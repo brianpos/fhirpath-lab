@@ -1,0 +1,124 @@
+// assets/variables.scss
+
+// Variables you want to modify
+$btn-border-radius: 6px;
+
+// Modifying a SASS map variable
+// $material-light: ( cards: blue );
+$label-margin-bottom: 0;
+
+// https://mycolor.space/?hex=%233F81AE&sub=1
+$card-header-color: #79B6E6;
+
+$tab-backcolor: #D2F5FF;
+$tab-color: rgba(0, 0, 0, 0.87);
+
+.v-text-field .v-label--active {
+  transform-origin: left;
+}
+
+.v-label {
+  margin-bottom: 0;
+}
+
+.retired-page-background {
+  background-color: thistle;
+  padding-bottom: 24px;
+}
+
+.draft-page-background {
+  background-color: lightgray;
+  padding-bottom: 24px;
+}
+
+.active-page-background {
+  // background-color: #d8f3dc;
+  padding-bottom: 24px;
+}
+
+@media (max-width: 596px) {
+  .status-col {
+    max-width: unset;
+  }
+}
+
+.status-col {
+  max-width: 20ch;
+}
+
+/* Header coloring */
+.v-app-bar > .v-toolbar__content {
+  background-color: #3F81AE;
+}
+/* Search toolbar (header row2) */
+.v-toolbar__extension {
+  background-color: $card-header-color;
+}
+
+/* Edit properties card header row */
+.v-card> .v-toolbar > .v-toolbar__content {
+  color: white;
+  background-color: $card-header-color;
+}
+
+/* Tab coloring */
+.v-tab {
+  justify-content: initial;
+}
+.v-tab--active {
+  background-color: $tab-backcolor;
+  color: $tab-color;
+}
+.theme--light.v-toolbar.v-sheet {
+  background-color: $tab-backcolor;
+  color: $tab-color;
+}
+.field-label {
+  margin-right: 8px;
+  color: grey;
+}
+
+.version {
+  max-width: 20ch;
+}
+
+.date {
+  max-width: 20ch;
+}
+
+.fl-tab-header {
+  display: none;
+}
+@media (max-width: 596px) {
+  /* for phone display only show the icons */
+  .v-tab {
+    max-width: 48px;
+    min-width: 48px;
+  }
+
+  .fl-tab-header {
+    display: block;
+    background-color: $tab-backcolor;
+    color: $tab-color;
+    justify-content: stretch;
+    text-transform: uppercase;
+    font-size: 0.875em;
+    font-weight: 700;
+    padding: 13px 16px;
+    margin-top: -16px;
+    margin-left: -16px;
+    margin-right: -16px;
+  }
+}
+
+/* Markdown field preview styles */
+span.markdown p {
+  margin-bottom: 0.1rem;
+}
+span.markdown {
+  border-left: solid lightgrey 4px;
+  padding-left: 12px;
+  margin-top: 6px;
+  margin-bottom: 6px;
+  display: block;
+}
