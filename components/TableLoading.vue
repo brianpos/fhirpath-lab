@@ -1,19 +1,19 @@
 <template>
-  <span style="height 0;">
+  <v-overlay opacity="0">
     <v-progress-circular
-      class="fl-spinner"
+      class="fl-spinner2"
       indeterminate
       :size="80"
       :width="10"
       color="#6f42c1"
     >
     </v-progress-circular>
-  </span>
+  </v-overlay>
 </template>
 
 <style>
 .fl-spinner {
-  position: absolute;
+  position: fixed;
   top: calc(50vh - 40px);
   left: calc(50vw - 40px);
   z-index: 1000;
