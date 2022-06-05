@@ -115,7 +115,7 @@ td {
               <v-card flat>
                 <v-card-text>
                   <p class="fl-tab-header">Expression</p>
-                  <v-textarea label="Context Expression" v-model="contextExpression" hide-details="auto" rows="1"
+                  <v-textarea label="Context Expression (optional)" v-model="contextExpression" hide-details="auto" rows="1"
                     auto-grow />
                   <v-textarea label="Fhirpath Expression" v-model="fhirpathExpression" hide-details="auto" rows="3"
                     auto-grow />
