@@ -13,7 +13,7 @@
 
 <style>
 .fl-spinner {
-  position: fixed;
+  position: absolute;
   top: calc(50vh - 40px);
   left: calc(50vw - 40px);
   z-index: 1000;
