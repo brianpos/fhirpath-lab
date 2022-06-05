@@ -9,6 +9,7 @@ import { BaseResourceData } from "~/models/BaseResourceTableData";
 import { settings } from "./user_settings";
 
 export const requestFhirAcceptHeaders = "application/fhir+json; fhirVersion=4.0, application/fhir+json";
+export const requestFhirContentTypeHeaders = "application/fhir+json";
 
 export function getLink(
   type: "first" | "previous" | "next" | "last",

@@ -7,6 +7,10 @@ tr.ve-table-body-tr {
   max-width: 10ch;
 }
 
+td {
+  padding: 8px;  
+}
+
 .progress-button {
   max-width: 25px;
 }
@@ -173,9 +177,9 @@ tr.ve-table-body-tr {
                       <template v-for="(v1, index) in r2.trace">
                         <tr :key="index">
                           <td class="result-type">{{ v1.name }}</td>
-                        <td class="result-value">
+                          <td class="result-value">
                             <div class="code-json">{{ v1.value }}</div>
-                        </td>
+                          </td>
                         </tr>
                       </template>
                     </v-simple-table>
@@ -185,7 +189,7 @@ tr.ve-table-body-tr {
                       <tr :key="index">
                         <td class="result-type">{{ v1.name }}</td>
                         <td class="result-value">
-                            <div class="code-json">{{ v1.value }}</div>
+                          <div class="code-json">{{ v1.value }}</div>
                         </td>
                       </tr>
                     </template>
@@ -221,6 +225,7 @@ import Vue, { VNode } from "vue";
 import { settings } from "~/helpers/user_settings";
 import {
   requestFhirAcceptHeaders,
+  requestFhirContentTypeHeaders
 } from "~/helpers/searchFhir";
 import axios, { AxiosResponse } from "axios";
 import { AxiosError } from "axios";
@@ -298,10 +303,29 @@ export default Vue.extend({
         this.cancelSource = axios.CancelToken.source();
         this.loadingData = true;
         let token = this.cancelSource.token;
-        const response = await axios.get<fhir4.Parameters>(url, {
-          cancelToken: token,
-          headers: { "Accept": requestFhirAcceptHeaders }
-        });
+        let response: AxiosResponse<fhir4.Parameters, any>;
+        if (this.resourceJson) {
+          // Need to post this content instead
+          let p: fhir4.Parameters = { resourceType: "Parameters", parameter: [] };
+          p.parameter?.push({
+            name: "resource",
+            resource: JSON.parse(this.resourceJson)
+          });
+          response = await axios.post<fhir4.Parameters>(url, p,
+            {
+              cancelToken: token,
+              headers: {
+                "Accept": requestFhirAcceptHeaders,
+                "ContentType": requestFhirContentTypeHeaders
+              }
+            });
+        }
+        else {
+          response = await axios.get<fhir4.Parameters>(url, {
+            cancelToken: token,
+            headers: { "Accept": requestFhirAcceptHeaders }
+          });
+        }
         if (token.reason) {
           console.log(token.reason);
           return;
@@ -416,7 +440,7 @@ export default Vue.extend({
     // https://www.sitepoint.com/fetching-data-third-party-api-vue-axios/
     async evaluateFhirPathExpression() {
       let url = `https://qforms-server.azurewebsites.net/$fhirpath?expression=${encodeURI(this.fhirpathExpression ?? 'today()')}`;
-      if (this.resourceId) {
+      if (this.resourceId && !this.resourceJson) {
         url += `&resource=${encodeURI(this.resourceId)}`;
       }
       if (this.contextExpression) {
