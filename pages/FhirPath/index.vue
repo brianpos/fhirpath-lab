@@ -1,4 +1,4 @@
-<style scoped>
+<style lang="scss" scoped >
 tr.ve-table-body-tr {
   cursor: pointer;
 }
@@ -15,6 +15,29 @@ tr.ve-table-body-tr {
   margin-bottom: 6px;
 }
 
+.result-type {
+  border-bottom: silver 1px solid;
+}
+
+.result-value {
+  width: 100%;
+  border-bottom: silver 1px solid;
+}
+
+.results {
+  padding: 4px 12px;
+  color: white;
+  font-style: bold;
+  font-size: 1.25rem;
+  line-height: 1.5;
+  background-color: $card-header-color;
+}
+
+.context {
+  border-bottom: silver 1px solid;
+  background-color: $tab-backcolor;
+}
+
 .empty-data {
   display: flex;
   align-items: center;
@@ -25,6 +48,10 @@ tr.ve-table-body-tr {
   font-size: 16px;
   border: 1px solid #eee;
   border-top: 0;
+}
+
+.code-json {
+  white-space: pre-wrap;
 }
 </style>
 
@@ -54,7 +81,7 @@ tr.ve-table-body-tr {
         <v-toolbar flat color="primary">
           <v-toolbar-title>{{ resourceId }}</v-toolbar-title>
           <v-spacer />
-          <v-btn icon @click="evaluateFhirPathExpression">
+          <v-btn icon accesskey="g" title="press alt+g to go" @click="evaluateFhirPathExpression">
             <v-icon>
               mdi-play
             </v-icon>
@@ -73,6 +100,10 @@ tr.ve-table-body-tr {
             <v-icon left> mdi-format-list-bulleted </v-icon>
             Trace
           </v-tab>
+          <v-tab>
+            <v-icon left> mdi-bug-outline </v-icon>
+            Debug
+          </v-tab>
 
           <v-tabs-items touchless v-model="tab">
             <v-tab-item>
@@ -80,22 +111,28 @@ tr.ve-table-body-tr {
               <v-card flat>
                 <v-card-text>
                   <p class="fl-tab-header">Expression</p>
-                  <v-text-field label="Test Resource Id" v-model="resourceId" hide-details="auto">
-                    <template v-slot:append>
-                      <v-btn icon small tile @click="resourceId = undefined">
-                        <v-icon> mdi-close </v-icon>
-                      </v-btn>
-                      <v-btn icon small tile>
-                        <v-icon> mdi-download </v-icon>
-                      </v-btn>
-                    </template>
-                  </v-text-field>
-                  <v-textarea label="Context Expression" v-model="contextExpression" hide-details="auto" rows="2"
+                  <v-textarea label="Context Expression" v-model="contextExpression" hide-details="auto" rows="1"
                     auto-grow />
-                  <v-textarea label="Fhirpath Expression" v-model="fhirpathExpression" hide-details="auto" rows="4"
+                  <v-textarea label="Fhirpath Expression" v-model="fhirpathExpression" hide-details="auto" rows="3"
                     auto-grow />
-                  <v-text-field label="Terminology Server" v-model="terminologyServer" hide-details="auto" />
-                  <v-textarea v-model="resultText" />
+                  <div class="results">RESULTS</div>
+                  <template v-for="(r2, i1) in results">
+                    <v-simple-table :key="i1">
+                      <tr v-if="r2.context">
+                        <td class="context" colspan="2">
+                          <div>Context: <b>{{ r2.context }}</b></div>
+                        </td>
+                      </tr>
+                      <template v-for="(v1, index) in r2.result">
+                        <tr :key="index">
+                          <td class="result-type">{{ v1.type }}</td>
+                          <td class="result-value">
+                            <div class="code-json">{{ v1.value }}</div>
+                          </td>
+                        </tr>
+                      </template>
+                    </v-simple-table>
+                  </template>
                 </v-card-text>
               </v-card>
             </v-tab-item>
@@ -105,7 +142,18 @@ tr.ve-table-body-tr {
               <v-card flat>
                 <v-card-text>
                   <p class="fl-tab-header">Resource</p>
-                  <v-textarea v-model="resourceJson" rows="20" />
+                  <v-text-field label="Test Resource Id" v-model="resourceId" hide-details="auto">
+                    <template v-slot:append>
+                      <v-btn icon small tile @click="resourceId = undefined">
+                        <v-icon> mdi-close </v-icon>
+                      </v-btn>
+                      <v-btn icon small tile @click="downloadTestResource">
+                        <v-icon> mdi-download </v-icon>
+                      </v-btn>
+                    </template>
+                  </v-text-field>
+                  <v-textarea v-model="resourceJson" rows="16" />
+                  <v-text-field label="Terminology Server" v-model="terminologyServer" hide-details="auto" />
                 </v-card-text>
               </v-card>
             </v-tab-item>
@@ -115,17 +163,47 @@ tr.ve-table-body-tr {
               <v-card flat>
                 <v-card-text>
                   <p class="fl-tab-header">Trace</p>
+                  <template v-for="(r2, i1) in results">
+                    <v-simple-table :key="i1">
+                      <tr v-if="r2.context">
+                        <td class="context" colspan="2">
+                          <div>Context: <b>{{ r2.context }}</b></div>
+                        </td>
+                      </tr>
+                      <template v-for="(v1, index) in r2.trace">
+                        <tr :key="index">
+                          <td class="result-type">{{ v1.name }}</td>
+                        <td class="result-value">
+                            <div class="code-json">{{ v1.value }}</div>
+                        </td>
+                        </tr>
+                      </template>
+                    </v-simple-table>
+                  </template>
                   <v-simple-table>
                     <template v-for="(v1, index) in traceData">
                       <tr :key="index">
-                        <td>{{ v1.name }}</td>
-                        <td>{{ v1.value }}</td>
+                        <td class="result-type">{{ v1.name }}</td>
+                        <td class="result-value">
+                            <div class="code-json">{{ v1.value }}</div>
+                        </td>
                       </tr>
                     </template>
                   </v-simple-table>
                 </v-card-text>
               </v-card>
             </v-tab-item>
+
+            <v-tab-item>
+              <!-- Resource -->
+              <v-card flat>
+                <v-card-text>
+                  <p class="fl-tab-header">Debug</p>
+                  <v-textarea v-model="resultJson" rows="20" />
+                </v-card-text>
+              </v-card>
+            </v-tab-item>
+
           </v-tabs-items>
         </v-tabs>
       </v-card>
@@ -134,19 +212,15 @@ tr.ve-table-body-tr {
         title="Error Evaluating" @close="clearOutcome" />
     </div>
     <table-loading v-if="loadingData" />
+    <!-- <code class="code-json">{{ JSON.stringify(results, null, 4) }}</code> -->
   </div>
 </template>
 
 <script lang="ts">
 import Vue, { VNode } from "vue";
-import {
-  LibraryTableData,
-} from "~/models/LibraryTableData";
-import { formatDate } from "~/helpers/datetime";
 import { settings } from "~/helpers/user_settings";
 import {
   requestFhirAcceptHeaders,
-  searchPage,
 } from "~/helpers/searchFhir";
 import axios, { AxiosResponse } from "axios";
 import { AxiosError } from "axios";
@@ -159,6 +233,7 @@ interface FhirPathData {
   contextExpression?: string;
   fhirpathExpression?: string;
   loadingData: boolean;
+  resultJson?: string;
   resultText?: string;
   traceText?: string;
   saveOutcome?: fhir4.OperationOutcome;
@@ -168,11 +243,17 @@ interface FhirPathData {
   cancelSource?: CancelTokenSource;
   tab: any;
   traceData: TraceData[];
+  results: ResultData[];
+}
+
+interface ResultItem {
+  type: string;
+  value: any;
 }
 
 interface ResultData {
   context?: string;
-  result: any[];
+  result: ResultItem[];
   trace: TraceData[];
 }
 
@@ -181,13 +262,26 @@ interface TraceData {
   value: string;
 }
 
+function getValue(entry: fhir4.ParametersParameter): ResultItem[] {
+  let result: ResultItem[] = [];
+  var myMap = new Map(Object.entries(entry));
+  for (let [k, v] of myMap.entries()) {
+    if (k.startsWith('value'))
+      result.push({ type: k, value: v });
+    else if (k == 'resource')
+      result.push({ type: (v as fhir4.Resource).resourceType, value: v });
+  }
+  return result;
+}
+
 export default Vue.extend({
   head: {
     title: "FhirPath",
   },
-  mounted() {
+  async mounted() {
     this.showAdvancedSettings = settings.showAdvancedSettings();
-    this.evaluateFhirPathExpression();
+    // await this.downloadTestResource();
+    await this.evaluateFhirPathExpression();
   },
   methods: {
     settingsClosed() {
@@ -218,31 +312,91 @@ export default Vue.extend({
         const results = response.data;
         if (results) {
           this.raw = results;
-          this.resourceJson = JSON.stringify(results, null, 4);
+          this.resultJson = JSON.stringify(results, null, 4);
           this.resultText = '';
+          this.results = [];
           if (this.raw.parameter) {
+            let contextLessResultItem: ResultData = { context: '', result: [], trace: [] };
+            if (!this.contextExpression)
+              this.results.push(contextLessResultItem);
             for (var entry of this.raw.parameter) {
               if (entry.name === 'result') {
                 if (this.contextExpression) {
-                      this.resultText +=`${entry.valueString}\r\n${entry.part ? JSON.stringify(entry.part) : ''}\r\n`;
+                  this.resultText += `${entry.valueString}\r\n${entry.part ? JSON.stringify(entry.part, null, 4) : ''}\r\n`;
+                  let resultItem: ResultData = { context: entry.valueString, result: [], trace: [] };
+                  if (entry.part) {
+                    for (var part of entry.part) {
+                      resultItem.result.push(...getValue(part));
+                    }
+                  }
+                  this.results.push(resultItem);
                 }
                 else {
                   var myMap = new Map(Object.entries(entry));
                   for (let [k, v] of myMap.entries()) {
-                    if (k.startsWith('value') || k == 'resource')
+                    if (k.startsWith('value')) {
                       this.resultText += JSON.stringify(v);
+                      contextLessResultItem.result.push({ type: k, value: v });
+                    }
+                    else if (k == 'resource') {
+                      this.resultText += JSON.stringify(v);
+                      contextLessResultItem.result.push({ type: v.resourceType, value: v });
+                    }
                   }
                 }
               }
               if (entry.name === 'trace') {
-
-                this.traceData.push({ name: entry.valueString ?? '??', value: JSON.stringify(entry.part) });
+                if (!this.contextExpression) {
+                  this.traceData.push({ name: entry.valueString ?? '??', value: JSON.stringify(entry.part, null, 4) });
+                  contextLessResultItem.trace.push({ name: entry.valueString ?? '??', value: JSON.stringify(entry.part, null, 4) });
+                }
+                else {
+                  this.traceData.push({ name: entry.valueString ?? '??', value: JSON.stringify(entry.part, null, 4) });
+                }
               }
             }
           }
         } else {
           // host.tableData = [];
           // host.showEmpty = true;
+        }
+      } catch (err) {
+        this.loadingData = false;
+        if (axios.isAxiosError(err)) {
+          const serverError = err as AxiosError<fhir4.OperationOutcome>;
+          if (serverError && serverError.response) {
+            this.saveOutcome = serverError.response.data;
+            this.showOutcome = true;
+            return serverError.response.data;
+          }
+        } else {
+          console.log("Client Error:", err);
+        }
+      }
+    },
+
+    async downloadTestResource() {
+      try {
+        if (!this.resourceId) return;
+
+        if (this.cancelSource) this.cancelSource.cancel("new download started");
+        this.cancelSource = axios.CancelToken.source();
+        this.loadingData = true;
+        let token = this.cancelSource.token;
+        const response = await axios.get<fhir4.Resource>(this.resourceId, {
+          cancelToken: token,
+          headers: { "Accept": requestFhirAcceptHeaders }
+        });
+        if (token.reason) {
+          console.log(token.reason);
+          return;
+        }
+        this.cancelSource = undefined;
+        this.loadingData = false;
+
+        const results = response.data;
+        if (results) {
+          this.resourceJson = JSON.stringify(results, null, 4);
         }
       } catch (err) {
         this.loadingData = false;
@@ -282,14 +436,16 @@ export default Vue.extend({
       resourceId: 'https://sqlonfhir-r4.azurewebsites.net/fhir/Patient/example',
       resourceJson: undefined,
       contextExpression: 'name',
-      fhirpathExpression: "trace('nerd').family",
+      fhirpathExpression: "trace('nerd').given",
       loadingData: true,
+      resultJson: undefined,
       resultText: undefined,
       traceText: undefined,
       showOutcome: false,
       showAdvancedSettings: false,
       terminologyServer: 'https://sqlonfhir-r4.azurewebsites.net/fhir',
-      traceData: []
+      traceData: [],
+      results: [],
     };
   },
 });

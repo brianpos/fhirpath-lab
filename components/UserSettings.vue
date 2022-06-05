@@ -10,6 +10,11 @@
             hide-details="auto"
           />
           <v-text-field
+            label="FHIR Terminology Server"
+            v-model="fhirTerminologyServerUrl"
+            hide-details="auto"
+          />
+          <v-text-field
             label="Default Provider Field"
             v-model="defaultProviderField"
             hide-details="auto"
@@ -87,6 +92,7 @@ export default Vue.extend({
       console.log(values);
 
       this.fhirServerUrl = values.fhirServerUrl;
+      this.fhirTerminologyServerUrl = values.fhirTerminologyServerUrl;
       this.syncFavourites = values.syncFavourites;
       this.favouritesListId = values.favouritesListId;
       this.defaultProviderField = values.defaultProviderField;
@@ -105,6 +111,7 @@ export default Vue.extend({
   data(): UserSettingsData {
     return {
       fhirServerUrl: undefined,
+      fhirTerminologyServerUrl: undefined,
       syncFavourites: false,
       favouritesListId: undefined,
       defaultProviderField: undefined,

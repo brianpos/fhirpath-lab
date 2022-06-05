@@ -1,5 +1,6 @@
 export declare interface UserSettingsData {
     fhirServerUrl?: string;
+    fhirTerminologyServerUrl?: string;
     syncFavourites: boolean;
     favouritesListId?: string;
     defaultProviderField?: string;
@@ -16,6 +17,15 @@ export namespace settings {
         }
         catch {
             console.log("error reading the FHIR Server URL configuration value");
+            return "https://sqlonfhir-r4.azurewebsites.net/fhir";
+        }
+    }
+    export function getFhirTerminologyServerUrl(): string {
+        try {
+            return localStorage.getItem("settings_fhirTerminologyServerURL") ?? "https://sqlonfhir-r4.azurewebsites.net/fhir";
+        }
+        catch {
+            console.log("error reading the FHIR Terminology Server URL configuration value");
             return "https://sqlonfhir-r4.azurewebsites.net/fhir";
         }
     }
@@ -36,6 +46,7 @@ export namespace settings {
     export function load(): UserSettingsData {
         return {
             fhirServerUrl: localStorage.getItem("settings_fhirServerURL") ?? "https://sqlonfhir-r4.azurewebsites.net/fhir",
+            fhirTerminologyServerUrl: localStorage.getItem("settings_fhirTerminologyServerURL") ?? "https://sqlonfhir-r4.azurewebsites.net/fhir",
             syncFavourites: localStorage.getItem("settings_syncFavourites") === 'true',
             favouritesListId: localStorage.getItem("settings_favouritesListId") ?? undefined,
 
@@ -50,6 +61,10 @@ export namespace settings {
         try {
             if (settings.fhirServerUrl?.endsWith('/')) settings.fhirServerUrl = settings.fhirServerUrl.substring(0, settings.fhirServerUrl.length - 1);
             if (settings.fhirServerUrl) localStorage.setItem("settings_fhirServerURL", settings.fhirServerUrl);
+
+            if (settings.fhirTerminologyServerUrl?.endsWith('/')) settings.fhirTerminologyServerUrl = settings.fhirTerminologyServerUrl.substring(0, settings.fhirTerminologyServerUrl.length - 1);
+            if (settings.fhirTerminologyServerUrl) localStorage.setItem("settings_fhirTerminologyServerURL", settings.fhirTerminologyServerUrl);
+
             if (settings.syncFavourites) localStorage.setItem("settings_syncFavourites", settings.syncFavourites ? 'true' : 'false');
             else localStorage.removeItem("settings_syncFavourites");
             if (settings.syncFavourites && settings.favouritesListId) localStorage.setItem("settings_favouritesListId", settings.favouritesListId);
