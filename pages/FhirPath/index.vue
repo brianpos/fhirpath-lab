@@ -23,7 +23,7 @@
     <div class="container-fluid bd-layout" style="padding-top: 80px">
       <v-card>
         <v-toolbar flat color="primary">
-          <v-toolbar-title>{{ resourceId }}</v-toolbar-title>
+          <v-toolbar-title>{{ tabTitle() }}</v-toolbar-title>
           <v-spacer />
           <v-btn icon accesskey="g" title="press alt+g to go" @click="evaluateFhirPathExpression">
             <v-icon>
@@ -308,6 +308,10 @@ export default Vue.extend({
     await this.evaluateFhirPathExpression();
   },
   methods: {
+    tabTitle() {
+      if (this.resourceJson) return '(local resource JSON)';
+      return this.resourceId;
+    },
     settingsClosed() {
       this.showAdvancedSettings = settings.showAdvancedSettings();
     },
