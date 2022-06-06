@@ -249,7 +249,7 @@ import { AxiosError } from "axios";
 import { CancelTokenSource } from "axios";
 import fhirpath from "fhirpath";
 import fhirpath_r4_model from "fhirpath/fhir-context/r4";
-import { engine } from "fhirpath/src/misc.js";
+// import { engine } from "fhirpath/src/misc.js";
 
 interface FhirPathData {
   raw?: fhir4.Parameters;
