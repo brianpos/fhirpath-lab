@@ -44,7 +44,7 @@
             <v-icon left> mdi-format-list-bulleted </v-icon>
             Trace
           </v-tab>
-          <v-tab>
+          <v-tab v-show="showAdvancedSettings">
             <v-icon left> mdi-bug-outline </v-icon>
             Debug
           </v-tab>

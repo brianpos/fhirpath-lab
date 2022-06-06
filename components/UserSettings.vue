@@ -14,6 +14,11 @@
             v-model="fhirTerminologyServerUrl"
             hide-details="auto"
           />
+          <v-checkbox
+            label="Show Advanced Properties"
+            v-model="showAdvancedSettings"
+            hide-details="auto"
+          ></v-checkbox>
           <v-text-field
             label="Default Provider Field"
             v-model="defaultProviderField"
@@ -29,12 +34,7 @@
             hide-details="auto"
             v-model="pageSize"
           />
-          <v-checkbox
-            label="Show Advanced Properties"
-            v-model="showAdvancedSettings"
-            hide-details="auto"
-          ></v-checkbox>
-          <v-checkbox
+          <!-- <v-checkbox
             label="Sync Favourites"
             v-model="syncFavourites"
             hide-details="auto"
@@ -46,7 +46,7 @@
             :readonly="true"
             hide-details="auto"
             clearable
-          />
+          /> -->
         </v-form>
       </v-card-text>
       <v-card-actions>
