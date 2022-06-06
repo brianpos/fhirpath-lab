@@ -285,6 +285,7 @@ export default Vue.extend({
   },
   async mounted() {
     this.showAdvancedSettings = settings.showAdvancedSettings();
+    this.terminologyServer = settings.getFhirTerminologyServerUrl();
 
     // Read in any parameters from the URL
     if (this.$route.query.expression) {
@@ -296,6 +297,9 @@ export default Vue.extend({
       }
       else {
         this.contextExpression = '';
+      }
+      if (this.$route.query.terminologyServer) {
+        this.terminologyServer = this.$route.query.terminologyServer as string ?? '';
       }
       this.fhirpathExpression = this.$route.query.expression as string ?? '';
     }
