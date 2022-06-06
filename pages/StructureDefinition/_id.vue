@@ -1,20 +1,14 @@
 <template>
-  <div
-    :class="
-      raw && raw.status === 'draft'
-        ? 'draft-page-background'
-        : raw && raw.status === 'active'
+  <div :class="
+    raw && raw.status === 'draft'
+      ? 'draft-page-background'
+      : raw && raw.status === 'active'
         ? 'active-page-background'
         : raw && raw.status === 'retired'
-        ? 'retired-page-background'
-        : ''
-    "
-  >
-    <HeaderNavbar
-      :favourites="isFavourite"
-      :toggleFavourite="toggleFavourite"
-      @close-settings="settingsClosed"
-    />
+          ? 'retired-page-background'
+          : ''
+  ">
+    <HeaderNavbar :favourites="isFavourite" :toggleFavourite="toggleFavourite" @close-settings="settingsClosed" />
 
     <div class="container-fluid bd-layout" style="padding-top: 60px">
       <br />
@@ -24,20 +18,11 @@
       </div>
       <v-card v-if="raw">
         <v-toolbar flat color="primary">
-          <v-toolbar-title
-            ><span v-text="raw.title" /> (<span v-text="raw.status" />)<span
-              v-if="raw.version"
-            >
-              - {{ raw.version }}</span
-            ></v-toolbar-title
-          >
+          <v-toolbar-title><span v-text="raw.title" /> (<span v-text="raw.status" />)<span v-if="raw.version">
+              - {{ raw.version }}</span></v-toolbar-title>
           <v-spacer />
           <v-btn icon>
-            <v-icon
-              v-if="enableSave && !readonly"
-              @click="saveData"
-              :disabled="saving"
-            >
+            <v-icon v-if="enableSave && !readonly" @click="saveData" :disabled="saving">
               mdi-content-save
             </v-icon>
           </v-btn>
@@ -59,23 +44,14 @@
           <v-tabs-items touchless v-model="tab">
             <v-tab-item>
               <!-- Details -->
-              <conformance-resource-details-tab
-                :raw="raw"
-                :readonly="readonly"
-                :showAdvancedSettings="showAdvancedSettings"
-                @update="updateNow"
-              />
+              <conformance-resource-details-tab :raw="raw" :readonly="readonly"
+                :showAdvancedSettings="showAdvancedSettings" @update="updateNow" />
             </v-tab-item>
 
             <v-tab-item>
               <!-- Publishing -->
-              <conformance-resource-publishing-tab
-                :raw="raw"
-                :publishedVersions="publishedVersions"
-                :readonly="readonly"
-                :showAdvancedSettings="showAdvancedSettings"
-                @update="updateNow"
-              />
+              <conformance-resource-publishing-tab :raw="raw" :publishedVersions="publishedVersions"
+                :readonly="readonly" :showAdvancedSettings="showAdvancedSettings" @update="updateNow" />
             </v-tab-item>
 
             <v-tab-item>
@@ -88,21 +64,32 @@
                     <v-simple-table>
                       <thead>
                         <tr>
-                          <th>Name</th>
-                          <th>Type</th>
-                          <th>Card.</th>
+                          <th>Path</th>
                           <th>Description & Constraints</th>
                         </tr>
                       </thead>
                       <tbody>
-                        <template
-                          v-for="(element, index) in raw.differential.element"
-                        >
-                          <tr :key="index">
+                        <template v-for="(element, index) in raw.snapshot.element">
+                          <tr :key="index" v-if="hasNonStandardConstraint(element)">
                             <td class="path" v-text="element.path"></td>
-                            <td v-text="type(element)"></td>
-                            <td v-text="cardinality(element)"></td>
-                            <td v-text="element.definition"></td>
+                            <td>
+                              {{ element.definition }}
+                              <template v-for="(constraint, indexConstraint) in element.constraint">
+                                <div :key="indexConstraint" v-if="!isStandardConstraint(constraint)">
+                                  <b>{{ constraint.key }}</b> {{ constraint.human }}<br />
+                                  <v-textarea label="Expression" v-model="constraint.expression"
+                                    hide-details="auto" rows="2" auto-grow readonly>
+                                    <template v-slot:append>
+                                      <v-btn icon small tile :href="testExpressionPath(element, constraint)"
+                                        title="Debug this expression with the fhirpath tester">
+                                        <v-icon> mdi-bug-outline </v-icon>
+                                      </v-btn>
+                                    </template>
+                                  </v-textarea>
+                                </div>
+                              </template>
+
+                            </td>
                           </tr>
                         </template>
                       </tbody>
@@ -115,13 +102,8 @@
         </v-tabs>
       </v-card>
       <br />
-      <OperationOutcomeOverlay
-        v-if="showOutcome"
-        :saveOutcome="saveOutcome"
-        :showOutcome="showOutcome"
-        title="Error Saving"
-        @close="clearOutcome"
-      />
+      <OperationOutcomeOverlay v-if="showOutcome" :saveOutcome="saveOutcome" :showOutcome="showOutcome"
+        title="Error Saving" @close="clearOutcome" />
       <v-expansion-panels accordion>
         <v-expansion-panel>
           <v-expansion-panel-header>Raw JSON</v-expansion-panel-header>
@@ -141,6 +123,7 @@
   overflow-x: hidden;
   max-height: calc(100vh - 240px);
 }
+
 td.path {
   word-break: break-word;
 }
@@ -151,7 +134,7 @@ import Vue from "vue";
 import { StructureDefinitionData } from "../../models/StructureDefinitionTableData";
 import axios from "axios";
 import { AxiosError } from "axios";
-import { StructureDefinition } from "fhir/r4";
+import { ElementDefinition, ElementDefinitionConstraint, StructureDefinition } from "fhir/r4";
 import {
   loadCanonicalResource,
   loadPublishedVersions,
@@ -170,6 +153,26 @@ export default Vue.extend({
     this.searchFhirServer();
   },
   methods: {
+    testExpressionPath(element: ElementDefinition, constraint: ElementDefinitionConstraint):string {
+      return `../FhirPath?example-type=${this.raw?.type}&context=${element.path}&expression=${constraint.expression}`;
+    },
+    hasNonStandardConstraint(element: ElementDefinition) {
+      if (!element.constraint) return false;
+      for (var constraint of element.constraint) {
+        if (!this.isStandardConstraint(constraint)) return true;
+      }
+      return false;
+    },
+    isStandardConstraint(constraint: ElementDefinitionConstraint) {
+      if (constraint.key == 'ele-1') return true;
+      if (constraint.key == 'ext-1') return true;
+      if (constraint.key == 'dom-2') return true;
+      if (constraint.key == 'dom-3') return true;
+      if (constraint.key == 'dom-4') return true;
+      if (constraint.key == 'dom-5') return true;
+      if (constraint.key == 'dom-6') return true;
+      return false;
+    },
     settingsClosed() {
       this.showAdvancedSettings = settings.showAdvancedSettings();
     },
@@ -227,9 +230,8 @@ export default Vue.extend({
       );
       if (this.raw) {
         this.isFavourite = isFavourite(this.raw.resourceType, this.raw.id);
-        document.title = `Structure Definition: ${
-          this.raw.title ?? this.raw.name
-        }`;
+        document.title = `Structure Definition: ${this.raw.title ?? this.raw.name
+          }`;
       }
     },
     async saveData() {

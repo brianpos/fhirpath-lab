@@ -49,7 +49,7 @@
                   <v-text-field label="Base" v-model="raw.base" hide-details="auto" readonly />
                   <v-text-field label="Type" :value="computedType()" hide-details="auto" readonly />
                   <!-- <v-text-field label="Target" v-model="raw.target" hide-details="auto" /> -->
-                  <v-textarea label="Context Expression (optional)" v-model="raw.expression" hide-details="auto"
+                  <v-textarea label="Expression" v-model="raw.expression" hide-details="auto"
                     rows="3" auto-grow>
                     <template v-slot:append>
                       <v-btn icon small tile :href="testExpressionPath()"
