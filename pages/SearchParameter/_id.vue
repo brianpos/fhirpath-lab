@@ -47,12 +47,12 @@
                   <div class="results">Search Details</div>
                   <v-text-field label="Code" v-model="raw.code" hide-details="auto" readonly />
                   <v-text-field label="Base" v-model="raw.base" hide-details="auto" readonly />
-                  <v-text-field label="Type" v-model="computedType" hide-details="auto" readonly />
+                  <v-text-field label="Type" :value="computedType()" hide-details="auto" readonly />
                   <!-- <v-text-field label="Target" v-model="raw.target" hide-details="auto" /> -->
                   <v-textarea label="Context Expression (optional)" v-model="raw.expression" hide-details="auto"
                     rows="3" auto-grow>
                     <template v-slot:append>
-                      <v-btn icon small tile :href="testExpressionPath"
+                      <v-btn icon small tile :href="testExpressionPath()"
                         title="Debug this expression with the fhirpath tester">
                         <v-icon> mdi-bug-outline </v-icon>
                       </v-btn>
@@ -130,16 +130,16 @@ export default Vue.extend({
   mounted() {
     this.searchFhirServer();
   },
-  computed: {
+  methods: {
     computedType: function () {
       if (!this.raw)
         return 'argh';
       if (this.raw.target) return `${this.raw.type}(${this.raw.target})`;
       return this.raw.type;
     },
-    testExpressionPath() { return `../FhirPath?example-type=${this.raw?.base}&expression=${this.raw?.expression}`; }
-  },
-  methods: {
+    testExpressionPath() {
+      return `../FhirPath?example-type=${this.raw?.base}&expression=${this.raw?.expression}`;
+    },
     settingsClosed() {
       this.showAdvancedSettings = settings.showAdvancedSettings();
     },
