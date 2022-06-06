@@ -1,20 +1,14 @@
 <template>
-  <div
-    :class="
-      raw && raw.status === 'draft'
-        ? 'draft-page-background'
-        : raw && raw.status === 'active'
+  <div :class="
+    raw && raw.status === 'draft'
+      ? 'draft-page-background'
+      : raw && raw.status === 'active'
         ? 'active-page-background'
         : raw && raw.status === 'retired'
-        ? 'retired-page-background'
-        : ''
-    "
-  >
-    <HeaderNavbar
-      :favourites="isFavourite"
-      :toggleFavourite="toggleFavourite"
-      @close-settings="settingsClosed"
-    />
+          ? 'retired-page-background'
+          : ''
+  ">
+    <HeaderNavbar :favourites="isFavourite" :toggleFavourite="toggleFavourite" @close-settings="settingsClosed" />
 
     <div class="container-fluid bd-layout" style="padding-top: 60px">
       <br />
@@ -24,20 +18,11 @@
       </div>
       <v-card v-if="raw">
         <v-toolbar flat color="primary">
-          <v-toolbar-title
-            ><span v-text="raw.title" /> (<span v-text="raw.status" />)<span
-              v-if="raw.version"
-            >
-              - {{ raw.version }}</span
-            ></v-toolbar-title
-          >
+          <v-toolbar-title><span v-text="raw.title" /> (<span v-text="raw.status" />)<span v-if="raw.version">
+              - {{ raw.version }}</span></v-toolbar-title>
           <v-spacer />
           <v-btn icon>
-            <v-icon
-              v-if="enableSave && !readonly"
-              @click="saveData"
-              :disabled="saving"
-            >
+            <v-icon v-if="enableSave && !readonly" @click="saveData" :disabled="saving">
               mdi-content-save
             </v-icon>
           </v-btn>
@@ -51,224 +36,43 @@
             <v-icon left> mdi-download-network-outline </v-icon>
             Publishing
           </v-tab>
-          <v-tab>
-            <v-icon left> mdi-file-tree </v-icon>
-            Concepts
-          </v-tab>
-          <v-tab>
-            <v-icon left> mdi-format-list-bulleted </v-icon>
-            Expansion
-          </v-tab>
 
           <v-tabs-items touchless v-model="tab">
             <v-tab-item>
               <!-- Details -->
-              <conformance-resource-details-tab
-                :raw="raw"
-                :readonly="readonly"
-                :showAdvancedSettings="showAdvancedSettings"
-                @update="updateNow"
-              />
+              <conformance-resource-details-tab :raw="raw" :readonly="readonly"
+                :showAdvancedSettings="showAdvancedSettings" @update="updateNow">
+                <template v-slot:extension>
+                  <br />
+                  <div class="results">Search Details</div>
+                  <v-text-field label="Code" v-model="raw.code" hide-details="auto" readonly />
+                  <v-text-field label="Base" v-model="raw.base" hide-details="auto" readonly />
+                  <v-text-field label="Type" v-model="computedType" hide-details="auto" readonly />
+                  <!-- <v-text-field label="Target" v-model="raw.target" hide-details="auto" /> -->
+                  <v-textarea label="Context Expression (optional)" v-model="raw.expression" hide-details="auto"
+                    rows="3" auto-grow>
+                    <template v-slot:append>
+                      <v-btn icon small tile :href="testExpressionPath"
+                        title="Debug this expression with the fhirpath tester">
+                        <v-icon> mdi-bug-outline </v-icon>
+                      </v-btn>
+                    </template>
+                  </v-textarea>
+                </template>
+              </conformance-resource-details-tab>
             </v-tab-item>
 
             <v-tab-item>
               <!-- Publishing -->
-              <conformance-resource-publishing-tab
-                :raw="raw"
-                :publishedVersions="publishedVersions"
-                :readonly="readonly"
-                :showAdvancedSettings="showAdvancedSettings"
-                @update="updateNow"
-              />
-            </v-tab-item>
-
-            <v-tab-item>
-              <!-- Content -->
-              <v-card flat>
-                <v-card-text>
-                  <p class="fl-tab-header">Concepts</p>
-
-                  <p v-if="raw.compose">
-                    <v-checkbox
-                      label="Include inactive codes"
-                      v-model="raw.compose.inactive"
-                      :readonly="readonly"
-                      dense
-                      hide-details="auto"
-                      @click="updateNow"
-                    />
-                    <template v-if="raw.compose.include">
-                      <template v-for="(include, index) in raw.compose.include">
-                        <v-simple-table class="map-table" :key="index">
-                          <thead>
-                            <tr class="map-header">
-                              <th colspan="2">
-                                {{ include.system
-                                }}<template v-if="include.version"
-                                  >|{{ include.version }}</template
-                                >
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody v-if="include.concept">
-                            <tr class="vs-include">
-                              <th colspan="2">Include Concepts</th>
-                            </tr>
-                            <template v-for="(v1, indexC) in include.concept">
-                              <tr :key="indexC">
-                                <td><code v-text="v1.code"></code></td>
-                                <td v-text="v1.display"></td>
-                              </tr>
-                            </template>
-                          </tbody>
-                          <tbody v-if="include.filter">
-                            <tr class="vs-include">
-                              <th colspan="3">Filter</th>
-                            </tr>
-                            <template
-                              v-for="(filter, indexC) in include.filter"
-                            >
-                              <tr :key="indexC">
-                                <td><code v-text="filter.property"></code></td>
-                                <td v-text="filter.op"></td>
-                                <td v-text="filter.value"></td>
-                              </tr>
-                            </template>
-                          </tbody>
-                          <tbody v-if="include.SearchParameter">
-                            <tr class="vs-include">
-                              <th>Include SearchParameter(s)</th>
-                            </tr>
-                            <template
-                              v-for="(filter, indexC) in include.SearchParameter"
-                            >
-                              <tr :key="indexC">
-                                <td><code v-text="filter"></code></td>
-                              </tr>
-                            </template>
-                          </tbody>
-                        </v-simple-table>
-                      </template>
-                    </template>
-
-                    <template v-if="raw.compose.exclude">
-                      <template v-for="(exclude, index) in raw.compose.exclude">
-                        <v-simple-table class="map-table" :key="index">
-                          <thead>
-                            <tr class="map-header">
-                              <th colspan="2">
-                                {{ exclude.system
-                                }}<template v-if="exclude.version"
-                                  >|{{ exclude.version }}</template
-                                >
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody v-if="exclude.concept">
-                            <tr class="vs-exclude">
-                              <th colspan="2">Exclude Concepts</th>
-                            </tr>
-                            <template v-for="(v1, indexC) in exclude.concept">
-                              <tr class="vs-exclude" :key="indexC">
-                                <td>(<code v-text="v1.code"></code>)</td>
-                                <td v-text="v1.display"></td>
-                              </tr>
-                            </template>
-                          </tbody>
-                          <tbody v-if="exclude.filter">
-                            <tr class="vs-exclude">
-                              <th colspan="3">Exclude Filter</th>
-                            </tr>
-                            <template
-                              v-for="(filter, indexC) in exclude.filter"
-                            >
-                              <tr :key="indexC">
-                                <td><code v-text="filter.property"></code></td>
-                                <td v-text="filter.op"></td>
-                                <td v-text="filter.value"></td>
-                              </tr>
-                            </template>
-                          </tbody>
-                          <tbody v-if="exclude.SearchParameter">
-                            <tr class="vs-exclude">
-                              <th>Exclude SearchParameter(s)</th>
-                            </tr>
-                            <template
-                              v-for="(filter, indexC) in exclude.SearchParameter"
-                            >
-                              <tr :key="indexC">
-                                <td><code v-text="filter"></code></td>
-                              </tr>
-                            </template>
-                          </tbody>
-                        </v-simple-table>
-                      </template>
-                    </template>
-                  </p>
-                </v-card-text>
-              </v-card>
-            </v-tab-item>
-
-            <v-tab-item>
-              <!-- Expansion -->
-              <v-card flat>
-                <v-card-text>
-                  <p class="fl-tab-header">
-                    Expansion<template v-if="!raw.expansion">
-                      - Test expand/filter</template
-                    >
-                  </p>
-                  <div>
-                    <v-text-field
-                      label="Test Filter text (not stored)"
-                      v-model="testFilterValue"
-                      @input="performExpansion"
-                    />
-                    <template v-if="localExpansion">
-                      Total:
-                      <template
-                        v-if="localExpansion.total && localExpansion.total > 40"
-                        >40/</template
-                      ><span v-text="localExpansion.total" />
-                      <v-simple-table class="map-table">
-                        <thead>
-                          <tr class="map-header">
-                            <th>code</th>
-                            <th>display</th>
-                            <th>system</th>
-                          </tr>
-                        </thead>
-                        <tbody v-if="localExpansion.contains">
-                          <template
-                            v-for="(coding, index) in localExpansion.contains"
-                          >
-                            <tr :key="index">
-                              <td><code v-text="coding.code"></code></td>
-                              <td v-text="coding.display"></td>
-                              <td v-text="coding.system"></td>
-                            </tr>
-                          </template>
-                        </tbody>
-                      </v-simple-table>
-                      <!-- <pre
-                        v-text="JSON.stringify(localExpansion, null, 2)"
-                      ></pre> -->
-                    </template>
-                  </div>
-                </v-card-text>
-              </v-card>
+              <conformance-resource-publishing-tab :raw="raw" :publishedVersions="publishedVersions"
+                :readonly="readonly" :showAdvancedSettings="showAdvancedSettings" @update="updateNow" />
             </v-tab-item>
           </v-tabs-items>
         </v-tabs>
       </v-card>
       <br />
-      <OperationOutcomeOverlay
-        v-if="showOutcome"
-        :saveOutcome="saveOutcome"
-        :showOutcome="showOutcome"
-        title="Error Saving"
-        @close="clearOutcome"
-      />
+      <OperationOutcomeOverlay v-if="showOutcome" :saveOutcome="saveOutcome" :showOutcome="showOutcome"
+        title="Error Saving" @close="clearOutcome" />
       <v-expansion-panels accordion>
         <v-expansion-panel>
           <v-expansion-panel-header>Raw JSON</v-expansion-panel-header>
@@ -282,25 +86,22 @@
   </div>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
 .v-window-item--active {
   overflow-y: auto;
   overflow-x: hidden;
   max-height: calc(100vh - 240px);
 }
-.map-table {
-  margin-top: 12px;
-}
-.map-header > th {
-  background-color: rgba(177, 156, 217, 0.25098);
-}
 
-.vs-include > th,
-.vs-exclude > th {
-  height: 28px !important;
-}
-.vs-exclude > td {
-  font-style: italic;
+.results {
+  padding: 4px 12px;
+  background-color: $tab-backcolor;
+  color: $tab-color;
+  font-size: 0.875em;
+  font-weight: 700;
+  justify-content: stretch;
+  text-transform: uppercase;
+  line-height: 1.5;
 }
 </style>
 
@@ -328,6 +129,15 @@ import { BaseResource_defaultValues } from "~/models/BaseResourceTableData";
 export default Vue.extend({
   mounted() {
     this.searchFhirServer();
+  },
+  computed: {
+    computedType: function () {
+      if (!this.raw)
+        return 'argh';
+      if (this.raw.target) return `${this.raw.type}(${this.raw.target})`;
+      return this.raw.type;
+    },
+    testExpressionPath() { return `../FhirPath?example-type=${this.raw?.base}&expression=${this.raw?.expression}`; }
   },
   methods: {
     settingsClosed() {

@@ -49,10 +49,6 @@
             <v-icon left> mdi-download-network-outline </v-icon>
             Publishing
           </v-tab>
-          <v-tab>
-            <v-icon left> mdi-file-tree </v-icon>
-            Content
-          </v-tab>
 
           <v-tabs-items touchless v-model="tab">
             <v-tab-item>
@@ -62,7 +58,37 @@
                 :readonly="readonly"
                 :showAdvancedSettings="showAdvancedSettings"
                 @update="updateNow"
-              />
+              >
+                <template v-slot:extension>
+                  <br/>
+                  <div class="results">Expression Details</div>
+                  <p v-if="raw.type">
+                    Type:
+                    <ul v-if="raw.type.coding">
+                    <li v-for="(item, index) in raw.type.coding" :key="index">
+                      {{ (item.display || item.code) }}
+                    </li>
+                    </ul>
+                  </p>
+
+                  <p v-if="raw.content">
+                    <template v-for="(v1,index) in raw.content">
+                      <p :key="index">
+                  <v-text-field label="Title" v-model="v1.title" hide-details="auto" />
+                  <v-textarea label="Fhirpath Expression" :value="convertExpression(v1.data)" @change="updateExpression(v1, $event)" hide-details="auto"
+                    rows="3" auto-grow>
+                    <template v-slot:append>
+                      <v-btn icon small tile :href="testExpressionPath(v1.data)"
+                        title="Debug this expression with the fhirpath tester">
+                        <v-icon> mdi-bug-outline </v-icon>
+                      </v-btn>
+                    </template>
+                  </v-textarea>
+                      </p>
+                    </template>
+                  </p>
+                </template> 
+              </conformance-resource-details-tab>
             </v-tab-item>
 
             <v-tab-item>
@@ -74,34 +100,6 @@
                 :showAdvancedSettings="showAdvancedSettings"
                 @update="updateNow"
               />
-            </v-tab-item>
-
-            <v-tab-item>
-              <!-- Content -->
-              <v-card flat>
-                <v-card-text>
-                  <p class="fl-tab-header">Content</p>
-                  <p v-if="raw.type">
-                    Type:
-                    <ul v-if="raw.type.coding">
-                    <li v-for="(item, index) in raw.type.coding" :key="index">
-                      {{ (item.display || item.code) }}
-                    </li>
-                    </ul>
-                  </p>
-
-                  <p v-if="raw.content">
-                    Content:
-                    <template v-for="(v1,index) in raw.content">
-                      <p :key="index">
-                      <span v-text="v1.contentType"></span>
-                      <span v-text="v1.title"></span>
-                      <code class="data" v-text="v1.data"></code>
-                      </p>
-                    </template>
-                  </p>
-                </v-card-text>
-              </v-card>
             </v-tab-item>
           </v-tabs-items>
         </v-tabs>
@@ -127,13 +125,23 @@
   </div>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
 ul {
   margin-left: 25px;
 }
 .data {
   word-break: break-all;
   display: block;
+}
+.results {
+  padding: 4px 12px;
+    background-color: $tab-backcolor;
+    color: $tab-color;
+    font-size: 0.875em;
+    font-weight: 700;
+    justify-content: stretch;
+    text-transform: uppercase;
+  line-height: 1.5;
 }
 </style>
 <script lang="ts">
@@ -164,6 +172,16 @@ export default Vue.extend({
     this.searchFhirServer();
   },
   methods: {
+    testExpressionPath(value: string):string {
+      const expr = atob(value);
+      return `../FhirPath?expression=${expr}`;
+    },
+    convertExpression(value: string):string {
+      return atob(value);
+    },
+    updateExpression(item: fhir4.Attachment, value: string) {
+      item.data = btoa(value);
+    },
     settingsClosed() {
       this.showAdvancedSettings = settings.showAdvancedSettings();
     },

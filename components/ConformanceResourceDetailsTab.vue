@@ -3,68 +3,32 @@
     <v-card-text>
       <p class="fl-tab-header">Details</p>
       <v-form>
-        <v-text-field
-          label="Title"
-          v-model="raw.title"
-          :readonly="readonly"
-          hide-details="auto"
-          @input="notifyChange"
-        />
-        <v-checkbox
-          v-show="showAdvancedSettings"
-          label="Experimental"
-          v-model="raw.experimental"
-          :readonly="readonly"
-          dense
-          hide-details="auto"
-          @click="notifyChange"
-        />
+        <v-text-field label="Title" v-model="raw.title" :readonly="readonly" hide-details="auto"
+          @input="notifyChange" />
+        <v-checkbox v-show="showAdvancedSettings" label="Experimental" v-model="raw.experimental" :readonly="readonly"
+          dense hide-details="auto" @click="notifyChange" />
 
-        <v-textarea
-          label="Description"
+        <v-textarea label="Description"
           title="The Description is shown alongside the Title when a user is selecting the Questionnaire from a directory. This field supports Markdown formatting"
-          v-model="raw.description"
-          :readonly="readonly"
-          @input="notifyChange"
-          auto-grow
-          hide-details="auto"
-          clearable
-          rows="2"
-        />
-        <span
-          class="markdown"
+          v-model="raw.description" :readonly="readonly" @input="notifyChange" auto-grow hide-details="auto" clearable
+          rows="2" />
+        <span class="markdown"
           title="(preview) The Description is shown alongside the Title when a user is selecting the Questionnaire from a directory."
-          v-html="convertHtml(raw.description)"
-        />
+          v-html="convertHtml(raw.description)" />
 
-        <v-textarea
-          label="Purpose"
+        <v-textarea label="Purpose"
           title="The Purpose describes why this Questionnaire was created. This field supports Markdown formatting"
-          v-model="raw.purpose"
-          :readonly="readonly"
-          @input="notifyChange"
-          auto-grow
-          hide-details="auto"
-          clearable
-          rows="2"
-        />
-        <span
-          class="markdown"
-          title="(preview) The Purpose describes why this Questionnaire was created."
-          v-html="convertHtml(raw.purpose)"
-        />
+          v-model="raw.purpose" :readonly="readonly" @input="notifyChange" auto-grow hide-details="auto" clearable
+          rows="2" />
+        <span class="markdown" title="(preview) The Purpose describes why this Questionnaire was created."
+          v-html="convertHtml(raw.purpose)" />
 
-        <v-text-field
-          label="Name"
-          v-show="showAdvancedSettings"
-          v-model="raw.name"
-          :readonly="readonly"
-          hide-details="auto"
-          @input="notifyChange"
-        />
+        <v-text-field label="Name" v-show="showAdvancedSettings" v-model="raw.name" :readonly="readonly"
+          hide-details="auto" @input="notifyChange" />
 
-        <span class="field-label">Use Context:</span
-        ><span v-text="raw.useContext" /> <br />
+        <span class="field-label">Use Context:</span><span v-text="raw.useContext" /> <br />
+
+        <slot name="extension"></slot>
       </v-form>
     </v-card-text>
   </v-card>

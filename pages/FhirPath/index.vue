@@ -1,64 +1,3 @@
-<style lang="scss" scoped >
-tr.ve-table-body-tr {
-  cursor: pointer;
-}
-
-.tool-button {
-  max-width: 10ch;
-}
-
-td {
-  padding: 8px;  
-}
-
-.progress-button {
-  max-width: 25px;
-}
-
-.fl-toolbar {
-  margin-bottom: 6px;
-}
-
-.result-type {
-  border-bottom: silver 1px solid;
-}
-
-.result-value {
-  width: 100%;
-  border-bottom: silver 1px solid;
-}
-
-.results {
-  padding: 4px 12px;
-  color: white;
-  font-style: bold;
-  font-size: 1.25rem;
-  line-height: 1.5;
-  background-color: $card-header-color;
-}
-
-.context {
-  border-bottom: silver 1px solid;
-  background-color: $tab-backcolor;
-}
-
-.empty-data {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: min(200px, 80vh);
-  width: 100%;
-  color: #666;
-  font-size: 16px;
-  border: 1px solid #eee;
-  border-top: 0;
-}
-
-.code-json {
-  white-space: pre-wrap;
-}
-</style>
-
 <template>
   <div>
     <HeaderNavbar @close-settings="settingsClosed" :extended="false">
@@ -79,6 +18,7 @@ td {
         /> -->
       </template>
     </HeaderNavbar>
+    <table-loading v-if="loadingData" />
 
     <div class="container-fluid bd-layout" style="padding-top: 80px">
       <v-card>
@@ -215,10 +155,70 @@ td {
       <OperationOutcomeOverlay v-if="showOutcome" :saveOutcome="saveOutcome" :showOutcome="showOutcome"
         title="Error Evaluating" @close="clearOutcome" />
     </div>
-    <table-loading v-if="loadingData" />
     <!-- <code class="code-json">{{ JSON.stringify(results, null, 4) }}</code> -->
   </div>
 </template>
+
+<style lang="scss" scoped >
+tr.ve-table-body-tr {
+  cursor: pointer;
+}
+
+.tool-button {
+  max-width: 10ch;
+}
+
+td {
+  padding: 8px;  
+}
+
+.progress-button {
+  max-width: 25px;
+}
+
+.fl-toolbar {
+  margin-bottom: 6px;
+}
+
+.result-type {
+  border-bottom: silver 1px solid;
+}
+
+.result-value {
+  width: 100%;
+  border-bottom: silver 1px solid;
+}
+
+.results {
+  padding: 4px 12px;
+  color: white;
+  font-style: bold;
+  font-size: 1.25rem;
+  line-height: 1.5;
+  background-color: $card-header-color;
+}
+
+.context {
+  border-bottom: silver 1px solid;
+  background-color: $tab-backcolor;
+}
+
+.empty-data {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: min(200px, 80vh);
+  width: 100%;
+  color: #666;
+  font-size: 16px;
+  border: 1px solid #eee;
+  border-top: 0;
+}
+
+.code-json {
+  white-space: pre-wrap;
+}
+</style>
 
 <script lang="ts">
 import Vue, { VNode } from "vue";
