@@ -55,8 +55,8 @@
               <v-card flat>
                 <v-card-text>
                   <p class="fl-tab-header">Expression</p>
-                  <v-textarea label="Context Expression (optional)" v-model="contextExpression" hide-details="auto" rows="1"
-                    auto-grow />
+                  <v-textarea label="Context Expression (optional)" v-model="contextExpression" hide-details="auto"
+                    rows="1" auto-grow />
                   <v-textarea label="Fhirpath Expression" v-model="fhirpathExpression" hide-details="auto" rows="3"
                     auto-grow />
                   <div class="results">RESULTS</div>
@@ -152,8 +152,8 @@
         </v-tabs>
       </v-card>
       <br />
-      <OperationOutcomeOverlay v-if="showOutcome" :saveOutcome="saveOutcome" :showOutcome="showOutcome"
-        title="Error Evaluating" @close="clearOutcome" />
+      <OperationOutcomeOverlay v-if="showOutcome" :saveOutcome="saveOutcome" :showOutcome="showOutcome" title="Error"
+        @close="clearOutcome" />
     </div>
     <!-- <code class="code-json">{{ JSON.stringify(results, null, 4) }}</code> -->
   </div>
@@ -169,7 +169,7 @@ tr.ve-table-body-tr {
 }
 
 td {
-  padding: 8px;  
+  padding: 8px;
 }
 
 .progress-button {
@@ -285,6 +285,21 @@ export default Vue.extend({
   },
   async mounted() {
     this.showAdvancedSettings = settings.showAdvancedSettings();
+
+    // Read in any parameters from the URL
+    if (this.$route.query.expression) {
+      if (this.$route.query.exampletype) {
+        this.resourceId = `https://sqlonfhir-r4.azurewebsites.net/fhir/${this.$route.query.exampletype}/example`;
+      }
+      if (this.$route.query.context) {
+        this.contextExpression = this.$route.query.context as string ?? '';
+      }
+      else {
+        this.contextExpression = '';
+      }
+      this.fhirpathExpression = this.$route.query.expression as string ?? '';
+    }
+
     // await this.downloadTestResource();
     await this.evaluateFhirPathExpression();
   },
@@ -409,7 +424,10 @@ export default Vue.extend({
         let token = this.cancelSource.token;
         const response = await axios.get<fhir4.Resource>(this.resourceId, {
           cancelToken: token,
-          headers: { "Accept": requestFhirAcceptHeaders }
+          headers: {
+            "Cache-Control": "no-cache",
+            "Accept": requestFhirAcceptHeaders
+          }
         });
         if (token.reason) {
           console.log(token.reason);
@@ -427,7 +445,13 @@ export default Vue.extend({
         if (axios.isAxiosError(err)) {
           const serverError = err as AxiosError<fhir4.OperationOutcome>;
           if (serverError && serverError.response) {
-            this.saveOutcome = serverError.response.data;
+            if (serverError.response.data?.resourceType == 'OperationOutcome') {
+              this.saveOutcome = serverError.response.data;
+            } else {
+              if (serverError.response.status == 404)
+                this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
+              this.saveOutcome?.issue.push({ code: 'not-found', severity: 'error', details: { text: 'Test resource not found' } });
+            }
             this.showOutcome = true;
             return serverError.response.data;
           }
