@@ -14,7 +14,7 @@
           :next="nextPage"
           :last="lastPage"
           :add="addNewQuestionnaire"
-          :showAdd="true"
+          :showAdd="false"
         />
       </template>
     </HeaderNavbar>

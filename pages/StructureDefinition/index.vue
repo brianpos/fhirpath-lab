@@ -42,7 +42,7 @@ tr.ve-table-body-tr {
           :next="nextPage"
           :last="lastPage"
           :add="addNew"
-          :showAdd="true"
+          :showAdd="false"
         />
       </template>
     </HeaderNavbar>
@@ -175,6 +175,7 @@ export default Vue.extend({
             status: vs?.status ?? "(undefined)",
             useContext: toSearchDisplay_UseContext(vs?.useContext) ?? "",
             publisher: vs?.publisher ?? "",
+            type: vs?.type,
             description: vs?.description,
             favourite: isFavourite(
               post.resource?.resourceType,
@@ -187,7 +188,7 @@ export default Vue.extend({
 
     // https://www.sitepoint.com/fetching-data-third-party-api-vue-axios/
     async searchFhirServer() {
-      let url = `${settings.getFhirServerUrl()}/StructureDefinition?_count=${settings.getPageSize()}&_elements=id,name,title,description,url,version,date,status,publisher,useContext`;
+      let url = `${settings.getFhirServerUrl()}/StructureDefinition?_count=${settings.getPageSize()}&_elements=id,name,title,description,url,version,date,status,publisher,useContext,type`;
       if (this.searchFor) {
         url += `&title=${encodeURI(this.searchFor)}`;
       }
@@ -238,6 +239,7 @@ export default Vue.extend({
 //        { field: "useContext", key: "uc", title: "Use Context", align: "left" },
         { field: "date", key: "b", title: "Publish Date", align: "left" },
         { field: "publisher", key: "d", title: "Publisher", align: "left" },
+        { field: "type", key: "type", title: "Type", align: "left" },
         { field: "id", key: "id", title: "ID", align: "left" },
         {
           field: "favourite",

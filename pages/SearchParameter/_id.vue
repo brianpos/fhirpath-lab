@@ -138,7 +138,7 @@ export default Vue.extend({
       return this.raw.type;
     },
     testExpressionPath() {
-      return `../FhirPath?example-type=${this.raw?.base}&expression=${this.raw?.expression}`;
+      return `../FhirPath?exampletype=${this.raw?.base}&expression=${this.raw?.expression}`;
     },
     settingsClosed() {
       this.showAdvancedSettings = settings.showAdvancedSettings();

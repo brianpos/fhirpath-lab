@@ -69,7 +69,7 @@
                         </tr>
                       </thead>
                       <tbody>
-                        <template v-for="(element, index) in raw.snapshot.element">
+                        <template v-for="(element, index) in elements()">
                           <tr :key="index" v-if="hasNonStandardConstraint(element)">
                             <td class="path" v-text="element.path"></td>
                             <td>
@@ -153,8 +153,11 @@ export default Vue.extend({
     this.searchFhirServer();
   },
   methods: {
+    elements(){
+      return this.raw?.snapshot?.element || this.raw?.differential?.element || [];
+    },
     testExpressionPath(element: ElementDefinition, constraint: ElementDefinitionConstraint):string {
-      return `../FhirPath?example-type=${this.raw?.type}&context=${element.path}&expression=${constraint.expression}`;
+      return `../FhirPath?exampletype=${this.raw?.type}&context=${element.path}&expression=${constraint.expression}`;
     },
     hasNonStandardConstraint(element: ElementDefinition) {
       if (!element.constraint) return false;

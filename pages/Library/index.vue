@@ -34,7 +34,8 @@ tr.ve-table-body-tr {
       <template v-slot:extension>
         <search-navigator label="Library" :count="totalCount" :enableFirst="!!firstPageLink"
           :enablePrevious="!!previousPageLink" :enableNext="!!nextPageLink" :enableLast="!!lastPageLink"
-          :first="firstPage" :previous="previousPage" :next="nextPage" :last="lastPage" :add="addNew" :showAdd="true" />
+          :first="firstPage" :previous="previousPage" :next="nextPage" :last="lastPage" :add="addNew"
+          :showAdd="false" />
       </template>
     </HeaderNavbar>
 
