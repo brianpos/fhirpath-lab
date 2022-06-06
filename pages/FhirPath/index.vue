@@ -281,7 +281,7 @@ function getValue(entry: fhir4.ParametersParameter): ResultItem[] {
 
 export default Vue.extend({
   head: {
-    title: "FhirPath",
+    title: "FhirPathTester",
   },
   async mounted() {
     this.showAdvancedSettings = settings.showAdvancedSettings();
