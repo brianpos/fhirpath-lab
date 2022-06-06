@@ -25,6 +25,8 @@
         <v-toolbar flat color="primary">
           <v-toolbar-title>{{ tabTitle() }}</v-toolbar-title>
           <v-spacer />
+          <v-select class="engineselector" :items="executionEngines" v-model="selectedEngine" hide-details="auto"
+            @change="evaluateFhirPathExpression" />
           <v-btn icon accesskey="g" title="press alt+g to go" @click="evaluateFhirPathExpression">
             <v-icon>
               mdi-play
@@ -96,7 +98,18 @@
                       </v-btn>
                     </template>
                   </v-text-field>
-                  <v-textarea v-model="resourceJson" rows="16" />
+                  <v-textarea v-model="resourceJson" rows="16" label="Test Resource JSON (optional, if Resource ID provided)" 
+                  persistent-placeholder
+                  placeholder='{
+    "resourceType": "Patient",
+    "id": "example",
+    ...'>
+                    <template v-slot:append>
+                      <v-btn icon small tile @click="resourceJson = undefined">
+                        <v-icon> mdi-close </v-icon>
+                      </v-btn>
+                    </template>
+                  </v-textarea>
                   <v-text-field label="Terminology Server" v-model="terminologyServer" hide-details="auto" />
                 </v-card-text>
               </v-card>
@@ -139,7 +152,7 @@
             </v-tab-item>
 
             <v-tab-item>
-              <!-- Resource -->
+              <!-- Debug -->
               <v-card flat>
                 <v-card-text>
                   <p class="fl-tab-header">Debug</p>
@@ -162,6 +175,10 @@
 <style lang="scss" scoped >
 tr.ve-table-body-tr {
   cursor: pointer;
+}
+
+.engineselector {
+  max-width: 14ch;
 }
 
 .tool-button {
@@ -230,6 +247,9 @@ import {
 import axios, { AxiosResponse } from "axios";
 import { AxiosError } from "axios";
 import { CancelTokenSource } from "axios";
+import fhirpath from "fhirpath";
+import fhirpath_r4_model from "fhirpath/fhir-context/r4";
+import { engine } from "fhirpath/src/misc.js";
 
 interface FhirPathData {
   raw?: fhir4.Parameters;
@@ -249,6 +269,8 @@ interface FhirPathData {
   tab: any;
   traceData: TraceData[];
   results: ResultData[];
+  selectedEngine: string;
+  executionEngines: string[];
 }
 
 interface ResultItem {
@@ -272,7 +294,7 @@ function getValue(entry: fhir4.ParametersParameter): ResultItem[] {
   var myMap = new Map(Object.entries(entry));
   for (let [k, v] of myMap.entries()) {
     if (k.startsWith('value'))
-      result.push({ type: k, value: v });
+      result.push({ type: k.replace('value', ''), value: v });
     else if (k == 'resource')
       result.push({ type: (v as fhir4.Resource).resourceType, value: v });
   }
@@ -383,7 +405,7 @@ export default Vue.extend({
                   for (let [k, v] of myMap.entries()) {
                     if (k.startsWith('value')) {
                       this.resultText += JSON.stringify(v);
-                      contextLessResultItem.result.push({ type: k, value: v });
+                      contextLessResultItem.result.push({ type: k.replace('value', ''), value: v });
                     }
                     else if (k == 'resource') {
                       this.resultText += JSON.stringify(v);
@@ -425,12 +447,15 @@ export default Vue.extend({
     async downloadTestResource() {
       try {
         if (!this.resourceId) return;
+        let url = this.resourceId;
+        if (this.resourceId && !this.resourceId.startsWith('http'))
+          url = settings.getFhirServerUrl() +'/'+ this.resourceId;
 
         if (this.cancelSource) this.cancelSource.cancel("new download started");
         this.cancelSource = axios.CancelToken.source();
         this.loadingData = true;
         let token = this.cancelSource.token;
-        const response = await axios.get<fhir4.Resource>(this.resourceId, {
+        const response = await axios.get<fhir4.Resource>(url, {
           cancelToken: token,
           headers: {
             "Cache-Control": "no-cache",
@@ -469,11 +494,68 @@ export default Vue.extend({
       }
     },
 
+    async evaluateExpressionUsingFhirpathjs() {
+      if (!this.resourceJson && this.resourceId) {
+        await this.downloadTestResource();
+      }
+      if (!this.resourceJson) {
+        return;
+      }
+      this.results = [];
+      this.traceData = [];
+      this.resultJson = undefined;
+      this.resultText = undefined;
+
+      // run the actual fhirpath engine
+      const fhirData = JSON.parse(this.resourceJson);
+      // debugger;
+      // engine.traceFn = function (x: any, label: string) {
+      //   console.log("TRACE2:[" + (label || "") + "]", JSON.stringify(x, null, " "));
+      //   return x;
+      // };
+      var environment: any = { resource: fhirData };
+
+      if (this.contextExpression) {
+        // scan over each of the expressions
+        var contextNodes: any[] = fhirpath.evaluate(fhirData, this.contextExpression, environment, fhirpath_r4_model);
+        for (let contextNode of contextNodes) {
+          let res: any[] = fhirpath.evaluate(contextNode, this.fhirpathExpression ?? '', environment, fhirpath_r4_model);
+          let resData: ResultData = { context: `${this.contextExpression}[${contextNodes.indexOf(contextNode)}]`, result: [], trace: [] };
+          this.results.push(resData);
+
+          for (var item of res) {
+            resData.result.push({ type: Object.prototype.toString.call(item ?? '').substring(8).replace(']', ''), value: item });
+          }
+        }
+      }
+      else {
+        let res: any[] = fhirpath.evaluate(fhirData, this.fhirpathExpression ?? '', environment, fhirpath_r4_model);
+        let resData: ResultData = { result: [], trace: [] };
+        this.results.push(resData);
+
+        for (var item of res) {
+          resData.result.push({ type: Object.prototype.toString.call(item ?? '').substring(8).replace(']', ''), value: item });
+        }
+      }
+    },
+    evaluateSingleNode() {
+
+    },
+
     // https://www.sitepoint.com/fetching-data-third-party-api-vue-axios/
     async evaluateFhirPathExpression() {
+      if (this.selectedEngine == "fhirpath.js") {
+        await this.evaluateExpressionUsingFhirpathjs();
+        return;
+      }
+
+      // Run the firely/brianpos 
       let url = `https://qforms-server.azurewebsites.net/$fhirpath?expression=${encodeURI(this.fhirpathExpression ?? 'today()')}`;
       if (this.resourceId && !this.resourceJson) {
-        url += `&resource=${encodeURI(this.resourceId)}`;
+        if (!this.resourceId.startsWith('http'))
+          url += `&resource=${encodeURI(settings.getFhirServerUrl()+'/'+this.resourceId)}`;
+        else
+          url += `&resource=${encodeURI(this.resourceId)}`;
       }
       if (this.contextExpression) {
         url += `&context=${encodeURI(this.contextExpression)}`;
@@ -502,6 +584,12 @@ export default Vue.extend({
       terminologyServer: 'https://sqlonfhir-r4.azurewebsites.net/fhir',
       traceData: [],
       results: [],
+      selectedEngine: ".NET (firely)",
+      executionEngines: [
+        ".NET (firely)",
+        "fhirpath.js",
+        // "java"
+      ]
     };
   },
 });
