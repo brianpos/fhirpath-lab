@@ -33,7 +33,7 @@
             v-on="on"
             class="fl-nav dots"
           >
-            <span class="fl-refdata">Reference Data </span
+            <span class="fl-refdata">Expression Sources</span
             ><v-icon class="fl-refdata2">mdi-dots-vertical</v-icon>
           </v-btn>
         </template>
