@@ -404,12 +404,14 @@ export default Vue.extend({
                   let resultItem: ResultData = { context: entry.valueString, result: [], trace: [] };
                   if (entry.part) {
                     for (var part of entry.part) {
-                  if (part.name == 'trace')
+                  if (part.name === 'trace') {
                     resultItem.trace.push(...getTraceValue(part));
-                  else
+                  }
+                  else {
                       resultItem.result.push(...getValue(part));
                     }
                   }
+              }
                   this.results.push(resultItem);
                 }
                     }
