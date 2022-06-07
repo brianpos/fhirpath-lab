@@ -42,7 +42,7 @@
             <v-icon left> mdi-clipboard-text-outline </v-icon>
             Resource
           </v-tab>
-          <v-tab :disabled="(traceData.length === 0)">
+          <v-tab :disabled="!hasTraceData()">
             <v-icon left> mdi-format-list-bulleted </v-icon>
             Trace
           </v-tab>
@@ -71,10 +71,10 @@
                       </tr>
                       <template v-for="(v1, index) in r2.result">
                         <tr :key="index">
-                          <td class="result-type">{{ v1.type }}</td>
                           <td class="result-value">
                             <div class="code-json">{{ v1.value }}</div>
                           </td>
+                          <td class="result-type"><i v-if="v1.type">({{ v1.type }})</i></td>
                         </tr>
                       </template>
                     </v-simple-table>
@@ -122,7 +122,7 @@
                   <template v-for="(r2, i1) in results">
                     <v-simple-table :key="i1">
                       <tr v-if="r2.context">
-                        <td class="context" colspan="2">
+                        <td class="context" colspan="3">
                           <div>Context: <b>{{ r2.context }}</b></div>
                         </td>
                       </tr>
@@ -132,20 +132,11 @@
                           <td class="result-value">
                             <div class="code-json">{{ v1.value }}</div>
                           </td>
+                          <td class="result-type"><i v-if="v1.type">({{ v1.type }})</i></td>
                         </tr>
                       </template>
                     </v-simple-table>
                   </template>
-                  <v-simple-table>
-                    <template v-for="(v1, index) in traceData">
-                      <tr :key="index">
-                        <td class="result-type"><b>{{ v1.name }}</b></td>
-                        <td class="result-value">
-                          <div class="code-json">{{ v1.value }}</div>
-                        </td>
-                      </tr>
-                    </template>
-                  </v-simple-table>
                 </v-card-text>
               </v-card>
             </v-tab-item>
@@ -248,6 +239,7 @@ import {
 import axios, { AxiosResponse } from "axios";
 import { AxiosError } from "axios";
 import { CancelTokenSource } from "axios";
+import { getExtensionStringValue } from "fhir-extension-helpers";
 import fhirpath from "fhirpath";
 import fhirpath_r4_model from "fhirpath/fhir-context/r4";
 // import { engine } from "fhirpath/src/misc.js";
@@ -260,15 +252,12 @@ interface FhirPathData {
   fhirpathExpression?: string;
   loadingData: boolean;
   resultJson?: string;
-  resultText?: string;
-  traceText?: string;
   saveOutcome?: fhir4.OperationOutcome;
   showOutcome?: boolean;
   showAdvancedSettings: boolean;
   terminologyServer: string;
   cancelSource?: CancelTokenSource;
   tab: any;
-  traceData: TraceData[];
   results: ResultData[];
   selectedEngine: string;
   executionEngines: string[];
@@ -287,6 +276,7 @@ interface ResultData {
 
 interface TraceData {
   name: string;
+  type?: string;
   value: string;
 }
 
@@ -298,6 +288,19 @@ function getValue(entry: fhir4.ParametersParameter): ResultItem[] {
       result.push({ type: k.replace('value', ''), value: v });
     else if (k == 'resource')
       result.push({ type: (v as fhir4.Resource).resourceType, value: v });
+  }
+  const extVal = getExtensionStringValue(entry, "http://fhir.forms-lab.com/StructureDefinition/json-value");
+  if (extVal)
+    result.push({ type: entry.name, value: JSON.parse(extVal) });
+  return result;
+}
+function getTraceValue(entry: fhir4.ParametersParameter): TraceData[] {
+  let result: TraceData[] = [];
+  if (entry.part) {
+    for (var part of entry.part) {
+      const val = getValue(part);
+      result.push({ name: entry.valueString ?? '', type: part.name, value: JSON.stringify(val[0].value, null, 4) });
+    }
   }
   return result;
 }
@@ -337,6 +340,14 @@ export default Vue.extend({
     },
     settingsClosed() {
       this.showAdvancedSettings = settings.showAdvancedSettings();
+    },
+
+    hasTraceData(): boolean {
+      if (this.results.length === 0) return false;
+      for (var rd of this.results) {
+        if (rd.trace.length > 0) return true;
+      }
+      return false;
     },
 
     clearOutcome() {
@@ -383,52 +394,25 @@ export default Vue.extend({
         if (results) {
           this.raw = results;
           this.resultJson = JSON.stringify(results, null, 4);
-          this.resultText = '';
           this.results = [];
           if (this.raw.parameter) {
-            let contextLessResultItem: ResultData = { context: '', result: [], trace: [] };
-            if (!this.contextExpression)
-              this.results.push(contextLessResultItem);
             for (var entry of this.raw.parameter) {
-              if (entry.name === 'result') {
-                if (this.contextExpression) {
-                  this.resultText += `${entry.valueString}\r\n${entry.part ? JSON.stringify(entry.part, null, 4) : ''}\r\n`;
+              if (entry.name === 'parameters') continue; // skip over the configuration settings
+
+              // Anything else is a result
+              // scan over the parts (values)
                   let resultItem: ResultData = { context: entry.valueString, result: [], trace: [] };
                   if (entry.part) {
                     for (var part of entry.part) {
+                  if (part.name == 'trace')
+                    resultItem.trace.push(...getTraceValue(part));
+                  else
                       resultItem.result.push(...getValue(part));
                     }
                   }
                   this.results.push(resultItem);
                 }
-                else {
-                  var myMap = new Map(Object.entries(entry));
-                  for (let [k, v] of myMap.entries()) {
-                    if (k.startsWith('value')) {
-                      this.resultText += JSON.stringify(v);
-                      contextLessResultItem.result.push({ type: k.replace('value', ''), value: v });
                     }
-                    else if (k == 'resource') {
-                      this.resultText += JSON.stringify(v);
-                      contextLessResultItem.result.push({ type: v.resourceType, value: v });
-                    }
-                  }
-                }
-              }
-              if (entry.name === 'trace') {
-                if (!this.contextExpression) {
-                  this.traceData.push({ name: entry.valueString ?? '??', value: JSON.stringify(entry.part, null, 4) });
-                  contextLessResultItem.trace.push({ name: entry.valueString ?? '??', value: JSON.stringify(entry.part, null, 4) });
-                }
-                else {
-                  this.traceData.push({ name: entry.valueString ?? '??', value: JSON.stringify(entry.part, null, 4) });
-                }
-              }
-            }
-          }
-        } else {
-          // host.tableData = [];
-          // host.showEmpty = true;
         }
       } catch (err) {
         this.loadingData = false;
@@ -503,44 +487,37 @@ export default Vue.extend({
         return;
       }
       this.results = [];
-      this.traceData = [];
       this.resultJson = undefined;
-      this.resultText = undefined;
 
       // run the actual fhirpath engine
       const fhirData = JSON.parse(this.resourceJson);
       // debugger;
-      // engine.traceFn = function (x: any, label: string) {
-      //   console.log("TRACE2:[" + (label || "") + "]", JSON.stringify(x, null, " "));
-      //   return x;
-      // };
       var environment: any = { resource: fhirData };
+
+      let contextNodes: any[] = [];
 
       if (this.contextExpression) {
         // scan over each of the expressions
-        var contextNodes: any[] = fhirpath.evaluate(fhirData, this.contextExpression, environment, fhirpath_r4_model);
-        for (let contextNode of contextNodes) {
-          let res: any[] = fhirpath.evaluate(contextNode, this.fhirpathExpression ?? '', environment, fhirpath_r4_model);
-          let resData: ResultData = { context: `${this.contextExpression}[${contextNodes.indexOf(contextNode)}]`, result: [], trace: [] };
-          this.results.push(resData);
-
-          for (var item of res) {
-            resData.result.push({ type: Object.prototype.toString.call(item ?? '').substring(8).replace(']', ''), value: item });
-          }
-        }
+        contextNodes = fhirpath.evaluate(fhirData, this.contextExpression, environment, fhirpath_r4_model);
       }
       else {
-        let res: any[] = fhirpath.evaluate(fhirData, this.fhirpathExpression ?? '', environment, fhirpath_r4_model);
-        let resData: ResultData = { result: [], trace: [] };
+        contextNodes = fhirpath.evaluate(fhirData, "%resource", environment, fhirpath_r4_model);
+      }
+        for (let contextNode of contextNodes) {
+        let resData: ResultData;
+        if (this.contextExpression)
+          resData = { context: `${this.contextExpression}[${contextNodes.indexOf(contextNode)}]`, result: [], trace: [] };
+        else
+          resData = { result: [], trace: [] };
+
+        let res: any[] = fhirpath.evaluate(contextNode, this.fhirpathExpression ?? '', environment, fhirpath_r4_model);
         this.results.push(resData);
 
         for (var item of res) {
           resData.result.push({ type: Object.prototype.toString.call(item ?? '').substring(8).replace(']', ''), value: item });
         }
       }
-    },
-    evaluateSingleNode() {
-
+      console.log(this.results);
     },
 
     // https://www.sitepoint.com/fetching-data-third-party-api-vue-axios/
@@ -564,7 +541,6 @@ export default Vue.extend({
       if (this.terminologyServer) {
         url += `&terminologyserver=${encodeURI(this.terminologyServer)}`;
       }
-      this.traceData = [];
       await this.executeRequest(url);
     },
   },
@@ -578,12 +554,9 @@ export default Vue.extend({
       fhirpathExpression: "trace('nerd').given",
       loadingData: true,
       resultJson: undefined,
-      resultText: undefined,
-      traceText: undefined,
       showOutcome: false,
       showAdvancedSettings: false,
       terminologyServer: 'https://sqlonfhir-r4.azurewebsites.net/fhir',
-      traceData: [],
       results: [],
       selectedEngine: ".NET (firely)",
       executionEngines: [
