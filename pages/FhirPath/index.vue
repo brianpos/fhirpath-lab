@@ -421,6 +421,7 @@ export default Vue.extend({
         if (axios.isAxiosError(err)) {
           const serverError = err as AxiosError<fhir4.OperationOutcome>;
           if (serverError && serverError.response) {
+            this.resultJson = JSON.stringify(serverError.response.data, null, 4);
             this.saveOutcome = serverError.response.data;
             this.showOutcome = true;
             return serverError.response.data;
@@ -465,7 +466,9 @@ export default Vue.extend({
         if (axios.isAxiosError(err)) {
           const serverError = err as AxiosError<fhir4.OperationOutcome>;
           if (serverError && serverError.response) {
+            this.resultJson = JSON.stringify(serverError.response, null, 4);
             if (serverError.response.data?.resourceType == 'OperationOutcome') {
+              this.resultJson = JSON.stringify(serverError.response, null, 4);
               this.saveOutcome = serverError.response.data;
             } else {
               if (serverError.response.status == 404)
