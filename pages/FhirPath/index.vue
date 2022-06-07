@@ -98,9 +98,8 @@
                       </v-btn>
                     </template>
                   </v-text-field>
-                  <v-textarea v-model="resourceJson" rows="16" label="Test Resource JSON (optional, if Resource ID provided)" 
-                  persistent-placeholder
-                  placeholder='{
+                  <v-textarea v-model="resourceJson" rows="16"
+                    label="Test Resource JSON (optional, if Resource ID provided)" persistent-placeholder placeholder='{
     "resourceType": "Patient",
     "id": "example",
     ...'>
@@ -129,7 +128,7 @@
                       </tr>
                       <template v-for="(v1, index) in r2.trace">
                         <tr :key="index">
-                          <td class="result-type">{{ v1.name }}</td>
+                          <td class="result-type"><b>{{ v1.name }}</b></td>
                           <td class="result-value">
                             <div class="code-json">{{ v1.value }}</div>
                           </td>
@@ -140,7 +139,7 @@
                   <v-simple-table>
                     <template v-for="(v1, index) in traceData">
                       <tr :key="index">
-                        <td class="result-type">{{ v1.name }}</td>
+                        <td class="result-type"><b>{{ v1.name }}</b></td>
                         <td class="result-value">
                           <div class="code-json">{{ v1.value }}</div>
                         </td>
@@ -186,6 +185,8 @@ tr.ve-table-body-tr {
 }
 
 td {
+  vertical-align: top;
+  height: unset !important;
   padding: 8px;
 }
 
@@ -449,7 +450,7 @@ export default Vue.extend({
         if (!this.resourceId) return;
         let url = this.resourceId;
         if (this.resourceId && !this.resourceId.startsWith('http'))
-          url = settings.getFhirServerUrl() +'/'+ this.resourceId;
+          url = settings.getFhirServerUrl() + '/' + this.resourceId;
 
         if (this.cancelSource) this.cancelSource.cancel("new download started");
         this.cancelSource = axios.CancelToken.source();
@@ -553,7 +554,7 @@ export default Vue.extend({
       let url = `https://qforms-server.azurewebsites.net/$fhirpath?expression=${encodeURI(this.fhirpathExpression ?? 'today()')}`;
       if (this.resourceId && !this.resourceJson) {
         if (!this.resourceId.startsWith('http'))
-          url += `&resource=${encodeURI(settings.getFhirServerUrl()+'/'+this.resourceId)}`;
+          url += `&resource=${encodeURI(settings.getFhirServerUrl() + '/' + this.resourceId)}`;
         else
           url += `&resource=${encodeURI(this.resourceId)}`;
       }

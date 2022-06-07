@@ -5,7 +5,7 @@
       indeterminate
       :size="80"
       :width="10"
-      color="#6f42c1"
+      color="#3F81AE"
     >
     </v-progress-circular>
   </v-overlay>
