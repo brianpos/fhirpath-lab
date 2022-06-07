@@ -3,70 +3,111 @@
     <HeaderNavbar />
 
     <div class="container bd-layout" style="padding-top: 100px">
+      <br />
+      <p class="leader">
+        FHIRPath is heavily used in FHIR to define validations in <a href="StructureDefinition">profiles</a>, properties
+        to index in <a href="SearchParameter">search definitions</a> and various features inside
+        <a href="Questionnaire">questionnaires</a>. The fhirpath lab is an open source tool to simplify testing fhirpath
+        expressions (R4) against
+        the various open source fhirpath engines available (currently .net and javascript).
+      </p>
+      <br />
       <div class="home-grid">
-        <div class="logo grid-span-2">
-          <img src="fhir-lab-ico-300x300.png" /><br />
-          <span>Managing FHIRPATH Expressions</span>
-        </div>
-        <a class="link-item" href="FhirPath"
-          ><div style="font-weight: 600">Tester</div></a
-        >
-        <a href="FhirPath"
-          ><div>
+        <a class="link-item" href="FhirPath">
+          <div style="font-weight: 600">Tester</div>
+        </a>
+        <a href="FhirPath" class="link-plain-text">
+          <div>
             Quick Test page for testing any FHIRPath expressions
-          </div></a
-        >
-        <a class="link-item" href="Library"
-          ><div style="font-weight: 600">Library</div></a
-        >
-        <a href="Library"
-          ><div>
-            FHIRPath expressions and contexts used in form definitions to
+          </div>
+        </a>
+        <a class="link-item" href="Library">
+          <div style="font-weight: 600">Library</div>
+        </a>
+        <a href="Library" class="link-plain-text">
+          <div>
+            A library of FHIRPath expressions for sharing between other resources, to
             maintain the logic more easily
-          </div></a
-        >
-        <a class="link-item" href="StructureDefinition"
-          ><div style="font-weight: 600">Structure Definition</div></a
-        >
-        <a href="StructureDefinition"
-          ><div>
-            Supported FHIR Profile definitions (excluding core FHIR profiles).
-            including resource and extension definitions
-          </div></a
-        >
-        <a class="link-item" href="SearchParameter"
-          ><div style="font-weight: 600">Search Parameter</div></a
-        >
-        <a href="SearchParameter"
-          ><div>
-            Definition of a search parameter including the fhirpath expression for its evaluation
-          </div></a
-        >
-        <a class="link-item" href="Questionnaire"
-          ><div style="font-weight: 600">Questionnaire</div></a
-        >
-        <a href="Questionnaire"><div>Form Definitions</div></a>
-        <a class="link-item" href="List"
-          ><div style="font-weight: 600">List</div></a
-        >
-        <a href="List"
-          ><div>
-            A simple collection of items of any type above - used in collecting your favourites
-          </div></a
-        >
+          </div>
+        </a>
+      </div>
+      <br />
+      <p>
+        The Expression Sources menu provides access to existing resources containing expressions (from the fhir server
+        configured in settings) and then navigate to the tester to debug the expression with existing test data
+        (defaulting test resource ID "example")
+      </p>
+      <p>
+        <b>Note:</b> As the .net and JAVA fhirpath engines don't run in the browser this data is sent to a cloud
+        service to process these requests. None of this data is persisted outside the call itself.
+        Using individually identifiable data with this test utility is prohibited.
+      </p>
+      <br />
+      <h5>Disclaimers:</h5>
+      <p>
+        Written by Brian Postlethwaite to support the FHIR community and is provided AS-IS
+      </p>
+      <hr />
+      <div class="extra-links">
+        <div>
+          <h5>Specifications</h5>
+          <a href="http://hl7.org/fhirpath/" target="_blank">FHIRPath</a><br />
+          <a href="http://hl7.org/fhir/fhirpath.html" target="_blank">FHIRPath FHIR extensions</a><br />
+          <a href="http://hl7.org/fhir" target="_blank">FHIR (R4)</a>
+        </div>
+        <div>
+          <h5>Community</h5>
+          <a href="https://chat.fhir.org/#narrow/stream/179266-fhirpath" target="_blank">FHIRPath</a><br />
+          <a href="https://chat.fhir.org/#narrow/stream/179298-fhirpath.2Ejs" target="_blank">FHIRPath.js</a><br />
+          <a href="https://chat.fhir.org/#narrow/stream/179171-dotnet" target="_blank">FHIR with .net</a>
+        </div>
+        <div>
+          <h5>Source Code</h5>
+          <a href="https://github.com/brianpos/fhirpath-lab" target="_blank">fhirpath-lab</a><br />
+          <a href="https://github.com/HL7/fhirpath.js" target="_blank">fhirpath.js</a><br />
+          <a href="https://github.com/FirelyTeam/firely-net-common/tree/develop/src/Hl7.FhirPath"
+            target="_blank">FirelySDK fhirpath (.net)</a>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
 .home-grid {
   display: grid;
-  grid-template-columns: auto 1fr auto 1fr auto 1fr;
+  grid-template-columns: auto 1fr auto 1fr;
   gap: 12px 24px;
   grid-auto-flow: dense;
 }
 
+.leader {
+  font-size: x-large;
+}
+
+.link-plain-text {
+  text-decoration: initial;
+  color: initial;
+}
+
+p {
+  text-align: justify;
+  text-justify: inter-word;
+}
+
+.container::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-image: url('/fhir-lab-ico-300x300.png');
+  background-position: center;
+  /* Center the image */
+  opacity: 0.2;
+  z-index: -1;
+}
 
 .grid-span-2 {
   grid-column: span 2;
@@ -80,13 +121,26 @@
   vertical-align: middle;
   justify-self: center;
   grid-row: span 6;
-    grid-column: 3/5;
+  grid-column: 3/5;
+}
+
+h5 {
+  font-size: 18px;
+}
+
+.extra-links {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px 24px;
+  grid-auto-flow: dense;
+
 }
 
 @media (max-width: 1200px) {
   .home-grid {
     grid-template-columns: auto 1fr auto 1fr;
   }
+
   .logo {
     grid-column: span 2;
     grid-row: span 4;
@@ -108,15 +162,11 @@
   .grid-span-2 {
     grid-column: span 1 !important;
   }
+
   .link-item {
     margin-top: 12px;
     justify-self: left !important;
   }
-}
-
-a {
-  text-decoration: initial;
-  color: initial;
 }
 </style>
 <script lang="ts">
