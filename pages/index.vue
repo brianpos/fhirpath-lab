@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="main">
     <HeaderNavbar />
 
     <div class="container bd-layout" style="padding-top: 100px">
@@ -95,15 +95,16 @@ p {
   text-justify: inter-word;
 }
 
-.container::before {
+.main::before {
   content: "";
-  position: absolute;
+  position: fixed;
   top: 0;
   bottom: 0;
   left: 0;
   right: 0;
   background-image: url('/fhir-lab-ico-300x300.png');
   background-position: center;
+  background-attachment: fixed;
   /* Center the image */
   opacity: 0.2;
   z-index: -1;
