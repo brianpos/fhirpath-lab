@@ -289,12 +289,14 @@ import axios, { AxiosResponse } from "axios";
 import { AxiosError } from "axios";
 import { CancelTokenSource } from "axios";
 import { getExtensionStringValue } from "fhir-extension-helpers";
+import { getPreferredTerminologyServerFromSDC } from "fhir-sdc-helpers";
 import fhirpath from "fhirpath";
 import fhirpath_r4_model from "fhirpath/fhir-context/r4";
 // import { engine } from "fhirpath/src/misc.js";
 
 interface FhirPathData {
   raw?: fhir4.Parameters;
+  library?: fhir4.Library;
   resourceId?: string;
   resourceJson?: string;
   contextExpression?: string;
@@ -363,6 +365,10 @@ export default Vue.extend({
     this.terminologyServer = settings.getFhirTerminologyServerUrl();
 
     // Read in any parameters from the URL
+    if (this.$route.query.libaryId as string) {
+      await this.downloadLibrary(this.$route.query.libaryId as string);
+    }
+    else {
     if (this.$route.query.expression) {
       if (this.$route.query.exampletype) {
         this.resourceId = `https://sqlonfhir-r4.azurewebsites.net/fhir/${this.$route.query.exampletype}/example`;
@@ -378,12 +384,12 @@ export default Vue.extend({
       }
       this.fhirpathExpression = this.$route.query.expression as string ?? '';
     }
-
-    // await this.downloadTestResource();
+    }
     await this.evaluateFhirPathExpression();
   },
   methods: {
     tabTitle() {
+      if (this.library) return this.library.title;
       if (this.resourceJson) return '(local resource JSON)';
       return this.resourceId;
     },
@@ -472,6 +478,74 @@ export default Vue.extend({
           if (serverError && serverError.response) {
             this.resultJson = JSON.stringify(serverError.response.data, null, 4);
             this.saveOutcome = serverError.response.data;
+            this.showOutcome = true;
+            return serverError.response.data;
+          }
+        } else {
+          console.log("Client Error:", err);
+        }
+      }
+    },
+
+    async downloadLibrary(libraryId: string) {
+      try {
+        let url = libraryId;
+        if (!libraryId.startsWith('http'))
+          url = settings.getFhirServerUrl() + '/Library/' + libraryId;
+
+        if (this.cancelSource) this.cancelSource.cancel("new download started");
+        this.cancelSource = axios.CancelToken.source();
+        this.loadingData = true;
+        let token = this.cancelSource.token;
+        const response = await axios.get<fhir4.Library>(url, {
+          cancelToken: token,
+          headers: {
+            "Cache-Control": "no-cache",
+            "Accept": requestFhirAcceptHeaders
+          }
+        });
+        if (token.reason) {
+          console.log(token.reason);
+          return;
+        }
+        this.cancelSource = undefined;
+        this.loadingData = false;
+
+        if (response.data) {
+          this.library = response.data;
+
+          // and read the properties from the resource into the fields
+          this.fhirpathExpression = this.library?.content ? atob(this.library.content[0].data as string) : undefined;
+          this.contextExpression = getExtensionStringValue(this.library, "http://fhir.forms-lab.com/StructureDefinition/context-expression");
+          // and test resource IDs
+          const rId = getExtensionStringValue(this.library, "http://fhir.forms-lab.com/StructureDefinition/resource-id");
+          if (rId) {
+            this.resourceId = rId;
+            this.resourceJson = undefined;
+            if (this.resourceId?.startsWith("#") && this.library?.contained && this.library.contained[0]) {
+              this.resourceId = undefined;
+              this.resourceJson = JSON.stringify(this.library.contained[0], null, 4); // really should lookup by ID
+            }
+          }
+          const ts = getPreferredTerminologyServerFromSDC(this.library);
+          if (ts) {
+            this.terminologyServer = ts;
+          }
+        }
+      } catch (err) {
+        this.loadingData = false;
+        if (axios.isAxiosError(err)) {
+          const serverError = err as AxiosError<fhir4.OperationOutcome>;
+          if (serverError && serverError.response) {
+            this.resultJson = JSON.stringify(serverError.response, null, 4);
+            if (serverError.response.data?.resourceType == 'OperationOutcome') {
+              this.resultJson = JSON.stringify(serverError.response, null, 4);
+              this.saveOutcome = serverError.response.data;
+            } else {
+              if (serverError.response.status == 404)
+                this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
+              this.saveOutcome?.issue.push({ code: 'not-found', severity: 'error', details: { text: `Library resource ${libraryId} not found` } });
+            }
             this.showOutcome = true;
             return serverError.response.data;
           }
@@ -601,6 +675,7 @@ export default Vue.extend({
   data(): FhirPathData {
     return {
       tab: null,
+      library: undefined,
       raw: undefined,
       resourceId: 'Patient/example',
       resourceJson: undefined,
