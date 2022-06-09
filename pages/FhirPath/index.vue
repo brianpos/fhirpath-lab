@@ -553,7 +553,7 @@ export default Vue.extend({
     return {
       tab: null,
       raw: undefined,
-      resourceId: 'https://sqlonfhir-r4.azurewebsites.net/fhir/Patient/example',
+      resourceId: 'Patient/example',
       resourceJson: undefined,
       contextExpression: 'name',
       fhirpathExpression: "trace('nerd').given",
