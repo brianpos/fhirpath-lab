@@ -181,6 +181,7 @@ export default Vue.extend({
     },
     updateExpression(item: fhir4.Attachment, value: string) {
       item.data = btoa(value);
+      this.updateNow();
     },
     settingsClosed() {
       this.showAdvancedSettings = settings.showAdvancedSettings();
