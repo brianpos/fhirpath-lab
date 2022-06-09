@@ -190,13 +190,13 @@ export default Vue.extend({
     async searchFhirServer() {
       let url = `${settings.getFhirServerUrl()}/StructureDefinition?_count=${settings.getPageSize()}&_elements=id,name,title,description,url,version,date,status,publisher,useContext,type`;
       if (this.searchFor) {
-        url += `&title=${encodeURI(this.searchFor)}`;
+        url += `&title=${encodeURIComponent(this.searchFor)}`;
       }
       if (this.searchForStatus) {
-        url += `&status=${encodeURI(this.searchForStatus)}`;
+        url += `&status=${encodeURIComponent(this.searchForStatus)}`;
       }
       if (this.searchForPublisher) {
-        url += `&publisher=${encodeURI(this.searchForPublisher)}`;
+        url += `&publisher=${encodeURIComponent(this.searchForPublisher)}`;
       }
       await this.searchPage(url);
     },

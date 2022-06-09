@@ -239,10 +239,10 @@ export async function expandValueSet(serverBaseUrl: string, vsCanonical: string,
   const can = splitCanonical(vsCanonical);
   let urlRequest = `${serverBaseUrl}/ValueSet/$expand?url=${can?.canonicalUrl}`;
   if (can?.version){
-    urlRequest += `&version=${encodeURI(can.version)}`;
+    urlRequest += `&version=${encodeURIComponent(can.version)}`;
   }
   if (filter && filter.length > 0) {
-    urlRequest += `&filter=${encodeURI(filter)}`;
+    urlRequest += `&filter=${encodeURIComponent(filter)}`;
   }
   try {
     const response = await axios.get<fhir4.ValueSet | fhir4.OperationOutcome>(urlRequest, {

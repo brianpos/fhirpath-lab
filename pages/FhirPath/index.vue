@@ -533,18 +533,18 @@ export default Vue.extend({
       }
 
       // Run the firely/brianpos 
-      let url = `https://qforms-server.azurewebsites.net/$fhirpath?expression=${encodeURI(this.fhirpathExpression ?? 'today()')}`;
+      let url = `https://qforms-server.azurewebsites.net/$fhirpath?expression=${encodeURIComponent(this.fhirpathExpression ?? 'today()')}`;
       if (this.resourceId && !this.resourceJson) {
         if (!this.resourceId.startsWith('http'))
-          url += `&resource=${encodeURI(settings.getFhirServerUrl() + '/' + this.resourceId)}`;
+          url += `&resource=${encodeURIComponent(settings.getFhirServerUrl() + '/' + this.resourceId)}`;
         else
-          url += `&resource=${encodeURI(this.resourceId)}`;
+          url += `&resource=${encodeURIComponent(this.resourceId)}`;
       }
       if (this.contextExpression) {
-        url += `&context=${encodeURI(this.contextExpression)}`;
+        url += `&context=${encodeURIComponent(this.contextExpression)}`;
       }
       if (this.terminologyServer) {
-        url += `&terminologyserver=${encodeURI(this.terminologyServer)}`;
+        url += `&terminologyserver=${encodeURIComponent(this.terminologyServer)}`;
       }
       await this.executeRequest(url);
     },
