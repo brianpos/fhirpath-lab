@@ -33,12 +33,14 @@
             </v-icon>
           </v-btn>
         </v-toolbar>
+        <v-row dense>
+          <v-col>
         <v-tabs vertical v-model="tab">
           <v-tab>
             <v-icon left> mdi-function-variant </v-icon>
             Expression
           </v-tab>
-          <v-tab>
+              <v-tab class="left-resource">
             <v-icon left> mdi-clipboard-text-outline </v-icon>
             Resource
           </v-tab>
@@ -99,7 +101,8 @@
                     </template>
                   </v-text-field>
                   <v-textarea v-model="resourceJson" rows="16"
-                    label="Test Resource JSON (optional, if Resource ID provided)" persistent-placeholder placeholder='{
+                        label="Test Resource JSON (optional, if Resource ID provided)" persistent-placeholder
+                        placeholder='{
     "resourceType": "Patient",
     "id": "example",
     ...'>
@@ -153,7 +156,39 @@
 
           </v-tabs-items>
         </v-tabs>
+          </v-col>
+          <v-col class="right-resource">
+            <v-card flat>
+              <v-card-text>
+                <p class="fl-tab-header">Resource</p>
+                <v-text-field label="Test Resource Id" v-model="resourceId" hide-details="auto">
+                  <template v-slot:append>
+                    <v-btn icon small tile @click="resourceId = undefined">
+                      <v-icon> mdi-close </v-icon>
+                    </v-btn>
+                    <v-btn icon small tile @click="downloadTestResource">
+                      <v-icon> mdi-download </v-icon>
+                    </v-btn>
+                  </template>
+                </v-text-field>
+                <v-textarea v-model="resourceJson" rows="16"
+                  label="Test Resource JSON (optional, if Resource ID provided)" persistent-placeholder placeholder='{
+    "resourceType": "Patient",
+    "id": "example",
+    ...'>
+                  <template v-slot:append>
+                    <v-btn icon small tile @click="resourceJson = undefined">
+                      <v-icon> mdi-close </v-icon>
+                    </v-btn>
+                  </template>
+                </v-textarea>
+                <v-text-field label="Terminology Server" v-model="terminologyServer" hide-details="auto" />
+              </v-card-text>
+            </v-card>
+          </v-col>
+        </v-row>
       </v-card>
+
       <br />
       <OperationOutcomeOverlay v-if="showOutcome" :saveOutcome="saveOutcome" :showOutcome="showOutcome" title="Error"
         @close="clearOutcome" />
@@ -165,6 +200,20 @@
 <style lang="scss" scoped >
 tr.ve-table-body-tr {
   cursor: pointer;
+}
+
+.left-resource {
+  display: none;
+}
+
+@media (max-width: 1000px) {
+  .left-resource {
+    display: flex;
+  }
+
+  .right-resource {
+    display: none;
+  }
 }
 
 .engineselector {
