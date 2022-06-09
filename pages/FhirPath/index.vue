@@ -289,7 +289,7 @@ import axios, { AxiosResponse } from "axios";
 import { AxiosError } from "axios";
 import { CancelTokenSource } from "axios";
 import { getExtensionStringValue } from "fhir-extension-helpers";
-import { getPreferredTerminologyServerFromSDC } from "fhir-sdc-helpers";
+// import { getPreferredTerminologyServerFromSDC } from "fhir-sdc-helpers";
 import fhirpath from "fhirpath";
 import fhirpath_r4_model from "fhirpath/fhir-context/r4";
 // import { engine } from "fhirpath/src/misc.js";
@@ -527,10 +527,10 @@ export default Vue.extend({
               this.resourceJson = JSON.stringify(this.library.contained[0], null, 4); // really should lookup by ID
             }
           }
-          const ts = getPreferredTerminologyServerFromSDC(this.library);
-          if (ts) {
-            this.terminologyServer = ts;
-          }
+          // const ts = getPreferredTerminologyServerFromSDC(this.library);
+          // if (ts) {
+          //   this.terminologyServer = ts;
+          // }
         }
       } catch (err) {
         this.loadingData = false;
