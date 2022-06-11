@@ -117,6 +117,7 @@ import {
 } from "~/helpers/favourites";
 import { ConformanceResourceTableData } from "~/models/ConformanceResourceTableData";
 import { EasyTableDefinition_defaultValues } from "~/models/EasyTableDefinition";
+import { ConformanceSearchData } from "models/ConformanceSearchData";
 
 export default Vue.extend({
   head: {
@@ -124,6 +125,12 @@ export default Vue.extend({
   },
   mounted() {
     this.showAdvancedSettings = settings.showAdvancedSettings();
+    const searchData = settings.getSearchData("SearchParameter");
+    if (searchData) {
+      this.searchForPublisher = searchData.publisher;
+      this.searchForStatus = searchData.status;
+      this.searchFor = searchData.name;
+    }
     this.searchFhirServer();
   },
   methods: {
@@ -198,7 +205,17 @@ export default Vue.extend({
       if (this.searchForPublisher) {
         url += `&publisher=${encodeURIComponent(this.searchForPublisher)}`;
       }
+      this.saveSearchData();
       await this.searchPage(url);
+    },
+
+    saveSearchData() {
+      let searchData: ConformanceSearchData = {
+        publisher: this.searchForPublisher,
+        status: this.searchForStatus,
+        name: this.searchFor,
+      };
+      settings.saveSearchData("SearchParameter", searchData);
     },
   },
   data(): SearchParameterTableDefinition {

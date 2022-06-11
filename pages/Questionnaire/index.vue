@@ -148,6 +148,7 @@ import { isFavourite } from "~/helpers/favourites";
 import { ConformanceResourceTableData } from "~/models/ConformanceResourceTableData";
 import { settings } from "~/helpers/user_settings";
 import { EasyTableDefinition_defaultValues } from "~/models/EasyTableDefinition";
+import { ConformanceSearchData } from "models/ConformanceSearchData";
 
 export default Vue.extend({
   head: {
@@ -155,6 +156,13 @@ export default Vue.extend({
   },
   mounted() {
     this.showAdvancedSettings = settings.showAdvancedSettings();
+    const searchData = settings.getSearchData("Questionnaire");
+    if (searchData) {
+      this.searchForPublisher = searchData.publisher;
+      this.searchForStatus = searchData.status;
+      this.searchFor = searchData.name;
+      this.searchForUseContext = searchData.useContext;
+    }
     this.searchFhirServer();
     this.checkCustomUseContexts();
   },
@@ -242,7 +250,18 @@ export default Vue.extend({
           .join();
         if (contexts) url += `&context=${contexts}`;
       }
+      this.saveSearchData();
       await this.searchPage(url);
+    },
+
+    saveSearchData() {
+      let searchData: ConformanceSearchData = {
+        publisher: this.searchForPublisher,
+        status: this.searchForStatus,
+        name: this.searchFor,
+        useContext: this.searchForUseContext,
+      };
+      settings.saveSearchData("Questionnaire", searchData);
     },
 
     includeCustomUseContexts(contexts?: UsageContext[]): boolean {

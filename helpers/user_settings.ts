@@ -1,3 +1,5 @@
+
+import {ConformanceSearchData} from "models/ConformanceSearchData";
 export declare interface UserSettingsData {
     fhirServerUrl?: string;
     fhirTerminologyServerUrl?: string;
@@ -10,6 +12,23 @@ export declare interface UserSettingsData {
 }
 
 export namespace settings {
+
+    export function getSearchData(type: string): ConformanceSearchData | undefined {
+        const sdJson = localStorage.getItem(`search_${type}`);
+        if (sdJson){
+            return JSON.parse(sdJson);
+        }
+        return undefined;
+    }
+
+    export function saveSearchData(type: string, data: ConformanceSearchData){
+        if (data){
+            localStorage.setItem(`search_${type}`, JSON.stringify(data));
+        }
+        else {
+            localStorage.removeItem(`search_${type}`);
+        }
+    }
 
     export function getFhirServerUrl(): string {
         try {
