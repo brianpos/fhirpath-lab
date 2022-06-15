@@ -292,7 +292,6 @@ import { getExtensionStringValue } from "fhir-extension-helpers";
 // import { getPreferredTerminologyServerFromSDC } from "fhir-sdc-helpers";
 import fhirpath from "fhirpath";
 import fhirpath_r4_model from "fhirpath/fhir-context/r4";
-// import { engine } from "fhirpath/src/misc.js";
 
 interface FhirPathData {
   raw?: fhir4.Parameters;
@@ -369,21 +368,21 @@ export default Vue.extend({
       await this.downloadLibrary(this.$route.query.libaryId as string);
     }
     else {
-    if (this.$route.query.expression) {
-      if (this.$route.query.exampletype) {
-        this.resourceId = `https://sqlonfhir-r4.azurewebsites.net/fhir/${this.$route.query.exampletype}/example`;
+      if (this.$route.query.expression) {
+        if (this.$route.query.exampletype) {
+          this.resourceId = `https://sqlonfhir-r4.azurewebsites.net/fhir/${this.$route.query.exampletype}/example`;
+        }
+        if (this.$route.query.context) {
+          this.contextExpression = this.$route.query.context as string ?? '';
+        }
+        else {
+          this.contextExpression = '';
+        }
+        if (this.$route.query.terminologyServer) {
+          this.terminologyServer = this.$route.query.terminologyServer as string ?? '';
+        }
+        this.fhirpathExpression = this.$route.query.expression as string ?? '';
       }
-      if (this.$route.query.context) {
-        this.contextExpression = this.$route.query.context as string ?? '';
-      }
-      else {
-        this.contextExpression = '';
-      }
-      if (this.$route.query.terminologyServer) {
-        this.terminologyServer = this.$route.query.terminologyServer as string ?? '';
-      }
-      this.fhirpathExpression = this.$route.query.expression as string ?? '';
-    }
     }
     await this.evaluateFhirPathExpression();
   },
@@ -456,20 +455,20 @@ export default Vue.extend({
 
               // Anything else is a result
               // scan over the parts (values)
-                  let resultItem: ResultData = { context: entry.valueString, result: [], trace: [] };
-                  if (entry.part) {
-                    for (var part of entry.part) {
+              let resultItem: ResultData = { context: entry.valueString, result: [], trace: [] };
+              if (entry.part) {
+                for (var part of entry.part) {
                   if (part.name === 'trace') {
                     resultItem.trace.push(...getTraceValue(part));
                   }
                   else {
-                      resultItem.result.push(...getValue(part));
-                    }
+                    resultItem.result.push(...getValue(part));
                   }
-              }
-                  this.results.push(resultItem);
                 }
-                    }
+              }
+              this.results.push(resultItem);
+            }
+          }
         }
       } catch (err) {
         this.loadingData = false;
@@ -626,23 +625,73 @@ export default Vue.extend({
 
       if (this.contextExpression) {
         // scan over each of the expressions
-        contextNodes = fhirpath.evaluate(fhirData, this.contextExpression, environment, fhirpath_r4_model);
+        try {
+          contextNodes = fhirpath.evaluate(fhirData, this.contextExpression, environment, fhirpath_r4_model);
+        }
+        catch (err: any) {
+          console.log(err);
+          if (err.message) {
+            this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
+            this.saveOutcome?.issue.push({ code: 'exception', severity: 'fatal', details: { text: err.message } });
+            this.showOutcome = true;
+          }
+        }
       }
       else {
-        contextNodes = fhirpath.evaluate(fhirData, "%resource", environment, fhirpath_r4_model);
+        try {
+          contextNodes = fhirpath.evaluate(fhirData, "%resource", environment, fhirpath_r4_model);
+        }
+        catch (err: any) {
+          console.log(err);
+          if (err.message) {
+            this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
+            this.saveOutcome?.issue.push({ code: 'exception', severity: 'fatal', details: { text: err.message } });
+            this.showOutcome = true;
+          }
+        }
       }
-        for (let contextNode of contextNodes) {
+      for (let contextNode of contextNodes) {
         let resData: ResultData;
         if (this.contextExpression)
           resData = { context: `${this.contextExpression}[${contextNodes.indexOf(contextNode)}]`, result: [], trace: [] };
         else
           resData = { result: [], trace: [] };
 
-        let res: any[] = fhirpath.evaluate(contextNode, this.fhirpathExpression ?? '', environment, fhirpath_r4_model);
-        this.results.push(resData);
+        let tf = function (x: any, label: string): void {
+          if (Array.isArray(x)) {
+            for (var item of x) {
+              if (typeof item.getTypeInfo === "function") {
+                let ti = item.getTypeInfo();
+                console.log(ti);
+                resData.trace.push({ name: label ?? "", type: ti.name, value: JSON.stringify(item.data, null, 4) });
+              }
+              else {
+                resData.trace.push({ name: label ?? "", value: JSON.stringify(item, null, 4) });
+              }
+            }
+          }
+          else {
+            resData.trace.push({ name: label ?? "", value: JSON.stringify(x, null, 4) });
+          }
+          console.log("TRACE3:[" + (label || "") + "]", x);
+          return x;
+        };
 
-        for (var item of res) {
-          resData.result.push({ type: Object.prototype.toString.call(item ?? '').substring(8).replace(']', ''), value: item });
+        try {
+          let res: any[] = fhirpath.evaluate(contextNode, this.fhirpathExpression ?? '', environment, fhirpath_r4_model, tf);
+          this.results.push(resData);
+
+          for (var item of res) {
+            resData.result.push({ type: Object.prototype.toString.call(item ?? '').substring(8).replace(']', ''), value: item });
+          }
+        }
+        catch (err: any) {
+          console.log(err);
+          if (err.message) {
+            this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
+            this.saveOutcome?.issue.push({ code: 'exception', severity: 'fatal', details: { text: err.message } });
+            this.showOutcome = true;
+          }
         }
       }
       console.log(this.results);
