@@ -526,6 +526,13 @@ export default Vue.extend({
               this.resourceJson = JSON.stringify(this.library.contained[0], null, 4); // really should lookup by ID
             }
           }
+          else {
+            // no test resource found, check for the subject (which is the resource type)
+            const codes = this.library.subjectCodeableConcept?.coding;
+            if (codes && codes.length > 0) {
+              this.resourceId = `${codes[0].code}/example`;
+            }
+          }
           // const ts = getPreferredTerminologyServerFromSDC(this.library);
           // if (ts) {
           //   this.terminologyServer = ts;
