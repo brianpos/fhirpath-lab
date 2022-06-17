@@ -139,12 +139,14 @@
               </v-card>
             </v-tab-item>
 
-            <v-tab-item>
+                <v-tab-item :eager="true">
               <!-- Debug -->
               <v-card flat>
                 <v-card-text>
                   <p class="fl-tab-header">Debug</p>
-                  <v-textarea v-model="resultJson" rows="20" />
+                      <AceEditor ref="aceEditor" :readOnly="true" :fontSize="14" :showPrintMargin="false"
+                        :showGutter="true" :highlightActiveLine="true" mode="json" theme="chrome" name="editor"
+                        :value="resultJson" :editorProps="{ $blockScrolling: true }" width="" />
                 </v-card-text>
               </v-card>
             </v-tab-item>
@@ -287,6 +289,12 @@ import { getExtensionStringValue } from "fhir-extension-helpers";
 // import { getPreferredTerminologyServerFromSDC } from "fhir-sdc-helpers";
 import fhirpath from "fhirpath";
 import fhirpath_r4_model from "fhirpath/fhir-context/r4";
+import brace from 'brace';
+import { Ace as AceEditor, Split as SplitEditor } from 'vue2-brace-editor';
+
+import 'brace/mode/json';
+import 'brace/theme/chrome';
+import { runInThisContext } from "vm";
 
 const shareTooltipText = 'Copy a sharable link to this test expression';
 
@@ -354,6 +362,9 @@ function getTraceValue(entry: fhir4.ParametersParameter): TraceData[] {
 }
 
 export default Vue.extend({
+  components: {
+    AceEditor,
+  },
   head: {
     title: "FhirPathTester",
   },
