@@ -18,7 +18,8 @@
           </v-btn>
           <v-tooltip bottom color="primary">
             <template v-slot:activator="{ on, attrs }">
-              <v-btn icon dark @click="copyShareLinkToClipboard" v-bind="attrs" v-on="on" @mouseenter="updateShareText">
+              <v-btn icon dark @click="copyShareLinkToClipboard" v-bind="attrs" v-on="on" @mouseenter="updateShareText"
+                :hidden="!showShareLink()">
                 <v-icon>
                   mdi-share-variant-outline
                 </v-icon>
@@ -711,9 +712,25 @@ export default Vue.extend({
       console.log(this.results);
     },
 
+    showShareLink() {
+      if (navigator?.clipboard) {
+        return true;
+      }
+      return false;
+
+      // The copy link is hidden when the protocol is not secure (https) as 
+      // that's a browser security issue for accessing the clipboard
+      // if (window?.location?.protocol === "https://") {
+      //   return true;
+      // }
+      // if (window?.location?.hostname === "localhost") {
+      //   return true;
+      // }
+      // return false;
+    },
     updateShareText() {
       this.shareToolTipMessage = shareTooltipText;
-      if (this.resourceJson){
+      if (this.resourceJson) {
         this.shareToolTipMessage += '\r\n(without example resource JSON)';
       }
     },
@@ -736,8 +753,11 @@ export default Vue.extend({
       if (this.terminologyServer) {
         shareUrl += `&terminologyserver=${encodeURIComponent(this.terminologyServer)}`;
       }
+
+      if (navigator.clipboard) {
       navigator.clipboard.writeText(shareUrl);
       this.shareToolTipMessage = "Copied";
+      }
     },
     
     // https://www.sitepoint.com/fetching-data-third-party-api-vue-axios/
