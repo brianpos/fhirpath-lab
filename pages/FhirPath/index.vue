@@ -9,13 +9,23 @@
         <v-toolbar flat color="primary">
           <v-toolbar-title>{{ tabTitle() }}</v-toolbar-title>
           <v-spacer />
-          <v-select class="engineselector" :items="executionEngines" v-model="selectedEngine" hide-details="auto"
+          <v-select dark class="engineselector" :items="executionEngines" v-model="selectedEngine" hide-details="auto"
             @change="evaluateFhirPathExpression" />
-          <v-btn icon accesskey="g" title="press alt+g to go" @click="evaluateFhirPathExpression">
+          <v-btn icon dark accesskey="g" title="press alt+g to go" @click="evaluateFhirPathExpression">
             <v-icon>
               mdi-play
             </v-icon>
           </v-btn>
+          <v-tooltip bottom color="primary">
+            <template v-slot:activator="{ on, attrs }">
+              <v-btn icon dark @click="copyShareLinkToClipboard" v-bind="attrs" v-on="on" @mouseenter="updateShareText">
+                <v-icon>
+                  mdi-share-variant-outline
+                </v-icon>
+              </v-btn>
+            </template>
+            <span v-text="shareToolTipMessage"></span>
+          </v-tooltip>
         </v-toolbar>
         <v-row dense>
           <v-col>
@@ -277,6 +287,8 @@ import { getExtensionStringValue } from "fhir-extension-helpers";
 import fhirpath from "fhirpath";
 import fhirpath_r4_model from "fhirpath/fhir-context/r4";
 
+const shareTooltipText = 'Copy a sharable link to this test expression';
+
 interface FhirPathData {
   raw?: fhir4.Parameters;
   library?: fhir4.Library;
@@ -295,6 +307,7 @@ interface FhirPathData {
   results: ResultData[];
   selectedEngine: string;
   executionEngines: string[];
+  shareToolTipMessage: string;
 }
 
 interface ResultItem {
@@ -355,6 +368,11 @@ export default Vue.extend({
       if (this.$route.query.expression) {
         if (this.$route.query.exampletype) {
           this.resourceId = `https://sqlonfhir-r4.azurewebsites.net/fhir/${this.$route.query.exampletype}/example`;
+        }
+        else {
+          if (this.$route.query.resource) {
+            this.resourceId = this.$route.query.resource as string;
+          }
         }
         if (this.$route.query.context) {
           this.contextExpression = this.$route.query.context as string ?? '';
@@ -671,7 +689,7 @@ export default Vue.extend({
 
         try {
           let useExpression = this.fhirpathExpression ?? '';
-          if (resData.context){
+          if (resData.context) {
             useExpression = `${resData.context}.select(${this.fhirpathExpression})`;
           }
           let res: any[] = fhirpath.evaluate(fhirData, useExpression, environment, fhirpath_r4_model, tracefunction);
@@ -693,6 +711,35 @@ export default Vue.extend({
       console.log(this.results);
     },
 
+    updateShareText() {
+      this.shareToolTipMessage = shareTooltipText;
+      if (this.resourceJson){
+        this.shareToolTipMessage += '\r\n(without example resource JSON)';
+      }
+    },
+
+    copyShareLinkToClipboard() {
+      const url = new URL(window.location.href);
+      // console.log(url);
+      let shareUrl = `${url.origin}/FhirPath?expression=${encodeURIComponent(this.fhirpathExpression ?? '')}`;
+      if (this.contextExpression) {
+        shareUrl += `&context=${encodeURIComponent(this.contextExpression ?? '')}`;
+      }
+      if (this.resourceId) {
+        if (this.resourceId.startsWith('http')) {
+          shareUrl += `&resource=${encodeURIComponent(this.resourceId)}`;
+        }
+        else {
+          shareUrl += `&resource=${encodeURIComponent(settings.getFhirServerUrl() + '/' + this.resourceId)}`;
+        }
+      }
+      if (this.terminologyServer) {
+        shareUrl += `&terminologyserver=${encodeURIComponent(this.terminologyServer)}`;
+      }
+      navigator.clipboard.writeText(shareUrl);
+      this.shareToolTipMessage = "Copied";
+    },
+    
     // https://www.sitepoint.com/fetching-data-third-party-api-vue-axios/
     async evaluateFhirPathExpression() {
       if (this.selectedEngine == "fhirpath.js") {
@@ -736,8 +783,8 @@ export default Vue.extend({
       executionEngines: [
         ".NET (firely)",
         "fhirpath.js",
-        // "java"
-      ]
+      ],
+      shareToolTipMessage: shareTooltipText
     };
   },
 });
