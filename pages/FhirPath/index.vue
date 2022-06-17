@@ -1,22 +1,6 @@
 <template>
   <div>
     <HeaderNavbar @close-settings="settingsClosed" :extended="false">
-      <template v-slot:extension>
-        <!-- <search-navigator
-          label="Library"
-          :count="totalCount"
-          :enableFirst="!!firstPageLink"
-          :enablePrevious="!!previousPageLink"
-          :enableNext="!!nextPageLink"
-          :enableLast="!!lastPageLink"
-          :first="firstPage"
-          :previous="previousPage"
-          :next="nextPage"
-          :last="lastPage"
-          :add="addNew"
-          :showAdd="true"
-        /> -->
-      </template>
     </HeaderNavbar>
     <table-loading v-if="loadingData" />
 
@@ -659,12 +643,13 @@ export default Vue.extend({
       }
       for (let contextNode of contextNodes) {
         let resData: ResultData;
+        const index = contextNodes.indexOf(contextNode);
         if (this.contextExpression)
-          resData = { context: `${this.contextExpression}[${contextNodes.indexOf(contextNode)}]`, result: [], trace: [] };
+          resData = { context: `${this.contextExpression}[${index}]`, result: [], trace: [] };
         else
           resData = { result: [], trace: [] };
 
-        let tf = function (x: any, label: string): void {
+        let tracefunction = function (x: any, label: string): void {
           if (Array.isArray(x)) {
             for (var item of x) {
               if (typeof item.getTypeInfo === "function") {
@@ -685,7 +670,11 @@ export default Vue.extend({
         };
 
         try {
-          let res: any[] = fhirpath.evaluate(contextNode, this.fhirpathExpression ?? '', environment, fhirpath_r4_model, tf);
+          let useExpression = this.fhirpathExpression ?? '';
+          if (resData.context){
+            useExpression = `${resData.context}.select(${this.fhirpathExpression})`;
+          }
+          let res: any[] = fhirpath.evaluate(fhirData, useExpression, environment, fhirpath_r4_model, tracefunction);
           this.results.push(resData);
 
           for (var item of res) {
@@ -736,7 +725,7 @@ export default Vue.extend({
       resourceId: 'Patient/example',
       resourceJson: undefined,
       contextExpression: 'name',
-      fhirpathExpression: "trace('nerd').given",
+      fhirpathExpression: "trace('trc').given",
       loadingData: true,
       resultJson: undefined,
       showOutcome: false,
