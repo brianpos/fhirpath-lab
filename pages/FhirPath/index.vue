@@ -30,129 +30,129 @@
         </v-toolbar>
         <v-row dense>
           <v-col>
-        <v-tabs vertical v-model="tab">
-          <v-tab>
-            <v-icon left> mdi-function-variant </v-icon>
-            Expression
-          </v-tab>
+            <v-tabs vertical v-model="tab">
+              <v-tab>
+                <v-icon left> mdi-function-variant </v-icon>
+                Expression
+              </v-tab>
               <v-tab class="left-resource">
-            <v-icon left> mdi-clipboard-text-outline </v-icon>
-            Resource
-          </v-tab>
-          <v-tab :disabled="!hasTraceData()">
-            <v-icon left> mdi-format-list-bulleted </v-icon>
-            Trace
-          </v-tab>
-          <v-tab v-show="showAdvancedSettings">
-            <v-icon left> mdi-bug-outline </v-icon>
-            Debug
-          </v-tab>
+                <v-icon left> mdi-clipboard-text-outline </v-icon>
+                Resource
+              </v-tab>
+              <v-tab :disabled="!hasTraceData()">
+                <v-icon left> mdi-format-list-bulleted </v-icon>
+                Trace
+              </v-tab>
+              <v-tab v-show="showAdvancedSettings">
+                <v-icon left> mdi-bug-outline </v-icon>
+                Debug
+              </v-tab>
 
-          <v-tabs-items touchless v-model="tab">
-            <v-tab-item>
-              <!-- Expression -->
-              <v-card flat>
-                <v-card-text>
-                  <p class="fl-tab-header">Expression</p>
-                  <v-textarea label="Context Expression (optional)" v-model="contextExpression" hide-details="auto"
-                    rows="1" auto-grow />
-                  <v-textarea label="Fhirpath Expression" v-model="fhirpathExpression" hide-details="auto" rows="3"
-                    auto-grow />
-                  <div class="results">RESULTS</div>
-                  <template v-for="(r2, i1) in results">
-                    <v-simple-table :key="i1">
-                      <tr v-if="r2.context">
-                        <td class="context" colspan="2">
-                          <div>Context: <b>{{ r2.context }}</b></div>
-                        </td>
-                      </tr>
-                      <template v-for="(v1, index) in r2.result">
-                        <tr :key="index">
-                          <td class="result-value">
-                            <div class="code-json">{{ v1.value }}</div>
-                          </td>
-                          <td class="result-type"><i v-if="v1.type">({{ v1.type }})</i></td>
-                        </tr>
+              <v-tabs-items touchless v-model="tab">
+                <v-tab-item>
+                  <!-- Expression -->
+                  <v-card flat>
+                    <v-card-text>
+                      <p class="fl-tab-header">Expression</p>
+                      <v-textarea label="Context Expression (optional)" v-model="contextExpression" hide-details="auto"
+                        rows="1" auto-grow />
+                      <v-textarea label="Fhirpath Expression" v-model="fhirpathExpression" hide-details="auto" rows="3"
+                        auto-grow />
+                      <div class="results">RESULTS</div>
+                      <template v-for="(r2, i1) in results">
+                        <v-simple-table :key="i1">
+                          <tr v-if="r2.context">
+                            <td class="context" colspan="2">
+                              <div>Context: <b>{{ r2.context }}</b></div>
+                            </td>
+                          </tr>
+                          <template v-for="(v1, index) in r2.result">
+                            <tr :key="index">
+                              <td class="result-value">
+                                <div class="code-json">{{ v1.value }}</div>
+                              </td>
+                              <td class="result-type"><i v-if="v1.type">({{ v1.type }})</i></td>
+                            </tr>
+                          </template>
+                        </v-simple-table>
                       </template>
-                    </v-simple-table>
-                  </template>
-                </v-card-text>
-              </v-card>
-            </v-tab-item>
+                    </v-card-text>
+                  </v-card>
+                </v-tab-item>
 
-            <v-tab-item>
-              <!-- Resource -->
-              <v-card flat>
-                <v-card-text>
-                  <p class="fl-tab-header">Resource</p>
-                  <v-text-field label="Test Resource Id" v-model="resourceId" hide-details="auto">
-                    <template v-slot:append>
-                      <v-btn icon small tile @click="resourceId = undefined">
-                        <v-icon> mdi-close </v-icon>
-                      </v-btn>
-                      <v-btn icon small tile @click="downloadTestResource">
-                        <v-icon> mdi-download </v-icon>
-                      </v-btn>
-                    </template>
-                  </v-text-field>
-                  <v-textarea v-model="resourceJson" rows="16"
+                <v-tab-item>
+                  <!-- Resource -->
+                  <v-card flat>
+                    <v-card-text>
+                      <p class="fl-tab-header">Resource</p>
+                      <v-text-field label="Test Resource Id" v-model="resourceId" hide-details="auto">
+                        <template v-slot:append>
+                          <v-btn icon small tile @click="resourceId = undefined">
+                            <v-icon> mdi-close </v-icon>
+                          </v-btn>
+                          <v-btn icon small tile @click="downloadTestResource">
+                            <v-icon> mdi-download </v-icon>
+                          </v-btn>
+                        </template>
+                      </v-text-field>
+                      <v-textarea v-model="resourceJson" rows="16"
                         label="Test Resource JSON (optional, if Resource ID provided)" persistent-placeholder
                         placeholder='{
     "resourceType": "Patient",
     "id": "example",
     ...'>
-                    <template v-slot:append>
-                      <v-btn icon small tile @click="resourceJson = undefined">
-                        <v-icon> mdi-close </v-icon>
-                      </v-btn>
-                    </template>
-                  </v-textarea>
-                  <v-text-field label="Terminology Server" v-model="terminologyServer" hide-details="auto" />
-                </v-card-text>
-              </v-card>
-            </v-tab-item>
+                        <template v-slot:append>
+                          <v-btn icon small tile @click="resourceJson = undefined">
+                            <v-icon> mdi-close </v-icon>
+                          </v-btn>
+                        </template>
+                      </v-textarea>
+                      <v-text-field label="Terminology Server" v-model="terminologyServer" hide-details="auto" />
+                    </v-card-text>
+                  </v-card>
+                </v-tab-item>
 
-            <v-tab-item>
-              <!-- Trace -->
-              <v-card flat>
-                <v-card-text>
-                  <p class="fl-tab-header">Trace</p>
-                  <template v-for="(r2, i1) in results">
-                    <v-simple-table :key="i1">
-                      <tr v-if="r2.context">
-                        <td class="context" colspan="3">
-                          <div>Context: <b>{{ r2.context }}</b></div>
-                        </td>
-                      </tr>
-                      <template v-for="(v1, index) in r2.trace">
-                        <tr :key="index">
-                          <td class="result-type"><b>{{ v1.name }}</b></td>
-                          <td class="result-value">
-                            <div class="code-json">{{ v1.value }}</div>
-                          </td>
-                          <td class="result-type"><i v-if="v1.type">({{ v1.type }})</i></td>
-                        </tr>
+                <v-tab-item>
+                  <!-- Trace -->
+                  <v-card flat>
+                    <v-card-text>
+                      <p class="fl-tab-header">Trace</p>
+                      <template v-for="(r2, i1) in results">
+                        <v-simple-table :key="i1">
+                          <tr v-if="r2.context">
+                            <td class="context" colspan="3">
+                              <div>Context: <b>{{ r2.context }}</b></div>
+                            </td>
+                          </tr>
+                          <template v-for="(v1, index) in r2.trace">
+                            <tr :key="index">
+                              <td class="result-type"><b>{{ v1.name }}</b></td>
+                              <td class="result-value">
+                                <div class="code-json">{{ v1.value }}</div>
+                              </td>
+                              <td class="result-type"><i v-if="v1.type">({{ v1.type }})</i></td>
+                            </tr>
+                          </template>
+                        </v-simple-table>
                       </template>
-                    </v-simple-table>
-                  </template>
-                </v-card-text>
-              </v-card>
-            </v-tab-item>
+                    </v-card-text>
+                  </v-card>
+                </v-tab-item>
 
                 <v-tab-item :eager="true">
-              <!-- Debug -->
-              <v-card flat>
-                <v-card-text>
-                  <p class="fl-tab-header">Debug</p>
+                  <!-- Debug -->
+                  <v-card flat>
+                    <v-card-text>
+                      <p class="fl-tab-header">Debug</p>
                       <AceEditor ref="aceEditor" :readOnly="true" :fontSize="14" :showPrintMargin="false"
                         :showGutter="true" :highlightActiveLine="true" mode="json" theme="chrome" name="editor"
                         :value="resultJson" :editorProps="{ $blockScrolling: true }" width="" />
-                </v-card-text>
-              </v-card>
-            </v-tab-item>
+                    </v-card-text>
+                  </v-card>
+                </v-tab-item>
 
-          </v-tabs-items>
-        </v-tabs>
+              </v-tabs-items>
+            </v-tabs>
           </v-col>
           <v-col class="right-resource">
             <v-card flat>
@@ -422,35 +422,21 @@ export default Vue.extend({
       this.showOutcome = undefined;
     },
 
-    async executeRequest<T>(url: string) {
+    async executeRequest<T>(url: string, p: fhir4.Parameters) {
       try {
         if (this.cancelSource) this.cancelSource.cancel("new search started");
         this.cancelSource = axios.CancelToken.source();
         this.loadingData = true;
         let token = this.cancelSource.token;
         let response: AxiosResponse<fhir4.Parameters, any>;
-        if (this.resourceJson) {
-          // Need to post this content instead
-          let p: fhir4.Parameters = { resourceType: "Parameters", parameter: [] };
-          p.parameter?.push({
-            name: "resource",
-            resource: JSON.parse(this.resourceJson)
-          });
-          response = await axios.post<fhir4.Parameters>(url, p,
-            {
-              cancelToken: token,
-              headers: {
-                "Accept": requestFhirAcceptHeaders,
-                "ContentType": requestFhirContentTypeHeaders
-              }
-            });
-        }
-        else {
-          response = await axios.get<fhir4.Parameters>(url, {
+        response = await axios.post<fhir4.Parameters>(url, p,
+          {
             cancelToken: token,
-            headers: { "Accept": requestFhirAcceptHeaders }
+            headers: {
+              "Accept": requestFhirAcceptHeaders,
+              "ContentType": requestFhirContentTypeHeaders
+            }
           });
-        }
         if (token.reason) {
           console.log(token.reason);
           return;
@@ -766,11 +752,11 @@ export default Vue.extend({
       }
 
       if (navigator.clipboard) {
-      navigator.clipboard.writeText(shareUrl);
-      this.shareToolTipMessage = "Copied";
+        navigator.clipboard.writeText(shareUrl);
+        this.shareToolTipMessage = "Copied";
       }
     },
-    
+
     // https://www.sitepoint.com/fetching-data-third-party-api-vue-axios/
     async evaluateFhirPathExpression() {
       if (this.selectedEngine == "fhirpath.js") {
@@ -778,21 +764,45 @@ export default Vue.extend({
         return;
       }
 
-      // Run the firely/brianpos 
-      let url = `https://qforms-server.azurewebsites.net/$fhirpath?expression=${encodeURIComponent(this.fhirpathExpression ?? 'today()')}`;
-      if (this.resourceId && !this.resourceJson) {
-        if (!this.resourceId.startsWith('http'))
-          url += `&resource=${encodeURIComponent(settings.getFhirServerUrl() + '/' + this.resourceId)}`;
-        else
-          url += `&resource=${encodeURIComponent(this.resourceId)}`;
-      }
+      // brianpos hosted service
+      // default the firely SDK/brianpos service
+      let url = `https://qforms-server.azurewebsites.net/$fhirpath`;
+
+      let p: fhir4.Parameters = { resourceType: "Parameters", parameter: [{ name: "expression", valueString: this.fhirpathExpression ?? 'today()' }] };
+
       if (this.contextExpression) {
-        url += `&context=${encodeURIComponent(this.contextExpression)}`;
+        p.parameter?.push({ name: "context", valueString: this.contextExpression });
       }
+
+      if (this.selectedEngine == "java (HAPI)") {
+        // https://github.com/jkiddo/fhirpath-tester/blob/main/src/main/java/org/example/Evaluator.java (brianpos fork of this)
+        // https://docs.microsoft.com/en-us/azure/devops/pipelines/ecosystems/java-function?view=azure-devops
+        url = `https://fhirpath-lab-java.azurewebsites.net/fhir/$fhirpath?expression=${encodeURIComponent(this.fhirpathExpression ?? 'today()')}`;
+
+        if (!this.resourceJson && this.resourceId) {
+          await this.downloadTestResource();
+        }
+        if (!this.resourceJson) {
+          return;
+        }
+      }
+
+      if (this.resourceJson) {
+        p.parameter?.push({ name: "resource", resource: JSON.parse(this.resourceJson) });
+      }
+      else {
+        if (!this.resourceId?.startsWith('http')) {
+          p.parameter?.push({ name: "resource", valueString: settings.getFhirServerUrl() + '/' + this.resourceId });
+        }
+        else {
+          p.parameter?.push({ name: "resource", valueString: this.resourceId });
+        }
+      }
+
       if (this.terminologyServer) {
-        url += `&terminologyserver=${encodeURIComponent(this.terminologyServer)}`;
+        p.parameter?.push({ name: "terminologyserver", valueString: this.terminologyServer });
       }
-      await this.executeRequest(url);
+      await this.executeRequest(url, p);
     },
   },
   data(): FhirPathData {
@@ -814,6 +824,7 @@ export default Vue.extend({
       executionEngines: [
         ".NET (firely)",
         "fhirpath.js",
+        "java (HAPI)"
       ],
       shareToolTipMessage: shareTooltipText
     };
