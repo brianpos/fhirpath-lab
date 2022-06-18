@@ -7,9 +7,8 @@
       <p class="leader">
         FHIRPath is heavily used in FHIR to define validations in <a href="StructureDefinition">profiles</a>, properties
         to index in <a href="SearchParameter">search definitions</a> and various features inside
-        <a href="Questionnaire">questionnaires</a>. The fhirpath lab is an open source tool to simplify testing fhirpath
-        expressions (R4) against
-        the various open source fhirpath engines available (currently .net and javascript).
+        questionnaires. The fhirpath lab is an open source tool to simplify testing fhirpath
+        expressions (R4) against the various open source fhirpath engines available (currently .net, javascript and java).
       </p>
       <br />
       <div class="home-grid">
@@ -38,7 +37,7 @@
         (defaulting test resource ID "example")
       </p>
       <p>
-        <b>Note:</b> As the .net and JAVA fhirpath engines don't run in the browser this data is sent to a cloud
+        <b>Note:</b> As the .net and java fhirpath engines don't run in the browser this data is sent to a cloud
         service to process these requests. None of this data is persisted outside the call itself.
         Using individually identifiable data with this test utility is prohibited.<br/>
         These are the versions of each of the fhirpath engines in use:

@@ -48,9 +48,6 @@
             <v-list-item href="/SearchParameter">
               <v-list-item-title>Search Parameters</v-list-item-title>
             </v-list-item>
-            <v-list-item href="/Questionnaire">
-              <v-list-item-title>Form Definitions</v-list-item-title>
-            </v-list-item>
           </v-list-item-group>
         </v-list>
       </v-menu>
