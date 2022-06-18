@@ -40,12 +40,20 @@
       <p>
         <b>Note:</b> As the .net and JAVA fhirpath engines don't run in the browser this data is sent to a cloud
         service to process these requests. None of this data is persisted outside the call itself.
-        Using individually identifiable data with this test utility is prohibited.
+        Using individually identifiable data with this test utility is prohibited.<br/>
+        These are the versions of each of the fhirpath engines in use:
       </p>
+      <ul style="padding-left: 40px">
+        <li>Firely SDK FHIRPath Engine v3.8.3 <i>(server side)</i></li>
+        <li>FHIRPath.js v2.14.4 <i>(plus string Join/Split/encode/decode)</i></li>
+        <li>HAPI FHIRPath v6.0.1 <i>(server side)</i></li>
+      </ul>
       <br />
       <h5>Disclaimers:</h5>
       <p>
-        Written by Brian Postlethwaite to support the FHIR community and is provided AS-IS
+        Written by Brian Postlethwaite to support the FHIR community and is provided AS-IS<br />
+        HL7®, FHIR® and the FHIR Mark® are trademarks owned by Health Level Seven International, registered with the
+        United States Patent and Trademark Office.
       </p>
       <hr />
       <div class="extra-links">
@@ -112,10 +120,6 @@ p {
 
 .grid-span-2 {
   grid-column: span 2;
-}
-
-.link-item {
-  justify-self: right;
 }
 
 .logo {
