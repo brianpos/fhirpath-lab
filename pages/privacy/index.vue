@@ -35,11 +35,11 @@
       </p>
       <h5>3rd Party Tools and Technologies:</h5>
       <div class="home-grid">
-        <a class="link-item" target="_blank" href="https://nuxtjs.org/">
-          <div style="font-weight: 600">VueJS/Nuxt</div>
+        <a class="link-item" target="_blank" href="https://github.com/FirelyTeam/firely-net-sdk">
+          <div style="font-weight: 600">Firely SDK</div>
         </a>
         <div class="link-plain-text">
-          VueJS/Nuxt UI Framework. MIT License
+          .NET based fhirpath engine. Licensed under a BSD 3 Clause license.
         </div>
 
         <a class="link-item" target="_blank" href="https://github.com/HL7/fhirpath.js">
@@ -58,32 +58,27 @@
           JAVA based fhirpath engine. Licensed under a BSD 3 Clause license.
         </div>
 
-        <a class="link-item" target="_blank" href="https://github.com/FirelyTeam/firely-net-sdk">
-          <div style="font-weight: 600">Firely SDK</div>
+        <a class="link-item" target="_blank" href="https://nuxtjs.org/">
+          <div style="font-weight: 600">VueJS/Nuxt</div>
         </a>
         <div class="link-plain-text">
-          .NET based fhirpath engine. Licensed under a BSD 3 Clause license.
+          VueJS/Nuxt UI Framework. MIT License
         </div>
 
-        <a class="link-item" target="_blank" href="https://github.com/FirelyTeam/firely-net-sdk">
-          <div style="font-weight: 600">jsoneditor</div>
+        <a class="link-item" target="_blank" href="https://github.com/Happy-Coding-Clans/vue-easytable/blob/master/README.md">
+          <div style="font-weight: 600">vue-easytable</div>
         </a>
         <div class="link-plain-text">
-          . Licensed under a ... license.
+          A powerful data/grid control used for displahying search results.
+          Licensed under the MIT license.
         </div>
 
-        <a class="link-item" target="_blank" href="https://github.com/FirelyTeam/firely-net-sdk">
-          <div style="font-weight: 600">jsoneditor</div>
+        <a class="link-item" target="_blank" href="vue2-brace-editor">
+          <div style="font-weight: 600">ace / brace</div>
         </a>
         <div class="link-plain-text">
-          . Licensed under a ... license.
-        </div>
-
-        <a class="link-item" target="_blank" href="https://github.com/FirelyTeam/firely-net-sdk">
-          <div style="font-weight: 600">jsoneditor</div>
-        </a>
-        <div class="link-plain-text">
-          . Licensed under a ... license.
+          A web based JSON code editor for displaying the debug output, and edit the Resource
+           JSON content.
         </div>
       </div>
       <br />
