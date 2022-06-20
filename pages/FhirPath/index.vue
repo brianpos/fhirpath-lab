@@ -617,14 +617,19 @@ export default Vue.extend({
       if (!this.resourceJson && this.resourceId) {
         await this.downloadTestResource();
       }
-      if (!this.resourceJson) {
-        return;
-      }
+      // removing this constraint as there are expression tests 
+      // that you can do that don't require a resource.  
+      // if (!this.resourceJson) {
+      //   return;
+      // }
       this.results = [];
       this.resultJson = undefined;
 
       // run the actual fhirpath engine
-      const fhirData = JSON.parse(this.resourceJson);
+      let fhirData = {};
+      if (this.resourceJson) {
+        JSON.parse(this.resourceJson);
+      }
       // debugger;
       var environment: any = { resource: fhirData };
 
@@ -782,9 +787,11 @@ export default Vue.extend({
         if (!this.resourceJson && this.resourceId) {
           await this.downloadTestResource();
         }
-        if (!this.resourceJson) {
-          return;
-        }
+        // removing this constraint as there are expression tests 
+        // that you can do that don't require a resource.  
+        // if (!this.resourceJson) {
+        //   return;
+        // }
       }
 
       if (this.resourceJson) {
