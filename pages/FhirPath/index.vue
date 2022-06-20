@@ -55,9 +55,10 @@
                     <v-card-text>
                       <p class="fl-tab-header">Expression</p>
                       <v-textarea label="Context Expression (optional)" v-model="contextExpression" hide-details="auto"
-                        rows="1" auto-grow />
+                        rows="1" auto-grow autocomplete="off" autocorrect="off" autocapitalize="off"
+                        spellcheck="false" />
                       <v-textarea label="Fhirpath Expression" v-model="fhirpathExpression" hide-details="auto" rows="3"
-                        auto-grow />
+                        auto-grow autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
                       <div class="results">RESULTS</div>
                       <template v-for="(r2, i1) in results">
                         <v-simple-table :key="i1">
@@ -85,7 +86,8 @@
                   <v-card flat>
                     <v-card-text>
                       <p class="fl-tab-header">Resource</p>
-                      <v-text-field label="Test Resource Id" v-model="resourceId" hide-details="auto">
+                      <v-text-field label="Test Resource Id" v-model="resourceId" hide-details="auto" autocomplete="off"
+                        autocorrect="off" autocapitalize="off" spellcheck="false">
                         <template v-slot:append>
                           <v-btn icon small tile @click="resourceId = undefined">
                             <v-icon> mdi-close </v-icon>
@@ -95,7 +97,8 @@
                           </v-btn>
                         </template>
                       </v-text-field>
-                      <v-textarea v-model="resourceJson" rows="16"
+                      <v-textarea v-model="resourceJson" rows="16" autocomplete="off" autocorrect="off"
+                        autocapitalize="off" spellcheck="false"
                         label="Test Resource JSON (optional, if Resource ID provided)" persistent-placeholder
                         placeholder='{
     "resourceType": "Patient",
@@ -107,7 +110,8 @@
                           </v-btn>
                         </template>
                       </v-textarea>
-                      <v-text-field label="Terminology Server" v-model="terminologyServer" hide-details="auto" />
+                      <v-text-field label="Terminology Server" v-model="terminologyServer" hide-details="auto"
+                        autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
                     </v-card-text>
                   </v-card>
                 </v-tab-item>
@@ -168,8 +172,9 @@
                     </v-btn>
                   </template>
                 </v-text-field>
-                <v-textarea v-model="resourceJson" rows="16"
-                  label="Test Resource JSON (optional, if Resource ID provided)" persistent-placeholder placeholder='{
+                <v-textarea v-model="resourceJson" rows="16" autocomplete="off" autocorrect="off" autocapitalize="off"
+                  spellcheck="false" label="Test Resource JSON (optional, if Resource ID provided)"
+                  persistent-placeholder placeholder='{
     "resourceType": "Patient",
     "id": "example",
     ...'>
