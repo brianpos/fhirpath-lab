@@ -627,9 +627,9 @@ export default Vue.extend({
       this.resultJson = undefined;
 
       // run the actual fhirpath engine
-      let fhirData = {};
+      let fhirData = { resourceType: 'Patient'}; // some dummy data
       if (this.resourceJson) {
-        JSON.parse(this.resourceJson);
+        fhirData = JSON.parse(this.resourceJson);
       }
       // debugger;
       var environment: any = { resource: fhirData };
