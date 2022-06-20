@@ -53,7 +53,14 @@ export default {
   modules: [
     // https://go.nuxtjs.dev/bootstrap
     'bootstrap-vue/nuxt',
+    // https://github.com/nuxt-community/applicationinsights-module
+    '@nuxtjs/applicationinsights',
   ],
+
+  // https://github.com/nuxt-community/applicationinsights-module
+  appInsights: {
+    instrumentationKey: '2a417deb-a0e7-4737-83ca-947e21b66dd0' //  your project's Instrumentation Key here
+  },
 
   // Build Configuration: https://go.nuxtjs.dev/config-build
   build: {

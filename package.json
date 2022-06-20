@@ -12,6 +12,7 @@
     "dockerize": "docker build -t forms-lab ."
   },
   "dependencies": {
+    "@nuxtjs/applicationinsights": "^1.2.2",
     "@types/fhir": "0.0.34",
     "axios": "^0.24.0",
     "bootstrap": "^4.6.0",
@@ -22,11 +23,11 @@
     "fhir-extension-helpers": "^0.3.0",
     "fhir-sdc-helpers": "^0.1.0",
     "fhirpath": "github:brianpos/fhirpath.js#feature/brian-updates",
-    "jsoneditor": "^9.7.4",
     "luxon": "^2.2.0",
     "marked": "^4.0.10",
     "minimist": ">=1.2.6",
     "nuxt": "^2.15.7",
+    "vue-application-insights": "^1.0.7",
     "vue-easytable": "^2.11.0",
     "vue2-brace-editor": "^2.0.2"
   },

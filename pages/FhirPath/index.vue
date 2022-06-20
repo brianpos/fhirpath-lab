@@ -291,6 +291,7 @@ import fhirpath from "fhirpath";
 import fhirpath_r4_model from "fhirpath/fhir-context/r4";
 import brace from 'brace';
 import { Ace as AceEditor, Split as SplitEditor } from 'vue2-brace-editor';
+import { IApplicationInsights } from '@microsoft/applicationinsights-web'
 
 import 'brace/mode/json';
 import 'brace/theme/chrome';
@@ -635,6 +636,8 @@ export default Vue.extend({
 
       let contextNodes: any[] = [];
 
+      (this as any).$appInsights?.trackEvent({ name: 'evaluate fhirpath.js' });
+
       if (this.contextExpression) {
         // scan over each of the expressions
         try {
@@ -792,6 +795,10 @@ export default Vue.extend({
         // if (!this.resourceJson) {
         //   return;
         // }
+        (this as any).$appInsights?.trackEvent({ name: 'evaluate HAPI' });
+      }
+      else {
+        (this as any).$appInsights?.trackEvent({ name: 'evaluate FirelySDK' });
       }
 
       if (this.resourceJson) {
