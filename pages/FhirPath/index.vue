@@ -49,7 +49,7 @@
               </v-tab>
 
               <v-tabs-items touchless v-model="tab">
-                <v-tab-item>
+                <v-tab-item :eager="true">
                   <!-- Expression -->
                   <v-card flat>
                     <v-card-text>
@@ -57,8 +57,16 @@
                       <v-textarea label="Context Expression (optional)" v-model="contextExpression" hide-details="auto"
                         rows="1" auto-grow autocomplete="off" autocorrect="off" autocapitalize="off"
                         spellcheck="false" />
-                      <v-textarea label="Fhirpath Expression" v-model="fhirpathExpression" hide-details="auto" rows="3"
-                        auto-grow autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+                      <!-- <v-textarea label="Fhirpath Expression" v-model="fhirpathExpression" hide-details="auto" rows="3"
+                        auto-grow autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" /> -->
+
+                      <label class="v-label theme--light bare-label">Fhirpath Expression</label>
+                      <AceEditor ref="aceEditorExpr" :readOnly="false" :fontSize="16" :showPrintMargin="false"
+                        height="85px" :showGutter="false" :highlightActiveLine="false" mode="text" theme="chrome"
+                        :setOptions="{ minLines: 3, maxLines: Infinity }" name="fp_editor" :value="fhirpathExpression"
+                        width="" :wrapEnabled="true" :onChange="expressionUpdated" />
+                      <div class="ace_editor_footer"></div>
+
                       <div class="results">RESULTS</div>
                       <template v-for="(r2, i1) in results">
                         <v-simple-table :key="i1">
@@ -199,7 +207,107 @@
   </div>
 </template>
 
+<style lang="scss">
+.ace_my_token {
+  color: red;
+}
+
+.ace-chrome {
+
+  .ace_fhir_string {
+    color: #a31515;
+    // font-weight: bold;
+  }
+
+  .ace_fhir_paren {
+    color: green;
+    font-weight: bold;
+  }
+
+  .ace_fhir_keyword {
+    color: #0000ff;
+  }
+
+  .ace_fhir_variable {
+    color: #b255a5;
+    font-weight: bold;
+  }
+
+  .ace_bstring {
+    color: green !important;
+    font-weight: bold;
+  }
+
+  .ace_fhir_comment {
+    color: #008000
+  }
+
+  .ace_fhir_literal {
+    color: darkslategray;
+  }
+
+  .ace_fhir_identifier {
+    color: #1f377f;
+    text-decoration: underline;
+  }
+
+  .ace_fhir_function {
+    color: #74531f;
+  }
+
+  // add tooltips to these using https://www.bitdegree.org/learn/css-tooltip
+}
+</style>
+
 <style lang="scss" scoped >
+@import '~vuetify/src/styles/styles.sass';
+
+.ace_editor {
+  margin-top: -6px;
+  margin-left: -4px;
+  padding-bottom: 4px;
+}
+
+.ace_editor_footer {
+  background-color: #949494;
+  height: 1px;
+}
+
+.ace_editor:focus-within+.ace_editor_footer,
+.ace_editor:hover+.ace_editor_footer {
+  background-color: black;
+  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);
+}
+
+
+.ace_editor::before,
+.ace_editor::after {
+  bottom: -1px; // Needed for browser autocomplete styles
+  content: '';
+  left: 4px;
+  position: absolute;
+  transition: $primary-transition;
+  width: 100%;
+}
+
+.ace_editor:focus-within::after {
+  transform: scaleX(1);
+}
+
+.ace_editor::before {
+  border-color: inherit;
+  border-style: solid;
+  border-width: thin 0 0 0;
+}
+
+.ace_editor::after {
+  background-color: black;
+  border-color: black;
+  border-style: solid;
+  border-width: 1px 0 thin 1px;
+  transform: scaleX(0);
+}
+
 tr.ve-table-body-tr {
   cursor: pointer;
 }
@@ -249,6 +357,12 @@ td {
   border-bottom: silver 1px solid;
 }
 
+.bare-label {
+  transform-origin: top left;
+  transform: scale(0.75);
+  margin-top: 10px;
+}
+
 .results {
   padding: 4px 12px;
   color: white;
@@ -256,6 +370,7 @@ td {
   font-size: 1.25rem;
   line-height: 1.5;
   background-color: $card-header-color;
+  margin-top: 10px;
 }
 
 .context {
@@ -294,10 +409,11 @@ import { getExtensionStringValue } from "fhir-extension-helpers";
 // import { getPreferredTerminologyServerFromSDC } from "fhir-sdc-helpers";
 import fhirpath from "fhirpath";
 import fhirpath_r4_model from "fhirpath/fhir-context/r4";
-import brace from 'brace';
-import { Ace as AceEditor, Split as SplitEditor } from 'vue2-brace-editor';
+import { Rules as FhirPathHightlighter_Rules } from "~/helpers/fhirpath_highlighter"
+import { Ace as AceEditor } from 'vue2-brace-editor';
 import { IApplicationInsights } from '@microsoft/applicationinsights-web'
 
+import 'brace/mode/text';
 import 'brace/mode/json';
 import 'brace/theme/chrome';
 import { runInThisContext } from "vm";
@@ -378,6 +494,23 @@ export default Vue.extend({
     this.showAdvancedSettings = settings.showAdvancedSettings();
     this.terminologyServer = settings.getFhirTerminologyServerUrl();
 
+    // Update the editor's Mode
+    if (this.$refs.aceEditorExpr) {
+      var editor: any = (this.$refs.aceEditorExpr as any).editor;
+      if (editor) {
+        editor.session.setMode('ace/mode/text', function () {
+          // https://ace.c9.io/#nav=higlighter
+          editor.session.$mode.$highlightRules.addRules(FhirPathHightlighter_Rules);
+
+          // force recreation of tokenizer
+          editor.session.$mode.$tokenizer = null;
+          editor.session.bgTokenizer.setTokenizer(editor.session.$mode.getTokenizer());
+          // force re-highlight whole document
+          editor.session.bgTokenizer.start(0);
+        });
+      }
+    }
+
     // Read in any parameters from the URL
     if (this.$route.query.libaryId as string) {
       await this.downloadLibrary(this.$route.query.libaryId as string);
@@ -407,6 +540,15 @@ export default Vue.extend({
     await this.evaluateFhirPathExpression();
   },
   methods: {
+    expressionUpdated() {
+    if (this.$refs.aceEditorExpr) {
+      var editor: any = (this.$refs.aceEditorExpr as any).editor;
+      if (editor) {
+          this.fhirpathExpression = editor.getValue();
+          this.$forceUpdate();
+      }
+    }
+  },
     tabTitle() {
       if (this.library) return this.library.title;
       if (this.resourceJson) return '(local resource JSON)';
@@ -632,7 +774,7 @@ export default Vue.extend({
       this.resultJson = undefined;
 
       // run the actual fhirpath engine
-      let fhirData = { resourceType: 'Patient'}; // some dummy data
+      let fhirData = { resourceType: 'Patient' }; // some dummy data
       if (this.resourceJson) {
         fhirData = JSON.parse(this.resourceJson);
       }
@@ -790,7 +932,8 @@ export default Vue.extend({
       if (this.selectedEngine == "java (HAPI)") {
         // https://github.com/jkiddo/fhirpath-tester/blob/main/src/main/java/org/example/Evaluator.java (brianpos fork of this)
         // https://docs.microsoft.com/en-us/azure/devops/pipelines/ecosystems/java-function?view=azure-devops
-        url = `https://fhirpath-lab-java.azurewebsites.net/fhir/$fhirpath?expression=${encodeURIComponent(this.fhirpathExpression ?? 'today()')}`;
+        url = `https://fhirpath-lab-java.azurewebsites.net/fhir/$fhirpath`;
+        // url = 'https://localhost:44378/$fhirpath2'
 
         if (!this.resourceJson && this.resourceId) {
           await this.downloadTestResource();

@@ -2,7 +2,7 @@
   "name": "fhirpath-lab",
   "version": "1.0.0",
   "private": true,
-  "license" : "BSD-3-Clause",
+  "license": "BSD-3-Clause",
   "type": "module",
   "scripts": {
     "dev": "nuxt",
@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@nuxtjs/applicationinsights": "^1.2.2",
+    "@types/ace": "0.0.48",
     "@types/fhir": "0.0.34",
     "axios": "^0.24.0",
     "bootstrap": "^4.6.0",
