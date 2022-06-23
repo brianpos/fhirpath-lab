@@ -71,6 +71,15 @@ export const Rules: Record<string, TextHighlightToken[]> = {
         token: "fhir_keyword", // section 6.3/6.4/6.5
         regex: /\b(as|is|in|contains|and|or|xor|implies)\b/
       }, {
+        token: "fhir_keyword.this",
+        regex: /(\$this)\b/
+      }, {
+        token: "fhir_keyword.index", // section 6.3/6.4/6.5
+        regex: /(\$index)\b/
+      }, {
+        token: "fhir_keyword.total", // section 6.3/6.4/6.5
+        regex: /(\$total)\b/
+      }, {
         token: "fhir_keyword.math", // section 6.6
         regex: /\b(div|mod)\b/
       }, {
