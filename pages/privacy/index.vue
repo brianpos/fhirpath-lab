@@ -73,8 +73,8 @@
           Licensed under the MIT license.
         </div>
 
-        <a class="link-item" target="_blank" href="vue2-brace-editor">
-          <div style="font-weight: 600">ace / brace</div>
+        <a class="link-item" target="_blank" href="https://ace.c9.io/">
+          <div style="font-weight: 600">ace</div>
         </a>
         <div class="link-plain-text">
           A web based JSON code editor for displaying the debug output, and edit the Resource

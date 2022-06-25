@@ -54,17 +54,14 @@
                   <v-card flat>
                     <v-card-text>
                       <p class="fl-tab-header">Expression</p>
-                      <v-textarea label="Context Expression (optional)" v-model="contextExpression" hide-details="auto"
-                        rows="1" auto-grow autocomplete="off" autocorrect="off" autocapitalize="off"
-                        spellcheck="false" />
-                      <!-- <v-textarea label="Fhirpath Expression" v-model="fhirpathExpression" hide-details="auto" rows="3"
-                        auto-grow autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" /> -->
+                      <label class="v-label theme--light bare-label">Context Expression (optional)</label>
+                      <!-- <v-input label="Context Expression (optional)" hide-details="auto" :value="contextExpression">
+                      </v-input> -->
+                      <div height="85px" width="100%" ref="aceEditorContextExpression"></div>
+                      <div class="ace_editor_footer"></div>
 
                       <label class="v-label theme--light bare-label">Fhirpath Expression</label>
-                      <AceEditor ref="aceEditorExpr" :readOnly="false" :fontSize="16" :showPrintMargin="false"
-                        height="85px" :showGutter="false" :highlightActiveLine="false" mode="text" theme="chrome"
-                        :setOptions="{ minLines: 3, maxLines: Infinity }" name="fp_editor" :value="fhirpathExpression"
-                        width="" :wrapEnabled="true" :onChange="expressionUpdated" />
+                      <div height="85px" width="100%" ref="aceEditorExpression"></div>
                       <div class="ace_editor_footer"></div>
 
                       <div class="results">RESULTS</div>
@@ -89,7 +86,7 @@
                   </v-card>
                 </v-tab-item>
 
-                <v-tab-item>
+                <v-tab-item :eager="true">
                   <!-- Resource -->
                   <v-card flat>
                     <v-card-text>
@@ -105,19 +102,10 @@
                           </v-btn>
                         </template>
                       </v-text-field>
-                      <v-textarea v-model="resourceJson" rows="16" autocomplete="off" autocorrect="off"
-                        autocapitalize="off" spellcheck="false"
-                        label="Test Resource JSON (optional, if Resource ID provided)" persistent-placeholder
-                        placeholder='{
-    "resourceType": "Patient",
-    "id": "example",
-    ...'>
-                        <template v-slot:append>
-                          <v-btn icon small tile @click="resourceJson = undefined">
-                            <v-icon> mdi-close </v-icon>
-                          </v-btn>
-                        </template>
-                      </v-textarea>
+                      <label class="v-label theme--light bare-label">Test Resource JSON (optional, if Resource ID
+                        provided)</label>
+                      <div height="85px" width="100%" ref="aceEditorResourceJsonTab"></div>
+                      <div class="ace_editor_footer"></div>
                       <v-text-field label="Terminology Server" v-model="terminologyServer" hide-details="auto"
                         autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
                     </v-card-text>
@@ -156,9 +144,7 @@
                   <v-card flat>
                     <v-card-text>
                       <p class="fl-tab-header">Debug</p>
-                      <AceEditor ref="aceEditor" :readOnly="true" :fontSize="14" :showPrintMargin="false"
-                        :showGutter="true" :highlightActiveLine="true" mode="json" theme="chrome" name="editor"
-                        :value="resultJson" :editorProps="{ $blockScrolling: true }" width="" />
+                      <div ref="aceEditorDebug"></div>
                     </v-card-text>
                   </v-card>
                 </v-tab-item>
@@ -180,18 +166,10 @@
                     </v-btn>
                   </template>
                 </v-text-field>
-                <v-textarea v-model="resourceJson" rows="16" autocomplete="off" autocorrect="off" autocapitalize="off"
-                  spellcheck="false" label="Test Resource JSON (optional, if Resource ID provided)"
-                  persistent-placeholder placeholder='{
-    "resourceType": "Patient",
-    "id": "example",
-    ...'>
-                  <template v-slot:append>
-                    <v-btn icon small tile @click="resourceJson = undefined">
-                      <v-icon> mdi-close </v-icon>
-                    </v-btn>
-                  </template>
-                </v-textarea>
+                <label class="v-label theme--light bare-label">Test Resource JSON (optional, if Resource ID
+                  provided)</label>
+                <div height="85px" width="100%" ref="aceEditorResourceJsonRight"></div>
+                <div class="ace_editor_footer"></div>
                 <v-text-field label="Terminology Server" v-model="terminologyServer" hide-details="auto" />
               </v-card-text>
             </v-card>
@@ -208,8 +186,16 @@
 </template>
 
 <style lang="scss">
-.ace_my_token {
-  color: red;
+.ace_hidden-cursors {
+  opacity: 0;
+}
+
+.ace_editor .ace_bracket {
+  display: none;
+}
+
+.ace_editor:focus-within .ace_bracket {
+  display: block;
 }
 
 .ace-chrome {
@@ -263,7 +249,7 @@
 @import '~vuetify/src/styles/styles.sass';
 
 .ace_editor {
-  margin-top: -6px;
+  margin-top: -2px;
   margin-left: -4px;
   padding-bottom: 4px;
 }
@@ -409,14 +395,15 @@ import { getExtensionStringValue } from "fhir-extension-helpers";
 // import { getPreferredTerminologyServerFromSDC } from "fhir-sdc-helpers";
 import fhirpath from "fhirpath";
 import fhirpath_r4_model from "fhirpath/fhir-context/r4";
-import { Rules as FhirPathHightlighter_Rules } from "~/helpers/fhirpath_highlighter"
-import { Ace as AceEditor } from 'vue2-brace-editor';
+import { Rules as FhirPathHightlighter_Rules, setCustomHighlightRules } from "~/helpers/fhirpath_highlighter"
 import { IApplicationInsights } from '@microsoft/applicationinsights-web'
 
-import 'brace/mode/text';
-import 'brace/mode/json';
-import 'brace/theme/chrome';
-import { runInThisContext } from "vm";
+import "ace-builds";
+import ace from "ace-builds";
+import "ace-builds/src-noconflict/mode-text";
+import "ace-builds/src-noconflict/mode-json";
+import "ace-builds/src-noconflict/theme-chrome";
+
 
 const shareTooltipText = 'Copy a sharable link to this test expression';
 
@@ -424,11 +411,7 @@ interface FhirPathData {
   raw?: fhir4.Parameters;
   library?: fhir4.Library;
   resourceId?: string;
-  resourceJson?: string;
-  contextExpression?: string;
-  fhirpathExpression?: string;
   loadingData: boolean;
-  resultJson?: string;
   saveOutcome?: fhir4.OperationOutcome;
   showOutcome?: boolean;
   showAdvancedSettings: boolean;
@@ -439,6 +422,10 @@ interface FhirPathData {
   selectedEngine: string;
   executionEngines: string[];
   shareToolTipMessage: string;
+  expressionEditor?: ace.Ace.Editor;
+  expressionContextEditor?: ace.Ace.Editor;
+  debugEditor?: ace.Ace.Editor;
+  resourceJsonEditor?: ace.Ace.Editor;
 }
 
 interface ResultItem {
@@ -485,7 +472,6 @@ function getTraceValue(entry: fhir4.ParametersParameter): TraceData[] {
 
 export default Vue.extend({
   components: {
-    AceEditor,
   },
   head: {
     title: "FhirPathTester",
@@ -494,20 +480,98 @@ export default Vue.extend({
     this.showAdvancedSettings = settings.showAdvancedSettings();
     this.terminologyServer = settings.getFhirTerminologyServerUrl();
 
-    // Update the editor's Mode
-    if (this.$refs.aceEditorExpr) {
-      var editor: any = (this.$refs.aceEditorExpr as any).editor;
-      if (editor) {
-        editor.session.setMode('ace/mode/text', function () {
-          // https://ace.c9.io/#nav=higlighter
-          editor.session.$mode.$highlightRules.addRules(FhirPathHightlighter_Rules);
+    const CDN = 'https://cdn.jsdelivr.net/npm/ace-builds@1.6.0/src-min-noconflict';
+    if (true) {
+        ace.config.set('basePath', CDN);
+        ace.config.set('modePath', CDN);
+        ace.config.set('themePath', CDN);
+        ace.config.set('workerPath', CDN);
+    }
 
-          // force recreation of tokenizer
-          editor.session.$mode.$tokenizer = null;
-          editor.session.bgTokenizer.setTokenizer(editor.session.$mode.getTokenizer());
-          // force re-highlight whole document
-          editor.session.bgTokenizer.start(0);
-        });
+    // Update the editor's Mode
+    var editorCtxtDiv: any = this.$refs.aceEditorContextExpression as Element;
+    if (editorCtxtDiv) {
+      this.expressionContextEditor = ace.edit(editorCtxtDiv, {
+        wrap: "free",
+        minLines: 1,
+        maxLines: Infinity,
+        highlightActiveLine: false,
+        showGutter: false,
+        fontSize: 16,
+        showPrintMargin: false,
+        theme: "ace/theme/chrome",
+        mode: "ace/mode/text",
+        wrapBehavioursEnabled: true
+      });
+
+      if (this.expressionContextEditor) {
+        setCustomHighlightRules(this.expressionContextEditor, FhirPathHightlighter_Rules);
+        this.expressionContextEditor.setValue("name"); // default value
+        this.expressionContextEditor.clearSelection();
+      }
+    }
+
+    var editorDiv: any = this.$refs.aceEditorExpression as Element;
+    if (editorDiv) {
+      this.expressionEditor = ace.edit(editorDiv, {
+        wrap: "free",
+        minLines: 3,
+        maxLines: Infinity,
+        highlightActiveLine: false,
+        showGutter: false,
+        fontSize: 16,
+        showPrintMargin: false,
+        theme: "ace/theme/chrome",
+        mode: "ace/mode/text",
+        wrapBehavioursEnabled: true
+      });
+
+      if (this.expressionEditor) {
+        setCustomHighlightRules(this.expressionEditor, FhirPathHightlighter_Rules);
+        this.expressionEditor.setValue("trace('trc').given");
+        this.expressionEditor.clearSelection();
+      }
+    }
+
+    var editorDebugDiv: any = this.$refs.aceEditorDebug as Element;
+    if (editorDebugDiv) {
+      this.debugEditor = ace.edit(editorDebugDiv, {
+        wrap: "free",
+        readOnly: true,
+        minLines: 15,
+        maxLines: 35,
+        highlightActiveLine: true,
+        showGutter: true,
+        fontSize: 14,
+        showPrintMargin: false,
+        theme: "ace/theme/chrome",
+        mode: "ace/mode/json",
+        wrapBehavioursEnabled: true
+      });
+    }
+
+    const resourceEditorSettings: Partial<ace.Ace.EditorOptions> = {
+      wrap: "free",
+      minLines: 15,
+      maxLines: 30,
+      highlightActiveLine: true,
+      showGutter: true,
+      fontSize: 14,
+      showPrintMargin: false,
+      theme: "ace/theme/chrome",
+      mode: "ace/mode/json",
+      wrapBehavioursEnabled: true
+    };
+    var editorResourceJsonRightDiv: any = this.$refs.aceEditorResourceJsonRight as Element;
+    if (editorResourceJsonRightDiv) {
+      this.resourceJsonEditor = ace.edit(editorResourceJsonRightDiv, resourceEditorSettings);
+
+      var editorResourceJsonLeftDiv: any = this.$refs.aceEditorResourceJsonTab as Element;
+      if (editorResourceJsonLeftDiv) {
+        let editor = ace.edit(editorResourceJsonLeftDiv, resourceEditorSettings);
+        if (editor) {
+          editor.setSession(this.resourceJsonEditor.session);
+        }
       }
     }
 
@@ -525,37 +589,60 @@ export default Vue.extend({
             this.resourceId = this.$route.query.resource as string;
           }
         }
-        if (this.$route.query.context) {
-          this.contextExpression = this.$route.query.context as string ?? '';
-        }
+
+          if (this.expressionContextEditor) {
+          if (this.$route.query.context) {
+            this.expressionContextEditor.setValue(this.$route.query.context as string ?? '');
+            this.expressionContextEditor.clearSelection();
+          }
         else {
-          this.contextExpression = '';
+            this.expressionContextEditor.setValue('');
         }
+        }
+
         if (this.$route.query.terminologyServer) {
           this.terminologyServer = this.$route.query.terminologyServer as string ?? '';
         }
-        this.fhirpathExpression = this.$route.query.expression as string ?? '';
+        if (this.expressionEditor) {
+          this.expressionEditor.setValue(this.$route.query.expression as string ?? '');
+          this.expressionEditor.clearSelection();
+        }
       }
     }
     await this.evaluateFhirPathExpression();
   },
   methods: {
-    expressionUpdated() {
-    if (this.$refs.aceEditorExpr) {
-      var editor: any = (this.$refs.aceEditorExpr as any).editor;
-      if (editor) {
-          this.fhirpathExpression = editor.getValue();
-          this.$forceUpdate();
-      }
-    }
-  },
     tabTitle() {
       if (this.library) return this.library.title;
-      if (this.resourceJson) return '(local resource JSON)';
+      if (this.getResourceJson()) return '(local resource JSON)';
       return this.resourceId;
     },
     settingsClosed() {
       this.showAdvancedSettings = settings.showAdvancedSettings();
+    },
+
+    getContextExpression(): string | undefined {
+      const json = this.expressionContextEditor?.getValue();
+      if (json && json.length > 0) {
+        return json;
+      }
+      return undefined;
+    },
+
+    getFhirpathExpression(): string | undefined {
+      const json = this.expressionEditor?.getValue();
+      if (json && json.length > 0) {
+        return json;
+      }
+      return undefined;
+    },
+
+    getResourceJson(): string | undefined {
+      const json = this.resourceJsonEditor?.getValue();
+      if (json && json.length > 0) {
+        return json;
+      }
+      return undefined;
     },
 
     hasTraceData(): boolean {
@@ -570,6 +657,12 @@ export default Vue.extend({
       this.showOutcome = undefined;
     },
 
+    setResultJson(result: string) {
+      if (this.debugEditor) {
+        this.debugEditor.setValue(result);
+        this.debugEditor.clearSelection();
+      }
+    },
     async executeRequest<T>(url: string, p: fhir4.Parameters) {
       try {
         if (this.cancelSource) this.cancelSource.cancel("new search started");
@@ -595,7 +688,8 @@ export default Vue.extend({
         const results = response.data;
         if (results) {
           this.raw = results;
-          this.resultJson = JSON.stringify(results, null, 4);
+          this.setResultJson(JSON.stringify(results, null, 4));
+
           this.results = [];
           if (this.raw.parameter) {
             for (var entry of this.raw.parameter) {
@@ -623,7 +717,7 @@ export default Vue.extend({
         if (axios.isAxiosError(err)) {
           const serverError = err as AxiosError<fhir4.OperationOutcome>;
           if (serverError && serverError.response) {
-            this.resultJson = JSON.stringify(serverError.response.data, null, 4);
+            this.setResultJson(JSON.stringify(serverError.response.data, null, 4));
             this.saveOutcome = serverError.response.data;
             this.showOutcome = true;
             return serverError.response.data;
@@ -662,16 +756,31 @@ export default Vue.extend({
           this.library = response.data;
 
           // and read the properties from the resource into the fields
-          this.fhirpathExpression = this.library?.content ? atob(this.library.content[0].data as string) : undefined;
-          this.contextExpression = getExtensionStringValue(this.library, "http://fhir.forms-lab.com/StructureDefinition/context-expression");
+          var editor: any;
+          if (this.expressionEditor) {
+            this.expressionEditor.setValue(this.library?.content ? atob(this.library.content[0].data as string) : '');
+            this.expressionEditor.clearSelection();
+          }
+          const contextExpression = getExtensionStringValue(this.library, "http://fhir.forms-lab.com/StructureDefinition/context-expression");
+          if (this.expressionContextEditor) {
+            this.expressionContextEditor.setValue(contextExpression ?? '');
+            this.expressionContextEditor.clearSelection();
+          }
+
           // and test resource IDs
           const rId = getExtensionStringValue(this.library, "http://fhir.forms-lab.com/StructureDefinition/resource-id");
           if (rId) {
             this.resourceId = rId;
-            this.resourceJson = undefined;
+            if (this.resourceJsonEditor) {
+              this.resourceJsonEditor.setValue('');
             if (this.resourceId?.startsWith("#") && this.library?.contained && this.library.contained[0]) {
               this.resourceId = undefined;
-              this.resourceJson = JSON.stringify(this.library.contained[0], null, 4); // really should lookup by ID
+                const resourceJson = JSON.stringify(this.library.contained[0], null, 4); // really should lookup by ID
+                if (resourceJson) {
+                  this.resourceJsonEditor.setValue(resourceJson);
+                }
+                this.resourceJsonEditor.clearSelection();
+              }
             }
           }
           else {
@@ -691,9 +800,9 @@ export default Vue.extend({
         if (axios.isAxiosError(err)) {
           const serverError = err as AxiosError<fhir4.OperationOutcome>;
           if (serverError && serverError.response) {
-            this.resultJson = JSON.stringify(serverError.response, null, 4);
+            this.setResultJson(JSON.stringify(serverError.response, null, 4));
             if (serverError.response.data?.resourceType == 'OperationOutcome') {
-              this.resultJson = JSON.stringify(serverError.response, null, 4);
+              this.setResultJson(JSON.stringify(serverError.response, null, 4));
               this.saveOutcome = serverError.response.data;
             } else {
               if (serverError.response.status == 404)
@@ -736,16 +845,22 @@ export default Vue.extend({
 
         const results = response.data;
         if (results) {
-          this.resourceJson = JSON.stringify(results, null, 4);
+          if (this.resourceJsonEditor) {
+            const resourceJson = JSON.stringify(results, null, 4);
+            if (resourceJson) {
+              this.resourceJsonEditor.setValue(resourceJson);
+            }
+            this.resourceJsonEditor.clearSelection();
+          }
         }
       } catch (err) {
         this.loadingData = false;
         if (axios.isAxiosError(err)) {
           const serverError = err as AxiosError<fhir4.OperationOutcome>;
           if (serverError && serverError.response) {
-            this.resultJson = JSON.stringify(serverError.response, null, 4);
+            this.setResultJson(JSON.stringify(serverError.response, null, 4));
             if (serverError.response.data?.resourceType == 'OperationOutcome') {
-              this.resultJson = JSON.stringify(serverError.response, null, 4);
+              this.setResultJson(JSON.stringify(serverError.response, null, 4));
               this.saveOutcome = serverError.response.data;
             } else {
               if (serverError.response.status == 404)
@@ -762,7 +877,7 @@ export default Vue.extend({
     },
 
     async evaluateExpressionUsingFhirpathjs() {
-      if (!this.resourceJson && this.resourceId) {
+      if (!this.getResourceJson() && this.resourceId) {
         await this.downloadTestResource();
       }
       // removing this constraint as there are expression tests 
@@ -771,12 +886,13 @@ export default Vue.extend({
       //   return;
       // }
       this.results = [];
-      this.resultJson = undefined;
+      this.setResultJson('');
 
       // run the actual fhirpath engine
       let fhirData = { resourceType: 'Patient' }; // some dummy data
-      if (this.resourceJson) {
-        fhirData = JSON.parse(this.resourceJson);
+      const resourceJson = this.getResourceJson();
+      if (resourceJson) {
+        fhirData = JSON.parse(resourceJson);
       }
       // debugger;
       var environment: any = { resource: fhirData };
@@ -785,10 +901,11 @@ export default Vue.extend({
 
       (this as any).$appInsights?.trackEvent({ name: 'evaluate fhirpath.js' });
 
-      if (this.contextExpression) {
+      const contextExpression = this.getContextExpression();
+      if (contextExpression) {
         // scan over each of the expressions
         try {
-          contextNodes = fhirpath.evaluate(fhirData, this.contextExpression, environment, fhirpath_r4_model);
+          contextNodes = fhirpath.evaluate(fhirData, contextExpression, environment, fhirpath_r4_model);
         }
         catch (err: any) {
           console.log(err);
@@ -815,8 +932,8 @@ export default Vue.extend({
       for (let contextNode of contextNodes) {
         let resData: ResultData;
         const index = contextNodes.indexOf(contextNode);
-        if (this.contextExpression)
-          resData = { context: `${this.contextExpression}[${index}]`, result: [], trace: [] };
+        if (contextExpression)
+          resData = { context: `${contextExpression}[${index}]`, result: [], trace: [] };
         else
           resData = { result: [], trace: [] };
 
@@ -825,7 +942,7 @@ export default Vue.extend({
             for (var item of x) {
               if (typeof item.getTypeInfo === "function") {
                 let ti = item.getTypeInfo();
-                console.log(ti);
+                // console.log(ti);
                 resData.trace.push({ name: label ?? "", type: ti.name, value: JSON.stringify(item.data, null, 4) });
               }
               else {
@@ -841,9 +958,9 @@ export default Vue.extend({
         };
 
         try {
-          let useExpression = this.fhirpathExpression ?? '';
+          let useExpression = this.getFhirpathExpression() ?? '';
           if (resData.context) {
-            useExpression = `${resData.context}.select(${this.fhirpathExpression})`;
+            useExpression = `${resData.context}.select(${useExpression})`;
           }
           let res: any[] = fhirpath.evaluate(fhirData, useExpression, environment, fhirpath_r4_model, tracefunction);
           this.results.push(resData);
@@ -861,7 +978,7 @@ export default Vue.extend({
           }
         }
       }
-      console.log(this.results);
+      // console.log(this.results);
     },
 
     showShareLink() {
@@ -882,7 +999,7 @@ export default Vue.extend({
     },
     updateShareText() {
       this.shareToolTipMessage = shareTooltipText;
-      if (this.resourceJson) {
+      if (this.getResourceJson()) {
         this.shareToolTipMessage += '\r\n(without example resource JSON)';
       }
     },
@@ -890,9 +1007,10 @@ export default Vue.extend({
     copyShareLinkToClipboard() {
       const url = new URL(window.location.href);
       // console.log(url);
-      let shareUrl = `${url.origin}/FhirPath?expression=${encodeURIComponent(this.fhirpathExpression ?? '')}`;
-      if (this.contextExpression) {
-        shareUrl += `&context=${encodeURIComponent(this.contextExpression ?? '')}`;
+      let shareUrl = `${url.origin}/FhirPath?expression=${encodeURIComponent(this.getFhirpathExpression() ?? '')}`;
+      const contextExpression = this.getContextExpression();
+      if (contextExpression) {
+        shareUrl += `&context=${encodeURIComponent(contextExpression ?? '')}`;
       }
       if (this.resourceId) {
         if (this.resourceId.startsWith('http')) {
@@ -914,6 +1032,7 @@ export default Vue.extend({
 
     // https://www.sitepoint.com/fetching-data-third-party-api-vue-axios/
     async evaluateFhirPathExpression() {
+      let resourceJson = this.getResourceJson();
       if (this.selectedEngine == "fhirpath.js") {
         await this.evaluateExpressionUsingFhirpathjs();
         return;
@@ -923,10 +1042,11 @@ export default Vue.extend({
       // default the firely SDK/brianpos service
       let url = `https://qforms-server.azurewebsites.net/$fhirpath`;
 
-      let p: fhir4.Parameters = { resourceType: "Parameters", parameter: [{ name: "expression", valueString: this.fhirpathExpression ?? 'today()' }] };
+      let p: fhir4.Parameters = { resourceType: "Parameters", parameter: [{ name: "expression", valueString: this.getFhirpathExpression() ?? 'today()' }] };
 
-      if (this.contextExpression) {
-        p.parameter?.push({ name: "context", valueString: this.contextExpression });
+      const contextExpression = this.getContextExpression();
+      if (contextExpression) {
+        p.parameter?.push({ name: "context", valueString: contextExpression });
       }
 
       if (this.selectedEngine == "java (HAPI)") {
@@ -935,9 +1055,11 @@ export default Vue.extend({
         url = `https://fhirpath-lab-java.azurewebsites.net/fhir/$fhirpath`;
         // url = 'https://localhost:44378/$fhirpath2'
 
-        if (!this.resourceJson && this.resourceId) {
+        if (!this.getResourceJson() && this.resourceId) {
           await this.downloadTestResource();
+          resourceJson = this.getResourceJson();        
         }
+
         // removing this constraint as there are expression tests 
         // that you can do that don't require a resource.  
         // if (!this.resourceJson) {
@@ -949,8 +1071,8 @@ export default Vue.extend({
         (this as any).$appInsights?.trackEvent({ name: 'evaluate FirelySDK' });
       }
 
-      if (this.resourceJson) {
-        p.parameter?.push({ name: "resource", resource: JSON.parse(this.resourceJson) });
+      if (resourceJson) {
+        p.parameter?.push({ name: "resource", resource: JSON.parse(resourceJson) });
       }
       else {
         if (!this.resourceId?.startsWith('http')) {
@@ -973,22 +1095,22 @@ export default Vue.extend({
       library: undefined,
       raw: undefined,
       resourceId: 'Patient/example',
-      resourceJson: undefined,
-      contextExpression: 'name',
-      fhirpathExpression: "trace('trc').given",
       loadingData: true,
-      resultJson: undefined,
       showOutcome: false,
       showAdvancedSettings: false,
       terminologyServer: 'https://sqlonfhir-r4.azurewebsites.net/fhir',
       results: [],
-      selectedEngine: ".NET (firely)",
+      selectedEngine: "fhirpath.js",
       executionEngines: [
         ".NET (firely)",
         "fhirpath.js",
         "java (HAPI)"
       ],
-      shareToolTipMessage: shareTooltipText
+      shareToolTipMessage: shareTooltipText,
+      expressionEditor: undefined,
+      expressionContextEditor: undefined,
+      debugEditor: undefined,
+      resourceJsonEditor: undefined,
     };
   },
 });
