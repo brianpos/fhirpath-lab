@@ -105,7 +105,7 @@
                       <label class="v-label theme--light bare-label">Test Resource JSON (optional, if Resource ID
                         provided)</label>
                       <div height="85px" width="100%" ref="aceEditorResourceJsonTab"></div>
-                      <div class="ace_editor_footer"></div>
+                      <!-- <div class="ace_editor_footer"></div> -->
                       <v-text-field label="Terminology Server" v-model="terminologyServer" hide-details="auto"
                         autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
                     </v-card-text>
@@ -169,7 +169,7 @@
                 <label class="v-label theme--light bare-label">Test Resource JSON (optional, if Resource ID
                   provided)</label>
                 <div height="85px" width="100%" ref="aceEditorResourceJsonRight"></div>
-                <div class="ace_editor_footer"></div>
+                <!-- <div class="ace_editor_footer"></div> -->
                 <v-text-field label="Terminology Server" v-model="terminologyServer" hide-details="auto" />
               </v-card-text>
             </v-card>
@@ -239,7 +239,8 @@ td {
 .bare-label {
   transform-origin: top left;
   transform: scale(0.75);
-  margin-top: 10px;
+  margin-top: 8px;
+  height: 20px;
 }
 
 .results {

@@ -62,44 +62,55 @@
 }
 
 .ace_editor {
-  margin-top: -2px;
+  margin-top: -4px;
   margin-left: -4px;
-  padding-bottom: 4px;
+  padding-bottom: 2px;
 }
 
+// --------------------------------------------------------------------------
+// Editor footer line (Material UI focus display)
+// --------------------------------------------------------------------------
+
 .ace_editor_footer {
-  background-color: #949494;
-  height: 1px;
+  position: relative;
+  margin-top: 1px;
+  height: 0;
+  padding-bottom: 4px;
+  border-bottom: thin solid white ;
+  color: #949494;
 }
 
 .ace_editor:focus-within+.ace_editor_footer,
 .ace_editor:hover+.ace_editor_footer {
-  background-color: black;
+  color: #212121;
   transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);
+  // display: block;
 }
 
 
-.ace_editor::before,
-.ace_editor::after {
+.ace_editor+.ace_editor_footer::before,
+.ace_editor+.ace_editor_footer::after {
   bottom: -1px; // Needed for browser autocomplete styles
   content: '';
-  left: 4px;
+  // left: 4px;
   position: absolute;
   transition: $primary-transition;
   width: 100%;
+  // display: none;
 }
 
-.ace_editor:focus-within::after {
+.ace_editor:focus-within+.ace_editor_footer::after {
+  display: block;
   transform: scaleX(1);
 }
 
-.ace_editor::before {
+.ace_editor+.ace_editor_footer::before {
   border-color: inherit;
   border-style: solid;
   border-width: thin 0 0 0;
 }
 
-.ace_editor::after {
+.ace_editor+.ace_editor_footer::after {
   background-color: black;
   border-color: black;
   border-style: solid;
