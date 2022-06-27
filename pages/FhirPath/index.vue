@@ -185,114 +185,7 @@
   </div>
 </template>
 
-<style lang="scss">
-.ace_hidden-cursors {
-  opacity: 0;
-}
-
-.ace_editor .ace_bracket {
-  display: none;
-}
-
-.ace_editor:focus-within .ace_bracket {
-  display: block;
-}
-
-.ace-chrome {
-
-  .ace_fhir_string {
-    color: #a31515;
-    // font-weight: bold;
-  }
-
-  .ace_fhir_paren {
-    color: green;
-    font-weight: bold;
-  }
-
-  .ace_fhir_keyword {
-    color: #0000ff;
-  }
-
-  .ace_fhir_variable {
-    color: #b255a5;
-    font-weight: bold;
-  }
-
-  .ace_bstring {
-    color: green !important;
-    font-weight: bold;
-  }
-
-  .ace_fhir_comment {
-    color: #008000
-  }
-
-  .ace_fhir_literal {
-    color: darkslategray;
-  }
-
-  .ace_fhir_identifier {
-    color: #1f377f;
-    text-decoration: underline;
-  }
-
-  .ace_fhir_function {
-    color: #74531f;
-  }
-
-  // add tooltips to these using https://www.bitdegree.org/learn/css-tooltip
-}
-</style>
-
 <style lang="scss" scoped >
-@import '~vuetify/src/styles/styles.sass';
-
-.ace_editor {
-  margin-top: -2px;
-  margin-left: -4px;
-  padding-bottom: 4px;
-}
-
-.ace_editor_footer {
-  background-color: #949494;
-  height: 1px;
-}
-
-.ace_editor:focus-within+.ace_editor_footer,
-.ace_editor:hover+.ace_editor_footer {
-  background-color: black;
-  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);
-}
-
-
-.ace_editor::before,
-.ace_editor::after {
-  bottom: -1px; // Needed for browser autocomplete styles
-  content: '';
-  left: 4px;
-  position: absolute;
-  transition: $primary-transition;
-  width: 100%;
-}
-
-.ace_editor:focus-within::after {
-  transform: scaleX(1);
-}
-
-.ace_editor::before {
-  border-color: inherit;
-  border-style: solid;
-  border-width: thin 0 0 0;
-}
-
-.ace_editor::after {
-  background-color: black;
-  border-color: black;
-  border-style: solid;
-  border-width: 1px 0 thin 1px;
-  transform: scaleX(0);
-}
 
 tr.ve-table-body-tr {
   cursor: pointer;
@@ -396,6 +289,7 @@ import { getExtensionStringValue } from "fhir-extension-helpers";
 import fhirpath from "fhirpath";
 import fhirpath_r4_model from "fhirpath/fhir-context/r4";
 import { Rules as FhirPathHightlighter_Rules, setCustomHighlightRules } from "~/helpers/fhirpath_highlighter"
+import "~/assets/fhirpath_highlighter.scss"
 import { IApplicationInsights } from '@microsoft/applicationinsights-web'
 
 import "ace-builds";
