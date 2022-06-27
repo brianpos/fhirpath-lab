@@ -133,7 +133,7 @@ export const Rules: Record<string, TextHighlightToken[]> = {
       regex: /\./
     }, {
       token: "fhir_identifier",
-      regex: /\w+/
+      regex: /\b([A-Za-z]|_)([A-Za-z0-9]|_)*\b/
     }, {
       token: "text",
       regex: "\\s+"
