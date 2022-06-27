@@ -96,8 +96,8 @@ More information about the usage of this directory in [the documentation](https:
 | text.`div` // identifier that is a reserved word
 | _testme // idenfier starting with an underscore (not a fhir property)
 | deceased.ofType(Boolean) // type selector
-// | deceased as boolean // 'as'
-// | deceased.as(boolean)
+// | deceased as boolean // 'as' cast operator
+// | deceased.as(boolean) // `as(` cast function
 | (deceased is Boolean)
 | name.where($this.use = 'usual').text // $this keyword in use
 | iif(true, 'iif true', 'iif false') // iif function

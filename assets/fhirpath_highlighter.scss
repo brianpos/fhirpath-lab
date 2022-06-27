@@ -5,9 +5,17 @@
 
 .ace-chrome {
 
+  .ace_fhir_date,
+  .ace_fhir_datetime,
+  .ace_fhir_time,
   .ace_fhir_string {
     color: #a31515;
     // font-weight: bold;
+  }
+
+  .ace_fhir_quantity{
+    color: #a31515;
+    font-style: italic;
   }
 
   .ace_fhir_paren {
@@ -17,6 +25,7 @@
 
   .ace_fhir_keyword {
     color: #0000ff;
+    font-weight: bold;
   }
 
   .ace_fhir_variable {
@@ -30,7 +39,7 @@
   }
 
   .ace_fhir_comment {
-    color: #008000
+    color: #8ee08f;
   }
 
   .ace_fhir_literal {
@@ -38,8 +47,12 @@
   }
 
   .ace_fhir_identifier {
-    color: #1f377f;
-    text-decoration: underline;
+    color: #318495;
+    // text-decoration: underline;
+  }
+  
+  .ace_fhir_nav {
+    // text-decoration: underline;
   }
 
   .ace_fhir_function {
