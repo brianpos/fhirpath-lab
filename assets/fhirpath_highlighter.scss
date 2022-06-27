@@ -3,18 +3,6 @@
 @import '~vuetify/src/styles/styles.sass';
 
 
-.ace_hidden-cursors {
-  opacity: 0;
-}
-
-.ace_editor .ace_bracket {
-  display: none;
-}
-
-.ace_editor:focus-within .ace_bracket {
-  display: block;
-}
-
 .ace-chrome {
 
   .ace_fhir_string {
@@ -61,11 +49,30 @@
   // add tooltips to these using https://www.bitdegree.org/learn/css-tooltip
 }
 
+// --------------------------------------------------------------------------
+// ace editor top level styling
+// --------------------------------------------------------------------------
 .ace_editor {
   margin-top: -4px;
   margin-left: -4px;
   padding-bottom: 2px;
 }
+
+// don't show the cursor when the control doesn't have focus
+.ace_hidden-cursors {
+  opacity: 0;
+}
+
+
+// Only show the brace matching when the control has focus
+.ace_editor .ace_bracket {
+  display: none;
+}
+
+.ace_editor:focus-within .ace_bracket {
+  display: block;
+}
+
 
 // --------------------------------------------------------------------------
 // Editor footer line (Material UI focus display)
