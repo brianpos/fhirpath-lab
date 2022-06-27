@@ -19,9 +19,6 @@ export function setCustomHighlightRules(editor: ace.Ace.Editor, rules: Record<st
 export const Rules: Record<string, TextHighlightToken[]> = {
   "start": [
     {
-      token: "variable", // single line
-      regex: '["](?:(?:\\\\.)|(?:[^"\\\\]))*?["]\\s*(?=:)'
-    }, {
       token: "fhir_string", // single line
       regex: /'/,
       next: "fhir_string"
