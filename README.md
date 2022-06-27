@@ -72,3 +72,38 @@ Example: `/static/robots.txt` is mapped as `/robots.txt`.
 
 More information about the usage of this directory in [the documentation](https://nuxtjs.org/docs/2.x/directory-structure/static).
 
+### An expression that tests out most of the syntax highlighter cases
+/* a multi-line comment - FHIR syntax highlighers */
+1 // integer
+| -2 // negative integer
+| 3.141592650 // decimal
+| @2020-12-01 // date
+| @2015-02-04T14:34:28+09:00 // datetime
+| @T12:45:28 // time portion
+| 'some string' // string
+| '\tsom\\e \'st\'r\ning' // string with a quote inside it (and newline)
+| '\u00A9' // unicode copyright symbol
+| 'string' & ' another string' // string contactenation
+| 1 weeks // quantity
+| 1 'mg' // quantity
+| gender // simple identifier
+| meta.versionId // backbone property
+| name[0].text // array indexer
+| today() // top level function
+| 1.toString() // const calling a string
+| birthDate.toString() // type conversion(function) on property
+| `deceased` // quoted identifier
+| text.`div` // identifier that is a reserved word
+| _testme // idenfier starting with an underscore (not a fhir property)
+| deceased.ofType(Boolean) // type selector
+// | deceased as boolean // 'as'
+// | deceased.as(boolean)
+| (deceased is Boolean)
+| name.where($this.use = 'usual').text // $this keyword in use
+| iif(true, 'iif true', 'iif false') // iif function
+| %ucum // an environment variable (from the spec)
+| %`ucum` + '/test' // delimitted environment variable
+| 5-6 // a numeric expression
+| iif(true or false xor true, 'boolean tv', 'boolean fv') // booleans
+| 6*6 //numeric multiplication
+| name.select('x: '+ family.combine(given).join(', '))
