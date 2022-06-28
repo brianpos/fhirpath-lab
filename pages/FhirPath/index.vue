@@ -102,8 +102,7 @@
                           </v-btn>
                         </template>
                       </v-text-field>
-                      <label class="v-label theme--light bare-label">Test Resource JSON (optional, if Resource ID
-                        provided)</label>
+                      <label class="v-label theme--light bare-label">Test Resource JSON <i>{{ resourceJsonChangedMessage() }}</i></label>
                       <div height="85px" width="100%" ref="aceEditorResourceJsonTab"></div>
                       <!-- <div class="ace_editor_footer"></div> -->
                       <v-text-field label="Terminology Server" v-model="terminologyServer" hide-details="auto"
@@ -156,7 +155,7 @@
             <v-card flat>
               <v-card-text>
                 <p class="fl-tab-header">Resource</p>
-                <v-text-field label="Test Resource Id" v-model="resourceId" hide-details="auto">
+                <v-text-field label="Test Resource Id" v-model="resourceId" hide-details="auto" autocorrect="off" autocapitalize="off" spellcheck="false">
                   <template v-slot:append>
                     <v-btn icon small tile @click="resourceId = undefined">
                       <v-icon> mdi-close </v-icon>
@@ -166,8 +165,7 @@
                     </v-btn>
                   </template>
                 </v-text-field>
-                <label class="v-label theme--light bare-label">Test Resource JSON (optional, if Resource ID
-                  provided)</label>
+                <label class="v-label theme--light bare-label">Test Resource JSON <i>{{ resourceJsonChangedMessage() }}</i></label>
                 <div height="85px" width="100%" ref="aceEditorResourceJsonRight"></div>
                 <!-- <div class="ace_editor_footer"></div> -->
                 <v-text-field label="Terminology Server" v-model="terminologyServer" hide-details="auto" />
@@ -306,6 +304,7 @@ interface FhirPathData {
   raw?: fhir4.Parameters;
   library?: fhir4.Library;
   resourceId?: string;
+  resourceJsonChanged: boolean;
   loadingData: boolean;
   saveOutcome?: fhir4.OperationOutcome;
   showOutcome?: boolean;
@@ -464,6 +463,7 @@ export default Vue.extend({
     var editorResourceJsonRightDiv: any = this.$refs.aceEditorResourceJsonRight as Element;
     if (editorResourceJsonRightDiv) {
       this.resourceJsonEditor = ace.edit(editorResourceJsonRightDiv, resourceEditorSettings);
+      this.resourceJsonEditor.session.on("change", this.resourceJsonChangedEvent);
 
       var editorResourceJsonLeftDiv: any = this.$refs.aceEditorResourceJsonTab as Element;
       if (editorResourceJsonLeftDiv) {
@@ -511,6 +511,14 @@ export default Vue.extend({
     await this.evaluateFhirPathExpression();
   },
   methods: {
+    resourceJsonChangedEvent(){
+      this.resourceJsonChanged = true;
+    },
+    resourceJsonChangedMessage(): string | undefined {
+      if (this.resourceJsonChanged && this.resourceId){
+        return '(modified)';
+      }
+    },
     tabTitle() {
       if (this.library) return this.library.title;
       if (this.getResourceJson()) return '(local resource JSON)';
@@ -672,11 +680,13 @@ export default Vue.extend({
             this.resourceId = rId;
             if (this.resourceJsonEditor) {
               this.resourceJsonEditor.setValue('');
+              this.resourceJsonChanged = false;
             if (this.resourceId?.startsWith("#") && this.library?.contained && this.library.contained[0]) {
               this.resourceId = undefined;
                 const resourceJson = JSON.stringify(this.library.contained[0], null, 4); // really should lookup by ID
                 if (resourceJson) {
                   this.resourceJsonEditor.setValue(resourceJson);
+                  this.resourceJsonChanged = false;
                 }
                 this.resourceJsonEditor.clearSelection();
               }
@@ -748,6 +758,7 @@ export default Vue.extend({
             const resourceJson = JSON.stringify(results, null, 4);
             if (resourceJson) {
               this.resourceJsonEditor.setValue(resourceJson);
+              this.resourceJsonChanged = false;
             }
             this.resourceJsonEditor.clearSelection();
           }
@@ -994,6 +1005,7 @@ export default Vue.extend({
       library: undefined,
       raw: undefined,
       resourceId: 'Patient/example',
+      resourceJsonChanged: false,
       loadingData: true,
       showOutcome: false,
       showAdvancedSettings: false,
