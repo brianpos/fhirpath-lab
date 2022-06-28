@@ -39,6 +39,10 @@
                 <v-icon left> mdi-clipboard-text-outline </v-icon>
                 Resource
               </v-tab>
+              <v-tab v-show="variables.size > 0">
+                <v-icon left> mdi-application-variable-outline </v-icon>
+                Variables
+              </v-tab>
               <v-tab :disabled="!hasTraceData()">
                 <v-icon left> mdi-format-list-bulleted </v-icon>
                 Trace
@@ -107,6 +111,32 @@
                       <!-- <div class="ace_editor_footer"></div> -->
                       <v-text-field label="Terminology Server" v-model="terminologyServer" hide-details="auto"
                         autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+                    </v-card-text>
+                  </v-card>
+                </v-tab-item>
+
+                <v-tab-item :eager="true">
+                  <!-- Variables -->
+                  <v-card flat>
+                    <v-card-text>
+                      <p class="fl-tab-header">Variables</p>
+                        <template v-for="(v1, index) in variables">
+                          <v-textarea auto-grow rows="1" :label="v1[0]" hide-details="auto" :value="v1[1]" @input="updateVariableValue(v1[0])" :key="index">
+                            <template v-slot:append>
+                              <v-btn icon small tile @click="variables.set(v1[0], undefined); $forceUpdate()">
+                                <v-icon> mdi-close </v-icon>
+                              </v-btn>
+                              <v-btn icon small tile @click="downloadVariableResource(v1[0])"> 
+                                <v-icon> mdi-download </v-icon>
+                              </v-btn>
+                            </template>
+                          </v-textarea>
+                          <!-- <div class="code-json">{{ JSON.stringify(v1[1], null, 2) }}</div> -->
+                        </template>
+                        <br/>
+                        <label><i>Note: This variables tab is only visible when there are variables in the expression.
+                          To add another variable, name it in the fhirpath expression.<br/>
+                          Also note that the variables are not supported in the context expression.</i></label>
                     </v-card-text>
                   </v-card>
                 </v-tab-item>
@@ -320,6 +350,7 @@ interface FhirPathData {
   expressionContextEditor?: ace.Ace.Editor;
   debugEditor?: ace.Ace.Editor;
   resourceJsonEditor?: ace.Ace.Editor;
+  variables: Map<string, any>;
 }
 
 interface ResultItem {
@@ -422,11 +453,10 @@ export default Vue.extend({
         wrapBehavioursEnabled: true
       });
 
-      if (this.expressionEditor) {
         setCustomHighlightRules(this.expressionEditor, FhirPathHightlighter_Rules);
         this.expressionEditor.setValue("trace('trc').given");
         this.expressionEditor.clearSelection();
-      }
+        this.expressionEditor.on("change", this.fhirpathExpressionChangedEvent)
     }
 
     var editorDebugDiv: any = this.$refs.aceEditorDebug as Element;
@@ -513,6 +543,49 @@ export default Vue.extend({
   methods: {
     resourceJsonChangedEvent(){
       this.resourceJsonChanged = true;
+    },
+    updateVariableValue(name: string){
+      const ie: InputEvent = event as InputEvent;
+      // console.log(event);
+      const value = (ie.currentTarget as any).value;
+      if (this.variables.get(name) !== value){
+        this.variables.set(name, value);
+        this.$forceUpdate();
+      }
+    },
+    fhirpathExpressionChangedEvent(){
+      // Check the expression to see if there are any variables in there
+      const session = this.expressionEditor?.session;
+      if (session){
+        const count = session.doc.getLength();
+        // accumulate the variables
+        let updatedVariables = new Map<string, any>();
+        for (let row = 0; row<= count; row++){
+          if (session.doc.getLine(row).includes("%")){
+            const tkns = this.expressionEditor?.session.getTokens(row);
+            if (tkns){
+              for (const tkn of tkns){
+                if (tkn.type === "fhir_variable"){
+                  if (!this.variables.has(tkn.value)){
+                    console.log(tkn.value);
+                    updatedVariables.set(tkn.value, undefined);
+                    // provide default implementation values for known env vars
+                    switch(tkn.value){
+                      case '%ucum': updatedVariables.set(tkn.value, "http://unitsofmeasure.org"); break;
+                    }
+                  }
+                  else {
+                    updatedVariables.set(tkn.value, this.variables.get(tkn.value));
+                  }
+                }
+              }
+            }
+          }
+        }
+        this.variables = updatedVariables;
+      }
+      if (this.tab === 2){
+      }
     },
     resourceJsonChangedMessage(): string | undefined {
       if (this.resourceJsonChanged && this.resourceId){
@@ -786,6 +859,59 @@ export default Vue.extend({
       }
     },
 
+    async downloadVariableResource(name: string) {
+      try {
+        if (!this.variables.get(name)) return;
+        let url = this.variables.get(name);
+        if (url && !url.startsWith('http'))
+          url = settings.getFhirServerUrl() + '/' + url;
+
+        if (this.cancelSource) this.cancelSource.cancel("new download started");
+        this.cancelSource = axios.CancelToken.source();
+        this.loadingData = true;
+        let token = this.cancelSource.token;
+        const response = await axios.get<fhir4.Resource>(url, {
+          cancelToken: token,
+          headers: {
+            "Cache-Control": "no-cache",
+            "Accept": requestFhirAcceptHeaders
+          }
+        });
+        if (token.reason) {
+          console.log(token.reason);
+          return;
+        }
+        this.cancelSource = undefined;
+        this.loadingData = false;
+
+        const results = response.data;
+        if (results) {
+          this.variables.set(name, JSON.stringify(results, null, 4));
+          this.$forceUpdate();
+        }
+      } catch (err) {
+        this.loadingData = false;
+        if (axios.isAxiosError(err)) {
+          const serverError = err as AxiosError<fhir4.OperationOutcome>;
+          if (serverError && serverError.response) {
+            this.setResultJson(JSON.stringify(serverError.response, null, 4));
+            if (serverError.response.data?.resourceType == 'OperationOutcome') {
+              this.setResultJson(JSON.stringify(serverError.response, null, 4));
+              this.saveOutcome = serverError.response.data;
+            } else {
+              if (serverError.response.status == 404)
+                this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
+              this.saveOutcome?.issue.push({ code: 'not-found', severity: 'error', details: { text: 'Test resource not found' } });
+            }
+            this.showOutcome = true;
+            return serverError.response.data;
+          }
+        } else {
+          console.log("Client Error:", err);
+        }
+      }
+    },
+
     async evaluateExpressionUsingFhirpathjs() {
       if (!this.getResourceJson() && this.resourceId) {
         await this.downloadTestResource();
@@ -805,7 +931,20 @@ export default Vue.extend({
         fhirData = JSON.parse(resourceJson);
       }
       // debugger;
-      var environment: any = { resource: fhirData };
+      var environment: Record<string, any> = { resource: fhirData };
+      for (let v of this.variables) {
+        let value = v[1];
+        if (value && (value.startsWith("[") || value.startsWith("{"))) {
+          // convert to an object
+          try{
+            value = JSON.parse(value);
+          }
+          catch(e){
+            console.log(e);
+          }
+        }
+        environment[v[0].substring(1)] = value;
+      }
 
       let contextNodes: any[] = [];
 
@@ -1022,6 +1161,7 @@ export default Vue.extend({
       expressionContextEditor: undefined,
       debugEditor: undefined,
       resourceJsonEditor: undefined,
+      variables: new Map<string, any>(),
     };
   },
 });
