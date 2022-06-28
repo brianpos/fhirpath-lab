@@ -126,7 +126,7 @@
                               <v-btn icon small tile @click="variables.set(v1[0], undefined); $forceUpdate()">
                                 <v-icon> mdi-close </v-icon>
                               </v-btn>
-                              <v-btn icon small tile @click="downloadVariableResource(v1[0])"> 
+                              <v-btn icon small tile @click="downloadVariableResource(v1[0])" :hidden="!isValidFhirUrl(v1[1])"> 
                                 <v-icon> mdi-download </v-icon>
                               </v-btn>
                             </template>
@@ -541,6 +541,17 @@ export default Vue.extend({
     await this.evaluateFhirPathExpression();
   },
   methods: {
+    isValidFhirUrl(url: string){
+      if (url){
+        // Not being fussing on values explicitly tagged with a web protocol
+        if (url.startsWith("http:")) return true;
+        if (url.startsWith("https:")) return true;
+
+        // if the first component is a FHIR resource type, then we'll let that go too.
+        if (url.startsWith("Patient")) return true;
+      }
+      return false;
+    },
     resourceJsonChangedEvent(){
       this.resourceJsonChanged = true;
     },
