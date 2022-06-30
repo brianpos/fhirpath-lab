@@ -159,7 +159,7 @@ export default Vue.extend({
     },
     // https://www.sitepoint.com/fetching-data-third-party-api-vue-axios/
     async searchFhirServer() {
-      document.title = "Value Set:";
+      document.title = "Search Parameter:";
       const createNew = (): fhir4.SearchParameter => {
         var newResource: fhir4.SearchParameter = {
           resourceType: "SearchParameter",
