@@ -23,7 +23,7 @@
         <span class="markdown" title="(preview) The Purpose describes why this Questionnaire was created."
           v-html="convertHtml(raw.purpose)" />
 
-        <v-text-field label="Name" v-show="showAdvancedSettings" v-model="raw.name" :readonly="readonly"
+        <v-text-field label="Name" v-show="(showAdvancedSettings && raw.resourceType !=='SubscriptionTopic')" v-model="raw.name" :readonly="readonly"
           hide-details="auto" @input="notifyChange" />
 
         <span class="field-label">Use Context:</span><span v-text="raw.useContext" /> <br />
