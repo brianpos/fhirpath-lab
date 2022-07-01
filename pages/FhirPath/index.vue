@@ -538,7 +538,7 @@ export default Vue.extend({
     else {
       if (this.$route.query.expression) {
         if (this.$route.query.exampletype) {
-          this.resourceId = `https://sqlonfhir-r4.azurewebsites.net/fhir/${this.$route.query.exampletype}/example`;
+          this.resourceId = `${settings.getFhirServerUrl()}/${this.$route.query.exampletype}/example`;
         }
         else {
           if (this.$route.query.resource) {

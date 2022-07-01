@@ -151,7 +151,7 @@ export default Vue.extend({
       return this.raw?.snapshot?.element || this.raw?.differential?.element || [];
     },
     testExpressionPath(element: ElementDefinition, constraint: ElementDefinitionConstraint):string {
-      return `../FhirPath?exampletype=${this.raw?.type}&context=${element.path}&expression=${constraint.expression}`;
+      return `../FhirPath?exampletype=${this.raw?.type}&context=${encodeURIComponent(element.path??'')}&expression=${encodeURIComponent(constraint.expression ?? '')}`;
     },
     hasNonStandardConstraint(element: ElementDefinition) {
       if (!element.constraint) return false;

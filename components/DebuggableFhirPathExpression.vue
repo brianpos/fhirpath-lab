@@ -1,7 +1,7 @@
 <template>
   <div
     class="
-      trigger-item
+      fhir-path-editor
       v-input--is-focused
       v-input v-text-field v-text-field--is-booted
     "
@@ -39,7 +39,7 @@
 </template>
 
 <style lang="scss" scoped>
-.trigger-item {
+.fhir-path-editor {
   display: flex;
   align-items: flex-start;
   flex: 1 0 auto;
