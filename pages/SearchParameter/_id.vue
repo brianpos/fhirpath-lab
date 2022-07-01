@@ -18,7 +18,7 @@
       </div>
       <v-card v-if="raw">
         <v-toolbar flat color="primary">
-          <v-toolbar-title><span v-text="raw.title" /> (<span v-text="raw.status" />)<span v-if="raw.version">
+          <v-toolbar-title><span v-text="raw.name" /> (<span v-text="raw.status" />)<span v-if="raw.version">
               - {{ raw.version }}</span></v-toolbar-title>
           <v-spacer />
           <v-btn icon>
@@ -49,15 +49,9 @@
                   <v-text-field label="Base" v-model="raw.base" hide-details="auto" readonly />
                   <v-text-field label="Type" :value="computedType()" hide-details="auto" readonly />
                   <!-- <v-text-field label="Target" v-model="raw.target" hide-details="auto" /> -->
-                  <v-textarea label="Expression" v-model="raw.expression" hide-details="auto"
-                    rows="3" auto-grow>
-                    <template v-slot:append>
-                      <v-btn icon small tile :href="testExpressionPath()"
-                        title="Debug this expression with the fhirpath tester">
-                        <v-icon> mdi-bug-outline </v-icon>
-                      </v-btn>
-                    </template>
-                  </v-textarea>
+                  <debuggable-fhir-path-expression :readonly="false"
+                    label="Expression" :minLines="3" :href="testExpressionPath()"
+                    :value="raw.expression" @change="updateExpression"/>
                 </template>
               </conformance-resource-details-tab>
             </v-tab-item>
@@ -125,8 +119,10 @@ import {
 } from "~/helpers/favourites";
 import { DateTime } from "luxon";
 import { BaseResource_defaultValues } from "~/models/BaseResourceTableData";
+import DebuggableFhirPathExpression from "~/components/DebuggableFhirPathExpression.vue";
 
 export default Vue.extend({
+  components: { DebuggableFhirPathExpression },
   mounted() {
     this.searchFhirServer();
   },
@@ -136,6 +132,11 @@ export default Vue.extend({
         return 'argh';
       if (this.raw.target) return `${this.raw.type}(${this.raw.target})`;
       return this.raw.type;
+    },
+    updateExpression(event: InputEvent) {
+      if (this.raw){
+        this.raw.expression = event.data ?? undefined;
+      }
     },
     testExpressionPath() {
       return `../FhirPath?exampletype=${this.raw?.base}&expression=${this.raw?.expression}`;

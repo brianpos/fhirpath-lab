@@ -3,7 +3,7 @@
     <v-card-text>
       <p class="fl-tab-header">Details</p>
       <v-form>
-        <v-text-field label="Title" v-model="raw.title" :readonly="readonly" hide-details="auto"
+        <v-text-field label="Title" v-if="(raw.resourceType !== 'SearchParameter')" v-model="raw.title" :readonly="readonly" hide-details="auto"
           @input="notifyChange" />
         <v-checkbox v-show="showAdvancedSettings" label="Experimental" v-model="raw.experimental" :readonly="readonly"
           dense hide-details="auto" @click="notifyChange" />

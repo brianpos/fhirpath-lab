@@ -77,18 +77,12 @@
                               <template v-for="(constraint, indexConstraint) in element.constraint">
                                 <div :key="indexConstraint" v-if="!isStandardConstraint(constraint)">
                                   <b>{{ constraint.key }}</b> {{ constraint.human }}<br />
-                                  <v-textarea label="Expression" v-model="constraint.expression"
-                                    hide-details="auto" rows="2" auto-grow readonly>
-                                    <template v-slot:append>
-                                      <v-btn icon small tile :href="testExpressionPath(element, constraint)"
-                                        title="Debug this expression with the fhirpath tester">
-                                        <v-icon> mdi-bug-outline </v-icon>
-                                      </v-btn>
-                                    </template>
-                                  </v-textarea>
+                                  <debuggable-fhir-path-expression
+                                    readonly="true" :href="testExpressionPath(element, constraint)"
+                                    label="Expression" :minLines="2"
+                                    :value="constraint.expression" />
                                 </div>
                               </template>
-
                             </td>
                           </tr>
                         </template>
