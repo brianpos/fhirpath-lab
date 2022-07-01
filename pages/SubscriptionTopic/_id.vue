@@ -36,6 +36,18 @@
             <v-icon left> mdi-download-network-outline </v-icon>
             Publishing
           </v-tab>
+          <v-tab>
+            <v-icon left> mdi-air-filter </v-icon>
+            Triggers
+          </v-tab>
+          <v-tab>
+            <v-icon left> mdi-filter-cog-outline </v-icon>
+            Filters
+          </v-tab>
+          <v-tab>
+            <v-icon left> mdi-shape-outline </v-icon>
+            Shape
+          </v-tab>
 
           <v-tabs-items touchless v-model="tab">
             <v-tab-item>
@@ -129,14 +141,22 @@ export default Vue.extend({
     this.searchFhirServer();
   },
   methods: {
-    computedType: function () {
-      if (!this.raw)
-        return 'argh';
-      if (this.raw.target) return `${this.raw.type}(${this.raw.target})`;
-      return this.raw.type;
+    addResourceTrigger: function() {
+      const newTrigger: fhir4.SubscriptionTopicResourceTrigger = {
+        resource: "",
+        queryCriteria: {}
+      }
+      this.raw?.resourceTrigger?.push(newTrigger);
     },
-    testExpressionPath() {
-      return `../FhirPath?exampletype=${this.raw?.base}&expression=${this.raw?.expression}`;
+    addEventTrigger: function() {
+      const newTrigger: fhir4.SubscriptionTopicEventTrigger = {
+        resource: "",
+        event: {}
+      }
+      this.raw?.eventTrigger?.push(newTrigger);
+    },
+    computedType: function () {
+        return 'argh';
     },
     settingsClosed() {
       this.showAdvancedSettings = settings.showAdvancedSettings();
@@ -185,6 +205,8 @@ export default Vue.extend({
       if (this.raw) {
         this.isFavourite = isFavourite(this.raw.resourceType, this.raw.id);
         document.title = `Subscription Topic: ${this.raw.title}`;
+        if (!this.raw.resourceTrigger) this.raw.resourceTrigger = [];
+        if (!this.raw.eventTrigger) this.raw.eventTrigger = [];
       }
     },
     async saveData() {
