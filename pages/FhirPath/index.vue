@@ -121,9 +121,11 @@
                     <v-card-text>
                       <p class="fl-tab-header">Variables</p>
                         <template v-for="(v1, index) in variables">
-                          <v-textarea auto-grow rows="1" :label="v1[0]" hide-details="auto" :value="v1[1]" @input="updateVariableValue(v1[0])" :key="index">
+                        <v-textarea :auto-grow="!v1[1].resourceId" :rows="(!v1[1].resourceId?1:5)" :label="v1[0]" hide-details="auto" :value="v1[1].data" 
+                          @input="updateVariableValue(v1[0])" :key="index" 
+                          :messages="variableMessages(v1[1])" :error-messages="variableErrorMessages(v1[1])" :error="(!!v1[1].errorMessage)">
                             <template v-slot:append>
-                              <v-btn icon small tile @click="variables.set(v1[0], undefined); $forceUpdate()">
+                            <v-btn icon small tile @click="variables.set(v1[0], { data: v1[1].resourceId }); $forceUpdate()">
                                 <v-icon> mdi-close </v-icon>
                               </v-btn>
                               <v-btn icon small tile @click="downloadVariableResource(v1[0])" :hidden="!isValidFhirUrl(v1[1])"> 
@@ -213,8 +215,17 @@
   </div>
 </template>
 
-<style lang="scss" scoped >
+<style lang="scss">
+.v-input--has-state.error--text .v-input__slot::before,
+.v-input--has-state.error--text .v-input__slot::after,
+.v-input--has-state.error--text .v-label,
+.v-input--has-state.error--text .v-messages__message {
+  color: red;
+  font-weight: bold;
+}
+</style>
 
+<style lang="scss" scoped >
 tr.ve-table-body-tr {
   cursor: pointer;
 }
@@ -350,12 +361,19 @@ interface FhirPathData {
   expressionContextEditor?: ace.Ace.Editor;
   debugEditor?: ace.Ace.Editor;
   resourceJsonEditor?: ace.Ace.Editor;
-  variables: Map<string, any>;
+  variables: Map<string, VariableData>;
 }
 
 interface ResultItem {
   type: string;
   value: any;
+}
+
+interface VariableData {
+  data: any;
+  resourceId?: string;
+  datatype?: string;
+  errorMessage?: string;
 }
 
 interface ResultData {
@@ -549,7 +567,26 @@ export default Vue.extend({
     await this.evaluateFhirPathExpression();
   },
   methods: {
-    isValidFhirUrl(url: string){
+    variableMessages(variable: VariableData): string | undefined{
+      if (variable.resourceId) return variable.resourceId;
+      if (variable.data?.startsWith("[")) return "(array)";
+      if (variable.data?.startsWith("{")) return "(Object)";
+    },
+    variableErrorMessages(variable: VariableData): string | undefined {
+      if (variable.errorMessage) delete variable.errorMessage;
+      if (variable.data?.startsWith("[") || variable.data?.startsWith("{")){
+          try{
+            JSON.parse(variable.data);
+          }
+          catch(e: any){
+            // console.log(e);
+            variable.errorMessage = e.message;
+            return e.message;
+          }
+      }
+    },
+    isValidFhirUrl(variable: VariableData){
+      const url: string = variable?.resourceId ?? variable?.data;
       if (url){
         // Not being fussing on values explicitly tagged with a web protocol
         if (url.startsWith("http:")) return true;
@@ -567,9 +604,13 @@ export default Vue.extend({
       const ie: InputEvent = event as InputEvent;
       // console.log(event);
       const value = (ie.currentTarget as any).value;
-      if (this.variables.get(name) !== value){
-        this.variables.set(name, value);
+      const varValue = this.variables.get(name)
+      if (varValue && varValue.data !== value){
+        varValue.data = value;
         this.$forceUpdate();
+      }
+      else{
+        this.variables.set(name, { data: value });
       }
     },
     fhirpathExpressionChangedEvent(){
@@ -587,8 +628,8 @@ export default Vue.extend({
                 if (tkn.type === "fhir_variable"){
                   const varName = canonicalVariableName(tkn.value);
                   if (!this.variables.has(varName)){
-                    console.log(tkn.value + ' ' + varName);
-                    updatedVariables.set(varName, undefined);
+                    // console.log(tkn.value + ' ' + varName);
+                    updatedVariables.set(varName, { data: undefined });
                     // provide default implementation values for known env vars
                     switch(varName){
                       case 'ucum': updatedVariables.set(varName, "http://unitsofmeasure.org"); break;
@@ -882,7 +923,7 @@ export default Vue.extend({
     async downloadVariableResource(name: string) {
       try {
         if (!this.variables.get(name)) return;
-        let url = this.variables.get(name);
+        let url = this.variables.get(name)?.resourceId ?? this.variables.get(name)?.data;
         if (url && !url.startsWith('http'))
           url = settings.getFhirServerUrl() + '/' + url;
 
@@ -906,7 +947,7 @@ export default Vue.extend({
 
         const results = response.data;
         if (results) {
-          this.variables.set(name, JSON.stringify(results, null, 4));
+          this.variables.set(name, { resourceId: url, data: JSON.stringify(results, null, 4)});
           this.$forceUpdate();
         }
       } catch (err) {
@@ -953,7 +994,7 @@ export default Vue.extend({
       // debugger;
       var environment: Record<string, any> = { resource: fhirData };
       for (let v of this.variables) {
-        let value = v[1];
+        let value = v[1].data;
         if (value && (value.startsWith("[") || value.startsWith("{"))) {
           // convert to an object
           try{
@@ -1123,7 +1164,7 @@ export default Vue.extend({
         let pVars : fhir4.ParametersParameter = { name: "variables", part: []};
         p.parameter?.push(pVars);
         for(const varName of this.variables.keys()) {
-          let value = this.variables.get(varName);
+          let value = this.variables.get(varName)?.data;
           if (value && (value.startsWith("[") || value.startsWith("{"))) {
             // convert to an object
             try{
@@ -1138,7 +1179,7 @@ export default Vue.extend({
             }
             pVars.part?.push({ name: varName, extension: [{ url: 'http://fhir.forms-lab.com/StructureDefinition/json-value', valueString: value }] });
           }
-          else{
+          else {
             if (value === 'true') pVars.part?.push({ name: varName, valueBoolean: true });
             else if (value === 'false') pVars.part?.push({ name: varName, valueBoolean: false });
             else if (value.match(/^[-+]?[0-9]+$/)) pVars.part?.push({ name: varName, valueInteger: value });
@@ -1212,7 +1253,7 @@ export default Vue.extend({
       expressionContextEditor: undefined,
       debugEditor: undefined,
       resourceJsonEditor: undefined,
-      variables: new Map<string, any>(),
+      variables: new Map<string, VariableData>(),
     };
   },
 });
