@@ -614,7 +614,7 @@ export default Vue.extend({
     },
     tabTitle() {
       if (this.library) return this.library.title;
-      if (this.getResourceJson()) return '(local resource JSON)';
+      if (this.getResourceJson() && this.resourceJsonChanged) return '(local resource JSON)';
       return this.resourceId;
     },
     settingsClosed() {
