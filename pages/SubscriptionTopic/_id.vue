@@ -40,11 +40,11 @@
             <v-icon left> mdi-air-filter </v-icon>
             Triggers
           </v-tab>
-          <v-tab>
+          <v-tab :hidden="true">
             <v-icon left> mdi-filter-cog-outline </v-icon>
             Filters
           </v-tab>
-          <v-tab>
+          <v-tab :hidden="true">
             <v-icon left> mdi-shape-outline </v-icon>
             Shape
           </v-tab>
@@ -54,10 +54,37 @@
               <!-- Details -->
               <conformance-resource-details-tab :raw="raw" :readonly="readonly"
                 :showAdvancedSettings="showAdvancedSettings" @update="updateNow">
-                <template v-slot:extension>
-                  <br />
-                  <div class="results">Search Details</div>
+              </conformance-resource-details-tab>
+            </v-tab-item>
+
+            <v-tab-item>
+              <!-- Publishing -->
+              <conformance-resource-publishing-tab :raw="raw" :publishedVersions="publishedVersions"
+                :readonly="readonly" :showAdvancedSettings="showAdvancedSettings" @update="updateNow" />
+            </v-tab-item>
+
+            <v-tab-item>
+              <!-- Triggers Resource + Event -->
+              <v-card flat>
+                <v-card-text v-if="raw && raw.resourceTrigger && raw.eventTrigger">
+                  <p class="fl-tab-header">Triggers</p>
+                  <!-- <div class="results">Resource Triggers</div> -->
+                  <v-simple-table class="triggers">
+                    <template v-for="(trigger, i1) in raw.resourceTrigger">
+                      <tr :key="i1">
+                        <td class="context" colspan="2">
+                          <resource-trigger-item :name="'table'+i1" :raw="trigger" :readonly="readonly" @update="updateNow">
+                          </resource-trigger-item>
+                        </td>
+                      </tr>
+                    </template>
+                  </v-simple-table>
+                  
+                  <v-btn small @click="addResourceTrigger">Add Resource Trigger</v-btn>
+                  <!-- <br/>
+                  <div class="results">Event Triggers</div>
                   <v-text-field label="Type" :value="computedType()" hide-details="auto" readonly />
+                  <v-btn small @click="addEventTrigger">Add Event Trigger</v-btn> -->
                   <!-- <v-text-field label="Target" v-model="raw.target" hide-details="auto" /> -->
                   <!-- <v-textarea label="Expression" v-model="raw.expression" hide-details="auto"
                     rows="3" auto-grow>
@@ -68,15 +95,32 @@
                       </v-btn>
                     </template>
                   </v-textarea> -->
-                </template>
-              </conformance-resource-details-tab>
+                </v-card-text>
+              </v-card>
             </v-tab-item>
 
             <v-tab-item>
-              <!-- Publishing -->
-              <conformance-resource-publishing-tab :raw="raw" :publishedVersions="publishedVersions"
-                :readonly="readonly" :showAdvancedSettings="showAdvancedSettings" @update="updateNow" />
+              <!-- Filters -->
+              <v-card flat>
+                <v-card-text>
+                  <p class="fl-tab-header">Filters</p>
+                  <v-text-field label="Type" :value="computedType()" hide-details="auto" readonly />
+                  <v-btn small>Add</v-btn>
+                </v-card-text>
+              </v-card>
             </v-tab-item>
+
+            <v-tab-item>
+              <!-- Notification Shape -->
+              <v-card flat>
+                <v-card-text>
+                  <p class="fl-tab-header">Shape</p>
+                  <v-text-field label="Type" :value="computedType()" hide-details="auto" readonly />
+                  <v-btn small>Add</v-btn>
+                </v-card-text>
+              </v-card>
+            </v-tab-item>
+
           </v-tabs-items>
         </v-tabs>
       </v-card>
@@ -97,6 +141,11 @@
 </template>
 
 <style lang="scss" scoped>
+.triggers tr td {
+ border-bottom: $card-header-color 3pt solid;
+ margin-bottom: 4px;
+}
+
 .v-window-item--active {
   overflow-y: auto;
   overflow-x: hidden;
@@ -135,8 +184,10 @@ import {
 } from "~/helpers/favourites";
 import { DateTime } from "luxon";
 import { BaseResource_defaultValues } from "~/models/BaseResourceTableData";
+import ResourceTriggerItem from "~/components/SubscriptionTopic/ResourceTriggerItem.vue";
 
 export default Vue.extend({
+  components: { ResourceTriggerItem },
   mounted() {
     this.searchFhirServer();
   },
