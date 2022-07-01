@@ -370,6 +370,14 @@ interface TraceData {
   value: string;
 }
 
+function canonicalVariableName(name: string): string {
+  if (name.startsWith("%")) name = name.substring(1);
+  if (name.startsWith("`")) name = name.substring(1);
+  if (name.endsWith("`")) name = name.substring(0, name.length-1);
+  if (name.indexOf('`') !== -1) name = name.replaceAll('\\`', '`');
+  return name;
+}
+
 function getValue(entry: fhir4.ParametersParameter): ResultItem[] {
   let result: ResultItem[] = [];
   var myMap = new Map(Object.entries(entry));
@@ -577,16 +585,17 @@ export default Vue.extend({
             if (tkns){
               for (const tkn of tkns){
                 if (tkn.type === "fhir_variable"){
-                  if (!this.variables.has(tkn.value)){
-                    console.log(tkn.value);
-                    updatedVariables.set(tkn.value, undefined);
+                  const varName = canonicalVariableName(tkn.value);
+                  if (!this.variables.has(varName)){
+                    console.log(tkn.value + ' ' + varName);
+                    updatedVariables.set(varName, undefined);
                     // provide default implementation values for known env vars
-                    switch(tkn.value){
-                      case '%ucum': updatedVariables.set(tkn.value, "http://unitsofmeasure.org"); break;
+                    switch(varName){
+                      case 'ucum': updatedVariables.set(varName, "http://unitsofmeasure.org"); break;
                     }
                   }
                   else {
-                    updatedVariables.set(tkn.value, this.variables.get(tkn.value));
+                    updatedVariables.set(varName, this.variables.get(varName));
                   }
                 }
               }
@@ -954,7 +963,7 @@ export default Vue.extend({
             console.log(e);
           }
         }
-        environment[v[0].substring(1)] = value;
+        environment[v[0]] = value;
       }
 
       let contextNodes: any[] = [];
@@ -1107,6 +1116,37 @@ export default Vue.extend({
       const contextExpression = this.getContextExpression();
       if (contextExpression) {
         p.parameter?.push({ name: "context", valueString: contextExpression });
+      }
+
+      // add in any variables
+      if (this.variables){
+        let pVars : fhir4.ParametersParameter = { name: "variables", part: []};
+        p.parameter?.push(pVars);
+        for(const varName of this.variables.keys()) {
+          let value = this.variables.get(varName);
+          if (value && (value.startsWith("[") || value.startsWith("{"))) {
+            // convert to an object
+            try{
+              const po = JSON.parse(value);
+              if (po.resourceType){
+                pVars.part?.push({ name: varName, resource: po });
+                continue;
+              }
+            }
+            catch(e){
+              console.log(e);
+            }
+            pVars.part?.push({ name: varName, extension: [{ url: 'http://fhir.forms-lab.com/StructureDefinition/json-value', valueString: value }] });
+          }
+          else{
+            if (value === 'true') pVars.part?.push({ name: varName, valueBoolean: true });
+            else if (value === 'false') pVars.part?.push({ name: varName, valueBoolean: false });
+            else if (value.match(/^[-+]?[0-9]+$/)) pVars.part?.push({ name: varName, valueInteger: value });
+            else if (value.match(/^[-+]?[0-9]+.[0-9]+$/)) pVars.part?.push({ name: varName, valueDecimal: value });
+            // Should other types be also included here?
+            else pVars.part?.push({ name: varName, valueString: value });
+          }
+        }
       }
 
       if (this.selectedEngine == "java (HAPI)") {
