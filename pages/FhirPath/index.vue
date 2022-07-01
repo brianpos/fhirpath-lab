@@ -319,7 +319,8 @@ import Vue, { VNode } from "vue";
 import { settings } from "~/helpers/user_settings";
 import {
   requestFhirAcceptHeaders,
-  requestFhirContentTypeHeaders
+  requestFhirContentTypeHeaders,
+  fhirResourceTypes,
 } from "~/helpers/searchFhir";
 import axios, { AxiosResponse } from "axios";
 import { AxiosError } from "axios";
@@ -589,11 +590,18 @@ export default Vue.extend({
       const url: string = variable?.resourceId ?? variable?.data;
       if (url){
         // Not being fussing on values explicitly tagged with a web protocol
-        if (url.startsWith("http:")) return true;
-        if (url.startsWith("https:")) return true;
+        if (url.startsWith("http://") || url.startsWith("https://")){
+          for (const frt of fhirResourceTypes){
+            if (url.indexOf(frt+"/") > 0 || url.indexOf(frt+"?") > 0) return true;
+          }
+          return false;
+        } 
 
         // if the first component is a FHIR resource type, then we'll let that go too.
-        if (url.startsWith("Patient")) return true;
+        for (const frt of fhirResourceTypes){
+          if (url.startsWith(frt+"/")) return true;
+          if (url.startsWith(frt+"?")) return true;
+        }
       }
       return false;
     },
