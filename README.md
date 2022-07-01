@@ -107,3 +107,9 @@ More information about the usage of this directory in [the documentation](https:
 | iif(true or false xor true, 'boolean tv', 'boolean fv') // booleans
 | 6*6 //numeric multiplication
 | name.select('x: '+ family.combine(given).join(', '))
+
+## Known Issues
+_(this set of issues are known but not on the main issues list as don't plan to fix unless have legitimate use cases that need them)_
+* Environment Variables using the quoted format cannot include escaped values in them e.g. `` %`tes\`t` ``
+* Environmant Variable processing in the JAVA engine doesn't support resource framgents
+* Sharing an expression via the share link doesn't include resource JSON or environment variable values _(plan to support this only via saved Library resources in the future)_
