@@ -28,7 +28,7 @@
         icon
         small
         tile
-        target="blank"
+        target="_blank"
         :href="href"
         title="Debug this expression with the fhirpath tester"
       >
