@@ -78,7 +78,7 @@
                                 <div :key="indexConstraint" v-if="!isStandardConstraint(constraint)">
                                   <b>{{ constraint.key }}</b> {{ constraint.human }}<br />
                                   <debuggable-fhir-path-expression
-                                    readonly="true" :href="testExpressionPath(element, constraint)"
+                                    :readonly="true" :href="testExpressionPath(element, constraint)"
                                     label="Expression" :minLines="2"
                                     :value="constraint.expression" />
                                 </div>
