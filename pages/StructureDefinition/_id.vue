@@ -60,7 +60,26 @@
                 <v-card-text>
                   <p class="fl-tab-header">Elements</p>
 
-                  <p v-if="raw.differential && raw.differential.element">
+                  <p v-if="!hasAnyNonStandardConstraints()">
+                    <v-simple-table>
+                      <thead>
+                        <tr>
+                          <th>Path</th>
+                          <th>Description & Constraints</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td class="path"></td>
+                          <td>
+                            <i>(No constraints defined in the differential)</i>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </v-simple-table>
+                  </p>
+
+                  <p v-if="hasAnyNonStandardConstraints()">
                     <v-simple-table>
                       <thead>
                         <tr>
@@ -70,7 +89,7 @@
                       </thead>
                       <tbody>
                         <template v-for="(element, index) in elements()">
-                          <tr :key="index" v-if="hasNonStandardConstraint(element)">
+                          <tr :key="index" v-if="hasNonStandardConstraint(element) && element.constraint">
                             <td class="path" v-text="element.path"></td>
                             <td>
                               {{ element.definition }}
@@ -152,6 +171,12 @@ export default Vue.extend({
     },
     testExpressionPath(element: ElementDefinition, constraint: ElementDefinitionConstraint):string {
       return `../FhirPath?exampletype=${this.raw?.type}&context=${encodeURIComponent(element.path??'')}&expression=${encodeURIComponent(constraint.expression ?? '')}`;
+    },
+    hasAnyNonStandardConstraints(): boolean {
+      for (const element of this.elements()){
+        if (this.hasNonStandardConstraint(element)) return true;
+      }
+      return false;
     },
     hasNonStandardConstraint(element: ElementDefinition) {
       if (!element.constraint) return false;
