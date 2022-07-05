@@ -60,7 +60,7 @@
   </v-simple-table>
 </template>
 
-<style>
+<style scoped>
 .col-description,
 .col-linkid {
   min-width: 20ch;

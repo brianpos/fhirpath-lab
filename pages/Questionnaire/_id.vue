@@ -38,9 +38,8 @@
             ></v-toolbar-title
           >
           <v-spacer />
-          <v-btn icon>
+          <v-btn v-if="enableSave && !readonly" icon title="save">
             <v-icon
-              v-if="enableSave && !readonly"
               @click="saveData"
               :disabled="saving"
             >

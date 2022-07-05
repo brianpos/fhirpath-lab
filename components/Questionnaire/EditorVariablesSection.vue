@@ -44,7 +44,7 @@
   </div>
 </template>
 
-<style>
+<style scoped>
 .group {
   background-color: #b19cd920;
 }

@@ -21,8 +21,8 @@
           <v-toolbar-title><span v-text="raw.title" /> (<span v-text="raw.status" />)<span v-if="raw.version">
               - {{ raw.version }}</span></v-toolbar-title>
           <v-spacer />
-          <v-btn icon>
-            <v-icon v-if="enableSave && !readonly" @click="saveData" :disabled="saving">
+          <v-btn v-if="enableSave && !readonly" icon title="save">
+            <v-icon @click="saveData" :disabled="saving">
               mdi-content-save
             </v-icon>
           </v-btn>
@@ -135,6 +135,12 @@
   overflow-y: auto;
   overflow-x: hidden;
   max-height: calc(100vh - 240px);
+}
+
+td {
+  vertical-align: top;
+  height: unset !important;
+  padding: 8px !important;
 }
 
 td.path {

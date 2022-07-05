@@ -76,6 +76,7 @@
             target="_blank">FirelySDK fhirpath (.net)</a>
         </div>
       </div>
+      <br/>
     </div>
   </div>
 </template>

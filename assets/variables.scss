@@ -65,6 +65,10 @@ $tab-color: rgba(0, 0, 0, 0.87);
 .v-tab {
   justify-content: initial;
 }
+.v-tab.v-tab.v-tab--active{
+  color: $tab-color;
+}
+
 .v-tab--active {
   background-color: $tab-backcolor;
   color: $tab-color;

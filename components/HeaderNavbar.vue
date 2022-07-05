@@ -1,7 +1,7 @@
 <template>
   <div class="header" data-app>
     <v-app-bar fixed app elevate-on-scroll dark>
-      <v-app-bar-nav-icon class="logo" href="/"
+      <v-app-bar-nav-icon class="logo" href="/" title="Fhirpath Lab Home"
         ><NuxtLogo
       /></v-app-bar-nav-icon>
       <v-toolbar-title>Fhirpath Lab</v-toolbar-title>
@@ -27,11 +27,11 @@
         <template v-slot:activator="{ on, attrs }">
           <v-btn
             elevation="0"
-            color="primary"
             dark
             v-bind="attrs"
             v-on="on"
             class="fl-nav dots"
+            title="Expression Sources"
           >
             <span class="fl-refdata">Expression Sources</span
             ><v-icon class="fl-refdata2">mdi-dots-vertical</v-icon>
@@ -52,7 +52,7 @@
         </v-list>
       </v-menu>
 
-      <v-btn icon small @click="overlay = true">
+      <v-btn icon small @click="overlay = true" title="Settings">
         <v-icon small>mdi-cog</v-icon>
       </v-btn>
 

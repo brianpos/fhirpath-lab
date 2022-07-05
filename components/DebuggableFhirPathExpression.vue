@@ -23,6 +23,7 @@
       <div
         class="ace_editor_footer"
         style="position: absolute; left: 0px; right: 0px; bottom: 0px"
+        ref="footerline"
       ></div>
       <v-btn
         icon
@@ -104,18 +105,18 @@ export default Vue.extend({
       });
 
       this.triggerEditor.on("blur", () => {
+        (this.$refs.labelControl as Element)?.classList.remove("primary--text");
+        (this.$refs.footerline as Element)?.classList.remove("primary--text");
         if (this.value) {
-          (this.$refs.labelControl as Element)?.classList.add(
-            "v-label--active"
-          );
+          (this.$refs.labelControl as Element)?.classList.add("v-label--active");
         } else {
-          (this.$refs.labelControl as Element)?.classList.remove(
-            "v-label--active"
-          );
+          (this.$refs.labelControl as Element)?.classList.remove("v-label--active");
         }
       });
       this.triggerEditor.on("focus", () => {
         (this.$refs.labelControl as Element)?.classList.add("v-label--active");
+        (this.$refs.labelControl as Element)?.classList.add("primary--text");
+        (this.$refs.footerline as Element)?.classList.add("primary--text");
       });
       setCustomHighlightRules(this.triggerEditor, FhirPathHightlighter_Rules);
       if (this.value) {
