@@ -26,6 +26,7 @@
         ref="footerline"
       ></div>
       <v-btn
+        v-if="href"
         icon
         small
         tile

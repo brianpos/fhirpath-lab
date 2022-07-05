@@ -215,6 +215,13 @@
   </div>
 </template>
 
+<style lang="scss" scoped>
+.ace_editor:focus-within+.ace_editor_footer {
+  color: #1976d2;
+  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);
+}
+</style>
+
 <style lang="scss" scoped >
 tr.ve-table-body-tr {
   cursor: pointer;
