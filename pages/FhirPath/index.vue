@@ -215,16 +215,6 @@
   </div>
 </template>
 
-<style lang="scss">
-.v-input--has-state.error--text .v-input__slot::before,
-.v-input--has-state.error--text .v-input__slot::after,
-.v-input--has-state.error--text .v-label,
-.v-input--has-state.error--text .v-messages__message {
-  color: red;
-  font-weight: bold;
-}
-</style>
-
 <style lang="scss" scoped >
 tr.ve-table-body-tr {
   cursor: pointer;
@@ -1117,7 +1107,7 @@ export default Vue.extend({
     },
     updateShareText() {
       this.shareToolTipMessage = shareTooltipText;
-      if (this.getResourceJson()) {
+      if (this.getResourceJson() && this.resourceJsonChanged) {
         this.shareToolTipMessage += '\r\n(without example resource JSON)';
       }
     },
