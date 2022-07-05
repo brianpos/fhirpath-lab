@@ -25,10 +25,13 @@
             </template>
           </v-text-field>
           <v-text-field
-          v-if="FhirServerSupportsSmartAuth"
+          v-if="FhirServerSupportsSmartAuth || OAuthClientId"
+            :class="(FhirServerSupportsSmartAuth ? '' : 'fp-amber')"
+            :messages="(FhirServerSupportsSmartAuth ? '' : 'Server does not support OAuth, remove the Client ID')"
             label="FHIR Server OAuth Client ID"
             v-model="OAuthClientId"
             hide-details="auto"
+            :clearable="!FhirServerSupportsSmartAuth"
           />
           <v-text-field
             label="FHIR Terminology Server"
@@ -80,7 +83,12 @@
   </span>
 </template>
 
-<style scoped>
+<style lang="scss">
+.v-application .fp-amber input {
+  color: #ffc107; //amber
+}
+</style>
+<style lang="scss" scoped>
 .v-card {
   width: min(80vw, 600px);
 }
@@ -91,17 +99,11 @@ import Vue from "vue";
 import axios from "axios";
 import { AxiosError } from "axios";
 import { List } from "fhir/r4";
-import {
-  setFavourite,
-  isFavourite,
-  unsetFavourite,
-} from "~/helpers/favourites";
 import "~/helpers/user_settings";
 import { settings, UserSettingsData } from "~/helpers/user_settings";
 import { requestFhirAcceptHeaders } from "~/helpers/searchFhir";
 import { fhirclient } from "fhirclient/lib/types";
 import { fhirVersions } from "fhirclient/lib/settings";
-import { fetchWellKnownJson } from "fhirclient/lib/smart";
 import { getExtension, getExtensionUriValue } from "fhir-extension-helpers";
 
 interface IControlData extends UserSettingsData {
