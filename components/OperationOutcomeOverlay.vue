@@ -7,8 +7,8 @@
           <div class="issue-item" :key="index" v-if="!hideIssue(issue)">
             <span>
               <nobr>
-              <v-icon v-if="issue.severity === 'error' || issue.severity === 'fatal'" style="color: red;">mdi-alert-octagon</v-icon>
-              <v-icon v-if="issue.severity === 'warning'" style="color: orange">mdi-alert</v-icon>
+              <v-icon v-if="issue.severity === 'error' || issue.severity === 'fatal'" color="red">mdi-alert-octagon</v-icon>
+              <v-icon v-if="issue.severity === 'warning'" color="orange">mdi-alert</v-icon>
             <span
               :class="severityClassName(issue.severity)"
               v-text="issue.severity"
@@ -63,17 +63,17 @@
   word-break: break-word;
 }
 
-.fatal {
+.fp-fatal {
   color: red;
   font-weight: bold;
 }
 
-.error {
+.fp-error {
   color: red;
   font-weight: bold;
 }
 
-.warning {
+.fp-warning {
   color: orange;
   font-weight: bold;
 }
@@ -95,9 +95,9 @@ export default Vue.extend({
       return false;
     },
     severityClassName(severity: string): string {
-      if (severity === "fatal") return "fatal";
-      if (severity === "error") return "error";
-      if (severity === "warning") return "warning";
+      if (severity === "fatal") return "fp-fatal";
+      if (severity === "error") return "fp-error";
+      if (severity === "warning") return "fp-warning";
       return "";
     },
     close() {
