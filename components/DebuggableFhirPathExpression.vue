@@ -10,7 +10,7 @@
       <label
         ref="labelControl"
         v-if="label"
-        style="position: absolute; z-index: 10; left: 0px; right: auto"
+        style="position: absolute; left: 0px; right: auto"
         class="v-label theme--light v-label--active"
         >{{ label }}</label
       >
