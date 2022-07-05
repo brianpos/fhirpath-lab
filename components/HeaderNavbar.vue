@@ -245,7 +245,7 @@ export default Vue.extend({
         // "iss": "https://fhir.simplifier.net/r4", // simplifier - no auth endpoints
         // "client_id": "3ab1d54f-b004-48fd-a1b6-eeae73d8858e",
         "scope": "launch openid profile fhirUser patient/*.read",
-        "redirectUri": "http://localhost:3000/"
+        "redirectUri": "/"
       });
     },
     async logout() {
