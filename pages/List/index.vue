@@ -109,13 +109,18 @@ export default Vue.extend({
       eventCustomOption: {
         bodyRowEvents: ({ row, rowIndex }: any) => {
           return {
-            click: (event: any) => {
+            click: (event: PointerEvent) => {
               console.log("click::", row, rowIndex, event);
               var data: ListTableData = row;
               console.log("row data::", data);
-              this.$router.push("/List/" + data.id);
+              if (event.ctrlKey){
+                window.open("/List/" + data.id, '_blank'); 
+              }
+              else{
+                this.$router.push("/List/" + data.id);
+              }
             },
-            contextmenu: (event: any) => {
+            contextmenu: (event: PointerEvent) => {
               console.log("contextmenu::", row, rowIndex, event);
               event.preventDefault();
             },

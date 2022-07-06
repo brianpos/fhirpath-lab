@@ -191,7 +191,7 @@ export default Vue.extend({
       );
       if (this.raw) {
         this.isFavourite = isFavourite(this.raw.resourceType, this.raw.id);
-        document.title = `Search Parameter: ${this.raw.name}`;
+        document.title = `Search Parameter: ${this.raw.name ?? this.raw.description }`;
       }
     },
     async saveData() {

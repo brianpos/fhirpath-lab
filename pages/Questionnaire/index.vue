@@ -326,13 +326,18 @@ export default Vue.extend({
       eventCustomOption: {
         bodyRowEvents: ({ row, rowIndex }: any) => {
           return {
-            click: (event: any) => {
+            click: (event: PointerEvent) => {
               console.log("click::", row, rowIndex, event);
               var data: QuestionnaireTableData = row;
               console.log("row data::", data);
-              this.$router.push("/Questionnaire/" + data.id);
+              if (event.ctrlKey){
+                window.open("/Questionnaire/" + data.id, '_blank'); 
+              }
+              else{
+                this.$router.push("/Questionnaire/" + data.id);
+              }
             },
-            contextmenu: (event: any) => {
+            contextmenu: (event: PointerEvent) => {
               console.log("contextmenu::", row, rowIndex, event);
               event.preventDefault();
             },
