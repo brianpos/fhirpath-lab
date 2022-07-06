@@ -12,6 +12,7 @@
               hide-details="auto"
               @input="notifyChange"
               :rules="rules"
+              spellcheck="false"
             />
           </v-col>
           <v-col cols="12" md="2" sm="12">
@@ -22,6 +23,7 @@
               :readonly="readonly || raw.status !== 'draft'"
               hide-details="auto"
               @input="notifyChange"
+              spellcheck="false"
             />
           </v-col>
         </v-row>

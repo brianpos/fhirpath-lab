@@ -24,7 +24,7 @@
           v-html="convertHtml(raw.purpose)" />
 
         <v-text-field label="Name" v-show="(showAdvancedSettings && raw.resourceType !=='SubscriptionTopic')" v-model="raw.name" :readonly="readonly"
-          hide-details="auto" @input="notifyChange" />
+          hide-details="auto" @input="notifyChange" spellcheck="false" />
 
         <span class="field-label">Use Context:</span><span v-text="raw.useContext" /> <br />
 
