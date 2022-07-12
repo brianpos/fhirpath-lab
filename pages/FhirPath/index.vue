@@ -319,7 +319,7 @@ import {
   requestFhirContentTypeHeaders,
   fhirResourceTypes,
 } from "~/helpers/searchFhir";
-import axios, { AxiosResponse } from "axios";
+import axios, { AxiosRequestHeaders, AxiosResponse } from "axios";
 import { AxiosError } from "axios";
 import { CancelTokenSource } from "axios";
 import { getExtensionStringValue } from "fhir-extension-helpers";
@@ -392,6 +392,14 @@ function canonicalVariableName(name: string): string {
   if (name.endsWith("`")) name = name.substring(0, name.length-1);
   if (name.indexOf('`') !== -1) name = name.replaceAll('\\`', '`');
   return name;
+}
+
+function isSystemVariableName(name: string): boolean {
+  if (name === "ucum") return true;
+  if (name === "resource") return true;
+  if (name === "rootResource") return true;
+  if (name === "context") return true;
+  return false;
 }
 
 function getValue(entry: fhir4.ParametersParameter): ResultItem[] {
@@ -632,6 +640,8 @@ export default Vue.extend({
               for (const tkn of tkns){
                 if (tkn.type === "fhir_variable"){
                   const varName = canonicalVariableName(tkn.value);
+                  if (isSystemVariableName(varName)) continue;
+
                   if (!this.variables.has(varName)){
                     // console.log(tkn.value + ' ' + varName);
                     updatedVariables.set(varName, { data: undefined });
@@ -784,12 +794,13 @@ export default Vue.extend({
         this.cancelSource = axios.CancelToken.source();
         this.loadingData = true;
         let token = this.cancelSource.token;
-        const response = await axios.get<fhir4.Library>(url, {
-          cancelToken: token,
-          headers: {
+        let headers: AxiosRequestHeaders = {
             "Cache-Control": "no-cache",
             "Accept": requestFhirAcceptHeaders
           }
+        const response = await axios.get<fhir4.Library>(url, {
+          cancelToken: token,
+          headers: headers
         });
         if (token.reason) {
           console.log(token.reason);
@@ -877,12 +888,13 @@ export default Vue.extend({
         this.cancelSource = axios.CancelToken.source();
         this.loadingData = true;
         let token = this.cancelSource.token;
-        const response = await axios.get<fhir4.Resource>(url, {
-          cancelToken: token,
-          headers: {
+        let headers: AxiosRequestHeaders = {
             "Cache-Control": "no-cache",
             "Accept": requestFhirAcceptHeaders
           }
+        const response = await axios.get<fhir4.Resource>(url, {
+          cancelToken: token,
+          headers: headers
         });
         if (token.reason) {
           console.log(token.reason);
@@ -936,12 +948,13 @@ export default Vue.extend({
         this.cancelSource = axios.CancelToken.source();
         this.loadingData = true;
         let token = this.cancelSource.token;
-        const response = await axios.get<fhir4.Resource>(url, {
-          cancelToken: token,
-          headers: {
+        let headers: AxiosRequestHeaders = {
             "Cache-Control": "no-cache",
             "Accept": requestFhirAcceptHeaders
           }
+        const response = await axios.get<fhir4.Resource>(url, {
+          cancelToken: token,
+          headers: headers
         });
         if (token.reason) {
           console.log(token.reason);
@@ -997,7 +1010,7 @@ export default Vue.extend({
         fhirData = JSON.parse(resourceJson);
       }
       // debugger;
-      var environment: Record<string, any> = { resource: fhirData };
+      var environment: Record<string, any> = { resource: fhirData, rootResource: fhirData };
       for (let v of this.variables) {
         let value = v[1].data;
         if (value && (value.startsWith("[") || value.startsWith("{"))) {
@@ -1155,7 +1168,11 @@ export default Vue.extend({
 
       // brianpos hosted service
       // default the firely SDK/brianpos service
-      let url = `https://qforms-server.azurewebsites.net/$fhirpath`;
+      // let url = `https://qforms-server.azurewebsites.net/$fhirpath`;
+      // let url = `https://localhost:44378/$fhirpath`;
+      // Source code for this is at https://github.com/brianpos/fhirpath-lab-dotnet
+      let url = `https://fhirpath-lab-net.azurewebsites.net/api/$fhirpath`;
+      // let url = `http://localhost:7071/api/$fhirpath`;
 
       let p: fhir4.Parameters = { resourceType: "Parameters", parameter: [{ name: "expression", valueString: this.getFhirpathExpression() ?? 'today()' }] };
 
@@ -1243,6 +1260,7 @@ export default Vue.extend({
       resourceId: 'Patient/example',
       resourceJsonChanged: false,
       loadingData: true,
+      saveOutcome: undefined,
       showOutcome: false,
       showAdvancedSettings: false,
       terminologyServer: 'https://sqlonfhir-r4.azurewebsites.net/fhir',

@@ -24,7 +24,7 @@
     "express": "^4.17.2",
     "fhir-extension-helpers": "^0.3.0",
     "fhir-sdc-helpers": "^0.1.0",
-    "fhirclient": "^2.4.0",
+    "fhirclient": "github:microsoft-healthcare-madison/client-js#with-jose",
     "fhirpath": "github:brianpos/fhirpath.js#feature/brian-updates",
     "luxon": "^2.2.0",
     "marked": "^4.0.10",

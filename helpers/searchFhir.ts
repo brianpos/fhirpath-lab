@@ -1,6 +1,6 @@
 import { Address, Bundle, BundleEntry, BundleLink, CodeableConcept, Coding, ContactPoint, UsageContext, ValueSet } from "fhir/r4";
 import EasyTableDefinition from '~/models/EasyTableDefinition'
-import axios, { AxiosResponse } from "axios";
+import axios, { AxiosRequestHeaders, AxiosResponse } from "axios";
 import { AxiosError } from "axios";
 import { ConformanceResourceData, WithPublishingHistory } from "~/models/ConformanceResourceTableData";
 import { ConformanceResourceInterface } from "~/models/ConformanceResourceInterface";
@@ -174,9 +174,10 @@ export async function searchPage<T>(host: EasyTableDefinition<T>, url: string, m
     host.cancelSource = axios.CancelToken.source();
     host.loadingData = true;
     let token = host.cancelSource.token;
+    let headers: AxiosRequestHeaders = { "Accept": requestFhirAcceptHeaders };
     const response = await axios.get<Bundle>(url, {
       cancelToken: token,
-      headers: { "Accept": requestFhirAcceptHeaders }
+      headers: headers
     });
     if (token.reason) {
       console.log(token.reason);
@@ -225,13 +226,14 @@ export function calculateNextVersion(versions: (string | undefined)[]): string {
 export async function loadPublishedVersions<TData extends ConformanceResourceInterface>(serverBaseUrl: string, resourceType: string, canonicalUrl: string, data: WithPublishingHistory<TData>) {
   try {
     const urlRequest = `${serverBaseUrl}/${resourceType}?url=${canonicalUrl}&_summary=true`;
+    let headers: AxiosRequestHeaders = {
+      'Cache-Control': 'no-cache',
+      "Accept": requestFhirAcceptHeaders
+    };
     const response = await axios.get<Bundle>(urlRequest,
       {
         // query URL without using browser cache
-        headers: {
-          'Cache-Control': 'no-cache',
-          "Accept": requestFhirAcceptHeaders
-        },
+        headers: headers,
       });
     var result: TData[] = [];
     if (response?.data?.entry) {
@@ -277,12 +279,13 @@ export async function loadFhirResource<TData extends fhir4.FhirResource>(serverB
     }
 
     const urlRequest = `${serverBaseUrl}/${resourceType}/${loadResourceId}`;
+    let headers: AxiosRequestHeaders = {
+      'Cache-Control': 'no-cache',
+      "Accept": requestFhirAcceptHeaders
+    };
     const response = await axios.get<TData>(urlRequest, {
       // query URL without using browser cache
-      headers: {
-        "Cache-Control": "no-cache",
-        "Accept": requestFhirAcceptHeaders
-      },
+      headers: headers,
     });
     data.raw = response.data;
 
@@ -352,13 +355,18 @@ export async function saveFhirResource<TData extends fhir4.FhirResource>(serverB
     data.saveOutcome = undefined;
 
     var response: AxiosResponse<TData, any>;
+    let headers: AxiosRequestHeaders = {
+      'Cache-Control': 'no-cache',
+      "Accept": requestFhirAcceptHeaders,
+      'Content-Type': requestFhirContentTypeHeaders
+    };
     if (data.raw?.id) {
       const urlRequest = `${serverBaseUrl}/${data.raw?.resourceType}/${data.raw.id}`;
-      response = await axios.put<TData>(urlRequest, data.raw, { headers: { "Accept": requestFhirAcceptHeaders } });
+      response = await axios.put<TData>(urlRequest, data.raw, { headers: headers });
     } else {
       // Create a new resource (via post)
       const urlRequest = `${serverBaseUrl}/${data.raw?.resourceType}`;
-      response = await axios.post<TData>(urlRequest, data.raw, { headers: { "Accept": requestFhirAcceptHeaders } });
+      response = await axios.post<TData>(urlRequest, data.raw, { headers: headers });
     }
     data.raw = response.data;
     data.saving = false;

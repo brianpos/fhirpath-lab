@@ -159,9 +159,9 @@
 import Vue, { PropType } from "vue";
 import { settings } from "~/helpers/user_settings";
 import UserSettings from "./UserSettings.vue";
-import FHIR from "fhirclient";
-import Client from "fhirclient/lib/Client";
-import { SMART_KEY } from "fhirclient/lib/settings";
+import FHIR from "fhirclient/dist";
+import Client from "fhirclient/dist/lib/Client";
+import { SMART_KEY } from "fhirclient/dist/lib/settings";
 
 interface IData {
   overlay: boolean;
@@ -192,9 +192,6 @@ export default Vue.extend({
     FHIR.oauth2.ready()
       .then(this.completeOAuthDance)
       .catch(console.error);
-  },
-  updated(){
-    this.OAuthClientId = settings.getOAuthClientId();
   },
   methods: {
     profileIcon():string {
@@ -245,7 +242,8 @@ export default Vue.extend({
         // "iss": "https://fhir.simplifier.net/r4", // simplifier - no auth endpoints
         // "client_id": "3ab1d54f-b004-48fd-a1b6-eeae73d8858e",
         "scope": "launch openid profile fhirUser patient/*.read",
-        "redirectUri": "/"
+        "redirectUri": "/",
+        "pkceMode": "ifSupported"
       });
     },
     async logout() {
@@ -262,6 +260,7 @@ export default Vue.extend({
     closeSettings() {
       this.overlay = false;
       this.$emit("close-settings");
+      this.OAuthClientId = settings.getOAuthClientId();
     },
   },
   data: (): IData => ({
