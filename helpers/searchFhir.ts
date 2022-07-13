@@ -196,7 +196,28 @@ export async function searchPage<T>(host: EasyTableDefinition<T>, url: string, m
         host.lastPageLink = getLink("last", response.data.link);
       }
 
-      mapData(results);
+      // Check for any outcomes included
+      const outcomes = results.filter((item) => {
+        if (item.search?.mode !== "outcome") {
+          return false;
+        }
+        return true;
+      });
+
+      if (outcomes.length > 0 && outcomes[0].resource?.resourceType === "OperationOutcome"){
+        host.outcome = outcomes[0].resource as fhir4.OperationOutcome;
+      }
+      else {
+        host.outcome = undefined;
+      }
+
+      const filteredResults = results.filter((item) => {
+        if (item.search?.mode === "outcome") {
+          return false;
+        }
+        return true;
+      });
+      mapData(filteredResults);
       host.showEmpty = false;
 
     } else {
@@ -210,6 +231,7 @@ export async function searchPage<T>(host: EasyTableDefinition<T>, url: string, m
     if (axios.isAxiosError(err)) {
       const serverError = err as AxiosError<fhir4.OperationOutcome>;
       if (serverError && serverError.response) {
+        host.outcome = serverError.response.data;
         return serverError.response.data;
       }
     } else {

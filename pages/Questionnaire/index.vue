@@ -66,6 +66,8 @@
           </v-col>
         </v-row>
       </v-form>
+      <OperationOutcomeOverlay v-if="outcome" :saveOutcome="outcome" :showOutcome="(outcome != undefined)"
+        title="Search Errors/Warnings" :popupWhenErrors="false" @close="outcome = undefined" />
       <ve-table
         :columns="columns"
         :table-data="tableData"
@@ -388,6 +390,7 @@ export default Vue.extend({
         },
       ],
       tableData: [],
+      outcome: undefined,
       searchFor: undefined,
       searchForStatus: "active,draft",
       searchForUseContext: [],

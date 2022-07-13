@@ -62,12 +62,14 @@ tr.ve-table-body-tr {
           </v-col>
         </v-row>
       </v-form>
+      <OperationOutcomeOverlay v-if="outcome" :saveOutcome="outcome" :showOutcome="(outcome != undefined)"
+        title="Search Errors/Warnings" :popupWhenErrors="false" @close="outcome = undefined" />
       <ve-table :columns="columns" :table-data="tableData" :event-custom-option="eventCustomOption"
         :expand-option="expandOption" row-key-field-name="id" />
       <div v-show="showEmpty && !loadingData" class="empty-data">
         (No results)
       </div>
-    </div>
+      </div>
     <table-loading v-if="loadingData" />
   </div>
 </template>
@@ -276,10 +278,10 @@ export default Vue.extend({
               console.log("click::", row, rowIndex, event);
               var data: LibraryTableData = row;
               console.log("row data::", data);
-              if (event.ctrlKey){
+              if (event.ctrlKey) {
                 window.open("/Library/" + data.id, '_blank'); 
               }
-              else{
+              else {
                 this.$router.push("/Library/" + data.id);
               }
             },
@@ -324,6 +326,7 @@ export default Vue.extend({
         },
       ],
       tableData: [],
+      outcome: undefined,
       searchFor: undefined,
       searchForStatus: "active,draft",
       searchForUseContext: [],

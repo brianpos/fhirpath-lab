@@ -1,5 +1,40 @@
 <template>
-  <v-overlay :value="showOutcome">
+<div>
+  <div class="inline-panel-issues" v-if="!popupWhenErrors">
+        <v-btn style="float:right;" icon small tile @click="close">
+          <v-icon> mdi-close </v-icon>
+        </v-btn>
+        <template  v-for="(issue, index) in saveOutcome.issue">
+          <div class="issue-item" :key="index" v-if="!hideIssue(issue)">
+            <span>
+              <nobr>
+              <v-icon v-if="issue.severity === 'error' || issue.severity === 'fatal'" color="red">mdi-alert-octagon</v-icon>
+              <v-icon v-if="issue.severity === 'warning'" color="orange">mdi-alert</v-icon>
+            <span
+              :class="severityClassName(issue.severity)"
+              v-text="issue.severity"
+            />
+            </nobr>
+            <template v-if="issue.code">
+              <br/>
+            <nobr class="issue-code">(<span v-text="issue.code" />)</nobr>
+            </template>
+            </span>
+            <span class="details">
+            <span v-if="issue.details" v-text="issue.details.text" />
+            <template v-if="issue.expression">
+              <br />
+              <span v-if="issue.expression" v-text="issue.expression" />
+            </template>
+            <template v-if="issue.location">
+              <br />
+              <span v-if="issue.location" v-text="issue.location" />
+            </template>
+            </span>
+          </div>
+        </template>
+  </div>
+  <v-overlay v-if="popupWhenErrors" :value="showOutcome">
     <v-card light style="margin: 12px;">
       <v-card-title v-text="title"></v-card-title>
       <v-card-text class="issue-list" v-if="saveOutcome">
@@ -16,7 +51,7 @@
             </nobr>
             <template v-if="issue.code">
               <br/>
-            (<span v-text="issue.code" />)
+            <nobr class="issue-code">(<span v-text="issue.code" />)</nobr>
             </template>
             </span>
             <span class="details">
@@ -40,9 +75,20 @@
       </v-card-actions>
     </v-card>
   </v-overlay>
+</div>
 </template>
 
 <style scoped>
+.inline-panel-issues {
+  border-top: solid thin silver;
+  border-bottom: solid thin silver;
+  margin-top: 20px;
+  margin-bottom: 20px;
+  padding-left: 8px;
+  padding-right: 8px;
+  padding-top: 8px;
+}
+
 .issue-list {
   display: table;
   border-spacing: 8px;
@@ -54,9 +100,15 @@
   display: table-row;
 }
 
+.issue-code {
+  color: grey;
+  font-size: small;
+}
+
 .issue-item > span {
   display: table-cell;
   padding-bottom: 8px;
+  padding-right: 8px;
 }
 
 .details span{
@@ -87,7 +139,8 @@ export default Vue.extend({
   props: {
     title: String,
     saveOutcome: Object as PropType<fhir4.OperationOutcome>,
-    showOutcome: Boolean
+    showOutcome: Boolean,
+    popupWhenErrors: { type: Boolean, required: false, default: true }
   },
   methods: {
     hideIssue(issue: fhir4.OperationOutcomeIssue): boolean {
