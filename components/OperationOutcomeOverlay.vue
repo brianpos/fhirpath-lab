@@ -34,7 +34,7 @@
           </div>
         </template>
   </div>
-  <v-overlay v-if="popupWhenErrors" :value="showOutcome">
+  <v-overlay v-if="popupWhenErrors" style="z-index:6;" :value="showOutcome">
     <v-card light style="margin: 12px;">
       <v-card-title v-text="title"></v-card-title>
       <v-card-text class="issue-list" v-if="saveOutcome">
@@ -55,7 +55,7 @@
             </template>
             </span>
             <span class="details">
-            <span v-if="issue.details" v-text="issue.details.text" />
+            <span v-text="issueDescription(issue)" />
             <template v-if="issue.expression">
               <br />
               <span v-if="issue.expression" v-text="issue.expression" />
@@ -146,6 +146,18 @@ export default Vue.extend({
     hideIssue(issue: fhir4.OperationOutcomeIssue): boolean {
       if (issue.severity === 'warning' && issue.code === 'incomplete' && issue.details?.text?.includes('Unable to resolve reference to profile')) return true;
       return false;
+    },
+    issueDescription(issue: fhir4.OperationOutcomeIssue): string {
+      if (issue.details){
+        if (issue.details?.text) return issue.details?.text;
+        // Check to see if there are any codings
+        if (issue.details.coding) {
+          for (const coding of issue.details.coding){
+            if (coding.display) return coding.display;
+          }
+        }
+      }
+      return issue.diagnostics ?? '(unknown)';
     },
     severityClassName(severity: string): string {
       if (severity === "fatal") return "fp-fatal";
