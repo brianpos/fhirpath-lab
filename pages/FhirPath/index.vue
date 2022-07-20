@@ -68,7 +68,7 @@
                       <div height="85px" width="100%" ref="aceEditorExpression"></div>
                       <div class="ace_editor_footer"></div>
 
-                      <div class="results">RESULTS</div>
+                      <div class="results">RESULTS <span class="processedBy">{{ processedByEngine }}</span></div>
                       <template v-for="(r2, i1) in results">
                         <v-simple-table :key="i1">
                           <tr v-if="r2.context">
@@ -309,6 +309,10 @@ td {
 .code-json {
   white-space: pre-wrap;
 }
+.processedBy {
+  float: right;
+  font-size: small;
+}
 </style>
 
 <script lang="ts">
@@ -361,6 +365,7 @@ interface FhirPathData {
   debugEditor?: ace.Ace.Editor;
   resourceJsonEditor?: ace.Ace.Editor;
   variables: Map<string, VariableData>;
+  processedByEngine?: string;
 }
 
 interface ResultItem {
@@ -752,7 +757,14 @@ export default Vue.extend({
           this.results = [];
           if (this.raw.parameter) {
             for (var entry of this.raw.parameter) {
-              if (entry.name === 'parameters') continue; // skip over the configuration settings
+              if (entry.name === 'parameters'){
+                // read the processing engine version
+                if (entry.part && entry.part.length > 0 && entry.part[0].name === 'evaluator'){
+                  this.processedByEngine = entry.part[0].valueString;
+                }
+
+                continue; // skip over the configuration settings
+              }
 
               // Anything else is a result
               // scan over the parts (values)
@@ -1036,6 +1048,7 @@ export default Vue.extend({
       if (contextExpression) {
         // scan over each of the expressions
         try {
+          this.processedByEngine = `fhirpath.js-2.14.4+`;
           contextNodes = fhirpath.evaluate(fhirData, contextExpression, environment, fhirpath_r4_model);
         }
         catch (err: any) {
@@ -1164,6 +1177,9 @@ export default Vue.extend({
     // https://www.sitepoint.com/fetching-data-third-party-api-vue-axios/
     async evaluateFhirPathExpression() {
 
+      // reset the processing engine
+      this.processedByEngine = undefined;
+
       // Validate the test fhir resource object
       let resourceJson = this.getResourceJson();
       if (resourceJson) {
@@ -1245,19 +1261,25 @@ export default Vue.extend({
         // https://github.com/jkiddo/fhirpath-tester/blob/main/src/main/java/org/example/Evaluator.java (brianpos fork of this)
         // https://docs.microsoft.com/en-us/azure/devops/pipelines/ecosystems/java-function?view=azure-devops
         url = `https://fhirpath-lab-java.azurewebsites.net/fhir/$fhirpath`;
-        // url = 'https://localhost:44378/$fhirpath2'
+        // url = 'https://localhost:44378/$fhirpath-hapi'
 
         if (!this.getResourceJson() && this.resourceId) {
           await this.downloadTestResource();
           resourceJson = this.getResourceJson();        
         }
 
-        // removing this constraint as there are expression tests 
-        // that you can do that don't require a resource.  
-        // if (!this.resourceJson) {
-        //   return;
-        // }
         (this as any).$appInsights?.trackEvent({ name: 'evaluate HAPI' });
+      }
+      else if (this.selectedEngine == "java (IBM)") {
+        url = `https://fhirpath-lab-java.azurewebsites.net/fhir/$fhirpath-ibm`;
+        // url = 'https://localhost:44378/$fhirpath-ibm'
+
+        if (!this.getResourceJson() && this.resourceId) {
+          await this.downloadTestResource();
+          resourceJson = this.getResourceJson();        
+        }
+
+        (this as any).$appInsights?.trackEvent({ name: 'evaluate IBM' });
       }
       else {
         (this as any).$appInsights?.trackEvent({ name: 'evaluate FirelySDK' });
@@ -1298,7 +1320,8 @@ export default Vue.extend({
       executionEngines: [
         ".NET (firely)",
         "fhirpath.js",
-        "java (HAPI)"
+        "java (HAPI)",
+        "java (IBM)"
       ],
       shareToolTipMessage: shareTooltipText,
       expressionEditor: undefined,
@@ -1306,6 +1329,7 @@ export default Vue.extend({
       debugEditor: undefined,
       resourceJsonEditor: undefined,
       variables: new Map<string, VariableData>(),
+      processedByEngine: undefined,
     };
   },
 });
