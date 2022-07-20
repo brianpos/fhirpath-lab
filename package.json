@@ -12,6 +12,7 @@
     "dockerize": "docker build -t forms-lab ."
   },
   "dependencies": {
+    "@fhir-typescript/r4b-core": "0.0.12-beta.15",
     "@nuxtjs/applicationinsights": "^1.2.2",
     "@types/ace": "0.0.48",
     "@types/fhir": "^0.0.35",
