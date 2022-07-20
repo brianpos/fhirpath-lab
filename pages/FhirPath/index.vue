@@ -733,7 +733,7 @@ export default Vue.extend({
         this.cancelSource = axios.CancelToken.source();
         this.loadingData = true;
         let token = this.cancelSource.token;
-        let response: AxiosResponse<fhir4.Parameters, any>;
+        let response: AxiosResponse<fhir4.Parameters | fhir4.OperationOutcome, any>;
         response = await axios.post<fhir4.Parameters>(url, p,
           {
             cancelToken: token,
@@ -751,8 +751,14 @@ export default Vue.extend({
 
         const results = response.data;
         if (results) {
-          this.raw = results;
           this.setResultJson(JSON.stringify(results, null, 4));
+          if (results.resourceType === 'OperationOutcome')
+          {
+            this.saveOutcome = results;
+            this.showOutcome = true;
+            return;
+          }
+          this.raw = results;
 
           this.results = [];
           if (this.raw.parameter) {
@@ -1062,6 +1068,7 @@ export default Vue.extend({
       }
       else {
         try {
+          this.processedByEngine = `fhirpath.js-2.14.4+`;
           contextNodes = fhirpath.evaluate(fhirData, "%resource", environment, fhirpath_r4_model);
         }
         catch (err: any) {
@@ -1246,8 +1253,8 @@ export default Vue.extend({
           else {
             if (value === 'true') pVars.part?.push({ name: varName, valueBoolean: true });
             else if (value === 'false') pVars.part?.push({ name: varName, valueBoolean: false });
-            else if (value.match(/^[-+]?[0-9]+$/)) pVars.part?.push({ name: varName, valueInteger: parseInt(value) });
-            else if (value.match(/^[-+]?[0-9]+.[0-9]+$/)) pVars.part?.push({ name: varName, valueDecimal: parseFloat(value) });
+            else if (value && value.match(/^[-+]?[0-9]+$/)) pVars.part?.push({ name: varName, valueInteger: parseInt(value) });
+            else if (value && value.match(/^[-+]?[0-9]+.[0-9]+$/)) pVars.part?.push({ name: varName, valueDecimal: parseFloat(value) });
             // Should other types be also included here?
             else pVars.part?.push({ name: varName, valueString: value });
           }
