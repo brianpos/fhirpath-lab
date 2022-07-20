@@ -80,7 +80,7 @@
                     </template>
                   </v-simple-table>
                   
-                  <v-btn small @click="addResourceTrigger">Add Resource Trigger</v-btn>
+                  <v-btn hidden small @click="addResourceTrigger">Add Resource Trigger</v-btn>
                   <!-- <br/>
                   <div class="results">Event Triggers</div>
                   <v-text-field label="Type" :value="computedType()" hide-details="auto" readonly />

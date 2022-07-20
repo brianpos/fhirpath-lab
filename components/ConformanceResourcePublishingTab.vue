@@ -4,8 +4,7 @@
       <p class="fl-tab-header">Publishing</p>
       <v-form>
         <v-row no-gutters>
-          <v-col cols="12" md="10" sm="12">
-            <v-text-field
+            <v-textarea auto-grow rows="1"
               label="Canonical URL"
               v-model="raw.url"
               :readonly="readonly || raw.status !== 'draft'"
@@ -14,8 +13,6 @@
               :rules="rules"
               spellcheck="false"
             />
-          </v-col>
-          <v-col cols="12" md="2" sm="12">
             <v-text-field
               class="version"
               label="Version"
@@ -25,10 +22,8 @@
               @input="notifyChange"
               spellcheck="false"
             />
-          </v-col>
         </v-row>
         <v-row no-gutters class="row-gap">
-          <v-col cols="12" md="2" sm="12">
             <v-select
               label="Status"
               class="version"
@@ -37,8 +32,6 @@
               hide-details="auto"
               @input="notifyStatusChange"
             />
-          </v-col>
-          <v-col cols="12" md="2" sm="12">
             <a
               v-if="raw.status !== 'draft' && raw.id"
               v-bind:href="'/' + raw.resourceType + '/' + raw.id + ':new'"
@@ -46,7 +39,6 @@
             >
               <v-btn class="row-button" small> Draft New Version </v-btn>
             </a>
-          </v-col>
         </v-row>
         <template v-if="showAdvancedSettings">
         Publish Date:
@@ -139,6 +131,7 @@
 </template>
 
 <style>
+
 .row-button {
   margin-top: 16px;
 }
@@ -146,7 +139,7 @@
   column-gap: 4px;
 }
 .row.no-gutters {
-  column-gap: 40px;
+  column-gap: 20px;
 }
 </style>
 

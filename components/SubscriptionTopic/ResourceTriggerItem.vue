@@ -31,43 +31,47 @@
       v-model="raw.supportedInteraction"
       :items="supportedInteractions"
     />
-    <hr />
+    <debuggable-fhir-path-expression :readonly="false"
+      label="Trigger on FHIRPath Expression" :minLines="2" :href="testExpressionPath()"
+      :value="raw.fhirPathCriteria" @change="raw.fhirPathCriteria = $event.data"/>
+
     <template v-if="raw.queryCriteria">
-      <v-text-field
+      <div class="results">Query based trigger criteria</div>
+      <v-row no-gutters>
+      <v-textarea auto-grow rows="1"
         label="Previous"
         v-model="raw.queryCriteria.previous"
         :readonly="readonly"
         hide-details="auto"
         @input="notifyChange"
       />
-      <v-select
+      <v-select style="max-width:20ch"
         hide-details="auto"
-        label="on create result"
+        label="On create Previous considered"
         v-model="raw.queryCriteria.resultForCreate"
         :items="testResults"
       />
-      <v-text-field
+      </v-row>
+      <v-row no-gutters>
+      <v-textarea auto-grow rows="1"
         label="Current"
         v-model="raw.queryCriteria.current"
         :readonly="readonly"
         hide-details="auto"
         @input="notifyChange"
       />
-      <v-select
+      <v-select style="max-width:20ch"
         hide-details="auto"
-        label="on delete result"
+        label="On delete Current considered"
         v-model="raw.queryCriteria.resultForDelete"
         :items="testResults"
       />
+      </v-row>
       <v-checkbox
-        v-model="raw.queryCriteria.requireBoth"
-        label="Both true"
+        v-model="raw.queryCriteria.requireBoth" hide-details="auto" dense
+        label="Previous and Current rules required"
       ></v-checkbox>
     </template>
-
-    <debuggable-fhir-path-expression :readonly="false"
-      label="Expression" :minLines="2" :href="testExpressionPath()"
-      :value="raw.fhirPathCriteria" @change="raw.fhirPathCriteria = $event.data"/>
   </div>
 </template>
 
@@ -75,9 +79,21 @@
 .trigger-item:focus-within {
   border-color: $card-header-color;
 }
+
 .trigger-item {
   border: 2px solid transparent;
   padding: 4px;
+}
+
+.results {
+  padding: 4px 12px;
+  background-color: $tab-backcolor;
+  color: $tab-color;
+  font-size: 0.875em;
+  font-weight: 700;
+  justify-content: stretch;
+  text-transform: uppercase;
+  line-height: 1.5;
 }
 </style>
 
