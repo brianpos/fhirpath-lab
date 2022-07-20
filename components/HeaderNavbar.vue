@@ -50,10 +50,10 @@
             </v-list-item>
             <!-- <v-list-item href="/Questionnaire">
               <v-list-item-title>Questionnaires</v-list-item-title>
-            </v-list-item>
+            </v-list-item> -->
             <v-list-item href="/SubscriptionTopic">
               <v-list-item-title>Subscription Topics</v-list-item-title>
-            </v-list-item> -->
+            </v-list-item>
           </v-list-item-group>
         </v-list>
       </v-menu>
