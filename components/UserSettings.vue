@@ -153,7 +153,7 @@ export default Vue.extend({
         const results = response.data;
         if (results) {
           const vers = fhirVersions as Record<string, Number>;
-          if (results.fhirVersion && vers[results.fhirVersion] == 4){
+          if (results.fhirVersion && (vers[results.fhirVersion] == 4 || results.fhirVersion === '4.3.0')){
             this.FhirServerVerified = true;
             // also check for the security extensions
             if (results.rest && results.rest.length > 0){
