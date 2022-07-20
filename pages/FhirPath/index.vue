@@ -399,6 +399,7 @@ function isSystemVariableName(name: string): boolean {
   if (name === "resource") return true;
   if (name === "rootResource") return true;
   if (name === "context") return true;
+  if (name === "terminologies") return true;
   return false;
 }
 
@@ -717,6 +718,7 @@ export default Vue.extend({
       if (this.debugEditor) {
         this.debugEditor.setValue(result);
         this.debugEditor.clearSelection();
+        this.debugEditor.renderer.updateFull(true);
       }
     },
     async executeRequest<T>(url: string, p: fhir4.Parameters) {
@@ -1204,11 +1206,14 @@ export default Vue.extend({
           else {
             if (value === 'true') pVars.part?.push({ name: varName, valueBoolean: true });
             else if (value === 'false') pVars.part?.push({ name: varName, valueBoolean: false });
-            else if (value.match(/^[-+]?[0-9]+$/)) pVars.part?.push({ name: varName, valueInteger: value });
-            else if (value.match(/^[-+]?[0-9]+.[0-9]+$/)) pVars.part?.push({ name: varName, valueDecimal: value });
+            else if (value.match(/^[-+]?[0-9]+$/)) pVars.part?.push({ name: varName, valueInteger: parseInt(value) });
+            else if (value.match(/^[-+]?[0-9]+.[0-9]+$/)) pVars.part?.push({ name: varName, valueDecimal: parseFloat(value) });
             // Should other types be also included here?
             else pVars.part?.push({ name: varName, valueString: value });
           }
+        }
+        if (pVars.part?.length === 0){
+          delete pVars.part;
         }
       }
 
