@@ -44,6 +44,7 @@
         :readonly="readonly"
         hide-details="auto"
         @input="notifyChange"
+        autocorrect="off" autocapitalize="off" spellcheck="false"
       />
       <v-select style="max-width:20ch"
         hide-details="auto"
@@ -59,6 +60,7 @@
         :readonly="readonly"
         hide-details="auto"
         @input="notifyChange"
+        autocorrect="off" autocapitalize="off" spellcheck="false"
       />
       <v-select style="max-width:20ch"
         hide-details="auto"

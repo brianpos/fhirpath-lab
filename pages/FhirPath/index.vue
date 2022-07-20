@@ -121,7 +121,9 @@
                     <v-card-text>
                       <p class="fl-tab-header">Variables</p>
                         <template v-for="(v1, index) in variables">
-                        <v-textarea :auto-grow="!v1[1].resourceId" :rows="(!v1[1].resourceId?1:5)" :label="v1[0]" hide-details="auto" :value="v1[1].data" 
+                        <v-textarea :auto-grow="!v1[1].resourceId" :rows="(!v1[1].resourceId?1:5)" 
+                          :label="v1[0]" hide-details="auto" :value="v1[1].data" 
+                          autocorrect="off" autocapitalize="off" spellcheck="false"
                           @input="updateVariableValue(v1[0])" :key="index" 
                           :messages="variableMessages(v1[1])" :error-messages="variableErrorMessages(v1[1])" :error="(!!v1[1].errorMessage)">
                             <template v-slot:append>
