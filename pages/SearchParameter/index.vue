@@ -81,6 +81,9 @@ tr.ve-table-body-tr {
           </v-col>
         </v-row>
       </v-form>
+      <OperationOutcomeOverlay v-if="outcome" :saveOutcome="outcome" :showOutcome="(outcome != undefined)"
+        title="Search Errors/Warnings" :popupWhenErrors="false" @close="outcome = undefined" />
+        
       <ve-table
         :columns="columns"
         :table-data="tableData"
@@ -223,13 +226,18 @@ export default Vue.extend({
       eventCustomOption: {
         bodyRowEvents: ({ row, rowIndex }: any) => {
           return {
-            click: (event: any) => {
+            click: (event: PointerEvent) => {
               console.log("click::", row, rowIndex, event);
               var data: SearchParameterTableData = row;
               console.log("row data::", data);
-              this.$router.push("/SearchParameter/" + data.id);
+              if (event.ctrlKey){
+                window.open("/SearchParameter/" + data.id, '_blank'); 
+              }
+              else{
+                this.$router.push("/SearchParameter/" + data.id);
+              }
             },
-            contextmenu: (event: any) => {
+            contextmenu: (event: PointerEvent) => {
               console.log("contextmenu::", row, rowIndex, event);
               event.preventDefault();
             },
@@ -250,17 +258,17 @@ export default Vue.extend({
         },
       },
       columns: [
-        { field: "title", key: "a", title: "Name", align: "left", type: "expand" },
-        { field: "version", key: "v", title: "Version", align: "left" },
-        { field: "status", key: "c", title: "Status", align: "left" },
+        { field: "title", key: "title", title: "Name", align: "left", type: "expand" },
+        { field: "version", key: "ver", title: "Version", align: "left" },
+        { field: "status", key: "stat", title: "Status", align: "left" },
 //        { field: "useContext", key: "uc", title: "Use Context", align: "left" },
-        { field: "date", key: "b", title: "Publish Date", align: "left" },
-        { field: "publisher", key: "d", title: "Publisher", align: "left" },
-        { field: "base", key: "d", title: "Resource(s)", align: "left" },
+        { field: "date", key: "date", title: "Publish Date", align: "left" },
+        { field: "publisher", key: "pub", title: "Publisher", align: "left" },
+        { field: "base", key: "base", title: "Resource(s)", align: "left" },
         { field: "id", key: "id", title: "ID", align: "left" },
         {
           field: "favourite",
-          key: "e",
+          key: "fav",
           title: "",
           align: "center",
           renderBodyCell: (cellData: any, h: any) => {
@@ -271,6 +279,7 @@ export default Vue.extend({
         },
       ],
       tableData: [],
+      outcome: undefined,
       searchFor: undefined,
       searchForStatus: undefined,
       searchForPublisher: undefined,

@@ -65,6 +65,10 @@ $tab-color: rgba(0, 0, 0, 0.87);
 .v-tab {
   justify-content: initial;
 }
+.v-tab.v-tab.v-tab--active{
+  color: $tab-color;
+}
+
 .v-tab--active {
   background-color: $tab-backcolor;
   color: $tab-color;
@@ -78,8 +82,9 @@ $tab-color: rgba(0, 0, 0, 0.87);
   color: grey;
 }
 
+/* Publishing tab properties */
 .version {
-  max-width: 20ch;
+  max-width: 15ch;
 }
 
 .date {
@@ -121,4 +126,9 @@ span.markdown {
   margin-top: 6px;
   margin-bottom: 6px;
   display: block;
+}
+
+/* EasyTable (search tables)*/
+.ve-table-body-tr {
+  cursor: pointer;
 }

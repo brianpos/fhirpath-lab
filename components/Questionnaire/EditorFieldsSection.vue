@@ -68,7 +68,7 @@
   </v-simple-table>
 </template>
 
-<style>
+<style scoped>
 .table-with-add > .v-data-table__wrapper > table {
   /* To ensure there is enough space after the table so that the quick action buttons don't get trimmed */
   margin-bottom: 16px !important;

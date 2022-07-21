@@ -1,6 +1,6 @@
 import { Address, Bundle, BundleEntry, BundleLink, CodeableConcept, Coding, ContactPoint, UsageContext, ValueSet } from "fhir/r4";
 import EasyTableDefinition from '~/models/EasyTableDefinition'
-import axios, { AxiosResponse } from "axios";
+import axios, { AxiosRequestHeaders, AxiosResponse } from "axios";
 import { AxiosError } from "axios";
 import { ConformanceResourceData, WithPublishingHistory } from "~/models/ConformanceResourceTableData";
 import { ConformanceResourceInterface } from "~/models/ConformanceResourceInterface";
@@ -10,6 +10,149 @@ import { settings } from "./user_settings";
 
 export const requestFhirAcceptHeaders = "application/fhir+json; fhirVersion=4.0, application/fhir+json";
 export const requestFhirContentTypeHeaders = "application/fhir+json";
+export const fhirResourceTypes = [
+  "Account",
+  "ActivityDefinition",
+  "AdministrableProductDefinition",
+  "AdverseEvent",
+  "AllergyIntolerance",
+  "Appointment",
+  "AppointmentResponse",
+  "AuditEvent",
+  "Basic",
+  "Binary",
+  "BiologicallyDerivedProduct",
+  "BodyStructure",
+  "Bundle",
+  "CapabilityStatement",
+  "CarePlan",
+  "CareTeam",
+  "CatalogEntry",
+  "ChargeItem",
+  "ChargeItemDefinition",
+  "Citation",
+  "Claim",
+  "ClaimResponse",
+  "ClinicalImpression",
+  "ClinicalUseDefinition",
+  "CodeSystem",
+  "Communication",
+  "CommunicationRequest",
+  "CompartmentDefinition",
+  "Composition",
+  "ConceptMap",
+  "Condition",
+  "Consent",
+  "Contract",
+  "Coverage",
+  "CoverageEligibilityRequest",
+  "CoverageEligibilityResponse",
+  "DetectedIssue",
+  "Device",
+  "DeviceDefinition",
+  "DeviceMetric",
+  "DeviceRequest",
+  "DeviceUseStatement",
+  "DiagnosticReport",
+  "DocumentManifest",
+  "DocumentReference",
+  "Encounter",
+  "Endpoint",
+  "EnrollmentRequest",
+  "EnrollmentResponse",
+  "EpisodeOfCare",
+  "EventDefinition",
+  "Evidence",
+  "EvidenceReport",
+  "EvidenceVariable",
+  "ExampleScenario",
+  "ExplanationOfBenefit",
+  "FamilyMemberHistory",
+  "Flag",
+  "Goal",
+  "GraphDefinition",
+  "Group",
+  "GuidanceResponse",
+  "HealthcareService",
+  "ImagingStudy",
+  "Immunization",
+  "ImmunizationEvaluation",
+  "ImmunizationRecommendation",
+  "ImplementationGuide",
+  "Ingredient",
+  "InsurancePlan",
+  "Invoice",
+  "Library",
+  "Linkage",
+  "List",
+  "Location",
+  "ManufacturedItemDefinition",
+  "Measure",
+  "MeasureReport",
+  "Media",
+  "Medication",
+  "MedicationAdministration",
+  "MedicationDispense",
+  "MedicationKnowledge",
+  "MedicationRequest",
+  "MedicationStatement",
+  "MedicinalProductDefinition",
+  "MessageDefinition",
+  "MessageHeader",
+  "MolecularSequence",
+  "NamingSystem",
+  "NutritionOrder",
+  "NutritionProduct",
+  "Observation",
+  "ObservationDefinition",
+  "OperationDefinition",
+  "OperationOutcome",
+  "Organization",
+  "OrganizationAffiliation",
+  "PackagedProductDefinition",
+  "Parameters",
+  "Patient",
+  "PaymentNotice",
+  "PaymentReconciliation",
+  "Person",
+  "PlanDefinition",
+  "Practitioner",
+  "PractitionerRole",
+  "Procedure",
+  "Provenance",
+  "Questionnaire",
+  "QuestionnaireResponse",
+  "RegulatedAuthorization",
+  "RelatedPerson",
+  "RequestGroup",
+  "ResearchDefinition",
+  "ResearchElementDefinition",
+  "ResearchStudy",
+  "ResearchSubject",
+  "RiskAssessment",
+  "Schedule",
+  "SearchParameter",
+  "ServiceRequest",
+  "Slot",
+  "Specimen",
+  "SpecimenDefinition",
+  "StructureDefinition",
+  "StructureMap",
+  "Subscription",
+  "SubscriptionStatus",
+  "SubscriptionTopic",
+  "Substance",
+  "SubstanceDefinition",
+  "SupplyDelivery",
+  "SupplyRequest",
+  "Task",
+  "TerminologyCapabilities",
+  "TestReport",
+  "TestScript",
+  "ValueSet",
+  "VerificationResult",
+  "VisionPrescription",
+];
 
 export function getLink(
   type: "first" | "previous" | "next" | "last",
@@ -31,9 +174,10 @@ export async function searchPage<T>(host: EasyTableDefinition<T>, url: string, m
     host.cancelSource = axios.CancelToken.source();
     host.loadingData = true;
     let token = host.cancelSource.token;
+    let headers: AxiosRequestHeaders = { "Accept": requestFhirAcceptHeaders };
     const response = await axios.get<Bundle>(url, {
       cancelToken: token,
-      headers: { "Accept": requestFhirAcceptHeaders }
+      headers: headers
     });
     if (token.reason) {
       console.log(token.reason);
@@ -52,7 +196,28 @@ export async function searchPage<T>(host: EasyTableDefinition<T>, url: string, m
         host.lastPageLink = getLink("last", response.data.link);
       }
 
-      mapData(results);
+      // Check for any outcomes included
+      const outcomes = results.filter((item) => {
+        if (item.search?.mode !== "outcome") {
+          return false;
+        }
+        return true;
+      });
+
+      if (outcomes.length > 0 && outcomes[0].resource?.resourceType === "OperationOutcome"){
+        host.outcome = outcomes[0].resource as fhir4.OperationOutcome;
+      }
+      else {
+        host.outcome = undefined;
+      }
+
+      const filteredResults = results.filter((item) => {
+        if (item.search?.mode === "outcome") {
+          return false;
+        }
+        return true;
+      });
+      mapData(filteredResults);
       host.showEmpty = false;
 
     } else {
@@ -66,6 +231,7 @@ export async function searchPage<T>(host: EasyTableDefinition<T>, url: string, m
     if (axios.isAxiosError(err)) {
       const serverError = err as AxiosError<fhir4.OperationOutcome>;
       if (serverError && serverError.response) {
+        host.outcome = serverError.response.data;
         return serverError.response.data;
       }
     } else {
@@ -82,13 +248,14 @@ export function calculateNextVersion(versions: (string | undefined)[]): string {
 export async function loadPublishedVersions<TData extends ConformanceResourceInterface>(serverBaseUrl: string, resourceType: string, canonicalUrl: string, data: WithPublishingHistory<TData>) {
   try {
     const urlRequest = `${serverBaseUrl}/${resourceType}?url=${canonicalUrl}&_summary=true`;
+    let headers: AxiosRequestHeaders = {
+      'Cache-Control': 'no-cache',
+      "Accept": requestFhirAcceptHeaders
+    };
     const response = await axios.get<Bundle>(urlRequest,
       {
         // query URL without using browser cache
-        headers: {
-          'Cache-Control': 'no-cache',
-          "Accept": requestFhirAcceptHeaders
-        },
+        headers: headers,
       });
     var result: TData[] = [];
     if (response?.data?.entry) {
@@ -134,12 +301,13 @@ export async function loadFhirResource<TData extends fhir4.FhirResource>(serverB
     }
 
     const urlRequest = `${serverBaseUrl}/${resourceType}/${loadResourceId}`;
+    let headers: AxiosRequestHeaders = {
+      'Cache-Control': 'no-cache',
+      "Accept": requestFhirAcceptHeaders
+    };
     const response = await axios.get<TData>(urlRequest, {
       // query URL without using browser cache
-      headers: {
-        "Cache-Control": "no-cache",
-        "Accept": requestFhirAcceptHeaders
-      },
+      headers: headers,
     });
     data.raw = response.data;
 
@@ -209,13 +377,18 @@ export async function saveFhirResource<TData extends fhir4.FhirResource>(serverB
     data.saveOutcome = undefined;
 
     var response: AxiosResponse<TData, any>;
+    let headers: AxiosRequestHeaders = {
+      'Cache-Control': 'no-cache',
+      "Accept": requestFhirAcceptHeaders,
+      'Content-Type': requestFhirContentTypeHeaders
+    };
     if (data.raw?.id) {
       const urlRequest = `${serverBaseUrl}/${data.raw?.resourceType}/${data.raw.id}`;
-      response = await axios.put<TData>(urlRequest, data.raw, { headers: { "Accept": requestFhirAcceptHeaders } });
+      response = await axios.put<TData>(urlRequest, data.raw, { headers: headers });
     } else {
       // Create a new resource (via post)
       const urlRequest = `${serverBaseUrl}/${data.raw?.resourceType}`;
-      response = await axios.post<TData>(urlRequest, data.raw, { headers: { "Accept": requestFhirAcceptHeaders } });
+      response = await axios.post<TData>(urlRequest, data.raw, { headers: headers });
     }
     data.raw = response.data;
     data.saving = false;

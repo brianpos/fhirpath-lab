@@ -3,7 +3,7 @@
     <v-card-text>
       <p class="fl-tab-header">Details</p>
       <v-form>
-        <v-text-field label="Title" v-model="raw.title" :readonly="readonly" hide-details="auto"
+        <v-text-field label="Title" v-if="(raw.resourceType !== 'SearchParameter')" v-model="raw.title" :readonly="readonly" hide-details="auto"
           @input="notifyChange" />
         <v-checkbox v-show="showAdvancedSettings" label="Experimental" v-model="raw.experimental" :readonly="readonly"
           dense hide-details="auto" @click="notifyChange" />
@@ -23,8 +23,8 @@
         <span class="markdown" title="(preview) The Purpose describes why this Questionnaire was created."
           v-html="convertHtml(raw.purpose)" />
 
-        <v-text-field label="Name" v-show="showAdvancedSettings" v-model="raw.name" :readonly="readonly"
-          hide-details="auto" @input="notifyChange" />
+        <v-text-field label="Name" v-show="(showAdvancedSettings && raw.resourceType !=='SubscriptionTopic')" v-model="raw.name" :readonly="readonly"
+          hide-details="auto" @input="notifyChange" spellcheck="false" />
 
         <span class="field-label">Use Context:</span><span v-text="raw.useContext" /> <br />
 

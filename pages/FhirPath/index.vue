@@ -39,6 +39,10 @@
                 <v-icon left> mdi-clipboard-text-outline </v-icon>
                 Resource
               </v-tab>
+              <v-tab v-show="variables.size > 0">
+                <v-icon left> mdi-application-variable-outline </v-icon>
+                Variables
+              </v-tab>
               <v-tab :disabled="!hasTraceData()">
                 <v-icon left> mdi-format-list-bulleted </v-icon>
                 Trace
@@ -64,7 +68,7 @@
                       <div height="85px" width="100%" ref="aceEditorExpression"></div>
                       <div class="ace_editor_footer"></div>
 
-                      <div class="results">RESULTS</div>
+                      <div class="results">RESULTS <span class="processedBy">{{ processedByEngine }}</span></div>
                       <template v-for="(r2, i1) in results">
                         <v-simple-table :key="i1">
                           <tr v-if="r2.context">
@@ -107,6 +111,36 @@
                       <!-- <div class="ace_editor_footer"></div> -->
                       <v-text-field label="Terminology Server" v-model="terminologyServer" hide-details="auto"
                         autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+                    </v-card-text>
+                  </v-card>
+                </v-tab-item>
+
+                <v-tab-item :eager="true">
+                  <!-- Variables -->
+                  <v-card flat>
+                    <v-card-text>
+                      <p class="fl-tab-header">Variables</p>
+                        <template v-for="(v1, index) in variables">
+                        <v-textarea :auto-grow="!v1[1].resourceId" :rows="(!v1[1].resourceId?1:5)" 
+                          :label="v1[0]" hide-details="auto" :value="v1[1].data" 
+                          autocorrect="off" autocapitalize="off" spellcheck="false"
+                          @input="updateVariableValue(v1[0])" :key="index" 
+                          :messages="variableMessages(v1[1])" :error-messages="variableErrorMessages(v1[1])" :error="(!!v1[1].errorMessage)">
+                            <template v-slot:append>
+                            <v-btn icon small tile @click="variables.set(v1[0], { data: v1[1].resourceId }); $forceUpdate()">
+                                <v-icon> mdi-close </v-icon>
+                              </v-btn>
+                              <v-btn icon small tile @click="downloadVariableResource(v1[0])" :hidden="!isValidFhirUrl(v1[1])"> 
+                                <v-icon> mdi-download </v-icon>
+                              </v-btn>
+                            </template>
+                          </v-textarea>
+                          <!-- <div class="code-json">{{ JSON.stringify(v1[1], null, 2) }}</div> -->
+                        </template>
+                        <br/>
+                        <label><i>Note: This variables tab is only visible when there are variables in the expression.
+                          To add another variable, name it in the fhirpath expression.<br/>
+                          Also note that the variables are not supported in the context expression.</i></label>
                     </v-card-text>
                   </v-card>
                 </v-tab-item>
@@ -183,8 +217,14 @@
   </div>
 </template>
 
-<style lang="scss" scoped >
+<style lang="scss" scoped>
+.ace_editor:focus-within+.ace_editor_footer {
+  color: #1976d2;
+  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);
+}
+</style>
 
+<style lang="scss" scoped >
 tr.ve-table-body-tr {
   cursor: pointer;
 }
@@ -271,6 +311,10 @@ td {
 .code-json {
   white-space: pre-wrap;
 }
+.processedBy {
+  float: right;
+  font-size: small;
+}
 </style>
 
 <script lang="ts">
@@ -278,9 +322,10 @@ import Vue, { VNode } from "vue";
 import { settings } from "~/helpers/user_settings";
 import {
   requestFhirAcceptHeaders,
-  requestFhirContentTypeHeaders
+  requestFhirContentTypeHeaders,
+  fhirResourceTypes,
 } from "~/helpers/searchFhir";
-import axios, { AxiosResponse } from "axios";
+import axios, { AxiosRequestHeaders, AxiosResponse } from "axios";
 import { AxiosError } from "axios";
 import { CancelTokenSource } from "axios";
 import { getExtensionStringValue } from "fhir-extension-helpers";
@@ -297,6 +342,7 @@ import "ace-builds/src-noconflict/mode-text";
 import "ace-builds/src-noconflict/mode-json";
 import "ace-builds/src-noconflict/theme-chrome";
 
+import { fhir } from '@fhir-typescript/r4b-core';
 
 const shareTooltipText = 'Copy a sharable link to this test expression';
 
@@ -320,11 +366,20 @@ interface FhirPathData {
   expressionContextEditor?: ace.Ace.Editor;
   debugEditor?: ace.Ace.Editor;
   resourceJsonEditor?: ace.Ace.Editor;
+  variables: Map<string, VariableData>;
+  processedByEngine?: string;
 }
 
 interface ResultItem {
   type: string;
   value: any;
+}
+
+interface VariableData {
+  data: any;
+  resourceId?: string;
+  datatype?: string;
+  errorMessage?: string;
 }
 
 interface ResultData {
@@ -337,6 +392,23 @@ interface TraceData {
   name: string;
   type?: string;
   value: string;
+}
+
+function canonicalVariableName(name: string): string {
+  if (name.startsWith("%")) name = name.substring(1);
+  if (name.startsWith("`")) name = name.substring(1);
+  if (name.endsWith("`")) name = name.substring(0, name.length-1);
+  if (name.indexOf('`') !== -1) name = name.replaceAll('\\`', '`');
+  return name;
+}
+
+function isSystemVariableName(name: string): boolean {
+  if (name === "ucum") return true;
+  if (name === "resource") return true;
+  if (name === "rootResource") return true;
+  if (name === "context") return true;
+  if (name === "terminologies") return true;
+  return false;
 }
 
 function getValue(entry: fhir4.ParametersParameter): ResultItem[] {
@@ -422,11 +494,10 @@ export default Vue.extend({
         wrapBehavioursEnabled: true
       });
 
-      if (this.expressionEditor) {
         setCustomHighlightRules(this.expressionEditor, FhirPathHightlighter_Rules);
         this.expressionEditor.setValue("trace('trc').given");
         this.expressionEditor.clearSelection();
-      }
+        this.expressionEditor.on("change", this.fhirpathExpressionChangedEvent)
     }
 
     var editorDebugDiv: any = this.$refs.aceEditorDebug as Element;
@@ -481,7 +552,7 @@ export default Vue.extend({
     else {
       if (this.$route.query.expression) {
         if (this.$route.query.exampletype) {
-          this.resourceId = `https://sqlonfhir-r4.azurewebsites.net/fhir/${this.$route.query.exampletype}/example`;
+          this.resourceId = `${settings.getFhirServerUrl()}/${this.$route.query.exampletype}/example`;
         }
         else {
           if (this.$route.query.resource) {
@@ -511,8 +582,95 @@ export default Vue.extend({
     await this.evaluateFhirPathExpression();
   },
   methods: {
+    variableMessages(variable: VariableData): string | undefined{
+      if (variable.resourceId) return variable.resourceId;
+      if (variable.data?.startsWith("[")) return "(array)";
+      if (variable.data?.startsWith("{")) return "(Object)";
+    },
+    variableErrorMessages(variable: VariableData): string | undefined {
+      if (variable.errorMessage) delete variable.errorMessage;
+      if (variable.data?.startsWith("[") || variable.data?.startsWith("{")){
+          try{
+            JSON.parse(variable.data);
+          }
+          catch(e: any){
+            // console.log(e);
+            variable.errorMessage = e.message;
+            return e.message;
+          }
+      }
+    },
+    isValidFhirUrl(variable: VariableData){
+      const url: string = variable?.resourceId ?? variable?.data;
+      if (url){
+        // Not being fussing on values explicitly tagged with a web protocol
+        if (url.startsWith("http://") || url.startsWith("https://")){
+          for (const frt of fhirResourceTypes){
+            if (url.indexOf(frt+"/") > 0 || url.indexOf(frt+"?") > 0) return true;
+          }
+          return false;
+        } 
+
+        // if the first component is a FHIR resource type, then we'll let that go too.
+        for (const frt of fhirResourceTypes){
+          if (url.startsWith(frt+"/")) return true;
+          if (url.startsWith(frt+"?")) return true;
+        }
+      }
+      return false;
+    },
     resourceJsonChangedEvent(){
       this.resourceJsonChanged = true;
+    },
+    updateVariableValue(name: string){
+      const ie: InputEvent = event as InputEvent;
+      // console.log(event);
+      const value = (ie.currentTarget as any).value;
+      const varValue = this.variables.get(name)
+      if (varValue && varValue.data !== value){
+        varValue.data = value;
+        this.$forceUpdate();
+      }
+      else{
+        this.variables.set(name, { data: value });
+      }
+    },
+    fhirpathExpressionChangedEvent(){
+      // Check the expression to see if there are any variables in there
+      const session = this.expressionEditor?.session;
+      if (session){
+        const count = session.doc.getLength();
+        // accumulate the variables
+        let updatedVariables = new Map<string, any>();
+        for (let row = 0; row<= count; row++){
+          if (session.doc.getLine(row).includes("%")){
+            const tkns = this.expressionEditor?.session.getTokens(row);
+            if (tkns){
+              for (const tkn of tkns){
+                if (tkn.type === "fhir_variable"){
+                  const varName = canonicalVariableName(tkn.value);
+                  if (isSystemVariableName(varName)) continue;
+
+                  if (!this.variables.has(varName)){
+                    // console.log(tkn.value + ' ' + varName);
+                    updatedVariables.set(varName, { data: undefined });
+                    // provide default implementation values for known env vars
+                    switch(varName){
+                      case 'ucum': updatedVariables.set(varName, "http://unitsofmeasure.org"); break;
+                    }
+                  }
+                  else {
+                    updatedVariables.set(varName, this.variables.get(varName));
+                  }
+                }
+              }
+            }
+          }
+        }
+        this.variables = updatedVariables;
+      }
+      if (this.tab === 2){
+      }
     },
     resourceJsonChangedMessage(): string | undefined {
       if (this.resourceJsonChanged && this.resourceId){
@@ -521,7 +679,7 @@ export default Vue.extend({
     },
     tabTitle() {
       if (this.library) return this.library.title;
-      if (this.getResourceJson()) return '(local resource JSON)';
+      if (this.getResourceJson() && this.resourceJsonChanged) return '(local resource JSON)';
       return this.resourceId;
     },
     settingsClosed() {
@@ -568,6 +726,7 @@ export default Vue.extend({
       if (this.debugEditor) {
         this.debugEditor.setValue(result);
         this.debugEditor.clearSelection();
+        this.debugEditor.renderer.updateFull(true);
       }
     },
     async executeRequest<T>(url: string, p: fhir4.Parameters) {
@@ -576,7 +735,7 @@ export default Vue.extend({
         this.cancelSource = axios.CancelToken.source();
         this.loadingData = true;
         let token = this.cancelSource.token;
-        let response: AxiosResponse<fhir4.Parameters, any>;
+        let response: AxiosResponse<fhir4.Parameters | fhir4.OperationOutcome, any>;
         response = await axios.post<fhir4.Parameters>(url, p,
           {
             cancelToken: token,
@@ -594,13 +753,26 @@ export default Vue.extend({
 
         const results = response.data;
         if (results) {
-          this.raw = results;
           this.setResultJson(JSON.stringify(results, null, 4));
+          if (results.resourceType === 'OperationOutcome')
+          {
+            this.saveOutcome = results;
+            this.showOutcome = true;
+            return;
+          }
+          this.raw = results;
 
           this.results = [];
           if (this.raw.parameter) {
             for (var entry of this.raw.parameter) {
-              if (entry.name === 'parameters') continue; // skip over the configuration settings
+              if (entry.name === 'parameters'){
+                // read the processing engine version
+                if (entry.part && entry.part.length > 0 && entry.part[0].name === 'evaluator'){
+                  this.processedByEngine = entry.part[0].valueString;
+                }
+
+                continue; // skip over the configuration settings
+              }
 
               // Anything else is a result
               // scan over the parts (values)
@@ -645,12 +817,13 @@ export default Vue.extend({
         this.cancelSource = axios.CancelToken.source();
         this.loadingData = true;
         let token = this.cancelSource.token;
-        const response = await axios.get<fhir4.Library>(url, {
-          cancelToken: token,
-          headers: {
+        let headers: AxiosRequestHeaders = {
             "Cache-Control": "no-cache",
             "Accept": requestFhirAcceptHeaders
           }
+        const response = await axios.get<fhir4.Library>(url, {
+          cancelToken: token,
+          headers: headers
         });
         if (token.reason) {
           console.log(token.reason);
@@ -738,12 +911,13 @@ export default Vue.extend({
         this.cancelSource = axios.CancelToken.source();
         this.loadingData = true;
         let token = this.cancelSource.token;
-        const response = await axios.get<fhir4.Resource>(url, {
-          cancelToken: token,
-          headers: {
+        let headers: AxiosRequestHeaders = {
             "Cache-Control": "no-cache",
             "Accept": requestFhirAcceptHeaders
           }
+        const response = await axios.get<fhir4.Resource>(url, {
+          cancelToken: token,
+          headers: headers
         });
         if (token.reason) {
           console.log(token.reason);
@@ -762,6 +936,60 @@ export default Vue.extend({
             }
             this.resourceJsonEditor.clearSelection();
           }
+        }
+      } catch (err) {
+        this.loadingData = false;
+        if (axios.isAxiosError(err)) {
+          const serverError = err as AxiosError<fhir4.OperationOutcome>;
+          if (serverError && serverError.response) {
+            this.setResultJson(JSON.stringify(serverError.response, null, 4));
+            if (serverError.response.data?.resourceType == 'OperationOutcome') {
+              this.setResultJson(JSON.stringify(serverError.response, null, 4));
+              this.saveOutcome = serverError.response.data;
+            } else {
+              if (serverError.response.status == 404)
+                this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
+              this.saveOutcome?.issue.push({ code: 'not-found', severity: 'error', details: { text: 'Test resource not found' } });
+            }
+            this.showOutcome = true;
+            return serverError.response.data;
+          }
+        } else {
+          console.log("Client Error:", err);
+        }
+      }
+    },
+
+    async downloadVariableResource(name: string) {
+      try {
+        if (!this.variables.get(name)) return;
+        let url = this.variables.get(name)?.resourceId ?? this.variables.get(name)?.data;
+        if (url && !url.startsWith('http'))
+          url = settings.getFhirServerUrl() + '/' + url;
+
+        if (this.cancelSource) this.cancelSource.cancel("new download started");
+        this.cancelSource = axios.CancelToken.source();
+        this.loadingData = true;
+        let token = this.cancelSource.token;
+        let headers: AxiosRequestHeaders = {
+            "Cache-Control": "no-cache",
+            "Accept": requestFhirAcceptHeaders
+          }
+        const response = await axios.get<fhir4.Resource>(url, {
+          cancelToken: token,
+          headers: headers
+        });
+        if (token.reason) {
+          console.log(token.reason);
+          return;
+        }
+        this.cancelSource = undefined;
+        this.loadingData = false;
+
+        const results = response.data;
+        if (results) {
+          this.variables.set(name, { resourceId: url, data: JSON.stringify(results, null, 4)});
+          this.$forceUpdate();
         }
       } catch (err) {
         this.loadingData = false;
@@ -805,7 +1033,20 @@ export default Vue.extend({
         fhirData = JSON.parse(resourceJson);
       }
       // debugger;
-      var environment: any = { resource: fhirData };
+      var environment: Record<string, any> = { resource: fhirData, rootResource: fhirData };
+      for (let v of this.variables) {
+        let value = v[1].data;
+        if (value && (value.startsWith("[") || value.startsWith("{"))) {
+          // convert to an object
+          try{
+            value = JSON.parse(value);
+          }
+          catch(e){
+            console.log(e);
+          }
+        }
+        environment[v[0]] = value;
+      }
 
       let contextNodes: any[] = [];
 
@@ -815,6 +1056,7 @@ export default Vue.extend({
       if (contextExpression) {
         // scan over each of the expressions
         try {
+          this.processedByEngine = `fhirpath.js-2.14.4+`;
           contextNodes = fhirpath.evaluate(fhirData, contextExpression, environment, fhirpath_r4_model);
         }
         catch (err: any) {
@@ -828,6 +1070,7 @@ export default Vue.extend({
       }
       else {
         try {
+          this.processedByEngine = `fhirpath.js-2.14.4+`;
           contextNodes = fhirpath.evaluate(fhirData, "%resource", environment, fhirpath_r4_model);
         }
         catch (err: any) {
@@ -909,7 +1152,7 @@ export default Vue.extend({
     },
     updateShareText() {
       this.shareToolTipMessage = shareTooltipText;
-      if (this.getResourceJson()) {
+      if (this.getResourceJson() && this.resourceJsonChanged) {
         this.shareToolTipMessage += '\r\n(without example resource JSON)';
       }
     },
@@ -942,7 +1185,33 @@ export default Vue.extend({
 
     // https://www.sitepoint.com/fetching-data-third-party-api-vue-axios/
     async evaluateFhirPathExpression() {
+
+      // reset the processing engine
+      this.processedByEngine = undefined;
+
+      // Validate the test fhir resource object
       let resourceJson = this.getResourceJson();
+      if (resourceJson) {
+        let rawObj: object;
+        try {
+          rawObj = JSON.parse(resourceJson)
+          let resource: fhir.FhirResource | null = fhir.resourceFactory(rawObj);
+          if (resource) {
+            const issues: fhir.FtsIssue[] = resource.doModelValidation();
+            if (issues.length !== 0) {
+              this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
+              this.saveOutcome?.issue.push(...issues as any);
+              this.showOutcome = true;
+            }
+          }
+        } catch (err) {
+          console.log(err);
+          this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
+          this.saveOutcome?.issue.push({ code: 'exception', severity: 'error', details: { text: `Failed to parse the resource: ${err}` } });
+          this.showOutcome = true;
+        }
+      }
+
       if (this.selectedEngine == "fhirpath.js") {
         await this.evaluateExpressionUsingFhirpathjs();
         return;
@@ -950,7 +1219,11 @@ export default Vue.extend({
 
       // brianpos hosted service
       // default the firely SDK/brianpos service
-      let url = `https://qforms-server.azurewebsites.net/$fhirpath`;
+      // let url = `https://qforms-server.azurewebsites.net/$fhirpath`;
+      // let url = `https://localhost:44378/$fhirpath`;
+      // Source code for this is at https://github.com/brianpos/fhirpath-lab-dotnet
+      let url = `https://fhirpath-lab-net.azurewebsites.net/api/$fhirpath`;
+      // let url = `http://localhost:7071/api/$fhirpath`;
 
       let p: fhir4.Parameters = { resourceType: "Parameters", parameter: [{ name: "expression", valueString: this.getFhirpathExpression() ?? 'today()' }] };
 
@@ -959,23 +1232,63 @@ export default Vue.extend({
         p.parameter?.push({ name: "context", valueString: contextExpression });
       }
 
+      // add in any variables
+      if (this.variables){
+        let pVars : fhir4.ParametersParameter = { name: "variables", part: []};
+        p.parameter?.push(pVars);
+        for(const varName of this.variables.keys()) {
+          let value = this.variables.get(varName)?.data;
+          if (value && (value.startsWith("[") || value.startsWith("{"))) {
+            // convert to an object
+            try{
+              const po = JSON.parse(value);
+              if (po.resourceType){
+                pVars.part?.push({ name: varName, resource: po });
+                continue;
+              }
+            }
+            catch(e){
+              console.log(e);
+            }
+            pVars.part?.push({ name: varName, extension: [{ url: 'http://fhir.forms-lab.com/StructureDefinition/json-value', valueString: value }] });
+          }
+          else {
+            if (value === 'true') pVars.part?.push({ name: varName, valueBoolean: true });
+            else if (value === 'false') pVars.part?.push({ name: varName, valueBoolean: false });
+            else if (value && value.match(/^[-+]?[0-9]+$/)) pVars.part?.push({ name: varName, valueInteger: parseInt(value) });
+            else if (value && value.match(/^[-+]?[0-9]+.[0-9]+$/)) pVars.part?.push({ name: varName, valueDecimal: parseFloat(value) });
+            // Should other types be also included here?
+            else pVars.part?.push({ name: varName, valueString: value });
+          }
+        }
+        if (pVars.part?.length === 0){
+          delete pVars.part;
+        }
+      }
+
       if (this.selectedEngine == "java (HAPI)") {
         // https://github.com/jkiddo/fhirpath-tester/blob/main/src/main/java/org/example/Evaluator.java (brianpos fork of this)
         // https://docs.microsoft.com/en-us/azure/devops/pipelines/ecosystems/java-function?view=azure-devops
         url = `https://fhirpath-lab-java.azurewebsites.net/fhir/$fhirpath`;
-        // url = 'https://localhost:44378/$fhirpath2'
+        // url = 'https://localhost:44378/$fhirpath-hapi'
 
         if (!this.getResourceJson() && this.resourceId) {
           await this.downloadTestResource();
           resourceJson = this.getResourceJson();        
         }
 
-        // removing this constraint as there are expression tests 
-        // that you can do that don't require a resource.  
-        // if (!this.resourceJson) {
-        //   return;
-        // }
         (this as any).$appInsights?.trackEvent({ name: 'evaluate HAPI' });
+      }
+      else if (this.selectedEngine == "java (IBM)") {
+        url = `https://fhirpath-lab-java.azurewebsites.net/fhir/$fhirpath-ibm`;
+        // url = 'https://localhost:44378/$fhirpath-ibm'
+
+        if (!this.getResourceJson() && this.resourceId) {
+          await this.downloadTestResource();
+          resourceJson = this.getResourceJson();        
+        }
+
+        (this as any).$appInsights?.trackEvent({ name: 'evaluate IBM' });
       }
       else {
         (this as any).$appInsights?.trackEvent({ name: 'evaluate FirelySDK' });
@@ -1007,6 +1320,7 @@ export default Vue.extend({
       resourceId: 'Patient/example',
       resourceJsonChanged: false,
       loadingData: true,
+      saveOutcome: undefined,
       showOutcome: false,
       showAdvancedSettings: false,
       terminologyServer: 'https://sqlonfhir-r4.azurewebsites.net/fhir',
@@ -1015,13 +1329,16 @@ export default Vue.extend({
       executionEngines: [
         ".NET (firely)",
         "fhirpath.js",
-        "java (HAPI)"
+        "java (HAPI)",
+        "java (IBM)"
       ],
       shareToolTipMessage: shareTooltipText,
       expressionEditor: undefined,
       expressionContextEditor: undefined,
       debugEditor: undefined,
       resourceJsonEditor: undefined,
+      variables: new Map<string, VariableData>(),
+      processedByEngine: undefined,
     };
   },
 });

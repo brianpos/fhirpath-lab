@@ -21,8 +21,8 @@
           <v-toolbar-title><span v-text="raw.title" /> (<span v-text="raw.status" />)<span v-if="raw.version">
               - {{ raw.version }}</span></v-toolbar-title>
           <v-spacer />
-          <v-btn icon>
-            <v-icon v-if="enableSave && !readonly" @click="saveData" :disabled="saving">
+          <v-btn v-if="enableSave && !readonly" icon title="save">
+            <v-icon @click="saveData" :disabled="saving">
               mdi-content-save
             </v-icon>
           </v-btn>
@@ -60,7 +60,26 @@
                 <v-card-text>
                   <p class="fl-tab-header">Elements</p>
 
-                  <p v-if="raw.differential && raw.differential.element">
+                  <p v-if="!hasAnyNonStandardConstraints()">
+                    <v-simple-table>
+                      <thead>
+                        <tr>
+                          <th>Path</th>
+                          <th>Description & Constraints</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td class="path"></td>
+                          <td>
+                            <i>(No constraints defined in the differential)</i>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </v-simple-table>
+                  </p>
+
+                  <p v-if="hasAnyNonStandardConstraints()">
                     <v-simple-table>
                       <thead>
                         <tr>
@@ -70,25 +89,19 @@
                       </thead>
                       <tbody>
                         <template v-for="(element, index) in elements()">
-                          <tr :key="index" v-if="hasNonStandardConstraint(element)">
+                          <tr :key="index" v-if="hasNonStandardConstraint(element) && element.constraint">
                             <td class="path" v-text="element.path"></td>
                             <td>
                               {{ element.definition }}
                               <template v-for="(constraint, indexConstraint) in element.constraint">
                                 <div :key="indexConstraint" v-if="!isStandardConstraint(constraint)">
                                   <b>{{ constraint.key }}</b> {{ constraint.human }}<br />
-                                  <v-textarea label="Expression" v-model="constraint.expression"
-                                    hide-details="auto" rows="2" auto-grow readonly>
-                                    <template v-slot:append>
-                                      <v-btn icon small tile :href="testExpressionPath(element, constraint)"
-                                        title="Debug this expression with the fhirpath tester">
-                                        <v-icon> mdi-bug-outline </v-icon>
-                                      </v-btn>
-                                    </template>
-                                  </v-textarea>
+                                  <debuggable-fhir-path-expression
+                                    :readonly="true" :href="testExpressionPath(element, constraint)"
+                                    label="Expression" :minLines="2"
+                                    :value="constraint.expression" />
                                 </div>
                               </template>
-
                             </td>
                           </tr>
                         </template>
@@ -124,6 +137,12 @@
   max-height: calc(100vh - 240px);
 }
 
+td {
+  vertical-align: top;
+  height: unset !important;
+  padding: 8px !important;
+}
+
 td.path {
   word-break: break-word;
 }
@@ -157,7 +176,13 @@ export default Vue.extend({
       return this.raw?.snapshot?.element || this.raw?.differential?.element || [];
     },
     testExpressionPath(element: ElementDefinition, constraint: ElementDefinitionConstraint):string {
-      return `../FhirPath?exampletype=${this.raw?.type}&context=${element.path}&expression=${constraint.expression}`;
+      return `../FhirPath?exampletype=${this.raw?.type}&context=${encodeURIComponent(element.path??'')}&expression=${encodeURIComponent(constraint.expression ?? '')}`;
+    },
+    hasAnyNonStandardConstraints(): boolean {
+      for (const element of this.elements()){
+        if (this.hasNonStandardConstraint(element)) return true;
+      }
+      return false;
     },
     hasNonStandardConstraint(element: ElementDefinition) {
       if (!element.constraint) return false;

@@ -20,6 +20,8 @@
     </HeaderNavbar>
 
     <div class="container-fluid bd-layout" style="padding-top: 114px">
+      <OperationOutcomeOverlay v-if="outcome" :saveOutcome="outcome" :showOutcome="(outcome != undefined)"
+        title="Search Errors/Warnings" :popupWhenErrors="false" @close="outcome = undefined" />
       <ve-table
         :columns="columns"
         :table-data="tableData"
@@ -109,13 +111,18 @@ export default Vue.extend({
       eventCustomOption: {
         bodyRowEvents: ({ row, rowIndex }: any) => {
           return {
-            click: (event: any) => {
+            click: (event: PointerEvent) => {
               console.log("click::", row, rowIndex, event);
               var data: ListTableData = row;
               console.log("row data::", data);
-              this.$router.push("/List/" + data.id);
+              if (event.ctrlKey){
+                window.open("/List/" + data.id, '_blank'); 
+              }
+              else{
+                this.$router.push("/List/" + data.id);
+              }
             },
-            contextmenu: (event: any) => {
+            contextmenu: (event: PointerEvent) => {
               console.log("contextmenu::", row, rowIndex, event);
               event.preventDefault();
             },
@@ -131,6 +138,7 @@ export default Vue.extend({
         { field: "id", key: "id", title: "ID", align: "left" },
       ],
       tableData: [],
+      outcome: undefined,
       ... EasyTableDefinition_defaultValues
     };
   },

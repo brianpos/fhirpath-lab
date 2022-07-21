@@ -14,15 +14,15 @@
       <br />
 
       <div v-if="!raw">
-        Loading SearchParameter/<span v-text="this.$route.params.id" />...
+        Loading SubscriptionTopic/<span v-text="this.$route.params.id" />...
       </div>
       <v-card v-if="raw">
         <v-toolbar flat color="primary">
-          <v-toolbar-title><span v-text="raw.name" /> (<span v-text="raw.status" />)<span v-if="raw.version">
+          <v-toolbar-title><span v-text="raw.title" /> (<span v-text="raw.status" />)<span v-if="raw.version">
               - {{ raw.version }}</span></v-toolbar-title>
           <v-spacer />
-          <v-btn icon>
-            <v-icon v-if="enableSave && !readonly" @click="saveData" :disabled="saving">
+          <v-btn v-if="enableSave && !readonly" icon title="save">
+            <v-icon @click="saveData" :disabled="saving">
               mdi-content-save
             </v-icon>
           </v-btn>
@@ -36,23 +36,24 @@
             <v-icon left> mdi-download-network-outline </v-icon>
             Publishing
           </v-tab>
+          <v-tab>
+            <v-icon left> mdi-air-filter </v-icon>
+            Triggers
+          </v-tab>
+          <v-tab :hidden="true">
+            <v-icon left> mdi-filter-cog-outline </v-icon>
+            Filters
+          </v-tab>
+          <v-tab :hidden="true">
+            <v-icon left> mdi-shape-outline </v-icon>
+            Shape
+          </v-tab>
 
           <v-tabs-items touchless v-model="tab">
             <v-tab-item>
               <!-- Details -->
               <conformance-resource-details-tab :raw="raw" :readonly="readonly"
                 :showAdvancedSettings="showAdvancedSettings" @update="updateNow">
-                <template v-slot:extension>
-                  <br />
-                  <div class="results">Search Details</div>
-                  <v-text-field label="Code" v-model="raw.code" hide-details="auto" readonly />
-                  <v-text-field label="Base" v-model="raw.base" hide-details="auto" readonly />
-                  <v-text-field label="Type" :value="computedType()" hide-details="auto" readonly />
-                  <!-- <v-text-field label="Target" v-model="raw.target" hide-details="auto" /> -->
-                  <debuggable-fhir-path-expression :readonly="false"
-                    label="Expression" :minLines="3" :href="testExpressionPath()"
-                    :value="raw.expression" @change="updateExpression"/>
-                </template>
               </conformance-resource-details-tab>
             </v-tab-item>
 
@@ -61,6 +62,65 @@
               <conformance-resource-publishing-tab :raw="raw" :publishedVersions="publishedVersions"
                 :readonly="readonly" :showAdvancedSettings="showAdvancedSettings" @update="updateNow" />
             </v-tab-item>
+
+            <v-tab-item>
+              <!-- Triggers Resource + Event -->
+              <v-card flat>
+                <v-card-text v-if="raw && raw.resourceTrigger && raw.eventTrigger">
+                  <p class="fl-tab-header">Triggers</p>
+                  <!-- <div class="results">Resource Triggers</div> -->
+                  <v-simple-table class="triggers">
+                    <template v-for="(trigger, i1) in raw.resourceTrigger">
+                      <tr :key="i1">
+                        <td class="context" colspan="2">
+                          <resource-trigger-item :name="'table'+i1" :raw="trigger" :readonly="readonly" @update="updateNow">
+                          </resource-trigger-item>
+                        </td>
+                      </tr>
+                    </template>
+                  </v-simple-table>
+                  
+                  <v-btn hidden small @click="addResourceTrigger">Add Resource Trigger</v-btn>
+                  <!-- <br/>
+                  <div class="results">Event Triggers</div>
+                  <v-text-field label="Type" :value="computedType()" hide-details="auto" readonly />
+                  <v-btn small @click="addEventTrigger">Add Event Trigger</v-btn> -->
+                  <!-- <v-text-field label="Target" v-model="raw.target" hide-details="auto" /> -->
+                  <!-- <v-textarea label="Expression" v-model="raw.expression" hide-details="auto"
+                    rows="3" auto-grow>
+                    <template v-slot:append>
+                      <v-btn icon small tile :href="testExpressionPath()"
+                        title="Debug this expression with the fhirpath tester">
+                        <v-icon> mdi-bug-outline </v-icon>
+                      </v-btn>
+                    </template>
+                  </v-textarea> -->
+                </v-card-text>
+              </v-card>
+            </v-tab-item>
+
+            <v-tab-item>
+              <!-- Filters -->
+              <v-card flat>
+                <v-card-text>
+                  <p class="fl-tab-header">Filters</p>
+                  <v-text-field label="Type" :value="computedType()" hide-details="auto" readonly />
+                  <v-btn small>Add</v-btn>
+                </v-card-text>
+              </v-card>
+            </v-tab-item>
+
+            <v-tab-item>
+              <!-- Notification Shape -->
+              <v-card flat>
+                <v-card-text>
+                  <p class="fl-tab-header">Shape</p>
+                  <v-text-field label="Type" :value="computedType()" hide-details="auto" readonly />
+                  <v-btn small>Add</v-btn>
+                </v-card-text>
+              </v-card>
+            </v-tab-item>
+
           </v-tabs-items>
         </v-tabs>
       </v-card>
@@ -81,6 +141,11 @@
 </template>
 
 <style lang="scss" scoped>
+.triggers tr td {
+ border-bottom: $card-header-color 3pt solid;
+ margin-bottom: 4px;
+}
+
 .v-window-item--active {
   overflow-y: auto;
   overflow-x: hidden;
@@ -101,10 +166,10 @@
 
 <script lang="ts">
 import Vue from "vue";
-import { SearchParameterData } from "../../models/SearchParameterTableData";
+import { SubscriptionTopicData } from "../../models/SubscriptionTopicTableData";
 import axios from "axios";
 import { AxiosError } from "axios";
-import { SearchParameter } from "fhir/r4";
+import { SubscriptionTopic } from "fhir/r4";
 import { settings } from "~/helpers/user_settings";
 import {
   loadCanonicalResource,
@@ -119,27 +184,30 @@ import {
 } from "~/helpers/favourites";
 import { DateTime } from "luxon";
 import { BaseResource_defaultValues } from "~/models/BaseResourceTableData";
-import DebuggableFhirPathExpression from "~/components/DebuggableFhirPathExpression.vue";
+import ResourceTriggerItem from "~/components/SubscriptionTopic/ResourceTriggerItem.vue";
 
 export default Vue.extend({
-  components: { DebuggableFhirPathExpression },
+  components: { ResourceTriggerItem },
   mounted() {
     this.searchFhirServer();
   },
   methods: {
-    computedType: function () {
-      if (!this.raw)
-        return 'argh';
-      if (this.raw.target) return `${this.raw.type}(${this.raw.target})`;
-      return this.raw.type;
-    },
-    updateExpression(event: InputEvent) {
-      if (this.raw){
-        this.raw.expression = event.data ?? undefined;
+    addResourceTrigger: function() {
+      const newTrigger: fhir4.SubscriptionTopicResourceTrigger = {
+        resource: "",
+        queryCriteria: {}
       }
+      this.raw?.resourceTrigger?.push(newTrigger);
     },
-    testExpressionPath() {
-      return `../FhirPath?exampletype=${this.raw?.base}&expression=${encodeURIComponent(this.raw?.expression??'')}`;
+    addEventTrigger: function() {
+      const newTrigger: fhir4.SubscriptionTopicEventTrigger = {
+        resource: "",
+        event: {}
+      }
+      this.raw?.eventTrigger?.push(newTrigger);
+    },
+    computedType: function () {
+        return 'argh';
     },
     settingsClosed() {
       this.showAdvancedSettings = settings.showAdvancedSettings();
@@ -160,38 +228,36 @@ export default Vue.extend({
     },
     // https://www.sitepoint.com/fetching-data-third-party-api-vue-axios/
     async searchFhirServer() {
-      document.title = "Search Parameter:";
-      const createNew = (): fhir4.SearchParameter => {
-        var newResource: fhir4.SearchParameter = {
-          resourceType: "SearchParameter",
+      document.title = "Subscription Topic:";
+      const createNew = (): fhir4.SubscriptionTopic => {
+        var newResource: fhir4.SubscriptionTopic = {
+          resourceType: "SubscriptionTopic",
           status: "draft",
           version: "0.1",
-          base: [],
-          code: '',
           description: '',
-          name: '',
-          type: 'string',
           url: ''
         };
         const stgs = settings.load();
         newResource.publisher = stgs.defaultProviderField;
         const randomId = settings.createRandomID();
-        newResource.name = "R" + randomId.replaceAll("-", "_");
+        newResource.title = "R" + randomId.replaceAll("-", "_");
         if (stgs.defaultNewCanonicalBase)
-          newResource.url = `${stgs.defaultNewCanonicalBase}/SearchParameter/${randomId}`;
+          newResource.url = `${stgs.defaultNewCanonicalBase}/SubscriptionTopic/${randomId}`;
         return newResource;
       };
       await loadCanonicalResource(
         settings.getFhirServerUrl(),
         this,
         this,
-        "SearchParameter",
+        "SubscriptionTopic",
         this.$route.params.id,
         createNew
       );
       if (this.raw) {
         this.isFavourite = isFavourite(this.raw.resourceType, this.raw.id);
-        document.title = `Search Parameter: ${this.raw.name ?? this.raw.description }`;
+        document.title = `Subscription Topic: ${this.raw.title}`;
+        if (!this.raw.resourceTrigger) this.raw.resourceTrigger = [];
+        if (!this.raw.eventTrigger) this.raw.eventTrigger = [];
       }
     },
     async saveData() {
@@ -217,7 +283,7 @@ export default Vue.extend({
       }
     },
   },
-  data(): SearchParameterData {
+  data(): SubscriptionTopicData {
     return {
       testFilterValue: undefined,
 

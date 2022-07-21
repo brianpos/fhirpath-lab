@@ -47,7 +47,7 @@
   </v-simple-table>
 </template>
 
-<style>
+<style scoped>
 .group {
   background-color: #b19cd920;
 }

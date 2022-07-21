@@ -4,7 +4,8 @@
 
 
 .ace-chrome {
-
+  background-color: transparent;
+  
   .ace_fhir_date,
   .ace_fhir_datetime,
   .ace_fhir_time,
@@ -100,9 +101,14 @@
   color: #949494;
 }
 
-.ace_editor:focus-within+.ace_editor_footer,
 .ace_editor:hover+.ace_editor_footer {
   color: #212121;
+  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);
+  // display: block;
+}
+
+.ace_editor:focus-within+.ace_editor_footer {
+  color: currentColor;
   transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);
   // display: block;
 }
@@ -131,8 +137,8 @@
 }
 
 .ace_editor+.ace_editor_footer::after {
-  background-color: black;
-  border-color: black;
+  background-color: currentColor;
+  border-color: currentColor;
   border-style: solid;
   border-width: 1px 0 thin 1px;
   transform: scaleX(0);

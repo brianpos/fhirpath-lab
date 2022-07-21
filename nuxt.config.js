@@ -73,6 +73,7 @@ export default {
     // https://www.youtube.com/watch?v=j7l5e2ID0aw&t=7s
     transpile: [
       "vue-easytable",
+      "@fhir-typescript/r4b-core",
       "fhirpath"
     ]
   }

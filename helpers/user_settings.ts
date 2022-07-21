@@ -2,6 +2,7 @@
 import {ConformanceSearchData} from "models/ConformanceSearchData";
 export declare interface UserSettingsData {
     fhirServerUrl?: string;
+    OAuthClientId?: string;
     fhirTerminologyServerUrl?: string;
     syncFavourites: boolean;
     favouritesListId?: string;
@@ -39,6 +40,15 @@ export namespace settings {
             return "https://sqlonfhir-r4.azurewebsites.net/fhir";
         }
     }
+    export function getOAuthClientId(): string|undefined {
+        try {
+            return localStorage.getItem("settings_OAuthClientId") ?? undefined;
+        }
+        catch {
+            console.log("error reading the OAuthClientId configuration value");
+            return undefined;
+        }
+    }
     export function getFhirTerminologyServerUrl(): string {
         try {
             return localStorage.getItem("settings_fhirTerminologyServerURL") ?? "https://sqlonfhir-r4.azurewebsites.net/fhir";
@@ -65,6 +75,7 @@ export namespace settings {
     export function load(): UserSettingsData {
         return {
             fhirServerUrl: localStorage.getItem("settings_fhirServerURL") ?? "https://sqlonfhir-r4.azurewebsites.net/fhir",
+            OAuthClientId: localStorage.getItem("settings_OAuthClientId") ?? undefined,
             fhirTerminologyServerUrl: localStorage.getItem("settings_fhirTerminologyServerURL") ?? "https://sqlonfhir-r4.azurewebsites.net/fhir",
             syncFavourites: localStorage.getItem("settings_syncFavourites") === 'true',
             favouritesListId: localStorage.getItem("settings_favouritesListId") ?? undefined,
@@ -80,6 +91,9 @@ export namespace settings {
         try {
             if (settings.fhirServerUrl?.endsWith('/')) settings.fhirServerUrl = settings.fhirServerUrl.substring(0, settings.fhirServerUrl.length - 1);
             if (settings.fhirServerUrl) localStorage.setItem("settings_fhirServerURL", settings.fhirServerUrl);
+
+            if (settings.OAuthClientId) localStorage.setItem("settings_OAuthClientId", settings.OAuthClientId);
+            else localStorage.removeItem("settings_OAuthClientId");
 
             if (settings.fhirTerminologyServerUrl?.endsWith('/')) settings.fhirTerminologyServerUrl = settings.fhirTerminologyServerUrl.substring(0, settings.fhirTerminologyServerUrl.length - 1);
             if (settings.fhirTerminologyServerUrl) localStorage.setItem("settings_fhirTerminologyServerURL", settings.fhirTerminologyServerUrl);

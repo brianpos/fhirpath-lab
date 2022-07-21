@@ -34,8 +34,8 @@
             ></v-toolbar-title
           >
           <v-spacer />
-          <v-btn icon>
-            <v-icon v-if="enableSave && !readonly" @click="saveData" :disabled="saving">
+          <v-btn v-if="enableSave && !readonly" icon title="save">
+            <v-icon @click="saveData" :disabled="saving">
               mdi-content-save
             </v-icon>
           </v-btn>
@@ -75,15 +75,9 @@
                     <template v-for="(v1,index) in raw.content">
                       <p :key="index">
                   <v-text-field label="Title" v-model="v1.title" hide-details="auto" />
-                  <v-textarea label="Fhirpath Expression" :value="convertExpression(v1.data)" @change="updateExpression(v1, $event)" hide-details="auto"
-                    rows="3" auto-grow>
-                    <template v-slot:append>
-                      <v-btn icon small tile :href="testExpressionPath(v1.data)"
-                        title="Debug this expression with the fhirpath tester">
-                        <v-icon> mdi-bug-outline </v-icon>
-                      </v-btn>
-                    </template>
-                  </v-textarea>
+                  <debuggable-fhir-path-expression :readonly="false"
+                    label="FHIRPath Expression" :minLines="3" :href="testExpressionPath(v1.data)"
+                    :value="convertExpression(v1.data)" @change="updateExpression(v1, $event.data)"/>
                       </p>
                     </template>
                   </p>
