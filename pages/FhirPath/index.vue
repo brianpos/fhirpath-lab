@@ -560,19 +560,24 @@ export default Vue.extend({
           }
         }
 
-          if (this.expressionContextEditor) {
+        if (this.expressionContextEditor) {
           if (this.$route.query.context) {
             this.expressionContextEditor.setValue(this.$route.query.context as string ?? '');
             this.expressionContextEditor.clearSelection();
           }
-        else {
-            this.expressionContextEditor.setValue('');
+          else {
+              this.expressionContextEditor.setValue('');
+          }
         }
+
+        if (this.$route.query.engine) {
+          this.selectedEngine = this.$route.query.engine as string ?? '';
         }
 
         if (this.$route.query.terminologyServer) {
           this.terminologyServer = this.$route.query.terminologyServer as string ?? '';
         }
+
         if (this.expressionEditor) {
           this.expressionEditor.setValue(this.$route.query.expression as string ?? '');
           this.expressionEditor.clearSelection();
@@ -1161,6 +1166,7 @@ export default Vue.extend({
       const url = new URL(window.location.href);
       // console.log(url);
       let shareUrl = `${url.origin}/FhirPath?expression=${encodeURIComponent(this.getFhirpathExpression() ?? '')}`;
+      shareUrl += `&engine=${encodeURIComponent(this.selectedEngine ?? '')}`;
       const contextExpression = this.getContextExpression();
       if (contextExpression) {
         shareUrl += `&context=${encodeURIComponent(contextExpression ?? '')}`;
