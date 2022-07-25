@@ -1117,10 +1117,11 @@ export default Vue.extend({
 
         try {
           let useExpression = this.getFhirpathExpression() ?? '';
-          if (resData.context) {
-            useExpression = `${resData.context}.select(${useExpression})`;
+          let path = {
+            base: resData.context??'', 
+            expression: useExpression
           }
-          let res: any[] = fhirpath.evaluate(fhirData, useExpression, environment, fhirpath_r4_model, tracefunction);
+          let res: any[] = fhirpath.evaluate(contextNode, path, environment, fhirpath_r4_model, tracefunction);
           this.results.push(resData);
 
           for (var item of res) {
