@@ -21,7 +21,7 @@
             </template>
             </span>
             <span class="details">
-            <span v-if="issue.details" v-text="issue.details.text" />
+            <span style="max-height:100px; display: block; overflow-y: auto" v-text="issueDescription(issue)" />
             <template v-if="issue.expression">
               <br />
               <span v-if="issue.expression" v-text="issue.expression" />
