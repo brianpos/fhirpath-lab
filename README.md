@@ -26,10 +26,12 @@ Direct access to launch the test page can be done and pass through test data as 
 | **expression** | *(fhirpath expression)* The expression to evaluate |
 | context | *(optional fhirpath expression)* A start point within the resource to execute the expression.<br/>If this expression returns multiple elements, the expression will be evaluated against each line individually |
 | resource | *(optional)* The resource id of a test resource to evaluate the expression against.<br/>If a relative id is provided then it will use the FHIR server selected in your settings.<br/>Must contain the resource type e.g. `Patient/example` |
+| resourceJson | *(optional)* A compressed/encoded test resource JSON |
 | libaryId | *(optional)* A specific fhirpath library instance to load which has all the data|
 | exampletype | *(optional)* The resource type that the expression will be evaluated against (used to select an example resource if the resource or resourceJson is not provided)<br/>This is usually used when trying to test a StructureDefinition or other instance where you don't have a specific instance to test with, but you do know what the resource type the expression should be run against<br/>The tester will select a resource with the id `example` on the fhir server selected in your settings |
 | engine | *(optional)* Which fhirpath engine to select (`.NET (firely)` , `fhirpath.js` , `java (HAPI)`, `java (IBM)`) |
 | terminologyServer | *(optional)* Only used by the .net engine for the experimental terminology functionality |
+| parameters | A compressed/encoded json object with all the above data in it |
 
 ## Build Setup
 
