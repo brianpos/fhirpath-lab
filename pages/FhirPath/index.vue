@@ -1106,7 +1106,18 @@ export default Vue.extend({
       let fhirData = { resourceType: 'Patient' }; // some dummy data
       const resourceJson = this.getResourceJson();
       if (resourceJson) {
+        try
+        {
         fhirData = JSON.parse(resourceJson);
+      }
+        catch (err: any) {
+          console.log(err);
+          if (err.message) {
+            this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
+            this.saveOutcome?.issue.push({ code: 'exception', severity: 'fatal', details: { text: err.message } });
+            this.showOutcome = true;
+          }
+        }
       }
       // debugger;
       var environment: Record<string, any> = { resource: fhirData, rootResource: fhirData };
