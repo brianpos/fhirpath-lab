@@ -102,8 +102,8 @@ import { List } from "fhir/r4";
 import "~/helpers/user_settings";
 import { settings, UserSettingsData } from "~/helpers/user_settings";
 import { requestFhirAcceptHeaders } from "~/helpers/searchFhir";
-import { fhirclient } from "fhirclient/dist/lib/types";
-import { fhirVersions } from "fhirclient/dist/lib/settings";
+import { fhirclient } from "fhirclient/lib/types";
+import { fhirVersions } from "fhirclient/lib/settings";
 import { getExtension, getExtensionUriValue } from "fhir-extension-helpers";
 
 interface IControlData extends UserSettingsData {
