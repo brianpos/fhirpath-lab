@@ -70,7 +70,7 @@
       </v-card-text>
       <v-card-actions>
         <v-spacer />
-        <v-btn @click="close">Ok</v-btn>
+        <v-btn color="primary" ref="closeButton" @click="close">Ok</v-btn>
         <v-spacer />
       </v-card-actions>
     </v-card>
@@ -141,6 +141,11 @@ export default Vue.extend({
     saveOutcome: Object as PropType<fhir4.OperationOutcome>,
     showOutcome: Boolean,
     popupWhenErrors: { type: Boolean, required: false, default: true }
+  },
+  mounted() {
+    setTimeout(() => {
+      (this.$refs.closeButton as any).$el.focus();
+    });
   },
   methods: {
     hideIssue(issue: fhir4.OperationOutcomeIssue): boolean {
