@@ -1306,8 +1306,11 @@ export default Vue.extend({
         }
 
         const resourceJson = this.getResourceJson();
-        if (resourceJson && this.resourceJsonChanged)
+        if (resourceJson && this.resourceJsonChanged){
+          try {
           packageData.resourceJson = JSON.stringify(JSON.parse(resourceJson));
+          } catch {}
+        }
         return packageData;
     },
     copyZulipShareLinkToClipboard() {
