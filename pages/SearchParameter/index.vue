@@ -124,7 +124,7 @@ import { ConformanceSearchData } from "models/ConformanceSearchData";
 
 export default Vue.extend({
   head: {
-    title: "Value Set",
+    title: "Search Parameter",
   },
   mounted() {
     this.showAdvancedSettings = settings.showAdvancedSettings();

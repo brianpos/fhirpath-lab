@@ -27,6 +27,17 @@
             </template>
             <span v-text="shareToolTipMessage"></span>
           </v-tooltip>
+          <v-tooltip bottom color="primary">
+            <template v-slot:activator="{ on, attrs }">
+              <v-btn v-if="showAdvancedSettings" icon dark  @click="copyZulipShareLinkToClipboard" 
+              :hidden="!showShareLink()"  v-bind="attrs" v-on="on" @mouseenter="updateZulipShareText">
+                <svg class="brand-logo" role="img" aria-label="Zulip" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" height="25">
+                    <path fill="hsl(0, 0%, 100%)" d="M 473.09 122.97 c 0 22.69 -10.19 42.85 -25.72 55.08 L 296.61 312.69 c -2.8 2.4 -6.44 -1.47 -4.42 -4.7 l 55.3 -110.72 c 1.55 -3.1 -0.46 -6.91 -3.64 -6.91 H 129.36 c -33.22 0 -60.4 -30.32 -60.4 -67.37 c 0 -37.06 27.18 -67.37 60.4 -67.37 h 283.33 c 33.22 -0.02 60.4 30.3 60.4 67.35 z M 129.36 506.05 h 283.33 c 33.22 0 60.4 -30.32 60.4 -67.37 c 0 -37.06 -27.18 -67.37 -60.4 -67.37 H 198.2 c -3.18 0 -5.19 -3.81 -3.64 -6.91 l 55.3 -110.72 c 2.02 -3.23 -1.62 -7.1 -4.42 -4.7 L 94.68 383.6 c -15.53 12.22 -25.72 32.39 -25.72 55.08 c 0 37.05 27.18 67.37 60.4 67.37 z"></path>
+                </svg>
+              </v-btn>
+            </template>
+            <span v-text="shareZulipToolTipMessage"></span>
+          </v-tooltip>
         </v-toolbar>
         <v-row dense>
           <v-col>
@@ -343,8 +354,11 @@ import "ace-builds/src-noconflict/mode-json";
 import "ace-builds/src-noconflict/theme-chrome";
 
 import { fhir } from '@fhir-typescript/r4b-core';
+import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from "lz-string";
+import { VariableData, EncodeTestFhirpathData, DecodeTestFhirpathData, TestFhirpathData } from "~/models/testenginemodel";
 
 const shareTooltipText = 'Copy a sharable link to this test expression';
+const shareZulipTooltipText = 'Copy a sharable link for Zulip to this test expression';
 
 interface FhirPathData {
   raw?: fhir4.Parameters;
@@ -362,6 +376,7 @@ interface FhirPathData {
   selectedEngine: string;
   executionEngines: string[];
   shareToolTipMessage: string;
+  shareZulipToolTipMessage: string;
   expressionEditor?: ace.Ace.Editor;
   expressionContextEditor?: ace.Ace.Editor;
   debugEditor?: ace.Ace.Editor;
@@ -373,13 +388,6 @@ interface FhirPathData {
 interface ResultItem {
   type: string;
   value: any;
-}
-
-interface VariableData {
-  data: any;
-  resourceId?: string;
-  datatype?: string;
-  errorMessage?: string;
 }
 
 interface ResultData {
@@ -545,24 +553,76 @@ export default Vue.extend({
       }
     }
 
-    // Read in any parameters from the URL
-    if (this.$route.query.libaryId as string) {
-      await this.downloadLibrary(this.$route.query.libaryId as string);
+    // Check for the encoded parameters first
+    const parameters = this.$route.query.parameters as string;
+    let data: TestFhirpathData;
+    if (parameters) {
+      // special parameter that encodes all the stuff inside
+      data = DecodeTestFhirpathData(parameters);
+      console.log(data);
     }
     else {
-      if (this.$route.query.expression) {
+    // Read in any parameters from the URL
+      data = this.readParametersFromQuery();
+    }
+    await this.applyParameters(data);
+    await this.evaluateFhirPathExpression();
+    this.loadingData = false;
+  },
+  methods: {
+    readParametersFromQuery(): TestFhirpathData{
+      let data: TestFhirpathData = {
+        expression: this.$route.query.expression as string
+      };
+    if (this.$route.query.libaryId as string) {
+        data.libraryId = this.$route.query.libaryId as string;
+    }
+    else {
+        if (this.$route.query.context) {
+          data.context = this.$route.query.context as string;
+        }
+
+        if (this.$route.query.resource) {
+          data.resource = this.$route.query.resource as string;
+        }
+
+        const resourceJson = this.$route.query.resourceJson + '';
+        if (resourceJson) {
+          data.resourceJson = decompressFromEncodedURIComponent(resourceJson)??'';
+        }
+
         if (this.$route.query.exampletype) {
-          this.resourceId = `${settings.getFhirServerUrl()}/${this.$route.query.exampletype}/example`;
+          data.exampletype = this.$route.query.exampletype as string;
+        }
+
+        if (this.$route.query.engine) {
+          data.engine = this.$route.query.engine as string ?? '';
+        }
+
+        if (this.$route.query.terminologyServer) {
+          data.terminologyServer = this.$route.query.terminologyServer as string ?? '';
+        }
+      }
+      return data;
+    },
+    async applyParameters(p: TestFhirpathData){
+      if (p.libraryId) {
+        await this.downloadLibrary(p.libraryId);
+      }
+      else {
+        if (p.expression) {
+          if (p.exampletype) {
+            this.resourceId = `${settings.getFhirServerUrl()}/${p.exampletype}/example`;
         }
         else {
-          if (this.$route.query.resource) {
-            this.resourceId = this.$route.query.resource as string;
+            if (p.resource) {
+              this.resourceId = p.resource;
           }
         }
 
         if (this.expressionContextEditor) {
-          if (this.$route.query.context) {
-            this.expressionContextEditor.setValue(this.$route.query.context as string ?? '');
+            if (p.context) {
+              this.expressionContextEditor.setValue(p.context ?? '');
             this.expressionContextEditor.clearSelection();
           }
           else {
@@ -570,23 +630,34 @@ export default Vue.extend({
           }
         }
 
-        if (this.$route.query.engine) {
-          this.selectedEngine = this.$route.query.engine as string ?? '';
+          const resourceJson = p.resourceJson;
+          if (resourceJson) {
+            this.resourceJsonEditor?.setValue(JSON.stringify(JSON.parse(resourceJson), null, 2));
+            this.resourceJsonChanged = true;
+            this.resourceId = undefined;
+            this.resourceJsonEditor?.clearSelection();
         }
 
-        if (this.$route.query.terminologyServer) {
-          this.terminologyServer = this.$route.query.terminologyServer as string ?? '';
+          if (p.engine) {
+            this.selectedEngine = p.engine ?? '';
+          }
+
+          if (p.terminologyServer) {
+            this.terminologyServer = p.terminologyServer ?? '';
         }
 
         if (this.expressionEditor) {
-          this.expressionEditor.setValue(this.$route.query.expression as string ?? '');
+            this.expressionEditor.setValue(p.expression ?? '');
           this.expressionEditor.clearSelection();
         }
+          if (p.variables){
+            for (let v of p.variables){
+              this.variables.set(v.name, v);
       }
     }
-    await this.evaluateFhirPathExpression();
+        }
+      }
   },
-  methods: {
     variableMessages(variable: VariableData): string | undefined{
       if (variable.resourceId) return variable.resourceId;
       if (variable.data?.startsWith("[")) return "(array)";
@@ -637,7 +708,7 @@ export default Vue.extend({
         this.$forceUpdate();
       }
       else{
-        this.variables.set(name, { data: value });
+        this.variables.set(name, { name:name, data: value });
       }
     },
     fhirpathExpressionChangedEvent(){
@@ -993,7 +1064,7 @@ export default Vue.extend({
 
         const results = response.data;
         if (results) {
-          this.variables.set(name, { resourceId: url, data: JSON.stringify(results, null, 4)});
+          this.variables.set(name, { name:name, resourceId: url, data: JSON.stringify(results, null, 4)});
           this.$forceUpdate();
         }
       } catch (err) {
@@ -1035,7 +1106,18 @@ export default Vue.extend({
       let fhirData = { resourceType: 'Patient' }; // some dummy data
       const resourceJson = this.getResourceJson();
       if (resourceJson) {
+        try
+        {
         fhirData = JSON.parse(resourceJson);
+      }
+        catch (err: any) {
+          console.log(err);
+          if (err.message) {
+            this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
+            this.saveOutcome?.issue.push({ code: 'exception', severity: 'fatal', details: { text: err.message } });
+            this.showOutcome = true;
+          }
+        }
       }
       // debugger;
       var environment: Record<string, any> = { resource: fhirData, rootResource: fhirData };
@@ -1117,10 +1199,11 @@ export default Vue.extend({
 
         try {
           let useExpression = this.getFhirpathExpression() ?? '';
-          if (resData.context) {
-            useExpression = `${resData.context}.select(${useExpression})`;
+          let path = {
+            base: resData.context??'', 
+            expression: useExpression
           }
-          let res: any[] = fhirpath.evaluate(fhirData, useExpression, environment, fhirpath_r4_model, tracefunction);
+          let res: any[] = fhirpath.evaluate(contextNode, path, environment, fhirpath_r4_model, { traceFn: tracefunction });
           this.results.push(resData);
 
           for (var item of res) {
@@ -1161,6 +1244,11 @@ export default Vue.extend({
         this.shareToolTipMessage += '\r\n(without example resource JSON)';
       }
     },
+    updateZulipShareText() {
+      const data = this.prepareSharePackageData();
+      this.shareZulipToolTipMessage = shareZulipTooltipText + ` (${EncodeTestFhirpathData(data).length} bytes)`;
+    },
+
 
     copyShareLinkToClipboard() {
       const url = new URL(window.location.href);
@@ -1171,13 +1259,17 @@ export default Vue.extend({
       if (contextExpression) {
         shareUrl += `&context=${encodeURIComponent(contextExpression ?? '')}`;
       }
-      if (this.resourceId) {
+      if (this.resourceId && !this.resourceJsonChanged) {
         if (this.resourceId.startsWith('http')) {
           shareUrl += `&resource=${encodeURIComponent(this.resourceId)}`;
         }
         else {
           shareUrl += `&resource=${encodeURIComponent(settings.getFhirServerUrl() + '/' + this.resourceId)}`;
         }
+      }
+      const resourceJson = this.getResourceJson();
+      if (resourceJson && (this.resourceJsonChanged || !this.resourceId)) {
+          shareUrl += `&resourceJson=${compressToEncodedURIComponent(resourceJson)}`;
       }
       if (this.terminologyServer) {
         shareUrl += `&terminologyserver=${encodeURIComponent(this.terminologyServer)}`;
@@ -1187,6 +1279,47 @@ export default Vue.extend({
         navigator.clipboard.writeText(shareUrl);
         this.shareToolTipMessage = "Copied";
       }
+      if (this.showAdvancedSettings){
+        let packageData: TestFhirpathData = this.prepareSharePackageData();
+        const compressedData = EncodeTestFhirpathData(packageData);
+        shareUrl = `${url.origin}/FhirPath?parameters=${compressedData}`;
+        navigator.clipboard.writeText(shareUrl);
+        console.log(DecodeTestFhirpathData(compressedData));
+      }
+    },
+
+    prepareSharePackageData(): TestFhirpathData {
+        let packageData: TestFhirpathData = {
+          expression: this.getFhirpathExpression()??'',
+          context: this.getContextExpression(),
+          resource: this.resourceId,
+          libraryId: this.library?.id,
+          engine: this.selectedEngine,
+          terminologyServer: this.terminologyServer,
+        };
+        if (this.variables){
+          packageData.variables = [];
+          for (let varValue of this.variables){
+            varValue[1].name = varValue[0];
+            packageData.variables.push(varValue[1]);
+          }
+        }
+
+        const resourceJson = this.getResourceJson();
+        if (resourceJson && this.resourceJsonChanged){
+          try {
+          packageData.resourceJson = JSON.stringify(JSON.parse(resourceJson));
+          } catch {}
+        }
+        return packageData;
+    },
+    copyZulipShareLinkToClipboard() {
+      const url = new URL(window.location.href);
+      let packageData: TestFhirpathData = this.prepareSharePackageData();
+      const compressedData = EncodeTestFhirpathData(packageData);
+      const shareUrl = `[\`${packageData.expression}\`](${url.origin}/FhirPath?parameters=${compressedData})`;
+      navigator.clipboard.writeText(shareUrl);
+      console.log(DecodeTestFhirpathData(compressedData));
     },
 
     // https://www.sitepoint.com/fetching-data-third-party-api-vue-axios/
@@ -1215,6 +1348,7 @@ export default Vue.extend({
           this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
           this.saveOutcome?.issue.push({ code: 'exception', severity: 'error', details: { text: `Failed to parse the resource: ${err}` } });
           this.showOutcome = true;
+          this.loadingData = false;
         }
       }
 
@@ -1339,6 +1473,7 @@ export default Vue.extend({
         "java (IBM)"
       ],
       shareToolTipMessage: shareTooltipText,
+      shareZulipToolTipMessage: shareZulipTooltipText,
       expressionEditor: undefined,
       expressionContextEditor: undefined,
       debugEditor: undefined,

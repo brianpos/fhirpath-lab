@@ -21,7 +21,7 @@
             </template>
             </span>
             <span class="details">
-            <span v-if="issue.details" v-text="issue.details.text" />
+            <span style="max-height:100px; display: block; overflow-y: auto" v-text="issueDescription(issue)" />
             <template v-if="issue.expression">
               <br />
               <span v-if="issue.expression" v-text="issue.expression" />
@@ -70,7 +70,7 @@
       </v-card-text>
       <v-card-actions>
         <v-spacer />
-        <v-btn @click="close">Ok</v-btn>
+        <v-btn color="primary" ref="closeButton" @click="close">Ok</v-btn>
         <v-spacer />
       </v-card-actions>
     </v-card>
@@ -141,6 +141,11 @@ export default Vue.extend({
     saveOutcome: Object as PropType<fhir4.OperationOutcome>,
     showOutcome: Boolean,
     popupWhenErrors: { type: Boolean, required: false, default: true }
+  },
+  mounted() {
+    setTimeout(() => {
+      (this.$refs.closeButton as any).$el.focus();
+    });
   },
   methods: {
     hideIssue(issue: fhir4.OperationOutcomeIssue): boolean {
