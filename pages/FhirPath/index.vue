@@ -1203,7 +1203,7 @@ export default Vue.extend({
             base: resData.context??'', 
             expression: useExpression
           }
-          let res: any[] = fhirpath.evaluate(contextNode, path, environment, fhirpath_r4_model, tracefunction);
+          let res: any[] = fhirpath.evaluate(contextNode, path, environment, fhirpath_r4_model, { traceFn: tracefunction });
           this.results.push(resData);
 
           for (var item of res) {
