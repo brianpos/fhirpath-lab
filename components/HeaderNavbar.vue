@@ -40,7 +40,10 @@
         <v-list>
           <v-list-item-group>
             <v-list-item href="/Library">
-              <v-list-item-title>Expression Library</v-list-item-title>
+              <v-list-item-icon>
+                <v-icon left> mdi-library-outline </v-icon>
+                Expression Library
+              </v-list-item-icon>
             </v-list-item>
             <v-list-item href="/StructureDefinition">
               <v-list-item-title>Structure Definitions</v-list-item-title>
