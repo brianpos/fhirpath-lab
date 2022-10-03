@@ -11,7 +11,7 @@
           <v-spacer />
           <v-select dark class="engineselector" :items="executionEngines" v-model="selectedEngine" hide-details="auto"
             @change="evaluateFhirPathExpression" />
-          <v-btn icon dark accesskey="g" title="press alt+g to go" @click="evaluateFhirPathExpression">
+          <v-btn icon dark accesskey="g" title="press alt+g to go" @focus="checkFocus" @click="evaluateFhirPathExpression">
             <v-icon>
               mdi-play
             </v-icon>
@@ -359,6 +359,7 @@ const shareTooltipText = 'Copy a sharable link to this test expression';
 const shareZulipTooltipText = 'Copy a sharable link for Zulip to this test expression';
 
 interface FhirPathData {
+  prevFocus?: any;
   raw?: fhir4.Parameters;
   library?: fhir4.Library;
   resourceId?: string;
@@ -1320,6 +1321,11 @@ export default Vue.extend({
       console.log(DecodeTestFhirpathData(compressedData));
     },
 
+    checkFocus(event: any) {
+      if (event.relatedTarget) {
+        this.prevFocus = event.relatedTarget;
+      }
+    },
     // https://www.sitepoint.com/fetching-data-third-party-api-vue-axios/
     async evaluateFhirPathExpression() {
 
@@ -1352,6 +1358,9 @@ export default Vue.extend({
 
       if (this.selectedEngine == "fhirpath.js") {
         await this.evaluateExpressionUsingFhirpathjs();
+        if (this.prevFocus){
+          this.prevFocus.focus();
+        }
         return;
       }
 
@@ -1448,10 +1457,16 @@ export default Vue.extend({
         p.parameter?.push({ name: "terminologyserver", valueString: this.terminologyServer });
       }
       await this.executeRequest(url, p);
+
+      // Set focus to the control that previously had focus (if was known)
+      if (this.prevFocus){
+          this.prevFocus.focus();
+        }
     },
   },
   data(): FhirPathData {
     return {
+      prevFocus: null,
       tab: null,
       library: undefined,
       raw: undefined,
