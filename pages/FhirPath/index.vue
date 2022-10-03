@@ -212,8 +212,6 @@
                 </v-text-field>
                 <label class="v-label theme--light bare-label">Test Resource JSON <i>{{ resourceJsonChangedMessage() }}</i></label>
                 <div height="85px" width="100%" ref="aceEditorResourceJsonRight"></div>
-                <!-- <div class="ace_editor_footer"></div> -->
-                <v-text-field label="Terminology Server" v-model="terminologyServer" hide-details="auto" />
               </v-card-text>
             </v-card>
           </v-col>
