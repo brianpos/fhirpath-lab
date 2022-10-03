@@ -12,17 +12,19 @@
       </p>
       <br />
       <div class="home-grid">
-        <a class="link-item" href="FhirPath">
-          <div style="font-weight: 600">Tester</div>
-        </a>
+        <v-btn dark color="#3F81AE" class="link-item text-decoration-none" href="FhirPath">
+          <v-icon left> mdi-bug-outline </v-icon>
+            Tester
+        </v-btn>
         <a href="FhirPath" class="link-plain-text">
           <div>
             Quick Test page for testing any FHIRPath expressions
           </div>
         </a>
-        <a class="link-item" href="Library">
-          <div style="font-weight: 600">Library</div>
-        </a>
+        <v-btn dark color="#3F81AE" class="link-item text-decoration-none" href="Library">
+          <v-icon left> mdi-library-outline </v-icon>
+            Library
+        </v-btn>
         <a href="Library" class="link-plain-text">
           <div>
             A library of FHIRPath expressions for sharing between other resources, to
