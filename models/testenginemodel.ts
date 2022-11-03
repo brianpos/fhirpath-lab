@@ -30,3 +30,12 @@ export function EncodeTestFhirpathData(data: TestFhirpathData): string {
 export function DecodeTestFhirpathData(data: string): TestFhirpathData {
     return JSON.parse(decompressFromEncodedURIComponent(data) ?? '');
 }
+
+export interface TestFhirMapData {
+    expression: string;
+    context?: string;
+    resource?: string;
+    resourceJson?: string;
+    engine?: string;
+}
+

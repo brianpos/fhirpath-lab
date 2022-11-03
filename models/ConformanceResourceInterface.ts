@@ -5,7 +5,7 @@ import { DomainResource, Coding, Element, ContactDetail, Period, Identifier, Usa
  */
  export interface ConformanceResourceInterface extends DomainResource {
   /** Resource Type Name (for serialization) */
-  resourceType: 'Questionnaire' | 'Library' | 'StructureDefinition' | 'SearchParameter' | 'SubscriptionTopic';
+  resourceType: 'Questionnaire' | 'Library' | 'StructureDefinition' | 'SearchParameter' | 'SubscriptionTopic' | 'StructureMap';
   /**
    * The 'date' element may be more recent than the approval date because of minor changes or editorial corrections.
    */
