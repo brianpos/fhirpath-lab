@@ -157,7 +157,6 @@ export default Vue.extend({
             status: vs?.status ?? "(undefined)",
             useContext: toSearchDisplay_UseContext(vs?.useContext) ?? "",
             publisher: vs?.publisher ?? "",
-            type: vs?.type,
             description: vs?.description,
             favourite: isFavourite(
               post.resource?.resourceType,
