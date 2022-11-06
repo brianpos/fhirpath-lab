@@ -18,152 +18,140 @@
             </v-icon>
           </v-btn>
         </v-toolbar>
-        <v-row dense>
-          <v-col>
-            <v-tabs vertical v-model="tab">
-              <v-tab>
-                <v-icon left> mdi-function-variant </v-icon>
-                Map
-              </v-tab>
-              <v-tab class="left-resource">
-                <v-icon left> mdi-clipboard-text-outline </v-icon>
-                Resource
-              </v-tab>
-              <v-tab :disabled="!hasTraceData()">
-                <v-icon left> mdi-format-list-bulleted </v-icon>
-                Trace
-              </v-tab>
-              <v-tab>
-                <v-icon left> mdi-bug-outline </v-icon>
-                Debug
-              </v-tab>
-
-              <v-tabs-items touchless v-model="tab">
-                <v-tab-item :eager="true">
-                  <!-- Expression -->
-                  <v-card flat>
-                    <v-card-text>
-                      <p class="fl-tab-header">Map</p>
-                      <label class="v-label theme--light bare-label">Fhir Map </label>
-                      <div height="85px" width="100%" ref="aceEditorExpression"></div>
-                      <div class="ace_editor_footer"></div>
-
-                      <div class="results">RESULTS <span class="processedBy">{{ processedByEngine }}</span></div>
-                      <template v-for="(r2, i1) in results">
-                        <v-simple-table :key="i1">
-                          <tr v-if="r2.context">
-                            <td class="context" colspan="2">
-                              <div>Context: <b>{{ r2.context }}</b></div>
-                            </td>
-                          </tr>
-                          <template v-for="(v1, index) in r2.result">
-                            <tr :key="index">
-                              <td class="result-value">
-                                <div class="code-json">{{ v1.value }}</div>
-                              </td>
-                              <td class="result-type"><i v-if="v1.type">({{ v1.type }})</i></td>
-                            </tr>
-                          </template>
-                        </v-simple-table>
-                      </template>
-                    </v-card-text>
-                  </v-card>
-                </v-tab-item>
-
-                <v-tab-item :eager="true">
-                  <!-- Resource -->
-                  <v-card flat>
-                    <v-card-text>
-                      <p class="fl-tab-header">Resource</p>
-                      <v-text-field label="Test Resource Id" v-model="resourceId" hide-details="auto" autocomplete="off"
-                        autocorrect="off" autocapitalize="off" spellcheck="false">
-                        <template v-slot:append>
-                          <v-btn icon small tile @click="resourceId = undefined">
-                            <v-icon> mdi-close </v-icon>
-                          </v-btn>
-                          <v-btn icon small tile @click="downloadTestResource">
-                            <v-icon> mdi-download </v-icon>
-                          </v-btn>
+        <v-card-text>
+            <div class="newlayout">
+        <div>
+          <div class="context">
+            <v-icon left> mdi-function-variant </v-icon>
+            Map
+          </div>
+          <div class="newcontent">
+            <v-text-field label="Structure Map Id" v-model="structureMapId" hide-details="auto" autocomplete="off"
+                          autocorrect="off" autocapitalize="off" spellcheck="false">
+              <template v-slot:append>
+                <v-btn icon small tile @click="structureMapId = undefined">
+                  <v-icon> mdi-close </v-icon>
+                </v-btn>
+                <v-btn icon small tile @click="downloadStructureMapResource">
+                  <v-icon> mdi-download </v-icon>
+                </v-btn>
+              </template>
+            </v-text-field>
+            <label class="v-label theme--light bare-label">Structure Map <i>{{
+            resourceJsonChangedMessage() }}</i></label>
+            <div width="100%" ref="aceEditorExpression"></div>
+            <div class="ace_editor_footer"></div>
+          </div>
+        </div>
+        <div>
+          <div class="context">Results <span class="processedBy">{{ processedByEngine }}</span></div>
+          <div class="newcontent">
+            <template v-if="results">
+                          <v-simple-table>
+                              <tr>
+                                <td class="result-value">
+                                  <div class="code-json">{{ results.value }}</div>
+                                </td>
+                                <td class="result-type"><i v-if="results.type">({{ results.type }})</i></td>
+                              </tr>
+                          </v-simple-table>
                         </template>
-                      </v-text-field>
-                      <label class="v-label theme--light bare-label">Test Resource JSON <i>{{
-                      resourceJsonChangedMessage() }}</i></label>
-                      <div height="85px" width="100%" ref="aceEditorResourceJsonTab"></div>
-                      <!-- <div class="ace_editor_footer"></div> -->
-                    </v-card-text>
-                  </v-card>
-                </v-tab-item>
-
-                <v-tab-item>
-                  <!-- Trace -->
-                  <v-card flat>
-                    <v-card-text>
-                      <p class="fl-tab-header">Trace</p>
-                      <template v-for="(r2, i1) in results">
-                        <v-simple-table :key="i1">
-                          <tr v-if="r2.context">
-                            <td class="context" colspan="3">
-                              <div>Context: <b>{{ r2.context }}</b></div>
-                            </td>
-                          </tr>
-                          <template v-for="(v1, index) in r2.trace">
-                            <tr :key="index">
-                              <td class="result-value">
-                                <div :class="traceTypeClass(v1.type)">{{ v1.value }}</div>
-                              </td>
-                            </tr>
-                          </template>
-                        </v-simple-table>
-                      </template>
-                    </v-card-text>
-                  </v-card>
-                </v-tab-item>
-
-                <v-tab-item :eager="true">
-                  <!-- Debug -->
-                  <v-card flat>
-                    <v-card-text>
-                      <p class="fl-tab-header">Debug</p>
-                      <div ref="aceEditorDebug"></div>
-                    </v-card-text>
-                  </v-card>
-                </v-tab-item>
-
-              </v-tabs-items>
-            </v-tabs>
-          </v-col>
-          <v-col class="right-resource">
-            <v-card flat>
-              <v-card-text>
-                <p class="fl-tab-header">Resource</p>
-                <v-text-field label="Test Resource Id" v-model="resourceId" hide-details="auto" autocorrect="off"
-                  autocapitalize="off" spellcheck="false">
-                  <template v-slot:append>
-                    <v-btn icon small tile @click="resourceId = undefined">
-                      <v-icon> mdi-close </v-icon>
-                    </v-btn>
-                    <v-btn icon small tile @click="downloadTestResource">
-                      <v-icon> mdi-download </v-icon>
-                    </v-btn>
-                  </template>
-                </v-text-field>
-                <label class="v-label theme--light bare-label">Test Resource JSON <i>{{ resourceJsonChangedMessage()
-                }}</i></label>
-                <div height="85px" width="100%" ref="aceEditorResourceJsonRight"></div>
-              </v-card-text>
-            </v-card>
-          </v-col>
-        </v-row>
+          </div>
+        </div>
+        <div>
+          <div class="context">
+            <v-icon left> mdi-clipboard-text-outline </v-icon>
+            Input Resource
+          </div>
+          <div class="newcontent">
+            <v-text-field label="Test Resource Id" v-model="resourceId" hide-details="auto" autocomplete="off"
+                          autocorrect="off" autocapitalize="off" spellcheck="false">
+              <template v-slot:append>
+                <v-btn icon small tile @click="resourceId = undefined">
+                  <v-icon> mdi-close </v-icon>
+                </v-btn>
+                <v-btn icon small tile @click="downloadTestResource">
+                  <v-icon> mdi-download </v-icon>
+                </v-btn>
+              </template>
+            </v-text-field>
+            <label class="v-label theme--light bare-label">Test Resource JSON <i>{{
+            resourceJsonChangedMessage() }}</i></label>
+            <div height="85px" width="100%" ref="aceEditorResourceJsonTab"></div>
+            <div class="ace_editor_footer"></div>
+          </div>
+        </div>
+        <div>
+          <div class="context">
+            <v-icon left> mdi-format-list-bulleted </v-icon>
+            Trace
+          </div>
+          <div class="newcontent">
+            <v-simple-table>
+              <template v-for="(v1, index) in trace">
+                <tr :key="index">
+                  <td class="result-value">
+                    <div :class="traceTypeClass(v1.type)">{{ v1.value }}</div>
+                  </td>
+                </tr>
+              </template>
+            </v-simple-table>
+          </div>
+        </div>
+      </div>
+        </v-card-text>
       </v-card>
 
       <br />
       <OperationOutcomeOverlay v-if="showOutcome" :saveOutcome="saveOutcome" :showOutcome="showOutcome" title="Error"
         @close="clearOutcome" />
+        <v-expansion-panels accordion>
+        <v-expansion-panel>
+          <v-expansion-panel-header><div>
+            <v-icon left> mdi-bug-outline </v-icon>
+            DEBUG
+          </div>
+          </v-expansion-panel-header>
+          <v-expansion-panel-content  :eager="true">
+            <div ref="aceEditorDebug"></div>
+          </v-expansion-panel-content>
+        </v-expansion-panel>
+      </v-expansion-panels>
     </div>
   </div>
 </template>
 
+<style lang="scss">
+.v-application--wrap {
+  background-color: lightgray;
+}
+</style>
+
 <style lang="scss" scoped>
+.newlayout {
+  display: grid;
+  grid-template-columns: 50% 50%;
+  gap: 12px;
+  margin-right: 14px;
+
+  .context {
+    padding: 12px;
+    padding-top: 6px;
+    padding-bottom: 6px;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+  }
+
+  .newcontent {
+    min-height: 200px;
+    max-height: 350px;
+    // border: solid blue 1px;
+    padding: 4px;
+    overflow-y: auto;
+  }
+}
+
+
 .ace_editor:focus-within+.ace_editor_footer {
   color: #1976d2;
   transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);
@@ -276,6 +264,7 @@ td {
 .processedBy {
   float: right;
   font-size: small;
+  text-transform: none;
 }
 </style>
 
@@ -283,6 +272,7 @@ td {
 import Vue, { VNode } from "vue";
 import { settings } from "~/helpers/user_settings";
 import {
+  requestFhirMapAcceptHeaders,
   requestFhirAcceptHeaders,
   requestFhirContentTypeHeaders,
   fhirResourceTypes,
@@ -314,6 +304,7 @@ const shareZulipTooltipText = 'Copy a sharable link for Zulip to this test expre
 interface FhirMapData {
   prevFocus?: any;
   raw?: fhir4.Parameters;
+  structureMapId?: string;
   resourceId?: string;
   resourceJsonChanged: boolean;
   loadingData: boolean;
@@ -321,7 +312,8 @@ interface FhirMapData {
   showOutcome?: boolean;
   cancelSource?: CancelTokenSource;
   tab: any;
-  results: ResultData[];
+  results?: ResultData;
+  trace: TraceData[];
   selectedEngine: string;
   executionEngines: string[];
   expressionEditor?: ace.Ace.Editor;
@@ -331,15 +323,9 @@ interface FhirMapData {
   processedByEngine?: string;
 }
 
-interface ResultItem {
+interface ResultData {
   type: string;
   value: any;
-}
-
-interface ResultData {
-  context?: string;
-  result: ResultItem[];
-  trace: TraceData[];
 }
 
 interface TraceData {
@@ -365,19 +351,18 @@ function isSystemVariableName(name: string): boolean {
   return false;
 }
 
-function getValue(entry: fhir4.ParametersParameter): ResultItem[] {
-  let result: ResultItem[] = [];
+function getValue(entry: fhir4.ParametersParameter): ResultData | undefined {
   var myMap = new Map(Object.entries(entry));
   for (let [k, v] of myMap.entries()) {
     if (k.startsWith('value'))
-      result.push({ type: k.replace('value', ''), value: v });
+      return { type: k.replace('value', ''), value: v };
     else if (k == 'resource')
-      result.push({ type: (v as fhir4.Resource).resourceType, value: v });
+      return { type: (v as fhir4.Resource).resourceType, value: v };
   }
   const extVal = getExtensionStringValue(entry, "http://fhir.forms-lab.com/StructureDefinition/json-value");
   if (extVal)
-    result.push({ type: entry.name, value: JSON.parse(extVal) });
-  return result;
+    return { type: entry.name, value: JSON.parse(extVal) };
+  return undefined;
 }
 function getTraceValue(entry: fhir4.ParametersParameter): TraceData[] {
   let result: TraceData[] = [];
@@ -385,10 +370,10 @@ function getTraceValue(entry: fhir4.ParametersParameter): TraceData[] {
     for (var part of entry.part) {
       const val = getValue(part);
       if (part.name === "debug"){
-        result.push({ name: entry.valueString ?? '', type: part.name, value: val[0].value });
+        result.push({ name: entry.valueString ?? '', type: part.name, value: val?.value });
       }
       else{
-        result.push({ name: entry.valueString ?? '', type: part.name, value: JSON.stringify(val[0].value, null, 4) });
+        result.push({ name: entry.valueString ?? '', type: part.name, value: JSON.stringify(val?.value, null, 4) });
       }
     }
   }
@@ -415,8 +400,8 @@ export default Vue.extend({
     if (editorDiv) {
       this.expressionEditor = ace.edit(editorDiv, {
         wrap: "free",
-        minLines: 3,
-        maxLines: 37,
+        minLines: 16,
+        maxLines: 16,
         highlightActiveLine: false,
         showGutter: true,
         fontSize: 14,
@@ -465,8 +450,8 @@ group SetEntryData(source src: Patient, target entry)
       this.debugEditor = ace.edit(editorDebugDiv, {
         wrap: "free",
         readOnly: true,
-        minLines: 15,
-        maxLines: 35,
+        minLines: 16,
+        maxLines: 36,
         highlightActiveLine: true,
         showGutter: true,
         fontSize: 14,
@@ -481,7 +466,7 @@ group SetEntryData(source src: Patient, target entry)
     const resourceEditorSettings: Partial<ace.Ace.EditorOptions> = {
       wrap: "free",
       minLines: 15,
-      maxLines: 30,
+      maxLines: 16,
       highlightActiveLine: true,
       showGutter: true,
       fontSize: 14,
@@ -491,18 +476,9 @@ group SetEntryData(source src: Patient, target entry)
       mode: "ace/mode/json",
       wrapBehavioursEnabled: true
     };
-    var editorResourceJsonRightDiv: any = this.$refs.aceEditorResourceJsonRight as Element;
-    if (editorResourceJsonRightDiv) {
-      this.resourceJsonEditor = ace.edit(editorResourceJsonRightDiv, resourceEditorSettings);
-      this.resourceJsonEditor.session.on("change", this.resourceJsonChangedEvent);
-
-      var editorResourceJsonLeftDiv: any = this.$refs.aceEditorResourceJsonTab as Element;
-      if (editorResourceJsonLeftDiv) {
-        let editor = ace.edit(editorResourceJsonLeftDiv, resourceEditorSettings);
-        if (editor) {
-          editor.setSession(this.resourceJsonEditor.session);
-        }
-      }
+    var editorResourceJsonLeftDiv: any = this.$refs.aceEditorResourceJsonTab as Element;
+    if (editorResourceJsonLeftDiv) {
+      this.resourceJsonEditor = ace.edit(editorResourceJsonLeftDiv, resourceEditorSettings);
     }
 
     // Check for the encoded parameters first
@@ -623,14 +599,6 @@ group SetEntryData(source src: Patient, target entry)
       return undefined;
     },
 
-    hasTraceData(): boolean {
-      if (this.results.length === 0) return false;
-      for (var rd of this.results) {
-        if (rd.trace.length > 0) return true;
-      }
-      return false;
-    },
-
     clearOutcome() {
       this.showOutcome = undefined;
     },
@@ -674,7 +642,6 @@ group SetEntryData(source src: Patient, target entry)
           }
           this.raw = results;
 
-          this.results = [];
           if (this.raw.parameter) {
             for (var entry of this.raw.parameter) {
               if (entry.name === 'parameters') {
@@ -683,23 +650,19 @@ group SetEntryData(source src: Patient, target entry)
                   this.processedByEngine = entry.part[0].valueString;
                 }
 
+                // The map would be in here too (but we can ignore that)
                 continue; // skip over the configuration settings
               }
 
-              // Anything else is a result
-              // scan over the parts (values)
-              let resultItem: ResultData = { context: entry.valueString, result: [], trace: [] };
-              if (entry.part) {
-                for (var part of entry.part) {
-                  if (part.name === 'trace') {
-                    resultItem.trace.push(...getTraceValue(part));
-                  }
-                  else {
-                    resultItem.result.push(...getValue(part));
-                  }
-                }
+              if (entry.name === 'trace'){
+                // Trace data
+                this.trace.push(...getTraceValue(entry));
+                continue;
               }
-              this.results.push(resultItem);
+
+              if (entry.name === 'result'){
+                this.results = getValue(entry);
+              }
             }
           }
         }
@@ -754,6 +717,64 @@ group SetEntryData(source src: Patient, target entry)
               this.resourceJsonChanged = false;
             }
             this.resourceJsonEditor.clearSelection();
+          }
+        }
+      } catch (err) {
+        this.loadingData = false;
+        if (axios.isAxiosError(err)) {
+          const serverError = err as AxiosError<fhir4.OperationOutcome>;
+          if (serverError && serverError.response) {
+            this.setResultJson(JSON.stringify(serverError.response, null, 4));
+            if (serverError.response.data?.resourceType == 'OperationOutcome') {
+              this.setResultJson(JSON.stringify(serverError.response, null, 4));
+              this.saveOutcome = serverError.response.data;
+            } else {
+              if (serverError.response.status == 404)
+                this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
+              this.saveOutcome?.issue.push({ code: 'not-found', severity: 'error', details: { text: 'Test resource not found' } });
+            }
+            this.showOutcome = true;
+            return serverError.response.data;
+          }
+        } else {
+          console.log("Client Error:", err);
+        }
+      }
+    },
+
+    async downloadStructureMapResource() {
+      try {
+        if (!this.structureMapId) return;
+        let url = this.structureMapId;
+        if (this.structureMapId && !this.structureMapId.startsWith('http'))
+          url = settings.getFhirServerUrl() + '/' + this.structureMapId;
+
+        if (this.cancelSource) this.cancelSource.cancel("new download map started");
+        this.cancelSource = axios.CancelToken.source();
+        this.loadingData = true;
+        let token = this.cancelSource.token;
+        let headers: AxiosRequestHeaders = {
+          "Cache-Control": "no-cache",
+          "Accept": requestFhirMapAcceptHeaders
+        }
+        const response = await axios.get(url, {
+          cancelToken: token,
+          headers: headers
+        });
+        if (token.reason) {
+          console.log(token.reason);
+          return;
+        }
+        this.cancelSource = undefined;
+        this.loadingData = false;
+
+        const results = response.data;
+        if (results) {
+          if (this.expressionEditor) {
+            if (results) {
+              this.expressionEditor.setValue(results);
+            }
+            this.expressionEditor.clearSelection();
           }
         }
       } catch (err) {
@@ -877,12 +898,14 @@ group SetEntryData(source src: Patient, target entry)
       prevFocus: null,
       tab: null,
       raw: undefined,
+      structureMapId: undefined,
       resourceId: 'Patient/example',
       resourceJsonChanged: false,
       loadingData: true,
       saveOutcome: undefined,
       showOutcome: false,
-      results: [],
+      results: undefined,
+      trace: [],
       selectedEngine: ".NET (brianpos)",
       executionEngines: [
         ".NET (brianpos)",
