@@ -44,7 +44,9 @@
           </div>
         </div>
         <div>
-          <div class="context">Results <span class="processedBy">{{ processedByEngine }}</span></div>
+          <div class="context">
+            <v-icon left> mdi-file-document-outline </v-icon>
+            Results <span class="processedBy">{{ processedByEngine }}</span></div>
           <div class="newcontent">
             <template v-if="results">
                           <v-simple-table>
