@@ -643,6 +643,7 @@ group SetEntryData(source src: Patient, target entry)
             return;
           }
           this.raw = results;
+          this.trace = [];
 
           if (this.raw.parameter) {
             for (var entry of this.raw.parameter) {
