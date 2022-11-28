@@ -96,6 +96,22 @@
   grid-auto-flow: row;
 }
 
+@media (max-width: 600px) {
+  .newlayout {
+    grid-template-columns: 100%;
+  }
+
+  .newlayout > div {
+    min-height: 20vh;
+    max-height: 75vh
+  };
+
+  .ct-debug {
+    display: none !important;
+    grid-column-end: 2 !important;
+  }
+}
+
 .newlayout > div {
   // border: solid 1px red;
   background-color: white;
@@ -163,7 +179,8 @@
   }
 }
 
-.Results-main{
+.Results-main {
+  grid-template-rows: 27vh 27vh 32vh;
   .ct-results {
     grid-column: 2 / 3;
     grid-row: 1 / span 2;
@@ -886,12 +903,12 @@ group SetEntryData(source src: Patient, target entry)
       debugEditor: undefined,
       resourceJsonEditor: undefined,
       processedByEngine: undefined,
-      viewMode: '',
+      viewMode: 'Map',
       viewModes: [
-      '',
       'Map',
       'TestResource',
-      'Results'
+      'Results',
+      '',
       ]
     };
   },
