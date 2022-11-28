@@ -98,6 +98,7 @@
           </v-list-item-group>
         </v-list>
       </v-menu>
+      <slot name="extraNavButtons"></slot>
     </v-app-bar>
     <v-overlay :value="overlay"
       ><user-settings @close="closeSettings"
