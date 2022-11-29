@@ -16,17 +16,26 @@
  
     <div :class="getViewMode">
       <div class="ct-map">
-        <div class="ct-header">
+        <div class="ct-header grid-toolbar">
           <v-icon left dark> mdi-function-variant </v-icon>
-            Map
+            <span class="header-text">Map <span v-if="structureMapId">({{structureMapId}})</span></span>
+            <span>
+              <v-btn small icon dark tile @click="showMapSelector=true"><v-icon title="Download an existing map" dark> mdi-download </v-icon></v-btn>
+              <!-- <v-btn small icon dark tile><v-icon title="Save Map" dark> mdi-content-save </v-icon></v-btn> -->
+            </span>
         </div>
         <div ref="aceEditorExpression"></div>
       </div>
 
       <div class="ct-input">
-        <div class="ct-header">
+        <div class="ct-header grid-toolbar">
           <v-icon left dark> mdi-clipboard-text-outline </v-icon>
-            Test Resource
+            <span class="header-text">Test Resource <span v-if="resourceId">({{resourceId}})</span></span>
+            <span>
+              <v-btn small icon dark tile @click="showResourceSelector=true"><v-icon title="Download an existing resource" dark> mdi-download </v-icon></v-btn>
+              <!-- <v-btn small icon dark tile><v-icon title="Save Test Resource" dark> mdi-content-save </v-icon></v-btn> -->
+              <v-btn small icon dark tile @click="reformatTestResource"><v-icon title="Format json" dark> mdi-format-indent-increase </v-icon></v-btn>
+            </span>
         </div>
         <div ref="aceEditorResourceJsonTab"></div>
       </div>
@@ -50,7 +59,7 @@
       <div class="ct-results">
         <div class="ct-header">
           <v-icon left dark> mdi-file-document-outline </v-icon>
-          Results <span class="processedBy">{{ processedByEngine }}</span>
+          <span>Results <span class="processedBy">{{ processedByEngine }}</span></span>
         </div>
         <template v-if="results">
           <v-simple-table>
@@ -73,6 +82,13 @@
       </div>
     </div>
 
+    <FileSelectorOverlay :visible="showMapSelector" iconName="mdi-clipboard-text-outline" title="Select Map" :initialFilename="structureMapId"
+        @download="downloadStructureMapResourceFromSelector"
+        @close="showMapSelector=false" />
+    <FileSelectorOverlay :visible="showResourceSelector" iconName="mdi-function-variant" title="Select Test Resource" :initialFilename="resourceId"
+        @download="downloadTestResourceFromSelector"
+        @close="showResourceSelector=false" />
+    
     <OperationOutcomeOverlay v-if="showOutcome" :saveOutcome="saveOutcome" :showOutcome="showOutcome" title="Error"
         @close="clearOutcome" />
   </div>
@@ -146,9 +162,18 @@
   border-bottom: silver 1px solid;
 }
 
+.header-text {
+  overflow-wrap: anywhere;
+}
+
+.grid-toolbar {
+  display: grid;
+  grid-gap: 4px; 
+  grid-template-columns: 25px auto max-content
+}
 
 .Map-main{
-  grid-template-rows: 23vh 23vh 23vh 15vh;
+  grid-template-rows: 30vh 30vh 27vh;
 
   .ct-map {
     grid-row-start: 1;
@@ -158,13 +183,12 @@
     grid-row-start: 3;
   }
   .ct-debug {
-    grid-column-start: 1;
-    grid-column-end: 3;
+    display: none;
   }
 }
 
 .TestResource-main{
-  grid-template-rows: 23vh 23vh 23vh 15vh;
+  grid-template-rows: 30vh 30vh 27vh;
 
   .ct-input {
     grid-row-start: 1;
@@ -174,12 +198,26 @@
     grid-row-start: 3;
   }
   .ct-debug {
-    grid-column-start: 1;
-    grid-column-end: 3;
+    display: none;
   }
 }
 
 .Results-main {
+  grid-template-rows: 27vh 27vh 32vh;
+  .ct-results {
+    grid-column: 2 / 3;
+    grid-row: 1 / span 2;
+  }
+  .ct-trace {
+    grid-column-start: 1;
+    grid-column-end: 3;
+  }
+  .ct-debug {
+    display: none;
+  }
+}
+
+.Debug-main {
   grid-template-rows: 27vh 27vh 32vh;
   .ct-results {
     grid-column: 2 / 3;
@@ -294,6 +332,8 @@ interface FhirMapData {
   loadingData: boolean;
   saveOutcome?: fhir4.OperationOutcome;
   showOutcome?: boolean;
+  showMapSelector?: boolean;
+  showResourceSelector?: boolean;
   cancelSource?: CancelTokenSource;
   tab: any;
   results?: ResultData;
@@ -580,6 +620,18 @@ group SetEntryData(source src: Patient, target entry)
       this.showOutcome = undefined;
     },
 
+    reformatTestResource(){
+      if (this.resourceJsonEditor){
+        const jsonValue = this.resourceJsonEditor.getValue();
+        try {
+          this.resourceJsonEditor.setValue(JSON.stringify(JSON.parse(jsonValue), null, 4));
+          this.resourceJsonEditor.clearSelection();
+          this.resourceJsonEditor.renderer.updateFull(true);
+        }
+        catch{}
+      }
+    },
+
     setResultJson(result: string) {
       if (this.debugEditor) {
         this.debugEditor.setValue(result);
@@ -660,6 +712,12 @@ group SetEntryData(source src: Patient, target entry)
       }
     },
 
+    async downloadTestResourceFromSelector(args: string) {
+      this.resourceId = args;
+      await this.downloadTestResource();
+      this.showResourceSelector = false;
+    },
+
     async downloadTestResource() {
       try {
         if (!this.resourceId) return;
@@ -718,6 +776,12 @@ group SetEntryData(source src: Patient, target entry)
           console.log("Client Error:", err);
         }
       }
+    },
+
+    async downloadStructureMapResourceFromSelector(args: string) {
+      this.structureMapId = args;
+      await this.downloadStructureMapResource();
+      this.showMapSelector = false;
     },
 
     async downloadStructureMapResource() {
@@ -891,7 +955,9 @@ group SetEntryData(source src: Patient, target entry)
       loadingData: true,
       saveOutcome: undefined,
       showOutcome: false,
-      results: undefined,
+      showMapSelector: false,
+      showResourceSelector: false,
+          results: undefined,
       trace: [],
       selectedEngine: ".NET (brianpos)",
       executionEngines: [
@@ -908,6 +974,7 @@ group SetEntryData(source src: Patient, target entry)
       'Map',
       'TestResource',
       'Results',
+      'Debug',
       '',
       ]
     };
