@@ -225,6 +225,84 @@
   }
 }
 
+.MapOnly-main{
+  grid-template-rows: calc(100vh - 60px - 24px - 24px);
+
+  .ct-map {
+    grid-column: 1 / 3;
+  }
+  .ct-input {
+    display: none;
+  }
+  .ct-trace {
+    display: none;
+  }
+  .ct-results {
+    display: none;
+  }
+  .ct-debug {
+    display: none;
+  }
+}
+
+.TestOnly-main{
+  grid-template-rows: calc(100vh - 60px - 24px - 24px);
+
+  .ct-map {
+    display: none;
+  }
+  .ct-input {
+    grid-column: 1 / 3;
+  }
+  .ct-trace {
+    display: none;
+  }
+  .ct-results {
+    display: none;
+  }
+  .ct-debug {
+    display: none;
+  }
+}
+.ResultOnly-main{
+  grid-template-rows: calc(100vh - 60px - 24px - 24px);
+
+  .ct-map {
+    display: none;
+  }
+  .ct-input {
+    display: none;
+  }
+  .ct-trace {
+    display: none;
+  }
+  .ct-results {
+    grid-column: 1 / 3;
+  }
+  .ct-debug {
+    display: none;
+  }
+}
+
+.TraceOnly-main{
+  grid-template-rows: calc(100vh - 60px - 24px - 24px);
+
+  .ct-map {
+    display: none;
+  }
+  .ct-input {
+    display: none;
+  }
+  .ct-trace {
+    grid-column: 1 / 3;
+  }
+  .ct-results {
+    display: none;
+  }
+  .ct-debug {
+    display: none;
+  }
+}
 
 .ace_editor:focus-within+.ace_editor_footer {
   color: #1976d2;
@@ -974,6 +1052,10 @@ group SetEntryData(source src: Patient, target entry)
       'Map',
       'TestResource',
       'Results',
+      'MapOnly',
+      'TestOnly',
+      'ResultOnly',
+      'TraceOnly',
       'Debug',
       '',
       ]
