@@ -58,6 +58,14 @@
               <v-list-item-title>Subscription Topics</v-list-item-title>
             </v-list-item>
           </v-list-item-group>
+          <v-list-item-group>
+            <v-list-item href="/StructureMap">
+              <v-list-item-title>Structure Maps</v-list-item-title>
+            </v-list-item>
+            <v-list-item href="/FhirMapper2">
+              <v-list-item-title>Test Structure Map</v-list-item-title>
+            </v-list-item>
+          </v-list-item-group>
         </v-list>
       </v-menu>
 

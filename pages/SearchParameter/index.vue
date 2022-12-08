@@ -200,7 +200,8 @@ export default Vue.extend({
     async searchFhirServer() {
       let url = `${settings.getFhirServerUrl()}/SearchParameter?_count=${settings.getPageSize()}&_elements=id,name,description,url,version,date,status,publisher,useContext,base`;
       if (this.searchFor) {
-        url += `&title=${encodeURIComponent(this.searchFor)}`;
+        // Search Parameter doesn;t have a title, only Zool, I mean "name" property
+        url += `&name=${encodeURIComponent(this.searchFor)}`;
       }
       if (this.searchForStatus) {
         url += `&status=${encodeURIComponent(this.searchForStatus)}`;
