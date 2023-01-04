@@ -103,10 +103,9 @@
 <style lang="scss" scoped>
 .newlayout {
   display: grid;
-  grid-template-columns: 50% 50%;
-  grid-template-rows: 27vh 27vh 27vh;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: calc(33vh - 40px) calc(33vh - 40px) calc(33vh - 40px);
   gap: 12px;
-  margin-right: 14px;
   height: 100%;
   align-content: stretch;
   grid-auto-flow: row;
@@ -173,7 +172,7 @@
 }
 
 .Map-main{
-  grid-template-rows: 30vh 30vh 27vh;
+  grid-template-rows: calc(33vh - 40px) calc(33vh - 40px) calc(33vh - 40px);
 
   .ct-map {
     grid-row-start: 1;
@@ -188,7 +187,7 @@
 }
 
 .TestResource-main{
-  grid-template-rows: 30vh 30vh 27vh;
+  grid-template-rows: calc(33vh - 40px) calc(33vh - 40px) calc(33vh - 40px);
 
   .ct-input {
     grid-row-start: 1;
@@ -203,7 +202,7 @@
 }
 
 .Results-main {
-  grid-template-rows: 27vh 27vh 32vh;
+  grid-template-rows: calc(33vh - 40px) calc(33vh - 40px) calc(33vh - 40px);
   .ct-results {
     grid-column: 2 / 3;
     grid-row: 1 / span 2;
@@ -218,7 +217,7 @@
 }
 
 .Debug-main {
-  grid-template-rows: 27vh 27vh 32vh;
+  grid-template-rows: calc(33vh - 40px) calc(33vh - 40px) calc(33vh - 40px);
   .ct-results {
     grid-column: 2 / 3;
     grid-row: 1 / span 2;
