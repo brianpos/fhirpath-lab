@@ -1426,6 +1426,19 @@ export default Vue.extend({
 
         (this as any).$appInsights?.trackEvent({ name: 'evaluate HAPI' });
       }
+      else if (this.selectedEngine == "java (HAPI-R5)") {
+        // https://github.com/jkiddo/fhirpath-tester/blob/main/src/main/java/org/example/Evaluator.java (brianpos fork of this)
+        // https://docs.microsoft.com/en-us/azure/devops/pipelines/ecosystems/java-function?view=azure-devops
+        url = `https://fhirpath-lab-java.azurewebsites.net/fhir5/$fhirpath-r5`;
+        // url = 'https://localhost:44378/$fhirpath-hapi'
+
+        if (!this.getResourceJson() && this.resourceId) {
+          await this.downloadTestResource();
+          resourceJson = this.getResourceJson();        
+        }
+
+        (this as any).$appInsights?.trackEvent({ name: 'evaluate HAPI' });
+      }
       else if (this.selectedEngine == "java (IBM)") {
         url = `https://fhirpath-lab-java.azurewebsites.net/fhir/$fhirpath-ibm`;
         // url = 'https://localhost:44378/$fhirpath-ibm'
@@ -1483,6 +1496,7 @@ export default Vue.extend({
         ".NET (firely)",
         "fhirpath.js",
         "java (HAPI)",
+        "java (HAPI-R5)",
         "java (IBM)"
       ],
       shareToolTipMessage: shareTooltipText,
