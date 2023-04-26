@@ -328,6 +328,7 @@ td {
 
 <script lang="ts">
 import Vue, { VNode } from "vue";
+import "vue-router";
 import { settings } from "~/helpers/user_settings";
 import {
   requestFhirAcceptHeaders,
@@ -341,6 +342,7 @@ import { getExtensionStringValue } from "fhir-extension-helpers";
 // import { getPreferredTerminologyServerFromSDC } from "fhir-sdc-helpers";
 import fhirpath from "fhirpath";
 import fhirpath_r4_model from "fhirpath/fhir-context/r4";
+import fhirpath_r5_model from "fhirpath/fhir-context/r5";
 import { Rules as FhirPathHightlighter_Rules, setCustomHighlightRules } from "~/helpers/fhirpath_highlighter"
 import "~/assets/fhirpath_highlighter.scss"
 import { IApplicationInsights } from '@microsoft/applicationinsights-web'
@@ -443,7 +445,54 @@ function getTraceValue(entry: fhir4b.ParametersParameter): TraceData[] {
   return result;
 }
 
-export default Vue.extend({
+interface IFhirPathMethods
+{
+  readParametersFromQuery(): TestFhirpathData;
+  applyParameters(p: TestFhirpathData): void;
+  variableMessages(variable: VariableData): string | undefined;
+  variableErrorMessages(variable: VariableData): string | undefined;
+  isValidFhirUrl(variable: VariableData): boolean;
+  resourceJsonChangedEvent(): void;
+  updateVariableValue(name: string): void;
+  fhirpathExpressionChangedEvent(): void;
+  resourceJsonChangedMessage(): string | undefined;
+  tabTitle(): void;
+  settingsClosed(): void;
+
+  getContextExpression(): string | undefined;
+  getFhirpathExpression(): string | undefined;
+  getResourceJson(): string | undefined;
+
+  hasTraceData(): boolean;
+  clearOutcome(): void;
+  setResultJson(result: string): void;
+  executeRequest<T>(url: string, p: fhir4b.Parameters): void;
+
+  downloadLibrary(libraryId: string): void;
+  downloadTestResource(): void;
+  downloadVariableResource(name: string): void;
+  evaluateExpressionUsingFhirpathjs(): void;
+  evaluateExpressionUsingFhirpathjsR5(): void;
+  prepareSharePackageData(): TestFhirpathData;
+  showShareLink(): boolean;
+  updateShareText(): void;
+  updateZulipShareText(): void;
+  copyShareLinkToClipboard(): void;
+  copyZulipShareLinkToClipboard(): void;
+  evaluateFhirPathExpression(): void;
+  checkFocus(event: any): void;
+}
+
+interface IFhirPathComputed
+{
+
+}
+
+interface IFhirPathProps
+{
+}
+
+export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFhirPathProps>({
   components: {
   },
   head: {
@@ -675,7 +724,7 @@ export default Vue.extend({
           }
       }
     },
-    isValidFhirUrl(variable: VariableData){
+    isValidFhirUrl(variable: VariableData): boolean {
       const url: string = variable?.resourceId ?? variable?.data;
       if (url){
         // Not being fussing on values explicitly tagged with a web protocol
@@ -697,7 +746,7 @@ export default Vue.extend({
     resourceJsonChangedEvent(){
       this.resourceJsonChanged = true;
     },
-    updateVariableValue(name: string){
+    updateVariableValue(name: string): void{
       const ie: InputEvent = event as InputEvent;
       // console.log(event);
       const value = (ie.currentTarget as any).value;
@@ -1221,7 +1270,139 @@ export default Vue.extend({
       // console.log(this.results);
     },
 
-    showShareLink() {
+    async evaluateExpressionUsingFhirpathjsR5() {
+      if (!this.getResourceJson() && this.resourceId) {
+        await this.downloadTestResource();
+      }
+      // removing this constraint as there are expression tests 
+      // that you can do that don't require a resource.  
+      // if (!this.resourceJson) {
+      //   return;
+      // }
+      this.results = [];
+      this.setResultJson('');
+
+      // run the actual fhirpath engine
+      let fhirData = { resourceType: 'Patient' }; // some dummy data
+      const resourceJson = this.getResourceJson();
+      if (resourceJson) {
+        try
+        {
+        fhirData = JSON.parse(resourceJson);
+      }
+        catch (err: any) {
+          console.log(err);
+          if (err.message) {
+            this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
+            this.saveOutcome?.issue.push({ code: 'exception', severity: 'fatal', details: { text: err.message } });
+            this.showOutcome = true;
+          }
+        }
+      }
+      // debugger;
+      var environment: Record<string, any> = { resource: fhirData, rootResource: fhirData };
+      for (let v of this.variables) {
+        let value = v[1].data;
+        if (value && (value.startsWith("[") || value.startsWith("{"))) {
+          // convert to an object
+          try{
+            value = JSON.parse(value);
+          }
+          catch(e){
+            console.log(e);
+          }
+        }
+        environment[v[0]] = value;
+      }
+
+      let contextNodes: any[] = [];
+
+      (this as any).$appInsights?.trackEvent({ name: 'evaluate fhirpath.js' });
+
+      const contextExpression = this.getContextExpression();
+      if (contextExpression) {
+        // scan over each of the expressions
+        try {
+          this.processedByEngine = `fhirpath.js-2.14.4+ (r5)`;
+          contextNodes = fhirpath.evaluate(fhirData, contextExpression, environment, fhirpath_r5_model);
+        }
+        catch (err: any) {
+          console.log(err);
+          if (err.message) {
+            this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
+            this.saveOutcome?.issue.push({ code: 'exception', severity: 'fatal', details: { text: err.message } });
+            this.showOutcome = true;
+          }
+        }
+      }
+      else {
+        try {
+          this.processedByEngine = `fhirpath.js-2.14.4+ (r5)`;
+          contextNodes = fhirpath.evaluate(fhirData, "%resource", environment, fhirpath_r5_model);
+        }
+        catch (err: any) {
+          console.log(err);
+          if (err.message) {
+            this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
+            this.saveOutcome?.issue.push({ code: 'exception', severity: 'fatal', details: { text: err.message } });
+            this.showOutcome = true;
+          }
+        }
+      }
+      for (let contextNode of contextNodes) {
+        let resData: ResultData;
+        const index = contextNodes.indexOf(contextNode);
+        if (contextExpression)
+          resData = { context: `${contextExpression}[${index}]`, result: [], trace: [] };
+        else
+          resData = { result: [], trace: [] };
+
+        let tracefunction = function (x: any, label: string): void {
+          if (Array.isArray(x)) {
+            for (var item of x) {
+              if (typeof item.getTypeInfo === "function") {
+                let ti = item.getTypeInfo();
+                // console.log(ti);
+                resData.trace.push({ name: label ?? "", type: ti.name, value: JSON.stringify(item.data, null, 4) });
+              }
+              else {
+                resData.trace.push({ name: label ?? "", value: JSON.stringify(item, null, 4) });
+              }
+            }
+          }
+          else {
+            resData.trace.push({ name: label ?? "", value: JSON.stringify(x, null, 4) });
+          }
+          console.log("TRACE3:[" + (label || "") + "]", x);
+          return x;
+        };
+
+        try {
+          let useExpression = this.getFhirpathExpression() ?? '';
+          let path = {
+            base: resData.context??'', 
+            expression: useExpression
+          }
+          let res: any[] = fhirpath.evaluate(contextNode, path, environment, fhirpath_r5_model, { traceFn: tracefunction });
+          this.results.push(resData);
+
+          for (var item of res) {
+            resData.result.push({ type: Object.prototype.toString.call(item ?? '').substring(8).replace(']', ''), value: item });
+          }
+        }
+        catch (err: any) {
+          console.log(err);
+          if (err.message) {
+            this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
+            this.saveOutcome?.issue.push({ code: 'exception', severity: 'fatal', details: { text: err.message } });
+            this.showOutcome = true;
+          }
+        }
+      }
+      // console.log(this.results);
+    },
+
+    showShareLink(): boolean {
       if (navigator?.clipboard) {
         return true;
       }
@@ -1364,6 +1545,14 @@ export default Vue.extend({
         return;
       }
 
+      if (this.selectedEngine == "fhirpath.js (R5)") {
+        await this.evaluateExpressionUsingFhirpathjsR5();
+        if (this.prevFocus){
+          this.prevFocus.focus();
+        }
+        return;
+      }
+
       // brianpos hosted service
       // default the firely SDK/brianpos service
       // let url = `https://qforms-server.azurewebsites.net/$fhirpath`;
@@ -1496,8 +1685,9 @@ export default Vue.extend({
         ".NET (firely)",
         "fhirpath.js",
         "java (HAPI)",
+        "java (IBM)",
+        "fhirpath.js (R5)",
         "java (HAPI-R5)",
-        "java (IBM)"
       ],
       shareToolTipMessage: shareTooltipText,
       shareZulipToolTipMessage: shareZulipTooltipText,
