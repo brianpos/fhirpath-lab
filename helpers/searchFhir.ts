@@ -1,4 +1,4 @@
-import { Address, Bundle, BundleEntry, BundleLink, CodeableConcept, Coding, ContactPoint, UsageContext, ValueSet } from "fhir/r4";
+import { Address, Bundle, BundleEntry, BundleLink, CodeableConcept, Coding, ContactPoint, UsageContext, ValueSet } from "fhir/r4b";
 import EasyTableDefinition from '~/models/EasyTableDefinition'
 import axios, { AxiosRequestHeaders, AxiosResponse } from "axios";
 import { AxiosError } from "axios";
@@ -206,7 +206,7 @@ export async function searchPage<T>(host: EasyTableDefinition<T>, url: string, m
       });
 
       if (outcomes.length > 0 && outcomes[0].resource?.resourceType === "OperationOutcome"){
-        host.outcome = outcomes[0].resource as fhir4.OperationOutcome;
+        host.outcome = outcomes[0].resource as fhir4b.OperationOutcome;
       }
       else {
         host.outcome = undefined;
@@ -230,7 +230,7 @@ export async function searchPage<T>(host: EasyTableDefinition<T>, url: string, m
     host.showEmpty = true;
     host.tableData = [];
     if (axios.isAxiosError(err)) {
-      const serverError = err as AxiosError<fhir4.OperationOutcome>;
+      const serverError = err as AxiosError<fhir4b.OperationOutcome>;
       if (serverError && serverError.response) {
         host.outcome = serverError.response.data;
         return serverError.response.data;
@@ -269,7 +269,7 @@ export async function loadPublishedVersions<TData extends ConformanceResourceInt
     data.publishedVersions = result;
   } catch (err) {
     if (axios.isAxiosError(err)) {
-      const serverError = err as AxiosError<fhir4.OperationOutcome>;
+      const serverError = err as AxiosError<fhir4b.OperationOutcome>;
       if (serverError && serverError.response) {
         return serverError.response.data;
       }
@@ -279,7 +279,7 @@ export async function loadPublishedVersions<TData extends ConformanceResourceInt
   }
 }
 
-export async function loadFhirResource<TData extends fhir4.FhirResource>(serverBaseUrl: string, data: BaseResourceData<TData>, resourceType: string, routeId: string, createNew: () => TData) {
+export async function loadFhirResource<TData extends fhir4b.FhirResource>(serverBaseUrl: string, data: BaseResourceData<TData>, resourceType: string, routeId: string, createNew: () => TData) {
   try {
     // clear the save validation messaging properties
     data.showOutcome = false;
@@ -322,7 +322,7 @@ export async function loadFhirResource<TData extends fhir4.FhirResource>(serverB
     }
   } catch (err) {
     if (axios.isAxiosError(err)) {
-      const serverError = err as AxiosError<fhir4.OperationOutcome>;
+      const serverError = err as AxiosError<fhir4b.OperationOutcome>;
       if (serverError && serverError.response) {
         return serverError.response.data;
       }
@@ -332,7 +332,7 @@ export async function loadFhirResource<TData extends fhir4.FhirResource>(serverB
   }
 }
 
-export async function loadCanonicalResource<TData extends fhir4.FhirResource, CData extends ConformanceResourceInterface>(serverBaseUrl: string, data: BaseResourceData<TData>, cdata: ConformanceResourceData<CData>, resourceType: string, routeId: string, createNew: () => TData) {
+export async function loadCanonicalResource<TData extends fhir4b.FhirResource, CData extends ConformanceResourceInterface>(serverBaseUrl: string, data: BaseResourceData<TData>, cdata: ConformanceResourceData<CData>, resourceType: string, routeId: string, createNew: () => TData) {
   await loadFhirResource(serverBaseUrl, data, resourceType, routeId, createNew);
   var loadedResource = data.raw as ConformanceResourceInterface;
   if (loadedResource) {
@@ -369,10 +369,10 @@ export async function loadCanonicalResource<TData extends fhir4.FhirResource, CD
   }
 }
 
-export async function saveFhirResource<TData extends fhir4.FhirResource>(serverBaseUrl: string, data: BaseResourceData<TData>): Promise<fhir4.OperationOutcome | undefined> {
+export async function saveFhirResource<TData extends fhir4b.FhirResource>(serverBaseUrl: string, data: BaseResourceData<TData>): Promise<fhir4b.OperationOutcome | undefined> {
   data.saving = true;
   try {
-    const resource = data.raw as fhir4.FhirResource;
+    const resource = data.raw as fhir4b.FhirResource;
     console.log("save " + data.raw?.id);
     data.showOutcome = undefined;
     data.saveOutcome = undefined;
@@ -397,7 +397,7 @@ export async function saveFhirResource<TData extends fhir4.FhirResource>(serverB
   } catch (err) {
     data.saving = false;
     if (axios.isAxiosError(err)) {
-      const serverError = err as AxiosError<fhir4.OperationOutcome>;
+      const serverError = err as AxiosError<fhir4b.OperationOutcome>;
       if (serverError && serverError.response) {
         data.saveOutcome = serverError.response.data;
         data.showOutcome = true;
@@ -409,7 +409,7 @@ export async function saveFhirResource<TData extends fhir4.FhirResource>(serverB
   }
 }
 
-export async function expandValueSet(serverBaseUrl: string, vsCanonical: string, filter?: string): Promise<fhir4.ValueSetExpansion | fhir4.OperationOutcome> {
+export async function expandValueSet(serverBaseUrl: string, vsCanonical: string, filter?: string): Promise<fhir4b.ValueSetExpansion | fhir4b.OperationOutcome> {
   const can = splitCanonical(vsCanonical);
   let urlRequest = `${serverBaseUrl}/ValueSet/$expand?url=${can?.canonicalUrl}`;
   if (can?.version){
@@ -419,7 +419,7 @@ export async function expandValueSet(serverBaseUrl: string, vsCanonical: string,
     urlRequest += `&filter=${encodeURIComponent(filter)}`;
   }
   try {
-    const response = await axios.get<fhir4.ValueSet | fhir4.OperationOutcome>(urlRequest, {
+    const response = await axios.get<fhir4b.ValueSet | fhir4b.OperationOutcome>(urlRequest, {
       // query URL without using browser cache
       headers: {
         "Cache-Control": "no-cache",
@@ -428,12 +428,12 @@ export async function expandValueSet(serverBaseUrl: string, vsCanonical: string,
     });
     if (response.data.resourceType === 'OperationOutcome')
       return response.data;
-    let vsResult = response.data as fhir4.ValueSet;
+    let vsResult = response.data as fhir4b.ValueSet;
     if (vsResult.expansion)
       return vsResult.expansion;
   } catch (err) {
     if (axios.isAxiosError(err)) {
-      const serverError = err as AxiosError<fhir4.OperationOutcome>;
+      const serverError = err as AxiosError<fhir4b.OperationOutcome>;
       if (serverError && serverError.response) {
         return serverError.response.data;
       }

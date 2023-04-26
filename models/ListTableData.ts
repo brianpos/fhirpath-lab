@@ -14,5 +14,5 @@ export interface ListTableData {
   publisher: string;
 }
 
-export interface ListData extends BaseResourceData<fhir4.List> {
+export interface ListData extends BaseResourceData<fhir4b.List> {
 }

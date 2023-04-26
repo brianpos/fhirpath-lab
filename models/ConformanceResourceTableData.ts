@@ -22,12 +22,12 @@ export interface ConformanceResourceTableData {
   favourite?: boolean;
 }
 
-export interface WithPublishingHistory<TData extends fhir4.DomainResource> {
+export interface WithPublishingHistory<TData extends fhir4b.DomainResource> {
   publishedVersions: TData[] | null;
 }
 
 
-export interface ConformanceResourceData<TData extends fhir4.DomainResource> extends BaseResourceData<TData> {
+export interface ConformanceResourceData<TData extends fhir4b.DomainResource> extends BaseResourceData<TData> {
   publishedVersions: TData[] | null;
-  usageCategories?: fhir4.Coding[];
+  usageCategories?: fhir4b.Coding[];
 }

@@ -6,5 +6,5 @@ export interface StructureDefinitionTableDefinition extends ConformanceResourceT
 export interface StructureDefinitionTableData extends ConformanceResourceTableData {
 }
 
-export interface StructureDefinitionData extends ConformanceResourceData<fhir4.StructureDefinition> {
+export interface StructureDefinitionData extends ConformanceResourceData<fhir4b.StructureDefinition> {
 }

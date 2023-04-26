@@ -1,4 +1,4 @@
-import { DomainResource, Coding, Element, ContactDetail, Period, Identifier, UsageContext, CodeableConcept } from "fhir/r4";
+import { DomainResource, Coding, Element, ContactDetail, Period, Identifier, UsageContext, CodeableConcept } from "fhir/r4b";
 
 /**
  * Metadata across all Conformance style resources

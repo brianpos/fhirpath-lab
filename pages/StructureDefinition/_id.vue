@@ -153,7 +153,7 @@ import Vue from "vue";
 import { StructureDefinitionData } from "../../models/StructureDefinitionTableData";
 import axios from "axios";
 import { AxiosError } from "axios";
-import { ElementDefinition, ElementDefinitionConstraint, StructureDefinition } from "fhir/r4";
+import { ElementDefinition, ElementDefinitionConstraint, StructureDefinition } from "fhir/r4b";
 import {
   loadCanonicalResource,
   loadPublishedVersions,
@@ -218,10 +218,10 @@ export default Vue.extend({
       this.$forceUpdate();
       this.enableSave = true;
     },
-    cardinality(element: fhir4.ElementDefinition): string {
+    cardinality(element: fhir4b.ElementDefinition): string {
       return `[${element.min ?? "?"}..${element.max ?? "?"}]`;
     },
-    type(element: fhir4.ElementDefinition): string {
+    type(element: fhir4b.ElementDefinition): string {
       if (!element.type) return "";
       return element.type
         .map((e) => {
@@ -232,10 +232,10 @@ export default Vue.extend({
     // https://www.sitepoint.com/fetching-data-third-party-api-vue-axios/
     async searchFhirServer() {
       document.title = "Structure Definition:";
-      const createNew = (): fhir4.StructureDefinition => {
+      const createNew = (): fhir4b.StructureDefinition => {
         const stgs = settings.load();
         const randomId = settings.createRandomID();
-        var newResource: fhir4.StructureDefinition = {
+        var newResource: fhir4b.StructureDefinition = {
           resourceType: "StructureDefinition",
           status: "draft",
           version: "0.1",

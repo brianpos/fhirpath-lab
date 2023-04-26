@@ -98,7 +98,7 @@
 import Vue from "vue";
 import axios from "axios";
 import { AxiosError } from "axios";
-import { List } from "fhir/r4";
+import { List } from "fhir/r4b";
 import "~/helpers/user_settings";
 import { settings, UserSettingsData } from "~/helpers/user_settings";
 import { requestFhirAcceptHeaders } from "~/helpers/searchFhir";
@@ -139,7 +139,7 @@ export default Vue.extend({
         // host.loadingData = true;
         // let token = host.cancelSource.token;
         const url = `${this.fhirServerUrl}/metadata?_summary=true`;
-        const response = await axios.get<fhir4.CapabilityStatement>(url, {
+        const response = await axios.get<fhir4b.CapabilityStatement>(url, {
           // cancelToken: token,
           headers: { "Accept": requestFhirAcceptHeaders }
         });
@@ -180,7 +180,7 @@ export default Vue.extend({
               }
               catch(err){
                 if (axios.isAxiosError(err)) {
-                  const serverError = err as AxiosError<fhir4.OperationOutcome>;
+                  const serverError = err as AxiosError<fhir4b.OperationOutcome>;
                   if (serverError && serverError.response) {
                     console.log(serverError);
                     if (serverError.response.status !== 404){
@@ -200,7 +200,7 @@ export default Vue.extend({
         }
       } catch (err) {
         if (axios.isAxiosError(err)) {
-          const serverError = err as AxiosError<fhir4.OperationOutcome>;
+          const serverError = err as AxiosError<fhir4b.OperationOutcome>;
           if (serverError && serverError.response) {
             this.FhirServerErrorMessage = serverError.message;
           }

@@ -6,6 +6,6 @@ export interface StructureMapTableDefinition extends ConformanceResourceTableDef
 export interface StructureMapTableData extends ConformanceResourceTableData {
 }
 
-export interface StructureMapData extends ConformanceResourceData<fhir4.StructureMap> {
+export interface StructureMapData extends ConformanceResourceData<fhir4b.StructureMap> {
     rawMap: string | null;
 }

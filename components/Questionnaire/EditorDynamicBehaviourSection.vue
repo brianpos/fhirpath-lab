@@ -81,7 +81,7 @@ td {
 
 <script lang="ts">
 import Vue, { PropType } from "vue";
-import { QuestionnaireItem } from "fhir/r4";
+import { QuestionnaireItem } from "fhir/r4b";
 import { hasExtension, hasExtensionAny } from "fhir-extension-helpers";
 import { FlattenedQuestionnaireItem } from "~/models/QuestionnaireTableData";
 import { structuredDataCapture } from "~/helpers/structureddatacapture";

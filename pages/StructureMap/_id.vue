@@ -105,7 +105,7 @@ import Vue from "vue";
 import { StructureMapData } from "../../models/StructureMapTableData";
 import axios from "axios";
 import { AxiosError } from "axios";
-import { ElementDefinition, ElementDefinitionConstraint, StructureMap } from "fhir/r4";
+import { ElementDefinition, ElementDefinitionConstraint, StructureMap } from "fhir/r4b";
 import {
   loadCanonicalResource,
   loadPublishedVersions,
@@ -144,10 +144,10 @@ export default Vue.extend({
     // https://www.sitepoint.com/fetching-data-third-party-api-vue-axios/
     async searchFhirServer() {
       document.title = "Structure Map:";
-      const createNew = (): fhir4.StructureMap => {
+      const createNew = (): fhir4b.StructureMap => {
         const stgs = settings.load();
         const randomId = settings.createRandomID();
-        var newResource: fhir4.StructureMap = {
+        var newResource: fhir4b.StructureMap = {
           resourceType: "StructureMap",
           status: "draft",
           version: "0.1",

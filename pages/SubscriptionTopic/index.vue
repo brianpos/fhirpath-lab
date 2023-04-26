@@ -174,7 +174,7 @@ export default Vue.extend({
     async searchPage(url: string) {
       await searchPage(this, url, (entries) => {
         this.tableData = entries.map<SubscriptionTopicTableData>((post) => {
-          var sp = post.resource as fhir4.SubscriptionTopic;
+          var sp = post.resource as fhir4b.SubscriptionTopic;
           return {
             id: sp?.id ?? "",
             title: sp?.title ?? sp?.description ?? "(none)",

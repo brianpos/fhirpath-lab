@@ -113,11 +113,11 @@ export namespace structuredDataCapture {
         return undefined;
     }
 
-    export function getUnit(item?: QuestionnaireItem): fhir4.Coding | undefined {
+    export function getUnit(item?: QuestionnaireItem): fhir4b.Coding | undefined {
         return extensionHelpers.getExtensionCodingValue(item, exturl_questionnaire_unit);
     }
 
-    export function setUnit(item: QuestionnaireItem, value: fhir4.Coding | undefined) {
+    export function setUnit(item: QuestionnaireItem, value: fhir4b.Coding | undefined) {
         extensionHelpers.setExtension(item, { url: exturl_questionnaire_unit, valueCoding: value });
     }
 

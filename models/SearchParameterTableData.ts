@@ -7,7 +7,7 @@ export interface SearchParameterTableDefinition extends ConformanceResourceTable
 export interface SearchParameterTableData extends ConformanceResourceTableData {
 }
 
-export interface SearchParameterData extends ConformanceResourceData<fhir4.SearchParameter> {
+export interface SearchParameterData extends ConformanceResourceData<fhir4b.SearchParameter> {
     testFilterValue?: string;
     cancelSource?: CancelTokenSource;
 }

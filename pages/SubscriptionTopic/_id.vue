@@ -169,7 +169,7 @@ import Vue from "vue";
 import { SubscriptionTopicData } from "../../models/SubscriptionTopicTableData";
 import axios from "axios";
 import { AxiosError } from "axios";
-import { SubscriptionTopic } from "fhir/r4";
+import { SubscriptionTopic } from "fhir/r4b";
 import { settings } from "~/helpers/user_settings";
 import {
   loadCanonicalResource,
@@ -193,14 +193,14 @@ export default Vue.extend({
   },
   methods: {
     addResourceTrigger: function() {
-      const newTrigger: fhir4.SubscriptionTopicResourceTrigger = {
+      const newTrigger: fhir4b.SubscriptionTopicResourceTrigger = {
         resource: "",
         queryCriteria: {}
       }
       this.raw?.resourceTrigger?.push(newTrigger);
     },
     addEventTrigger: function() {
-      const newTrigger: fhir4.SubscriptionTopicEventTrigger = {
+      const newTrigger: fhir4b.SubscriptionTopicEventTrigger = {
         resource: "",
         event: {}
       }
@@ -229,8 +229,8 @@ export default Vue.extend({
     // https://www.sitepoint.com/fetching-data-third-party-api-vue-axios/
     async searchFhirServer() {
       document.title = "Subscription Topic:";
-      const createNew = (): fhir4.SubscriptionTopic => {
-        var newResource: fhir4.SubscriptionTopic = {
+      const createNew = (): fhir4b.SubscriptionTopic => {
+        var newResource: fhir4b.SubscriptionTopic = {
           resourceType: "SubscriptionTopic",
           status: "draft",
           version: "0.1",

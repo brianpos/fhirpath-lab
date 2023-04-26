@@ -5,5 +5,5 @@ export interface LibraryTableDefinition extends ConformanceResourceTableDefiniti
 export interface LibraryTableData extends ConformanceResourceTableData {
 }
 
-export interface LibraryData extends ConformanceResourceData<fhir4.Library> {
+export interface LibraryData extends ConformanceResourceData<fhir4b.Library> {
 }

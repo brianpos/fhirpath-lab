@@ -7,7 +7,7 @@ export default interface EasyTableDefinition<TData> extends EasyTableDefinitionR
   tableData: TData[];
 
   /** Outcome if included in the search result processing */
-  outcome?: fhir4.OperationOutcome;
+  outcome?: fhir4b.OperationOutcome;
 
   /** Custom Header render method 
    * https://happy-coding-clans.github.io/vue-easytable/#/en/doc/table/cell-custom

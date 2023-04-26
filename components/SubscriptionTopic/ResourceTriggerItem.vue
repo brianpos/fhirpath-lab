@@ -111,7 +111,7 @@ interface TriggerData {
 export default Vue.extend({
   props: {
     readonly: Boolean,
-    raw: Object as PropType<fhir4.SubscriptionTopicResourceTrigger>,
+    raw: Object as PropType<fhir4b.SubscriptionTopicResourceTrigger>,
   },
   methods: {
     notifyChange() {

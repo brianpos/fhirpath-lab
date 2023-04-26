@@ -253,7 +253,7 @@ tr.ve-table-body-tr {
 }
 
 .engineselector {
-  max-width: 14ch;
+  max-width: 18ch;
 }
 
 .tool-button {
@@ -360,12 +360,12 @@ const shareZulipTooltipText = 'Copy a sharable link for Zulip to this test expre
 
 interface FhirPathData {
   prevFocus?: any;
-  raw?: fhir4.Parameters;
-  library?: fhir4.Library;
+  raw?: fhir4b.Parameters;
+  library?: fhir4b.Library;
   resourceId?: string;
   resourceJsonChanged: boolean;
   loadingData: boolean;
-  saveOutcome?: fhir4.OperationOutcome;
+  saveOutcome?: fhir4b.OperationOutcome;
   showOutcome?: boolean;
   showAdvancedSettings: boolean;
   terminologyServer: string;
@@ -418,21 +418,21 @@ function isSystemVariableName(name: string): boolean {
   return false;
 }
 
-function getValue(entry: fhir4.ParametersParameter): ResultItem[] {
+function getValue(entry: fhir4b.ParametersParameter): ResultItem[] {
   let result: ResultItem[] = [];
   var myMap = new Map(Object.entries(entry));
   for (let [k, v] of myMap.entries()) {
     if (k.startsWith('value'))
       result.push({ type: k.replace('value', ''), value: v });
     else if (k == 'resource')
-      result.push({ type: (v as fhir4.Resource).resourceType, value: v });
+      result.push({ type: (v as fhir4b.Resource).resourceType, value: v });
   }
   const extVal = getExtensionStringValue(entry, "http://fhir.forms-lab.com/StructureDefinition/json-value");
   if (extVal)
     result.push({ type: entry.name, value: JSON.parse(extVal) });
   return result;
 }
-function getTraceValue(entry: fhir4.ParametersParameter): TraceData[] {
+function getTraceValue(entry: fhir4b.ParametersParameter): TraceData[] {
   let result: TraceData[] = [];
   if (entry.part) {
     for (var part of entry.part) {
@@ -804,14 +804,14 @@ export default Vue.extend({
         this.debugEditor.renderer.updateFull(true);
       }
     },
-    async executeRequest<T>(url: string, p: fhir4.Parameters) {
+    async executeRequest<T>(url: string, p: fhir4b.Parameters) {
       try {
         if (this.cancelSource) this.cancelSource.cancel("new search started");
         this.cancelSource = axios.CancelToken.source();
         this.loadingData = true;
         let token = this.cancelSource.token;
-        let response: AxiosResponse<fhir4.Parameters | fhir4.OperationOutcome, any>;
-        response = await axios.post<fhir4.Parameters>(url, p,
+        let response: AxiosResponse<fhir4b.Parameters | fhir4b.OperationOutcome, any>;
+        response = await axios.post<fhir4b.Parameters>(url, p,
           {
             cancelToken: token,
             headers: {
@@ -869,7 +869,7 @@ export default Vue.extend({
       } catch (err) {
         this.loadingData = false;
         if (axios.isAxiosError(err)) {
-          const serverError = err as AxiosError<fhir4.OperationOutcome>;
+          const serverError = err as AxiosError<fhir4b.OperationOutcome>;
           if (serverError && serverError.response) {
             this.setResultJson(JSON.stringify(serverError.response.data, null, 4));
             this.saveOutcome = serverError.response.data;
@@ -896,7 +896,7 @@ export default Vue.extend({
             "Cache-Control": "no-cache",
             "Accept": requestFhirAcceptHeaders
           }
-        const response = await axios.get<fhir4.Library>(url, {
+        const response = await axios.get<fhir4b.Library>(url, {
           cancelToken: token,
           headers: headers
         });
@@ -955,7 +955,7 @@ export default Vue.extend({
       } catch (err) {
         this.loadingData = false;
         if (axios.isAxiosError(err)) {
-          const serverError = err as AxiosError<fhir4.OperationOutcome>;
+          const serverError = err as AxiosError<fhir4b.OperationOutcome>;
           if (serverError && serverError.response) {
             this.setResultJson(JSON.stringify(serverError.response, null, 4));
             if (serverError.response.data?.resourceType == 'OperationOutcome') {
@@ -990,7 +990,7 @@ export default Vue.extend({
             "Cache-Control": "no-cache",
             "Accept": requestFhirAcceptHeaders
           }
-        const response = await axios.get<fhir4.Resource>(url, {
+        const response = await axios.get<fhir4b.Resource>(url, {
           cancelToken: token,
           headers: headers
         });
@@ -1015,7 +1015,7 @@ export default Vue.extend({
       } catch (err) {
         this.loadingData = false;
         if (axios.isAxiosError(err)) {
-          const serverError = err as AxiosError<fhir4.OperationOutcome>;
+          const serverError = err as AxiosError<fhir4b.OperationOutcome>;
           if (serverError && serverError.response) {
             this.setResultJson(JSON.stringify(serverError.response, null, 4));
             if (serverError.response.data?.resourceType == 'OperationOutcome') {
@@ -1050,7 +1050,7 @@ export default Vue.extend({
             "Cache-Control": "no-cache",
             "Accept": requestFhirAcceptHeaders
           }
-        const response = await axios.get<fhir4.Resource>(url, {
+        const response = await axios.get<fhir4b.Resource>(url, {
           cancelToken: token,
           headers: headers
         });
@@ -1069,7 +1069,7 @@ export default Vue.extend({
       } catch (err) {
         this.loadingData = false;
         if (axios.isAxiosError(err)) {
-          const serverError = err as AxiosError<fhir4.OperationOutcome>;
+          const serverError = err as AxiosError<fhir4b.OperationOutcome>;
           if (serverError && serverError.response) {
             this.setResultJson(JSON.stringify(serverError.response, null, 4));
             if (serverError.response.data?.resourceType == 'OperationOutcome') {
@@ -1142,7 +1142,7 @@ export default Vue.extend({
       if (contextExpression) {
         // scan over each of the expressions
         try {
-          this.processedByEngine = `fhirpath.js-2.14.4+`;
+          this.processedByEngine = `fhirpath.js-2.14.4+ (r4b)`;
           contextNodes = fhirpath.evaluate(fhirData, contextExpression, environment, fhirpath_r4_model);
         }
         catch (err: any) {
@@ -1156,7 +1156,7 @@ export default Vue.extend({
       }
       else {
         try {
-          this.processedByEngine = `fhirpath.js-2.14.4+`;
+          this.processedByEngine = `fhirpath.js-2.14.4+ (r4b)`;
           contextNodes = fhirpath.evaluate(fhirData, "%resource", environment, fhirpath_r4_model);
         }
         catch (err: any) {
@@ -1372,7 +1372,7 @@ export default Vue.extend({
       let url = `https://fhirpath-lab-net.azurewebsites.net/api/$fhirpath`;
       // let url = `http://localhost:7071/api/$fhirpath`;
 
-      let p: fhir4.Parameters = { resourceType: "Parameters", parameter: [{ name: "expression", valueString: this.getFhirpathExpression() ?? 'today()' }] };
+      let p: fhir4b.Parameters = { resourceType: "Parameters", parameter: [{ name: "expression", valueString: this.getFhirpathExpression() ?? 'today()' }] };
 
       const contextExpression = this.getContextExpression();
       if (contextExpression) {
@@ -1381,7 +1381,7 @@ export default Vue.extend({
 
       // add in any variables
       if (this.variables){
-        let pVars : fhir4.ParametersParameter = { name: "variables", part: []};
+        let pVars : fhir4b.ParametersParameter = { name: "variables", part: []};
         p.parameter?.push(pVars);
         for(const varName of this.variables.keys()) {
           let value = this.variables.get(varName)?.data;

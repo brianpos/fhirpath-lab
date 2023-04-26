@@ -1,4 +1,4 @@
-import { Questionnaire, QuestionnaireItem } from "fhir/r4";
+import { Questionnaire, QuestionnaireItem } from "fhir/r4b";
 import { ConformanceResourceTableDefinition, ConformanceResourceTableData, ConformanceResourceData } from './ConformanceResourceTableData'
 
 export interface QuestionnaireTableDefinition extends ConformanceResourceTableDefinition<QuestionnaireTableData> {
@@ -7,7 +7,7 @@ export interface QuestionnaireTableDefinition extends ConformanceResourceTableDe
 export interface QuestionnaireTableData extends ConformanceResourceTableData {
 }
 
-export interface QuestionnaireData extends ConformanceResourceData<fhir4.Questionnaire> {
+export interface QuestionnaireData extends ConformanceResourceData<fhir4b.Questionnaire> {
   flatModel?: FlattenedQuestionnaireItem[];
   formContainerElement: any;
   selectedItem?: FlattenedQuestionnaireItem;

@@ -305,12 +305,12 @@ const shareZulipTooltipText = 'Copy a sharable link for Zulip to this test expre
 
 interface FhirMapData {
   prevFocus?: any;
-  raw?: fhir4.Parameters;
+  raw?: fhir4b.Parameters;
   structureMapId?: string;
   resourceId?: string;
   resourceJsonChanged: boolean;
   loadingData: boolean;
-  saveOutcome?: fhir4.OperationOutcome;
+  saveOutcome?: fhir4b.OperationOutcome;
   showOutcome?: boolean;
   cancelSource?: CancelTokenSource;
   tab: any;
@@ -353,20 +353,20 @@ function isSystemVariableName(name: string): boolean {
   return false;
 }
 
-function getValue(entry: fhir4.ParametersParameter): ResultData | undefined {
+function getValue(entry: fhir4b.ParametersParameter): ResultData | undefined {
   var myMap = new Map(Object.entries(entry));
   for (let [k, v] of myMap.entries()) {
     if (k.startsWith('value'))
       return { type: k.replace('value', ''), value: v };
     else if (k == 'resource')
-      return { type: (v as fhir4.Resource).resourceType, value: v };
+      return { type: (v as fhir4b.Resource).resourceType, value: v };
   }
   const extVal = getExtensionStringValue(entry, "http://fhir.forms-lab.com/StructureDefinition/json-value");
   if (extVal)
     return { type: entry.name, value: JSON.parse(extVal) };
   return undefined;
 }
-function getTraceValue(entry: fhir4.ParametersParameter): TraceData[] {
+function getTraceValue(entry: fhir4b.ParametersParameter): TraceData[] {
   let result: TraceData[] = [];
   if (entry.part) {
     for (var part of entry.part) {
@@ -612,14 +612,14 @@ group SetEntryData(source src: Patient, target entry)
         this.debugEditor.renderer.updateFull(true);
       }
     },
-    async executeRequest<T>(url: string, p: fhir4.Parameters) {
+    async executeRequest<T>(url: string, p: fhir4b.Parameters) {
       try {
         if (this.cancelSource) this.cancelSource.cancel("new map test started");
         this.cancelSource = axios.CancelToken.source();
         this.loadingData = true;
         let token = this.cancelSource.token;
-        let response: AxiosResponse<fhir4.Parameters | fhir4.OperationOutcome, any>;
-        response = await axios.post<fhir4.Parameters>(url, p,
+        let response: AxiosResponse<fhir4b.Parameters | fhir4b.OperationOutcome, any>;
+        response = await axios.post<fhir4b.Parameters>(url, p,
           {
             cancelToken: token,
             headers: {
@@ -672,7 +672,7 @@ group SetEntryData(source src: Patient, target entry)
       } catch (err) {
         this.loadingData = false;
         if (axios.isAxiosError(err)) {
-          const serverError = err as AxiosError<fhir4.OperationOutcome>;
+          const serverError = err as AxiosError<fhir4b.OperationOutcome>;
           if (serverError && serverError.response) {
             this.setResultJson(JSON.stringify(serverError.response.data, null, 4));
             this.saveOutcome = serverError.response.data;
@@ -700,7 +700,7 @@ group SetEntryData(source src: Patient, target entry)
           "Cache-Control": "no-cache",
           "Accept": requestFhirAcceptHeaders
         }
-        const response = await axios.get<fhir4.Resource>(url, {
+        const response = await axios.get<fhir4b.Resource>(url, {
           cancelToken: token,
           headers: headers
         });
@@ -725,7 +725,7 @@ group SetEntryData(source src: Patient, target entry)
       } catch (err) {
         this.loadingData = false;
         if (axios.isAxiosError(err)) {
-          const serverError = err as AxiosError<fhir4.OperationOutcome>;
+          const serverError = err as AxiosError<fhir4b.OperationOutcome>;
           if (serverError && serverError.response) {
             this.setResultJson(JSON.stringify(serverError.response, null, 4));
             if (serverError.response.data?.resourceType == 'OperationOutcome') {
@@ -783,7 +783,7 @@ group SetEntryData(source src: Patient, target entry)
       } catch (err) {
         this.loadingData = false;
         if (axios.isAxiosError(err)) {
-          const serverError = err as AxiosError<fhir4.OperationOutcome>;
+          const serverError = err as AxiosError<fhir4b.OperationOutcome>;
           if (serverError && serverError.response) {
             this.setResultJson(JSON.stringify(serverError.response, null, 4));
             if (serverError.response.data?.resourceType == 'OperationOutcome') {

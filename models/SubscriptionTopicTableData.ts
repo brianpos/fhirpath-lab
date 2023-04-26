@@ -7,7 +7,7 @@ export interface SubscriptionTopicTableDefinition extends ConformanceResourceTab
 export interface SubscriptionTopicTableData extends ConformanceResourceTableData {
 }
 
-export interface SubscriptionTopicData extends ConformanceResourceData<fhir4.SubscriptionTopic> {
+export interface SubscriptionTopicData extends ConformanceResourceData<fhir4b.SubscriptionTopic> {
     testFilterValue?: string;
     cancelSource?: CancelTokenSource;
 }

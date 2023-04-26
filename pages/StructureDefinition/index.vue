@@ -147,7 +147,7 @@ export default Vue.extend({
     async searchPage(url: string) {
       await searchPage(this, url, (entries) => {
         this.tableData = entries.map<StructureDefinitionTableData>((post) => {
-          var vs = post.resource as fhir4.StructureDefinition;
+          var vs = post.resource as fhir4b.StructureDefinition;
           return {
             id: vs?.id ?? "",
             title: vs?.title ?? vs?.name ?? vs?.description ?? "(none)",

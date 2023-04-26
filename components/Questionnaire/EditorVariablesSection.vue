@@ -57,7 +57,7 @@ td {
 
 <script lang="ts">
 import Vue, { PropType } from "vue";
-import { Questionnaire, QuestionnaireItem } from "fhir/r4";
+import { Questionnaire, QuestionnaireItem } from "fhir/r4b";
 import { hasExtension } from "fhir-extension-helpers";
 import { FlattenedQuestionnaireItem } from "~/models/QuestionnaireTableData";
 import { structuredDataCapture } from "fhir-sdc-helpers";
@@ -65,7 +65,7 @@ import { structuredDataCapture } from "fhir-sdc-helpers";
 export default Vue.extend({
   props: {
     questionnaire: Object as PropType<Questionnaire>,
-    items: Array as PropType<FlattenedQuestionnaireItem[]>, // { type: fhir4.QuestionnaireItem },
+    items: Array as PropType<FlattenedQuestionnaireItem[]>, // { type: fhir4b.QuestionnaireItem },
   },
   methods: {
     filteredItems(): FlattenedQuestionnaireItem[] {
@@ -81,7 +81,7 @@ export default Vue.extend({
       );
     },
 
-    readVariables(from: fhir4.Element | undefined): fhir4.Expression[] {
+    readVariables(from: fhir4b.Element | undefined): fhir4b.Expression[] {
       if (!from) return [];
       return structuredDataCapture.getVariables(from) ?? [];
     },

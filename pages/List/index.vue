@@ -40,7 +40,7 @@ import Vue from "vue";
 import { ListTableDefinition, ListTableData } from "../../models/ListTableData";
 import axios from "axios";
 import { AxiosError } from "axios";
-import { Bundle } from "fhir/r4";
+import { Bundle } from "fhir/r4b";
 import { settings } from "~/helpers/user_settings";
 import { searchPage } from "~/helpers/searchFhir";
 import { formatDate } from "~/helpers/datetime";
@@ -85,7 +85,7 @@ export default Vue.extend({
     async searchPage(url: string) {
       await searchPage(this, url, (entries) => {
         this.tableData = entries.map<ListTableData>((post) => {
-          var vs = post.resource as fhir4.List;
+          var vs = post.resource as fhir4b.List;
           var td: ListTableData = {
             id: vs?.id ?? "",
             title: vs?.title ?? "(none)",

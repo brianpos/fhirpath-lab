@@ -82,7 +82,7 @@ import {
 } from "~/models/LibraryTableData";
 import { formatDate } from "~/helpers/datetime";
 import { getExtensionMarkdownValue } from "fhir-extension-helpers";
-import { Bundle, CodeableConcept, UsageContext } from "fhir/r4";
+import { Bundle, CodeableConcept, UsageContext } from "fhir/r4b";
 import { settings } from "~/helpers/user_settings";
 import {
   searchPage,
@@ -155,7 +155,7 @@ export default Vue.extend({
       await searchPage(this, url, (entries) => {
         var updateRequired = false;
         this.tableData = entries.map<LibraryTableData>((post) => {
-          var vs = post.resource as fhir4.Library;
+          var vs = post.resource as fhir4b.Library;
           updateRequired =
             updateRequired || this.includeCustomUseContexts(vs?.useContext);
           return {
