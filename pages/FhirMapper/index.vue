@@ -846,7 +846,7 @@ group SetEntryData(source src: Patient, target entry)
       // let url = `https://localhost:7089/StructureMap/$transform?debug=true`;
       // let url = `http://localhost:7071/api/$fhirpath`;
 
-      let p: fhir4.Parameters = {
+      let p: fhir4b.Parameters = {
         resourceType: "Parameters",
         parameter: [{ name: "map", valueString: this.getFhirpathExpression() ?? 'today()' }]
       };
