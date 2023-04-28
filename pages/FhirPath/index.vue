@@ -29,7 +29,7 @@
           </v-tooltip>
           <v-tooltip bottom color="primary">
             <template v-slot:activator="{ on, attrs }">
-              <v-btn v-if="showAdvancedSettings" icon dark  @click="copyZulipShareLinkToClipboard" 
+              <v-btn icon dark  @click="copyZulipShareLinkToClipboard" 
               :hidden="!showShareLink()"  v-bind="attrs" v-on="on" @mouseenter="updateZulipShareText">
                 <svg class="brand-logo" role="img" aria-label="Zulip" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" height="25">
                     <path fill="hsl(0, 0%, 100%)" d="M 473.09 122.97 c 0 22.69 -10.19 42.85 -25.72 55.08 L 296.61 312.69 c -2.8 2.4 -6.44 -1.47 -4.42 -4.7 l 55.3 -110.72 c 1.55 -3.1 -0.46 -6.91 -3.64 -6.91 H 129.36 c -33.22 0 -60.4 -30.32 -60.4 -67.37 c 0 -37.06 27.18 -67.37 60.4 -67.37 h 283.33 c 33.22 -0.02 60.4 30.3 60.4 67.35 z M 129.36 506.05 h 283.33 c 33.22 0 60.4 -30.32 60.4 -67.37 c 0 -37.06 -27.18 -67.37 -60.4 -67.37 H 198.2 c -3.18 0 -5.19 -3.81 -3.64 -6.91 l 55.3 -110.72 c 2.02 -3.23 -1.62 -7.1 -4.42 -4.7 L 94.68 383.6 c -15.53 12.22 -25.72 32.39 -25.72 55.08 c 0 37.05 27.18 67.37 60.4 67.37 z"></path>
@@ -1191,7 +1191,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       if (contextExpression) {
         // scan over each of the expressions
         try {
-          this.processedByEngine = `fhirpath.js-2.14.4+ (r4b)`;
+          this.processedByEngine = `fhirpath.js-3.4.0+ (r4b)`;
           contextNodes = fhirpath.evaluate(fhirData, contextExpression, environment, fhirpath_r4_model);
         }
         catch (err: any) {
@@ -1205,7 +1205,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       }
       else {
         try {
-          this.processedByEngine = `fhirpath.js-2.14.4+ (r4b)`;
+          this.processedByEngine = `fhirpath.js-3.4.0+ (r4b)`;
           contextNodes = fhirpath.evaluate(fhirData, "%resource", environment, fhirpath_r4_model);
         }
         catch (err: any) {
@@ -1323,7 +1323,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       if (contextExpression) {
         // scan over each of the expressions
         try {
-          this.processedByEngine = `fhirpath.js-2.14.4+ (r5)`;
+          this.processedByEngine = `fhirpath.js-3.4.0+ (r5)`;
           contextNodes = fhirpath.evaluate(fhirData, contextExpression, environment, fhirpath_r5_model);
         }
         catch (err: any) {
@@ -1337,7 +1337,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       }
       else {
         try {
-          this.processedByEngine = `fhirpath.js-2.14.4+ (r5)`;
+          this.processedByEngine = `fhirpath.js-3.4.0+ (r5)`;
           contextNodes = fhirpath.evaluate(fhirData, "%resource", environment, fhirpath_r5_model);
         }
         catch (err: any) {
