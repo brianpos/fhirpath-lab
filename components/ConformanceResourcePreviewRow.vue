@@ -32,7 +32,7 @@ color: #6f42c1
 
 <script lang="ts">
 import Vue, { PropType } from "vue";
-import { Extension, Questionnaire } from "fhir/r4";
+import { Extension, Questionnaire } from "fhir/r4b";
 import {
   hasExtension,
   hasExtensionAny,

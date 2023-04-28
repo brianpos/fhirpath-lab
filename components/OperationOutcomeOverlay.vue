@@ -138,7 +138,7 @@ import { BaseResourceNoData } from "~/models/BaseResourceTableData";
 export default Vue.extend({
   props: {
     title: String,
-    saveOutcome: Object as PropType<fhir4.OperationOutcome>,
+    saveOutcome: Object as PropType<fhir4b.OperationOutcome>,
     showOutcome: Boolean,
     popupWhenErrors: { type: Boolean, required: false, default: true }
   },
@@ -148,11 +148,11 @@ export default Vue.extend({
     });
   },
   methods: {
-    hideIssue(issue: fhir4.OperationOutcomeIssue): boolean {
+    hideIssue(issue: fhir4b.OperationOutcomeIssue): boolean {
       if (issue.severity === 'warning' && issue.code === 'incomplete' && issue.details?.text?.includes('Unable to resolve reference to profile')) return true;
       return false;
     },
-    issueDescription(issue: fhir4.OperationOutcomeIssue): string {
+    issueDescription(issue: fhir4b.OperationOutcomeIssue): string {
       if (issue.details){
         if (issue.details?.text) return issue.details?.text;
         // Check to see if there are any codings

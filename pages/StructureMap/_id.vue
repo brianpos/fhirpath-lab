@@ -14,7 +14,7 @@
       <br />
 
       <div v-if="!raw">
-        Loading StructureDefinition/<span v-text="this.$route.params.id" />...
+        Loading StructureMap/<span v-text="this.$route.params.id" />...
       </div>
       <v-card v-if="raw">
         <v-toolbar flat color="primary">
@@ -38,7 +38,7 @@
           </v-tab>
           <v-tab>
             <v-icon left> mdi-file-tree </v-icon>
-            Elements
+            Map
           </v-tab>
 
           <v-tabs-items touchless v-model="tab">
@@ -59,55 +59,7 @@
               <v-card flat>
                 <v-card-text>
                   <p class="fl-tab-header">Elements</p>
-
-                  <p v-if="!hasAnyNonStandardConstraints()">
-                    <v-simple-table>
-                      <thead>
-                        <tr>
-                          <th>Path</th>
-                          <th>Description & Constraints</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr>
-                          <td class="path"></td>
-                          <td>
-                            <i>(No constraints defined in the differential)</i>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </v-simple-table>
-                  </p>
-
-                  <p v-if="hasAnyNonStandardConstraints()">
-                    <v-simple-table>
-                      <thead>
-                        <tr>
-                          <th>Path</th>
-                          <th>Description & Constraints</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <template v-for="(element, index) in elements()">
-                          <tr :key="index" v-if="hasNonStandardConstraint(element) && element.constraint">
-                            <td class="path" v-text="element.path"></td>
-                            <td>
-                              {{ element.definition }}
-                              <template v-for="(constraint, indexConstraint) in element.constraint">
-                                <div :key="indexConstraint" v-if="!isStandardConstraint(constraint)">
-                                  <b>{{ constraint.key }}</b> {{ constraint.human }}<br />
-                                  <debuggable-fhir-path-expression
-                                    :readonly="true" :href="testExpressionPath(element, constraint)"
-                                    label="Expression" :minLines="2"
-                                    :value="constraint.expression" />
-                                </div>
-                              </template>
-                            </td>
-                          </tr>
-                        </template>
-                      </tbody>
-                    </v-simple-table>
-                  </p>
+                  <v-textarea :value="rawMap"></v-textarea>
                 </v-card-text>
               </v-card>
             </v-tab-item>
@@ -150,10 +102,10 @@ td.path {
 
 <script lang="ts">
 import Vue from "vue";
-import { StructureDefinitionData } from "../../models/StructureDefinitionTableData";
+import { StructureMapData } from "../../models/StructureMapTableData";
 import axios from "axios";
 import { AxiosError } from "axios";
-import { ElementDefinition, ElementDefinitionConstraint, StructureDefinition } from "fhir/r4b";
+import { ElementDefinition, ElementDefinitionConstraint, StructureMap } from "fhir/r4b";
 import {
   loadCanonicalResource,
   loadPublishedVersions,
@@ -172,35 +124,6 @@ export default Vue.extend({
     this.searchFhirServer();
   },
   methods: {
-    elements(){
-      return this.raw?.snapshot?.element || this.raw?.differential?.element || [];
-    },
-    testExpressionPath(element: ElementDefinition, constraint: ElementDefinitionConstraint):string {
-      return `../FhirPath?exampletype=${this.raw?.type}&context=${encodeURIComponent(element.path??'')}&expression=${encodeURIComponent(constraint.expression ?? '')}`;
-    },
-    hasAnyNonStandardConstraints(): boolean {
-      for (const element of this.elements()){
-        if (this.hasNonStandardConstraint(element)) return true;
-      }
-      return false;
-    },
-    hasNonStandardConstraint(element: ElementDefinition) {
-      if (!element.constraint) return false;
-      for (var constraint of element.constraint) {
-        if (!this.isStandardConstraint(constraint)) return true;
-      }
-      return false;
-    },
-    isStandardConstraint(constraint: ElementDefinitionConstraint) {
-      if (constraint.key == 'ele-1') return true;
-      if (constraint.key == 'ext-1') return true;
-      if (constraint.key == 'dom-2') return true;
-      if (constraint.key == 'dom-3') return true;
-      if (constraint.key == 'dom-4') return true;
-      if (constraint.key == 'dom-5') return true;
-      if (constraint.key == 'dom-6') return true;
-      return false;
-    },
     settingsClosed() {
       this.showAdvancedSettings = settings.showAdvancedSettings();
     },
@@ -218,32 +141,19 @@ export default Vue.extend({
       this.$forceUpdate();
       this.enableSave = true;
     },
-    cardinality(element: fhir4b.ElementDefinition): string {
-      return `[${element.min ?? "?"}..${element.max ?? "?"}]`;
-    },
-    type(element: fhir4b.ElementDefinition): string {
-      if (!element.type) return "";
-      return element.type
-        .map((e) => {
-          return e.code;
-        })
-        .join(",");
-    },
     // https://www.sitepoint.com/fetching-data-third-party-api-vue-axios/
     async searchFhirServer() {
-      document.title = "Structure Definition:";
-      const createNew = (): fhir4b.StructureDefinition => {
+      document.title = "Structure Map:";
+      const createNew = (): fhir4b.StructureMap => {
         const stgs = settings.load();
         const randomId = settings.createRandomID();
-        var newResource: fhir4b.StructureDefinition = {
-          resourceType: "StructureDefinition",
+        var newResource: fhir4b.StructureMap = {
+          resourceType: "StructureMap",
           status: "draft",
           version: "0.1",
-          abstract: false,
-          kind: "logical",
-          type: "",
+          group: [],
           publisher: stgs.defaultProviderField,
-          url: `${stgs.defaultNewCanonicalBase}/StructureDefinition/${randomId}`,
+          url: `${stgs.defaultNewCanonicalBase}/StructureMap/${randomId}`,
           name: "R" + randomId.replaceAll("-", "_"),
         };
         return newResource;
@@ -252,14 +162,13 @@ export default Vue.extend({
         settings.getFhirServerUrl(),
         this,
         this,
-        "StructureDefinition",
+        "StructureMap",
         this.$route.params.id,
         createNew
       );
       if (this.raw) {
         this.isFavourite = isFavourite(this.raw.resourceType, this.raw.id);
-        document.title = `Structure Definition: ${this.raw.title ?? this.raw.name
-          }`;
+        document.title = `Structure Map: ${this.raw.title ?? this.raw.name }`;  
       }
     },
     async saveData() {
@@ -285,9 +194,10 @@ export default Vue.extend({
       }
     },
   },
-  data(): StructureDefinitionData {
+  data(): StructureMapData {
     return {
       raw: null,
+      rawMap: null,
       publishedVersions: [],
       ...BaseResource_defaultValues,
     };

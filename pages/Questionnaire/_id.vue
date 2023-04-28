@@ -208,7 +208,7 @@ import {
 } from "~/models/QuestionnaireTableData";
 import axios from "axios";
 import { AxiosError } from "axios";
-import { Questionnaire, Bundle } from "fhir/r4";
+import { Questionnaire, Bundle } from "fhir/r4b";
 import { settings } from "~/helpers/user_settings";
 import { marked } from "marked";
 import { formatDate, parseDate } from "~/helpers/datetime";
@@ -257,7 +257,7 @@ export default Vue.extend({
     AddItem(parentItem: any) {
       console.log("add new item");
       if (this.raw && this.flatModel) {
-        var newItem: fhir4.QuestionnaireItem = {
+        var newItem: fhir4b.QuestionnaireItem = {
           linkId: settings.createRandomID(),
           type: "string",
         };
@@ -302,8 +302,8 @@ export default Vue.extend({
     // https://www.sitepoint.com/fetching-data-third-party-api-vue-axios/
     async searchFhirServer() {
       document.title = "Questionnaire:";
-      const createNew = (): fhir4.Questionnaire => {
-        var newResource: fhir4.Questionnaire = {
+      const createNew = (): fhir4b.Questionnaire => {
+        var newResource: fhir4b.Questionnaire = {
           resourceType: "Questionnaire",
           status: "draft",
           version: "0.1",
@@ -334,7 +334,7 @@ export default Vue.extend({
         // now that we have the URL for the instance - check for other published versions
         if (this.raw.url) {
           // Initialize the preview model
-          var qr: fhir4.QuestionnaireResponse = {
+          var qr: fhir4b.QuestionnaireResponse = {
             resourceType: "QuestionnaireResponse",
             questionnaire: "Questionnaire/" + this.raw.url,
             status: "in-progress",

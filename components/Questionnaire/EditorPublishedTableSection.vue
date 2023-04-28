@@ -60,7 +60,7 @@ td {
 
 <script lang="ts">
 import Vue, { PropType } from "vue";
-import { Questionnaire } from "fhir/r4";
+import { Questionnaire } from "fhir/r4b";
 import { formatDate, parseDate } from "~/helpers/datetime";
 
 export default {

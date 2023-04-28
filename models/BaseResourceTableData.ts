@@ -5,7 +5,7 @@ export interface BaseResourceTableDefinition<TData> extends EasyTableDefinition<
   searchForPublisher?: string;
 }
 
-export interface BaseResourceData<TData extends fhir4.DomainResource> extends BaseResourceNoData {
+export interface BaseResourceData<TData extends fhir4b.DomainResource> extends BaseResourceNoData {
   raw: TData | null;
 }
 
@@ -27,7 +27,7 @@ export interface BaseResourceNoData {
   readonly: boolean;
   tab: any;
   enableSave: boolean;
-  saveOutcome?: fhir4.OperationOutcome;
+  saveOutcome?: fhir4b.OperationOutcome;
   showOutcome?: boolean;
   showAdvancedSettings?: boolean;
 }

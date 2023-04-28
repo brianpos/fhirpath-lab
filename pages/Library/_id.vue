@@ -143,7 +143,7 @@ import Vue from "vue";
 import { LibraryData } from "~/models/LibraryTableData";
 import axios from "axios";
 import { AxiosError } from "axios";
-import { Library } from "fhir/r4";
+import { Library } from "fhir/r4b";
 import { settings } from "~/helpers/user_settings";
 import {
   setFavourite,
@@ -173,7 +173,7 @@ export default Vue.extend({
     convertExpression(value: string):string {
       return atob(value);
     },
-    updateExpression(item: fhir4.Attachment, value: string) {
+    updateExpression(item: fhir4b.Attachment, value: string) {
       item.data = btoa(value);
       this.updateNow();
     },
@@ -197,8 +197,8 @@ export default Vue.extend({
     // https://www.sitepoint.com/fetching-data-third-party-api-vue-axios/
     async searchFhirServer() {
       document.title = "Library:";
-      const createNew = (): fhir4.Library => {
-        var newResource: fhir4.Library = {
+      const createNew = (): fhir4b.Library => {
+        var newResource: fhir4b.Library = {
           resourceType: "Library",
           status: "draft",
           version: "0.1",

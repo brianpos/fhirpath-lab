@@ -103,14 +103,14 @@ import {
   Extension,
   QuestionnaireItem,
   QuestionnaireItemInitial,
-} from "fhir/r4";
+} from "fhir/r4b";
 import { hasExtension, hasExtensionAny } from "fhir-extension-helpers";
 import { FlattenedQuestionnaireItem } from "~/models/QuestionnaireTableData";
 import { structuredDataCapture } from "~/helpers/structureddatacapture";
 
 export default {
   props: {
-    items: Array as PropType<FlattenedQuestionnaireItem[]>, // { type: fhir4.QuestionnaireItem },
+    items: Array as PropType<FlattenedQuestionnaireItem[]>, // { type: fhir4b.QuestionnaireItem },
   },
   methods: {
     MinCardinality(item: QuestionnaireItem): string {
@@ -125,9 +125,9 @@ export default {
       return item.repeats ? "*" : "1";
     },
 
-    readVariables(from: Extension[] | undefined): fhir4.Expression[] {
+    readVariables(from: Extension[] | undefined): fhir4b.Expression[] {
       if (!from) return [];
-      var result: fhir4.Expression[] = [];
+      var result: fhir4b.Expression[] = [];
       for (let ext of from) {
         if (ext.url === structuredDataCapture.exturl_variable) {
           if (ext.valueExpression) result.push(ext.valueExpression);
@@ -164,9 +164,9 @@ export default {
         .join(", ");
     },
 
-    readExpressions(from: Extension[] | undefined): fhir4.Expression[] {
+    readExpressions(from: Extension[] | undefined): fhir4b.Expression[] {
       if (!from) return [];
-      var result: fhir4.Expression[] = [];
+      var result: fhir4b.Expression[] = [];
       for (let ext of from) {
         if (
           ext.url ===

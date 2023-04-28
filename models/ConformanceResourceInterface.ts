@@ -1,11 +1,11 @@
-import { DomainResource, Coding, Element, ContactDetail, Period, Identifier, UsageContext, CodeableConcept } from "fhir/r4";
+import { DomainResource, Coding, Element, ContactDetail, Period, Identifier, UsageContext, CodeableConcept } from "fhir/r4b";
 
 /**
  * Metadata across all Conformance style resources
  */
  export interface ConformanceResourceInterface extends DomainResource {
   /** Resource Type Name (for serialization) */
-  resourceType: 'Questionnaire' | 'Library' | 'StructureDefinition' | 'SearchParameter' | 'SubscriptionTopic';
+  resourceType: 'Questionnaire' | 'Library' | 'StructureDefinition' | 'SearchParameter' | 'SubscriptionTopic' | 'StructureMap';
   /**
    * The 'date' element may be more recent than the approval date because of minor changes or editorial corrections.
    */

@@ -175,7 +175,7 @@ import Vue from "vue";
 import { ListData } from "../../models/ListTableData";
 import axios from "axios";
 import { AxiosError } from "axios";
-import { CodeableConcept, List } from "fhir/r4";
+import { CodeableConcept, List } from "fhir/r4b";
 import { settings } from "~/helpers/user_settings";
 import {
   loadFhirResource,
@@ -219,8 +219,8 @@ export default Vue.extend({
     // https://www.sitepoint.com/fetching-data-third-party-api-vue-axios/
     async searchFhirServer() {
       document.title = "List:";
-      const createNew = (): fhir4.List => {
-        var newResource: fhir4.List = {
+      const createNew = (): fhir4b.List => {
+        var newResource: fhir4b.List = {
           resourceType: "List",
           mode: "working",
           status: "current",

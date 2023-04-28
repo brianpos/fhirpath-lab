@@ -104,7 +104,7 @@ import Vue from "vue";
 import { SearchParameterData } from "../../models/SearchParameterTableData";
 import axios from "axios";
 import { AxiosError } from "axios";
-import { SearchParameter } from "fhir/r4";
+import { SearchParameter } from "fhir/r4b";
 import { settings } from "~/helpers/user_settings";
 import {
   loadCanonicalResource,
@@ -161,8 +161,8 @@ export default Vue.extend({
     // https://www.sitepoint.com/fetching-data-third-party-api-vue-axios/
     async searchFhirServer() {
       document.title = "Search Parameter:";
-      const createNew = (): fhir4.SearchParameter => {
-        var newResource: fhir4.SearchParameter = {
+      const createNew = (): fhir4b.SearchParameter => {
+        var newResource: fhir4b.SearchParameter = {
           resourceType: "SearchParameter",
           status: "draft",
           version: "0.1",

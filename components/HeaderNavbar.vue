@@ -58,6 +58,14 @@
               <v-list-item-title>Subscription Topics</v-list-item-title>
             </v-list-item>
           </v-list-item-group>
+          <v-list-item-group>
+            <v-list-item href="/StructureMap">
+              <v-list-item-title>Structure Maps</v-list-item-title>
+            </v-list-item>
+            <v-list-item href="/FhirMapper2">
+              <v-list-item-title>Test Structure Map</v-list-item-title>
+            </v-list-item>
+          </v-list-item-group>
         </v-list>
       </v-menu>
 
@@ -98,6 +106,7 @@
           </v-list-item-group>
         </v-list>
       </v-menu>
+      <slot name="extraNavButtons"></slot>
     </v-app-bar>
     <v-overlay :value="overlay"
       ><user-settings @close="closeSettings"
@@ -169,7 +178,7 @@ import { SMART_KEY } from "fhirclient/lib/settings";
 interface IData {
   overlay: boolean;
   loggedIn: boolean;
-  user: fhir4.Practitioner | fhir4.Patient | fhir4.RelatedPerson | fhir4.Person | undefined;
+  user: fhir4b.Practitioner | fhir4b.Patient | fhir4b.RelatedPerson | fhir4b.Person | undefined;
   client?: Client;
   OAuthClientId?: string;
 }
@@ -227,7 +236,7 @@ export default Vue.extend({
       console.log(this.client?.state);
       // parseJwt(FHIR.oauth2.options.)
       if (this.$route.query.code){
-        // const bun = await client.request<fhir4.Bundle>("Patient");
+        // const bun = await client.request<fhir4b.Bundle>("Patient");
         // console.log(bun);
         // alert("fresh auth");
       }

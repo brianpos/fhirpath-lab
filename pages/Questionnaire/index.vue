@@ -138,7 +138,7 @@ import {
 } from "~/models/QuestionnaireTableData";
 import axios from "axios";
 import { AxiosError } from "axios";
-import { Bundle, CodeableConcept, UsageContext } from "fhir/r4";
+import { Bundle, CodeableConcept, UsageContext } from "fhir/r4b";
 import { formatDate } from "~/helpers/datetime";
 import { getExtensionMarkdownValue } from "fhir-extension-helpers";
 import {
@@ -209,7 +209,7 @@ export default Vue.extend({
       await searchPage(this, url, (entries) => {
         var updateRequired = false;
         this.tableData = entries.map<QuestionnaireTableData>((post) => {
-          var vs = post.resource as fhir4.Questionnaire;
+          var vs = post.resource as fhir4b.Questionnaire;
           updateRequired =
             updateRequired || this.includeCustomUseContexts(vs?.useContext);
           return {
