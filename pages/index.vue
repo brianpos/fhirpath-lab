@@ -45,7 +45,7 @@
         These are the versions of each of the fhirpath engines in use:
       </p>
       <ul style="padding-left: 40px">
-        <li>Firely SDK FHIRPath Engine v4.2.1 <i>(server side)</i></li>
+        <li>Firely SDK FHIRPath Engine v5.1.0 <i>(server side)</i></li>
         <li>FHIRPath.js v3.4.0 <i>(plus string Join/Split/encode/decode)</i></li>
         <li>HAPI FHIRPath v6.4.4 <i>(server side)</i></li>
         <li>IBM FHIRPath v4.11.1 (LinuxForHealth)<i>(server side)</i></li>
