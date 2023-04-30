@@ -1561,6 +1561,10 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       let url = `https://fhirpath-lab-net.azurewebsites.net/api/$fhirpath`;
       // let url = `http://localhost:7071/api/$fhirpath`;
 
+      if (this.selectedEngine == ".NET (firely-R5)") {
+        url = `https://fhirpath-lab-net.azurewebsites.net/api/$fhirpath-r5`;
+        // url = `http://localhost:7071/api/$fhirpath-r5`;
+      }
       let p: fhir4b.Parameters = { resourceType: "Parameters", parameter: [{ name: "expression", valueString: this.getFhirpathExpression() ?? 'today()' }] };
 
       const contextExpression = this.getContextExpression();
@@ -1686,6 +1690,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         "fhirpath.js",
         "java (HAPI)",
         "java (IBM)",
+        ".NET (firely-R5)",
         "fhirpath.js (R5)",
         "java (HAPI-R5)",
       ],
