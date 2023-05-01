@@ -31,6 +31,15 @@
             maintain the logic more easily
           </div>
         </a>
+        <v-btn dark color="#3F81AE" class="link-item text-decoration-none" href="FhirMapper2">
+          <v-icon left> mdi-chart-gantt </v-icon>
+            Mapper
+        </v-btn>
+        <a href="FhirMapper2" class="link-plain-text">
+          <div>
+            Test page for mapping to/from FHIR resources using the <a href="https://www.hl7.org/fhir/mapping-language.html">FHIR Mapping Language</a>
+          </div>
+        </a>
       </div>
       <br />
       <p>
@@ -49,6 +58,7 @@
         <li>FHIRPath.js v3.4.0 <i>(plus string Join/Split/encode/decode)</i></li>
         <li>HAPI FHIRPath v6.4.4 <i>(server side)</i></li>
         <li>IBM FHIRPath v4.11.1 (LinuxForHealth)<i>(server side)</i></li>
+        <li>Dotnet FHIRMappingLanguage Engine v5.1.0 <i>(server side)</i></li>
       </ul>
       <br />
       <h5>Disclaimers:</h5>
