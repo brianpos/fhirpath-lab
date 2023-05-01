@@ -172,7 +172,8 @@
                             <tr :key="index">
                               <td class="result-type"><b>{{ v1.name }}</b></td>
                               <td class="result-value">
-                                <div class="code-json">{{ v1.value }}</div>
+                                <div class="code-json" v-if="v1.value != null">{{ v1.value }}</div>
+                                <div class="code-json" v-if="v1.value == null"><i>(null)</i></div>
                               </td>
                               <td class="result-type"><i v-if="v1.type">({{ v1.type }})</i></td>
                             </tr>
@@ -400,7 +401,7 @@ interface ResultData {
 interface TraceData {
   name: string;
   type?: string;
-  value: string;
+  value?: string;
 }
 
 function canonicalVariableName(name: string): string {
@@ -439,7 +440,10 @@ function getTraceValue(entry: fhir4b.ParametersParameter): TraceData[] {
   if (entry.part) {
     for (var part of entry.part) {
       const val = getValue(part);
-      result.push({ name: entry.valueString ?? '', type: part.name, value: JSON.stringify(val[0].value, null, 4) });
+      let valueData : TraceData = { name: entry.valueString ?? '', type: part.name };
+      if (val.length > 0)
+        valueData.value = JSON.stringify(val[0].value, null, 4);
+      result.push(valueData);
     }
   }
   return result;
