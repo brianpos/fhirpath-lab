@@ -728,7 +728,7 @@ group SetEntryData(source src: Patient, target entry)
             cancelToken: token,
             headers: {
               "Accept": requestFhirAcceptHeaders,
-              "ContentType": requestFhirContentTypeHeaders
+              "Content-Type": requestFhirContentTypeHeaders
             }
           });
         if (token.reason) {

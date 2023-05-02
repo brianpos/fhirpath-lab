@@ -869,7 +869,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
             cancelToken: token,
             headers: {
               "Accept": requestFhirAcceptHeaders,
-              "ContentType": requestFhirContentTypeHeaders
+              "Content-Type": requestFhirContentTypeHeaders
             }
           });
         if (token.reason) {
