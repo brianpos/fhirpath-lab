@@ -173,7 +173,7 @@
                               <td class="result-type"><b>{{ v1.name }}</b></td>
                               <td class="result-value">
                                 <div class="code-json" v-if="v1.value != null">{{ v1.value }}</div>
-                                <div class="code-json" v-if="v1.value == null"><i>(null)</i></div>
+                                <div class="code-json" v-if="v1.value == null && v1.type == 'empty-string'"><i>""</i></div>
                               </td>
                               <td class="result-type"><i v-if="v1.type">({{ v1.type }})</i></td>
                             </tr>
@@ -433,6 +433,9 @@ function getValue(entry: fhir4b.ParametersParameter): ResultItem[] {
   const extVal = getExtensionStringValue(entry, "http://fhir.forms-lab.com/StructureDefinition/json-value");
   if (extVal)
     result.push({ type: entry.name, value: JSON.parse(extVal) });
+  if (entry.name == "empty-string")
+    result.push({ type: "empty-string", value: "" });
+  
   return result;
 }
 function getTraceValue(entry: fhir4b.ParametersParameter): TraceData[] {
