@@ -115,6 +115,7 @@
                           <v-btn icon small tile @click="downloadTestResource">
                             <v-icon> mdi-download </v-icon>
                           </v-btn>
+                          <v-btn small icon tile @click="reformatTestResource"><v-icon title="Format json" dark> mdi-format-indent-increase </v-icon></v-btn>
                         </template>
                       </v-text-field>
                       <label class="v-label theme--light bare-label">Test Resource JSON <i>{{ resourceJsonChangedMessage() }}</i></label>
@@ -209,6 +210,7 @@
                     <v-btn icon small tile @click="downloadTestResource">
                       <v-icon> mdi-download </v-icon>
                     </v-btn>
+                    <v-btn small icon tile @click="reformatTestResource"><v-icon title="Format json" dark> mdi-format-indent-increase </v-icon></v-btn>
                   </template>
                 </v-text-field>
                 <label class="v-label theme--light bare-label">Test Resource JSON <i>{{ resourceJsonChangedMessage() }}</i></label>
@@ -476,6 +478,7 @@ interface IFhirPathMethods
   executeRequest<T>(url: string, p: fhir4b.Parameters): void;
 
   downloadLibrary(libraryId: string): void;
+  reformatTestResource(): void;
   downloadTestResource(): void;
   downloadVariableResource(name: string): void;
   evaluateExpressionUsingFhirpathjs(): void;
@@ -1028,6 +1031,18 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         } else {
           console.log("Client Error:", err);
         }
+      }
+    },
+
+    reformatTestResource(){
+      if (this.resourceJsonEditor){
+        const jsonValue = this.resourceJsonEditor.getValue();
+        try {
+          this.resourceJsonEditor.setValue(JSON.stringify(JSON.parse(jsonValue), null, 4));
+          this.resourceJsonEditor.clearSelection();
+          this.resourceJsonEditor.renderer.updateFull(true);
+        }
+        catch{}
       }
     },
 
