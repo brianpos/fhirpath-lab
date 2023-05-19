@@ -1519,7 +1519,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       const url = new URL(window.location.href);
       let packageData: TestFhirpathData = this.prepareSharePackageData();
       const compressedData = EncodeTestFhirpathData(packageData);
-      const shareUrl = `[\`${packageData.expression}\`](${url.origin}/FhirPath?parameters=${compressedData})`;
+      const shareUrl = `\`\`\`fhirpath\n${packageData.expression}\n\`\`\`\n:test_tube: [Test with FHIRPath-Lab](${url.origin}/FhirPath?parameters=${compressedData})`;
       navigator.clipboard.writeText(shareUrl);
       console.log(DecodeTestFhirpathData(compressedData));
     },
