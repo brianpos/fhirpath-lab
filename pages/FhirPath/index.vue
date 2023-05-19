@@ -115,6 +115,7 @@
                           <v-btn icon small tile @click="downloadTestResource">
                             <v-icon> mdi-download </v-icon>
                           </v-btn>
+                          <v-btn small icon tile @click="reformatTestResource"><v-icon title="Format json" dark> mdi-format-indent-increase </v-icon></v-btn>
                         </template>
                       </v-text-field>
                       <label class="v-label theme--light bare-label">Test Resource JSON <i>{{ resourceJsonChangedMessage() }}</i></label>
@@ -173,7 +174,7 @@
                               <td class="result-type"><b>{{ v1.name }}</b></td>
                               <td class="result-value">
                                 <div class="code-json" v-if="v1.value != null">{{ v1.value }}</div>
-                                <div class="code-json" v-if="v1.value == null"><i>(null)</i></div>
+                                <div class="code-json" v-if="v1.value == null && v1.type == 'empty-string'"><i>""</i></div>
                               </td>
                               <td class="result-type"><i v-if="v1.type">({{ v1.type }})</i></td>
                             </tr>
@@ -209,6 +210,7 @@
                     <v-btn icon small tile @click="downloadTestResource">
                       <v-icon> mdi-download </v-icon>
                     </v-btn>
+                    <v-btn small icon tile @click="reformatTestResource"><v-icon title="Format json" dark> mdi-format-indent-increase </v-icon></v-btn>
                   </template>
                 </v-text-field>
                 <label class="v-label theme--light bare-label">Test Resource JSON <i>{{ resourceJsonChangedMessage() }}</i></label>
@@ -433,6 +435,9 @@ function getValue(entry: fhir4b.ParametersParameter): ResultItem[] {
   const extVal = getExtensionStringValue(entry, "http://fhir.forms-lab.com/StructureDefinition/json-value");
   if (extVal)
     result.push({ type: entry.name, value: JSON.parse(extVal) });
+  if (entry.name == "empty-string")
+    result.push({ type: "empty-string", value: "" });
+  
   return result;
 }
 function getTraceValue(entry: fhir4b.ParametersParameter): TraceData[] {
@@ -473,6 +478,7 @@ interface IFhirPathMethods
   executeRequest<T>(url: string, p: fhir4b.Parameters): void;
 
   downloadLibrary(libraryId: string): void;
+  reformatTestResource(): void;
   downloadTestResource(): void;
   downloadVariableResource(name: string): void;
   evaluateExpressionUsingFhirpathjs(): void;
@@ -869,7 +875,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
             cancelToken: token,
             headers: {
               "Accept": requestFhirAcceptHeaders,
-              "ContentType": requestFhirContentTypeHeaders
+              "Content-Type": requestFhirContentTypeHeaders
             }
           });
         if (token.reason) {
@@ -1025,6 +1031,18 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         } else {
           console.log("Client Error:", err);
         }
+      }
+    },
+
+    reformatTestResource(){
+      if (this.resourceJsonEditor){
+        const jsonValue = this.resourceJsonEditor.getValue();
+        try {
+          this.resourceJsonEditor.setValue(JSON.stringify(JSON.parse(jsonValue), null, 4));
+          this.resourceJsonEditor.clearSelection();
+          this.resourceJsonEditor.renderer.updateFull(true);
+        }
+        catch{}
       }
     },
 
@@ -1501,7 +1519,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       const url = new URL(window.location.href);
       let packageData: TestFhirpathData = this.prepareSharePackageData();
       const compressedData = EncodeTestFhirpathData(packageData);
-      const shareUrl = `[\`${packageData.expression}\`](${url.origin}/FhirPath?parameters=${compressedData})`;
+      const shareUrl = `\`\`\`fhirpath\n${packageData.expression}\n\`\`\`\n:test_tube: [Test with FHIRPath-Lab](${url.origin}/FhirPath?parameters=${compressedData})`;
       navigator.clipboard.writeText(shareUrl);
       console.log(DecodeTestFhirpathData(compressedData));
     },
