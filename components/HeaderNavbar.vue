@@ -108,7 +108,7 @@
       </v-menu>
       <slot name="extraNavButtons"></slot>
     </v-app-bar>
-    <v-overlay :value="overlay"
+    <v-overlay :value="overlay" style="z-index: 8" 
       ><user-settings @close="closeSettings"
     /></v-overlay>
   </div>

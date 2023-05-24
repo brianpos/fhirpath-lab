@@ -63,8 +63,8 @@
                 Debug
               </v-tab>
 
-              <v-tabs-items touchless v-model="tab">
-                <v-tab-item :eager="true">
+              <v-tabs-items style="height: calc(100vh - 168px)" touchless v-model="tab">
+                <v-tab-item :eager="true" style="height: calc(100vh - 168px); overflow-y: auto;" >
                   <!-- Expression -->
                   <v-card flat>
                     <v-card-text>
@@ -119,7 +119,7 @@
                         </template>
                       </v-text-field>
                       <label class="v-label theme--light bare-label">Test Resource JSON <i>{{ resourceJsonChangedMessage() }}</i></label>
-                      <div height="85px" width="100%" ref="aceEditorResourceJsonTab"></div>
+                      <div style="height: calc(100vh - 320px)"  width="100%" ref="aceEditorResourceJsonTab"></div>
                       <!-- <div class="ace_editor_footer"></div> -->
                       <v-text-field label="Terminology Server" v-model="terminologyServer" hide-details="auto"
                         autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
@@ -127,7 +127,7 @@
                   </v-card>
                 </v-tab-item>
 
-                <v-tab-item :eager="true">
+                <v-tab-item style="height: calc(100vh - 168px); overflow-y: auto;" >
                   <!-- Variables -->
                   <v-card flat>
                     <v-card-text>
@@ -157,7 +157,7 @@
                   </v-card>
                 </v-tab-item>
 
-                <v-tab-item>
+                <v-tab-item style="height: calc(100vh - 168px); overflow-y: auto;" >
                   <!-- Trace -->
                   <v-card flat>
                     <v-card-text>
@@ -190,7 +190,7 @@
                   <v-card flat>
                     <v-card-text>
                       <p class="fl-tab-header">Debug</p>
-                      <div ref="aceEditorDebug"></div>
+                      <div style="height: calc(100vh - 196px)" ref="aceEditorDebug"></div>
                     </v-card-text>
                   </v-card>
                 </v-tab-item>
@@ -214,7 +214,7 @@
                   </template>
                 </v-text-field>
                 <label class="v-label theme--light bare-label">Test Resource JSON <i>{{ resourceJsonChangedMessage() }}</i></label>
-                <div height="85px" width="100%" ref="aceEditorResourceJsonRight"></div>
+                <div style="height: calc(100vh - 272px)" width="100%" ref="aceEditorResourceJsonRight"></div>
               </v-card-text>
             </v-card>
           </v-col>
@@ -222,7 +222,7 @@
       </v-card>
 
       <br />
-      <OperationOutcomeOverlay v-if="showOutcome" :saveOutcome="saveOutcome" :showOutcome="showOutcome" title="Error"
+      <OperationOutcomeOverlay style="z-index: 8" v-if="showOutcome" :saveOutcome="saveOutcome" :showOutcome="showOutcome" title="Error"
         @close="clearOutcome" />
     </div>
     <!-- <code class="code-json">{{ JSON.stringify(results, null, 4) }}</code> -->
