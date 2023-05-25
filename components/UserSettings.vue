@@ -54,6 +54,12 @@
             v-model="defaultNewCanonicalBase"
           />
           <v-text-field
+            label="Open AI API Key"
+            hide-details="auto"
+            v-model="openAIkey"
+            title="Used to access the Open AI API in the fhirpath tester section of this app to explain fhirpath expressions"
+          />
+          <v-text-field
             label="List Page Size"
             hide-details="auto"
             v-model="pageSize"
@@ -224,6 +230,7 @@ export default Vue.extend({
       this.favouritesListId = values.favouritesListId;
       this.defaultProviderField = values.defaultProviderField;
       this.defaultNewCanonicalBase = values.defaultNewCanonicalBase;
+      this.openAIkey = values.openAIkey;
       this.showAdvancedSettings = values.showAdvancedSettings;
       this.pageSize = values.pageSize;
 
@@ -247,6 +254,7 @@ export default Vue.extend({
       favouritesListId: undefined,
       defaultProviderField: undefined,
       defaultNewCanonicalBase: undefined,
+      openAIkey: undefined,
       showAdvancedSettings: true,
       pageSize: 10,
 

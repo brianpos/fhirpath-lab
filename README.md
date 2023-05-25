@@ -17,6 +17,15 @@ to test resource data to evaluate with them
 | Questionnaire | Source resource for validation, pre-population, answerExpressions |
 | SearchParameter | Source resource for search parameter expressions |
 
+### Open AI
+What can I do with it:
+* Are there any issues with this expression?
+* update the expression to fix the issue
+* create a new expression to return the patient's MRN identifier value
+* create a new expression to return the patient's name
+* correct the coding where clause to handle the presence of multiple types
+* help me with this operationoutcome against this resource (will provide ability to copy the resource into the test resource page, and the outcome expressions into the context)
+
 ## Test Launch API
 Direct access to launch the test page can be done and pass through test data as parameters:
 > https://fhirpath-lab.azurewebsites.net/FhirPath?expression=today() ...

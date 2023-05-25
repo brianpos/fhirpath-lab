@@ -8,6 +8,7 @@ export declare interface UserSettingsData {
     favouritesListId?: string;
     defaultProviderField?: string;
     defaultNewCanonicalBase?: string;
+    openAIkey?: string;
     showAdvancedSettings: boolean;
     pageSize: number;
 }
@@ -67,6 +68,15 @@ export namespace settings {
             return 10;
         }
     }
+    export function getOpenAIkey(): string|undefined {
+        try {
+            return localStorage.getItem("settings_openAIkey") ?? undefined;
+        }
+        catch {
+            console.log("error reading the OpenAI API key configuration value");
+            return undefined;
+        }
+    }
 
     export function showAdvancedSettings(): boolean {
         return !localStorage.getItem("settings_showAdvancedSettings") ? false : true;
@@ -82,6 +92,7 @@ export namespace settings {
 
             defaultProviderField: localStorage.getItem("settings_defaultProviderField") ?? undefined,
             defaultNewCanonicalBase: localStorage.getItem("settings_defaultNewCanonicalBase") ?? "http://fhir.forms-lab.org/examples",
+            openAIkey: localStorage.getItem("settings_openAIkey") ?? undefined,
             showAdvancedSettings: !localStorage.getItem("settings_showAdvancedSettings") ? false : true,
             pageSize: Number.parseInt(localStorage.getItem("settings_pageSize") ?? "10", 10),
         };
@@ -104,6 +115,8 @@ export namespace settings {
 
             if (settings.defaultProviderField) localStorage.setItem("settings_defaultProviderField", settings.defaultProviderField);
             if (settings.defaultNewCanonicalBase) localStorage.setItem("settings_defaultNewCanonicalBase", settings.defaultNewCanonicalBase);
+            if (settings.openAIkey) localStorage.setItem("settings_openAIkey", settings.openAIkey);
+            else localStorage.removeItem("settings_openAIkey");
             if (settings.showAdvancedSettings) localStorage.setItem("settings_showAdvancedSettings", settings.showAdvancedSettings ? 'true' : 'false');
             else localStorage.removeItem("settings_showAdvancedSettings");
             if (settings.pageSize) localStorage.setItem("settings_pageSize", settings.pageSize.toString());

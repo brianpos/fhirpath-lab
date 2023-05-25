@@ -38,6 +38,17 @@
             </template>
             <span v-text="shareZulipToolTipMessage"></span>
           </v-tooltip>
+          <v-tooltip bottom color="primary">
+            <template v-slot:activator="{ on, attrs }">
+              <v-btn v-if="showAdvancedSettings" icon :dark="showChat"  @click="showChat = !showChat" 
+                  v-bind="attrs" v-on="on" >
+                <v-icon>
+                  mdi-brain
+                </v-icon>
+              </v-btn>
+            </template>
+            <span>Show FhirPath AI Bot to help you with expressions<br/>(powered by OpenAI gpt3.5)</span>
+          </v-tooltip>
         </v-toolbar>
         <v-row dense>
           <v-col>
@@ -62,6 +73,10 @@
                 <v-icon left> mdi-bug-outline </v-icon>
                 Debug
               </v-tab>
+              <!-- <v-tab v-show="showAdvancedSettings">
+                <v-icon left> mdi-brain </v-icon>
+                Chat
+              </v-tab> -->
 
               <v-tabs-items style="height: calc(100vh - 168px)" touchless v-model="tab">
                 <v-tab-item :eager="true" style="height: calc(100vh - 168px); overflow-y: auto;" >
@@ -79,6 +94,30 @@
                       <div height="85px" width="100%" ref="aceEditorExpression"></div>
                       <div class="ace_editor_footer"></div>
 
+                      <v-textarea
+                        style="font-style: italic;"
+                        v-if="showAdvancedSettings & false" 
+                        :value="openAIexpressionExplanation"
+                        label="Fhirpath Expression Explanation"
+                        hide-details="auto"
+                        :messages="openAIexpressionExplanationMessage"
+                        :loading="openAIexpressionExplanationLoading"
+                        >
+                        <template v-slot:prepend>
+                          <v-btn icon small tile @click="openAiExplainExpression" 
+                            :disabled="openAIexpressionExplanationLoading"
+                            title="Use OpenAI to explain what this fhirpath expression does">
+                            <v-icon> mdi-brain </v-icon>
+                          </v-btn>
+                          </template>
+                          <template v-slot:append>
+                          <v-btn icon small tile @click="openAiGenerateExpression"
+                            :disabled="openAIexpressionExplanationLoading"
+                            title="Use OpenAI to generate a FHIRPath expression based on this explanation ">
+                            <v-icon> mdi-cog-play-outline </v-icon>
+                          </v-btn>
+                        </template>
+                      </v-textarea>
                       <div class="results">RESULTS <span class="processedBy">{{ processedByEngine }}</span></div>
                       <template v-for="(r2, i1) in results">
                         <v-simple-table :key="i1">
@@ -198,7 +237,18 @@
               </v-tabs-items>
             </v-tabs>
           </v-col>
-          <v-col class="right-resource">
+          <v-col v-show="showChat">
+            <v-card flat>
+              <v-card-text>
+                <p class="fl-tab-header">FhirPath AI Chat</p>
+                <Chat style="height: calc(100vh - 200px)" ref="chatComponent" 
+                    @send-message="handleSendMessage" 
+                    @reset-conversation="resetConversation"
+                    @apply-suggested-expression="applySuggestedExpression"/>
+              </v-card-text>
+            </v-card>
+          </v-col>
+          <v-col class="right-resource" v-show="!showChat">
             <v-card flat>
               <v-card-text>
                 <p class="fl-tab-header">Resource</p>
@@ -355,10 +405,15 @@ import ace from "ace-builds";
 import "ace-builds/src-noconflict/mode-text";
 import "ace-builds/src-noconflict/mode-json";
 import "ace-builds/src-noconflict/theme-chrome";
+import Chat from "~/components/Chat.vue";
+import { Message } from "~/types/chat-types";
 
-import { fhir } from '@fhir-typescript/r4b-core';
+// import { fhir } from '@fhir-typescript/r4b-core';
 import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from "lz-string";
 import { VariableData, EncodeTestFhirpathData, DecodeTestFhirpathData, TestFhirpathData } from "~/models/testenginemodel";
+
+import { EvaluateCodePrompt, EvaluateTextPrompt, EvaluateChatPrompt, GetSystemPrompt } from "~/helpers/openai_utils";
+import { ChatCompletionRequestMessage } from "openai";
 
 const shareTooltipText = 'Copy a sharable link to this test expression';
 const shareZulipTooltipText = 'Copy a sharable link for Zulip to this test expression';
@@ -387,6 +442,11 @@ interface FhirPathData {
   resourceJsonEditor?: ace.Ace.Editor;
   variables: Map<string, VariableData>;
   processedByEngine?: string;
+  openAIexpressionExplanation?: string;
+  openAIexpressionExplanationLoading: boolean;
+  openAIexpressionExplanationMessage?: string;
+  showChat: boolean;
+  openAILastContext: string;
 }
 
 interface ResultItem {
@@ -481,8 +541,8 @@ interface IFhirPathMethods
   reformatTestResource(): void;
   downloadTestResource(): void;
   downloadVariableResource(name: string): void;
-  evaluateExpressionUsingFhirpathjs(): void;
-  evaluateExpressionUsingFhirpathjsR5(): void;
+  evaluateExpressionUsingFhirpathJs(): void;
+  evaluateExpressionUsingFhirpathJsR5(): void;
   prepareSharePackageData(): TestFhirpathData;
   showShareLink(): boolean;
   updateShareText(): void;
@@ -491,6 +551,12 @@ interface IFhirPathMethods
   copyZulipShareLinkToClipboard(): void;
   evaluateFhirPathExpression(): void;
   checkFocus(event: any): void;
+
+  openAiGenerateExpression(): void;
+  openAiExplainExpression(): void;
+  handleSendMessage(message: string): void;
+  resetConversation(): void;
+  applySuggestedExpression(updatedExpression: string): void;
 }
 
 interface IFhirPathComputed
@@ -500,6 +566,13 @@ interface IFhirPathComputed
 
 interface IFhirPathProps
 {
+  $refs : {
+    aceEditorExpression: HTMLDivElement,
+    aceEditorContextExpression: HTMLDivElement,
+    aceEditorDebug: HTMLDivElement,
+    aceEditorResourceJson: HTMLDivElement,
+    chatComponent: Chat,
+  },
 }
 
 export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFhirPathProps>({
@@ -561,7 +634,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       });
 
         setCustomHighlightRules(this.expressionEditor, FhirPathHightlighter_Rules);
-        this.expressionEditor.setValue("trace('trc').given");
+        this.expressionEditor.setValue("trace('trc').given.join(' ')\n.combine(family).join(', ')");
         this.expressionEditor.clearSelection();
         this.expressionEditor.on("change", this.fhirpathExpressionChangedEvent)
     }
@@ -572,7 +645,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         wrap: "free",
         readOnly: true,
         minLines: 15,
-        maxLines: 35,
+        // maxLines: 35,
         highlightActiveLine: true,
         showGutter: true,
         fontSize: 14,
@@ -587,7 +660,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     const resourceEditorSettings: Partial<ace.Ace.EditorOptions> = {
       wrap: "free",
       minLines: 15,
-      maxLines: 30,
+      // maxLines: 30,
       highlightActiveLine: true,
       showGutter: true,
       fontSize: 14,
@@ -970,7 +1043,6 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
           this.library = response.data;
 
           // and read the properties from the resource into the fields
-          var editor: any;
           if (this.expressionEditor) {
             this.expressionEditor.setValue(this.library?.content ? atob(this.library.content[0].data as string) : '');
             this.expressionEditor.clearSelection();
@@ -1160,7 +1232,141 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       }
     },
 
-    async evaluateExpressionUsingFhirpathjs() {
+    async openAiGenerateExpression() {
+      const prompt = `
+Assume that you're working in the context of ${this.getContextExpression()}.
+Create a fhirpath expression that:
+${this.openAIexpressionExplanation}
+
+Expression:
+`;
+      if (settings.getOpenAIkey()){
+        this.openAIexpressionExplanationLoading = true;
+        this.openAIexpressionExplanationMessage = "Generating expression...";
+        const generatedExpression = await EvaluateTextPrompt(prompt, settings.getOpenAIkey()??"", 0, 1000);
+        if (this.expressionEditor) {
+            this.expressionEditor.setValue(generatedExpression ?? '');
+            this.expressionEditor.clearSelection();
+          }
+        this.openAIexpressionExplanationMessage = "";
+        this.openAIexpressionExplanationLoading = false;
+      }
+    },
+
+    async openAiExplainExpression() {
+      let prompt = `
+Provide a detailed explanation of what the following fhirpath expression
+would do when run in the context of ${this.getContextExpression()}.
+Also describe what any functions that are called do (after leaving a line-break).
+
+Expression:
+${this.getFhirpathExpression()}
+
+Answer:
+`;
+      if (settings.getOpenAIkey()){
+        this.$refs.chatComponent?.addMessage("Author", "Can you describe this fhirpath expression?", true);
+        this.openAIexpressionExplanationLoading = true;
+        this.openAIexpressionExplanationMessage = "Describing expression...";
+        this.openAIexpressionExplanation = await EvaluateTextPrompt(prompt, settings.getOpenAIkey()??"", 0, 1000);
+        this.openAIexpressionExplanationMessage = "(Generated by OpenAI GPT-3)";
+        this.openAIexpressionExplanationLoading = false;
+
+        // this.$refs.chatComponent.sendMessage("FhirPath AI", this.openAIexpressionExplanation ?? "No explanation found");
+      }
+    },
+
+    applySuggestedExpression(updatedExpression: string): void {
+      if (this.expressionEditor) {
+        // before blindly applying the updated text, do some cleaning of the context
+        let fhirData : fhir4b.Resource = { resourceType: 'Patient' }; // some dummy data
+        const resourceJson = this.getResourceJson();
+        if (resourceJson) {
+          try
+          {
+            fhirData = JSON.parse(resourceJson);
+          }
+          catch (err: any) {
+          }
+        }
+        if (updatedExpression.startsWith(fhirData.resourceType + "."))
+          updatedExpression = updatedExpression.substring(fhirData.resourceType.length+1);
+
+        let context = this.getContextExpression() ?? '';
+        if (context.length > 0){
+          if (updatedExpression.startsWith(context + "."))
+          updatedExpression = updatedExpression.substring(context.length+2);
+        }
+
+        this.expressionEditor.setValue(updatedExpression);
+        this.expressionEditor.clearSelection();
+        this.expressionEditor.renderer.updateFull(true);
+      }
+    },
+
+    resetConversation(): void {
+      this.openAILastContext = "";
+    },
+
+    async handleSendMessage(message: string) {  
+      console.log("Message sent:", message);
+      const chat = this.$refs.chatComponent as Chat;
+
+      // Perform any additional actions with the message here  
+      const systemPrompt = GetSystemPrompt();
+
+      this.openAIexpressionExplanationLoading = true;
+      this.openAIexpressionExplanationMessage = "Asking question...";
+      chat.setThinking(true);
+      let userQuestionContext: string= "";
+
+      let fhirData : fhir4b.Resource = { resourceType: 'Patient' }; // some dummy data
+      const resourceJson = this.getResourceJson();
+      if (resourceJson) {
+        try
+        {
+          fhirData = JSON.parse(resourceJson);
+        }
+        catch (err: any) {
+        }
+      }
+
+      const expr = this.getFhirpathExpression() ?? '';
+      if (expr.length > 0) {
+        userQuestionContext += `Based on the FHIRPath expression \`${expr}\`\n\n`;
+        let context = this.getContextExpression() ?? '';
+        if (context.length > 0){
+          if (context.startsWith(fhirData.resourceType+'.'))
+            userQuestionContext += `being evaluated on the \`${context}\` context.\n\n`;
+          else
+            userQuestionContext += `being performed on the \`${fhirData.resourceType}.${context}\` context.\n\n`;
+        }
+        else if (!expr.startsWith(fhirData.resourceType+'.')){
+          userQuestionContext += `being evaluated on the \`${fhirData.resourceType}\` resource context.\n\n`;
+        }
+      }
+      if (userQuestionContext != this.openAILastContext){
+        if (userQuestionContext.length > 0)
+          chat.addMessage("Author", userQuestionContext, false);
+        this.openAILastContext = userQuestionContext;
+      }
+      chat.addMessage("Author", message, true);
+
+      // userQuestion += message;
+      // chat.addMessage("Author", userQuestion, true);
+
+      let prompt: Array<ChatCompletionRequestMessage> = [];
+      prompt.push({ role: "system", content: systemPrompt});
+      prompt = prompt.concat(chat.getConversationChat());
+
+      const resultOfQuestion = await EvaluateChatPrompt(prompt, settings.getOpenAIkey()??"", 0, 1000);
+      this.openAIexpressionExplanationMessage = "(Generated by OpenAI GPT-3)";
+      this.openAIexpressionExplanationLoading = false;
+      chat.addMessage("FhirPath AI", resultOfQuestion ?? '', true);
+      chat.setThinking(false);
+    },
+
+    async evaluateExpressionUsingFhirpathJs() {
       if (!this.getResourceJson() && this.resourceId) {
         await this.downloadTestResource();
       }
@@ -1292,7 +1498,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       // console.log(this.results);
     },
 
-    async evaluateExpressionUsingFhirpathjsR5() {
+    async evaluateExpressionUsingFhirpathJsR5() {
       if (!this.getResourceJson() && this.resourceId) {
         await this.downloadTestResource();
       }
@@ -1560,7 +1766,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       // }
 
       if (this.selectedEngine == "fhirpath.js") {
-        await this.evaluateExpressionUsingFhirpathjs();
+        await this.evaluateExpressionUsingFhirpathJs();
         if (this.prevFocus){
           this.prevFocus.focus();
         }
@@ -1568,7 +1774,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       }
 
       if (this.selectedEngine == "fhirpath.js (R5)") {
-        await this.evaluateExpressionUsingFhirpathjsR5();
+        await this.evaluateExpressionUsingFhirpathJsR5();
         if (this.prevFocus){
           this.prevFocus.focus();
         }
@@ -1724,6 +1930,11 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       resourceJsonEditor: undefined,
       variables: new Map<string, VariableData>(),
       processedByEngine: undefined,
+      openAIexpressionExplanation: undefined,
+      openAIexpressionExplanationLoading: false,
+      openAIexpressionExplanationMessage: "",
+      showChat: true,
+      openAILastContext: "",
     };
   },
 });
