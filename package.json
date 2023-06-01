@@ -33,6 +33,7 @@
     "marked": "^4.0.10",
     "minimist": ">=1.2.6",
     "nuxt": "^2.15.7",
+    "vue-property-decorator": "^9.1.2",
     "openai": "^3.2.1",
     "vue-application-insights": "^1.0.7",
     "vue-easytable": "^2.11.0"
