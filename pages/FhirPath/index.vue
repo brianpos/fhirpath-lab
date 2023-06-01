@@ -40,7 +40,7 @@
           </v-tooltip>
           <v-tooltip bottom color="primary">
             <template v-slot:activator="{ on, attrs }">
-              <v-btn v-if="showAdvancedSettings" icon :dark="showChat"  @click="showChat = !showChat" 
+              <v-btn v-if="showAdvancedSettings && chatEnabled" icon :dark="showChat"  @click="showChat = !showChat" 
                   v-bind="attrs" v-on="on" >
                 <v-icon>
                   mdi-brain
@@ -96,7 +96,7 @@
 
                       <v-textarea
                         style="font-style: italic;"
-                        v-if="showAdvancedSettings & false" 
+                        v-if="showAdvancedSettings && false" 
                         :value="openAIexpressionExplanation"
                         label="Fhirpath Expression Explanation"
                         hide-details="auto"
@@ -446,6 +446,7 @@ interface FhirPathData {
   openAIexpressionExplanation?: string;
   openAIexpressionExplanationLoading: boolean;
   openAIexpressionExplanationMessage?: string;
+  chatEnabled: boolean;
   showChat: boolean;
   openAILastContext: string;
 }
@@ -585,6 +586,8 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
   },
   async mounted() {
     this.showAdvancedSettings = settings.showAdvancedSettings();
+    if (settings.getOpenAIkey())
+      this.chatEnabled = true;
     this.terminologyServer = settings.getFhirTerminologyServerUrl();
 
     const CDN = 'https://cdn.jsdelivr.net/npm/ace-builds@1.6.0/src-min-noconflict';
@@ -893,6 +896,8 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     },
     settingsClosed() {
       this.showAdvancedSettings = settings.showAdvancedSettings();
+      this.chatEnabled = settings.getOpenAIkey() !== undefined;
+      this.$forceUpdate();
     },
 
     getContextExpression(): string | undefined {
@@ -1957,7 +1962,8 @@ Answer:
       openAIexpressionExplanation: undefined,
       openAIexpressionExplanationLoading: false,
       openAIexpressionExplanationMessage: "",
-      showChat: true,
+      showChat: false,
+      chatEnabled: false,
       openAILastContext: "",
     };
   },

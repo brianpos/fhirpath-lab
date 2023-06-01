@@ -57,6 +57,7 @@
             label="Open AI API Key"
             hide-details="auto"
             v-model="openAIkey"
+            v-if="showAdvancedSettings && (defaultProviderField == 'Say the magic word' || openAIkey)"
             title="Used to access the Open AI API in the fhirpath tester section of this app to explain fhirpath expressions"
           />
           <v-text-field
