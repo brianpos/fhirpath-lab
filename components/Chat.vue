@@ -109,15 +109,15 @@ export default class Chat extends Vue {
     this.$emit("reset-conversation");
   }
 
-  applySuggestion(event : MouseEvent) {
-    if (event.target.className === "language-fhirpath") {
-      console.log('Suggestion applied', event.target.innerText);
+  applySuggestion(event : MouseEvent & {target: HTMLElement}) {
+    if (event.target?.className === "language-fhirpath") {
+      console.log('Suggestion applied', event.target?.innerText);
       // Your logic to apply the suggestion
-      this.$emit("apply-suggested-expression", event.target.innerText);
+      this.$emit("apply-suggested-expression", event.target?.innerText);
     } else {
-      console.log('Context suggestion applied', event.target.innerText);
+      console.log('Context suggestion applied', event.target?.innerText);
       // Your logic to apply the suggestion
-      this.$emit("apply-suggested-context", event.target.innerText);
+      this.$emit("apply-suggested-context", event.target?.innerText);
     }
   }
 

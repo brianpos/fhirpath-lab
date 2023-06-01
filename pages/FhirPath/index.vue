@@ -244,6 +244,7 @@
                 <Chat style="height: calc(100vh - 200px)" ref="chatComponent" 
                     @send-message="handleSendMessage" 
                     @reset-conversation="resetConversation"
+                    @apply-suggested-context="applySuggestedContext"
                     @apply-suggested-expression="applySuggestedExpression"/>
               </v-card-text>
             </v-card>
@@ -557,6 +558,7 @@ interface IFhirPathMethods
   handleSendMessage(message: string): void;
   resetConversation(): void;
   applySuggestedExpression(updatedExpression: string): void;
+  applySuggestedContext(updatedExpression: string): void;
 }
 
 interface IFhirPathComputed
@@ -1304,6 +1306,28 @@ Answer:
       }
     },
 
+    applySuggestedContext(updatedExpression: string): void {
+      if (this.expressionContextEditor) {
+        // before blindly applying the updated text, do some cleaning of the context
+        let fhirData : fhir4b.Resource = { resourceType: 'Patient' }; // some dummy data
+        const resourceJson = this.getResourceJson();
+        if (resourceJson) {
+          try
+          {
+            fhirData = JSON.parse(resourceJson);
+          }
+          catch (err: any) {
+          }
+        }
+        if (updatedExpression.startsWith(fhirData.resourceType + "."))
+          updatedExpression = updatedExpression.substring(fhirData.resourceType.length+1);
+
+        this.expressionContextEditor.setValue(updatedExpression);
+        this.expressionContextEditor.clearSelection();
+        this.expressionContextEditor.renderer.updateFull(true);
+      }
+    },
+    
     resetConversation(): void {
       this.openAILastContext = "";
     },
