@@ -56,10 +56,19 @@
           <v-text-field
             label="Open AI API Key"
             hide-details="auto"
+            :type="AiDisplayType"
             v-model="openAIkey"
             v-if="showAdvancedSettings && (defaultProviderField == 'Say the magic word' || openAIkey)"
             title="Used to access the Open AI API in the fhirpath tester section of this app to explain fhirpath expressions"
-          />
+          >
+          <template v-slot:append>
+              <v-btn icon small tile  
+                @click="toggleAIKey">
+                <v-icon v-if="showAIKey" title="Hide AI Key"> mdi-eye-outline </v-icon>
+                <v-icon v-if="!showAIKey" title="Show AI Key"> mdi-eye-off-outline </v-icon>
+              </v-btn>
+            </template>
+          </v-text-field>
           <v-text-field
             label="List Page Size"
             hide-details="auto"
@@ -124,7 +133,20 @@ export default Vue.extend({
   async mounted() {
     this.readUserSettings();
   },
+  computed:{
+    AiDisplayType: function(): string {
+      if (this.showAIKey) {
+        return "";
+      } else {
+        return "password";
+      }
+    },
+  },
   methods: {
+    toggleAIKey() {
+      console.log("toggleAIKey", this.showAIKey);
+      this.showAIKey = !this.showAIKey;
+    },
     closeSettings() {
       this.$emit("close");
     },
@@ -256,6 +278,7 @@ export default Vue.extend({
       defaultProviderField: undefined,
       defaultNewCanonicalBase: undefined,
       openAIkey: undefined,
+      showAIKey: false,
       showAdvancedSettings: true,
       pageSize: 10,
 

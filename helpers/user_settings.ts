@@ -9,6 +9,7 @@ export declare interface UserSettingsData {
     defaultProviderField?: string;
     defaultNewCanonicalBase?: string;
     openAIkey?: string;
+    showAIKey: boolean;
     showAdvancedSettings: boolean;
     pageSize: number;
 }
@@ -93,6 +94,7 @@ export namespace settings {
             defaultProviderField: localStorage.getItem("settings_defaultProviderField") ?? undefined,
             defaultNewCanonicalBase: localStorage.getItem("settings_defaultNewCanonicalBase") ?? "http://fhir.forms-lab.org/examples",
             openAIkey: localStorage.getItem("settings_openAIkey") ?? undefined,
+            showAIKey: false,
             showAdvancedSettings: !localStorage.getItem("settings_showAdvancedSettings") ? false : true,
             pageSize: Number.parseInt(localStorage.getItem("settings_pageSize") ?? "10", 10),
         };
