@@ -1576,16 +1576,11 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       }
 
       // brianpos hosted service
-      // default the firely SDK/brianpos service
-      // let url = `https://qforms-server.azurewebsites.net/$fhirpath`;
-      // let url = `https://localhost:44378/$fhirpath`;
       // Source code for this is at https://github.com/brianpos/fhirpath-lab-dotnet
-      let url = `https://fhirpath-lab-net.azurewebsites.net/api/$fhirpath`;
-      // let url = `http://localhost:7071/api/$fhirpath`;
+      let url = settings.dotnet_server_r4b();
 
       if (this.selectedEngine == ".NET (firely-R5)") {
-        url = `https://fhirpath-lab-net.azurewebsites.net/api/$fhirpath-r5`;
-        // url = `http://localhost:7071/api/$fhirpath-r5`;
+        url = settings.dotnet_server_r5();
       }
       let p: fhir4b.Parameters = { resourceType: "Parameters", parameter: [{ name: "expression", valueString: this.getFhirpathExpression() ?? 'today()' }] };
 
@@ -1631,8 +1626,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       if (this.selectedEngine == "java (HAPI)") {
         // https://github.com/jkiddo/fhirpath-tester/blob/main/src/main/java/org/example/Evaluator.java (brianpos fork of this)
         // https://docs.microsoft.com/en-us/azure/devops/pipelines/ecosystems/java-function?view=azure-devops
-        url = `https://fhirpath-lab-java.azurewebsites.net/fhir/$fhirpath`;
-        // url = 'https://localhost:44378/$fhirpath-hapi'
+        url = settings.java_server_r4b();
 
         if (!this.getResourceJson() && this.resourceId) {
           await this.downloadTestResource();
@@ -1644,8 +1638,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       else if (this.selectedEngine == "java (HAPI-R5)") {
         // https://github.com/jkiddo/fhirpath-tester/blob/main/src/main/java/org/example/Evaluator.java (brianpos fork of this)
         // https://docs.microsoft.com/en-us/azure/devops/pipelines/ecosystems/java-function?view=azure-devops
-        url = `https://fhirpath-lab-java.azurewebsites.net/fhir5/$fhirpath-r5`;
-        // url = 'https://localhost:44378/$fhirpath-hapi'
+        url = settings.java_server_r5();
 
         if (!this.getResourceJson() && this.resourceId) {
           await this.downloadTestResource();
@@ -1655,8 +1648,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         (this as any).$appInsights?.trackEvent({ name: 'evaluate HAPI' });
       }
       else if (this.selectedEngine == "java (IBM)") {
-        url = `https://fhirpath-lab-java.azurewebsites.net/fhir/$fhirpath-ibm`;
-        // url = 'https://localhost:44378/$fhirpath-ibm'
+        url = settings.ibm_server_r4b();
 
         if (!this.getResourceJson() && this.resourceId) {
           await this.downloadTestResource();

@@ -12,7 +12,28 @@ export declare interface UserSettingsData {
     pageSize: number;
 }
 
+var serverConnections = require('~/static/config.json');
+
 export namespace settings {
+
+    export function dotnet_server_r4b(): string {
+        return serverConnections.dotnet_server_r4b;
+    }
+    export function dotnet_server_r5(): string {
+        return serverConnections.dotnet_server_r5;
+    }
+    export function java_server_r4b(): string {
+        return serverConnections.java_server_r4b;
+    }
+    export function java_server_r5(): string {
+        return serverConnections.java_server_r5;
+    }
+    export function ibm_server_r4b(): string {
+        return serverConnections.ibm_server_r4b;
+    }
+    export function mapper_server(): string {
+        return serverConnections.mapper_server;
+    }
 
     export function getSearchData(type: string): ConformanceSearchData | undefined {
         const sdJson = localStorage.getItem(`search_${type}`);

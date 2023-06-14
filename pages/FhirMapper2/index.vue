@@ -967,9 +967,7 @@ group SetEntryData(source src: Patient, target entry)
       // brianpos hosted service
       // default the firely SDK/brianpos service
       // Source code for this is at https://github.com/brianpos/fhirpath-lab-dotnet
-      let url = `https://fhir-mapping-lab.azurewebsites.net/StructureMap/$transform?debug=true`;
-      // let url = `https://localhost:7089/StructureMap/$transform?debug=true`;
-      // let url = `http://localhost:7071/api/$fhirpath`;
+      let url = settings.mapper_server();
 
       let p: fhir4b.Parameters = {
         resourceType: "Parameters",
