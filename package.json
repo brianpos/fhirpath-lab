@@ -12,6 +12,7 @@
     "dockerize": "docker build -t forms-lab ."
   },
   "dependencies": {
+    "@azure/openai": "^1.0.0-beta.2",
     "@fhir-typescript/r4b-core": "0.0.12-beta.15",
     "@nuxtjs/applicationinsights": "^1.2.2",
     "@types/ace": "0.0.48",
@@ -34,7 +35,6 @@
     "minimist": ">=1.2.6",
     "nuxt": "^2.15.7",
     "vue-property-decorator": "^9.1.2",
-    "openai": "^3.2.1",
     "vue-application-insights": "^1.0.7",
     "vue-easytable": "^2.11.0"
   },
@@ -45,8 +45,9 @@
     "@nuxt/typescript-build": "^2.1.0",
     "@nuxtjs/vuetify": "^1.12.2",
     "@types/luxon": "^2.0.8",
-    "@vue/runtime-dom" : "^3.2.47",
-    "@volar-plugins/vetur":"^2.0.0",
-    "minimist": ">=1.2.6"
+    "@volar-plugins/vetur": "^2.0.0",
+    "@vue/runtime-dom": "^3.2.47",
+    "minimist": ">=1.2.6",
+    "vue-property-decorator": "^9.1.2"
   }
 }

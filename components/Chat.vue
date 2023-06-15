@@ -76,7 +76,7 @@
 import { Component, Vue } from "vue-property-decorator";
 import { Message } from "../types/chat-types";
 import { marked } from "marked";
-import { ChatCompletionRequestMessage, ChatCompletionRequestMessageRoleEnum } from "openai";
+import { ChatMessage } from "@azure/openai";
 
 @Component
 export default class Chat extends Vue {
@@ -135,13 +135,13 @@ export default class Chat extends Vue {
   }
 
   
-    getConversationChat(): Array<ChatCompletionRequestMessage> {
+    getConversationChat(): Array<ChatMessage> {
     const conversationHistory = this.messages
       .map((message) => { return {"role": this.mapUserName(message.user), "content":  message.text };});
     return conversationHistory;
   }
 
-  mapUserName(role: string): ChatCompletionRequestMessageRoleEnum
+  mapUserName(role: string): string
   {
     if (role === "Author") return "user";
     if (role === "System") return "system";

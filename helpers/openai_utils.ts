@@ -1,75 +1,55 @@
-import { Configuration, CreateChatCompletionRequest, CreateChatCompletionResponse, CreateCompletionRequest, CreateCompletionResponse, ChatCompletionRequestMessage, OpenAIApi } from "openai";
+import { ChatMessage, OpenAIClient, AzureKeyCredential, OpenAIKeyCredential, OpenAIClientOptions } from "@azure/openai";
 
-let openai: OpenAIApi | undefined = undefined;
-let openaiConfig: Configuration | undefined = undefined;
-
-export async function completion(params: CreateCompletionRequest, apiKey: string): Promise<CreateCompletionResponse> {
-    if (!openai || openaiConfig?.apiKey !== apiKey) {
-        openaiConfig = new Configuration({ apiKey: apiKey });
-        openai = new OpenAIApi(openaiConfig);
-    }
-    const completion = await openai.createCompletion(params);
-    // console.log(JSON.stringify(completion.data, null, 2))
-    return completion.data
+export interface IOpenAISettings {
+    openAIKey: string;
+    openAIBasePath: string | undefined;
+    openAIApiVersion: string | undefined;
+    openAIModel: string | undefined;
 }
 
-export async function chatCompletion(params: CreateChatCompletionRequest, apiKey: string): Promise<CreateChatCompletionResponse> {
-    if (!openai || openaiConfig?.apiKey !== apiKey) {
-        openaiConfig = new Configuration({ apiKey: apiKey });
-        openai = new OpenAIApi(openaiConfig);
-    }
+export interface OpenAiError {
+    error: OpenAiErrorDetail;
+}
+
+interface OpenAiErrorDetail {
+    code: number;
+    message: string;
+}
+
+export async function EvaluateChatPrompt(
+    messages: Array<ChatMessage>,
+    settings: IOpenAISettings,
+    temperature: number,
+    max_tokens?: number): Promise<string | undefined> {
+
     try {
-        const completion = await openai.createChatCompletion(params);
-        console.log(JSON.stringify(completion.data, null, 2))
-        return completion.data;
-    } catch(err) {
+        let client = null;
+        if (settings.openAIBasePath) {
+            client = new OpenAIClient(settings.openAIBasePath ?? "",
+                new AzureKeyCredential(settings.openAIKey),
+                { apiVersion: settings.openAIApiVersion });
+        }
+        else {
+            const opts: OpenAIClientOptions = {
+                credentials: { apiKeyHeaderName: "Authorization" }
+            };
+            client = new OpenAIClient(new OpenAIKeyCredential(settings.openAIKey), opts);
+        }
+
+        const result = await client.getChatCompletions(settings.openAIModel ?? "", messages, {
+            temperature: temperature,
+            maxTokens: max_tokens
+        });
+        return result.choices[0].message?.content;
+
+    } catch (err) {
         console.log(err);
-        let r: CreateChatCompletionResponse = {
-            id: "",
-            object: "",
-            created: 0,
-            model: "",
-            choices: [{
-                message: { content: err.message, role: "system" },
-            }],
-        };
-        return r;
+        return err.message ?? err.error?.message;
     }
-}
-
-export async function EvaluateTextPrompt(prompt: string, apiKey: string, temperature: number, max_tokens?: number) {
-    const result = await completion({
-        model: "text-davinci-003",
-        prompt,
-        temperature,
-        max_tokens,
-    }, apiKey);
-    return result.choices[0].text;
 };
 
-export async function EvaluateChatPrompt(messages: Array<ChatCompletionRequestMessage>, apiKey: string, temperature: number, max_tokens?: number) {
-    const result = await chatCompletion({
-        model: "gpt-3.5-turbo",
-        // model: "gpt-4",
-        messages,
-        temperature,
-        max_tokens,
-    }, apiKey);
-    return result.choices[0].message?.content;
-};
-
-export async function EvaluateCodePrompt(prompt: string, apiKey: string, temperature: number, max_tokens?: number) {
-    const result = await completion({
-        model: "code-davinci-002",
-        prompt,
-        temperature,
-        max_tokens,
-    }, apiKey);
-    return result.choices[0].text;
-};
-
-export function CreatePrompt(): Array<ChatCompletionRequestMessage> {
-    let prompt: Array<ChatCompletionRequestMessage> = [];
+export function CreatePrompt(): Array<ChatMessage> {
+    let prompt: Array<ChatMessage> = [];
 
     prompt.push({ role: "system", content: GetSystemPrompt() });
 
@@ -102,7 +82,7 @@ intersect
 exclude
 union
 combine
-iff
+iif
 toBoolean
 convertsToBoolean
 toInteger
@@ -332,11 +312,11 @@ fragment HEX
 `;
 
 export function GetSystemPrompt(): string {
-        // ---
-        // `+ fhirpathGrammar +`
-        // ---
-        const systemPrompt = `
-    * You are a casual, helpful assistant with a detailed understanding of both FHIR structures and the FHIRPath language that provides concise responses.
+    // ---
+    // `+ fhirpathGrammar +`
+    // ---
+    const systemPrompt = `
+    * You are a casual, helpful assistant with a detailed understanding of both FHIR structures and the FHIRPath language that provides concise responses with suggested follow-up questions.
     * only use this subset of FHIRPath functions: ${fhirpathFunctions.split('\n').join(', ')}.
     * 'concat' and '$join' are not valid fhirpath functions.
     * provide FHIRPath expressions using a markdown block with the language \`fhirpath\`.

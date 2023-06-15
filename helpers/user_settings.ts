@@ -8,7 +8,10 @@ export declare interface UserSettingsData {
     favouritesListId?: string;
     defaultProviderField?: string;
     defaultNewCanonicalBase?: string;
-    openAIkey?: string;
+    openAIApiVersion?: string; // 2023-03-15-preview
+    openAIBasePath?: string; // empty will use the chatGPT system default, not Azure
+    openAIKey?: string;
+    openAIModel?: string; // gpt-3.5-turbo, gpt-4
     showAIKey: boolean;
     showAdvancedSettings: boolean;
     pageSize: number;
@@ -90,12 +93,42 @@ export namespace settings {
             return 10;
         }
     }
-    export function getOpenAIkey(): string|undefined {
+    export function getOpenAIKey(): string|undefined {
         try {
             return localStorage.getItem("settings_openAIkey") ?? undefined;
         }
         catch {
             console.log("error reading the OpenAI API key configuration value");
+            return undefined;
+        }
+    }
+
+    export function getOpenAIBasePath(): string|undefined {
+        try {
+            return localStorage.getItem("settings_openAIBasePath") ?? undefined;
+        }
+        catch {
+            console.log("error reading the OpenAI BasePath configuration value");
+            return undefined;
+        }
+    }
+
+    export function getOpenAIApiVersion(): string|undefined {
+        try {
+            return localStorage.getItem("settings_openAIApiVersion") ?? undefined;
+        }
+        catch {
+            console.log("error reading the OpenAI API Version configuration value");
+            return undefined;
+        }
+    }
+
+    export function getOpenAIModel(): string|undefined {
+        try {
+            return localStorage.getItem("settings_openAIModel") ?? undefined;
+        }
+        catch {
+            console.log("error reading the OpenAI Model configuration value");
             return undefined;
         }
     }
@@ -114,7 +147,10 @@ export namespace settings {
 
             defaultProviderField: localStorage.getItem("settings_defaultProviderField") ?? undefined,
             defaultNewCanonicalBase: localStorage.getItem("settings_defaultNewCanonicalBase") ?? "http://fhir.forms-lab.org/examples",
-            openAIkey: localStorage.getItem("settings_openAIkey") ?? undefined,
+            openAIKey: localStorage.getItem("settings_openAIkey") ?? undefined,
+            openAIBasePath: localStorage.getItem("settings_openAIBasePath") ?? undefined,
+            openAIApiVersion: localStorage.getItem("settings_openAIApiVersion") ?? undefined,
+            openAIModel: localStorage.getItem("settings_openAIModel") ?? undefined,
             showAIKey: false,
             showAdvancedSettings: !localStorage.getItem("settings_showAdvancedSettings") ? false : true,
             pageSize: Number.parseInt(localStorage.getItem("settings_pageSize") ?? "10", 10),
@@ -138,8 +174,17 @@ export namespace settings {
 
             if (settings.defaultProviderField) localStorage.setItem("settings_defaultProviderField", settings.defaultProviderField);
             if (settings.defaultNewCanonicalBase) localStorage.setItem("settings_defaultNewCanonicalBase", settings.defaultNewCanonicalBase);
-            if (settings.openAIkey) localStorage.setItem("settings_openAIkey", settings.openAIkey);
+            
+            if (settings.openAIKey) localStorage.setItem("settings_openAIkey", settings.openAIKey);
             else localStorage.removeItem("settings_openAIkey");
+            
+            if (settings.openAIBasePath) localStorage.setItem("settings_openAIBasePath", settings.openAIBasePath);
+            else localStorage.removeItem("settings_openAIBasePath");
+            if (settings.openAIApiVersion) localStorage.setItem("settings_openAIApiVersion", settings.openAIApiVersion);
+            else localStorage.removeItem("settings_openAIApiVersion");
+            if (settings.openAIModel) localStorage.setItem("settings_openAIModel", settings.openAIModel);
+            else localStorage.removeItem("settings_openAIModel");
+
             if (settings.showAdvancedSettings) localStorage.setItem("settings_showAdvancedSettings", settings.showAdvancedSettings ? 'true' : 'false');
             else localStorage.removeItem("settings_showAdvancedSettings");
             if (settings.pageSize) localStorage.setItem("settings_pageSize", settings.pageSize.toString());

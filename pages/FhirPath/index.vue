@@ -94,30 +94,6 @@
                       <div height="85px" width="100%" ref="aceEditorExpression"></div>
                       <div class="ace_editor_footer"></div>
 
-                      <v-textarea
-                        style="font-style: italic;"
-                        v-if="showAdvancedSettings && false" 
-                        :value="openAIexpressionExplanation"
-                        label="Fhirpath Expression Explanation"
-                        hide-details="auto"
-                        :messages="openAIexpressionExplanationMessage"
-                        :loading="openAIexpressionExplanationLoading"
-                        >
-                        <template v-slot:prepend>
-                          <v-btn icon small tile @click="openAiExplainExpression" 
-                            :disabled="openAIexpressionExplanationLoading"
-                            title="Use OpenAI to explain what this fhirpath expression does">
-                            <v-icon> mdi-brain </v-icon>
-                          </v-btn>
-                          </template>
-                          <template v-slot:append>
-                          <v-btn icon small tile @click="openAiGenerateExpression"
-                            :disabled="openAIexpressionExplanationLoading"
-                            title="Use OpenAI to generate a FHIRPath expression based on this explanation ">
-                            <v-icon> mdi-cog-play-outline </v-icon>
-                          </v-btn>
-                        </template>
-                      </v-textarea>
                       <div class="results">RESULTS <span class="processedBy">{{ processedByEngine }}</span></div>
                       <template v-for="(r2, i1) in results">
                         <v-simple-table :key="i1">
@@ -413,8 +389,8 @@ import { Message } from "~/types/chat-types";
 import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from "lz-string";
 import { VariableData, EncodeTestFhirpathData, DecodeTestFhirpathData, TestFhirpathData } from "~/models/testenginemodel";
 
-import { EvaluateCodePrompt, EvaluateTextPrompt, EvaluateChatPrompt, GetSystemPrompt } from "~/helpers/openai_utils";
-import { ChatCompletionRequestMessage } from "openai";
+import { EvaluateChatPrompt, GetSystemPrompt, IOpenAISettings } from "~/helpers/openai_utils";
+import { ChatMessage } from "@azure/openai";
 
 const shareTooltipText = 'Copy a sharable link to this test expression';
 const shareZulipTooltipText = 'Copy a sharable link for Zulip to this test expression';
@@ -443,7 +419,6 @@ interface FhirPathData {
   resourceJsonEditor?: ace.Ace.Editor;
   variables: Map<string, VariableData>;
   processedByEngine?: string;
-  openAIexpressionExplanation?: string;
   openAIexpressionExplanationLoading: boolean;
   openAIexpressionExplanationMessage?: string;
   chatEnabled: boolean;
@@ -554,8 +529,7 @@ interface IFhirPathMethods
   evaluateFhirPathExpression(): void;
   checkFocus(event: any): void;
 
-  openAiGenerateExpression(): void;
-  openAiExplainExpression(): void;
+  GetAISettings(): IOpenAISettings;
   handleSendMessage(message: string): void;
   resetConversation(): void;
   applySuggestedExpression(updatedExpression: string): void;
@@ -586,7 +560,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
   },
   async mounted() {
     this.showAdvancedSettings = settings.showAdvancedSettings();
-    if (settings.getOpenAIkey())
+    if (settings.getOpenAIKey())
       this.chatEnabled = true;
     this.terminologyServer = settings.getFhirTerminologyServerUrl();
 
@@ -896,7 +870,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     },
     settingsClosed() {
       this.showAdvancedSettings = settings.showAdvancedSettings();
-      this.chatEnabled = settings.getOpenAIkey() !== undefined;
+      this.chatEnabled = settings.getOpenAIKey() !== undefined;
       this.$forceUpdate();
     },
 
@@ -1239,50 +1213,14 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       }
     },
 
-    async openAiGenerateExpression() {
-      const prompt = `
-Assume that you're working in the context of ${this.getContextExpression()}.
-Create a fhirpath expression that:
-${this.openAIexpressionExplanation}
-
-Expression:
-`;
-      if (settings.getOpenAIkey()){
-        this.openAIexpressionExplanationLoading = true;
-        this.openAIexpressionExplanationMessage = "Generating expression...";
-        const generatedExpression = await EvaluateTextPrompt(prompt, settings.getOpenAIkey()??"", 0, 1000);
-        if (this.expressionEditor) {
-            this.expressionEditor.setValue(generatedExpression ?? '');
-            this.expressionEditor.clearSelection();
-          }
-        this.openAIexpressionExplanationMessage = "";
-        this.openAIexpressionExplanationLoading = false;
-      }
+    GetAISettings(): IOpenAISettings {
+      return {
+        openAIKey: settings.getOpenAIKey() ?? "",
+        openAIBasePath: settings.getOpenAIBasePath(),
+        openAIApiVersion: settings.getOpenAIApiVersion(),
+        openAIModel: settings.getOpenAIModel(),
+      };
     },
-
-    async openAiExplainExpression() {
-      let prompt = `
-Provide a detailed explanation of what the following fhirpath expression
-would do when run in the context of ${this.getContextExpression()}.
-Also describe what any functions that are called do (after leaving a line-break).
-
-Expression:
-${this.getFhirpathExpression()}
-
-Answer:
-`;
-      if (settings.getOpenAIkey()){
-        this.$refs.chatComponent?.addMessage("Author", "Can you describe this fhirpath expression?", true);
-        this.openAIexpressionExplanationLoading = true;
-        this.openAIexpressionExplanationMessage = "Describing expression...";
-        this.openAIexpressionExplanation = await EvaluateTextPrompt(prompt, settings.getOpenAIkey()??"", 0, 1000);
-        this.openAIexpressionExplanationMessage = "(Generated by OpenAI GPT-3)";
-        this.openAIexpressionExplanationLoading = false;
-
-        // this.$refs.chatComponent.sendMessage("FhirPath AI", this.openAIexpressionExplanation ?? "No explanation found");
-      }
-    },
-
     applySuggestedExpression(updatedExpression: string): void {
       if (this.expressionEditor) {
         // before blindly applying the updated text, do some cleaning of the context
@@ -1384,12 +1322,15 @@ Answer:
       // userQuestion += message;
       // chat.addMessage("Author", userQuestion, true);
 
-      let prompt: Array<ChatCompletionRequestMessage> = [];
+      let prompt: Array<ChatMessage> = [];
       prompt.push({ role: "system", content: systemPrompt});
       prompt = prompt.concat(chat.getConversationChat());
 
-      const resultOfQuestion = await EvaluateChatPrompt(prompt, settings.getOpenAIkey()??"", 0, 1000);
-      this.openAIexpressionExplanationMessage = "(Generated by OpenAI GPT-3)";
+      const resultOfQuestion = await EvaluateChatPrompt(
+          prompt, this.GetAISettings(),
+          0, 
+          1000);
+      this.openAIexpressionExplanationMessage = "(Generated by OpenAI "+settings.getOpenAIModel()+")";
       this.openAIexpressionExplanationLoading = false;
       chat.addMessage("FhirPath AI", resultOfQuestion ?? '', true);
       chat.setThinking(false);
@@ -1951,7 +1892,6 @@ Answer:
       resourceJsonEditor: undefined,
       variables: new Map<string, VariableData>(),
       processedByEngine: undefined,
-      openAIexpressionExplanation: undefined,
       openAIexpressionExplanationLoading: false,
       openAIexpressionExplanationMessage: "",
       showChat: false,
