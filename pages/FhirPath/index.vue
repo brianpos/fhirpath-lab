@@ -159,7 +159,7 @@
                           @input="updateVariableValue(v1[0])" :key="index" 
                           :messages="variableMessages(v1[1])" :error-messages="variableErrorMessages(v1[1])" :error="(!!v1[1].errorMessage)">
                             <template v-slot:append>
-                            <v-btn icon small tile @click="variables.set(v1[0], { data: v1[1].resourceId }); $forceUpdate()">
+                            <v-btn icon small tile @click="variables.set(v1[0], { name: v1[0], data: v1[1].resourceId }); $forceUpdate()">
                                 <v-icon> mdi-close </v-icon>
                               </v-btn>
                               <v-btn icon small tile @click="downloadVariableResource(v1[0])" :hidden="!isValidFhirUrl(v1[1])"> 
@@ -952,7 +952,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
 
                   if (!this.variables.has(varName)){
                     // console.log(tkn.value + ' ' + varName);
-                    updatedVariables.set(varName, { data: undefined });
+                    updatedVariables.set(varName, { name: varName,  data: undefined });
                     // provide default implementation values for known env vars
                     switch(varName){
                       case 'ucum': updatedVariables.set(varName, "http://unitsofmeasure.org"); break;
