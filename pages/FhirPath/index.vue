@@ -69,6 +69,10 @@
                 <v-icon left> mdi-format-list-bulleted </v-icon>
                 Trace
               </v-tab>
+              <v-tab v-show="showAdvancedSettings && astDebug.length > 0">
+                <v-icon left> mdi-file-tree </v-icon>
+                AST
+              </v-tab>
               <v-tab v-show="showAdvancedSettings">
                 <v-icon left> mdi-bug-outline </v-icon>
                 Debug
@@ -95,6 +99,7 @@
                       <div class="ace_editor_footer"></div>
 
                       <div class="results">RESULTS <span class="processedBy">{{ processedByEngine }}</span></div>
+                      <OperationOutcomePanel :outcome="expressionParseOutcome" @close="expressionParseOutcome = undefined" />
                       <template v-for="(r2, i1) in results">
                         <v-simple-table :key="i1">
                           <tr v-if="r2.context">
@@ -200,6 +205,63 @@
                   </v-card>
                 </v-tab-item>
 
+                <v-tab-item style="height: calc(100vh - 168px); overflow-y: auto;">
+                  <!-- AST abstract syntax tree -->
+                  <v-card flat>
+                    <v-card-text>
+                      <p class="fl-tab-header">AST</p>
+                      <OperationOutcomePanel :outcome="expressionParseOutcome" @close="expressionParseOutcome = undefined" />
+                      <v-treeview
+                        :items="astDebug"
+                        :open="astOpen"
+                        activatable
+                        :dense="true"
+                        item-key="id"
+                        item-text="Name"
+                        item-children="Arguments"
+                        :open-all="true"
+                        open-on-click
+                      >
+                        <template v-slot:prepend="{ item, open }">
+                          <v-icon v-if="item.ReturnType.length == 0" color="red">
+                            mdi-alert-octagon
+                          </v-icon>
+                        </template>
+                        <template v-slot:label="{ item, open }">
+                          <template v-if="item.ExpressionType === 'FunctionCallExpression'">
+                            .{{ item.Name }}(...) <span style="color: grey">: {{ item.ReturnType }}</span>
+                          </template>
+                          <template v-else-if="item.ExpressionType === 'ConstantExpression'">
+                            <span style="color: #a31515;">'{{ item.Name }}'</span> <span style="color: grey" v-if="item.ReturnType.length > 0">: {{ item.ReturnType }}</span>
+                          </template>
+                          <template v-else-if="item.ExpressionType === 'ChildExpression'">
+                            .<span style="color: #318495; font-weight: bold">{{ item.Name }}</span> <span style="color: grey" v-if="item.ReturnType.length > 0">: {{ item.ReturnType }}</span>
+                          </template>
+                          <template v-else-if="item.ExpressionType === 'VariableRefExpression'">
+                            <span style="color: #b255a5; font-weight: bold">%{{ item.Name }}</span> <span style="color: grey" v-if="item.ReturnType.length > 0">: {{ item.ReturnType }}</span>
+                          </template>
+                          <template v-else-if="item.ExpressionType === 'AxisExpression' && item.Name === 'builtin.this'">
+                            <span style="color: #0000ff; font-weight: bold">$this</span> <span style="color: grey" v-if="item.ReturnType.length > 0">: {{ item.ReturnType }}</span>
+                          </template>
+                          <template v-else-if="item.ExpressionType === 'AxisExpression' && item.Name === 'builtin.that'">
+                            <span style="color: #0000ff;">Expression Scope</span> <span style="color: grey" v-if="item.ReturnType.length > 0">: {{ item.ReturnType }}</span>
+                          </template>
+                          <template v-else>
+                            {{ item.Name }} <span style="color: grey">: {{ item.ReturnType }}</span> ({{ item.ExpressionType }})
+                          </template>
+                          <template v-if="item.ReturnType.length == 0">
+                            <i><b>(no return type calculated)</b></i>
+                          </template>
+                          <!-- <template>
+                            {{ item.id }}
+                          </template> -->
+                        </template>
+                      </v-treeview>
+                      <v-checkbox v-model="astInverted" label="Inverted Tree" messages="(re-evaluate to apply)"></v-checkbox>
+                    </v-card-text>
+                  </v-card>
+                </v-tab-item>
+
                 <v-tab-item :eager="true">
                   <!-- Debug -->
                   <v-card flat>
@@ -255,6 +317,16 @@
     <!-- <code class="code-json">{{ JSON.stringify(results, null, 4) }}</code> -->
   </div>
 </template>
+
+<style>
+.v-treeview--dense .v-treeview-node__root {
+    min-height: 28px;
+}
+
+.v-treeview-node {
+  border-top: thin solid silver;
+}
+</style>
 
 <style lang="scss" scoped>
 .ace_editor:focus-within+.ace_editor_footer {
@@ -424,6 +496,18 @@ interface FhirPathData {
   chatEnabled: boolean;
   showChat: boolean;
   openAILastContext: string;
+  astDebug: JsonNode[];
+  astOpen: string[];
+  expressionParseOutcome?: fhir4b.OperationOutcome;
+  astInverted: boolean;
+}
+
+interface JsonNode {
+  id?: string;
+  ExpressionType: string;
+  Name: string;
+  Arguments?: JsonNode[];
+  ReturnType?: string;
 }
 
 interface ResultItem {
@@ -491,6 +575,37 @@ function getTraceValue(entry: fhir4b.ParametersParameter): TraceData[] {
   return result;
 }
 
+function AllocateNodeIds(ast: JsonNode, startAt: number = 0) : number{
+  ast.id = startAt.toString();
+  startAt++;
+  ast.Arguments?.forEach(element => {
+    startAt = AllocateNodeIds(element, startAt);
+  });
+  return startAt;
+}
+
+function DecomposeAst(ast: JsonNode): JsonNode[] {
+  let result: JsonNode[] = [];
+  if (ast.Arguments){
+    const focus = DecomposeAst(ast.Arguments[0]);
+    result.push(... focus);
+    const args = ast.Arguments.splice(0,1);
+    if (args?.length > 0) {
+      let newArgs: JsonNode[] = [];
+      ast.Arguments.forEach(element => {
+        const elementArgs = DecomposeAst(element);
+        newArgs.push(... elementArgs);
+      });
+      ast.Arguments = newArgs;
+    }
+    else {
+      delete ast.Arguments;
+    }
+  }
+  result.push(ast);
+  return result;
+}
+
 interface IFhirPathMethods
 {
   readParametersFromQuery(): TestFhirpathData;
@@ -553,8 +668,6 @@ interface IFhirPathProps
 }
 
 export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFhirPathProps>({
-  components: {
-  },
   head: {
     title: "FhirPathTester",
   },
@@ -922,6 +1035,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         if (this.cancelSource) this.cancelSource.cancel("new search started");
         this.cancelSource = axios.CancelToken.source();
         this.loadingData = true;
+        this.expressionParseOutcome = undefined;
         let token = this.cancelSource.token;
         let response: AxiosResponse<fhir4b.Parameters | fhir4b.OperationOutcome, any>;
         response = await axios.post<fhir4b.Parameters>(url, p,
@@ -959,6 +1073,29 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
                   this.processedByEngine = entry.part[0].valueString;
                 }
 
+                if (entry.part)
+                {
+                  this.astDebug = [];
+                  for (var part of entry.part) {
+                    if (part.name === 'parseDebugTree' && part.valueString) {
+                      let ast: JsonNode = JSON.parse(part.valueString);
+                      const lastId = AllocateNodeIds(ast);
+                      for (let i = 0; i < lastId; i++) {
+                        this.astOpen.push(i.toString());
+                      }
+                      // console.log(ast);
+                      if (this.astInverted) {
+                        this.astDebug = DecomposeAst(ast);
+                      }
+                      else {
+                        this.astDebug = [ast];
+                      }
+                    }
+                    if (part.name === 'debugOutcome' && part.resource) {
+                      this.expressionParseOutcome = part.resource as fhir4b.OperationOutcome;
+                    }
+                  }
+                }
                 continue; // skip over the configuration settings
               }
 
@@ -1710,6 +1847,9 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
 
       // reset the processing engine
       this.processedByEngine = undefined;
+      this.astDebug = [];
+      this.astOpen = [];
+      this.expressionParseOutcome = undefined;
 
       // Validate the test fhir resource object
       let resourceJson = this.getResourceJson();
@@ -1763,6 +1903,9 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       const contextExpression = this.getContextExpression();
       if (contextExpression) {
         p.parameter?.push({ name: "context", valueString: contextExpression });
+      }
+      if (this.showAdvancedSettings){
+        p.parameter?.push({ name: "validate", valueBoolean: true });
       }
 
       // add in any variables
@@ -1897,6 +2040,10 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       showChat: false,
       chatEnabled: false,
       openAILastContext: "",
+      astDebug: [],
+      astOpen: [],
+      expressionParseOutcome: undefined,
+      astInverted: true,
     };
   },
 });
