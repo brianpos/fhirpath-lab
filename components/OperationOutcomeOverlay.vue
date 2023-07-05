@@ -36,7 +36,7 @@
   </div>
   <v-overlay v-if="popupWhenErrors" style="z-index:6;" :value="showOutcome">
     <v-card light style="margin: 12px;">
-      <v-card-title v-text="title"></v-card-title>
+      <v-card-title>{{ title }}</v-card-title>
       <v-card-text class="issue-list" v-if="saveOutcome">
         <template v-for="(issue, index) in saveOutcome.issue">
           <div class="issue-item" :key="index" v-if="!hideIssue(issue)">
