@@ -1,7 +1,6 @@
 <template>
-  <v-card>
-    <v-card-title>Ask FhirPath AI</v-card-title>
-    <v-card-text>
+  <v-card style="display:flex; flex-direction: column; align-items: stretch;">
+    <v-card-text style="overflow-y: auto; flex-grow: 5;">
       <div class="messages" ref="messagesContainer">
         <div>
           <div class="message message-left">
@@ -12,6 +11,7 @@
           </div>
         </div>
         <div v-for="(message, index) in messages" :key="index">
+          <v-scroll-x-transition mode="out-in" :appear="true">
           <div
             :class="[
               'message',
@@ -35,15 +35,18 @@
               >: <span style="pointer-events: none;" @click="applySuggestion" v-html="convertHtml(message.text)" />
             </div>
           </div>
+          </v-scroll-x-transition>
         </div>
       </div>
       <div class="messages suggestions" v-if="messages.length == 0">
         <div v-for="(message, index) in suggestions" :key="index">
+          <v-scroll-x-transition mode="out-in" :appear="true">
           <div class="message message-right" @click="sendAuthorMessage(message)">
             <div class="message-content">
               <span v-text="message" />
             </div>
           </div>
+          </v-scroll-x-transition>
         </div>
       </div>
     </v-card-text>
@@ -57,8 +60,9 @@
         <span>Reset chat</span>
       </v-tooltip>
       <v-textarea
+        dense
         label="Message"
-        rows="3"
+        rows="2"
         v-model="newMessage"
         clearable
         :loading="thinking"
@@ -202,8 +206,6 @@ export default class Chat extends Vue {
 <style scoped>
 
 .messages {
-  max-height: calc(100vh - 424px);
-  overflow-y: auto;
   padding-left: 10px;
   padding-right: 10px;
 }
