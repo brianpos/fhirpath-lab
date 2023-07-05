@@ -1,5 +1,7 @@
 
 import {ConformanceSearchData} from "models/ConformanceSearchData";
+import { VariableData } from "~/models/testenginemodel";
+
 export declare interface UserSettingsData {
     fhirServerUrl?: string;
     OAuthClientId?: string;
@@ -17,9 +19,36 @@ export declare interface UserSettingsData {
     pageSize: number;
 }
 
+export declare interface ILastUsedParameters {
+    context: string | undefined;
+    expression: string | undefined;
+    resourceId?: string;
+    resourceJson?: string | undefined;
+    engine: string;
+    variables?: VariableData[];
+    loadCompleted?: boolean;
+}
+
 var serverConnections = require('~/static/config.json');
 
 export namespace settings {
+
+    export function saveLastUsedParameters(data: ILastUsedParameters | undefined):void {
+        if (data){
+            localStorage.setItem(`lastUsed`, JSON.stringify(data));
+        }
+        else {
+            localStorage.removeItem(`lastUsed`);
+        }
+    }
+
+    export function loadLastUsedParameters(): ILastUsedParameters | undefined {
+        const sdJson = localStorage.getItem(`lastUsed`);
+        if (sdJson){
+            return JSON.parse(sdJson);
+        }
+        return undefined;
+    }
 
     export function dotnet_server_r4b(): string {
         return serverConnections.dotnet_server_r4b;

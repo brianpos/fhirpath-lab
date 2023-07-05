@@ -431,7 +431,7 @@ td {
 <script lang="ts">
 import Vue, { VNode } from "vue";
 import "vue-router";
-import { settings } from "~/helpers/user_settings";
+import { settings, ILastUsedParameters } from "~/helpers/user_settings";
 import {
   requestFhirAcceptHeaders,
   requestFhirContentTypeHeaders,
@@ -643,6 +643,7 @@ interface IFhirPathMethods
   copyZulipShareLinkToClipboard(): void;
   evaluateFhirPathExpression(): void;
   checkFocus(event: any): void;
+  saveLastUsedParameters(loadCompleted: boolean): void;
 
   GetAISettings(): IOpenAISettings;
   handleSendMessage(message: string): void;
@@ -776,6 +777,19 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       }
     }
 
+    // read the values that were last used (stored in the local storage)
+    const lastUsed = settings.loadLastUsedParameters();
+    console.log(lastUsed);
+    if (lastUsed && lastUsed.loadCompleted) {
+      const p: TestFhirpathData = {
+        expression: lastUsed.expression ?? '',
+        context: lastUsed.context,
+        resource: lastUsed.resourceId,
+        resourceJson: lastUsed.resourceJson,
+        engine: lastUsed.engine,
+      };
+      // await this.applyParameters(p);
+    }
     // Check for the encoded parameters first
     const parameters = this.$route.query.parameters as string;
     let data: TestFhirpathData;
@@ -1113,6 +1127,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
                 }
               }
               this.results.push(resultItem);
+              this.saveLastUsedParameters(true);
             }
           }
         }
@@ -1842,6 +1857,26 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         this.prevFocus = event.relatedTarget;
       }
     },
+
+    saveLastUsedParameters(loadCompleted: boolean): void {
+      // Write the parameters into the local storage so that can be re-loaded next time
+      const data: ILastUsedParameters = {
+        context: this.getContextExpression(),
+        expression: this.getFhirpathExpression() ?? '',
+        resourceId: this.resourceId,
+        engine: this.selectedEngine,
+        resourceJson: this.getResourceJson(),
+        loadCompleted: loadCompleted,
+      };
+      if (this.variables){
+        data.variables = [];
+        this.variables.forEach((v) => {
+          data.variables?.push(v);
+        });
+      }
+      settings.saveLastUsedParameters(data);
+    },
+
     // https://www.sitepoint.com/fetching-data-third-party-api-vue-axios/
     async evaluateFhirPathExpression() {
 
@@ -1875,8 +1910,11 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       //   }
       // }
 
+      this.saveLastUsedParameters(false);
+
       if (this.selectedEngine == "fhirpath.js") {
         await this.evaluateExpressionUsingFhirpathJs();
+        this.saveLastUsedParameters(true);
         if (this.prevFocus){
           this.prevFocus.focus();
         }
@@ -1885,6 +1923,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
 
       if (this.selectedEngine == "fhirpath.js (R5)") {
         await this.evaluateExpressionUsingFhirpathJsR5();
+        this.saveLastUsedParameters(true);
         if (this.prevFocus){
           this.prevFocus.focus();
         }
