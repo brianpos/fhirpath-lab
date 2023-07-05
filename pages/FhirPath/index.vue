@@ -38,274 +38,260 @@
             </template>
             <span v-text="shareZulipToolTipMessage"></span>
           </v-tooltip>
-          <v-tooltip bottom color="primary">
-            <template v-slot:activator="{ on, attrs }">
-              <v-btn v-if="showAdvancedSettings && chatEnabled" icon :dark="showChat"  @click="showChat = !showChat" 
-                  v-bind="attrs" v-on="on" >
-                <v-icon>
-                  mdi-brain
-                </v-icon>
-              </v-btn>
-            </template>
-            <span>Show FhirPath AI Bot to help you with expressions<br/>(powered by OpenAI gpt3.5)</span>
-          </v-tooltip>
         </v-toolbar>
         <v-row dense>
           <v-col>
-            <v-tabs vertical v-model="tab">
-              <v-tab>
+            <v-tabs vertical v-model="tab" @change="changeTab">
+              <v-tab :class="expressionActiveClass" v-on:click="tabClicked">
                 <v-icon left> mdi-function-variant </v-icon>
                 Expression
               </v-tab>
-              <v-tab class="left-resource">
+              <v-tab :class="resourceActiveClass" v-on:click="tabClicked">
                 <v-icon left> mdi-clipboard-text-outline </v-icon>
                 Resource
               </v-tab>
-              <v-tab v-show="variables.size > 0">
+              <v-tab v-show="variables.size > 0" :class="variablesActiveClass" v-on:click="tabClicked">
                 <v-icon left> mdi-application-variable-outline </v-icon>
                 Variables
               </v-tab>
-              <v-tab :disabled="!hasTraceData()">
+              <v-tab :disabled="!hasTraceData()" :class="traceActiveClass" v-on:click="tabClicked">
                 <v-icon left> mdi-format-list-bulleted </v-icon>
                 Trace
               </v-tab>
-              <v-tab v-show="showAdvancedSettings && astDebug.length > 0">
+              <v-tab v-show="showAdvancedSettings && astDebug.length > 0" :class="astActiveClass" v-on:click="tabClicked">
                 <v-icon left> mdi-file-tree </v-icon>
                 AST
               </v-tab>
-              <v-tab v-show="showAdvancedSettings">
+              <v-tab v-show="showAdvancedSettings" :class="chatActiveClass" v-on:click="tabClicked">
+                <v-icon left> mdi-brain </v-icon>
+                Chat
+              </v-tab>
+              <v-tab v-show="showAdvancedSettings" :class="debugActiveClass" v-on:click="tabClicked">
                 <v-icon left> mdi-bug-outline </v-icon>
                 Debug
               </v-tab>
-              <!-- <v-tab v-show="showAdvancedSettings">
-                <v-icon left> mdi-brain </v-icon>
-                Chat
-              </v-tab> -->
 
-              <v-tabs-items style="height: calc(100vh - 168px)" touchless v-model="tab">
-                <v-tab-item :eager="true" style="height: calc(100vh - 168px); overflow-y: auto;" >
-                  <!-- Expression -->
-                  <v-card flat>
-                    <v-card-text>
-                      <p class="fl-tab-header">Expression</p>
-                      <label class="v-label theme--light bare-label">Context Expression (optional)</label>
-                      <!-- <v-input label="Context Expression (optional)" hide-details="auto" :value="contextExpression">
-                      </v-input> -->
-                      <div height="85px" width="100%" ref="aceEditorContextExpression"></div>
-                      <div class="ace_editor_footer"></div>
+              <v-tabs-items class="custom-tab" style="height: calc(100vh - 168px)" touchless v-model="tab">
 
-                      <label class="v-label theme--light bare-label">Fhirpath Expression</label>
-                      <div height="85px" width="100%" ref="aceEditorExpression"></div>
-                      <div class="ace_editor_footer"></div>
+                <v-scroll-x-transition mode="out-in" :hide-on-leave="true">
+                  <div v-show="expressionVisible" :eager="true" >
+                    <!-- Expression -->
+                    <v-card flat>
+                      <v-card-text>
+                        <p class="fl-tab-header">Expression</p>
+                        <label class="v-label theme--light bare-label">Context Expression (optional)</label>
+                        <!-- <v-input label="Context Expression (optional)" hide-details="auto" :value="contextExpression">
+                        </v-input> -->
+                        <div height="85px" width="100%" ref="aceEditorContextExpression"></div>
+                        <div class="ace_editor_footer"></div>
 
-                      <div class="results">RESULTS <span class="processedBy">{{ processedByEngine }}</span></div>
-                      <OperationOutcomePanel :outcome="expressionParseOutcome" @close="expressionParseOutcome = undefined" />
-                      <template v-for="(r2, i1) in results">
-                        <v-simple-table :key="i1">
-                          <tr v-if="r2.context">
-                            <td class="context" colspan="2">
-                              <div>Context: <b>{{ r2.context }}</b></div>
-                            </td>
-                          </tr>
-                          <template v-for="(v1, index) in r2.result">
-                            <tr :key="index">
-                              <td class="result-value">
-                                <div class="code-json">{{ v1.value }}</div>
+                        <label class="v-label theme--light bare-label">Fhirpath Expression</label>
+                        <div height="85px" width="100%" ref="aceEditorExpression"></div>
+                        <div class="ace_editor_footer"></div>
+
+                        <div class="results">RESULTS <span class="processedBy">{{ processedByEngine }}</span></div>
+                        <OperationOutcomePanel :outcome="expressionParseOutcome" @close="expressionParseOutcome = undefined" />
+                        <template v-for="(r2, i1) in results">
+                          <v-simple-table :key="i1">
+                            <tr v-if="r2.context">
+                              <td class="context" colspan="2">
+                                <div>Context: <b>{{ r2.context }}</b></div>
                               </td>
-                              <td class="result-type"><i v-if="v1.type">({{ v1.type }})</i></td>
                             </tr>
-                          </template>
-                        </v-simple-table>
-                      </template>
-                    </v-card-text>
-                  </v-card>
-                </v-tab-item>
-
-                <v-tab-item :eager="true">
-                  <!-- Resource -->
-                  <v-card flat>
-                    <v-card-text>
-                      <p class="fl-tab-header">Resource</p>
-                      <v-text-field label="Test Resource Id" v-model="resourceId" hide-details="auto" autocomplete="off"
-                        autocorrect="off" autocapitalize="off" spellcheck="false">
-                        <template v-slot:append>
-                          <v-btn icon small tile @click="resourceId = undefined">
-                            <v-icon> mdi-close </v-icon>
-                          </v-btn>
-                          <v-btn icon small tile @click="downloadTestResource">
-                            <v-icon> mdi-download </v-icon>
-                          </v-btn>
-                          <v-btn small icon tile @click="reformatTestResource"><v-icon title="Format json" dark> mdi-format-indent-increase </v-icon></v-btn>
-                        </template>
-                      </v-text-field>
-                      <label class="v-label theme--light bare-label">Test Resource JSON <i>{{ resourceJsonChangedMessage() }}</i></label>
-                      <div style="height: calc(100vh - 320px)"  width="100%" ref="aceEditorResourceJsonTab"></div>
-                      <!-- <div class="ace_editor_footer"></div> -->
-                      <v-text-field label="Terminology Server" v-model="terminologyServer" hide-details="auto"
-                        autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
-                    </v-card-text>
-                  </v-card>
-                </v-tab-item>
-
-                <v-tab-item style="height: calc(100vh - 168px); overflow-y: auto;" >
-                  <!-- Variables -->
-                  <v-card flat>
-                    <v-card-text>
-                      <p class="fl-tab-header">Variables</p>
-                        <template v-for="(v1, index) in variables">
-                        <v-textarea :auto-grow="!v1[1].resourceId" :rows="(!v1[1].resourceId?1:5)" 
-                          :label="v1[0]" hide-details="auto" :value="v1[1].data" 
-                          autocorrect="off" autocapitalize="off" spellcheck="false"
-                          @input="updateVariableValue(v1[0])" :key="index" 
-                          :messages="variableMessages(v1[1])" :error-messages="variableErrorMessages(v1[1])" :error="(!!v1[1].errorMessage)">
-                            <template v-slot:append>
-                            <v-btn icon small tile @click="variables.set(v1[0], { name: v1[0], data: v1[1].resourceId }); $forceUpdate()">
-                                <v-icon> mdi-close </v-icon>
-                              </v-btn>
-                              <v-btn icon small tile @click="downloadVariableResource(v1[0])" :hidden="!isValidFhirUrl(v1[1])"> 
-                                <v-icon> mdi-download </v-icon>
-                              </v-btn>
+                            <template v-for="(v1, index) in r2.result">
+                              <tr :key="index">
+                                <td class="result-value">
+                                  <div class="code-json">{{ v1.value }}</div>
+                                </td>
+                                <td class="result-type"><i v-if="v1.type">({{ v1.type }})</i></td>
+                              </tr>
                             </template>
-                          </v-textarea>
-                          <!-- <div class="code-json">{{ JSON.stringify(v1[1], null, 2) }}</div> -->
+                          </v-simple-table>
                         </template>
-                        <br/>
-                        <label><i>Note: This variables tab is only visible when there are variables in the expression.
-                          To add another variable, name it in the fhirpath expression.<br/>
-                          Also note that the variables are not supported in the context expression.</i></label>
-                    </v-card-text>
-                  </v-card>
-                </v-tab-item>
+                      </v-card-text>
+                    </v-card>
+                  </div>
+                </v-scroll-x-transition>
 
-                <v-tab-item style="height: calc(100vh - 168px); overflow-y: auto;" >
-                  <!-- Trace -->
-                  <v-card flat>
-                    <v-card-text>
-                      <p class="fl-tab-header">Trace</p>
-                      <template v-for="(r2, i1) in results">
-                        <v-simple-table :key="i1">
-                          <tr v-if="r2.context">
-                            <td class="context" colspan="3">
-                              <div>Context: <b>{{ r2.context }}</b></div>
-                            </td>
-                          </tr>
-                          <template v-for="(v1, index) in r2.trace">
-                            <tr :key="index">
-                              <td class="result-type"><b>{{ v1.name }}</b></td>
-                              <td class="result-value">
-                                <div class="code-json" v-if="v1.value != null">{{ v1.value }}</div>
-                                <div class="code-json" v-if="v1.value == null && v1.type == 'empty-string'"><i>""</i></div>
+                <v-scroll-x-transition mode="out-in" :hide-on-leave="true">
+                  <div v-show="resourceVisible" :eager="true" style="order:1;">
+                    <!-- Resource -->
+                    <v-card flat>
+                      <v-card-text>
+                        <p class="fl-tab-header">Resource</p>
+                        <v-text-field label="Test Resource Id" v-model="resourceId" hide-details="auto" autocomplete="off"
+                          autocorrect="off" autocapitalize="off" spellcheck="false">
+                          <template v-slot:append>
+                            <v-btn icon small tile @click="resourceId = undefined">
+                              <v-icon> mdi-close </v-icon>
+                            </v-btn>
+                            <v-btn icon small tile @click="downloadTestResource">
+                              <v-icon> mdi-download </v-icon>
+                            </v-btn>
+                            <v-btn small icon tile @click="reformatTestResource"><v-icon title="Format json" dark> mdi-format-indent-increase </v-icon></v-btn>
+                          </template>
+                        </v-text-field>
+                        <label class="v-label theme--light bare-label">Test Resource JSON <i>{{ resourceJsonChangedMessage() }}</i></label>
+                        <div class="resource" width="100%" ref="aceEditorResourceJsonTab"></div>
+                        <!-- <div class="ace_editor_footer"></div> -->
+                        <v-text-field label="Terminology Server" v-model="terminologyServer" hide-details="auto"
+                          autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+                      </v-card-text>
+                    </v-card>
+                  </div>
+                </v-scroll-x-transition>
+
+                <v-scroll-x-transition mode="out-in" :hide-on-leave="true">
+                  <div v-show="variablesVisible" >
+                    <!-- Variables -->
+                    <v-card flat>
+                      <v-card-text>
+                        <p class="fl-tab-header">Variables</p>
+                          <template v-for="(v1, index) in variables">
+                          <v-textarea :auto-grow="!v1[1].resourceId" :rows="(!v1[1].resourceId?1:5)" 
+                            :label="v1[0]" hide-details="auto" :value="v1[1].data" 
+                            autocorrect="off" autocapitalize="off" spellcheck="false"
+                            @input="updateVariableValue(v1[0])" :key="index" 
+                            :messages="variableMessages(v1[1])" :error-messages="variableErrorMessages(v1[1])" :error="(!!v1[1].errorMessage)">
+                              <template v-slot:append>
+                              <v-btn icon small tile @click="variables.set(v1[0], { name: v1[0], data: v1[1].resourceId }); $forceUpdate()">
+                                  <v-icon> mdi-close </v-icon>
+                                </v-btn>
+                                <v-btn icon small tile @click="downloadVariableResource(v1[0])" :hidden="!isValidFhirUrl(v1[1])"> 
+                                  <v-icon> mdi-download </v-icon>
+                                </v-btn>
+                              </template>
+                            </v-textarea>
+                            <!-- <div class="code-json">{{ JSON.stringify(v1[1], null, 2) }}</div> -->
+                          </template>
+                          <br/>
+                          <label><i>Note: This variables tab is only visible when there are variables in the expression.
+                            To add another variable, name it in the fhirpath expression.<br/>
+                            Also note that the variables are not supported in the context expression.</i></label>
+                      </v-card-text>
+                    </v-card>
+                  </div>
+                </v-scroll-x-transition>
+
+                <v-scroll-x-transition mode="out-in" :hide-on-leave="true">
+                  <div v-show="traceVisible" >
+                    <!-- Trace -->
+                    <v-card flat>
+                      <v-card-text>
+                        <p class="fl-tab-header">Trace</p>
+                        <template v-for="(r2, i1) in results">
+                          <v-simple-table :key="i1">
+                            <tr v-if="r2.context">
+                              <td class="context" colspan="3">
+                                <div>Context: <b>{{ r2.context }}</b></div>
                               </td>
-                              <td class="result-type"><i v-if="v1.type">({{ v1.type }})</i></td>
                             </tr>
-                          </template>
-                        </v-simple-table>
-                      </template>
-                    </v-card-text>
-                  </v-card>
-                </v-tab-item>
-
-                <v-tab-item style="height: calc(100vh - 168px); overflow-y: auto;">
-                  <!-- AST abstract syntax tree -->
-                  <v-card flat>
-                    <v-card-text>
-                      <p class="fl-tab-header">AST</p>
-                      <OperationOutcomePanel :outcome="expressionParseOutcome" @close="expressionParseOutcome = undefined" />
-                      <v-treeview
-                        :items="astDebug"
-                        :open="astOpen"
-                        activatable
-                        :dense="true"
-                        item-key="id"
-                        item-text="Name"
-                        item-children="Arguments"
-                        :open-all="true"
-                        open-on-click
-                      >
-                        <template v-slot:prepend="{ item, open }">
-                          <v-icon v-if="item.ReturnType.length == 0" color="red">
-                            mdi-alert-octagon
-                          </v-icon>
+                            <template v-for="(v1, index) in r2.trace">
+                              <tr :key="index">
+                                <td class="result-type"><b>{{ v1.name }}</b></td>
+                                <td class="result-value">
+                                  <div class="code-json" v-if="v1.value != null">{{ v1.value }}</div>
+                                  <div class="code-json" v-if="v1.value == null && v1.type == 'empty-string'"><i>""</i></div>
+                                </td>
+                                <td class="result-type"><i v-if="v1.type">({{ v1.type }})</i></td>
+                              </tr>
+                            </template>
+                          </v-simple-table>
                         </template>
-                        <template v-slot:label="{ item, open }">
-                          <template v-if="item.ExpressionType === 'FunctionCallExpression'">
-                            .{{ item.Name }}(...) <span style="color: grey">: {{ item.ReturnType }}</span>
-                          </template>
-                          <template v-else-if="item.ExpressionType === 'ConstantExpression'">
-                            <span style="color: #a31515;">'{{ item.Name }}'</span> <span style="color: grey" v-if="item.ReturnType.length > 0">: {{ item.ReturnType }}</span>
-                          </template>
-                          <template v-else-if="item.ExpressionType === 'ChildExpression'">
-                            .<span style="color: #318495; font-weight: bold">{{ item.Name }}</span> <span style="color: grey" v-if="item.ReturnType.length > 0">: {{ item.ReturnType }}</span>
-                          </template>
-                          <template v-else-if="item.ExpressionType === 'VariableRefExpression'">
-                            <span style="color: #b255a5; font-weight: bold">%{{ item.Name }}</span> <span style="color: grey" v-if="item.ReturnType.length > 0">: {{ item.ReturnType }}</span>
-                          </template>
-                          <template v-else-if="item.ExpressionType === 'AxisExpression' && item.Name === 'builtin.this'">
-                            <span style="color: #0000ff; font-weight: bold">$this</span> <span style="color: grey" v-if="item.ReturnType.length > 0">: {{ item.ReturnType }}</span>
-                          </template>
-                          <template v-else-if="item.ExpressionType === 'AxisExpression' && item.Name === 'builtin.that'">
-                            <span style="color: #0000ff;">Expression Scope</span> <span style="color: grey" v-if="item.ReturnType.length > 0">: {{ item.ReturnType }}</span>
-                          </template>
-                          <template v-else>
-                            {{ item.Name }} <span style="color: grey">: {{ item.ReturnType }}</span> ({{ item.ExpressionType }})
-                          </template>
-                          <template v-if="item.ReturnType.length == 0">
-                            <i><b>(no return type calculated)</b></i>
-                          </template>
-                          <!-- <template>
-                            {{ item.id }}
-                          </template> -->
-                        </template>
-                      </v-treeview>
-                      <v-checkbox v-model="astInverted" label="Inverted Tree" messages="(re-evaluate to apply)"></v-checkbox>
-                    </v-card-text>
-                  </v-card>
-                </v-tab-item>
+                      </v-card-text>
+                    </v-card>
+                  </div>
+                </v-scroll-x-transition>
 
-                <v-tab-item :eager="true">
-                  <!-- Debug -->
-                  <v-card flat>
-                    <v-card-text>
-                      <p class="fl-tab-header">Debug</p>
-                      <div style="height: calc(100vh - 196px)" ref="aceEditorDebug"></div>
-                    </v-card-text>
-                  </v-card>
-                </v-tab-item>
+                <v-scroll-x-transition mode="out-in" :hide-on-leave="true">
+                  <div v-show="astVisible">
+                    <!-- AST abstract syntax tree -->
+                    <v-card flat>
+                      <v-card-text>
+                        <p class="fl-tab-header">Abstract Syntax Tree</p>
+                        <OperationOutcomePanel :outcome="expressionParseOutcome" @close="expressionParseOutcome = undefined" />
+                        <v-treeview
+                          :items="astDebug"
+                          :open="astOpen"
+                          activatable
+                          :dense="true"
+                          item-key="id"
+                          item-text="Name"
+                          item-children="Arguments"
+                          :open-all="true"
+                          open-on-click
+                        >
+                          <template v-slot:prepend="{ item, open }">
+                            <v-icon v-if="item.ReturnType.length == 0" color="red">
+                              mdi-alert-octagon
+                            </v-icon>
+                          </template>
+                          <template v-slot:label="{ item, open }">
+                            <template v-if="item.ExpressionType === 'FunctionCallExpression'">
+                              .{{ item.Name }}(<template v-if="item.Arguments.length > 0">...</template>) <span style="color: grey">: {{ item.ReturnType }}</span>
+                            </template>
+                            <template v-else-if="item.ExpressionType === 'ConstantExpression'">
+                              <span style="color: #a31515;">'{{ item.Name }}'</span> <span style="color: grey" v-if="item.ReturnType.length > 0">: {{ item.ReturnType }}</span>
+                            </template>
+                            <template v-else-if="item.ExpressionType === 'ChildExpression'">
+                              .<span style="color: #318495; font-weight: bold">{{ item.Name }}</span> <span style="color: grey" v-if="item.ReturnType.length > 0">: {{ item.ReturnType }}</span>
+                            </template>
+                            <template v-else-if="item.ExpressionType === 'VariableRefExpression'">
+                              <span style="color: #b255a5; font-weight: bold">%{{ item.Name }}</span> <span style="color: grey" v-if="item.ReturnType.length > 0">: {{ item.ReturnType }}</span>
+                            </template>
+                            <template v-else-if="item.ExpressionType === 'AxisExpression' && item.Name === 'builtin.this'">
+                              <span style="color: #0000ff; font-weight: bold">$this</span> <span style="color: grey" v-if="item.ReturnType.length > 0">: {{ item.ReturnType }}</span>
+                            </template>
+                            <template v-else-if="item.ExpressionType === 'AxisExpression' && item.Name === 'builtin.that'">
+                              <span style="color: #0000ff;">Expression Scope</span> <span style="color: grey" v-if="item.ReturnType.length > 0">: {{ item.ReturnType }}</span>
+                            </template>
+                            <template v-else>
+                              {{ item.Name }} <span style="color: grey">: {{ item.ReturnType }}</span> ({{ item.ExpressionType }})
+                            </template>
+                            <template v-if="item.ReturnType.length == 0">
+                              <i><b>(no return type calculated)</b></i>
+                            </template>
+                            <!-- <template>
+                              {{ item.id }}
+                            </template> -->
+                          </template>
+                        </v-treeview>
+                        <v-checkbox v-model="astInverted" label="Inverted Tree" messages="(re-evaluate to apply)"></v-checkbox>
+                      </v-card-text>
+                    </v-card>
+                  </div>
+                </v-scroll-x-transition>
+
+                <v-scroll-x-transition mode="out-in" :hide-on-leave="true">
+                  <div v-show="chatVisible" :eager="true">
+                    <!-- Chat -->
+                    <v-card flat>
+                      <v-card-text>
+                        <p class="fl-tab-header">FhirPath AI Chat</p>
+                        <Chat class="chat" ref="chatComponent" 
+                            @send-message="handleSendMessage" 
+                            @reset-conversation="resetConversation"
+                            @apply-suggested-context="applySuggestedContext"
+                            @apply-suggested-expression="applySuggestedExpression"/>
+                      </v-card-text>
+                    </v-card>
+                  </div>
+                </v-scroll-x-transition>
+
+                <v-scroll-x-transition mode="out-in" :hide-on-leave="true">
+                  <div v-show="debugVisible" :eager="true">
+                    <!-- Debug -->
+                    <v-card flat>
+                      <v-card-text>
+                        <p class="fl-tab-header">Debug</p>
+                        <div class="debug" ref="aceEditorDebug"></div>
+                      </v-card-text>
+                    </v-card>
+                  </div>
+                </v-scroll-x-transition>
 
               </v-tabs-items>
             </v-tabs>
-          </v-col>
-          <v-col v-show="showChat">
-            <v-card flat>
-              <v-card-text>
-                <p class="fl-tab-header">FhirPath AI Chat</p>
-                <Chat style="height: calc(100vh - 200px)" ref="chatComponent" 
-                    @send-message="handleSendMessage" 
-                    @reset-conversation="resetConversation"
-                    @apply-suggested-context="applySuggestedContext"
-                    @apply-suggested-expression="applySuggestedExpression"/>
-              </v-card-text>
-            </v-card>
-          </v-col>
-          <v-col class="right-resource" v-show="!showChat">
-            <v-card flat>
-              <v-card-text>
-                <p class="fl-tab-header">Resource</p>
-                <v-text-field label="Test Resource Id" v-model="resourceId" hide-details="auto" autocorrect="off" autocapitalize="off" spellcheck="false">
-                  <template v-slot:append>
-                    <v-btn icon small tile @click="resourceId = undefined">
-                      <v-icon> mdi-close </v-icon>
-                    </v-btn>
-                    <v-btn icon small tile @click="downloadTestResource">
-                      <v-icon> mdi-download </v-icon>
-                    </v-btn>
-                    <v-btn small icon tile @click="reformatTestResource"><v-icon title="Format json" dark> mdi-format-indent-increase </v-icon></v-btn>
-                  </template>
-                </v-text-field>
-                <label class="v-label theme--light bare-label">Test Resource JSON <i>{{ resourceJsonChangedMessage() }}</i></label>
-                <div style="height: calc(100vh - 272px)" width="100%" ref="aceEditorResourceJsonRight"></div>
-              </v-card-text>
-            </v-card>
           </v-col>
         </v-row>
       </v-card>
@@ -317,6 +303,44 @@
     <!-- <code class="code-json">{{ JSON.stringify(results, null, 4) }}</code> -->
   </div>
 </template>
+
+<style lang="scss">
+.custom-tab > div {
+  flex-direction: row;
+  // height: calc(100vh - 168px);
+  // overflow-y: auto;
+}
+.custom-tab > div > div {
+  height: calc(100vh - 168px);
+  overflow-y: auto;
+}
+.resource {
+  height: calc(100vh - 320px);
+}
+.chat {
+  height: calc(100vh - 200px);
+}
+.debug {
+  height: calc(100vh - 196px);
+}
+@media (max-width: 596px) {
+  .custom-tab > div > div {
+    height: calc(100vh - 168px);
+  }
+  .resource {
+    height: calc(100vh - 320px - 48px);
+  }
+  .chat {
+    height: calc(100vh - 200px - 48px);
+  }
+  .debug {
+    height: calc(100vh - 196px - 48px);
+  }
+}
+.custom-tab > div > div{
+  flex: 1;
+}
+</style>
 
 <style>
 .v-treeview--dense .v-treeview-node__root {
@@ -480,6 +504,10 @@ interface FhirPathData {
   terminologyServer: string;
   cancelSource?: CancelTokenSource;
   tab: any;
+  lastTabClicked: KeyboardEvent | MouseEvent | undefined;
+  primaryTab: number;
+  secondaryTab: number;
+  windowWidth: number;
   results: ResultData[];
   selectedEngine: string;
   executionEngines: string[];
@@ -619,6 +647,8 @@ interface IFhirPathMethods
   resourceJsonChangedMessage(): string | undefined;
   tabTitle(): void;
   settingsClosed(): void;
+  tabClicked(e: KeyboardEvent | MouseEvent): void;
+  changeTab(selectTab: number): void;
 
   getContextExpression(): string | undefined;
   getFhirpathExpression(): string | undefined;
@@ -654,7 +684,21 @@ interface IFhirPathMethods
 
 interface IFhirPathComputed
 {
+  expressionVisible: boolean;
+  variablesVisible: boolean;
+  traceVisible: boolean;
+  chatVisible: boolean;
+  resourceVisible: boolean;
+  debugVisible: boolean;
+  astVisible: boolean;
 
+  expressionActiveClass: string;
+  variablesActiveClass: string;
+  traceActiveClass: string;
+  chatActiveClass: string;
+  resourceActiveClass: string;
+  debugActiveClass: string;
+  astActiveClass: string;
 }
 
 interface IFhirPathProps
@@ -673,6 +717,9 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     title: "FhirPathTester",
   },
   async mounted() {
+    window.onresize = () => {
+        this.windowWidth = window.innerWidth
+    }
     this.showAdvancedSettings = settings.showAdvancedSettings();
     if (settings.getOpenAIKey())
       this.chatEnabled = true;
@@ -763,18 +810,10 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       mode: "ace/mode/json",
       wrapBehavioursEnabled: true
     };
-    var editorResourceJsonRightDiv: any = this.$refs.aceEditorResourceJsonRight as Element;
-    if (editorResourceJsonRightDiv) {
-      this.resourceJsonEditor = ace.edit(editorResourceJsonRightDiv, resourceEditorSettings);
+    var editorResourceJsonDiv: any = this.$refs.aceEditorResourceJsonTab as Element;
+    if (editorResourceJsonDiv) {
+      this.resourceJsonEditor = ace.edit(editorResourceJsonDiv, resourceEditorSettings);
       this.resourceJsonEditor.session.on("change", this.resourceJsonChangedEvent);
-
-      var editorResourceJsonLeftDiv: any = this.$refs.aceEditorResourceJsonTab as Element;
-      if (editorResourceJsonLeftDiv) {
-        let editor = ace.edit(editorResourceJsonLeftDiv, resourceEditorSettings);
-        if (editor) {
-          editor.setSession(this.resourceJsonEditor.session);
-        }
-      }
     }
 
     // read the values that were last used (stored in the local storage)
@@ -806,7 +845,54 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     await this.evaluateFhirPathExpression();
     this.loadingData = false;
   },
+  computed: {
+    expressionVisible(): boolean {
+      return this.primaryTab === 0 || (this.secondaryTab === 0 && this.windowWidth > 999);
+    },
+    resourceVisible(): boolean {
+      return this.primaryTab === 1 || (this.secondaryTab === 1 && this.windowWidth > 999);
+    },
+    variablesVisible(): boolean {
+      return this.primaryTab === 2 || (this.secondaryTab === 2 && this.windowWidth > 999);
+    },
+    traceVisible(): boolean {
+      return this.primaryTab === 3 || (this.secondaryTab === 3 && this.windowWidth > 999);
+    },
+    astVisible(): boolean {
+      return this.primaryTab === 4 || (this.secondaryTab === 4 && this.windowWidth > 999);
+    },
+    chatVisible(): boolean {
+      return this.primaryTab === 5 || (this.secondaryTab === 5 && this.windowWidth > 999);
+    },
+    debugVisible(): boolean {
+      return this.primaryTab === 6 || (this.secondaryTab === 6 && this.windowWidth > 999);
+    },
+
+    expressionActiveClass(): string { return this.secondaryTab === 0 && this.windowWidth > 999 || this.primaryTab === 0 ? "v-tab--active" : "" },
+    resourceActiveClass(): string { return this.secondaryTab === 1 && this.windowWidth > 999 || this.primaryTab === 1 ? "v-tab--active" : "" },
+    variablesActiveClass(): string { return this.secondaryTab === 2 && this.windowWidth > 999 || this.primaryTab === 2 ? "v-tab--active" : "" },
+    traceActiveClass(): string { return this.secondaryTab === 3 && this.windowWidth > 999 || this.primaryTab === 3 ? "v-tab--active" : "" },
+    astActiveClass(): string { return this.secondaryTab === 4 && this.windowWidth > 999 || this.primaryTab === 4 ? "v-tab--active" : "" },
+    chatActiveClass(): string { return this.secondaryTab === 5 && this.windowWidth > 999 || this.primaryTab === 5 ? "v-tab--active" : "" },
+    debugActiveClass(): string { return this.secondaryTab === 6 && this.windowWidth > 999 || this.primaryTab === 6 ? "v-tab--active" : "" },
+  },
   methods: {
+    tabClicked(e: KeyboardEvent | MouseEvent): void{
+      this.lastTabClicked = e;
+    },
+    changeTab(selectTab: number): void {
+      // Primary tab is the one that is "locked" and only changeable when clicking with control
+      // The secondary tab is the one that is "switched" when clicking without control
+      if (this.primaryTab !== selectTab){
+        if (this.lastTabClicked && (this.lastTabClicked as MouseEvent).ctrlKey || this.windowWidth <= 999) {
+          this.primaryTab = selectTab;
+        }
+        else {
+          this.secondaryTab = selectTab;
+        }
+      }
+      this.lastTabClicked = undefined;
+    },
     readParametersFromQuery(): TestFhirpathData{
       let data: TestFhirpathData = {
         expression: this.$route.query.expression as string
@@ -2046,6 +2132,10 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     return {
       prevFocus: null,
       tab: null,
+      lastTabClicked: undefined,
+      primaryTab: 0,
+      secondaryTab: 1,
+      windowWidth: window.innerWidth,
       library: undefined,
       raw: undefined,
       resourceId: 'Patient/example',
