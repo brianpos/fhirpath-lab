@@ -2029,9 +2029,9 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       if (contextExpression) {
         p.parameter?.push({ name: "context", valueString: contextExpression });
       }
-      if (this.showAdvancedSettings){
-        p.parameter?.push({ name: "validate", valueBoolean: true });
-      }
+      // Add the debug parameter to check the expression
+      // works well enough to always ask now.
+      p.parameter?.push({ name: "validate", valueBoolean: true });
 
       // add in any variables
       if (this.variables){
