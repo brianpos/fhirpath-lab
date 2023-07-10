@@ -58,7 +58,7 @@
                 <v-icon left> mdi-format-list-bulleted </v-icon>
                 Trace
               </v-tab>
-              <v-tab v-show="showAdvancedSettings && astDebug.length > 0" :class="astActiveClass" v-on:click="tabClicked">
+              <v-tab v-show="astDebug.length > 0" :class="astActiveClass" v-on:click="tabClicked">
                 <v-icon left> mdi-file-tree </v-icon>
                 AST
               </v-tab>
