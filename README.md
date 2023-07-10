@@ -28,7 +28,7 @@ What can I do with it:
 
 ## Test Launch API
 Direct access to launch the test page can be done and pass through test data as parameters:
-> https://fhirpath-lab.azurewebsites.net/FhirPath?expression=today() ...
+> https://fhirpath-lab.com/FhirPath?expression=today() ...
 
 | Parameter | Description |
 | - | - |

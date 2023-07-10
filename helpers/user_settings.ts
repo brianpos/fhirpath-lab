@@ -50,6 +50,9 @@ export namespace settings {
         return undefined;
     }
 
+    export function dotnet_server_downloader(): string {
+        return serverConnections.dotnet_server_downloader;
+    }
     export function dotnet_server_r4b(): string {
         return serverConnections.dotnet_server_r4b;
     }

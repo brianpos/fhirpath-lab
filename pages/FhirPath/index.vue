@@ -1343,6 +1343,17 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         let url = this.resourceId;
         if (this.resourceId && !this.resourceId.startsWith('http'))
           url = settings.getFhirServerUrl() + '/' + this.resourceId;
+        
+        // if trying to use the hl7 example servers, that should be over https
+        if (url.startsWith("http://build.fhir.org/")
+            || url.startsWith("http://hl7.org/fhir/"))
+            url = "https://" + url.substring(7);
+        
+        // If this is trying to download a hl7 example, run it through the downloader proxy
+        // as the HL7 servers don't have CORS for us
+        if (url.startsWith("https://build.fhir.org/")
+            || url.startsWith("https://hl7.org/fhir/"))
+            url = settings.dotnet_server_downloader() + "?url=" + url;
 
         if (this.cancelSource) this.cancelSource.cancel("new download started");
         this.cancelSource = axios.CancelToken.source();
@@ -1403,6 +1414,15 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         let url = this.variables.get(name)?.resourceId ?? this.variables.get(name)?.data;
         if (url && !url.startsWith('http'))
           url = settings.getFhirServerUrl() + '/' + url;
+
+        // if trying to use the hl7 example servers, that should be over https
+        if (url.startsWith("http://build.fhir.org/")
+            || url.startsWith("http://hl7.org/fhir/"))
+            url = "https://" + url.substring(7);
+        
+        if (url.startsWith("https://build.fhir.org/")
+          || url.startsWith("https://hl7.org/fhir/"))
+          url = settings.dotnet_server_downloader() + "?url=" + url;
 
         if (this.cancelSource) this.cancelSource.cancel("new download started");
         this.cancelSource = axios.CancelToken.source();
