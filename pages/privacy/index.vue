@@ -24,10 +24,12 @@
       <p>
         <b>Data usage:</b> The usage data that we collect may be shared in aggregate form to
         provide usage information as to what parts of the system are used, and types of evaluations
-        tested. (e.g. % usage of expressions with each of the 3 engines included).<br />
+        tested. (e.g. % usage of expressions with each of the fhirpath engines included).<br />
         The terminology server and data server specified in the settings will be used to retrieve
-        fhir expression sources: StructureDefinition and SearchParameters. The Library resources
-        will come from a server
+        fhir expression sources: Such as StructureDefinition and SearchParameters.
+        <br/>
+        If downloading example resources from HL7.org or build.fhir.org the data will be retrieved
+        through a proxy built into the service to provide CORS services for this application.
       </p>
       <p>
         <b>Service location:</b> The service and all components used in its operation run on

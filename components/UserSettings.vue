@@ -54,6 +54,44 @@
             v-model="defaultNewCanonicalBase"
           />
           <v-text-field
+            label="Open AI API Key"
+            hide-details="auto"
+            :type="AiDisplayType"
+            v-model="openAIKey"
+            :visible="showAdvancedSettings && (defaultProviderField == 'Say the magic word' || openAIKey)"
+            title="Used to access the Open AI API in the fhirpath tester section of this app to explain fhirpath expressions"
+          >
+          <template v-slot:append>
+              <v-btn icon small tile  
+                @click="toggleAIKey">
+                <v-icon v-if="showAIKey" title="Hide AI Key"> mdi-eye-outline </v-icon>
+                <v-icon v-if="!showAIKey" title="Show AI Key"> mdi-eye-off-outline </v-icon>
+              </v-btn>
+            </template>
+          </v-text-field>
+          <v-text-field
+            label="Open AI Base Path"
+            hide-details="auto"
+            v-model="openAIBasePath"
+            v-if="showAdvancedSettings && openAIKey"
+            title="Used to access the Open AI API in the fhirpath tester section of this app to discuss fhirpath expressions"
+          />
+          <v-text-field
+            label="Open AI API Version"
+            hide-details="auto"
+            v-model="openAIApiVersion"
+            v-if="showAdvancedSettings && openAIKey"
+            title="Used to access the Open AI API in the fhirpath tester section of this app to discuss fhirpath expressions"
+          />
+          <v-text-field
+            label="Open AI Model"
+            hide-details="auto"
+            v-model="openAIModel"
+            v-if="showAdvancedSettings && openAIKey"
+            title="Used to access the Open AI API in the fhirpath tester section of this app to discuss fhirpath expressions"
+          />
+
+          <v-text-field
             label="List Page Size"
             hide-details="auto"
             v-model="pageSize"
@@ -117,7 +155,20 @@ export default Vue.extend({
   async mounted() {
     this.readUserSettings();
   },
+  computed:{
+    AiDisplayType: function(): string {
+      if (this.showAIKey) {
+        return "";
+      } else {
+        return "password";
+      }
+    },
+  },
   methods: {
+    toggleAIKey() {
+      // console.log("toggleAIKey", this.showAIKey);
+      this.showAIKey = !this.showAIKey;
+    },
     closeSettings() {
       this.$emit("close");
     },
@@ -224,6 +275,10 @@ export default Vue.extend({
       this.favouritesListId = values.favouritesListId;
       this.defaultProviderField = values.defaultProviderField;
       this.defaultNewCanonicalBase = values.defaultNewCanonicalBase;
+      this.openAIKey = values.openAIKey;
+      this.openAIApiVersion = values.openAIApiVersion;
+      this.openAIBasePath = values.openAIBasePath;
+      this.openAIModel = values.openAIModel;
       this.showAdvancedSettings = values.showAdvancedSettings;
       this.pageSize = values.pageSize;
 
@@ -247,6 +302,11 @@ export default Vue.extend({
       favouritesListId: undefined,
       defaultProviderField: undefined,
       defaultNewCanonicalBase: undefined,
+      openAIKey: undefined,
+      showAIKey: false,
+      openAIApiVersion: undefined,
+      openAIBasePath: undefined,
+      openAIModel: undefined,
       showAdvancedSettings: true,
       pageSize: 10,
 

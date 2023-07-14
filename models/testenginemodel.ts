@@ -1,4 +1,3 @@
-import { StructureDefinitionArgs } from "@fhir-typescript/r4b-core/dist/fhir";
 import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from "lz-string";
 
 export interface VariableData {

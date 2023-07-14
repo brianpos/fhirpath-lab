@@ -1,4 +1,5 @@
 {
+    "dotnet_server_downloader": "https://fhirpath-lab-net.azurewebsites.net/api/downloader",
     "dotnet_server_r4b": "https://fhirpath-lab-net.azurewebsites.net/api/$fhirpath",
     "dotnet_server_r5": "https://fhirpath-lab-net.azurewebsites.net/api/$fhirpath-r5",
     "java_server_r4b": "https://fhirpath-lab-java2.azurewebsites.net/fhir/$fhirpath",

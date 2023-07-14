@@ -1,10 +1,9 @@
 <template>
-<div>
-  <div class="inline-panel-issues" v-if="!popupWhenErrors">
+  <div class="inline-panel-issues" v-if="outcome && outcome.issue">
         <v-btn style="float:right;" icon small tile @click="close">
           <v-icon> mdi-close </v-icon>
         </v-btn>
-        <template  v-for="(issue, index) in saveOutcome.issue">
+        <template  v-for="(issue, index) in outcome.issue">
           <div class="issue-item" :key="index" v-if="!hideIssue(issue)">
             <span>
               <nobr>
@@ -34,48 +33,6 @@
           </div>
         </template>
   </div>
-  <v-overlay v-if="popupWhenErrors" style="z-index:6;" :value="showOutcome">
-    <v-card light style="margin: 12px;">
-      <v-card-title>{{ title }}</v-card-title>
-      <v-card-text class="issue-list" v-if="saveOutcome">
-        <template v-for="(issue, index) in saveOutcome.issue">
-          <div class="issue-item" :key="index" v-if="!hideIssue(issue)">
-            <span>
-              <nobr>
-              <v-icon v-if="issue.severity === 'error' || issue.severity === 'fatal'" color="red">mdi-alert-octagon</v-icon>
-              <v-icon v-if="issue.severity === 'warning'" color="orange">mdi-alert</v-icon>
-            <span
-              :class="severityClassName(issue.severity)"
-              v-text="issue.severity"
-            />
-            </nobr>
-            <template v-if="issue.code">
-              <br/>
-            <nobr class="issue-code">(<span v-text="issue.code" />)</nobr>
-            </template>
-            </span>
-            <span class="details">
-            <span v-text="issueDescription(issue)" />
-            <template v-if="issue.expression">
-              <br />
-              <span v-if="issue.expression" v-text="issue.expression" />
-            </template>
-            <template v-if="issue.location">
-              <br />
-              <span v-if="issue.location" v-text="issue.location" />
-            </template>
-            </span>
-          </div>
-        </template>
-      </v-card-text>
-      <v-card-actions>
-        <v-spacer />
-        <v-btn color="primary" ref="closeButton" @click="close">Ok</v-btn>
-        <v-spacer />
-      </v-card-actions>
-    </v-card>
-  </v-overlay>
-</div>
 </template>
 
 <style scoped>
@@ -87,13 +44,6 @@
   padding-left: 8px;
   padding-right: 8px;
   padding-top: 8px;
-}
-
-.issue-list {
-  display: table;
-  border-spacing: 8px;
-  max-height: 80vh;
-  overflow-y: auto;
 }
 
 .issue-item {
@@ -138,14 +88,7 @@ import { BaseResourceNoData } from "~/models/BaseResourceTableData";
 export default Vue.extend({
   props: {
     title: String,
-    saveOutcome: Object as PropType<fhir4b.OperationOutcome>,
-    showOutcome: Boolean,
-    popupWhenErrors: { type: Boolean, required: false, default: true }
-  },
-  mounted() {
-    setTimeout(() => {
-      (this.$refs.closeButton as any).$el.focus();
-    });
+    outcome: Object as PropType<fhir4b.OperationOutcome>,
   },
   methods: {
     hideIssue(issue: fhir4b.OperationOutcomeIssue): boolean {

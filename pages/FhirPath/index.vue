@@ -41,193 +41,316 @@
         </v-toolbar>
         <v-row dense>
           <v-col>
-            <v-tabs vertical v-model="tab">
-              <v-tab>
+            <v-tabs vertical v-model="tab" @change="changeTab">
+              <v-tab :class="expressionActiveClass" v-on:click="tabClicked">
                 <v-icon left> mdi-function-variant </v-icon>
                 Expression
               </v-tab>
-              <v-tab class="left-resource">
+              <v-tab :class="resourceActiveClass" v-on:click="tabClicked">
                 <v-icon left> mdi-clipboard-text-outline </v-icon>
                 Resource
               </v-tab>
-              <v-tab v-show="variables.size > 0">
+              <v-tab v-show="variables.size > 0" :class="variablesActiveClass" v-on:click="tabClicked">
                 <v-icon left> mdi-application-variable-outline </v-icon>
                 Variables
               </v-tab>
-              <v-tab :disabled="!hasTraceData()">
+              <v-tab :disabled="!hasTraceData()" :class="traceActiveClass" v-on:click="tabClicked">
                 <v-icon left> mdi-format-list-bulleted </v-icon>
                 Trace
               </v-tab>
-              <v-tab v-show="showAdvancedSettings">
+              <v-tab v-show="astDebug.length > 0" :class="astActiveClass" v-on:click="tabClicked">
+                <v-icon left> mdi-file-tree </v-icon>
+                AST
+              </v-tab>
+              <v-tab v-show="showAdvancedSettings" :class="chatActiveClass" v-on:click="tabClicked">
+                <v-icon left> mdi-brain </v-icon>
+                Chat
+              </v-tab>
+              <v-tab v-show="showAdvancedSettings" :class="debugActiveClass" v-on:click="tabClicked">
                 <v-icon left> mdi-bug-outline </v-icon>
                 Debug
               </v-tab>
 
-              <v-tabs-items touchless v-model="tab">
-                <v-tab-item :eager="true">
-                  <!-- Expression -->
-                  <v-card flat>
-                    <v-card-text>
-                      <p class="fl-tab-header">Expression</p>
-                      <label class="v-label theme--light bare-label">Context Expression (optional)</label>
-                      <!-- <v-input label="Context Expression (optional)" hide-details="auto" :value="contextExpression">
-                      </v-input> -->
-                      <div height="85px" width="100%" ref="aceEditorContextExpression"></div>
-                      <div class="ace_editor_footer"></div>
+              <v-tabs-items class="custom-tab" style="height: calc(100vh - 168px)" touchless v-model="tab">
 
-                      <label class="v-label theme--light bare-label">Fhirpath Expression</label>
-                      <div height="85px" width="100%" ref="aceEditorExpression"></div>
-                      <div class="ace_editor_footer"></div>
+                <v-scroll-x-transition mode="out-in" :hide-on-leave="true">
+                  <div v-show="expressionVisible" :eager="true" >
+                    <!-- Expression -->
+                    <v-card flat>
+                      <v-card-text>
+                        <p class="fl-tab-header">Expression</p>
+                        <label class="v-label theme--light bare-label">Context Expression (optional)</label>
+                        <!-- <v-input label="Context Expression (optional)" hide-details="auto" :value="contextExpression">
+                        </v-input> -->
+                        <div height="85px" width="100%" ref="aceEditorContextExpression"></div>
+                        <div class="ace_editor_footer"></div>
 
-                      <div class="results">RESULTS <span class="processedBy">{{ processedByEngine }}</span></div>
-                      <template v-for="(r2, i1) in results">
-                        <v-simple-table :key="i1">
-                          <tr v-if="r2.context">
-                            <td class="context" colspan="2">
-                              <div>Context: <b>{{ r2.context }}</b></div>
-                            </td>
-                          </tr>
-                          <template v-for="(v1, index) in r2.result">
-                            <tr :key="index">
-                              <td class="result-value">
-                                <div class="code-json">{{ v1.value }}</div>
+                        <label class="v-label theme--light bare-label">Fhirpath Expression</label>
+                        <div height="85px" width="100%" ref="aceEditorExpression"></div>
+                        <div class="ace_editor_footer"></div>
+
+                        <div class="results">RESULTS <span class="processedBy">{{ processedByEngine }}</span></div>
+                        <OperationOutcomePanel :outcome="expressionParseOutcome" @close="expressionParseOutcome = undefined" />
+                        <template v-for="(r2, i1) in results">
+                          <v-simple-table :key="i1">
+                            <tr v-if="r2.context">
+                              <td class="context" colspan="2">
+                                <div>Context: <b>{{ r2.context }}</b></div>
                               </td>
-                              <td class="result-type"><i v-if="v1.type">({{ v1.type }})</i></td>
                             </tr>
-                          </template>
-                        </v-simple-table>
-                      </template>
-                    </v-card-text>
-                  </v-card>
-                </v-tab-item>
-
-                <v-tab-item :eager="true">
-                  <!-- Resource -->
-                  <v-card flat>
-                    <v-card-text>
-                      <p class="fl-tab-header">Resource</p>
-                      <v-text-field label="Test Resource Id" v-model="resourceId" hide-details="auto" autocomplete="off"
-                        autocorrect="off" autocapitalize="off" spellcheck="false">
-                        <template v-slot:append>
-                          <v-btn icon small tile @click="resourceId = undefined">
-                            <v-icon> mdi-close </v-icon>
-                          </v-btn>
-                          <v-btn icon small tile @click="downloadTestResource">
-                            <v-icon> mdi-download </v-icon>
-                          </v-btn>
-                          <v-btn small icon tile @click="reformatTestResource"><v-icon title="Format json" dark> mdi-format-indent-increase </v-icon></v-btn>
-                        </template>
-                      </v-text-field>
-                      <label class="v-label theme--light bare-label">Test Resource JSON <i>{{ resourceJsonChangedMessage() }}</i></label>
-                      <div height="85px" width="100%" ref="aceEditorResourceJsonTab"></div>
-                      <!-- <div class="ace_editor_footer"></div> -->
-                      <v-text-field label="Terminology Server" v-model="terminologyServer" hide-details="auto"
-                        autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
-                    </v-card-text>
-                  </v-card>
-                </v-tab-item>
-
-                <v-tab-item :eager="true">
-                  <!-- Variables -->
-                  <v-card flat>
-                    <v-card-text>
-                      <p class="fl-tab-header">Variables</p>
-                        <template v-for="(v1, index) in variables">
-                        <v-textarea :auto-grow="!v1[1].resourceId" :rows="(!v1[1].resourceId?1:5)" 
-                          :label="v1[0]" hide-details="auto" :value="v1[1].data" 
-                          autocorrect="off" autocapitalize="off" spellcheck="false"
-                          @input="updateVariableValue(v1[0])" :key="index" 
-                          :messages="variableMessages(v1[1])" :error-messages="variableErrorMessages(v1[1])" :error="(!!v1[1].errorMessage)">
-                            <template v-slot:append>
-                            <v-btn icon small tile @click="variables.set(v1[0], { data: v1[1].resourceId }); $forceUpdate()">
-                                <v-icon> mdi-close </v-icon>
-                              </v-btn>
-                              <v-btn icon small tile @click="downloadVariableResource(v1[0])" :hidden="!isValidFhirUrl(v1[1])"> 
-                                <v-icon> mdi-download </v-icon>
-                              </v-btn>
+                            <template v-for="(v1, index) in r2.result">
+                              <tr :key="index">
+                                <td class="result-value">
+                                  <div class="code-json">{{ v1.value }}</div>
+                                </td>
+                                <td class="result-type"><i v-if="v1.type">({{ v1.type }})</i></td>
+                              </tr>
                             </template>
-                          </v-textarea>
-                          <!-- <div class="code-json">{{ JSON.stringify(v1[1], null, 2) }}</div> -->
+                          </v-simple-table>
                         </template>
-                        <br/>
-                        <label><i>Note: This variables tab is only visible when there are variables in the expression.
-                          To add another variable, name it in the fhirpath expression.<br/>
-                          Also note that the variables are not supported in the context expression.</i></label>
-                    </v-card-text>
-                  </v-card>
-                </v-tab-item>
+                      </v-card-text>
+                    </v-card>
+                  </div>
+                </v-scroll-x-transition>
 
-                <v-tab-item>
-                  <!-- Trace -->
-                  <v-card flat>
-                    <v-card-text>
-                      <p class="fl-tab-header">Trace</p>
-                      <template v-for="(r2, i1) in results">
-                        <v-simple-table :key="i1">
-                          <tr v-if="r2.context">
-                            <td class="context" colspan="3">
-                              <div>Context: <b>{{ r2.context }}</b></div>
-                            </td>
-                          </tr>
-                          <template v-for="(v1, index) in r2.trace">
-                            <tr :key="index">
-                              <td class="result-type"><b>{{ v1.name }}</b></td>
-                              <td class="result-value">
-                                <div class="code-json" v-if="v1.value != null">{{ v1.value }}</div>
-                                <div class="code-json" v-if="v1.value == null && v1.type == 'empty-string'"><i>""</i></div>
-                              </td>
-                              <td class="result-type"><i v-if="v1.type">({{ v1.type }})</i></td>
-                            </tr>
+                <v-scroll-x-transition mode="out-in" :hide-on-leave="true">
+                  <div v-show="resourceVisible" :eager="true" style="order:1;">
+                    <!-- Resource -->
+                    <v-card flat>
+                      <v-card-text>
+                        <p class="fl-tab-header">Resource</p>
+                        <v-text-field label="Test Resource Id" v-model="resourceId" hide-details="auto" autocomplete="off"
+                          autocorrect="off" autocapitalize="off" spellcheck="false">
+                          <template v-slot:append>
+                            <v-btn icon small tile @click="resourceId = undefined">
+                              <v-icon> mdi-close </v-icon>
+                            </v-btn>
+                            <v-btn icon small tile @click="downloadTestResource">
+                              <v-icon> mdi-download </v-icon>
+                            </v-btn>
+                            <v-btn small icon tile @click="reformatTestResource"><v-icon title="Format json" dark> mdi-format-indent-increase </v-icon></v-btn>
                           </template>
-                        </v-simple-table>
-                      </template>
-                    </v-card-text>
-                  </v-card>
-                </v-tab-item>
+                        </v-text-field>
+                        <label class="v-label theme--light bare-label">Test Resource JSON <i>{{ resourceJsonChangedMessage() }}</i></label>
+                        <div class="resource" width="100%" ref="aceEditorResourceJsonTab"></div>
+                        <!-- <div class="ace_editor_footer"></div> -->
+                        <v-text-field label="Terminology Server" v-model="terminologyServer" hide-details="auto"
+                          autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+                      </v-card-text>
+                    </v-card>
+                  </div>
+                </v-scroll-x-transition>
 
-                <v-tab-item :eager="true">
-                  <!-- Debug -->
-                  <v-card flat>
-                    <v-card-text>
-                      <p class="fl-tab-header">Debug</p>
-                      <div ref="aceEditorDebug"></div>
-                    </v-card-text>
-                  </v-card>
-                </v-tab-item>
+                <v-scroll-x-transition mode="out-in" :hide-on-leave="true">
+                  <div v-show="variablesVisible" >
+                    <!-- Variables -->
+                    <v-card flat>
+                      <v-card-text>
+                        <p class="fl-tab-header">Variables</p>
+                          <template v-for="(v1, index) in variables">
+                          <v-textarea :auto-grow="!v1[1].resourceId" :rows="(!v1[1].resourceId?1:5)" 
+                            :label="v1[0]" hide-details="auto" :value="v1[1].data" 
+                            autocorrect="off" autocapitalize="off" spellcheck="false"
+                            @input="updateVariableValue(v1[0])" :key="index" 
+                            :messages="variableMessages(v1[1])" :error-messages="variableErrorMessages(v1[1])" :error="(!!v1[1].errorMessage)">
+                              <template v-slot:append>
+                              <v-btn icon small tile @click="variables.set(v1[0], { name: v1[0], data: v1[1].resourceId }); $forceUpdate()">
+                                  <v-icon> mdi-close </v-icon>
+                                </v-btn>
+                                <v-btn icon small tile @click="downloadVariableResource(v1[0])" :hidden="!isValidFhirUrl(v1[1])"> 
+                                  <v-icon> mdi-download </v-icon>
+                                </v-btn>
+                              </template>
+                            </v-textarea>
+                            <!-- <div class="code-json">{{ JSON.stringify(v1[1], null, 2) }}</div> -->
+                          </template>
+                          <br/>
+                          <label><i>Note: This variables tab is only visible when there are variables in the expression.
+                            To add another variable, name it in the fhirpath expression.<br/>
+                            Also note that the variables are not supported in the context expression.</i></label>
+                      </v-card-text>
+                    </v-card>
+                  </div>
+                </v-scroll-x-transition>
+
+                <v-scroll-x-transition mode="out-in" :hide-on-leave="true">
+                  <div v-show="traceVisible" >
+                    <!-- Trace -->
+                    <v-card flat>
+                      <v-card-text>
+                        <p class="fl-tab-header">Trace</p>
+                        <template v-for="(r2, i1) in results">
+                          <v-simple-table :key="i1">
+                            <tr v-if="r2.context">
+                              <td class="context" colspan="3">
+                                <div>Context: <b>{{ r2.context }}</b></div>
+                              </td>
+                            </tr>
+                            <template v-for="(v1, index) in r2.trace">
+                              <tr :key="index">
+                                <td class="result-type"><b>{{ v1.name }}</b></td>
+                                <td class="result-value">
+                                  <div class="code-json" v-if="v1.value != null">{{ v1.value }}</div>
+                                  <div class="code-json" v-if="v1.value == null && v1.type == 'empty-string'"><i>""</i></div>
+                                </td>
+                                <td class="result-type"><i v-if="v1.type">({{ v1.type }})</i></td>
+                              </tr>
+                            </template>
+                          </v-simple-table>
+                        </template>
+                      </v-card-text>
+                    </v-card>
+                  </div>
+                </v-scroll-x-transition>
+
+                <v-scroll-x-transition mode="out-in" :hide-on-leave="true">
+                  <div v-show="astVisible">
+                    <!-- AST abstract syntax tree -->
+                    <v-card flat>
+                      <v-card-text>
+                        <p class="fl-tab-header">Abstract Syntax Tree</p>
+                        <OperationOutcomePanel :outcome="expressionParseOutcome" @close="expressionParseOutcome = undefined" />
+                        <v-treeview
+                          :items="astDebug"
+                          :open="astOpen"
+                          activatable
+                          :dense="true"
+                          item-key="id"
+                          item-text="Name"
+                          item-children="Arguments"
+                          :open-all="true"
+                          open-on-click
+                        >
+                          <template v-slot:prepend="{ item, open }">
+                            <v-icon v-if="item.ReturnType.length == 0" color="red">
+                              mdi-alert-octagon
+                            </v-icon>
+                          </template>
+                          <template v-slot:label="{ item, open }">
+                            <template v-if="item.ExpressionType === 'FunctionCallExpression'">
+                              .{{ item.Name }}(<template v-if="item.Arguments.length > 0">...</template>) <span style="color: grey">: {{ item.ReturnType }}</span>
+                            </template>
+                            <template v-else-if="item.ExpressionType === 'ConstantExpression'">
+                              <span style="color: #a31515;">'{{ item.Name }}'</span> <span style="color: grey" v-if="item.ReturnType.length > 0">: {{ item.ReturnType }}</span>
+                            </template>
+                            <template v-else-if="item.ExpressionType === 'ChildExpression'">
+                              .<span style="color: #318495; font-weight: bold">{{ item.Name }}</span> <span style="color: grey" v-if="item.ReturnType.length > 0">: {{ item.ReturnType }}</span>
+                            </template>
+                            <template v-else-if="item.ExpressionType === 'VariableRefExpression'">
+                              <span style="color: #b255a5; font-weight: bold">%{{ item.Name }}</span> <span style="color: grey" v-if="item.ReturnType.length > 0">: {{ item.ReturnType }}</span>
+                            </template>
+                            <template v-else-if="item.ExpressionType === 'AxisExpression' && item.Name === 'builtin.this'">
+                              <span style="color: #0000ff; font-weight: bold">$this</span> <span style="color: grey" v-if="item.ReturnType.length > 0">: {{ item.ReturnType }}</span>
+                            </template>
+                            <template v-else-if="item.ExpressionType === 'AxisExpression' && item.Name === 'builtin.that'">
+                              <span style="color: #0000ff;">Expression Scope</span> <span style="color: grey" v-if="item.ReturnType.length > 0">: {{ item.ReturnType }}</span>
+                            </template>
+                            <template v-else>
+                              {{ item.Name }} <span style="color: grey">: {{ item.ReturnType }}</span> ({{ item.ExpressionType }})
+                            </template>
+                            <template v-if="item.ReturnType.length == 0">
+                              <i><b>(no return type calculated)</b></i>
+                            </template>
+                            <!-- <template>
+                              {{ item.id }}
+                            </template> -->
+                          </template>
+                        </v-treeview>
+                        <v-checkbox v-model="astInverted" label="Inverted Tree" messages="(re-evaluate to apply)"></v-checkbox>
+                      </v-card-text>
+                    </v-card>
+                  </div>
+                </v-scroll-x-transition>
+
+                <v-scroll-x-transition mode="out-in" :hide-on-leave="true">
+                  <div v-show="chatVisible" :eager="true">
+                    <!-- Chat -->
+                    <v-card flat>
+                      <v-card-text>
+                        <p class="fl-tab-header">FhirPath AI Chat</p>
+                        <Chat class="chat" ref="chatComponent" 
+                            @send-message="handleSendMessage" 
+                            @reset-conversation="resetConversation"
+                            @apply-suggested-context="applySuggestedContext"
+                            @apply-suggested-expression="applySuggestedExpression"/>
+                      </v-card-text>
+                    </v-card>
+                  </div>
+                </v-scroll-x-transition>
+
+                <v-scroll-x-transition mode="out-in" :hide-on-leave="true">
+                  <div v-show="debugVisible" :eager="true">
+                    <!-- Debug -->
+                    <v-card flat>
+                      <v-card-text>
+                        <p class="fl-tab-header">Debug</p>
+                        <div class="debug" ref="aceEditorDebug"></div>
+                      </v-card-text>
+                    </v-card>
+                  </div>
+                </v-scroll-x-transition>
 
               </v-tabs-items>
             </v-tabs>
-          </v-col>
-          <v-col class="right-resource">
-            <v-card flat>
-              <v-card-text>
-                <p class="fl-tab-header">Resource</p>
-                <v-text-field label="Test Resource Id" v-model="resourceId" hide-details="auto" autocorrect="off" autocapitalize="off" spellcheck="false">
-                  <template v-slot:append>
-                    <v-btn icon small tile @click="resourceId = undefined">
-                      <v-icon> mdi-close </v-icon>
-                    </v-btn>
-                    <v-btn icon small tile @click="downloadTestResource">
-                      <v-icon> mdi-download </v-icon>
-                    </v-btn>
-                    <v-btn small icon tile @click="reformatTestResource"><v-icon title="Format json" dark> mdi-format-indent-increase </v-icon></v-btn>
-                  </template>
-                </v-text-field>
-                <label class="v-label theme--light bare-label">Test Resource JSON <i>{{ resourceJsonChangedMessage() }}</i></label>
-                <div height="85px" width="100%" ref="aceEditorResourceJsonRight"></div>
-              </v-card-text>
-            </v-card>
           </v-col>
         </v-row>
       </v-card>
 
       <br />
-      <OperationOutcomeOverlay v-if="showOutcome" :saveOutcome="saveOutcome" :showOutcome="showOutcome" title="Error"
+      <OperationOutcomeOverlay style="z-index: 8" v-if="showOutcome" :saveOutcome="saveOutcome" :showOutcome="showOutcome" title="Error"
         @close="clearOutcome" />
     </div>
     <!-- <code class="code-json">{{ JSON.stringify(results, null, 4) }}</code> -->
   </div>
 </template>
+
+<style lang="scss">
+.custom-tab > div {
+  flex-direction: row;
+  // height: calc(100vh - 168px);
+  // overflow-y: auto;
+}
+.custom-tab > div > div {
+  height: calc(100vh - 168px);
+  overflow-y: auto;
+}
+.resource {
+  height: calc(100vh - 320px);
+}
+.chat {
+  height: calc(100vh - 200px);
+}
+.debug {
+  height: calc(100vh - 196px);
+}
+@media (max-width: 596px) {
+  .custom-tab > div > div {
+    height: calc(100vh - 168px);
+  }
+  .resource {
+    height: calc(100vh - 320px - 48px);
+  }
+  .chat {
+    height: calc(100vh - 200px - 48px);
+  }
+  .debug {
+    height: calc(100vh - 196px - 48px);
+  }
+}
+.custom-tab > div > div{
+  flex: 1;
+}
+</style>
+
+<style>
+.v-treeview--dense .v-treeview-node__root {
+    min-height: 28px;
+}
+
+.v-treeview-node {
+  border-top: thin solid silver;
+}
+</style>
 
 <style lang="scss" scoped>
 .ace_editor:focus-within+.ace_editor_footer {
@@ -332,7 +455,7 @@ td {
 <script lang="ts">
 import Vue, { VNode } from "vue";
 import "vue-router";
-import { settings } from "~/helpers/user_settings";
+import { settings, ILastUsedParameters } from "~/helpers/user_settings";
 import {
   requestFhirAcceptHeaders,
   requestFhirContentTypeHeaders,
@@ -355,10 +478,15 @@ import ace from "ace-builds";
 import "ace-builds/src-noconflict/mode-text";
 import "ace-builds/src-noconflict/mode-json";
 import "ace-builds/src-noconflict/theme-chrome";
+import Chat from "~/components/Chat.vue";
+import { Message } from "~/types/chat-types";
 
-import { fhir } from '@fhir-typescript/r4b-core';
+// import { fhir } from '@fhir-typescript/r4b-core';
 import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from "lz-string";
 import { VariableData, EncodeTestFhirpathData, DecodeTestFhirpathData, TestFhirpathData } from "~/models/testenginemodel";
+
+import { EvaluateChatPrompt, GetSystemPrompt, IOpenAISettings } from "~/helpers/openai_utils";
+import { ChatMessage } from "@azure/openai";
 
 const shareTooltipText = 'Copy a sharable link to this test expression';
 const shareZulipTooltipText = 'Copy a sharable link for Zulip to this test expression';
@@ -376,6 +504,10 @@ interface FhirPathData {
   terminologyServer: string;
   cancelSource?: CancelTokenSource;
   tab: any;
+  lastTabClicked: KeyboardEvent | MouseEvent | undefined;
+  primaryTab: number;
+  secondaryTab: number;
+  windowWidth: number;
   results: ResultData[];
   selectedEngine: string;
   executionEngines: string[];
@@ -387,6 +519,23 @@ interface FhirPathData {
   resourceJsonEditor?: ace.Ace.Editor;
   variables: Map<string, VariableData>;
   processedByEngine?: string;
+  openAIexpressionExplanationLoading: boolean;
+  openAIexpressionExplanationMessage?: string;
+  chatEnabled: boolean;
+  showChat: boolean;
+  openAILastContext: string;
+  astDebug: JsonNode[];
+  astOpen: string[];
+  expressionParseOutcome?: fhir4b.OperationOutcome;
+  astInverted: boolean;
+}
+
+interface JsonNode {
+  id?: string;
+  ExpressionType: string;
+  Name: string;
+  Arguments?: JsonNode[];
+  ReturnType?: string;
 }
 
 interface ResultItem {
@@ -454,6 +603,37 @@ function getTraceValue(entry: fhir4b.ParametersParameter): TraceData[] {
   return result;
 }
 
+function AllocateNodeIds(ast: JsonNode, startAt: number = 0) : number{
+  ast.id = startAt.toString();
+  startAt++;
+  ast.Arguments?.forEach(element => {
+    startAt = AllocateNodeIds(element, startAt);
+  });
+  return startAt;
+}
+
+function DecomposeAst(ast: JsonNode): JsonNode[] {
+  let result: JsonNode[] = [];
+  if (ast.Arguments){
+    const focus = DecomposeAst(ast.Arguments[0]);
+    result.push(... focus);
+    const args = ast.Arguments.splice(0,1);
+    if (args?.length > 0) {
+      let newArgs: JsonNode[] = [];
+      ast.Arguments.forEach(element => {
+        const elementArgs = DecomposeAst(element);
+        newArgs.push(... elementArgs);
+      });
+      ast.Arguments = newArgs;
+    }
+    else {
+      delete ast.Arguments;
+    }
+  }
+  result.push(ast);
+  return result;
+}
+
 interface IFhirPathMethods
 {
   readParametersFromQuery(): TestFhirpathData;
@@ -467,6 +647,8 @@ interface IFhirPathMethods
   resourceJsonChangedMessage(): string | undefined;
   tabTitle(): void;
   settingsClosed(): void;
+  tabClicked(e: KeyboardEvent | MouseEvent): void;
+  changeTab(selectTab: number): void;
 
   getContextExpression(): string | undefined;
   getFhirpathExpression(): string | undefined;
@@ -481,8 +663,8 @@ interface IFhirPathMethods
   reformatTestResource(): void;
   downloadTestResource(): void;
   downloadVariableResource(name: string): void;
-  evaluateExpressionUsingFhirpathjs(): void;
-  evaluateExpressionUsingFhirpathjsR5(): void;
+  evaluateExpressionUsingFhirpathJs(): void;
+  evaluateExpressionUsingFhirpathJsR5(): void;
   prepareSharePackageData(): TestFhirpathData;
   showShareLink(): boolean;
   updateShareText(): void;
@@ -491,25 +673,56 @@ interface IFhirPathMethods
   copyZulipShareLinkToClipboard(): void;
   evaluateFhirPathExpression(): void;
   checkFocus(event: any): void;
+  saveLastUsedParameters(loadCompleted: boolean): void;
+
+  GetAISettings(): IOpenAISettings;
+  handleSendMessage(message: string): void;
+  resetConversation(): void;
+  applySuggestedExpression(updatedExpression: string): void;
+  applySuggestedContext(updatedExpression: string): void;
 }
 
 interface IFhirPathComputed
 {
+  expressionVisible: boolean;
+  variablesVisible: boolean;
+  traceVisible: boolean;
+  chatVisible: boolean;
+  resourceVisible: boolean;
+  debugVisible: boolean;
+  astVisible: boolean;
 
+  expressionActiveClass: string;
+  variablesActiveClass: string;
+  traceActiveClass: string;
+  chatActiveClass: string;
+  resourceActiveClass: string;
+  debugActiveClass: string;
+  astActiveClass: string;
 }
 
 interface IFhirPathProps
 {
+  $refs : {
+    aceEditorExpression: HTMLDivElement,
+    aceEditorContextExpression: HTMLDivElement,
+    aceEditorDebug: HTMLDivElement,
+    aceEditorResourceJson: HTMLDivElement,
+    chatComponent: Chat,
+  },
 }
 
 export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFhirPathProps>({
-  components: {
-  },
   head: {
     title: "FhirPathTester",
   },
   async mounted() {
+    window.onresize = () => {
+        this.windowWidth = window.innerWidth
+    }
     this.showAdvancedSettings = settings.showAdvancedSettings();
+    if (settings.getOpenAIKey())
+      this.chatEnabled = true;
     this.terminologyServer = settings.getFhirTerminologyServerUrl();
 
     const CDN = 'https://cdn.jsdelivr.net/npm/ace-builds@1.6.0/src-min-noconflict';
@@ -561,7 +774,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       });
 
         setCustomHighlightRules(this.expressionEditor, FhirPathHightlighter_Rules);
-        this.expressionEditor.setValue("trace('trc').given");
+        this.expressionEditor.setValue("trace('trc').given.join(' ')\n.combine(family).join(', ')");
         this.expressionEditor.clearSelection();
         this.expressionEditor.on("change", this.fhirpathExpressionChangedEvent)
     }
@@ -572,7 +785,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         wrap: "free",
         readOnly: true,
         minLines: 15,
-        maxLines: 35,
+        // maxLines: 35,
         highlightActiveLine: true,
         showGutter: true,
         fontSize: 14,
@@ -587,7 +800,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     const resourceEditorSettings: Partial<ace.Ace.EditorOptions> = {
       wrap: "free",
       minLines: 15,
-      maxLines: 30,
+      // maxLines: 30,
       highlightActiveLine: true,
       showGutter: true,
       fontSize: 14,
@@ -597,20 +810,25 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       mode: "ace/mode/json",
       wrapBehavioursEnabled: true
     };
-    var editorResourceJsonRightDiv: any = this.$refs.aceEditorResourceJsonRight as Element;
-    if (editorResourceJsonRightDiv) {
-      this.resourceJsonEditor = ace.edit(editorResourceJsonRightDiv, resourceEditorSettings);
+    var editorResourceJsonDiv: any = this.$refs.aceEditorResourceJsonTab as Element;
+    if (editorResourceJsonDiv) {
+      this.resourceJsonEditor = ace.edit(editorResourceJsonDiv, resourceEditorSettings);
       this.resourceJsonEditor.session.on("change", this.resourceJsonChangedEvent);
-
-      var editorResourceJsonLeftDiv: any = this.$refs.aceEditorResourceJsonTab as Element;
-      if (editorResourceJsonLeftDiv) {
-        let editor = ace.edit(editorResourceJsonLeftDiv, resourceEditorSettings);
-        if (editor) {
-          editor.setSession(this.resourceJsonEditor.session);
-        }
-      }
     }
 
+    // read the values that were last used (stored in the local storage)
+    const lastUsed = settings.loadLastUsedParameters();
+    console.log(lastUsed);
+    if (lastUsed && lastUsed.loadCompleted) {
+      const p: TestFhirpathData = {
+        expression: lastUsed.expression ?? '',
+        context: lastUsed.context,
+        resource: lastUsed.resourceId,
+        resourceJson: lastUsed.resourceJson,
+        engine: lastUsed.engine,
+      };
+      // await this.applyParameters(p);
+    }
     // Check for the encoded parameters first
     const parameters = this.$route.query.parameters as string;
     let data: TestFhirpathData;
@@ -627,7 +845,54 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     await this.evaluateFhirPathExpression();
     this.loadingData = false;
   },
+  computed: {
+    expressionVisible(): boolean {
+      return this.primaryTab === 0 || (this.secondaryTab === 0 && this.windowWidth > 999);
+    },
+    resourceVisible(): boolean {
+      return this.primaryTab === 1 || (this.secondaryTab === 1 && this.windowWidth > 999);
+    },
+    variablesVisible(): boolean {
+      return this.primaryTab === 2 || (this.secondaryTab === 2 && this.windowWidth > 999);
+    },
+    traceVisible(): boolean {
+      return this.primaryTab === 3 || (this.secondaryTab === 3 && this.windowWidth > 999);
+    },
+    astVisible(): boolean {
+      return this.primaryTab === 4 || (this.secondaryTab === 4 && this.windowWidth > 999);
+    },
+    chatVisible(): boolean {
+      return this.primaryTab === 5 || (this.secondaryTab === 5 && this.windowWidth > 999);
+    },
+    debugVisible(): boolean {
+      return this.primaryTab === 6 || (this.secondaryTab === 6 && this.windowWidth > 999);
+    },
+
+    expressionActiveClass(): string { return this.secondaryTab === 0 && this.windowWidth > 999 || this.primaryTab === 0 ? "v-tab--active" : "" },
+    resourceActiveClass(): string { return this.secondaryTab === 1 && this.windowWidth > 999 || this.primaryTab === 1 ? "v-tab--active" : "" },
+    variablesActiveClass(): string { return this.secondaryTab === 2 && this.windowWidth > 999 || this.primaryTab === 2 ? "v-tab--active" : "" },
+    traceActiveClass(): string { return this.secondaryTab === 3 && this.windowWidth > 999 || this.primaryTab === 3 ? "v-tab--active" : "" },
+    astActiveClass(): string { return this.secondaryTab === 4 && this.windowWidth > 999 || this.primaryTab === 4 ? "v-tab--active" : "" },
+    chatActiveClass(): string { return this.secondaryTab === 5 && this.windowWidth > 999 || this.primaryTab === 5 ? "v-tab--active" : "" },
+    debugActiveClass(): string { return this.secondaryTab === 6 && this.windowWidth > 999 || this.primaryTab === 6 ? "v-tab--active" : "" },
+  },
   methods: {
+    tabClicked(e: KeyboardEvent | MouseEvent): void{
+      this.lastTabClicked = e;
+    },
+    changeTab(selectTab: number): void {
+      // Primary tab is the one that is "locked" and only changeable when clicking with control
+      // The secondary tab is the one that is "switched" when clicking without control
+      if (this.primaryTab !== selectTab){
+        if (this.lastTabClicked && (this.lastTabClicked as MouseEvent).ctrlKey || this.windowWidth <= 999) {
+          this.primaryTab = selectTab;
+        }
+        else {
+          this.secondaryTab = selectTab;
+        }
+      }
+      this.lastTabClicked = undefined;
+    },
     readParametersFromQuery(): TestFhirpathData{
       let data: TestFhirpathData = {
         expression: this.$route.query.expression as string
@@ -787,7 +1052,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
 
                   if (!this.variables.has(varName)){
                     // console.log(tkn.value + ' ' + varName);
-                    updatedVariables.set(varName, { data: undefined });
+                    updatedVariables.set(varName, { name: varName,  data: undefined });
                     // provide default implementation values for known env vars
                     switch(varName){
                       case 'ucum': updatedVariables.set(varName, "http://unitsofmeasure.org"); break;
@@ -818,6 +1083,8 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     },
     settingsClosed() {
       this.showAdvancedSettings = settings.showAdvancedSettings();
+      this.chatEnabled = settings.getOpenAIKey() !== undefined;
+      this.$forceUpdate();
     },
 
     getContextExpression(): string | undefined {
@@ -868,6 +1135,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         if (this.cancelSource) this.cancelSource.cancel("new search started");
         this.cancelSource = axios.CancelToken.source();
         this.loadingData = true;
+        this.expressionParseOutcome = undefined;
         let token = this.cancelSource.token;
         let response: AxiosResponse<fhir4b.Parameters | fhir4b.OperationOutcome, any>;
         response = await axios.post<fhir4b.Parameters>(url, p,
@@ -905,6 +1173,29 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
                   this.processedByEngine = entry.part[0].valueString;
                 }
 
+                if (entry.part)
+                {
+                  this.astDebug = [];
+                  for (var part of entry.part) {
+                    if (part.name === 'parseDebugTree' && part.valueString) {
+                      let ast: JsonNode = JSON.parse(part.valueString);
+                      const lastId = AllocateNodeIds(ast);
+                      for (let i = 0; i < lastId; i++) {
+                        this.astOpen.push(i.toString());
+                      }
+                      // console.log(ast);
+                      if (this.astInverted) {
+                        this.astDebug = DecomposeAst(ast);
+                      }
+                      else {
+                        this.astDebug = [ast];
+                      }
+                    }
+                    if (part.name === 'debugOutcome' && part.resource) {
+                      this.expressionParseOutcome = part.resource as fhir4b.OperationOutcome;
+                    }
+                  }
+                }
                 continue; // skip over the configuration settings
               }
 
@@ -922,6 +1213,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
                 }
               }
               this.results.push(resultItem);
+              this.saveLastUsedParameters(true);
             }
           }
         }
@@ -970,7 +1262,6 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
           this.library = response.data;
 
           // and read the properties from the resource into the fields
-          var editor: any;
           if (this.expressionEditor) {
             this.expressionEditor.setValue(this.library?.content ? atob(this.library.content[0].data as string) : '');
             this.expressionEditor.clearSelection();
@@ -1052,6 +1343,17 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         let url = this.resourceId;
         if (this.resourceId && !this.resourceId.startsWith('http'))
           url = settings.getFhirServerUrl() + '/' + this.resourceId;
+        
+        // if trying to use the hl7 example servers, that should be over https
+        if (url.startsWith("http://build.fhir.org/")
+            || url.startsWith("http://hl7.org/fhir/"))
+            url = "https://" + url.substring(7);
+        
+        // If this is trying to download a hl7 example, run it through the downloader proxy
+        // as the HL7 servers don't have CORS for us
+        if (url.startsWith("https://build.fhir.org/")
+            || url.startsWith("https://hl7.org/fhir/"))
+            url = settings.dotnet_server_downloader() + "?url=" + url;
 
         if (this.cancelSource) this.cancelSource.cancel("new download started");
         this.cancelSource = axios.CancelToken.source();
@@ -1113,6 +1415,15 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         if (url && !url.startsWith('http'))
           url = settings.getFhirServerUrl() + '/' + url;
 
+        // if trying to use the hl7 example servers, that should be over https
+        if (url.startsWith("http://build.fhir.org/")
+            || url.startsWith("http://hl7.org/fhir/"))
+            url = "https://" + url.substring(7);
+        
+        if (url.startsWith("https://build.fhir.org/")
+          || url.startsWith("https://hl7.org/fhir/"))
+          url = settings.dotnet_server_downloader() + "?url=" + url;
+
         if (this.cancelSource) this.cancelSource.cancel("new download started");
         this.cancelSource = axios.CancelToken.source();
         this.loadingData = true;
@@ -1160,7 +1471,130 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       }
     },
 
-    async evaluateExpressionUsingFhirpathjs() {
+    GetAISettings(): IOpenAISettings {
+      return {
+        openAIKey: settings.getOpenAIKey() ?? "",
+        openAIBasePath: settings.getOpenAIBasePath(),
+        openAIApiVersion: settings.getOpenAIApiVersion(),
+        openAIModel: settings.getOpenAIModel(),
+      };
+    },
+    applySuggestedExpression(updatedExpression: string): void {
+      if (this.expressionEditor) {
+        // before blindly applying the updated text, do some cleaning of the context
+        let fhirData : fhir4b.Resource = { resourceType: 'Patient' }; // some dummy data
+        const resourceJson = this.getResourceJson();
+        if (resourceJson) {
+          try
+          {
+            fhirData = JSON.parse(resourceJson);
+          }
+          catch (err: any) {
+          }
+        }
+        if (updatedExpression.startsWith(fhirData.resourceType + "."))
+          updatedExpression = updatedExpression.substring(fhirData.resourceType.length+1);
+
+        let context = this.getContextExpression() ?? '';
+        if (context.length > 0){
+          if (updatedExpression.startsWith(context + "."))
+          updatedExpression = updatedExpression.substring(context.length+2);
+        }
+
+        this.expressionEditor.setValue(updatedExpression);
+        this.expressionEditor.clearSelection();
+        this.expressionEditor.renderer.updateFull(true);
+      }
+    },
+
+    applySuggestedContext(updatedExpression: string): void {
+      if (this.expressionContextEditor) {
+        // before blindly applying the updated text, do some cleaning of the context
+        let fhirData : fhir4b.Resource = { resourceType: 'Patient' }; // some dummy data
+        const resourceJson = this.getResourceJson();
+        if (resourceJson) {
+          try
+          {
+            fhirData = JSON.parse(resourceJson);
+          }
+          catch (err: any) {
+          }
+        }
+        if (updatedExpression.startsWith(fhirData.resourceType + "."))
+          updatedExpression = updatedExpression.substring(fhirData.resourceType.length+1);
+
+        this.expressionContextEditor.setValue(updatedExpression);
+        this.expressionContextEditor.clearSelection();
+        this.expressionContextEditor.renderer.updateFull(true);
+      }
+    },
+    
+    resetConversation(): void {
+      this.openAILastContext = "";
+    },
+
+    async handleSendMessage(message: string) {  
+      console.log("Message sent:", message);
+      const chat = this.$refs.chatComponent as Chat;
+
+      // Perform any additional actions with the message here  
+      const systemPrompt = GetSystemPrompt();
+
+      this.openAIexpressionExplanationLoading = true;
+      this.openAIexpressionExplanationMessage = "Asking question...";
+      chat.setThinking(true);
+      let userQuestionContext: string= "";
+
+      let fhirData : fhir4b.Resource = { resourceType: 'Patient' }; // some dummy data
+      const resourceJson = this.getResourceJson();
+      if (resourceJson) {
+        try
+        {
+          fhirData = JSON.parse(resourceJson);
+        }
+        catch (err: any) {
+        }
+      }
+
+      const expr = this.getFhirpathExpression() ?? '';
+      if (expr.length > 0) {
+        userQuestionContext += `Based on the FHIRPath expression \`${expr}\`\n\n`;
+        let context = this.getContextExpression() ?? '';
+        if (context.length > 0){
+          if (context.startsWith(fhirData.resourceType+'.'))
+            userQuestionContext += `being evaluated on the \`${context}\` context.\n\n`;
+          else
+            userQuestionContext += `being performed on the \`${fhirData.resourceType}.${context}\` context.\n\n`;
+        }
+        else if (!expr.startsWith(fhirData.resourceType+'.')){
+          userQuestionContext += `being evaluated on the \`${fhirData.resourceType}\` resource context.\n\n`;
+        }
+      }
+      if (userQuestionContext != this.openAILastContext){
+        if (userQuestionContext.length > 0)
+          chat.addMessage("Author", userQuestionContext, false);
+        this.openAILastContext = userQuestionContext;
+      }
+      chat.addMessage("Author", message, true);
+
+      // userQuestion += message;
+      // chat.addMessage("Author", userQuestion, true);
+
+      let prompt: Array<ChatMessage> = [];
+      prompt.push({ role: "system", content: systemPrompt});
+      prompt = prompt.concat(chat.getConversationChat());
+
+      const resultOfQuestion = await EvaluateChatPrompt(
+          prompt, this.GetAISettings(),
+          0, 
+          1000);
+      this.openAIexpressionExplanationMessage = "(Generated by OpenAI "+settings.getOpenAIModel()+")";
+      this.openAIexpressionExplanationLoading = false;
+      chat.addMessage("FhirPath AI", resultOfQuestion ?? '', true);
+      chat.setThinking(false);
+    },
+
+    async evaluateExpressionUsingFhirpathJs() {
       if (!this.getResourceJson() && this.resourceId) {
         await this.downloadTestResource();
       }
@@ -1292,7 +1726,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       // console.log(this.results);
     },
 
-    async evaluateExpressionUsingFhirpathjsR5() {
+    async evaluateExpressionUsingFhirpathJsR5() {
       if (!this.getResourceJson() && this.resourceId) {
         await this.downloadTestResource();
       }
@@ -1529,11 +1963,34 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         this.prevFocus = event.relatedTarget;
       }
     },
+
+    saveLastUsedParameters(loadCompleted: boolean): void {
+      // Write the parameters into the local storage so that can be re-loaded next time
+      const data: ILastUsedParameters = {
+        context: this.getContextExpression(),
+        expression: this.getFhirpathExpression() ?? '',
+        resourceId: this.resourceId,
+        engine: this.selectedEngine,
+        resourceJson: this.getResourceJson(),
+        loadCompleted: loadCompleted,
+      };
+      if (this.variables){
+        data.variables = [];
+        this.variables.forEach((v) => {
+          data.variables?.push(v);
+        });
+      }
+      settings.saveLastUsedParameters(data);
+    },
+
     // https://www.sitepoint.com/fetching-data-third-party-api-vue-axios/
     async evaluateFhirPathExpression() {
 
       // reset the processing engine
       this.processedByEngine = undefined;
+      this.astDebug = [];
+      this.astOpen = [];
+      this.expressionParseOutcome = undefined;
 
       // Validate the test fhir resource object
       let resourceJson = this.getResourceJson();
@@ -1559,8 +2016,11 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       //   }
       // }
 
+      this.saveLastUsedParameters(false);
+
       if (this.selectedEngine == "fhirpath.js") {
-        await this.evaluateExpressionUsingFhirpathjs();
+        await this.evaluateExpressionUsingFhirpathJs();
+        this.saveLastUsedParameters(true);
         if (this.prevFocus){
           this.prevFocus.focus();
         }
@@ -1568,7 +2028,8 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       }
 
       if (this.selectedEngine == "fhirpath.js (R5)") {
-        await this.evaluateExpressionUsingFhirpathjsR5();
+        await this.evaluateExpressionUsingFhirpathJsR5();
+        this.saveLastUsedParameters(true);
         if (this.prevFocus){
           this.prevFocus.focus();
         }
@@ -1588,6 +2049,9 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       if (contextExpression) {
         p.parameter?.push({ name: "context", valueString: contextExpression });
       }
+      // Add the debug parameter to check the expression
+      // works well enough to always ask now.
+      p.parameter?.push({ name: "validate", valueBoolean: true });
 
       // add in any variables
       if (this.variables){
@@ -1688,6 +2152,10 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     return {
       prevFocus: null,
       tab: null,
+      lastTabClicked: undefined,
+      primaryTab: 0,
+      secondaryTab: 1,
+      windowWidth: window.innerWidth,
       library: undefined,
       raw: undefined,
       resourceId: 'Patient/example',
@@ -1716,6 +2184,15 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       resourceJsonEditor: undefined,
       variables: new Map<string, VariableData>(),
       processedByEngine: undefined,
+      openAIexpressionExplanationLoading: false,
+      openAIexpressionExplanationMessage: "",
+      showChat: false,
+      chatEnabled: false,
+      openAILastContext: "",
+      astDebug: [],
+      astOpen: [],
+      expressionParseOutcome: undefined,
+      astInverted: true,
     };
   },
 });
