@@ -7,8 +7,8 @@
       <p class="leader">
         FHIRPath is heavily used in FHIR to define validations in <a href="StructureDefinition">profiles</a>, properties
         to index in <a href="SearchParameter">search definitions</a> and various features inside
-        questionnaires. The fhirpath lab is an open source tool to simplify testing fhirpath
-        expressions (R4) against the various open source fhirpath engines available (currently .net, javascript and java).
+        questionnaires. This fhirpath lab is an open source tool to simplify testing fhirpath
+        expressions against the various open source fhirpath engines available.
       </p>
       <br />
       <div class="home-grid">
