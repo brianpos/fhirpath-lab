@@ -58,7 +58,7 @@
             hide-details="auto"
             :type="AiDisplayType"
             v-model="openAIKey"
-            v-if="showAdvancedSettings && (defaultProviderField == 'Say the magic word' || openAIKey)"
+            :visible="showAdvancedSettings && (defaultProviderField == 'Say the magic word' || openAIKey)"
             title="Used to access the Open AI API in the fhirpath tester section of this app to explain fhirpath expressions"
           >
           <template v-slot:append>
@@ -166,7 +166,7 @@ export default Vue.extend({
   },
   methods: {
     toggleAIKey() {
-      console.log("toggleAIKey", this.showAIKey);
+      // console.log("toggleAIKey", this.showAIKey);
       this.showAIKey = !this.showAIKey;
     },
     closeSettings() {
