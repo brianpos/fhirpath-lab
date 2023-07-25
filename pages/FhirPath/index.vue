@@ -959,7 +959,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
 
         if (this.selectedEngine.indexOf("fhirpath.js") != -1){
           const astTab2 = this.$refs.astTabComponent2 as ParseTreeTab;
-          astTab2.displayTreeForExpression(this.getContextExpression() ?? '', this.getFhirpathExpression() ?? '');
+          astTab2?.displayTreeForExpression(this.getContextExpression() ?? '', this.getFhirpathExpression() ?? '');
         }
         // const astTab = this.$refs.astTabComponent as ParseTreeTab;
         // astTab.displayTreeForExpression(this.getContextExpression() ?? '', this.getFhirpathExpression() ?? '');
@@ -1105,7 +1105,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
                     if (part.name === 'parseDebugTree' && part.valueString) {
                       let ast: JsonNode = JSON.parse(part.valueString);
                       const astTab = this.$refs.astTabComponent2 as ParseTreeTab;
-                      astTab.displayTree(ast);
+                      astTab?.displayTree(ast);
                     }
                     if (part.name === 'debugOutcome' && part.resource) {
                       this.expressionParseOutcome = part.resource as fhir4b.OperationOutcome;
@@ -1906,7 +1906,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       // reset the processing engine
       this.processedByEngine = undefined;
       const astTab2 = this.$refs.astTabComponent2 as ParseTreeTab;
-      astTab2.clearDisplay();
+      astTab2?.clearDisplay();
       this.expressionParseOutcome = undefined;
       
       // const astTab = this.$refs.astTabComponent as ParseTreeTab;
