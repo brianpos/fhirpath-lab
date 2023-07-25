@@ -120,6 +120,12 @@ import fhirpath_r4_model from "fhirpath/fhir-context/r4";
 import fhirpath_r5_model from "fhirpath/fhir-context/r5";
 import { UndesirableEffectFrequencyCodeType } from "@fhir-typescript/r4b-core/dist/valueSetCodes";
 
+// Workaround to include the definition of the parse function
+// (which is actually there, just not in the definition)
+declare module "fhirpath" {
+  export function parse(expression: string): any;
+}
+
 export interface JsonNode {
   id?: string;
   ExpressionType: string;
@@ -380,11 +386,7 @@ export default class ParseTreeTab extends Vue {
     this.parseErrorMessage = undefined;
 
     try {
-      var ast: fpjsNode = fhirpath.parse(
-        expression,
-        context,
-        fhirpath_r4_model
-      );
+      var ast: fpjsNode = fhirpath.parse(expression);
       if (ast.children && ast.children.length > 0) {
         const node = ConvertFhirPathJsToAst(ast);
         this.astTree =
