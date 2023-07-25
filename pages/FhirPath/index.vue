@@ -88,7 +88,7 @@
                         <label class="v-label theme--light bare-label">Fhirpath Expression</label>
                         <div height="85px" width="100%" ref="aceEditorExpression"></div>
                         <div class="ace_editor_footer"></div>
-                        <parse-tree-tab v-show="false" ref="astTabComponent"></parse-tree-tab>
+                        <!-- <parse-tree-tab v-show="false" ref="astTabComponent"></parse-tree-tab> -->
 
                         <div class="results">RESULTS <span class="processedBy">{{ processedByEngine }}</span></div>
                         <OperationOutcomePanel :outcome="expressionParseOutcome" @close="expressionParseOutcome = undefined" />
@@ -205,7 +205,7 @@
                 </v-scroll-x-transition>
 
                 <v-scroll-x-transition mode="out-in" :hide-on-leave="true">
-                  <div v-show="astVisible">
+                  <div v-show="astVisible" :eager="true">
                     <!-- AST abstract syntax tree -->
                     <v-card flat>
                       <v-card-text>
@@ -625,7 +625,7 @@ interface IFhirPathProps
     aceEditorDebug: HTMLDivElement,
     aceEditorResourceJson: HTMLDivElement,
     chatComponent: Chat,
-    astTabComponent: ParseTreeTab,
+    // astTabComponent: ParseTreeTab,
     astTabComponent2: ParseTreeTab,
   },
 }
@@ -961,8 +961,8 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
           const astTab2 = this.$refs.astTabComponent2 as ParseTreeTab;
           astTab2.displayTreeForExpression(this.getContextExpression() ?? '', this.getFhirpathExpression() ?? '');
         }
-        const astTab = this.$refs.astTabComponent as ParseTreeTab;
-        astTab.displayTreeForExpression(this.getContextExpression() ?? '', this.getFhirpathExpression() ?? '');
+        // const astTab = this.$refs.astTabComponent as ParseTreeTab;
+        // astTab.displayTreeForExpression(this.getContextExpression() ?? '', this.getFhirpathExpression() ?? '');
 
         const count = session.doc.getLength();
         // accumulate the variables
@@ -1909,8 +1909,8 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       astTab2.clearDisplay();
       this.expressionParseOutcome = undefined;
       
-      const astTab = this.$refs.astTabComponent as ParseTreeTab;
-      astTab.displayTreeForExpression(this.getContextExpression() ?? '', this.getFhirpathExpression() ?? '');
+      // const astTab = this.$refs.astTabComponent as ParseTreeTab;
+      // astTab.displayTreeForExpression(this.getContextExpression() ?? '', this.getFhirpathExpression() ?? '');
 
       // Validate the test fhir resource object
       let resourceJson = this.getResourceJson();
