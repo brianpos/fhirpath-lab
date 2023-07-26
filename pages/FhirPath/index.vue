@@ -1939,7 +1939,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       this.saveLastUsedParameters(false);
 
       if (this.selectedEngine == "fhirpath.js") {
-        astTab2.displayTreeForExpression(this.getContextExpression() ?? '', this.getFhirpathExpression() ?? '');
+        astTab2?.displayTreeForExpression(this.getContextExpression() ?? '', this.getFhirpathExpression() ?? '');
         await this.evaluateExpressionUsingFhirpathJs();
         this.saveLastUsedParameters(true);
         if (this.prevFocus){
@@ -1949,7 +1949,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       }
 
       if (this.selectedEngine == "fhirpath.js (R5)") {
-        astTab2.displayTreeForExpression(this.getContextExpression() ?? '', this.getFhirpathExpression() ?? '');
+        astTab2?.displayTreeForExpression(this.getContextExpression() ?? '', this.getFhirpathExpression() ?? '');
         await this.evaluateExpressionUsingFhirpathJsR5();
         this.saveLastUsedParameters(true);
         if (this.prevFocus){
