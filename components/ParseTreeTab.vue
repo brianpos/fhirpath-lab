@@ -118,7 +118,6 @@ import { Component, Vue } from "vue-property-decorator";
 import fhirpath from "fhirpath";
 import fhirpath_r4_model from "fhirpath/fhir-context/r4";
 import fhirpath_r5_model from "fhirpath/fhir-context/r5";
-import { UndesirableEffectFrequencyCodeType } from "@fhir-typescript/r4b-core/dist/valueSetCodes";
 
 // Workaround to include the definition of the parse function
 // (which is actually there, just not in the definition)
