@@ -896,6 +896,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     if (editorResourceJsonDiv) {
       this.resourceJsonEditor = ace.edit(editorResourceJsonDiv, resourceEditorSettings);
       this.resourceJsonEditor?.setValue(JSON.stringify(JSON.parse(examplePatient), null, 2));
+      this.resourceJsonEditor?.clearSelection();
       this.resourceJsonEditor.session.on("change", this.resourceJsonChangedEvent);
     }
 
