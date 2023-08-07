@@ -58,13 +58,13 @@
                 <v-icon left> mdi-format-list-bulleted </v-icon>
                 Trace
               </v-tab>
-              <v-tab v-show="astDebug.length > 0" :class="astActiveClass" v-on:click="tabClicked">
+              <v-tab :class="astActiveClass" v-on:click="tabClicked">
                 <v-icon left> mdi-file-tree </v-icon>
                 AST
               </v-tab>
-              <v-tab v-show="showAdvancedSettings" :class="chatActiveClass" v-on:click="tabClicked">
+              <v-tab v-show="showAdvancedSettings && chatEnabled" :class="chatActiveClass" v-on:click="tabClicked">
                 <v-icon left> mdi-brain </v-icon>
-                Chat
+                AI Chat
               </v-tab>
               <v-tab v-show="showAdvancedSettings" :class="debugActiveClass" v-on:click="tabClicked">
                 <v-icon left> mdi-bug-outline </v-icon>
@@ -88,6 +88,7 @@
                         <label class="v-label theme--light bare-label">Fhirpath Expression</label>
                         <div height="85px" width="100%" ref="aceEditorExpression"></div>
                         <div class="ace_editor_footer"></div>
+                        <!-- <parse-tree-tab v-show="false" ref="astTabComponent"></parse-tree-tab> -->
 
                         <div class="results">RESULTS <span class="processedBy">{{ processedByEngine }}</span></div>
                         <OperationOutcomePanel :outcome="expressionParseOutcome" @close="expressionParseOutcome = undefined" />
@@ -204,59 +205,13 @@
                 </v-scroll-x-transition>
 
                 <v-scroll-x-transition mode="out-in" :hide-on-leave="true">
-                  <div v-show="astVisible">
+                  <div v-show="astVisible" :eager="true">
                     <!-- AST abstract syntax tree -->
                     <v-card flat>
                       <v-card-text>
                         <p class="fl-tab-header">Abstract Syntax Tree</p>
                         <OperationOutcomePanel :outcome="expressionParseOutcome" @close="expressionParseOutcome = undefined" />
-                        <v-treeview
-                          :items="astDebug"
-                          :open="astOpen"
-                          activatable
-                          :dense="true"
-                          item-key="id"
-                          item-text="Name"
-                          item-children="Arguments"
-                          :open-all="true"
-                          open-on-click
-                        >
-                          <template v-slot:prepend="{ item, open }">
-                            <v-icon v-if="item.ReturnType.length == 0" color="red">
-                              mdi-alert-octagon
-                            </v-icon>
-                          </template>
-                          <template v-slot:label="{ item, open }">
-                            <template v-if="item.ExpressionType === 'FunctionCallExpression'">
-                              .{{ item.Name }}(<template v-if="item.Arguments.length > 0">...</template>) <span style="color: grey">: {{ item.ReturnType }}</span>
-                            </template>
-                            <template v-else-if="item.ExpressionType === 'ConstantExpression'">
-                              <span style="color: #a31515;">'{{ item.Name }}'</span> <span style="color: grey" v-if="item.ReturnType.length > 0">: {{ item.ReturnType }}</span>
-                            </template>
-                            <template v-else-if="item.ExpressionType === 'ChildExpression'">
-                              .<span style="color: #318495; font-weight: bold">{{ item.Name }}</span> <span style="color: grey" v-if="item.ReturnType.length > 0">: {{ item.ReturnType }}</span>
-                            </template>
-                            <template v-else-if="item.ExpressionType === 'VariableRefExpression'">
-                              <span style="color: #b255a5; font-weight: bold">%{{ item.Name }}</span> <span style="color: grey" v-if="item.ReturnType.length > 0">: {{ item.ReturnType }}</span>
-                            </template>
-                            <template v-else-if="item.ExpressionType === 'AxisExpression' && item.Name === 'builtin.this'">
-                              <span style="color: #0000ff; font-weight: bold">$this</span> <span style="color: grey" v-if="item.ReturnType.length > 0">: {{ item.ReturnType }}</span>
-                            </template>
-                            <template v-else-if="item.ExpressionType === 'AxisExpression' && item.Name === 'builtin.that'">
-                              <span style="color: #0000ff;">Expression Scope</span> <span style="color: grey" v-if="item.ReturnType.length > 0">: {{ item.ReturnType }}</span>
-                            </template>
-                            <template v-else>
-                              {{ item.Name }} <span style="color: grey">: {{ item.ReturnType }}</span> ({{ item.ExpressionType }})
-                            </template>
-                            <template v-if="item.ReturnType.length == 0">
-                              <i><b>(no return type calculated)</b></i>
-                            </template>
-                            <!-- <template>
-                              {{ item.id }}
-                            </template> -->
-                          </template>
-                        </v-treeview>
-                        <v-checkbox v-model="astInverted" label="Inverted Tree" messages="(re-evaluate to apply)"></v-checkbox>
+                        <parse-tree-tab ref="astTabComponent2"></parse-tree-tab>
                       </v-card-text>
                     </v-card>
                   </div>
@@ -465,6 +420,7 @@ import axios, { AxiosRequestHeaders, AxiosResponse } from "axios";
 import { AxiosError } from "axios";
 import { CancelTokenSource } from "axios";
 import { getExtensionStringValue } from "fhir-extension-helpers";
+import { InvertTree, JsonNode } from "~/components/ParseTreeTab.vue";
 // import { getPreferredTerminologyServerFromSDC } from "fhir-sdc-helpers";
 import fhirpath from "fhirpath";
 import fhirpath_r4_model from "fhirpath/fhir-context/r4";
@@ -487,15 +443,180 @@ import { VariableData, EncodeTestFhirpathData, DecodeTestFhirpathData, TestFhirp
 
 import { EvaluateChatPrompt, GetSystemPrompt, IOpenAISettings } from "~/helpers/openai_utils";
 import { ChatMessage } from "@azure/openai";
+import ParseTreeTab from "~/components/ParseTreeTab.vue";
 
 const shareTooltipText = 'Copy a sharable link to this test expression';
 const shareZulipTooltipText = 'Copy a sharable link for Zulip to this test expression';
+
+const examplePatient = `
+{
+  "resourceType": "Patient",
+  "id": "example",
+  "identifier": [
+    {
+      "use": "usual",
+      "type": {
+        "coding": [
+          {
+            "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+            "code": "MR"
+          }
+        ]
+      },
+      "system": "urn:oid:1.2.36.146.595.217.0.1",
+      "value": "12345",
+      "period": {
+        "start": "2001-05-06"
+      },
+      "assigner": {
+        "display": "Acme Healthcare"
+      }
+    }
+  ],
+  "active": true,
+  "name": [
+  {
+  "use": "official",
+  "family": "Chalmers",
+  "given": [
+  "Peter",
+  "James"
+  ]
+  },
+  {
+  "use": "usual",
+  "given": [
+  "Jim"
+  ]
+  },
+  {
+  "use": "maiden",
+  "family": "Windsor",
+  "given": [
+  "Peter",
+  "James"
+  ],
+  "period": {
+  "end": "2002"
+  }
+  }
+  ],
+  "telecom": [
+  {
+  "use": "home"
+  },
+  {
+  "system": "phone",
+  "value": "(03) 5555 6473",
+  "use": "work",
+  "rank": 1
+  },
+  {
+  "system": "phone",
+  "value": "(03) 3410 5613",
+  "use": "mobile",
+  "rank": 2
+  },
+  {
+  "system": "phone",
+  "value": "(03) 5555 8834",
+  "use": "old",
+  "period": {
+  "end": "2014"
+  }
+  }
+  ],
+  "gender": "male",
+  "birthDate": "1974-12-25",
+  "_birthDate": {
+  "extension": [
+  {
+  "url": "http://hl7.org/fhir/StructureDefinition/patient-birthTime",
+  "valueDateTime": "1974-12-25T14:35:45-05:00"
+  }
+  ]
+  },
+  "deceasedBoolean": false,
+  "address": [
+  {
+  "use": "home",
+  "type": "both",
+  "text": "534 Erewhon St PeasantVille, Rainbow, Vic  3999",
+  "line": [
+  "534 Erewhon St"
+  ],
+  "city": "PleasantVille",
+  "district": "Rainbow",
+  "state": "Vic",
+  "postalCode": "3999",
+  "period": {
+  "start": "1974-12-25"
+  }
+  }
+  ],
+  "contact": [
+  {
+  "relationship": [
+  {
+  "coding": [
+  {
+  "system": "http://terminology.hl7.org/CodeSystem/v2-0131",
+  "code": "N"
+  }
+  ]
+  }
+  ],
+  "name": {
+  "family": "du Marché",
+  "_family": {
+  "extension": [
+  {
+  "url": "http://hl7.org/fhir/StructureDefinition/humanname-own-prefix",
+  "valueString": "VV"
+  }
+  ]
+  },
+  "given": [
+  "Bénédicte"
+  ]
+  },
+  "telecom": [
+  {
+  "system": "phone",
+  "value": "+33 (237) 998327"
+  }
+  ],
+  "address": {
+  "use": "home",
+  "type": "both",
+  "line": [
+  "534 Erewhon St"
+  ],
+  "city": "PleasantVille",
+  "district": "Rainbow",
+  "state": "Vic",
+  "postalCode": "3999",
+  "period": {
+  "start": "1974-12-25"
+  }
+  },
+  "gender": "female",
+  "period": {
+  "start": "2012"
+  }
+  }
+  ],
+  "managingOrganization": {
+  "reference": "Organization/1"
+  }
+}`;
 
 interface FhirPathData {
   prevFocus?: any;
   raw?: fhir4b.Parameters;
   library?: fhir4b.Library;
   resourceId?: string;
+  resourceType?: string;
   resourceJsonChanged: boolean;
   loadingData: boolean;
   saveOutcome?: fhir4b.OperationOutcome;
@@ -524,18 +645,8 @@ interface FhirPathData {
   chatEnabled: boolean;
   showChat: boolean;
   openAILastContext: string;
-  astDebug: JsonNode[];
-  astOpen: string[];
   expressionParseOutcome?: fhir4b.OperationOutcome;
   astInverted: boolean;
-}
-
-interface JsonNode {
-  id?: string;
-  ExpressionType: string;
-  Name: string;
-  Arguments?: JsonNode[];
-  ReturnType?: string;
 }
 
 interface ResultItem {
@@ -600,37 +711,6 @@ function getTraceValue(entry: fhir4b.ParametersParameter): TraceData[] {
       result.push(valueData);
     }
   }
-  return result;
-}
-
-function AllocateNodeIds(ast: JsonNode, startAt: number = 0) : number{
-  ast.id = startAt.toString();
-  startAt++;
-  ast.Arguments?.forEach(element => {
-    startAt = AllocateNodeIds(element, startAt);
-  });
-  return startAt;
-}
-
-function DecomposeAst(ast: JsonNode): JsonNode[] {
-  let result: JsonNode[] = [];
-  if (ast.Arguments){
-    const focus = DecomposeAst(ast.Arguments[0]);
-    result.push(... focus);
-    const args = ast.Arguments.splice(0,1);
-    if (args?.length > 0) {
-      let newArgs: JsonNode[] = [];
-      ast.Arguments.forEach(element => {
-        const elementArgs = DecomposeAst(element);
-        newArgs.push(... elementArgs);
-      });
-      ast.Arguments = newArgs;
-    }
-    else {
-      delete ast.Arguments;
-    }
-  }
-  result.push(ast);
   return result;
 }
 
@@ -709,6 +789,8 @@ interface IFhirPathProps
     aceEditorDebug: HTMLDivElement,
     aceEditorResourceJson: HTMLDivElement,
     chatComponent: Chat,
+    // astTabComponent: ParseTreeTab,
+    astTabComponent2: ParseTreeTab,
   },
 }
 
@@ -813,6 +895,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     var editorResourceJsonDiv: any = this.$refs.aceEditorResourceJsonTab as Element;
     if (editorResourceJsonDiv) {
       this.resourceJsonEditor = ace.edit(editorResourceJsonDiv, resourceEditorSettings);
+      this.resourceJsonEditor?.setValue(JSON.stringify(JSON.parse(examplePatient), null, 2));
       this.resourceJsonEditor.session.on("change", this.resourceJsonChangedEvent);
     }
 
@@ -1038,6 +1121,14 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       // Check the expression to see if there are any variables in there
       const session = this.expressionEditor?.session;
       if (session){
+
+        if (this.selectedEngine.indexOf("fhirpath.js") != -1){
+          const astTab2 = this.$refs.astTabComponent2 as ParseTreeTab;
+          astTab2?.displayTreeForExpression(this.getContextExpression() ?? '', this.getFhirpathExpression() ?? '');
+        }
+        // const astTab = this.$refs.astTabComponent as ParseTreeTab;
+        // astTab.displayTreeForExpression(this.getContextExpression() ?? '', this.getFhirpathExpression() ?? '');
+
         const count = session.doc.getLength();
         // accumulate the variables
         let updatedVariables = new Map<string, any>();
@@ -1175,21 +1266,11 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
 
                 if (entry.part)
                 {
-                  this.astDebug = [];
                   for (var part of entry.part) {
                     if (part.name === 'parseDebugTree' && part.valueString) {
                       let ast: JsonNode = JSON.parse(part.valueString);
-                      const lastId = AllocateNodeIds(ast);
-                      for (let i = 0; i < lastId; i++) {
-                        this.astOpen.push(i.toString());
-                      }
-                      // console.log(ast);
-                      if (this.astInverted) {
-                        this.astDebug = DecomposeAst(ast);
-                      }
-                      else {
-                        this.astDebug = [ast];
-                      }
+                      const astTab = this.$refs.astTabComponent2 as ParseTreeTab;
+                      astTab?.displayTree(ast);
                     }
                     if (part.name === 'debugOutcome' && part.resource) {
                       this.expressionParseOutcome = part.resource as fhir4b.OperationOutcome;
@@ -1376,6 +1457,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
 
         const results = response.data;
         if (results) {
+          this.resourceType = results.resourceType;
           if (this.resourceJsonEditor) {
             const resourceJson = JSON.stringify(results, null, 4);
             if (resourceJson) {
@@ -1402,6 +1484,10 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
             this.showOutcome = true;
             return serverError.response.data;
           }
+          // console.log("Axios Error:", err);
+          this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
+          this.saveOutcome?.issue.push({ code: 'unknown', severity: 'fatal', details: { text: err.message }, diagnostics: err.code });
+          this.showOutcome = true;
         } else {
           console.log("Client Error:", err);
         }
@@ -1613,6 +1699,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         try
         {
         fhirData = JSON.parse(resourceJson);
+        this.resourceType = fhirData.resourceType;
       }
         catch (err: any) {
           console.log(err);
@@ -1644,6 +1731,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       (this as any).$appInsights?.trackEvent({ name: 'evaluate fhirpath.js' });
 
       const contextExpression = this.getContextExpression();
+
       if (contextExpression) {
         // scan over each of the expressions
         try {
@@ -1988,9 +2076,12 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
 
       // reset the processing engine
       this.processedByEngine = undefined;
-      this.astDebug = [];
-      this.astOpen = [];
+      const astTab2 = this.$refs.astTabComponent2 as ParseTreeTab;
+      astTab2?.clearDisplay();
       this.expressionParseOutcome = undefined;
+      
+      // const astTab = this.$refs.astTabComponent as ParseTreeTab;
+      // astTab.displayTreeForExpression(this.getContextExpression() ?? '', this.getFhirpathExpression() ?? '');
 
       // Validate the test fhir resource object
       let resourceJson = this.getResourceJson();
@@ -2019,6 +2110,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       this.saveLastUsedParameters(false);
 
       if (this.selectedEngine == "fhirpath.js") {
+        astTab2?.displayTreeForExpression(this.getContextExpression() ?? '', this.getFhirpathExpression() ?? '');
         await this.evaluateExpressionUsingFhirpathJs();
         this.saveLastUsedParameters(true);
         if (this.prevFocus){
@@ -2028,6 +2120,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       }
 
       if (this.selectedEngine == "fhirpath.js (R5)") {
+        astTab2?.displayTreeForExpression(this.getContextExpression() ?? '', this.getFhirpathExpression() ?? '');
         await this.evaluateExpressionUsingFhirpathJsR5();
         this.saveLastUsedParameters(true);
         if (this.prevFocus){
@@ -2091,6 +2184,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         // https://github.com/jkiddo/fhirpath-tester/blob/main/src/main/java/org/example/Evaluator.java (brianpos fork of this)
         // https://docs.microsoft.com/en-us/azure/devops/pipelines/ecosystems/java-function?view=azure-devops
         url = settings.java_server_r4b();
+        astTab2.clearDisplay("AST not supported");
 
         if (!this.getResourceJson() && this.resourceId) {
           await this.downloadTestResource();
@@ -2103,6 +2197,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         // https://github.com/jkiddo/fhirpath-tester/blob/main/src/main/java/org/example/Evaluator.java (brianpos fork of this)
         // https://docs.microsoft.com/en-us/azure/devops/pipelines/ecosystems/java-function?view=azure-devops
         url = settings.java_server_r5();
+        astTab2.clearDisplay("AST not supported");
 
         if (!this.getResourceJson() && this.resourceId) {
           await this.downloadTestResource();
@@ -2113,6 +2208,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       }
       else if (this.selectedEngine == "java (IBM)") {
         url = settings.ibm_server_r4b();
+        astTab2.clearDisplay("AST not supported");
 
         if (!this.getResourceJson() && this.resourceId) {
           await this.downloadTestResource();
@@ -2158,7 +2254,8 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       windowWidth: window.innerWidth,
       library: undefined,
       raw: undefined,
-      resourceId: 'Patient/example',
+      resourceId: undefined,
+      resourceType: 'Patient',
       resourceJsonChanged: false,
       loadingData: true,
       saveOutcome: undefined,
@@ -2189,8 +2286,6 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       showChat: false,
       chatEnabled: false,
       openAILastContext: "",
-      astDebug: [],
-      astOpen: [],
       expressionParseOutcome: undefined,
       astInverted: true,
     };
