@@ -62,9 +62,9 @@
                 <v-icon left> mdi-file-tree </v-icon>
                 AST
               </v-tab>
-              <v-tab v-show="showAdvancedSettings" :class="chatActiveClass" v-on:click="tabClicked">
+              <v-tab v-show="showAdvancedSettings && chatEnabled" :class="chatActiveClass" v-on:click="tabClicked">
                 <v-icon left> mdi-brain </v-icon>
-                Chat
+                AI Chat
               </v-tab>
               <v-tab v-show="showAdvancedSettings" :class="debugActiveClass" v-on:click="tabClicked">
                 <v-icon left> mdi-bug-outline </v-icon>
