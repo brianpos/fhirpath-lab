@@ -448,11 +448,175 @@ import ParseTreeTab from "~/components/ParseTreeTab.vue";
 const shareTooltipText = 'Copy a sharable link to this test expression';
 const shareZulipTooltipText = 'Copy a sharable link for Zulip to this test expression';
 
+const examplePatient = `
+{
+  "resourceType": "Patient",
+  "id": "example",
+  "identifier": [
+    {
+      "use": "usual",
+      "type": {
+        "coding": [
+          {
+            "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+            "code": "MR"
+          }
+        ]
+      },
+      "system": "urn:oid:1.2.36.146.595.217.0.1",
+      "value": "12345",
+      "period": {
+        "start": "2001-05-06"
+      },
+      "assigner": {
+        "display": "Acme Healthcare"
+      }
+    }
+  ],
+  "active": true,
+  "name": [
+  {
+  "use": "official",
+  "family": "Chalmers",
+  "given": [
+  "Peter",
+  "James"
+  ]
+  },
+  {
+  "use": "usual",
+  "given": [
+  "Jim"
+  ]
+  },
+  {
+  "use": "maiden",
+  "family": "Windsor",
+  "given": [
+  "Peter",
+  "James"
+  ],
+  "period": {
+  "end": "2002"
+  }
+  }
+  ],
+  "telecom": [
+  {
+  "use": "home"
+  },
+  {
+  "system": "phone",
+  "value": "(03) 5555 6473",
+  "use": "work",
+  "rank": 1
+  },
+  {
+  "system": "phone",
+  "value": "(03) 3410 5613",
+  "use": "mobile",
+  "rank": 2
+  },
+  {
+  "system": "phone",
+  "value": "(03) 5555 8834",
+  "use": "old",
+  "period": {
+  "end": "2014"
+  }
+  }
+  ],
+  "gender": "male",
+  "birthDate": "1974-12-25",
+  "_birthDate": {
+  "extension": [
+  {
+  "url": "http://hl7.org/fhir/StructureDefinition/patient-birthTime",
+  "valueDateTime": "1974-12-25T14:35:45-05:00"
+  }
+  ]
+  },
+  "deceasedBoolean": false,
+  "address": [
+  {
+  "use": "home",
+  "type": "both",
+  "text": "534 Erewhon St PeasantVille, Rainbow, Vic  3999",
+  "line": [
+  "534 Erewhon St"
+  ],
+  "city": "PleasantVille",
+  "district": "Rainbow",
+  "state": "Vic",
+  "postalCode": "3999",
+  "period": {
+  "start": "1974-12-25"
+  }
+  }
+  ],
+  "contact": [
+  {
+  "relationship": [
+  {
+  "coding": [
+  {
+  "system": "http://terminology.hl7.org/CodeSystem/v2-0131",
+  "code": "N"
+  }
+  ]
+  }
+  ],
+  "name": {
+  "family": "du Marché",
+  "_family": {
+  "extension": [
+  {
+  "url": "http://hl7.org/fhir/StructureDefinition/humanname-own-prefix",
+  "valueString": "VV"
+  }
+  ]
+  },
+  "given": [
+  "Bénédicte"
+  ]
+  },
+  "telecom": [
+  {
+  "system": "phone",
+  "value": "+33 (237) 998327"
+  }
+  ],
+  "address": {
+  "use": "home",
+  "type": "both",
+  "line": [
+  "534 Erewhon St"
+  ],
+  "city": "PleasantVille",
+  "district": "Rainbow",
+  "state": "Vic",
+  "postalCode": "3999",
+  "period": {
+  "start": "1974-12-25"
+  }
+  },
+  "gender": "female",
+  "period": {
+  "start": "2012"
+  }
+  }
+  ],
+  "managingOrganization": {
+  "reference": "Organization/1"
+  }
+}`;
+
 interface FhirPathData {
   prevFocus?: any;
   raw?: fhir4b.Parameters;
   library?: fhir4b.Library;
   resourceId?: string;
+  resourceType?: string;
   resourceJsonChanged: boolean;
   loadingData: boolean;
   saveOutcome?: fhir4b.OperationOutcome;
@@ -731,6 +895,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     var editorResourceJsonDiv: any = this.$refs.aceEditorResourceJsonTab as Element;
     if (editorResourceJsonDiv) {
       this.resourceJsonEditor = ace.edit(editorResourceJsonDiv, resourceEditorSettings);
+      this.resourceJsonEditor?.setValue(JSON.stringify(JSON.parse(examplePatient), null, 2));
       this.resourceJsonEditor.session.on("change", this.resourceJsonChangedEvent);
     }
 
@@ -1292,6 +1457,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
 
         const results = response.data;
         if (results) {
+          this.resourceType = results.resourceType;
           if (this.resourceJsonEditor) {
             const resourceJson = JSON.stringify(results, null, 4);
             if (resourceJson) {
@@ -1318,6 +1484,10 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
             this.showOutcome = true;
             return serverError.response.data;
           }
+          // console.log("Axios Error:", err);
+          this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
+          this.saveOutcome?.issue.push({ code: 'unknown', severity: 'fatal', details: { text: err.message }, diagnostics: err.code });
+          this.showOutcome = true;
         } else {
           console.log("Client Error:", err);
         }
@@ -1529,6 +1699,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         try
         {
         fhirData = JSON.parse(resourceJson);
+        this.resourceType = fhirData.resourceType;
       }
         catch (err: any) {
           console.log(err);
@@ -2083,7 +2254,8 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       windowWidth: window.innerWidth,
       library: undefined,
       raw: undefined,
-      resourceId: 'Patient/example',
+      resourceId: undefined,
+      resourceType: 'Patient',
       resourceJsonChanged: false,
       loadingData: true,
       saveOutcome: undefined,
