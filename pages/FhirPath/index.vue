@@ -2185,7 +2185,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         // https://github.com/jkiddo/fhirpath-tester/blob/main/src/main/java/org/example/Evaluator.java (brianpos fork of this)
         // https://docs.microsoft.com/en-us/azure/devops/pipelines/ecosystems/java-function?view=azure-devops
         url = settings.java_server_r4b();
-        astTab2.clearDisplay("AST not supported");
+        astTab2?.clearDisplay("AST not supported");
 
         if (!this.getResourceJson() && this.resourceId) {
           await this.downloadTestResource();
@@ -2198,7 +2198,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         // https://github.com/jkiddo/fhirpath-tester/blob/main/src/main/java/org/example/Evaluator.java (brianpos fork of this)
         // https://docs.microsoft.com/en-us/azure/devops/pipelines/ecosystems/java-function?view=azure-devops
         url = settings.java_server_r5();
-        astTab2.clearDisplay("AST not supported");
+        astTab2?.clearDisplay("AST not supported");
 
         if (!this.getResourceJson() && this.resourceId) {
           await this.downloadTestResource();
@@ -2209,7 +2209,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       }
       else if (this.selectedEngine == "java (IBM)") {
         url = settings.ibm_server_r4b();
-        astTab2.clearDisplay("AST not supported");
+        astTab2?.clearDisplay("AST not supported");
 
         if (!this.getResourceJson() && this.resourceId) {
           await this.downloadTestResource();
