@@ -35,11 +35,86 @@
         }
 
         .layout>div {
+            /* border: 4px dashed green; */
+            max-height: calc(100vh - 108px);
+            /* overflow-y: auto; */
+            padding: 8px;
+            width: calc(25vw - 10px);
+        }
+
+        .layout>div:nth-child(n + 5) {
             border: 1px dashed silver;
             height: calc(100vh - 108px);
             overflow-y: auto;
             padding: 8px;
-            width: calc((100vw / 4) - 10px);
+            width: calc(25vw - 10px);
+        }
+
+        #prefill-error {
+            color: red;
+            font-style: bold;
+        }
+
+        #prefill-status {
+            padding-left: 8px;
+        }
+
+        @media (max-width: 1250px) {
+            .layout {
+                grid-template-columns: auto auto;
+                grid-template-rows: unset;
+            }
+
+            .layout>div:nth-child(n + 5) {
+                height: unset;
+                max-height: calc(70vh - 108px);
+                width: calc(50vw - 10px);
+                overflow-y: unset;
+            }
+
+            .layout>div {
+                height: unset;
+                max-height: calc(70vh - 108px);
+                width: calc(50vw - 10px);
+                overflow-y: unset;
+            }
+
+            .editor {
+                height: calc(70vh - 250px);
+            }
+
+            .editorIPS {
+                height: calc(70vh - 348px);
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .layout {
+                grid-template-columns: unset;
+                grid-template-rows: auto auto auto auto;
+            }
+
+            .layout>div {
+                height: unset;
+                max-height: calc(70vh - 108px);
+                width: calc(100vw - 10px);
+                overflow-y: unset;
+            }
+
+            .layout>div:nth-child(n + 5) {
+                height: unset;
+                max-height: calc(70vh - 108px);
+                width: calc(100vw - 10px);
+                overflow-y: unset;
+            }
+
+            .editor {
+                height: calc(70vh - 250px);
+            }
+
+            .editorIPS {
+                height: calc(70vh - 348px);
+            }
         }
     </style>
 </head>
@@ -52,28 +127,7 @@
     </nav>
     <div class="container2 layout">
         <div>
-            <h2>1. Source IPS Bundle</h2>
-            <label class="form-label">Fetch from URL</label>
-            <div class="input-group">
-                <input id="urlIPS" width="0" class="form-control" type="text" name="" placeholder=""
-                    value="https://ips.health/fhir/Patient/98549f1a-e0d5-4454-849c-f5b97d3ed299/$summary">
-                <button class="input-group-text" id="btnDownloadIPS"><span class="iconify"
-                        data-icon="mdi-download"></span></button>
-            </div>
-            <label class="form-label">or from shlink</label>
-            <div class="input-group">
-                <input id="shlink" width="0" class="form-control" type="text" name="" placeholder=""
-                    value="shlink:/eyJ1cmwiOiJodHRwczovL2FwaS52YXh4LmxpbmsvYXBpL3NobC9lNGZhMzdfMVotZ0t5Uko0cEJKYTkzczZreG9IZUNUYVN3V04wSGNuckowIiwiZmxhZyI6IiIsImtleSI6Il9Eekx6UEJOdWgwclpfWkpySVRCMF82N2gzREpWRlNMMVEyTnEzRUE0UW8iLCJsYWJlbCI6IlNITCBmcm9tIDIwMjMtMDgtMjQifQ">
-                <button class="input-group-text" id="btnDownloadSHLink"><span class="iconify"
-                        data-icon="mdi-download"></span></button>
-            </div>
-
-            <div>
-                <div id="editorIPS" class="editorIPS"></div>
-            </div>
-        </div>
-        <div>
-            <h2>2. Questionnaire</h2>
+            <h2>Intake Form</h2>
             <div class="input-group">
                 <input id="urlQuestionnaire" width="0" class="form-control" type="text" name="" placeholder=""
                     value="https://fhir.forms-lab.com/Questionnaire/ips-prepop">
@@ -82,61 +136,66 @@
                 <button class="input-group-text" id="btnFormatQuestionnaire"><span class="iconify"
                         data-icon="mdi-format-indent-increase"></span></button>
             </div>
+            <div id="myFormContainer"></div>
+        </div>
+        <div>
+            <h2>Auto-populate</h2>
+            <p>
+                You can partially complete this form using data from an International Patient Summary (IPS) formatted
+                medical record.<br />
+                Warning: This will clear any data already entered in the form.<br />
+                Select one of the below options to retrieve your medical record.
+            </p>
+            <label class="form-label">Direct IPS Address</label>
+            <div class="input-group">
+                <input id="urlIPS" width="0" class="form-control" type="text" name=""
+                    placeholder="Direct URL to IPS Bundle"
+                    value="https://hapi.fhir.org/baseR4/Patient/1221256/$summary">
+                <button class="input-group-text" id="btnDownloadIPS"><span class="iconify"
+                        data-icon="mdi-download"></span></button>
+            </div>
+            <label class="form-label">Smart Health Link (QR code)</label>
+            <div class="input-group">
+                <input id="shlink" width="0" class="form-control" type="text" name="" placeholder=""
+                    value="https://shlink.ips.health/ips#shlink:/eyJ1cmwiOiJodHRwczovL2FwaS52YXh4LmxpbmsvYXBpL3NobC8wMTNxS1YwZWRQWTdyVWNZYWpEa0V1ejZ0eGJ3WGs1Ums0N2tHanZrS1NBIiwiZmxhZyI6IiIsImtleSI6Ijh0bXpKQ0tvdDVKSHd2dmVNTzBsWmNJaXRGY3NpRmdzVWxFYTltVGN6TDgiLCJsYWJlbCI6IlNITCBmcm9tIDIwMjMtMDgtMjkifQ">
+                <button class="input-group-text" id="btnDownloadSHLink"><span class="iconify"
+                        data-icon="mdi-download"></span></button>
+            </div>
+            <p>
+                <i>Or manually enter your IPS Bundle into the editor below</i>
+                <br />
+            <div class="form-inline">
+                <button id="prepopQuestionnaire" class="btn btn-primary">Pre-fill from Medical Record</button>
+                <label id="prefill-status"></label>
+                <label id="prefill-error"></label>
+            </div>
+            </p>
+            <p>
+                <a href="https://www.hl7.org/fhir/uv/ips/2021Sep/ips.html" target="_blank">IPS</a> is a standard for
+                exchanging
+                patient data. It is a bundle of FHIR resources that can be used to pre-populate a form.
+            </p>
+        </div>
+        <div></div>
+        <div></div>
+        <div>
+            <h2>Questionnaire Definition <button id="renderQuestionnaire" class="btn btn-primary">Render</button></h2>
             <div id="editorQuestionnaire" class="editor"></div>
         </div>
         <div>
-            <h2>3. Run pre-population</h2>
-            <div>
-                <button id="renderQuestionnaire" class="btn btn-primary">Render</button>
-                <button id="prepopQuestionnaire" class="btn btn-primary">Pre Pop</button>
-                <span id="savingMessage"></span>
-            </div>
-            <div id="editorQR" class="editorIPS"></div>
+            <h2>IPS Bundle</h2>
+            <div id="editorIPS" class="editor"></div>
         </div>
         <div>
-            <h2>4. Preview</h2>
-            <div id="myFormContainer"></div>
+            <h2>Prepop Request</h2>
+            <div id="editorPrePopParams" class="editor"></div>
+        </div>
+        <div>
+            <h2>Prepop Response</h2>
+            <div id="editorQR" class="editor"></div>
         </div>
     </div>
 
-    <script type="module">
-        import * as shlClient from 'https://demo.vaxx.link/viewer/index.js';
-        import { verify } from 'https://demo.vaxx.link/viewer/shc-decoder.js';
-        var shl;
-
-        $("#btnDownloadSHLink").click(async function () {
-            editorIPS.setValue("loading Smart Health Link ...");
-            editorIPS.clearSelection();
-
-            shl = $("#shlink").val().match(/shlink:\/.*/)?.[0];
-            if (shl) {
-                retrieve()
-            }
-        });
-
-
-        async function retrieve() {
-            const recipient = "IPS Viewer Demonstration";
-
-            let passcode;
-            const needPasscode = shlClient.flag({ shl }).includes('P');
-            if (needPasscode) {
-                passcode = prompt("Enter passcode for SMART Health Link");
-            }
-
-            const retrieved = await shlClient.retrieve({
-                shl,
-                passcode,
-                recipient
-            });
-
-            const decoded = await Promise.all(retrieved.shcs.map(verify));
-            const data = decoded[0].fhirBundle
-
-            editorIPS.setValue(JSON.stringify(data, null, 4));
-            editorIPS.clearSelection();
-        }
-    </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
         crossorigin="anonymous"></script>
@@ -159,26 +218,39 @@
         var editorQuestionnaire;
         var editorIPS;
         var editorQR;
+        var editorPrePopParams;
 
-        $("#btnDownloadIPS").click(async function () {
-            editorIPS.setValue("loading IPS Bundle direct ...");
-            editorIPS.clearSelection();
-            const ipsURL = $("#urlIPS").val();
-            const response = await fetch(ipsURL, { cache: "no-cache", headers: { accept: "application/json" } });
-            const raw = await response.text();
-            try {
-                const json = JSON.parse(raw);
-                editorIPS.setValue(JSON.stringify(json, null, 4));
-                editorIPS.clearSelection();
-            }
-            catch (err) {
-                console.log(err);
-                editorIPS.setValue(raw);
-                editorIPS.clearSelection();
-            }
+        $(document).ready(function () {
+
+            editorIPS = ace.edit("editorIPS");
+            editorIPS.setTheme("ace/theme/solarized_light");
+            editorIPS.session.setMode("ace/mode/json");
+            editorIPS.setValue(JSON.stringify(sampleIPS, null, 4));
+
+            editorQuestionnaire = ace.edit("editorQuestionnaire");
+            editorQuestionnaire.setTheme("ace/theme/solarized_light");
+            editorQuestionnaire.session.setMode("ace/mode/json");
+
+            editorQR = ace.edit("editorQR");
+            editorQR.setTheme("ace/theme/solarized_light");
+            editorQR.session.setMode("ace/mode/json");
+
+            editorPrePopParams = ace.edit("editorPrePopParams");
+            editorPrePopParams.setTheme("ace/theme/solarized_light");
+            editorPrePopParams.session.setMode("ace/mode/json");
+
+            var fhirContext = {
+                fhir: FHIR.client({
+                    serverUrl: "https://sqlonfhir-r4.azurewebsites.net/fhir",
+                    tokenResponse: { patient: "https://sqlonfhir-r4.azurewebsites.net/fhir/Patient/example" }
+                })
+            };
+            LForms.Util.setFHIRContext(fhirContext.fhir);
+            LForms.Util.addFormToPage(formDefinition, 'myFormContainer', options);
         });
 
         $("#btnDownloadQuestionnaire").click(async function () {
+            $("#prefill-error").text("");
             editorQuestionnaire.setValue("loading ...");
             editorQuestionnaire.clearSelection();
             const questionnaireURL = $("#urlQuestionnaire").val();
@@ -198,34 +270,11 @@
                 console.log(err);
             }
         });
+
         $("#btnFormatQuestionnaire").click(function () {
             editorQuestionnaire.setValue(JSON.stringify(JSON.parse(editorQuestionnaire.getValue()), null, 4));
             formDefinition = JSON.parse(editorQuestionnaire.getValue());
             editorQuestionnaire.clearSelection();
-        });
-        $(document).ready(function () {
-
-            editorIPS = ace.edit("editorIPS");
-            editorIPS.setTheme("ace/theme/solarized_light");
-            editorIPS.session.setMode("ace/mode/json");
-            editorIPS.setValue(JSON.stringify(sampleIPS, null, 4));
-
-            editorQuestionnaire = ace.edit("editorQuestionnaire");
-            editorQuestionnaire.setTheme("ace/theme/solarized_light");
-            editorQuestionnaire.session.setMode("ace/mode/json");
-
-            editorQR = ace.edit("editorQR");
-            editorQR.setTheme("ace/theme/solarized_light");
-            editorQR.session.setMode("ace/mode/json");
-
-            var fhirContext = {
-                fhir: FHIR.client({
-                    serverUrl: "https://sqlonfhir-r4.azurewebsites.net/fhir",
-                    tokenResponse: { patient: "https://sqlonfhir-r4.azurewebsites.net/fhir/Patient/example" }
-                })
-            };
-            LForms.Util.setFHIRContext(fhirContext.fhir);
-            LForms.Util.addFormToPage(formDefinition, 'myFormContainer', options);
         });
 
         $("#renderQuestionnaire").click(function () {
@@ -233,36 +282,75 @@
             LForms.Util.addFormToPage(formDefinition, 'myFormContainer', options);
         });
 
-        $("#prepopQuestionnaire").click(async function () {
-            formDefinition = JSON.parse(editorQuestionnaire.getValue());
-            var ipsBundle = JSON.parse(editorIPS.getValue());
-            const prepopParams = {
-                resourceType: "Parameters",
-                "parameter": [
-                    {
-                        "name": "subject",
-                        "valueReference": {
-                            "display": "intake patient"
-                        }
-                    },
-                    {
-                        "name": "questionnaire",
-                        "resource": formDefinition
-                    },
-                    {
-                        "name": "context",
-                        "part": [
-                            {
-                                "name": "name",
-                                "valueString": "ips"
-                            },
-                            {
-                                "name": "content",
-                                "resource": ipsBundle
-                            }]
-                    }]
-            };
+        $("#btnDownloadIPS").click(async function () {
+            $("#prefill-status").text("loading IPS Bundle direct ...");
+            $("#prefill-error").text("");
+            editorIPS.setValue("loading IPS Bundle direct ...");
+            editorIPS.clearSelection();
+            const ipsURL = $("#urlIPS").val();
+            const response = await fetch(ipsURL, { cache: "no-cache", headers: { accept: "application/json" } });
+            const raw = await response.text();
             try {
+                const json = JSON.parse(raw);
+                editorIPS.setValue(JSON.stringify(json, null, 4));
+                editorIPS.clearSelection();
+
+                // And then use this data to pre-fill the form
+                await PreFillFromIPSBundle();
+            }
+            catch (err) {
+                console.log(err);
+                editorIPS.setValue(raw);
+                editorIPS.clearSelection();
+                $("#prefill-error").text(err.message);
+            }
+            $("#prefill-status").text("");
+        });
+
+        $("#prepopQuestionnaire").click(async function () {
+            $("#prefill-error").text("");
+            await PreFillFromIPSBundle();
+            $("#prefill-status").text("");
+        });
+
+        async function PreFillFromIPSBundle() {
+            try {
+                formDefinition = JSON.parse(editorQuestionnaire.getValue());
+            } catch (err) {
+                $("#prefill-error").text("Can't read form definition");
+                return;
+            }
+            try {
+                var ipsBundle = JSON.parse(editorIPS.getValue());
+                const prepopParams = {
+                    resourceType: "Parameters",
+                    "parameter": [
+                        {
+                            "name": "subject",
+                            "valueReference": {
+                                "display": "intake patient"
+                            }
+                        },
+                        {
+                            "name": "questionnaire",
+                            "resource": formDefinition
+                        },
+                        {
+                            "name": "context",
+                            "part": [
+                                {
+                                    "name": "name",
+                                    "valueString": "ips"
+                                },
+                                {
+                                    "name": "content",
+                                    "resource": ipsBundle
+                                }]
+                        }]
+                };
+                const bodyContent = JSON.stringify(prepopParams, null, 4);
+                editorPrePopParams.setValue(bodyContent);
+                editorPrePopParams.clearSelection();
                 // Use the FHIR $populate operation to pre-populate the form
                 // from Brian's forms-lab demo server
                 const response = await fetch("https://forms-lab-server.azurewebsites.net/Questionnaire/$populate", {
@@ -272,22 +360,36 @@
                         accept: "application/json",
                         "Content-Type": "application/json"
                     },
-                    body: JSON.stringify(prepopParams, null, 4)
+                    body: bodyContent
                 });
                 const raw = await response.text();
 
                 editorQR.setValue(raw);
                 editorQR.clearSelection();
 
+                try {
+                    var jsonOutput = JSON.parse(raw);
+                    if (jsonOutput.resourceType === "OperationOutcome") {
+                        $("#prefill-error").text("Unable to pre-populate form, refer to outcome");
+                    }
+                }
+                catch (err) {
+                    console.log(err);
+                    $("#prefill-error").text(err.message);
+                }
+
                 // TODO: Render the pre-populated data
-                var lhcQ =   LForms.Util.convertFHIRQuestionnaireToLForms(formDefinition, "R4");
+                $("#prefill-status").text("completing pre-fill ...");
+                var lhcQ = LForms.Util.convertFHIRQuestionnaireToLForms(formDefinition, "R4");
                 var lhcQR = LForms.Util.mergeFHIRDataIntoLForms("QuestionnaireResponse", JSON.parse(raw), lhcQ, "R4")
                 LForms.Util.addFormToPage(lhcQR, 'myFormContainer', options);
             }
             catch (err) {
                 console.log(err);
+                $("#prefill-error").text(err.message);
             }
-        });
+        }
+
         $("#lhcSubmit").click(function () {
             // details on how to use the LHC widget are here:
             // https://lhncbc.github.io/lforms/#fhirSupport
@@ -623,7 +725,7 @@
                         "extension": [
                             {
                                 "url": "http://hl7.org/fhir/StructureDefinition/NarrativeLink",
-                                "valueUri": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#PastHistoryOfIllnesses-29f1316b-0ad4-429f-95b0-1b61ccfec704"
+                                "valueUrl": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#PastHistoryOfIllnesses-29f1316b-0ad4-429f-95b0-1b61ccfec704"
                             }
                         ],
                         "clinicalStatus": {
@@ -664,7 +766,7 @@
                         "extension": [
                             {
                                 "url": "http://hl7.org/fhir/StructureDefinition/NarrativeLink",
-                                "valueUri": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#PastHistoryOfIllnesses-5297de1d-f952-4050-9dc6-e1218fb24951"
+                                "valueUrl": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#PastHistoryOfIllnesses-5297de1d-f952-4050-9dc6-e1218fb24951"
                             }
                         ],
                         "clinicalStatus": {
@@ -709,7 +811,7 @@
                         "extension": [
                             {
                                 "url": "http://hl7.org/fhir/StructureDefinition/NarrativeLink",
-                                "valueUri": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#PastHistoryOfIllnesses-3c317eb4-343b-4093-8f35-83a9483d92b0"
+                                "valueUrl": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#PastHistoryOfIllnesses-3c317eb4-343b-4093-8f35-83a9483d92b0"
                             }
                         ],
                         "clinicalStatus": {
@@ -753,7 +855,7 @@
                         "extension": [
                             {
                                 "url": "http://hl7.org/fhir/StructureDefinition/NarrativeLink",
-                                "valueUri": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#MedicationSummary-d41ac499-c7e8-45fa-9246-69028bae178f"
+                                "valueUrl": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#MedicationSummary-d41ac499-c7e8-45fa-9246-69028bae178f"
                             }
                         ],
                         "status": "active",
@@ -793,7 +895,7 @@
                         "extension": [
                             {
                                 "url": "http://hl7.org/fhir/StructureDefinition/NarrativeLink",
-                                "valueUri": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#MedicationSummary-c8b1d1d0-6654-4e55-a1f4-a832f463cf94"
+                                "valueUrl": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#MedicationSummary-c8b1d1d0-6654-4e55-a1f4-a832f463cf94"
                             }
                         ],
                         "status": "active",
@@ -833,7 +935,7 @@
                         "extension": [
                             {
                                 "url": "http://hl7.org/fhir/StructureDefinition/NarrativeLink",
-                                "valueUri": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#MedicationSummary-345da5a7-872a-4d10-83e3-08ad9feec597"
+                                "valueUrl": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#MedicationSummary-345da5a7-872a-4d10-83e3-08ad9feec597"
                             }
                         ],
                         "status": "active",
@@ -873,7 +975,7 @@
                         "extension": [
                             {
                                 "url": "http://hl7.org/fhir/StructureDefinition/NarrativeLink",
-                                "valueUri": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#MedicationSummary-ce18fde3-8e69-4820-8bf4-0015a6185115"
+                                "valueUrl": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#MedicationSummary-ce18fde3-8e69-4820-8bf4-0015a6185115"
                             }
                         ],
                         "status": "active",
@@ -936,7 +1038,7 @@
                         "extension": [
                             {
                                 "url": "http://hl7.org/fhir/StructureDefinition/NarrativeLink",
-                                "valueUri": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#SocialHistory-cd1cb4ea-6771-4713-bcf5-0f3f1e7422e4"
+                                "valueUrl": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#SocialHistory-cd1cb4ea-6771-4713-bcf5-0f3f1e7422e4"
                             }
                         ],
                         "status": "final",
@@ -987,7 +1089,7 @@
                         "extension": [
                             {
                                 "url": "http://hl7.org/fhir/StructureDefinition/NarrativeLink",
-                                "valueUri": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#Immunizations-964494c1-e0e0-433e-81e6-2eb4c4201186"
+                                "valueUrl": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#Immunizations-964494c1-e0e0-433e-81e6-2eb4c4201186"
                             }
                         ],
                         "identifier": [
@@ -1051,7 +1153,7 @@
                         "extension": [
                             {
                                 "url": "http://hl7.org/fhir/StructureDefinition/NarrativeLink",
-                                "valueUri": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#Immunizations-c1b08178-e73d-4dc5-a6a8-ef202de500d2"
+                                "valueUrl": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#Immunizations-c1b08178-e73d-4dc5-a6a8-ef202de500d2"
                             }
                         ],
                         "identifier": [
@@ -1115,7 +1217,7 @@
                         "extension": [
                             {
                                 "url": "http://hl7.org/fhir/StructureDefinition/NarrativeLink",
-                                "valueUri": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#Immunizations-6b01880b-766a-4c83-8562-068e4c80b212"
+                                "valueUrl": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#Immunizations-6b01880b-766a-4c83-8562-068e4c80b212"
                             }
                         ],
                         "identifier": [
@@ -1179,7 +1281,7 @@
                         "extension": [
                             {
                                 "url": "http://hl7.org/fhir/StructureDefinition/NarrativeLink",
-                                "valueUri": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#Immunizations-3acbcc22-7950-44ae-a256-914ef0046854"
+                                "valueUrl": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#Immunizations-3acbcc22-7950-44ae-a256-914ef0046854"
                             }
                         ],
                         "identifier": [
@@ -1244,7 +1346,7 @@
                         "extension": [
                             {
                                 "url": "http://hl7.org/fhir/StructureDefinition/NarrativeLink",
-                                "valueUri": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#Immunizations-e63b8d84-7a52-4b87-8967-5aafca4dc855"
+                                "valueUrl": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#Immunizations-e63b8d84-7a52-4b87-8967-5aafca4dc855"
                             }
                         ],
                         "identifier": [
@@ -1292,7 +1394,7 @@
                         "extension": [
                             {
                                 "url": "http://hl7.org/fhir/StructureDefinition/NarrativeLink",
-                                "valueUri": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#Immunizations-d021ddd0-14bd-4d62-a580-998b1844fa1c"
+                                "valueUrl": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#Immunizations-d021ddd0-14bd-4d62-a580-998b1844fa1c"
                             }
                         ],
                         "identifier": [
@@ -1371,7 +1473,7 @@
                         "extension": [
                             {
                                 "url": "http://hl7.org/fhir/StructureDefinition/NarrativeLink",
-                                "valueUri": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#Immunizations-44db5eb7-4779-4018-8cac-9c08a2983ca0"
+                                "valueUrl": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#Immunizations-44db5eb7-4779-4018-8cac-9c08a2983ca0"
                             }
                         ],
                         "identifier": [
@@ -1419,7 +1521,7 @@
                         "extension": [
                             {
                                 "url": "http://hl7.org/fhir/StructureDefinition/NarrativeLink",
-                                "valueUri": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#Immunizations-3f5be1ca-5aed-4f97-aa9a-37e8b68da374"
+                                "valueUrl": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#Immunizations-3f5be1ca-5aed-4f97-aa9a-37e8b68da374"
                             }
                         ],
                         "identifier": [
@@ -1494,7 +1596,7 @@
                         "extension": [
                             {
                                 "url": "http://hl7.org/fhir/StructureDefinition/NarrativeLink",
-                                "valueUri": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#Immunizations-54ce58c1-3b31-4db3-a5c2-7addb9236d24"
+                                "valueUrl": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#Immunizations-54ce58c1-3b31-4db3-a5c2-7addb9236d24"
                             }
                         ],
                         "identifier": [
@@ -1569,7 +1671,7 @@
                         "extension": [
                             {
                                 "url": "http://hl7.org/fhir/StructureDefinition/NarrativeLink",
-                                "valueUri": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#Immunizations-fb614759-5946-464b-aa11-de85cd337dee"
+                                "valueUrl": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#Immunizations-fb614759-5946-464b-aa11-de85cd337dee"
                             }
                         ],
                         "identifier": [
@@ -1618,7 +1720,7 @@
                         "extension": [
                             {
                                 "url": "http://hl7.org/fhir/StructureDefinition/NarrativeLink",
-                                "valueUri": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#Immunizations-780d49f2-525c-43ff-9d8f-410a67fdf12f"
+                                "valueUrl": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#Immunizations-780d49f2-525c-43ff-9d8f-410a67fdf12f"
                             }
                         ],
                         "identifier": [
@@ -1691,7 +1793,7 @@
                         "extension": [
                             {
                                 "url": "http://hl7.org/fhir/StructureDefinition/NarrativeLink",
-                                "valueUri": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#Immunizations-dd94410f-79be-4fb3-8bf9-1540f1f48cbd"
+                                "valueUrl": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#Immunizations-dd94410f-79be-4fb3-8bf9-1540f1f48cbd"
                             }
                         ],
                         "identifier": [
@@ -1739,7 +1841,7 @@
                         "extension": [
                             {
                                 "url": "http://hl7.org/fhir/StructureDefinition/NarrativeLink",
-                                "valueUri": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#Immunizations-d96ee1fa-66c6-41ba-9d69-803b4e693134"
+                                "valueUrl": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#Immunizations-d96ee1fa-66c6-41ba-9d69-803b4e693134"
                             }
                         ],
                         "identifier": [
@@ -1806,7 +1908,7 @@
                         "extension": [
                             {
                                 "url": "http://hl7.org/fhir/StructureDefinition/NarrativeLink",
-                                "valueUri": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#Immunizations-eca1769e-595f-4c82-bb1c-ab576742b65a"
+                                "valueUrl": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#Immunizations-eca1769e-595f-4c82-bb1c-ab576742b65a"
                             }
                         ],
                         "identifier": [
@@ -1849,7 +1951,7 @@
                         "extension": [
                             {
                                 "url": "http://hl7.org/fhir/StructureDefinition/NarrativeLink",
-                                "valueUri": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#Immunizations-690a34d9-7955-41b8-9d64-c7c35d675b58"
+                                "valueUrl": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#Immunizations-690a34d9-7955-41b8-9d64-c7c35d675b58"
                             }
                         ],
                         "identifier": [
@@ -1892,7 +1994,7 @@
                         "extension": [
                             {
                                 "url": "http://hl7.org/fhir/StructureDefinition/NarrativeLink",
-                                "valueUri": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#Immunizations-d82c724e-5f16-4748-9946-51f76156feb3"
+                                "valueUrl": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#Immunizations-d82c724e-5f16-4748-9946-51f76156feb3"
                             }
                         ],
                         "identifier": [
@@ -1926,7 +2028,7 @@
                         "extension": [
                             {
                                 "url": "http://hl7.org/fhir/StructureDefinition/NarrativeLink",
-                                "valueUri": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#AllergiesAndIntolerances-urn:uuid:2c60512e-9932-4dfd-a22f-3a173d4f39d7"
+                                "valueUrl": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#AllergiesAndIntolerances-urn:uuid:2c60512e-9932-4dfd-a22f-3a173d4f39d7"
                             }
                         ],
                         "clinicalStatus": {
@@ -1970,6 +2072,55 @@
                     }
                 }
             ]
+        }
+    </script>
+    <script type="module">
+        import * as shlClient from 'https://demo.vaxx.link/viewer/index.js';
+        import { verify } from 'https://demo.vaxx.link/viewer/shc-decoder.js';
+        var shl;
+
+        $("#btnDownloadSHLink").click(async function () {
+            $("#prefill-status").text("loading Smart Health Link ...");
+            $("#prefill-error").text("");
+            editorIPS.setValue("loading Smart Health Link ...");
+            editorIPS.clearSelection();
+
+            shl = $("#shlink").val().match(/shlink:\/.*/)?.[0];
+            if (shl) {
+                await retrieve()
+            }
+            $("#prefill-status").text("");
+        });
+
+
+        async function retrieve() {
+            const recipient = "IPS Viewer Demonstration";
+
+            let passcode;
+            const needPasscode = shlClient.flag({ shl }).includes('P');
+            if (needPasscode) {
+                passcode = prompt("Enter passcode for SMART Health Link");
+            }
+
+            const retrieved = await shlClient.retrieve({
+                shl,
+                passcode,
+                recipient
+            });
+
+            const decoded = await Promise.all(retrieved.shcs.map(verify));
+            const data = decoded[0].fhirBundle
+
+            editorIPS.setValue(JSON.stringify(data, null, 4));
+            editorIPS.clearSelection();
+
+            // And then use this data to pre-fill the form
+            try {
+                await PreFillFromIPSBundle();
+            }
+            catch (err) {
+                console.log(err);
+            }
         }
     </script>
 </body>
