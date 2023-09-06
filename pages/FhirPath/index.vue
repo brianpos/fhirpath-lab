@@ -82,6 +82,14 @@
                         <label class="v-label theme--light bare-label">Context Expression (optional)</label>
                         <!-- <v-input label="Context Expression (optional)" hide-details="auto" :value="contextExpression">
                         </v-input> -->
+                        <v-tooltip bottom >
+                          <template v-slot:activator="{ on, attrs }">
+                            <v-btn icon 
+                              v-bind="attrs" v-on="on"
+                              @click="resetExpression"><v-icon>mdi-broom</v-icon></v-btn>
+                          </template>
+                          <span>Reset Expression and context</span>
+                        </v-tooltip>
                         <div height="85px" width="100%" ref="aceEditorContextExpression"></div>
                         <div class="ace_editor_footer"></div>
 
@@ -720,6 +728,7 @@ interface IFhirPathMethods
   applyParameters(p: TestFhirpathData): void;
   variableMessages(variable: VariableData): string | undefined;
   variableErrorMessages(variable: VariableData): string | undefined;
+  resetExpression(): void;
   isValidFhirUrl(variable: VariableData): boolean;
   resourceJsonChangedEvent(): void;
   updateVariableValue(name: string): void;
@@ -1064,6 +1073,17 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     }
         }
       }
+  },
+  resetExpression():void {
+    if (this.expressionEditor) {
+      this.expressionEditor.setValue('');
+      this.expressionEditor.clearSelection();
+      this.expressionEditor.focus();
+    }
+    if (this.expressionContextEditor) {
+      this.expressionContextEditor.setValue('');
+      this.expressionContextEditor.clearSelection();
+    }
   },
     variableMessages(variable: VariableData): string | undefined{
       if (variable.resourceId) return variable.resourceId;
