@@ -84,7 +84,7 @@
                         </v-input> -->
                         <v-tooltip bottom >
                           <template v-slot:activator="{ on, attrs }">
-                            <v-btn icon style="right: 20px; position: absolute;"
+                            <v-btn icon style="right: 20px; position: absolute; padding-top: 20px;"
                               v-bind="attrs" v-on="on"
                               @click="resetExpression"><v-icon>mdi-broom</v-icon></v-btn>
                           </template>
