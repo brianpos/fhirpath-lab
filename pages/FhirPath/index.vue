@@ -38,6 +38,29 @@
             </template>
             <span v-text="shareZulipToolTipMessage"></span>
           </v-tooltip>
+
+          <v-tooltip bottom color="primary" v-show="showAdvancedSettings">
+            <template v-slot:activator="{ on, attrs }">
+              <v-btn icon dark @click="createNewLibrary" v-bind="attrs" v-on="on"
+                :hidden="!enableCreateLibrary">
+                <v-icon>
+                  mdi-content-save-plus
+                </v-icon>
+              </v-btn>
+            </template>
+            <span>Share this expression in Library</span>
+          </v-tooltip>
+          <v-tooltip bottom color="primary" v-show="showAdvancedSettings">
+            <template v-slot:activator="{ on, attrs }">
+              <v-btn icon dark @click="saveLibrary" v-bind="attrs" v-on="on"
+              :hidden="!enableSaveLibrary">
+                <v-icon>
+                  mdi-content-save
+                </v-icon>
+              </v-btn>
+            </template>
+            <span>Save the Library</span>
+          </v-tooltip>
         </v-toolbar>
         <v-row dense>
           <v-col>
@@ -69,6 +92,14 @@
               <v-tab v-show="showAdvancedSettings" :class="debugActiveClass" v-on:click="tabClicked">
                 <v-icon left> mdi-bug-outline </v-icon>
                 Debug
+              </v-tab>
+              <v-tab v-show="showAdvancedSettings" :class="libDetailsActiveClass" v-on:click="tabClicked" v-if="library">
+                <v-icon left> mdi-card-bulleted-settings-outline </v-icon>
+                Library
+              </v-tab>
+              <v-tab v-show="showAdvancedSettings" :class="libPublishingActiveClass" v-on:click="tabClicked" v-if="library">
+                <v-icon left> mdi-download-network-outline </v-icon>
+                Publishing
               </v-tab>
 
               <v-tabs-items class="custom-tab" style="height: calc(100vh - 168px)" touchless v-model="tab">
@@ -128,7 +159,7 @@
                     <v-card flat>
                       <v-card-text>
                         <p class="fl-tab-header">Resource</p>
-                        <v-text-field label="Test Resource Id" v-model="resourceId" hide-details="auto" autocomplete="off"
+                        <v-text-field label="Test Resource Id" v-model="resourceId" hide-details="auto" autocomplete="off" @input="updateNow"
                           autocorrect="off" autocapitalize="off" spellcheck="false">
                           <template v-slot:append>
                             <v-btn icon small tile @click="resourceId = undefined">
@@ -246,6 +277,42 @@
                       <v-card-text>
                         <p class="fl-tab-header">Debug</p>
                         <div class="debug" ref="aceEditorDebug"></div>
+                      </v-card-text>
+                    </v-card>
+                  </div>
+                </v-scroll-x-transition>
+
+                <v-scroll-x-transition mode="out-in" :hide-on-leave="true" v-if="library">
+                  <div v-show="libDetailsVisible" :eager="true">
+                    <!-- Library Details -->
+                    <v-card flat>
+                      <v-card-text>
+                        <p class="fl-tab-header">Library Details</p>
+                        <conformance-resource-details-tab ref="libDetailsTabComponent"
+                          :raw="library"
+                          :showAdvancedSettings="showAdvancedSettings"
+                          :readonly="false"
+                          @update="updateNow"
+                        >
+                        </conformance-resource-details-tab>
+                      </v-card-text>
+                    </v-card>
+                  </div>
+                </v-scroll-x-transition>
+
+                <v-scroll-x-transition mode="out-in" :hide-on-leave="true" v-if="library">
+                  <div v-show="libPublishingVisible" :eager="true">
+                    <!-- Library Publishing -->
+                    <v-card flat>
+                      <v-card-text>
+                        <p class="fl-tab-header">Library Publishing</p>
+                        <conformance-resource-publishing-tab
+                          :raw="library"
+                          :showAdvancedSettings="showAdvancedSettings"
+                          :readonly="false"
+                          @update="updateNow"
+                        />
+
                       </v-card-text>
                     </v-card>
                   </div>
@@ -421,11 +488,12 @@ import {
   requestFhirAcceptHeaders,
   requestFhirContentTypeHeaders,
   fhirResourceTypes,
+  saveFhirResource,
 } from "~/helpers/searchFhir";
 import axios, { AxiosRequestHeaders, AxiosResponse } from "axios";
 import { AxiosError } from "axios";
 import { CancelTokenSource } from "axios";
-import { getExtensionStringValue } from "fhir-extension-helpers";
+import { addExtension, addExtensionStringValue, clearExtension, getExtensionCodingValues, getExtensionReferenceValue, getExtensionStringValue, setExtension, setExtensionStringValue } from "fhir-extension-helpers";
 import { InvertTree, JsonNode } from "~/components/ParseTreeTab.vue";
 // import { getPreferredTerminologyServerFromSDC } from "fhir-sdc-helpers";
 import fhirpath from "fhirpath";
@@ -450,6 +518,10 @@ import { VariableData, EncodeTestFhirpathData, DecodeTestFhirpathData, TestFhirp
 import { EvaluateChatPrompt, GetSystemPrompt, IOpenAISettings } from "~/helpers/openai_utils";
 import { ChatMessage } from "@azure/openai";
 import ParseTreeTab from "~/components/ParseTreeTab.vue";
+import ConformanceResourceDetailsTab from "~/components/ConformanceResourceDetailsTab.vue";
+import { VueElement } from "@vue/runtime-dom";
+import { LibraryData } from "~/models/LibraryTableData";
+import { BaseResource_defaultValues } from "~/models/BaseResourceTableData";
 
 const shareTooltipText = 'Copy a sharable link to this test expression';
 const shareZulipTooltipText = 'Copy a sharable link for Zulip to this test expression';
@@ -628,6 +700,7 @@ interface FhirPathData {
   saveOutcome?: fhir4b.OperationOutcome;
   showOutcome?: boolean;
   showAdvancedSettings: boolean;
+  defaultProviderField: string | undefined;
   terminologyServer: string;
   cancelSource?: CancelTokenSource;
   tab: any;
@@ -653,6 +726,7 @@ interface FhirPathData {
   openAILastContext: string;
   expressionParseOutcome?: fhir4b.OperationOutcome;
   astInverted: boolean;
+  enableSave: boolean;
 }
 
 interface ResultItem {
@@ -731,9 +805,11 @@ interface IFhirPathMethods
   resourceJsonChangedEvent(): void;
   updateVariableValue(name: string): void;
   fhirpathExpressionChangedEvent(): void;
+  fhirpathContextExpressionChangedEvent(): void;
   resourceJsonChangedMessage(): string | undefined;
   tabTitle(): void;
   settingsClosed(): void;
+  updateNow():void;
   tabClicked(e: KeyboardEvent | MouseEvent): void;
   changeTab(selectTab: number): void;
 
@@ -761,6 +837,8 @@ interface IFhirPathMethods
   evaluateFhirPathExpression(): void;
   checkFocus(event: any): void;
   saveLastUsedParameters(loadCompleted: boolean): void;
+  createNewLibrary(): void;
+  saveLibrary(): void;
 
   GetAISettings(): IOpenAISettings;
   handleSendMessage(message: string): void;
@@ -778,6 +856,10 @@ interface IFhirPathComputed
   resourceVisible: boolean;
   debugVisible: boolean;
   astVisible: boolean;
+  libDetailsVisible: boolean;
+  libPublishingVisible: boolean;
+  enableSaveLibrary: boolean;
+  enableCreateLibrary: boolean;
 
   expressionActiveClass: string;
   variablesActiveClass: string;
@@ -786,6 +868,8 @@ interface IFhirPathComputed
   resourceActiveClass: string;
   debugActiveClass: string;
   astActiveClass: string;
+  libDetailsActiveClass: string;
+  libPublishingActiveClass: string;
 }
 
 interface IFhirPathProps
@@ -798,6 +882,7 @@ interface IFhirPathProps
     chatComponent: Chat,
     // astTabComponent: ParseTreeTab,
     astTabComponent2: ParseTreeTab,
+    libDetailsTabComponent: HTMLElement,
   },
 }
 
@@ -810,6 +895,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         this.windowWidth = window.innerWidth
     }
     this.showAdvancedSettings = settings.showAdvancedSettings();
+    this.defaultProviderField = settings.getDefaultProviderField();
     if (settings.getOpenAIKey())
       this.chatEnabled = true;
     this.terminologyServer = settings.getFhirTerminologyServerUrl();
@@ -843,6 +929,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         setCustomHighlightRules(this.expressionContextEditor, FhirPathHightlighter_Rules);
         this.expressionContextEditor.setValue("name"); // default value
         this.expressionContextEditor.clearSelection();
+        this.expressionContextEditor.on("change", this.fhirpathContextExpressionChangedEvent);
       }
     }
 
@@ -958,6 +1045,18 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     debugVisible(): boolean {
       return this.primaryTab === 6 || (this.secondaryTab === 6 && this.windowWidth > 999);
     },
+    libDetailsVisible(): boolean {
+      return this.primaryTab === 7 || (this.secondaryTab === 7 && this.windowWidth > 999);
+    },
+    libPublishingVisible(): boolean {
+      return this.primaryTab === 8 || (this.secondaryTab === 8 && this.windowWidth > 999);
+    },
+    enableSaveLibrary(): boolean {
+      return this.enableSave && this.library != undefined && this.showAdvancedSettings;
+    },
+    enableCreateLibrary(): boolean {
+      return this.library == undefined && this.showAdvancedSettings && ((this.defaultProviderField?.length ?? 0) > 0);
+    },
 
     expressionActiveClass(): string { return this.secondaryTab === 0 && this.windowWidth > 999 || this.primaryTab === 0 ? "v-tab--active" : "" },
     resourceActiveClass(): string { return this.secondaryTab === 1 && this.windowWidth > 999 || this.primaryTab === 1 ? "v-tab--active" : "" },
@@ -966,8 +1065,14 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     astActiveClass(): string { return this.secondaryTab === 4 && this.windowWidth > 999 || this.primaryTab === 4 ? "v-tab--active" : "" },
     chatActiveClass(): string { return this.secondaryTab === 5 && this.windowWidth > 999 || this.primaryTab === 5 ? "v-tab--active" : "" },
     debugActiveClass(): string { return this.secondaryTab === 6 && this.windowWidth > 999 || this.primaryTab === 6 ? "v-tab--active" : "" },
+    libDetailsActiveClass(): string { return this.secondaryTab === 7 && this.windowWidth > 999 || this.primaryTab === 7 ? "v-tab--active" : "" },
+    libPublishingActiveClass(): string { return this.secondaryTab === 8 && this.windowWidth > 999 || this.primaryTab === 8 ? "v-tab--active" : "" },
   },
   methods: {
+    updateNow() {
+      this.$forceUpdate();
+      this.enableSave = true;
+    },
     tabClicked(e: KeyboardEvent | MouseEvent): void{
       this.lastTabClicked = e;
     },
@@ -1122,6 +1227,8 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     },
     resourceJsonChangedEvent(){
       this.resourceJsonChanged = true;
+      this.enableSave = true;
+      console.log('enable save resourceJSON');
     },
     updateVariableValue(name: string): void{
       const ie: InputEvent = event as InputEvent;
@@ -1135,6 +1242,8 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       else{
         this.variables.set(name, { name:name, data: value });
       }
+      this.enableSave = true;
+      console.log('enable save update var');
     },
     fhirpathExpressionChangedEvent(){
       // Check the expression to see if there are any variables in there
@@ -1177,9 +1286,14 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
           }
         }
         this.variables = updatedVariables;
+        this.enableSave = true;
+        console.log('enable save expr change');
       }
       if (this.tab === 2){
       }
+    },
+    fhirpathContextExpressionChangedEvent(): void {
+      this.enableSave = true;
     },
     resourceJsonChangedMessage(): string | undefined {
       if (this.resourceJsonChanged && this.resourceId){
@@ -1193,6 +1307,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     },
     settingsClosed() {
       this.showAdvancedSettings = settings.showAdvancedSettings();
+      this.defaultProviderField = settings.getDefaultProviderField();
       this.chatEnabled = settings.getOpenAIKey() !== undefined;
       this.$forceUpdate();
     },
@@ -1372,8 +1487,17 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
             this.expressionContextEditor.clearSelection();
           }
 
+          // And variables
+          var libVariables = getExtensionCodingValues(this.library, "http://fhir.forms-lab.com/StructureDefinition/variable");
+          if (libVariables){
+            for (let v of libVariables){
+              this.variables.set(v.code??'', { name: v.code??'', data: v.display });
+            }
+          }
+
           // and test resource IDs
-          const rId = getExtensionStringValue(this.library, "http://fhir.forms-lab.com/StructureDefinition/resource-id");
+          const rId = getExtensionStringValue(this.library, "http://fhir.forms-lab.com/StructureDefinition/resource-id")
+          ?? getExtensionReferenceValue(this.library, "http://fhir.forms-lab.com/StructureDefinition/resource-id")?.reference;
           if (rId) {
             this.resourceId = rId;
             if (this.resourceJsonEditor) {
@@ -1402,6 +1526,10 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
           //   this.terminologyServer = ts;
           // }
         }
+        this.$nextTick(() => {
+          this.enableSave = false;
+          console.log('disable save - loaded');
+        });
       } catch (err) {
         this.loadingData = false;
         if (axios.isAxiosError(err)) {
@@ -2065,6 +2193,150 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       console.log(DecodeTestFhirpathData(compressedData));
     },
 
+    createNewLibrary(){
+      if (!this.getFhirpathExpression())
+        return;
+
+      const newName = settings.createRandomID();
+      this.library = {
+        resourceType: "Library",
+        name: newName.replace('-','_'),
+        status: "draft",
+        type: {
+          coding: [
+            {
+              system: "http://terminology.hl7.org/CodeSystem/library-type",
+              code: "logic-library",
+              display: "Logic Library",
+            },
+          ],
+        },
+        useContext: [
+          {
+            code: {
+              system: "http://terminology.hl7.org/CodeSystem/usage-context-type",
+              code: "user",
+              display: "User Type"
+            },
+            valueCodeableConcept: {
+              coding: [
+                {
+                  code: "fhirpath-lab",
+                  display: "FHIRPath Lab Shared"
+                }
+              ]
+            }
+          }
+        ],
+        content: [
+          {
+            contentType: "text/fhirpath",
+            data: window.btoa(this.getFhirpathExpression()??'')
+          }
+        ],
+        publisher: settings.getDefaultProviderField(),
+        url: settings.getDefaultNewCanonicalBase() + "/Library/" + newName,
+        version: '0.1',
+      }
+      this.changeTab(7);
+      this.enableSave = true;
+      this.$nextTick(() => {
+        const detailsTab = this.$refs.libDetailsTabComponent as any;
+        if (detailsTab)
+          detailsTab.$el.focus();
+      });
+    },
+
+    async saveLibrary(){
+      if (this.library){
+        // update the library, then save it!
+        // Set the base expression
+        if (this.library.content && this.library.content.length > 0)
+        {
+          this.library.content[0].data = window.btoa(this.getFhirpathExpression()??'');
+        }
+        else
+        {
+          this.library.content = [
+            {
+              contentType: "text/fhirpath",
+              data: window.btoa(this.getFhirpathExpression()??'')
+            }
+          ];
+        }
+
+        // Set the context expression
+        const contextExpression = this.getContextExpression();
+        if (contextExpression)
+          setExtensionStringValue(this.library, "http://fhir.forms-lab.com/StructureDefinition/context-expression", contextExpression);
+        else
+          clearExtension(this.library, "http://fhir.forms-lab.com/StructureDefinition/context-expression");
+
+        // set the resource content
+        this.library.contained = [];
+        const resourceJson = this.getResourceJson();
+        if (resourceJson && this.resourceJsonChanged)
+        {
+          const jsonObject = JSON.parse(resourceJson);
+          if (!jsonObject.id)
+            jsonObject.id = settings.createRandomID();
+          setExtension(this.library, 
+          {
+            url: "http://fhir.forms-lab.com/StructureDefinition/resource-id", 
+            valueReference: { reference: "#" + jsonObject.id }
+          });
+          this.library.contained.push(jsonObject);
+        }
+        else
+        {
+          // set the resource ID
+          if (this.resourceId)
+            setExtensionStringValue(this.library, "http://fhir.forms-lab.com/StructureDefinition/resource-id", this.resourceId);
+          else
+            clearExtension(this.library, "http://fhir.forms-lab.com/StructureDefinition/resource-id");
+        }
+
+        // set the variables included
+        clearExtension(this.library, "http://fhir.forms-lab.com/StructureDefinition/variable");
+        for (let v of this.variables) {
+          let value = v[1].data;
+          var ev = addExtension(this.library, {
+            url: "http://fhir.forms-lab.com/StructureDefinition/variable", 
+            valueCoding: {
+               code: v[1].name,
+               display: value
+               }
+          });
+        }
+
+        // now save the content
+        var data: LibraryData = {
+          raw: this.library,
+          publishedVersions: [],
+          ...BaseResource_defaultValues,
+        }
+
+        const outcome = await saveFhirResource(settings.getFhirServerUrl(), data);
+        if (data.raw)
+        {
+          this.library = data.raw;
+          this.enableSave = false;
+        }
+        if (!outcome) {
+          this.saveOutcome = outcome;
+          if (this.raw?.id) {
+            if (this.$route.params.id.endsWith(":new")) {
+              let href = this.$route.fullPath.replaceAll(
+                this.$route.params.id,
+                this.raw?.id
+              );
+              window.history.pushState({}, "", href);
+            }
+          }
+        }
+      }
+    },
+
     checkFocus(event: any) {
       if (event.relatedTarget) {
         this.prevFocus = event.relatedTarget;
@@ -2280,6 +2552,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       saveOutcome: undefined,
       showOutcome: false,
       showAdvancedSettings: false,
+      defaultProviderField: undefined,
       terminologyServer: 'https://sqlonfhir-r4.azurewebsites.net/fhir',
       results: [],
       selectedEngine: "fhirpath.js",
@@ -2307,6 +2580,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       openAILastContext: "",
       expressionParseOutcome: undefined,
       astInverted: true,
+      enableSave: false
     };
   },
 });

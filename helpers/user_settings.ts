@@ -128,6 +128,26 @@ export namespace settings {
             return "https://sqlonfhir-r4.azurewebsites.net/fhir";
         }
     }
+    export function getDefaultProviderField(): string|undefined {
+        try {
+            return localStorage.getItem("settings_defaultProviderField") ?? undefined;
+        }
+        catch {
+            console.log("error reading the defaultProviderField configuration value");
+            return undefined;
+        }
+    }
+
+    export function getDefaultNewCanonicalBase(): string|undefined {
+        try {
+            return localStorage.getItem("settings_defaultNewCanonicalBase") ?? undefined;
+        }
+        catch {
+            console.log("error reading the defaultNewCanonicalBase configuration value");
+            return undefined;
+        }
+    }
+
     export function getPageSize(): number {
         try {
             return Number.parseInt(localStorage.getItem("settings_pageSize") ?? "10");
@@ -221,7 +241,9 @@ export namespace settings {
             if (settings.syncFavourites && settings.favouritesListId) localStorage.setItem("settings_favouritesListId", settings.favouritesListId);
 
             if (settings.defaultProviderField) localStorage.setItem("settings_defaultProviderField", settings.defaultProviderField);
+            else localStorage.removeItem("settings_defaultProviderField");
             if (settings.defaultNewCanonicalBase) localStorage.setItem("settings_defaultNewCanonicalBase", settings.defaultNewCanonicalBase);
+            else localStorage.removeItem("settings_defaultNewCanonicalBase");
             
             if (settings.openAIKey) localStorage.setItem("settings_openAIkey", settings.openAIKey);
             else localStorage.removeItem("settings_openAIkey");

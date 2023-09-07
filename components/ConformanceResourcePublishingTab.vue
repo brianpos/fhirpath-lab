@@ -68,7 +68,7 @@
         />
         <span class="markdown" v-html="convertHtml(raw.copyright)" />
       </v-form>
-      <v-simple-table>
+      <v-simple-table v-if="publishedVersions">
         <template v-slot:default>
           <thead>
             <tr>

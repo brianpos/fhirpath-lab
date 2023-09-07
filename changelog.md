@@ -7,3 +7,5 @@
 * Addition of the `Reset expression and context` button to the test page
 * Removal of the Terminology Server URL from the resource page (still uses the value in the settings page)
 * Add new settings URL for where to retrieve example resources from (changes default from sqlonfhir-r4 to the public HAPI demo server)
+* Support creating and editing Library resources from the fhirpath expression test page
+    * requires `Show Advanced Properties` and a `Default Provider Field` to be set in the settings page
