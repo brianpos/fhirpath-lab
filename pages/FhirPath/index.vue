@@ -84,7 +84,7 @@
                         </v-input> -->
                         <v-tooltip bottom >
                           <template v-slot:activator="{ on, attrs }">
-                            <v-btn icon 
+                            <v-btn icon style="right: 20px; position: absolute;"
                               v-bind="attrs" v-on="on"
                               @click="resetExpression"><v-icon>mdi-broom</v-icon></v-btn>
                           </template>
@@ -143,8 +143,6 @@
                         <label class="v-label theme--light bare-label">Test Resource JSON <i>{{ resourceJsonChangedMessage() }}</i></label>
                         <div class="resource" width="100%" ref="aceEditorResourceJsonTab"></div>
                         <!-- <div class="ace_editor_footer"></div> -->
-                        <v-text-field label="Terminology Server" v-model="terminologyServer" hide-details="auto"
-                          autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
                       </v-card-text>
                     </v-card>
                   </div>
@@ -278,7 +276,7 @@
   overflow-y: auto;
 }
 .resource {
-  height: calc(100vh - 320px);
+  height: calc(100vh - 280px);
 }
 .chat {
   height: calc(100vh - 200px);

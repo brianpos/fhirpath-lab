@@ -1,0 +1,8 @@
+# fhirpath-lab change log
+![](static/Square44x44Logo.scale-150.png "UploadFIG logo")
+
+> **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
+
+## 7 September 2023
+* Addition of the `Reset expression and context` button to the test page
+* Removal of the Terminology Server URL from the resource page (still uses the value in the settings page)
