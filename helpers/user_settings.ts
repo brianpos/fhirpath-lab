@@ -6,6 +6,7 @@ export declare interface UserSettingsData {
     fhirServerUrl?: string;
     OAuthClientId?: string;
     fhirTerminologyServerUrl?: string;
+    fhirServerExamplesUrl?: string;
     syncFavourites: boolean;
     favouritesListId?: string;
     defaultProviderField?: string;
@@ -98,6 +99,17 @@ export namespace settings {
             return "https://sqlonfhir-r4.azurewebsites.net/fhir";
         }
     }
+
+    export function getFhirServerExamplesUrl(): string {
+        try {
+            return localStorage.getItem("settings_fhirServerExamplesURL") ?? "https://hapi.fhir.org/baseR4";
+        }
+        catch {
+            console.log("error reading the FHIR Server Examples URL configuration value");
+            return "https://hapi.fhir.org/baseR4";
+        }
+    }
+
     export function getOAuthClientId(): string|undefined {
         try {
             return localStorage.getItem("settings_OAuthClientId") ?? undefined;
@@ -172,6 +184,7 @@ export namespace settings {
     export function load(): UserSettingsData {
         return {
             fhirServerUrl: localStorage.getItem("settings_fhirServerURL") ?? "https://sqlonfhir-r4.azurewebsites.net/fhir",
+            fhirServerExamplesUrl: localStorage.getItem("settings_fhirServerExamplesURL") ?? "https://hapi.fhir.org/baseR4",
             OAuthClientId: localStorage.getItem("settings_OAuthClientId") ?? undefined,
             fhirTerminologyServerUrl: localStorage.getItem("settings_fhirTerminologyServerURL") ?? "https://sqlonfhir-r4.azurewebsites.net/fhir",
             syncFavourites: localStorage.getItem("settings_syncFavourites") === 'true',
@@ -193,6 +206,9 @@ export namespace settings {
         try {
             if (settings.fhirServerUrl?.endsWith('/')) settings.fhirServerUrl = settings.fhirServerUrl.substring(0, settings.fhirServerUrl.length - 1);
             if (settings.fhirServerUrl) localStorage.setItem("settings_fhirServerURL", settings.fhirServerUrl);
+
+            if (settings.fhirServerExamplesUrl?.endsWith('/')) settings.fhirServerExamplesUrl = settings.fhirServerExamplesUrl.substring(0, settings.fhirServerExamplesUrl.length - 1);
+            if (settings.fhirServerExamplesUrl) localStorage.setItem("settings_fhirServerExamplesURL", settings.fhirServerExamplesUrl);
 
             if (settings.OAuthClientId) localStorage.setItem("settings_OAuthClientId", settings.OAuthClientId);
             else localStorage.removeItem("settings_OAuthClientId");

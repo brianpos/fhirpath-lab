@@ -34,6 +34,11 @@
             :clearable="!FhirServerSupportsSmartAuth"
           />
           <v-text-field
+            label="FHIR Server for Examples"
+            v-model="fhirServerExamplesUrl"
+            hide-details="auto"
+          />
+          <v-text-field
             label="FHIR Terminology Server"
             v-model="fhirTerminologyServerUrl"
             hide-details="auto"
@@ -269,6 +274,7 @@ export default Vue.extend({
       console.log(values);
 
       this.fhirServerUrl = values.fhirServerUrl;
+      this.fhirServerExamplesUrl = values.fhirServerExamplesUrl;
       this.OAuthClientId = values.OAuthClientId;
       this.fhirTerminologyServerUrl = values.fhirTerminologyServerUrl;
       this.syncFavourites = values.syncFavourites;
@@ -296,6 +302,7 @@ export default Vue.extend({
   data(): IControlData {
     return {
       fhirServerUrl: undefined,
+      fhirServerExamplesUrl: undefined,
       OAuthClientId: undefined,
       fhirTerminologyServerUrl: undefined,
       syncFavourites: false,

@@ -1026,7 +1026,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       else {
         if (p.expression) {
           if (p.exampletype) {
-            this.resourceId = `${settings.getFhirServerUrl()}/${p.exampletype}/example`;
+            this.resourceId = `${settings.getFhirServerExamplesUrl()}/${p.exampletype}/example`;
         }
         else {
             if (p.resource) {
@@ -1442,7 +1442,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         if (!this.resourceId) return;
         let url = this.resourceId;
         if (this.resourceId && !this.resourceId.startsWith('http'))
-          url = settings.getFhirServerUrl() + '/' + this.resourceId;
+          url = settings.getFhirServerExamplesUrl() + '/' + this.resourceId;
         
         // if trying to use the hl7 example servers, that should be over https
         if (url.startsWith("http://build.fhir.org/")
@@ -1518,7 +1518,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         if (!this.variables.get(name)) return;
         let url = this.variables.get(name)?.resourceId ?? this.variables.get(name)?.data;
         if (url && !url.startsWith('http'))
-          url = settings.getFhirServerUrl() + '/' + url;
+          url = settings.getFhirServerExamplesUrl() + '/' + url;
 
         // if trying to use the hl7 example servers, that should be over https
         if (url.startsWith("http://build.fhir.org/")
@@ -2007,7 +2007,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
           shareUrl += `&resource=${encodeURIComponent(this.resourceId)}`;
         }
         else {
-          shareUrl += `&resource=${encodeURIComponent(settings.getFhirServerUrl() + '/' + this.resourceId)}`;
+          shareUrl += `&resource=${encodeURIComponent(settings.getFhirServerExamplesUrl() + '/' + this.resourceId)}`;
         }
       }
       const resourceJson = this.getResourceJson();
@@ -2245,7 +2245,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       }
       else {
         if (!this.resourceId?.startsWith('http')) {
-          p.parameter?.push({ name: "resource", valueString: settings.getFhirServerUrl() + '/' + this.resourceId });
+          p.parameter?.push({ name: "resource", valueString: settings.getFhirServerExamplesUrl() + '/' + this.resourceId });
         }
         else {
           p.parameter?.push({ name: "resource", valueString: this.resourceId });
