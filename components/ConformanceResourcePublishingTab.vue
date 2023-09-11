@@ -50,7 +50,7 @@
           label="Publisher"
           v-show="showAdvancedSettings"
           v-model="raw.publisher"
-          :readonly="readonly"
+          :readonly="readonly || lockPublisher"
           @input="notifyChange"
           hide-details="auto"
         />
@@ -63,7 +63,7 @@
           @input="notifyChange"
           auto-grow
           hide-details="auto"
-          clearable
+          :clearable="!readonly"
           rows="2"
         />
         <span class="markdown" v-html="convertHtml(raw.copyright)" />
@@ -153,6 +153,7 @@ import { DateTime } from "luxon";
 export default Vue.extend({
   props: {
     readonly: Boolean,
+    lockPublisher: Boolean,
     showAdvancedSettings: Boolean,
     raw: Object as PropType<ConformanceResourceInterface>,
     publishedVersions: {

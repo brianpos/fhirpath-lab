@@ -60,6 +60,7 @@
             <v-tab-item>
               <!-- Publishing -->
               <conformance-resource-publishing-tab :raw="raw" :publishedVersions="publishedVersions"
+                :lockPublisher="false"
                 :readonly="readonly" :showAdvancedSettings="showAdvancedSettings" @update="updateNow" />
             </v-tab-item>
 

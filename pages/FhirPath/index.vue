@@ -291,7 +291,7 @@
                         <conformance-resource-details-tab ref="libDetailsTabComponent"
                           :raw="library"
                           :showAdvancedSettings="showAdvancedSettings"
-                          :readonly="false"
+                          :readonly="!enableSaveLibrary"
                           @update="updateNow"
                         >
                         </conformance-resource-details-tab>
@@ -308,8 +308,9 @@
                         <p class="fl-tab-header">Library Publishing</p>
                         <conformance-resource-publishing-tab
                           :raw="library"
+                          :lockPublisher="true"
                           :showAdvancedSettings="showAdvancedSettings"
-                          :readonly="false"
+                          :readonly="!enableSaveLibrary"
                           @update="updateNow"
                         />
 
@@ -1052,7 +1053,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       return this.primaryTab === 8 || (this.secondaryTab === 8 && this.windowWidth > 999);
     },
     enableSaveLibrary(): boolean {
-      return this.enableSave && this.library != undefined && this.showAdvancedSettings;
+      return this.enableSave && this.library != undefined && this.showAdvancedSettings && this.defaultProviderField == this.library.publisher;
     },
     enableCreateLibrary(): boolean {
       return this.library == undefined && this.showAdvancedSettings && ((this.defaultProviderField?.length ?? 0) > 0);
