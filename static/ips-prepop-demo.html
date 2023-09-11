@@ -100,17 +100,17 @@
             }
 
             .layout>div:nth-child(n + 5) {
-                height: unset;
-                max-height: calc(70vh - 108px);
+                /* height: unset; */
+                /* max-height: calc(70vh - 108px); */
                 width: calc(50vw - 10px);
-                overflow-y: unset;
+                /* overflow-y: unset; */
             }
 
             .layout>div {
-                height: unset;
-                max-height: calc(70vh - 108px);
+                /* height: unset;
+                max-height: calc(70vh - 108px); */
                 width: calc(50vw - 10px);
-                overflow-y: unset;
+                /* overflow-y: unset; */
             }
 
             .editor {
@@ -129,17 +129,17 @@
             }
 
             .layout>div {
-                height: unset;
-                max-height: calc(70vh - 108px);
+                /* height: unset; */
+                /* max-height: calc(70vh - 108px); */
                 width: calc(100vw - 10px);
-                overflow-y: unset;
+                /* overflow-y: unset; */
             }
 
             .layout>div:nth-child(n + 5) {
-                height: unset;
-                max-height: calc(70vh - 108px);
+                /* height: unset;
+                max-height: calc(70vh - 108px); */
                 width: calc(100vw - 10px);
-                overflow-y: unset;
+                /* overflow-y: unset; */
             }
 
             .editor {
@@ -164,13 +164,15 @@
             <h2>Intake Form</h2>
             <div class="input-group">
                 <input id="urlQuestionnaire" width="0" class="form-control" type="text" name="" placeholder=""
-                    value="https://fhir.forms-lab.com/Questionnaire/ips-prepop">
+                    value="https://fhir.forms-lab.com/Questionnaire/ips-prepop6">
                 <button class="input-group-text" id="btnDownloadQuestionnaire"><span class="iconify"
                         data-icon="mdi-download"></span></button>
                 <button class="input-group-text" id="btnFormatQuestionnaire"><span class="iconify"
                         data-icon="mdi-format-indent-increase"></span></button>
             </div>
-            <div id="myFormContainer"></div>
+            <div>
+                <div id="myFormContainer"></div>
+            </div>
         </div>
         <div>
             <h2>Auto-populate</h2>
@@ -205,26 +207,33 @@
             </div>
             </p>
             <p>
-                <a href="https://www.hl7.org/fhir/uv/ips/2021Sep/ips.html" target="_blank">IPS</a> is a standard for
+                <a href="http://hl7.org/fhir/uv/ips" target="_blank">IPS</a> is a standard for
                 exchanging
                 patient data. It is a bundle of FHIR resources that can be used to pre-populate a form.
             </p>
+            <br />
+            <p>
+                <div class="btn-group" role="group" aria-label="First group">
+                    <div class="input-group-text">Debug View: </div>
+                    <button class="btn btn-outline-secondary" id="btnNone">None</button>
+                    <button class="btn btn-outline-primary" id="btnInput">Input</button>
+                    <button class="btn btn-outline-secondary" id="btnProcessing">Processing</button>
+                </div>
+            </p>
         </div>
-        <div></div>
-        <div></div>
-        <div>
+        <div class="view-input">
             <h2>Questionnaire Definition <button id="renderQuestionnaire" class="btn btn-primary">Render</button></h2>
             <div id="editorQuestionnaire" class="editor"></div>
         </div>
-        <div>
+        <div class="view-input">
             <h2>IPS Bundle</h2>
             <div id="editorIPS" class="editor"></div>
         </div>
-        <div>
+        <div class="output">
             <h2>Prepop Request</h2>
             <div id="editorPrePopParams" class="editor"></div>
         </div>
-        <div>
+        <div class="output">
             <h2>Prepop Response</h2>
             <div id="editorQR" class="editor"></div>
         </div>
@@ -255,6 +264,7 @@
         var editorPrePopParams;
 
         $(document).ready(function () {
+            $(".output").hide();
 
             editorIPS = ace.edit("editorIPS");
             editorIPS.setTheme("ace/theme/solarized_light");
@@ -281,6 +291,42 @@
             };
             LForms.Util.setFHIRContext(fhirContext.fhir);
             LForms.Util.addFormToPage(formDefinition, 'myFormContainer', options);
+        });
+
+        $("#btnNone").click(function () {
+            $(".view-input").hide();
+            $(".output").hide();
+
+            $("#btnNone").addClass("btn-outline-primary");
+            $("#btnNone").removeClass("btn-outline-secondary");
+            $("#btnInput").removeClass("btn-outline-primary");
+            $("#btnInput").addClass("btn-outline-secondary");
+            $("#btnProcessing").removeClass("btn-outline-primary");
+            $("#btnProcessing").addClass("btn-outline-secondary");
+        });
+
+        $("#btnInput").click(function () {
+            $(".view-input").show();
+            $(".output").hide();
+
+            $("#btnNone").removeClass("btn-outline-primary");
+            $("#btnNone").addClass("btn-outline-secondary");
+            $("#btnInput").addClass("btn-outline-primary");
+            $("#btnInput").removeClass("btn-outline-secondary");
+            $("#btnProcessing").removeClass("btn-outline-primary");
+            $("#btnProcessing").addClass("btn-outline-secondary");
+        });
+
+        $("#btnProcessing").click(function () {
+            $(".view-input").hide();
+            $(".output").show();
+
+            $("#btnNone").removeClass("btn-outline-primary");
+            $("#btnNone").addClass("btn-outline-secondary");
+            $("#btnInput").removeClass("btn-outline-primary");
+            $("#btnInput").addClass("btn-outline-secondary");
+            $("#btnProcessing").addClass("btn-outline-primary");
+            $("#btnProcessing").removeClass("btn-outline-secondary");
         });
 
         $("#btnDownloadQuestionnaire").click(async function () {

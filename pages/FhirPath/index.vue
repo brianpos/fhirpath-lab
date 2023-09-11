@@ -2273,7 +2273,6 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
           clearExtension(this.library, "http://fhir.forms-lab.com/StructureDefinition/context-expression");
 
         // set the resource content
-        this.library.contained = [];
         const resourceJson = this.getResourceJson();
         if (resourceJson && this.resourceJsonChanged)
         {
@@ -2285,6 +2284,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
             url: "http://fhir.forms-lab.com/StructureDefinition/resource-id", 
             valueReference: { reference: "#" + jsonObject.id }
           });
+          this.library.contained = [];
           this.library.contained.push(jsonObject);
         }
         else
