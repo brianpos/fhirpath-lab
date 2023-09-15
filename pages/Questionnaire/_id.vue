@@ -76,6 +76,10 @@
             <v-icon left> mdi-application-variable-outline </v-icon>
             Variables
           </v-tab>
+          <v-tab>
+            <v-icon left> mdi-file-document-edit-outline </v-icon>
+            Renderer
+          </v-tab>
 
           <v-tabs-items touchless v-model="tab">
             <v-tab-item>
@@ -164,6 +168,18 @@
                     v-bind:questionnaire="raw"
                     v-bind:items="flatModel"
                   />
+                </v-card-text>
+              </v-card>
+            </v-tab-item>
+
+            <v-tab-item>
+              <!-- CSIRO Renderer -->
+              <v-card flat>
+                <v-card-text>
+                  <p class="fl-tab-header">Renderer</p>
+                  <EditorRendererSection
+                    v-if="raw"
+                    v-bind:questionnaire="raw" />
                 </v-card-text>
               </v-card>
             </v-tab-item>
