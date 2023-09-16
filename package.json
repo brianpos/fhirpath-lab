@@ -9,7 +9,8 @@
     "build": "nuxt build",
     "start": "nuxt start",
     "generate": "nuxt generate",
-    "dockerize": "docker build -t fhirpath-lab ."
+    "dockerize": "docker build -t fhirpath-lab .",
+    "build:react-renderer": "webpack --mode=production --config webpack-react.config.cjs"
   },
   "dependencies": {
     "@aehrc/smart-forms-renderer": "^0.7.1",
@@ -40,6 +41,8 @@
     "vuereact-combined": "^1.2.11"
   },
   "devDependencies": {
+    "@aehrc/smart-forms-renderer": "^0.7.1",
+    "@babel/preset-react": "^7.22.15",
     "@mdi/font": "^6.5.95",
     "@mdi/js": "^6.5.95",
     "@nuxt/types": "^2.15.7",
@@ -49,6 +52,9 @@
     "@volar-plugins/vetur": "^2.0.0",
     "@vue/runtime-dom": "^3.2.47",
     "minimist": ">=1.2.6",
-    "vue-property-decorator": "^9.1.2"
+    "vue-property-decorator": "^9.1.2",
+    "webpack-cli": "^4.10.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   }
 }

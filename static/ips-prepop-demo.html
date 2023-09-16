@@ -174,7 +174,15 @@
                         data-icon="mdi-format-indent-increase"></span></button>
             </div>
             <div>
+                <div>
+                    <div class="btn-group" role="group" aria-label="First group">
+                        <div class="input-group-text">Form: </div>
+                        <button class="btn btn-outline-primary" id="btnLForms">LForms</button>
+                        <button class="btn btn-outline-secondary" id="btnCsiroForms">CsiroForms</button>
+                    </div>
+                </div>
                 <div id="myFormContainer"></div>
+                <div id="csiroForms"></div>
             </div>
         </div>
         <div>
@@ -216,7 +224,7 @@
             </p>
             <br />
             <p>
-                <div class="btn-group" role="group" aria-label="First group">
+                <div class="btn-group" role="group" aria-label="Second group">
                     <div class="input-group-text">Debug View: </div>
                     <button class="btn btn-outline-secondary" id="btnNone">None</button>
                     <button class="btn btn-outline-primary" id="btnInput">Input</button>
@@ -242,6 +250,20 @@
         </div>
     </div>
 
+    <!--     CSIRO Smart Forms renderer Webpack bundle-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.min.js"
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.min.js"
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.22.19/babel.min.js"
+            integrity="sha512-A3vi+b098nrOUubJ1enqjwbGL3ytZBTWB0ZMWP6yHhXHuQcO8JD0DWKnq05IHm6HnDdQVswqmpKmFHwjmaNclA=="
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+    <script type="text/javascript" src="bundle-renderer.js"></script>
+<!--    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.22.19/babel.min.js"-->
+<!--            integrity="sha512-A3vi+b098nrOUubJ1enqjwbGL3ytZBTWB0ZMWP6yHhXHuQcO8JD0DWKnq05IHm6HnDdQVswqmpKmFHwjmaNclA=="-->
+<!--            crossorigin="anonymous" referrerpolicy="no-referrer"></script>-->
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
         crossorigin="anonymous"></script>
@@ -258,7 +280,37 @@
     <script src="https://clinicaltables.nlm.nih.gov/lforms-versions/33.4.1/fhir/R4/lformsFHIR.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/fhirclient@2/build/fhir-client.min.js"></script>
 
+
+    <script type="text/babel">
+        // CSIRO form functions from bundle-renderer.js
+        const {buildForm, destroyForm} = window
+
+        async function buildCsiroForm(questionnaire) {
+            if (!questionnaire) {
+                return 0
+            }
+
+            destroyForm()
+            await buildForm(questionnaire)
+        }
+
+        async function buildCsiroFormWithResponse(questionnaire, questionnaireResponse) {
+            if (!questionnaire) {
+                return 0
+            }
+
+            destroyForm()
+            await buildForm(questionnaire, questionnaireResponse)
+        }
+
+        function destroyCsiroForm() {
+            destroyForm()
+        }
+    </script>
+
+
     <script type="text/javascript">
+
         var options = { prepopulate: false }; // this form is doing the pre-pop
         var formDefinition = { resourceType: "Questionnaire" };
         var editorQuestionnaire;
@@ -266,7 +318,8 @@
         var editorQR;
         var editorPrePopParams;
 
-        $(document).ready(function () {
+        $(document).ready(async function () {
+            $("#csiroForms").hide();
             $(".output").hide();
 
             editorIPS = ace.edit("editorIPS");
@@ -289,11 +342,32 @@
             var fhirContext = {
                 fhir: FHIR.client({
                     serverUrl: "https://sqlonfhir-r4.azurewebsites.net/fhir",
-                    tokenResponse: { patient: "https://sqlonfhir-r4.azurewebsites.net/fhir/Patient/example" }
+                    tokenResponse: {patient: "https://sqlonfhir-r4.azurewebsites.net/fhir/Patient/example"}
                 })
             };
             LForms.Util.setFHIRContext(fhirContext.fhir);
             LForms.Util.addFormToPage(formDefinition, 'myFormContainer', options);
+            await buildCsiroForm(formDefinition)
+        });
+
+        $("#btnLForms").click(function () {
+            $("#myFormContainer").show();
+            $("#csiroForms").hide();
+
+            $("#btnLForms").addClass("btn-outline-primary");
+            $("#btnLForms").removeClass("btn-outline-secondary");
+            $("#btnCsiroForms").removeClass("btn-outline-primary");
+            $("#btnCsiroForms").addClass("btn-outline-secondary");
+        });
+
+        $("#btnCsiroForms").click(function () {
+            $("#myFormContainer").hide();
+            $("#csiroForms").show();
+
+            $("#btnLForms").removeClass("btn-outline-primary");
+            $("#btnLForms").addClass("btn-outline-secondary");
+            $("#btnCsiroForms").addClass("btn-outline-primary");
+            $("#btnCsiroForms").removeClass("btn-outline-secondary");
         });
 
         $("#btnNone").click(function () {
@@ -341,6 +415,7 @@
             const raw = await response.text();
             editorQuestionnaire.setValue(raw);
             editorQuestionnaire.clearSelection();
+            destroyCsiroForm()
 
             // Now check if this is JSON then render it bare to the preview
             try {
@@ -348,6 +423,7 @@
                 editorQuestionnaire.setValue(JSON.stringify(json, null, 4));
                 editorQuestionnaire.clearSelection();
                 LForms.Util.addFormToPage(json, 'myFormContainer', options);
+                await buildCsiroForm(json)
             }
             catch (err) {
                 console.log(err);
@@ -360,9 +436,10 @@
             editorQuestionnaire.clearSelection();
         });
 
-        $("#renderQuestionnaire").click(function () {
+        $("#renderQuestionnaire").click(async function () {
             formDefinition = JSON.parse(editorQuestionnaire.getValue());
             LForms.Util.addFormToPage(formDefinition, 'myFormContainer', options);
+            await buildCsiroForm(formDefinition)
         });
 
         $("#btnDownloadIPS").click(async function () {
@@ -455,6 +532,9 @@
                     if (jsonOutput.resourceType === "OperationOutcome") {
                         $("#prefill-error").text("Unable to pre-populate form, refer to outcome");
                     }
+                    console.log(formDefinition);
+                    console.log(jsonOutput);
+                    await buildCsiroFormWithResponse(formDefinition, jsonOutput)
                 }
                 catch (err) {
                     console.log(err);
