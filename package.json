@@ -41,7 +41,6 @@
     "vuereact-combined": "^1.2.11"
   },
   "devDependencies": {
-    "@aehrc/smart-forms-renderer": "^0.7.1",
     "@babel/preset-react": "^7.22.15",
     "@mdi/font": "^6.5.95",
     "@mdi/js": "^6.5.95",
