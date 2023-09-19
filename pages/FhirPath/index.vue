@@ -520,7 +520,7 @@ import { EvaluateChatPrompt, GetSystemPrompt, IOpenAISettings } from "~/helpers/
 import { ChatMessage } from "@azure/openai";
 import ParseTreeTab from "~/components/ParseTreeTab.vue";
 import ConformanceResourceDetailsTab from "~/components/ConformanceResourceDetailsTab.vue";
-import { VueElement } from "@vue/runtime-dom";
+import { VueElement, nextTick } from "@vue/runtime-dom";
 import { LibraryData } from "~/models/LibraryTableData";
 import { BaseResource_defaultValues } from "~/models/BaseResourceTableData";
 
@@ -1090,14 +1090,14 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       }
       this.lastTabClicked = undefined;
     },
-    readParametersFromQuery(): TestFhirpathData{
+    readParametersFromQuery(): TestFhirpathData {
       let data: TestFhirpathData = {
         expression: this.$route.query.expression as string
       };
-    if (this.$route.query.libaryId as string) {
-        data.libraryId = this.$route.query.libaryId as string;
-    }
-    else {
+      if (this.$route.query.libaryId as string) {
+          data.libraryId = this.$route.query.libaryId as string;
+      }
+      else {
         if (this.$route.query.context) {
           data.context = this.$route.query.context as string;
         }
@@ -1117,6 +1117,27 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
 
         if (this.$route.query.engine) {
           data.engine = this.$route.query.engine as string ?? '';
+        }
+
+        if (this.$route.query){
+          // iterate all the query parameters and look for variables identified by the prefix "var-"
+          for (const [key, value] of Object.entries(this.$route.query)) {
+            if (key.startsWith("var-")) {
+              const varName = key.substring(4);
+              const varValue = value as string;
+              data.variables = data.variables ?? [];
+              data.variables.push({ name: varName, data: varValue });
+            }
+          }
+          this.$nextTick(async () => {
+            for (const variable of this.variables) {
+              if (variable[1].data?.startsWith("http://") || variable[1].data?.startsWith("https://")) {
+                // if the variable value is a resource reference, download the resource instead
+                console.log("Downloading variable: " + variable[0] + " = " + variable[1].data);
+                await this.downloadVariableResource(variable[0]);
+              }
+            }
+          });
         }
 
         if (this.$route.query.terminologyServer) {
