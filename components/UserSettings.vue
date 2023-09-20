@@ -231,7 +231,7 @@ export default Vue.extend({
                 });
 
                 const wkj = responseWKJ.data;
-                console.log(wkj);
+                // console.log(wkj);
                 if (wkj.token_endpoint && wkj.authorization_endpoint) this.FhirServerSupportsSmartAuth = true;
               }
               catch(err){
@@ -269,9 +269,9 @@ export default Vue.extend({
       this.loadingFhirServerAuthData = false;
     },
     async readUserSettings() {
-      console.log("read User Settings");
+      // console.log("read User Settings");
       const values = settings.load();
-      console.log(values);
+      // console.log(values);
 
       this.fhirServerUrl = values.fhirServerUrl;
       this.fhirServerExamplesUrl = values.fhirServerExamplesUrl;
@@ -292,10 +292,10 @@ export default Vue.extend({
       await this.checkFhirServerSmartAuthCapabilities();
     },
     async writeUserSettings() {
-      console.log("write User Settings");
+      // console.log("write User Settings");
       settings.save(this);
       const values = settings.load();
-      console.log(values);
+      // console.log(values);
       this.closeSettings();
     },
   },

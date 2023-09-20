@@ -11,11 +11,13 @@ export declare interface UserSettingsData {
     favouritesListId?: string;
     defaultProviderField?: string;
     defaultNewCanonicalBase?: string;
+
     openAIApiVersion?: string; // 2023-03-15-preview
     openAIBasePath?: string; // empty will use the chatGPT system default, not Azure
     openAIKey?: string;
     openAIModel?: string; // gpt-3.5-turbo, gpt-4
     showAIKey: boolean;
+
     showAdvancedSettings: boolean;
     pageSize: number;
 }

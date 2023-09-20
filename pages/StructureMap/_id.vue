@@ -122,6 +122,9 @@ import { BaseResource_defaultValues } from "~/models/BaseResourceTableData";
 
 export default Vue.extend({
   mounted() {
+    if (this.$route.query.fhirserver){
+      this.fhirServerUrl = this.$route.query.fhirserver as string;
+    }
     this.searchFhirServer();
   },
   methods: {
@@ -160,7 +163,7 @@ export default Vue.extend({
         return newResource;
       };
       await loadCanonicalResource(
-        settings.getFhirServerUrl(),
+        this.fhirServerUrl ?? settings.getFhirServerUrl(),
         this,
         this,
         "StructureMap",
@@ -173,7 +176,7 @@ export default Vue.extend({
       }
     },
     async saveData() {
-      const outcome = await saveFhirResource(settings.getFhirServerUrl(), this);
+      const outcome = await saveFhirResource(this.fhirServerUrl ?? settings.getFhirServerUrl(), this);
       if (!outcome) {
         if (this.raw?.id) {
           if (this.$route.params.id.endsWith(":new")) {
