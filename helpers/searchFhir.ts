@@ -332,6 +332,34 @@ export async function loadFhirResource<TData extends fhir4b.FhirResource>(server
   }
 }
 
+function reportErrorByString(severity: "error" | "fatal" | "warning" | "information", message: string): fhir4b.OperationOutcome {
+  return {
+    resourceType: 'OperationOutcome',
+    issue: [
+      {
+        severity: severity,
+        code: 'informational',
+        details: {text: message}
+      }
+    ]
+  };
+}
+
+function reportError<TData extends fhir4b.FhirResource>(data: BaseResourceData<TData>, err: any) : fhir4b.OperationOutcome {
+  if (axios.isAxiosError(err)) {
+    const serverError = err as AxiosError<fhir4b.OperationOutcome>;
+    if (serverError && serverError.response) {
+      data.saveOutcome = serverError.response.data;
+      data.showOutcome = true;
+      return serverError.response.data;
+    }
+    console.log("Other server error:", err);
+    return reportErrorByString("fatal", err.message);
+  }
+    console.log("Client Error:", err);
+    return reportErrorByString("fatal", err);
+}
+
 export async function loadCanonicalResource<TData extends fhir4b.FhirResource, CData extends ConformanceResourceInterface>(serverBaseUrl: string, data: BaseResourceData<TData>, cdata: ConformanceResourceData<CData>, resourceType: string, routeId: string, createNew: () => TData) {
   await loadFhirResource(serverBaseUrl, data, resourceType, routeId, createNew);
   var loadedResource = data.raw as ConformanceResourceInterface;
@@ -396,16 +424,7 @@ export async function saveFhirResource<TData extends fhir4b.FhirResource>(server
     data.enableSave = false;
   } catch (err) {
     data.saving = false;
-    if (axios.isAxiosError(err)) {
-      const serverError = err as AxiosError<fhir4b.OperationOutcome>;
-      if (serverError && serverError.response) {
-        data.saveOutcome = serverError.response.data;
-        data.showOutcome = true;
-        return serverError.response.data;
-      }
-    } else {
-      console.log("Client Error:", err);
-    }
+    return reportError(data, err);
   }
 }
 

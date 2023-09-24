@@ -523,6 +523,7 @@ import ConformanceResourceDetailsTab from "~/components/ConformanceResourceDetai
 import { VueElement, nextTick } from "@vue/runtime-dom";
 import { LibraryData } from "~/models/LibraryTableData";
 import { BaseResource_defaultValues } from "~/models/BaseResourceTableData";
+import { DomainResource, Resource } from "fhir/r4b";
 
 const shareTooltipText = 'Copy a sharable link to this test expression';
 const shareZulipTooltipText = 'Copy a sharable link for Zulip to this test expression';
@@ -2272,6 +2273,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     async saveLibrary(){
       if (this.library){
         // update the library, then save it!
+        this.loadingData = true;
         // Set the base expression
         if (this.library.content && this.library.content.length > 0)
         {
@@ -2306,8 +2308,13 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
             url: "http://fhir.forms-lab.com/StructureDefinition/resource-id", 
             valueReference: { reference: "#" + jsonObject.id }
           });
-          this.library.contained = [];
-          this.library.contained.push(jsonObject);
+          if (jsonObject.contained){
+            this.library.contained = jsonObject.contained;
+            delete jsonObject.contained;
+          } else {
+            this.library.contained = [];
+          }
+          this.library.contained?.push(jsonObject);
         }
         else
         {
@@ -2339,13 +2346,16 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         }
 
         const outcome = await saveFhirResource(settings.getFhirServerUrl(), data);
-        if (data.raw)
+        this.loadingData = false;
+        console.log(outcome);
+        if (data.raw && !outcome)
         {
           this.library = data.raw;
           this.enableSave = false;
         }
-        if (!outcome) {
+        if (outcome) {
           this.saveOutcome = outcome;
+          this.showOutcome = true;
           if (this.raw?.id) {
             if (this.$route.params.id.endsWith(":new")) {
               let href = this.$route.fullPath.replaceAll(
