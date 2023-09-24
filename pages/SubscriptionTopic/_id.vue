@@ -14,7 +14,7 @@
       <br />
 
       <div v-if="!raw">
-        Loading SubscriptionTopic/<span v-text="this.$route.params.id" />...
+        Loading SubscriptionTopic/<span v-text="$route.params.id" />...
       </div>
       <v-card v-if="raw">
         <v-toolbar flat color="primary">
@@ -67,7 +67,7 @@
             <v-tab-item>
               <!-- Triggers Resource + Event -->
               <v-card flat>
-                <v-card-text v-if="raw && raw.resourceTrigger && raw.eventTrigger">
+                <v-card-text v-if="raw && (raw.resourceTrigger || raw.eventTrigger)">
                   <p class="fl-tab-header">Triggers</p>
                   <!-- <div class="results">Resource Triggers</div> -->
                   <v-simple-table class="triggers">
