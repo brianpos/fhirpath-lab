@@ -523,7 +523,7 @@ import ConformanceResourceDetailsTab from "~/components/ConformanceResourceDetai
 import { VueElement, nextTick } from "@vue/runtime-dom";
 import { LibraryData } from "~/models/LibraryTableData";
 import { BaseResource_defaultValues } from "~/models/BaseResourceTableData";
-import { DomainResource, Resource } from "fhir/r4b";
+import { DomainResource, FhirResource, Resource } from "fhir/r4b";
 
 const shareTooltipText = 'Copy a sharable link to this test expression';
 const shareZulipTooltipText = 'Copy a sharable link for Zulip to this test expression';
@@ -1526,14 +1526,29 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
             if (this.resourceJsonEditor) {
               this.resourceJsonEditor.setValue('');
               this.resourceJsonChanged = false;
-            if (this.resourceId?.startsWith("#") && this.library?.contained && this.library.contained[0]) {
-              this.resourceId = undefined;
-                const resourceJson = JSON.stringify(this.library.contained[0], null, 4); // really should lookup by ID
-                if (resourceJson) {
-                  this.resourceJsonEditor.setValue(resourceJson);
-                  this.resourceJsonChanged = false;
+            if (this.resourceId?.startsWith("#") && this.library?.contained){
+              var resource: Resource|DomainResource|undefined = undefined;
+              var newContained: FhirResource[] = [];
+              for (var n=0; n < this.library.contained.length; n++){
+                if (rId === "#"+this.library.contained[n].id){
+                  resource = this.library.contained[n];
                 }
-                this.resourceJsonEditor.clearSelection();
+                else {
+                  newContained.push(this.library.contained[n])
+                }
+              }
+              if (resource) {
+                this.resourceId = undefined;
+                if (this.library.contained.length > 1 && resource as DomainResource){
+                  (resource as DomainResource).contained = newContained;
+                }
+                  const resourceJson = JSON.stringify(resource, null, 4); // really should lookup by ID
+                  if (resourceJson) {
+                    this.resourceJsonEditor.setValue(resourceJson);
+                    this.resourceJsonChanged = false;
+                  }
+                  this.resourceJsonEditor.clearSelection();
+                }
               }
             }
           }
