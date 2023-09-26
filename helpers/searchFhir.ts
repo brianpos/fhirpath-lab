@@ -1,10 +1,9 @@
-import { Address, Bundle, BundleEntry, BundleLink, CodeableConcept, Coding, ContactPoint, UsageContext, ValueSet } from "fhir/r4b";
+import { Address, Bundle, BundleEntry, BundleLink, CodeableConcept, Coding, ContactPoint, OperationOutcomeIssue, UsageContext, ValueSet } from "fhir/r4b";
 import EasyTableDefinition from '~/models/EasyTableDefinition'
 import axios, { AxiosRequestHeaders, AxiosResponse } from "axios";
 import { AxiosError } from "axios";
 import { ConformanceResourceData, WithPublishingHistory } from "~/models/ConformanceResourceTableData";
 import { ConformanceResourceInterface } from "~/models/ConformanceResourceInterface";
-import { urlencoded } from "express";
 import { BaseResourceData } from "~/models/BaseResourceTableData";
 import { settings } from "./user_settings";
 
@@ -168,6 +167,46 @@ export function getLink(
   return undefined;
 }
 
+const FhirpathLabCodeSystem = "http://fhirpath-lab.com/CodeSystem/error-codes";
+
+const errorCodingExpandValueSet: Coding = {system: FhirpathLabCodeSystem, code: "exp-01", display: "Expansion error" };
+const errorCodingLoadPubVersions: Coding = {system: FhirpathLabCodeSystem, code: "lpv-01", display: "Load published versions error" };
+const errorCodingLoadResource: Coding = {system: FhirpathLabCodeSystem, code: "lr-01", display: "Load fhir resource error" };
+const errorCodingSaveResource: Coding = {system: FhirpathLabCodeSystem, code: "sr-01", display: "Save fhir resource error" };
+const errorCodingSearch: Coding = {system: FhirpathLabCodeSystem, code: "sr-01", display: "Search fhir resource error" };
+
+
+export function CreateOperationOutcome(
+  severity: "error" | "fatal" | "warning" | "information",
+  code: "invalid" | "structure" | "required" | "value" | "invariant"
+    | "security" | "login" | "unknown" | "expired" | "forbidden" | "suppressed"
+    | "processing" | "not-supported" | "duplicate" | "multiple-matches" | "not-found" | "deleted" | "too-long" | "code-invalid" | "extension" | "too-costly" | "business-rule" | "conflict"
+    | "transient" | "lock-error" | "no-store" | "exception" | "timeout" | "incomplete" | "throttled"
+    | "informational",
+  message: string,
+  coding?: Coding,
+  diagnostics?: string
+): fhir4b.OperationOutcome {
+  var result: fhir4b.OperationOutcome =
+  {
+    resourceType: 'OperationOutcome',
+    issue: []
+  };
+
+  var issue: OperationOutcomeIssue =
+  {
+    severity: severity,
+    code: code,
+    details: { text: message }
+  }
+  if (coding && issue.details)
+    issue.details.coding = [coding];
+  if (diagnostics)
+    issue.diagnostics = diagnostics;
+  result.issue.push(issue);
+  return result;
+}
+
 /** Perform a FHIR Search operation */
 export async function searchPage<T>(host: EasyTableDefinition<T>, url: string, mapData: (entries: BundleEntry[]) => void) {
   try {
@@ -205,7 +244,7 @@ export async function searchPage<T>(host: EasyTableDefinition<T>, url: string, m
         return true;
       });
 
-      if (outcomes.length > 0 && outcomes[0].resource?.resourceType === "OperationOutcome"){
+      if (outcomes.length > 0 && outcomes[0].resource?.resourceType === "OperationOutcome") {
         host.outcome = outcomes[0].resource as fhir4b.OperationOutcome;
       }
       else {
@@ -235,9 +274,9 @@ export async function searchPage<T>(host: EasyTableDefinition<T>, url: string, m
         host.outcome = serverError.response.data;
         return serverError.response.data;
       }
-    } else {
-      console.log("Client Error:", err);
+      return CreateOperationOutcome("fatal", "exception", "Server: " + err.message, errorCodingSearch, url);
     }
+    return CreateOperationOutcome("fatal", "exception", "Client: " + err as string, errorCodingSearch, url);
   }
 }
 
@@ -247,8 +286,8 @@ export function calculateNextVersion(versions: (string | undefined)[]): string {
 }
 
 export async function loadPublishedVersions<TData extends ConformanceResourceInterface>(serverBaseUrl: string, resourceType: string, canonicalUrl: string, data: WithPublishingHistory<TData>) {
+  const urlRequest = `${serverBaseUrl}/${resourceType}?url=${canonicalUrl}&_summary=true`;
   try {
-    const urlRequest = `${serverBaseUrl}/${resourceType}?url=${canonicalUrl}&_summary=true`;
     let headers: AxiosRequestHeaders = {
       'Cache-Control': 'no-cache',
       "Accept": requestFhirAcceptHeaders
@@ -273,13 +312,14 @@ export async function loadPublishedVersions<TData extends ConformanceResourceInt
       if (serverError && serverError.response) {
         return serverError.response.data;
       }
-    } else {
-      console.log("Client Error:", err);
+      return CreateOperationOutcome("fatal", "exception", "Server: " + err.message, errorCodingLoadPubVersions, urlRequest);
     }
-  }
+    return CreateOperationOutcome("fatal", "exception", "Client: " + err, errorCodingLoadPubVersions, urlRequest);
+    }
 }
 
 export async function loadFhirResource<TData extends fhir4b.FhirResource>(serverBaseUrl: string, data: BaseResourceData<TData>, resourceType: string, routeId: string, createNew: () => TData) {
+  var urlRequest;
   try {
     // clear the save validation messaging properties
     data.showOutcome = false;
@@ -301,7 +341,7 @@ export async function loadFhirResource<TData extends fhir4b.FhirResource>(server
       );
     }
 
-    const urlRequest = `${serverBaseUrl}/${resourceType}/${loadResourceId}`;
+    urlRequest = `${serverBaseUrl}/${resourceType}/${loadResourceId}`;
     let headers: AxiosRequestHeaders = {
       'Cache-Control': 'no-cache',
       "Accept": requestFhirAcceptHeaders
@@ -326,42 +366,16 @@ export async function loadFhirResource<TData extends fhir4b.FhirResource>(server
       if (serverError && serverError.response) {
         return serverError.response.data;
       }
-    } else {
-      console.log("Client Error:", err);
+      return CreateOperationOutcome("fatal", "exception", "Server: " + err.message, errorCodingLoadResource, urlRequest);
     }
+    return CreateOperationOutcome("fatal", "exception", "Client: " + err as string, errorCodingLoadResource, urlRequest);
   }
-}
-
-function reportErrorByString(severity: "error" | "fatal" | "warning" | "information", message: string): fhir4b.OperationOutcome {
-  return {
-    resourceType: 'OperationOutcome',
-    issue: [
-      {
-        severity: severity,
-        code: 'informational',
-        details: {text: message}
-      }
-    ]
-  };
-}
-
-function reportError<TData extends fhir4b.FhirResource>(data: BaseResourceData<TData>, err: any) : fhir4b.OperationOutcome {
-  if (axios.isAxiosError(err)) {
-    const serverError = err as AxiosError<fhir4b.OperationOutcome>;
-    if (serverError && serverError.response) {
-      data.saveOutcome = serverError.response.data;
-      data.showOutcome = true;
-      return serverError.response.data;
-    }
-    console.log("Other server error:", err);
-    return reportErrorByString("fatal", err.message);
-  }
-    console.log("Client Error:", err);
-    return reportErrorByString("fatal", err);
 }
 
 export async function loadCanonicalResource<TData extends fhir4b.FhirResource, CData extends ConformanceResourceInterface>(serverBaseUrl: string, data: BaseResourceData<TData>, cdata: ConformanceResourceData<CData>, resourceType: string, routeId: string, createNew: () => TData) {
-  await loadFhirResource(serverBaseUrl, data, resourceType, routeId, createNew);
+  var result = await loadFhirResource(serverBaseUrl, data, resourceType, routeId, createNew);
+  if (result?.resourceType === "OperationOutcome") return result;
+
   var loadedResource = data.raw as ConformanceResourceInterface;
   if (loadedResource) {
     if (loadedResource.text?.status === "generated") delete loadedResource.text;
@@ -399,6 +413,7 @@ export async function loadCanonicalResource<TData extends fhir4b.FhirResource, C
 
 export async function saveFhirResource<TData extends fhir4b.FhirResource>(serverBaseUrl: string, data: BaseResourceData<TData>): Promise<fhir4b.OperationOutcome | undefined> {
   data.saving = true;
+  var urlRequest;
   try {
     const resource = data.raw as fhir4b.FhirResource;
     console.log("save " + data.raw?.id);
@@ -412,11 +427,11 @@ export async function saveFhirResource<TData extends fhir4b.FhirResource>(server
       'Content-Type': requestFhirContentTypeHeaders
     };
     if (data.raw?.id) {
-      const urlRequest = `${serverBaseUrl}/${data.raw?.resourceType}/${data.raw.id}`;
+      urlRequest = `${serverBaseUrl}/${data.raw?.resourceType}/${data.raw.id}`;
       response = await axios.put<TData>(urlRequest, data.raw, { headers: headers });
     } else {
       // Create a new resource (via post)
-      const urlRequest = `${serverBaseUrl}/${data.raw?.resourceType}`;
+      urlRequest = `${serverBaseUrl}/${data.raw?.resourceType}`;
       response = await axios.post<TData>(urlRequest, data.raw, { headers: headers });
     }
     data.raw = response.data;
@@ -424,14 +439,23 @@ export async function saveFhirResource<TData extends fhir4b.FhirResource>(server
     data.enableSave = false;
   } catch (err) {
     data.saving = false;
-    return reportError(data, err);
-  }
+    if (axios.isAxiosError(err)) {
+      const serverError = err as AxiosError<fhir4b.OperationOutcome>;
+      if (serverError && serverError.response) {
+        data.saveOutcome = serverError.response.data;
+        data.showOutcome = true;
+        return serverError.response.data;
+      }
+      return CreateOperationOutcome("fatal", "exception", "Server: " + err.message, errorCodingSaveResource, urlRequest);
+    }
+    return CreateOperationOutcome("fatal", "exception", "Client: " + err, errorCodingSaveResource, urlRequest);
+    }
 }
 
 export async function expandValueSet(serverBaseUrl: string, vsCanonical: string, filter?: string): Promise<fhir4b.ValueSetExpansion | fhir4b.OperationOutcome> {
   const can = splitCanonical(vsCanonical);
   let urlRequest = `${serverBaseUrl}/ValueSet/$expand?url=${can?.canonicalUrl}`;
-  if (can?.version){
+  if (can?.version) {
     urlRequest += `&version=${encodeURIComponent(can.version)}`;
   }
   if (filter && filter.length > 0) {
@@ -456,32 +480,11 @@ export async function expandValueSet(serverBaseUrl: string, vsCanonical: string,
       if (serverError && serverError.response) {
         return serverError.response.data;
       }
-    } else {
-      console.log("Client Error:", err);
-      return {
-        resourceType: 'OperationOutcome',
-        issue: [
-          {
-            severity: 'error',
-            code: 'informational',
-            diagnostics: 'Terminology Server failed to return an expansion in the Valueset returned: ' + err,
-            details: {text: '(none)'}
-          }
-        ]
-      };
-        }
+      return CreateOperationOutcome("fatal", "exception", err.message, errorCodingExpandValueSet);
+    }
+    return CreateOperationOutcome("fatal", "exception", err as string, errorCodingExpandValueSet);
   }
-  return {
-    resourceType: 'OperationOutcome',
-    issue: [
-      {
-        severity: 'error',
-        code: 'informational',
-        diagnostics: 'Terminology Server failed to return an expansion in the Valueset returned.',
-        details: {text: '(none)'}
-      }
-    ]
-  };
+  return CreateOperationOutcome("error", "informational", "(none)", undefined, "Terminology Server failed to return an expansion in the Valueset returned.");
 }
 
 export const searchPublishingStatuses = [
@@ -583,8 +586,8 @@ export function splitCanonical(canonicalUrl?: string): VersionedCanonicalUrl | u
   if (!canonicalUrl) return undefined;
 
   const codeIndex = canonicalUrl.indexOf('#');
-  let code: string|undefined = undefined;
-  if (codeIndex !== -1){
+  let code: string | undefined = undefined;
+  if (codeIndex !== -1) {
     code = canonicalUrl.substring(codeIndex + 1)
     canonicalUrl = canonicalUrl.substring(0, codeIndex);
   }

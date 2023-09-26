@@ -490,6 +490,7 @@ import {
   requestFhirContentTypeHeaders,
   fhirResourceTypes,
   saveFhirResource,
+  CreateOperationOutcome,
 } from "~/helpers/searchFhir";
 import axios, { AxiosRequestHeaders, AxiosResponse } from "axios";
 import { AxiosError } from "axios";
@@ -1471,7 +1472,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       }
     },
 
-    async downloadLibrary(libraryId: string) {
+    async downloadLibrary(libraryId: string): Promise<void> {
       try {
         let url = libraryId;
         if (!libraryId.startsWith('http'))
@@ -1583,11 +1584,14 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
               this.saveOutcome?.issue.push({ code: 'not-found', severity: 'error', details: { text: `Library resource ${libraryId} not found` } });
             }
             this.showOutcome = true;
-            return serverError.response.data;
+            return;
           }
-        } else {
-          console.log("Client Error:", err);
+          this.saveOutcome = CreateOperationOutcome("fatal", "exception", "Server: " + err.message, undefined, err.code);
+          this.showOutcome = true;
+          return;
         }
+        this.saveOutcome = CreateOperationOutcome("fatal", "exception", "Client: " + err);
+        this.showOutcome = true;
       }
     },
 
@@ -1669,13 +1673,12 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
             this.showOutcome = true;
             return serverError.response.data;
           }
-          // console.log("Axios Error:", err);
-          this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
-          this.saveOutcome?.issue.push({ code: 'unknown', severity: 'fatal', details: { text: err.message }, diagnostics: err.code });
+          this.saveOutcome = CreateOperationOutcome("fatal", "exception", "Server: " + err.message, undefined, err.code);
           this.showOutcome = true;
-        } else {
-          console.log("Client Error:", err);
+          return;
         }
+        this.saveOutcome = CreateOperationOutcome("fatal", "exception", "Client: " + err);
+        this.showOutcome = true;
       }
     },
 
@@ -1736,9 +1739,12 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
             this.showOutcome = true;
             return serverError.response.data;
           }
-        } else {
-          console.log("Client Error:", err);
+          this.saveOutcome = CreateOperationOutcome("fatal", "exception", "Server: " + err.message, undefined, err.code);
+          this.showOutcome = true;
+          return;
         }
+        this.saveOutcome = CreateOperationOutcome("fatal", "exception", "Client: " + err);
+        this.showOutcome = true;
       }
     },
 
@@ -1889,8 +1895,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         catch (err: any) {
           console.log(err);
           if (err.message) {
-            this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
-            this.saveOutcome?.issue.push({ code: 'exception', severity: 'fatal', details: { text: err.message } });
+            this.saveOutcome = CreateOperationOutcome('fatal', 'exception', err.message);
             this.showOutcome = true;
           }
         }
@@ -1926,8 +1931,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         catch (err: any) {
           console.log(err);
           if (err.message) {
-            this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
-            this.saveOutcome?.issue.push({ code: 'exception', severity: 'fatal', details: { text: err.message } });
+            this.saveOutcome = CreateOperationOutcome('fatal', 'exception', err.message);
             this.showOutcome = true;
           }
         }
@@ -1940,8 +1944,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         catch (err: any) {
           console.log(err);
           if (err.message) {
-            this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
-            this.saveOutcome?.issue.push({ code: 'exception', severity: 'fatal', details: { text: err.message } });
+            this.saveOutcome = CreateOperationOutcome('fatal', 'exception', err.message);
             this.showOutcome = true;
           }
         }
@@ -1990,8 +1993,11 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         catch (err: any) {
           console.log(err);
           if (err.message) {
-            this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
-            this.saveOutcome?.issue.push({ code: 'exception', severity: 'fatal', details: { text: err.message } });
+            this.saveOutcome = CreateOperationOutcome('fatal', 'exception', err.message);
+            this.showOutcome = true;
+          }
+          else{
+            this.saveOutcome = CreateOperationOutcome('fatal', 'exception', err);
             this.showOutcome = true;
           }
         }
@@ -2022,8 +2028,11 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         catch (err: any) {
           console.log(err);
           if (err.message) {
-            this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
-            this.saveOutcome?.issue.push({ code: 'exception', severity: 'fatal', details: { text: err.message } });
+            this.saveOutcome = CreateOperationOutcome('fatal', 'exception', err.message);
+            this.showOutcome = true;
+          }
+          else {
+            this.saveOutcome = CreateOperationOutcome('fatal', 'exception', err);
             this.showOutcome = true;
           }
         }
@@ -2058,8 +2067,11 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         catch (err: any) {
           console.log(err);
           if (err.message) {
-            this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
-            this.saveOutcome?.issue.push({ code: 'exception', severity: 'fatal', details: { text: err.message } });
+            this.saveOutcome = CreateOperationOutcome('fatal', 'exception', err.message);
+            this.showOutcome = true;
+          }
+          else {
+            this.saveOutcome = CreateOperationOutcome('fatal', 'exception', err);
             this.showOutcome = true;
           }
         }
@@ -2072,8 +2084,11 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         catch (err: any) {
           console.log(err);
           if (err.message) {
-            this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
-            this.saveOutcome?.issue.push({ code: 'exception', severity: 'fatal', details: { text: err.message } });
+            this.saveOutcome = CreateOperationOutcome('fatal', 'exception', err.message);
+            this.showOutcome = true;
+          }
+          else {
+            this.saveOutcome = CreateOperationOutcome('fatal', 'exception', err);
             this.showOutcome = true;
           }
         }
@@ -2122,8 +2137,11 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         catch (err: any) {
           console.log(err);
           if (err.message) {
-            this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
-            this.saveOutcome?.issue.push({ code: 'exception', severity: 'fatal', details: { text: err.message } });
+            this.saveOutcome = CreateOperationOutcome('fatal', 'exception', err.message);
+            this.showOutcome = true;
+          }
+          else {
+            this.saveOutcome = CreateOperationOutcome('fatal', 'exception', err);
             this.showOutcome = true;
           }
         }
