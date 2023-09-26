@@ -63,7 +63,8 @@ export default Vue.extend({
 
     },
     notifyChange() {
-      this.$emit("update");
+      if (!this.readonly)
+        this.$emit("update");
     },
     /** Convert the parameter data into a HTML from markdown format */
     convertHtml(field: string | undefined): string {

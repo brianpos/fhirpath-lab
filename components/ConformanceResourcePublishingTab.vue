@@ -29,6 +29,7 @@
               class="version"
               :items="statuses"
               v-model="raw.status"
+              :readonly="readonly"
               hide-details="auto"
               @input="notifyStatusChange"
             />
@@ -180,10 +181,11 @@ export default Vue.extend({
   },
   methods: {
     notifyChange() {
-      this.$emit("update");
+      if (!this.readonly)
+        this.$emit("update");
     },
     notifyStatusChange() {
-      if (this.raw.status === "active") {
+      if (!this.readonly && this.raw.status === "active") {
         // status was changed to publishing, so set the date
         this.raw.date =
           DateTime.now().toISODate() + "T" + DateTime.now().toISOTime();
