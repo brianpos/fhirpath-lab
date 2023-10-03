@@ -18,7 +18,7 @@
       </div>
       <br />
       <v-textarea label="JSON formatted property" outlined @paste="loadFromJson" :value="convertJson(description)"
-        auto-grow hide-details="auto" clearable rows="2">
+        @focus="event => event.target.select()" auto-grow hide-details="auto" clearable rows="2">
         <template v-slot:append>
           <v-btn icon small tile @click="copyToClipboard(convertJson(description))" title="Copy JSON fragment">
             <v-icon> mdi-content-copy </v-icon>
@@ -27,17 +27,18 @@
       </v-textarea>
       <br />
       <v-textarea label="XML formatted property" outlined @paste="loadFromXml" :value="convertXml(description)" auto-grow
-        hide-details="auto" clearable rows="2">
+        @focus="event => event.target.select()" hide-details="auto" clearable rows="2">
         <template v-slot:append>
           <v-btn icon small tile @click="copyToClipboard(convertXml(description))" title="Copy XML fragment">
             <v-icon> mdi-content-copy </v-icon>
           </v-btn>
         </template>
       </v-textarea>
-      <br/>
+      <br />
       <div>
         You can copy the XML or JSON fragment from your fhir resource and paste it into the corresponding field
-        to be able to quiclky edit it in the other fields, then use the copy button to put the result back into your resource.
+        to be able to quiclky edit it in the other fields, then use the copy button to put the result back into your
+        resource.
       </div>
     </div>
   </div>
