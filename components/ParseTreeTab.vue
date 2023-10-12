@@ -189,6 +189,15 @@ const specFunctionReferences = {
   "length": "http://hl7.org/fhirpath/N1/#length-integer", // 5.6.11
   "toChars": "http://hl7.org/fhirpath/N1/#tochars-collection", // 5.6.12
 
+  // Additional String Functions (approved an in the CI build)
+  "encode": "https://build.fhir.org/ig/HL7/FHIRPath/#encodeformat-string-string", // 5.7.1
+  "decode": "https://build.fhir.org/ig/HL7/FHIRPath/#decodeformat-string-string", // 5.7.2
+  "escape": "https://build.fhir.org/ig/HL7/FHIRPath/#escapetarget-string-string", // 5.7.3
+  "unescape": "https://build.fhir.org/ig/HL7/FHIRPath/#unescapetarget-string-string", // 5.7.4
+  "trim": "https://build.fhir.org/ig/HL7/FHIRPath/#trim-string", // 5.7.5
+  "split": "https://build.fhir.org/ig/HL7/FHIRPath/#splitseparator-string-collection", // 5.7.6
+  "join": "https://build.fhir.org/ig/HL7/FHIRPath/#joinseparator-string-string", // 5.7.7
+
   // Section 5.7: Math
   "abs": "http://hl7.org/fhirpath/N1/#abs-integer-decimal-quantity", // 5.7.1
   "ceiling": "http://hl7.org/fhirpath/N1/#ceiling-integer", // 5.7.2
@@ -233,6 +242,26 @@ const specFunctionReferences = {
 
   // Section 7: Aggregates
   "aggregate": "http://hl7.org/fhirpath/N1/#aggregateaggregator-expression-init-value-value", // 7.1
+
+  // Section 10.2: Reflection
+  "type": "http://hl7.org/fhirpath/N1/#reflection",
+
+  // FHIR Extensions to fhirpath (linked from the R4 specification)
+  "extension": "https://hl7.org/fhir/fhirpath.html#functions",
+  "hasValue": "https://hl7.org/fhir/fhirpath.html#functions",
+  "getValue": "https://hl7.org/fhir/fhirpath.html#functions",
+  "resolve": "https://hl7.org/fhir/fhirpath.html#functions",
+  "elementDefinition": "https://hl7.org/fhir/fhirpath.html#functions",
+  "slice": "https://hl7.org/fhir/fhirpath.html#functions",
+  "checkModifiers": "https://hl7.org/fhir/fhirpath.html#functions",
+  "conformsTo": "https://hl7.org/fhir/fhirpath.html#functions",
+  "memberOf": "https://hl7.org/fhir/fhirpath.html#functions",
+  "subsumes": "https://hl7.org/fhir/fhirpath.html#functions",
+  "subsumedBy": "https://hl7.org/fhir/fhirpath.html#functions",
+  "htmlChecks ": "https://hl7.org/fhir/fhirpath.html#functions",
+  "lowBoundary ": "https://hl7.org/fhir/fhirpath.html#functions",
+  "highBoundary ": "https://hl7.org/fhir/fhirpath.html#functions",
+  "comparable": "https://hl7.org/fhir/fhirpath.html#functions",
 };
 
 // Workaround to include the definition of the parse function
