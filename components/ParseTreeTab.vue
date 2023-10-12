@@ -23,7 +23,7 @@
       </template>
       <template v-slot:label="{ item }">
         <template v-if="item.ExpressionType === 'FunctionCallExpression'">
-          .{{ item.Name }}(<template
+          .<template v-if="item.SpecUrl"><a @click.stop target="_blank" :href="item.SpecUrl">{{ item.Name }}</a></template><template v-else>{{ item.Name }}</template>(<template
             v-if="item.Arguments && item.Arguments.length > 0"
             >...</template
           >)
@@ -112,7 +112,15 @@
     <v-checkbox v-model="astInverted" label="Inverted Tree"></v-checkbox>
   </div>
 </template>  
-    
+
+<style scoped>
+.v-application a {
+  color: rgba(0,0,0,.87);
+}
+a:hover {
+  color: #1976d2;
+}
+</style>
 <script lang="ts">
 import { Component, Vue } from "vue-property-decorator";
 import fhirpath from "fhirpath";
@@ -276,6 +284,7 @@ export interface JsonNode {
   Name: string;
   Arguments?: JsonNode[];
   ReturnType?: string;
+  SpecUrl?: string;
 }
 
 interface fpjsNode {
@@ -286,6 +295,13 @@ interface fpjsNode {
 }
 
 export function AllocateNodeIds(ast: JsonNode, startAt: number = 0): number {
+  if (ast.ExpressionType === 'FunctionCallExpression'){
+    // Check to see if this function has a spec link in our index
+    const index = ast.Name as keyof typeof specFunctionReferences;
+    if (specFunctionReferences[index]){
+      ast.SpecUrl = specFunctionReferences[index];
+    }
+  }
   ast.id = startAt.toString();
   startAt++;
   if (ast.Arguments && ast.Arguments.length > 0) {
@@ -554,7 +570,7 @@ export default class ParseTreeTab extends Vue {
           this.astOpenInverted.push(i.toString());
         }
       }
-    } catch (err) {
+    } catch (err: any) {
       console.log(err);
       this.parseErrorMessage = err?.message;
     }
