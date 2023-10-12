@@ -84,7 +84,7 @@ interface ISpecFunctionDetails {
   description?: string;
 }
 
-const mapReferences = new Map<string, ISpecFunctionDetails>([
+const mapFunctionReferences = new Map<string, ISpecFunctionDetails>([
   // Section 5 Functions
   // Section 5.1: Existence
   ['empty', { outlineNo: '5.1.1', title: 'empty() : Boolean', specUrl: 'http://hl7.org/fhirpath/N1/#empty-boolean', description: 'Returns true if the input collection is empty ({ }) and false otherwise.' }],
@@ -186,22 +186,8 @@ const mapReferences = new Map<string, ISpecFunctionDetails>([
   ["today", { outlineNo: '5.9.2c', title: 'today() : Date', specUrl: "http://hl7.org/fhirpath/N1/#today-date"}],
 
   // Section 6.3: Types
-  // 6.3.1 the `is` type specifier is not hyperlinked in the fhirpath lab
   ["is", { outlineNo: '6.3.2', title: 'is(type : type specifier)', specUrl: "http://hl7.org/fhirpath/N1/#istype-type-specifier"}],
-  // 6.3.3 the `as` type specifier is not hyperlinked in the fhirpath lab
   ["as", { outlineNo: '6.3.4', title: 'as(type : type specifier)', specUrl: "http://hl7.org/fhirpath/N1/#as-type-specifier"}],
-
-  // Section 6.4: Collections
-  // 6.4.1 The `|` operator isn't hyperlinked in the fhirpath lab
-  ["in", { outlineNo: '6.4.2', title: 'in', specUrl: "http://hl7.org/fhirpath/N1/#in-membership"}],
-  // 6.4.3 The `contains` operator isn't hyperlinked in the fhirpath lab
-
-  // Section 6.5: Boolean Logic
-  ["and", { outlineNo: '6.5.1', title: 'and', specUrl: "http://hl7.org/fhirpath/N1/#and"}],
-  ["or", { outlineNo: '6.5.2', title: 'or', specUrl: "http://hl7.org/fhirpath/N1/#or"}],
-  ["not", { outlineNo: '6.5.3', title: 'not', specUrl: "http://hl7.org/fhirpath/N1/#not-boolean"}],
-  ["xor", { outlineNo: '6.5.4', title: 'xor', specUrl: "http://hl7.org/fhirpath/N1/#xor"}],
-  ["implies", { outlineNo: '6.5.5', title: 'implies', specUrl: "http://hl7.org/fhirpath/N1/#implies"}],
 
   // Section 6.6: Math operators are not hyperlinked in the fhirpath lab
 
@@ -229,6 +215,24 @@ const mapReferences = new Map<string, ISpecFunctionDetails>([
   ["comparable", { title: 'comparable(quantity) : boolean', specUrl: "https://hl7.org/fhir/fhirpath.html#functions"}],
 ]);
 
+const mapOperatorReferences = new Map<string, ISpecFunctionDetails>([
+  // Section 6.3: Types
+  ["is", { outlineNo: '6.3.1', title: 'is type-specifier', specUrl: "http://hl7.org/fhirpath/N1/#is-type-specifier"}],
+  ["as", { outlineNo: '6.3.3', title: 'as type-specifier', specUrl: "http://hl7.org/fhirpath/N1/#as-type-specifier"}],
+
+  // Section 6.4: Collections
+  // 6.4.1 The `|` operator isn't hyperlinked in the fhirpath lab
+  ["in", { outlineNo: '6.4.2', title: 'in', specUrl: "http://hl7.org/fhirpath/N1/#in-membership"}],
+  ["contains", { outlineNo: '6.4.3', title: 'contains', specUrl: "http://hl7.org/fhirpath/N1/#contains-containership"}],
+
+  // Section 6.5: Boolean Logic
+  ["and", { outlineNo: '6.5.1', title: 'and', specUrl: "http://hl7.org/fhirpath/N1/#and"}],
+  ["or", { outlineNo: '6.5.2', title: 'or', specUrl: "http://hl7.org/fhirpath/N1/#or"}],
+  ["not", { outlineNo: '6.5.3', title: 'not', specUrl: "http://hl7.org/fhirpath/N1/#not-boolean"}],
+  ["xor", { outlineNo: '6.5.4', title: 'xor', specUrl: "http://hl7.org/fhirpath/N1/#xor"}],
+  ["implies", { outlineNo: '6.5.5', title: 'implies', specUrl: "http://hl7.org/fhirpath/N1/#implies"}],
+]);
+
 // Workaround to include the definition of the parse function
 // (which is actually there, just not in the definition)
 declare module "fhirpath" {
@@ -254,8 +258,8 @@ interface fpjsNode {
 export function AllocateNodeIds(ast: JsonNode, startAt: number = 0): number {
   if (ast.ExpressionType === 'FunctionCallExpression') {
     // Check to see if this function has a spec link in our index
-    if (mapReferences.has(ast.Name)) {
-      const ref = mapReferences.get(ast.Name);
+    if (mapFunctionReferences.has(ast.Name)) {
+      const ref = mapFunctionReferences.get(ast.Name);
       if (ref) {
         ast.SpecUrl = ref.specUrl;
       }
@@ -477,8 +481,8 @@ export default class ParseTreeTab extends Vue {
   public parseErrorMessage: string | undefined = "";
 
   nodeTooltip(node: JsonNode): string | undefined {
-    if (mapReferences.has(node.Name)) {
-      const ref = mapReferences.get(node.Name);
+    if (mapFunctionReferences.has(node.Name)) {
+      const ref = mapFunctionReferences.get(node.Name);
       if (ref) {
         var title = ref.title;
         if (ref.description) {
