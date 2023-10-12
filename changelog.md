@@ -3,6 +3,9 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+## 12 October 2023 (dev)
+* From the AST view provide hyperlinks to the fhirpath spec for functions (i.e. link `join` to the relevant bookmark in the spec)
+
 ## 25 September 2023
 * Variables can be passed through the URL using the `?var-xxx=value` syntax to set a variable called `xxx` in an expression (and used `%xxx`)
 * Fix bug with library resources saving/loading contained resources in the test resource
