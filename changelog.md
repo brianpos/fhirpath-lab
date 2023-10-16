@@ -1,5 +1,5 @@
 # fhirpath-lab change log
-![](static/Square44x44Logo.scale-150.png "UploadFIG logo")
+![](static/Square44x44Logo.scale-150.png "Fhirpath-lab logo")
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
