@@ -254,7 +254,21 @@ interface FhirMapConverterData {
   jsonEditor?: ace.Ace.Editor;
 }
 
-export default Vue.extend<FhirMapConverterData>({
+interface IFhirMapConverterMethods {
+  getMapText(): string | undefined;
+  getFhirText(): string | undefined;
+  convertToXml(): void;
+  convertToJson(): void;
+  clearOutcome(): void;
+  setFhirData(result: string): void;
+  convertStructureMap(map: string, contentType: string): void;
+}
+
+interface IFhirMapConverterComputed {
+
+}
+
+export default Vue.extend<FhirMapConverterData, IFhirMapConverterMethods, IFhirMapConverterComputed>({
   head: {
     title: "FML Converter",
   },
@@ -355,13 +369,15 @@ group SetEntryData(source src: Patient, target entry)
       this.setFhirData('');
       this.jsonEditor?.setOption('mode', "ace/mode/xml");
       const fml = this.getMapText();
-      this.convertStructureMap(fml, "application/xml+fhir");
+      if (fml)
+        this.convertStructureMap(fml, "application/xml+fhir");
     },
     convertToJson() {
       this.setFhirData('');
       this.jsonEditor?.setOption('mode', "ace/mode/json");
       const fml = this.getMapText();
-      this.convertStructureMap(fml, "application/json+fhir");
+      if (fml)
+        this.convertStructureMap(fml, "application/json+fhir");
     },
     clearOutcome() {
       this.showOutcome = undefined;
