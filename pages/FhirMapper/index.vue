@@ -409,7 +409,7 @@ group SetEntryData(source src: Patient, target entry)
       } catch (err) {
         this.loadingData = false;
         if (axios.isAxiosError(err)) {
-          const serverError = err as AxiosError<fhir4b.OperationOutcome>;
+          const serverError = err as AxiosError<string>;
           if (serverError && serverError.response) {
             if (serverError.response.headers["content-type"].includes("json")) {
               const errorJson = JSON.parse(serverError.response.data);
