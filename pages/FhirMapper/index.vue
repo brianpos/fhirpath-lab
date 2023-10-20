@@ -1,124 +1,53 @@
 <template>
   <div>
-    <HeaderNavbar @close-settings="settingsClosed" :extended="false">
+    <HeaderNavbar :extended="false">
     </HeaderNavbar>
-    <table-loading v-if="loadingData" />
 
     <div class="container-fluid bd-layout" style="padding-top: 80px">
-      <v-card>
+      <v-card class="workspace">
         <v-toolbar flat color="primary">
-          <v-toolbar-title>{{ tabTitle() }}</v-toolbar-title>
-          <v-spacer />
-          <v-select dark class="engineselector" :items="executionEngines" v-model="selectedEngine" hide-details="auto"
-            @change="evaluateFhirPathExpression" />
-          <v-btn icon dark accesskey="g" title="press alt+g to go" @focus="checkFocus"
-            @click="evaluateFhirPathExpression">
-            <v-icon>
-              mdi-play
-            </v-icon>
-          </v-btn>
+          <v-toolbar-title>Convert Map to/from xml/json</v-toolbar-title>
         </v-toolbar>
-        <v-card-text>
-            <div class="newlayout">
-        <div>
-          <div class="context">
-            <v-icon left> mdi-function-variant </v-icon>
-            Map
+        <div class="newlayout">
+          <div>
+            <div class="context">
+              <v-icon left> mdi-function-variant </v-icon>
+              FHIR Mapping Language (fml/map)
+            </div>
+            <div class="newcontent">
+              <div width="100%" ref="aceEditorMap"></div>
+              <div class="ace_editor_footer"></div>
+            </div>
           </div>
-          <div class="newcontent">
-            <v-text-field label="Structure Map Id" v-model="structureMapId" hide-details="auto" autocomplete="off"
-                          autocorrect="off" autocapitalize="off" spellcheck="false">
-              <template v-slot:append>
-                <v-btn icon small tile @click="structureMapId = undefined">
-                  <v-icon> mdi-close </v-icon>
-                </v-btn>
-                <v-btn icon small tile @click="downloadStructureMapResource">
-                  <v-icon> mdi-download </v-icon>
-                </v-btn>
-              </template>
-            </v-text-field>
-            <label class="v-label theme--light bare-label">Structure Map <i>{{
-            resourceJsonChangedMessage() }}</i></label>
-            <div width="100%" ref="aceEditorExpression"></div>
-            <div class="ace_editor_footer"></div>
+          <div>
+            <div class="context button-header">
+              &nbsp;
+            </div>
+            <div class="newcontent" style="align-content: space-around;">
+              <div class="map-buttons">
+                <v-btn title="Convert map to json" @click="convertToJson"> JSON <v-icon right>
+                    mdi-arrow-right-bold-outline </v-icon></v-btn>
+                <v-btn title="Convert map to xml" @click="convertToXml"> XML <v-icon right> mdi-arrow-right-bold-outline
+                  </v-icon></v-btn>
+              </div>
+            </div>
           </div>
-        </div>
-        <div>
-          <div class="context">
-            <v-icon left> mdi-file-document-outline </v-icon>
-            Results <span class="processedBy">{{ processedByEngine }}</span></div>
-          <div class="newcontent">
-            <template v-if="results">
-                          <v-simple-table>
-                              <tr>
-                                <td class="result-value">
-                                  <div class="code-json">{{ results.value }}</div>
-                                </td>
-                                <td class="result-type"><i v-if="results.type">({{ results.type }})</i></td>
-                              </tr>
-                          </v-simple-table>
-                        </template>
+          <div>
+            <div class="context">
+              <v-icon left> mdi-file-document-outline </v-icon>
+              XML/JSON
+            </div>
+            <div class="newcontent">
+              <div width="100%" ref="aceEditorJson"></div>
+              <div class="ace_editor_footer"></div>
+            </div>
           </div>
         </div>
-        <div>
-          <div class="context">
-            <v-icon left> mdi-clipboard-text-outline </v-icon>
-            Input Resource
-          </div>
-          <div class="newcontent">
-            <v-text-field label="Test Resource Id" v-model="resourceId" hide-details="auto" autocomplete="off"
-                          autocorrect="off" autocapitalize="off" spellcheck="false">
-              <template v-slot:append>
-                <v-btn icon small tile @click="resourceId = undefined">
-                  <v-icon> mdi-close </v-icon>
-                </v-btn>
-                <v-btn icon small tile @click="downloadTestResource">
-                  <v-icon> mdi-download </v-icon>
-                </v-btn>
-              </template>
-            </v-text-field>
-            <label class="v-label theme--light bare-label">Test Resource JSON <i>{{
-            resourceJsonChangedMessage() }}</i></label>
-            <div height="85px" width="100%" ref="aceEditorResourceJsonTab"></div>
-            <div class="ace_editor_footer"></div>
-          </div>
-        </div>
-        <div>
-          <div class="context">
-            <v-icon left> mdi-format-list-bulleted </v-icon>
-            Trace
-          </div>
-          <div class="newcontent">
-            <v-simple-table>
-              <template v-for="(v1, index) in trace">
-                <tr :key="index">
-                  <td class="result-value">
-                    <div :class="traceTypeClass(v1.type)">{{ v1.value }}</div>
-                  </td>
-                </tr>
-              </template>
-            </v-simple-table>
-          </div>
-        </div>
-      </div>
-        </v-card-text>
       </v-card>
 
       <br />
       <OperationOutcomeOverlay v-if="showOutcome" :saveOutcome="saveOutcome" :showOutcome="showOutcome" title="Error"
         @close="clearOutcome" />
-        <v-expansion-panels accordion>
-        <v-expansion-panel>
-          <v-expansion-panel-header><div>
-            <v-icon left> mdi-bug-outline </v-icon>
-            DEBUG
-          </div>
-          </v-expansion-panel-header>
-          <v-expansion-panel-content  :eager="true">
-            <div ref="aceEditorDebug"></div>
-          </v-expansion-panel-content>
-        </v-expansion-panel>
-      </v-expansion-panels>
     </div>
   </div>
 </template>
@@ -130,11 +59,34 @@
 </style>
 
 <style lang="scss" scoped>
+.workspace {
+  height: calc(100vh - 104px);
+  display: grid;
+  grid-template-rows: 64px auto;
+}
+
+.context.button-header {
+  background-color: unset;
+  border: none;
+}
+
+.map-buttons {
+  display: grid;
+  grid-template-rows: auto auto;
+  gap: 12px;
+}
+
+.newlayout>div {
+  display: grid;
+  grid-template-rows: min-content;
+}
+
 .newlayout {
   display: grid;
-  grid-template-columns: 50% 50%;
+  grid-template-columns: 1fr auto 1fr;
   gap: 12px;
   margin-right: 14px;
+  padding: 16px;
 
   .context {
     padding: 12px;
@@ -145,11 +97,11 @@
   }
 
   .newcontent {
-    min-height: 200px;
-    max-height: 350px;
     // border: solid blue 1px;
     padding: 4px;
     overflow-y: auto;
+    display: grid;
+    grid-template-rows: auto min-content;
   }
 }
 
@@ -178,9 +130,10 @@ tr.ve-table-body-tr {
 .left-resource {
   display: flex;
 }
+
 .right-resource {
-    display: none;
-  }
+  display: none;
+}
 
 @media (max-width: 1000px) {
   .left-resource {
@@ -215,12 +168,12 @@ td {
 }
 
 .result-type {
-//  border-bottom: silver 1px solid;
+  //  border-bottom: silver 1px solid;
 }
 
 .result-value {
   width: 100%;
-//  border-bottom: silver 1px solid;
+  //  border-bottom: silver 1px solid;
   padding-top: 0px;
   padding-bottom: 0px;
 }
@@ -271,121 +224,39 @@ td {
 </style>
 
 <script lang="ts">
-import Vue, { VNode } from "vue";
+import Vue from "vue";
 import { settings } from "~/helpers/user_settings";
 import {
   requestFhirMapAcceptHeaders,
   requestFhirAcceptHeaders,
   requestFhirContentTypeHeaders,
-  fhirResourceTypes,
 } from "~/helpers/searchFhir";
 import axios, { AxiosRequestHeaders, AxiosResponse } from "axios";
 import { AxiosError } from "axios";
 import { CancelTokenSource } from "axios";
-import { getExtensionStringValue } from "fhir-extension-helpers";
-// import { getPreferredTerminologyServerFromSDC } from "fhir-sdc-helpers";
-import fhirpath from "fhirpath";
-import fhirpath_r4_model from "fhirpath/fhir-context/r4";
 import { Rules as FhirPathHightlighter_Rules, setCustomHighlightRules } from "~/helpers/fhirpath_highlighter"
 import "~/assets/fhirpath_highlighter.scss"
-import { IApplicationInsights } from '@microsoft/applicationinsights-web'
 
 import "ace-builds";
 import ace from "ace-builds";
 import "ace-builds/src-noconflict/mode-text";
 import "ace-builds/src-noconflict/mode-json";
+import "ace-builds/src-noconflict/mode-xml";
 import "ace-builds/src-noconflict/theme-chrome";
+import { JSONReporter } from "consola";
 
-import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from "lz-string";
-import { TestFhirMapData } from "~/models/testenginemodel";
-
-const shareTooltipText = 'Copy a sharable link to this test expression';
-const shareZulipTooltipText = 'Copy a sharable link for Zulip to this test expression';
-
-interface FhirMapData {
-  prevFocus?: any;
-  raw?: fhir4b.Parameters;
-  structureMapId?: string;
-  resourceId?: string;
-  resourceJsonChanged: boolean;
+interface FhirMapConverterData {
   loadingData: boolean;
   saveOutcome?: fhir4b.OperationOutcome;
   showOutcome?: boolean;
   cancelSource?: CancelTokenSource;
-  tab: any;
-  results?: ResultData;
-  trace: TraceData[];
-  selectedEngine: string;
-  executionEngines: string[];
-  expressionEditor?: ace.Ace.Editor;
-  expressionContextEditor?: ace.Ace.Editor;
-  debugEditor?: ace.Ace.Editor;
-  resourceJsonEditor?: ace.Ace.Editor;
-  processedByEngine?: string;
+  fmlEditor?: ace.Ace.Editor;
+  jsonEditor?: ace.Ace.Editor;
 }
 
-interface ResultData {
-  type: string;
-  value: any;
-}
-
-interface TraceData {
-  name: string;
-  type?: string;
-  value: string;
-}
-
-function canonicalVariableName(name: string): string {
-  if (name.startsWith("%")) name = name.substring(1);
-  if (name.startsWith("`")) name = name.substring(1);
-  if (name.endsWith("`")) name = name.substring(0, name.length - 1);
-  if (name.indexOf('`') !== -1) name = name.replaceAll('\\`', '`');
-  return name;
-}
-
-function isSystemVariableName(name: string): boolean {
-  if (name === "ucum") return true;
-  if (name === "resource") return true;
-  if (name === "rootResource") return true;
-  if (name === "context") return true;
-  if (name === "terminologies") return true;
-  return false;
-}
-
-function getValue(entry: fhir4b.ParametersParameter): ResultData | undefined {
-  var myMap = new Map(Object.entries(entry));
-  for (let [k, v] of myMap.entries()) {
-    if (k.startsWith('value'))
-      return { type: k.replace('value', ''), value: v };
-    else if (k == 'resource')
-      return { type: (v as fhir4b.Resource).resourceType, value: v };
-  }
-  const extVal = getExtensionStringValue(entry, "http://fhir.forms-lab.com/StructureDefinition/json-value");
-  if (extVal)
-    return { type: entry.name, value: JSON.parse(extVal) };
-  return undefined;
-}
-function getTraceValue(entry: fhir4b.ParametersParameter): TraceData[] {
-  let result: TraceData[] = [];
-  if (entry.part) {
-    for (var part of entry.part) {
-      const val = getValue(part);
-      if (part.name === "debug"){
-        result.push({ name: entry.valueString ?? '', type: part.name, value: val?.value });
-      }
-      else{
-        result.push({ name: entry.valueString ?? '', type: part.name, value: JSON.stringify(val?.value, null, 4) });
-      }
-    }
-  }
-  return result;
-}
-
-export default Vue.extend({
-  components: {
-  },
+export default Vue.extend<FhirMapConverterData>({
   head: {
-    title: "FhirPathTester",
+    title: "FML Converter",
   },
   async mounted() {
     const CDN = 'https://cdn.jsdelivr.net/npm/ace-builds@1.6.0/src-min-noconflict';
@@ -397,12 +268,11 @@ export default Vue.extend({
     }
 
     // Update the editor's Mode
-    var editorDiv: any = this.$refs.aceEditorExpression as Element;
+    var editorDiv: any = this.$refs.aceEditorMap as Element;
     if (editorDiv) {
-      this.expressionEditor = ace.edit(editorDiv, {
+      this.fmlEditor = ace.edit(editorDiv, {
         wrap: "free",
         minLines: 16,
-        maxLines: 16,
         highlightActiveLine: false,
         showGutter: true,
         fontSize: 14,
@@ -413,8 +283,8 @@ export default Vue.extend({
         wrapBehavioursEnabled: true
       });
 
-      setCustomHighlightRules(this.expressionEditor, FhirPathHightlighter_Rules);
-      this.expressionEditor.setValue(`/// name = "SDOHCC-PRAPARE-Map"
+      setCustomHighlightRules(this.fmlEditor, FhirPathHightlighter_Rules);
+      this.fmlEditor.setValue(`/// name = "SDOHCC-PRAPARE-Map"
 /// status = draft
 /// version = 0.1
 
@@ -442,17 +312,15 @@ group SetEntryData(source src: Patient, target entry)
   } "obsn-entry-request";
 }
       `);
-      this.expressionEditor.clearSelection();
-      this.expressionEditor.on("change", this.fhirpathExpressionChangedEvent)
+      this.fmlEditor.clearSelection();
     }
 
-    var editorDebugDiv: any = this.$refs.aceEditorDebug as Element;
+    var editorDebugDiv: any = this.$refs.aceEditorJson as Element;
     if (editorDebugDiv) {
-      this.debugEditor = ace.edit(editorDebugDiv, {
+      this.jsonEditor = ace.edit(editorDebugDiv, {
         wrap: "free",
         readOnly: true,
         minLines: 16,
-        maxLines: 36,
         highlightActiveLine: true,
         showGutter: true,
         fontSize: 14,
@@ -464,244 +332,68 @@ group SetEntryData(source src: Patient, target entry)
       });
     }
 
-    const resourceEditorSettings: Partial<ace.Ace.EditorOptions> = {
-      wrap: "free",
-      minLines: 15,
-      maxLines: 16,
-      highlightActiveLine: true,
-      showGutter: true,
-      fontSize: 14,
-      cursorStyle: "slim",
-      showPrintMargin: false,
-      theme: "ace/theme/chrome",
-      mode: "ace/mode/json",
-      wrapBehavioursEnabled: true
-    };
-    var editorResourceJsonLeftDiv: any = this.$refs.aceEditorResourceJsonTab as Element;
-    if (editorResourceJsonLeftDiv) {
-      this.resourceJsonEditor = ace.edit(editorResourceJsonLeftDiv, resourceEditorSettings);
-    }
-
-    // Check for the encoded parameters first
-    const parameters = this.$route.query.parameters as string;
-    let data: TestFhirMapData;
-    // Read in any parameters from the URL
-    data = this.readParametersFromQuery();
-
-    await this.applyParameters(data);
-    await this.evaluateFhirPathExpression();
     this.loadingData = false;
   },
   methods: {
-    readParametersFromQuery(): TestFhirMapData {
-      let data: TestFhirMapData = {
-        expression: this.$route.query.expression as string
-      };
-      {
-        if (this.$route.query.context) {
-          data.context = this.$route.query.context as string;
-        }
-
-        if (this.$route.query.resource) {
-          data.resource = this.$route.query.resource as string;
-        }
-
-        const resourceJson = this.$route.query.resourceJson + '';
-        if (resourceJson) {
-          data.resourceJson = decompressFromEncodedURIComponent(resourceJson) ?? '';
-        }
-
-        if (this.$route.query.engine) {
-          data.engine = this.$route.query.engine as string ?? '';
-        }
+    getMapText(): string | undefined {
+      const fml = this.fmlEditor?.getValue();
+      if (fml && fml.length > 0) {
+        return fml;
       }
-      return data;
-    },
-    async applyParameters(p: TestFhirMapData) {
-      {
-        if (p.expression) {
-          if (p.resource) {
-            this.resourceId = p.resource;
-          }
-
-          if (this.expressionContextEditor) {
-            if (p.context) {
-              this.expressionContextEditor.setValue(p.context ?? '');
-              this.expressionContextEditor.clearSelection();
-            }
-            else {
-              this.expressionContextEditor.setValue('');
-            }
-          }
-
-          const resourceJson = p.resourceJson;
-          if (resourceJson) {
-            this.resourceJsonEditor?.setValue(JSON.stringify(JSON.parse(resourceJson), null, 2));
-            this.resourceJsonChanged = true;
-            this.resourceId = undefined;
-            this.resourceJsonEditor?.clearSelection();
-          }
-
-          if (p.engine) {
-            this.selectedEngine = p.engine ?? '';
-          }
-
-          if (this.expressionEditor) {
-            this.expressionEditor.setValue(p.expression ?? '');
-            this.expressionEditor.clearSelection();
-          }
-        }
-      }
-    },
-    resourceJsonChangedEvent() {
-      this.resourceJsonChanged = true;
-    },
-    fhirpathExpressionChangedEvent() {
-    },
-    resourceJsonChangedMessage(): string | undefined {
-      if (this.resourceJsonChanged && this.resourceId) {
-        return '(modified)';
-      }
-    },
-    tabTitle() {
-      if (this.getResourceJson() && this.resourceJsonChanged) return '(local resource JSON)';
-      return this.resourceId;
-    },
-    settingsClosed() {
+      return undefined;
     },
 
-    traceTypeClass(category: string|undefined): string {
-      if (category === "debug") return "trace_debug";
-      if (category === "info") return "trace_info";
-      return "code-json";
-    },
-
-    getContextExpression(): string | undefined {
-      const json = this.expressionContextEditor?.getValue();
+    getFhirText(): string | undefined {
+      const json = this.jsonEditor?.getValue();
       if (json && json.length > 0) {
         return json;
       }
       return undefined;
     },
 
-    getFhirpathExpression(): string | undefined {
-      const json = this.expressionEditor?.getValue();
-      if (json && json.length > 0) {
-        return json;
-      }
-      return undefined;
+    convertToXml() {
+      this.setFhirData('');
+      this.jsonEditor?.setOption('mode', "ace/mode/xml");
+      const fml = this.getMapText();
+      this.convertStructureMap(fml, "application/xml+fhir");
     },
-
-    getResourceJson(): string | undefined {
-      const json = this.resourceJsonEditor?.getValue();
-      if (json && json.length > 0) {
-        return json;
-      }
-      return undefined;
+    convertToJson() {
+      this.setFhirData('');
+      this.jsonEditor?.setOption('mode', "ace/mode/json");
+      const fml = this.getMapText();
+      this.convertStructureMap(fml, "application/json+fhir");
     },
-
     clearOutcome() {
       this.showOutcome = undefined;
     },
 
-    setResultJson(result: string) {
-      if (this.debugEditor) {
-        this.debugEditor.setValue(result);
-        this.debugEditor.clearSelection();
-        this.debugEditor.renderer.updateFull(true);
-      }
-    },
-    async executeRequest<T>(url: string, p: fhir4b.Parameters) {
-      try {
-        if (this.cancelSource) this.cancelSource.cancel("new map test started");
-        this.cancelSource = axios.CancelToken.source();
-        this.loadingData = true;
-        let token = this.cancelSource.token;
-        let response: AxiosResponse<fhir4b.Parameters | fhir4b.OperationOutcome, any>;
-        response = await axios.post<fhir4b.Parameters>(url, p,
-          {
-            cancelToken: token,
-            headers: {
-              "Accept": requestFhirAcceptHeaders,
-              "ContentType": requestFhirContentTypeHeaders
-            }
-          });
-        if (token.reason) {
-          console.log(token.reason);
-          return;
-        }
-        this.cancelSource = undefined;
-        this.loadingData = false;
-
-        const results = response.data;
-        if (results) {
-          this.setResultJson(JSON.stringify(results, null, 4));
-          if (results.resourceType === 'OperationOutcome') {
-            this.saveOutcome = results;
-            this.showOutcome = true;
-            return;
-          }
-          this.raw = results;
-          this.trace = [];
-
-          if (this.raw.parameter) {
-            for (var entry of this.raw.parameter) {
-              if (entry.name === 'parameters') {
-                // read the processing engine version
-                if (entry.part && entry.part.length > 0 && entry.part[0].name === 'evaluator') {
-                  this.processedByEngine = entry.part[0].valueString;
-                }
-
-                // The map would be in here too (but we can ignore that)
-                continue; // skip over the configuration settings
-              }
-
-              if (entry.name === 'trace'){
-                // Trace data
-                this.trace.push(...getTraceValue(entry));
-                continue;
-              }
-
-              if (entry.name === 'result'){
-                this.results = getValue(entry);
-              }
-            }
-          }
-        }
-      } catch (err) {
-        this.loadingData = false;
-        if (axios.isAxiosError(err)) {
-          const serverError = err as AxiosError<fhir4b.OperationOutcome>;
-          if (serverError && serverError.response) {
-            this.setResultJson(JSON.stringify(serverError.response.data, null, 4));
-            this.saveOutcome = serverError.response.data;
-            this.showOutcome = true;
-            return serverError.response.data;
-          }
-        } else {
-          console.log("Client Error:", err);
-        }
+    setFhirData(result: string) {
+      if (this.jsonEditor) {
+        this.jsonEditor.setValue(result);
+        this.jsonEditor.clearSelection();
+        this.jsonEditor.renderer.updateFull(true);
       }
     },
 
-    async downloadTestResource() {
+    async convertStructureMap(map: string, contentType: string) {
       try {
-        if (!this.resourceId) return;
-        let url = this.resourceId;
-        if (this.resourceId && !this.resourceId.startsWith('http'))
-          url = settings.getFhirServerUrl() + '/' + this.resourceId;
+        let url = settings.getFhirServerUrl() + '/$convert';
+        // this is the Java 'matchbox' engine
+        // url = 'https://test.ahdis.ch/matchbox/fhir/$convert';
 
-        if (this.cancelSource) this.cancelSource.cancel("new download started");
+        if (this.cancelSource) this.cancelSource.cancel("new convert map started");
         this.cancelSource = axios.CancelToken.source();
         this.loadingData = true;
         let token = this.cancelSource.token;
         let headers: AxiosRequestHeaders = {
           "Cache-Control": "no-cache",
-          "Accept": requestFhirAcceptHeaders
+          "Content-Type": requestFhirMapAcceptHeaders,
+          "Accept": contentType
         }
-        const response = await axios.get<fhir4b.Resource>(url, {
+        const response = await axios.post<string>(url, map, {
           cancelToken: token,
-          headers: headers
+          headers: headers,
+          transformResponse: (r) => r,
         });
         if (token.reason) {
           console.log(token.reason);
@@ -712,28 +404,29 @@ group SetEntryData(source src: Patient, target entry)
 
         const results = response.data;
         if (results) {
-          if (this.resourceJsonEditor) {
-            const resourceJson = JSON.stringify(results, null, 4);
-            if (resourceJson) {
-              this.resourceJsonEditor.setValue(resourceJson);
-              this.resourceJsonChanged = false;
-            }
-            this.resourceJsonEditor.clearSelection();
-          }
+          this.setFhirData(results);
         }
       } catch (err) {
         this.loadingData = false;
         if (axios.isAxiosError(err)) {
           const serverError = err as AxiosError<fhir4b.OperationOutcome>;
           if (serverError && serverError.response) {
-            this.setResultJson(JSON.stringify(serverError.response, null, 4));
-            if (serverError.response.data?.resourceType == 'OperationOutcome') {
-              this.setResultJson(JSON.stringify(serverError.response, null, 4));
-              this.saveOutcome = serverError.response.data;
+            if (serverError.response.headers["content-type"].includes("json")) {
+              const errorJson = JSON.parse(serverError.response.data);
+              console.log(errorJson);
+              if (errorJson?.resourceType == 'OperationOutcome') {
+                this.showOutcome = true;
+                this.saveOutcome = errorJson;
+                return;
+              }
+            }
+
+            // Wasn't a json formatted error message (probably due to asing for XML)
+            this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
+            if (serverError.response.status == 400) {
+              this.saveOutcome.issue.push({ code: 'unknown', severity: 'error', details: { text: 'The map is not valid - likely a parse error' } });
             } else {
-              if (serverError.response.status == 404)
-                this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
-              this.saveOutcome?.issue.push({ code: 'not-found', severity: 'error', details: { text: 'Test resource not found' } });
+              this.saveOutcome.issue.push({ code: 'unknown', severity: 'error', details: { text: 'An unknown error occurred' } });
             }
             this.showOutcome = true;
             return serverError.response.data;
@@ -744,158 +437,15 @@ group SetEntryData(source src: Patient, target entry)
       }
     },
 
-    async downloadStructureMapResource() {
-      try {
-        if (!this.structureMapId) return;
-        let url = this.structureMapId;
-        if (this.structureMapId && !this.structureMapId.startsWith('http'))
-          url = settings.getFhirServerUrl() + '/' + this.structureMapId;
-
-        if (this.cancelSource) this.cancelSource.cancel("new download map started");
-        this.cancelSource = axios.CancelToken.source();
-        this.loadingData = true;
-        let token = this.cancelSource.token;
-        let headers: AxiosRequestHeaders = {
-          "Cache-Control": "no-cache",
-          "Accept": requestFhirMapAcceptHeaders
-        }
-        const response = await axios.get(url, {
-          cancelToken: token,
-          headers: headers
-        });
-        if (token.reason) {
-          console.log(token.reason);
-          return;
-        }
-        this.cancelSource = undefined;
-        this.loadingData = false;
-
-        const results = response.data;
-        if (results) {
-          if (this.expressionEditor) {
-            if (results) {
-              this.expressionEditor.setValue(results);
-            }
-            this.expressionEditor.clearSelection();
-          }
-        }
-      } catch (err) {
-        this.loadingData = false;
-        if (axios.isAxiosError(err)) {
-          const serverError = err as AxiosError<fhir4b.OperationOutcome>;
-          if (serverError && serverError.response) {
-            this.setResultJson(JSON.stringify(serverError.response, null, 4));
-            if (serverError.response.data?.resourceType == 'OperationOutcome') {
-              this.setResultJson(JSON.stringify(serverError.response, null, 4));
-              this.saveOutcome = serverError.response.data;
-            } else {
-              if (serverError.response.status == 404)
-                this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
-              this.saveOutcome?.issue.push({ code: 'not-found', severity: 'error', details: { text: 'Test resource not found' } });
-            }
-            this.showOutcome = true;
-            return serverError.response.data;
-          }
-        } else {
-          console.log("Client Error:", err);
-        }
-      }
-    },
-
-    checkFocus(event: any) {
-      if (event.relatedTarget) {
-        this.prevFocus = event.relatedTarget;
-      }
-    },
-
-    // https://www.sitepoint.com/fetching-data-third-party-api-vue-axios/
-    async evaluateFhirPathExpression() {
-
-      // reset the processing engine
-      this.processedByEngine = undefined;
-
-      let resourceJson = this.getResourceJson();
-
-      // brianpos hosted service
-      // default the firely SDK/brianpos service
-      // Source code for this is at https://github.com/brianpos/fhirpath-lab-dotnet
-      let url = `https://fhir-mapping-lab.azurewebsites.net/StructureMap/$transform?debug=true`;
-      // let url = `https://localhost:7089/StructureMap/$transform?debug=true`;
-      // let url = `http://localhost:7071/api/$fhirpath`;
-
-      let p: fhir4b.Parameters = {
-        resourceType: "Parameters",
-        parameter: [{ name: "map", valueString: this.getFhirpathExpression() ?? 'today()' }]
-      };
-
-      const contextExpression = this.getContextExpression();
-      if (contextExpression) {
-        p.parameter?.push({ name: "context", valueString: contextExpression });
-      }
-
-      // for initial testing with .net
-      if (!this.getResourceJson() && this.resourceId) {
-        await this.downloadTestResource();
-        resourceJson = this.getResourceJson();
-      }
-
-      if (this.selectedEngine == "java (matchbox)") {
-        url = `https://test.ahdis.ch/fhir/StructureMap/$transform`;
-
-        if (!this.getResourceJson() && this.resourceId) {
-          await this.downloadTestResource();
-          resourceJson = this.getResourceJson();
-        }
-
-        (this as any).$appInsights?.trackEvent({ name: 'evaluate Matchbox (map)' });
-      }
-      else {
-        (this as any).$appInsights?.trackEvent({ name: 'evaluate .NET (map)' });
-      }
-
-      if (resourceJson) {
-        p.parameter?.push({ name: "resource", resource: JSON.parse(resourceJson) });
-      }
-      else {
-        if (!this.resourceId?.startsWith('http')) {
-          p.parameter?.push({ name: "resource", valueString: settings.getFhirServerUrl() + '/' + this.resourceId });
-        }
-        else {
-          p.parameter?.push({ name: "resource", valueString: this.resourceId });
-        }
-      }
-
-      await this.executeRequest(url, p);
-
-      // Set focus to the control that previously had focus (if was known)
-      if (this.prevFocus) {
-        this.prevFocus.focus();
-      }
-    },
   },
-  data(): FhirMapData {
+  data(): FhirMapConverterData {
     return {
-      prevFocus: null,
-      tab: null,
-      raw: undefined,
-      structureMapId: undefined,
-      resourceId: 'Patient/example',
-      resourceJsonChanged: false,
       loadingData: true,
       saveOutcome: undefined,
       showOutcome: false,
-      results: undefined,
-      trace: [],
-      selectedEngine: ".NET (brianpos)",
-      executionEngines: [
-        ".NET (brianpos)",
-        "java (matchbox)"
-      ],
-      expressionEditor: undefined,
-      expressionContextEditor: undefined,
-      debugEditor: undefined,
-      resourceJsonEditor: undefined,
-      processedByEngine: undefined,
+      cancelSource: undefined,
+      fmlEditor: undefined,
+      jsonEditor: undefined,
     };
   },
 });
