@@ -396,6 +396,7 @@ group SetEntryData(source src: Patient, target entry)
         let url = settings.getFhirServerUrl() + '/$convert';
         // this is the Java 'matchbox' engine
         // url = 'https://test.ahdis.ch/matchbox/fhir/$convert';
+        url = "https://fhir.forms-lab.com/$convert";
 
         if (this.cancelSource) this.cancelSource.cancel("new convert map started");
         this.cancelSource = axios.CancelToken.source();
