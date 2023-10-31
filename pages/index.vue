@@ -40,6 +40,15 @@
             Test page for mapping to/from FHIR resources using the <a href="https://www.hl7.org/fhir/mapping-language.html">FHIR Mapping Language</a>
           </div>
         </a>
+        <v-btn dark color="#3F81AE" class="link-item text-decoration-none" href="sqlonfhir">
+          <v-icon left> mdi-database-search </v-icon>
+            sql-on-fhir
+        </v-btn>
+        <a href="sqlonfhir" class="link-plain-text">
+          <div>
+            Test page for FHIR view definitions using the <a href="https://build.fhir.org/ig/FHIR/sql-on-fhir-v2">SQL on FHIR v2</a> specification
+          </div>
+        </a>
       </div>
       <br />
       <p>
