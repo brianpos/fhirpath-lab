@@ -74,6 +74,9 @@ export namespace settings {
     export function mapper_server(): string {
         return serverConnections.mapper_server;
     }
+    export function mapper_server_java(): string {
+        return serverConnections.mapper_server_java;
+    }
 
     export function getSearchData(type: string): ConformanceSearchData | undefined {
         const sdJson = localStorage.getItem(`search_${type}`);
