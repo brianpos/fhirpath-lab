@@ -10,6 +10,8 @@
           </v-btn>
           <v-select label="view" style="max-width: 14ch" dark :items="viewModes" v-model="viewMode" hide-details="auto"
             @change="refreshEditorSizes" />
+          <v-select dark class="engineselector" :items="executionEngines" v-model="selectedEngine" hide-details="auto"
+            @change="evaluateFhirPathExpression" />
       </template>
     </HeaderNavbar>
     <table-loading v-if="loadingData" />
@@ -43,7 +45,7 @@
       <div class="ct-trace">
         <div class="ct-header">
           <v-icon left dark> mdi-format-list-bulleted </v-icon>
-            Trace
+            Trace / Debug
         </div>
         <v-simple-table>
           <template v-for="(v1, index) in trace">
@@ -101,6 +103,11 @@
 </style>
 
 <style lang="scss" scoped>
+.engineselector {
+  padding-left: 6px;
+  max-width: 18ch;
+}
+
 .newlayout {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -799,7 +806,7 @@ group SetEntryData(source src: Patient, target entry)
         if (!this.resourceId) return;
         let url = this.resourceId;
         if (this.resourceId && !this.resourceId.startsWith('http'))
-          url = settings.getFhirServerUrl() + '/' + this.resourceId;
+          url = settings.getFhirServerExamplesUrl() + '/' + this.resourceId;
 
         if (this.cancelSource) this.cancelSource.cancel("new download started");
         this.cancelSource = axios.CancelToken.source();
@@ -962,15 +969,15 @@ group SetEntryData(source src: Patient, target entry)
         resourceJson = this.getResourceJson();
       }
 
-      if (this.selectedEngine == "java (matchbox)") {
-        url = `https://test.ahdis.ch/fhir/StructureMap/$transform`;
+      if (this.selectedEngine == "java (HAPI)") {
+        url = settings.mapper_server_java();
 
         if (!this.getResourceJson() && this.resourceId) {
           await this.downloadTestResource();
           resourceJson = this.getResourceJson();
         }
 
-        (this as any).$appInsights?.trackEvent({ name: 'evaluate Matchbox (map)' });
+        (this as any).$appInsights?.trackEvent({ name: 'evaluate HAPI (map)' });
       }
       else {
         (this as any).$appInsights?.trackEvent({ name: 'evaluate .NET (map)' });
@@ -1014,7 +1021,7 @@ group SetEntryData(source src: Patient, target entry)
       selectedEngine: ".NET (brianpos)",
       executionEngines: [
         ".NET (brianpos)",
-        "java (matchbox)"
+        "java (HAPI)"
       ],
       expressionEditor: undefined,
       expressionContextEditor: undefined,
