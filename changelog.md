@@ -3,6 +3,9 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+## 17 November 2023 (dev)
+* IPS demo also has a validate questionnaire feature - using the forms-lab Q def validation service
+
 ## 2 November 2023 (dev)
 * FHIR Map test page now uses the examples server address from the settings page
 * The HAPI fhir map engine (hosted with the fhirpath-lab) is now available to test on the FHIR Map test page
