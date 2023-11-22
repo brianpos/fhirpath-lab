@@ -490,6 +490,7 @@ import {
   requestFhirContentTypeHeaders,
   fhirResourceTypes,
   saveFhirResource,
+  CreateOperationOutcome,
 } from "~/helpers/searchFhir";
 import axios, { AxiosRequestHeaders, AxiosResponse } from "axios";
 import { AxiosError } from "axios";
@@ -520,9 +521,10 @@ import { EvaluateChatPrompt, GetSystemPrompt, IOpenAISettings } from "~/helpers/
 import { ChatMessage } from "@azure/openai";
 import ParseTreeTab from "~/components/ParseTreeTab.vue";
 import ConformanceResourceDetailsTab from "~/components/ConformanceResourceDetailsTab.vue";
-import { VueElement } from "@vue/runtime-dom";
+import { VueElement, nextTick } from "@vue/runtime-dom";
 import { LibraryData } from "~/models/LibraryTableData";
 import { BaseResource_defaultValues } from "~/models/BaseResourceTableData";
+import { DomainResource, FhirResource, Resource } from "fhir/r4b";
 
 const shareTooltipText = 'Copy a sharable link to this test expression';
 const shareZulipTooltipText = 'Copy a sharable link for Zulip to this test expression';
@@ -1090,14 +1092,14 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       }
       this.lastTabClicked = undefined;
     },
-    readParametersFromQuery(): TestFhirpathData{
+    readParametersFromQuery(): TestFhirpathData {
       let data: TestFhirpathData = {
         expression: this.$route.query.expression as string
       };
-    if (this.$route.query.libaryId as string) {
-        data.libraryId = this.$route.query.libaryId as string;
-    }
-    else {
+      if (this.$route.query.libaryId as string) {
+          data.libraryId = this.$route.query.libaryId as string;
+      }
+      else {
         if (this.$route.query.context) {
           data.context = this.$route.query.context as string;
         }
@@ -1117,6 +1119,27 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
 
         if (this.$route.query.engine) {
           data.engine = this.$route.query.engine as string ?? '';
+        }
+
+        if (this.$route.query){
+          // iterate all the query parameters and look for variables identified by the prefix "var-"
+          for (const [key, value] of Object.entries(this.$route.query)) {
+            if (key.startsWith("var-")) {
+              const varName = key.substring(4);
+              const varValue = value as string;
+              data.variables = data.variables ?? [];
+              data.variables.push({ name: varName, data: varValue });
+            }
+          }
+          this.$nextTick(async () => {
+            for (const variable of this.variables) {
+              if (variable[1].data?.startsWith("http://") || variable[1].data?.startsWith("https://")) {
+                // if the variable value is a resource reference, download the resource instead
+                console.log("Downloading variable: " + variable[0] + " = " + variable[1].data);
+                await this.downloadVariableResource(variable[0]);
+              }
+            }
+          });
         }
 
         if (this.$route.query.terminologyServer) {
@@ -1449,7 +1472,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       }
     },
 
-    async downloadLibrary(libraryId: string) {
+    async downloadLibrary(libraryId: string): Promise<void> {
       try {
         let url = libraryId;
         if (!libraryId.startsWith('http'))
@@ -1504,14 +1527,29 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
             if (this.resourceJsonEditor) {
               this.resourceJsonEditor.setValue('');
               this.resourceJsonChanged = false;
-            if (this.resourceId?.startsWith("#") && this.library?.contained && this.library.contained[0]) {
-              this.resourceId = undefined;
-                const resourceJson = JSON.stringify(this.library.contained[0], null, 4); // really should lookup by ID
-                if (resourceJson) {
-                  this.resourceJsonEditor.setValue(resourceJson);
-                  this.resourceJsonChanged = false;
+            if (this.resourceId?.startsWith("#") && this.library?.contained){
+              var resource: Resource|DomainResource|undefined = undefined;
+              var newContained: FhirResource[] = [];
+              for (var n=0; n < this.library.contained.length; n++){
+                if (rId === "#"+this.library.contained[n].id){
+                  resource = this.library.contained[n];
                 }
-                this.resourceJsonEditor.clearSelection();
+                else {
+                  newContained.push(this.library.contained[n])
+                }
+              }
+              if (resource) {
+                this.resourceId = undefined;
+                if (this.library.contained.length > 1 && resource as DomainResource){
+                  (resource as DomainResource).contained = newContained;
+                }
+                  const resourceJson = JSON.stringify(resource, null, 4); // really should lookup by ID
+                  if (resourceJson) {
+                    this.resourceJsonEditor.setValue(resourceJson);
+                    this.resourceJsonChanged = false;
+                  }
+                  this.resourceJsonEditor.clearSelection();
+                }
               }
             }
           }
@@ -1546,11 +1584,14 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
               this.saveOutcome?.issue.push({ code: 'not-found', severity: 'error', details: { text: `Library resource ${libraryId} not found` } });
             }
             this.showOutcome = true;
-            return serverError.response.data;
+            return;
           }
-        } else {
-          console.log("Client Error:", err);
+          this.saveOutcome = CreateOperationOutcome("fatal", "exception", "Server: " + err.message, undefined, err.code);
+          this.showOutcome = true;
+          return;
         }
+        this.saveOutcome = CreateOperationOutcome("fatal", "exception", "Client: " + err);
+        this.showOutcome = true;
       }
     },
 
@@ -1632,13 +1673,12 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
             this.showOutcome = true;
             return serverError.response.data;
           }
-          // console.log("Axios Error:", err);
-          this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
-          this.saveOutcome?.issue.push({ code: 'unknown', severity: 'fatal', details: { text: err.message }, diagnostics: err.code });
+          this.saveOutcome = CreateOperationOutcome("fatal", "exception", "Server: " + err.message, undefined, err.code);
           this.showOutcome = true;
-        } else {
-          console.log("Client Error:", err);
+          return;
         }
+        this.saveOutcome = CreateOperationOutcome("fatal", "exception", "Client: " + err);
+        this.showOutcome = true;
       }
     },
 
@@ -1699,9 +1739,12 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
             this.showOutcome = true;
             return serverError.response.data;
           }
-        } else {
-          console.log("Client Error:", err);
+          this.saveOutcome = CreateOperationOutcome("fatal", "exception", "Server: " + err.message, undefined, err.code);
+          this.showOutcome = true;
+          return;
         }
+        this.saveOutcome = CreateOperationOutcome("fatal", "exception", "Client: " + err);
+        this.showOutcome = true;
       }
     },
 
@@ -1852,8 +1895,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         catch (err: any) {
           console.log(err);
           if (err.message) {
-            this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
-            this.saveOutcome?.issue.push({ code: 'exception', severity: 'fatal', details: { text: err.message } });
+            this.saveOutcome = CreateOperationOutcome('fatal', 'exception', err.message);
             this.showOutcome = true;
           }
         }
@@ -1889,8 +1931,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         catch (err: any) {
           console.log(err);
           if (err.message) {
-            this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
-            this.saveOutcome?.issue.push({ code: 'exception', severity: 'fatal', details: { text: err.message } });
+            this.saveOutcome = CreateOperationOutcome('fatal', 'exception', err.message);
             this.showOutcome = true;
           }
         }
@@ -1903,8 +1944,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         catch (err: any) {
           console.log(err);
           if (err.message) {
-            this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
-            this.saveOutcome?.issue.push({ code: 'exception', severity: 'fatal', details: { text: err.message } });
+            this.saveOutcome = CreateOperationOutcome('fatal', 'exception', err.message);
             this.showOutcome = true;
           }
         }
@@ -1953,8 +1993,11 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         catch (err: any) {
           console.log(err);
           if (err.message) {
-            this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
-            this.saveOutcome?.issue.push({ code: 'exception', severity: 'fatal', details: { text: err.message } });
+            this.saveOutcome = CreateOperationOutcome('fatal', 'exception', err.message);
+            this.showOutcome = true;
+          }
+          else{
+            this.saveOutcome = CreateOperationOutcome('fatal', 'exception', err);
             this.showOutcome = true;
           }
         }
@@ -1985,8 +2028,11 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         catch (err: any) {
           console.log(err);
           if (err.message) {
-            this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
-            this.saveOutcome?.issue.push({ code: 'exception', severity: 'fatal', details: { text: err.message } });
+            this.saveOutcome = CreateOperationOutcome('fatal', 'exception', err.message);
+            this.showOutcome = true;
+          }
+          else {
+            this.saveOutcome = CreateOperationOutcome('fatal', 'exception', err);
             this.showOutcome = true;
           }
         }
@@ -2021,8 +2067,11 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         catch (err: any) {
           console.log(err);
           if (err.message) {
-            this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
-            this.saveOutcome?.issue.push({ code: 'exception', severity: 'fatal', details: { text: err.message } });
+            this.saveOutcome = CreateOperationOutcome('fatal', 'exception', err.message);
+            this.showOutcome = true;
+          }
+          else {
+            this.saveOutcome = CreateOperationOutcome('fatal', 'exception', err);
             this.showOutcome = true;
           }
         }
@@ -2035,8 +2084,11 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         catch (err: any) {
           console.log(err);
           if (err.message) {
-            this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
-            this.saveOutcome?.issue.push({ code: 'exception', severity: 'fatal', details: { text: err.message } });
+            this.saveOutcome = CreateOperationOutcome('fatal', 'exception', err.message);
+            this.showOutcome = true;
+          }
+          else {
+            this.saveOutcome = CreateOperationOutcome('fatal', 'exception', err);
             this.showOutcome = true;
           }
         }
@@ -2085,8 +2137,11 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         catch (err: any) {
           console.log(err);
           if (err.message) {
-            this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
-            this.saveOutcome?.issue.push({ code: 'exception', severity: 'fatal', details: { text: err.message } });
+            this.saveOutcome = CreateOperationOutcome('fatal', 'exception', err.message);
+            this.showOutcome = true;
+          }
+          else {
+            this.saveOutcome = CreateOperationOutcome('fatal', 'exception', err);
             this.showOutcome = true;
           }
         }
@@ -2251,6 +2306,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     async saveLibrary(){
       if (this.library){
         // update the library, then save it!
+        this.loadingData = true;
         // Set the base expression
         if (this.library.content && this.library.content.length > 0)
         {
@@ -2285,8 +2341,13 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
             url: "http://fhir.forms-lab.com/StructureDefinition/resource-id", 
             valueReference: { reference: "#" + jsonObject.id }
           });
-          this.library.contained = [];
-          this.library.contained.push(jsonObject);
+          if (jsonObject.contained){
+            this.library.contained = jsonObject.contained;
+            delete jsonObject.contained;
+          } else {
+            this.library.contained = [];
+          }
+          this.library.contained?.push(jsonObject);
         }
         else
         {
@@ -2318,13 +2379,16 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         }
 
         const outcome = await saveFhirResource(settings.getFhirServerUrl(), data);
-        if (data.raw)
+        this.loadingData = false;
+        console.log(outcome);
+        if (data.raw && !outcome)
         {
           this.library = data.raw;
           this.enableSave = false;
         }
-        if (!outcome) {
+        if (outcome) {
           this.saveOutcome = outcome;
+          this.showOutcome = true;
           if (this.raw?.id) {
             if (this.$route.params.id.endsWith(":new")) {
               let href = this.$route.fullPath.replaceAll(

@@ -11,11 +11,13 @@ export declare interface UserSettingsData {
     favouritesListId?: string;
     defaultProviderField?: string;
     defaultNewCanonicalBase?: string;
+
     openAIApiVersion?: string; // 2023-03-15-preview
     openAIBasePath?: string; // empty will use the chatGPT system default, not Azure
     openAIKey?: string;
     openAIModel?: string; // gpt-3.5-turbo, gpt-4
     showAIKey: boolean;
+
     showAdvancedSettings: boolean;
     pageSize: number;
 }
@@ -71,6 +73,9 @@ export namespace settings {
     }
     export function mapper_server(): string {
         return serverConnections.mapper_server;
+    }
+    export function mapper_server_java(): string {
+        return serverConnections.mapper_server_java;
     }
 
     export function getSearchData(type: string): ConformanceSearchData | undefined {

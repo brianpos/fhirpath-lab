@@ -18,6 +18,7 @@ export const BaseResource_defaultValues: BaseResourceNoData = {
   showOutcome: undefined,
   saveOutcome: undefined,
   showAdvancedSettings: undefined,
+  fhirServerUrl: undefined,
 }
 
 /** This interface holds the View Model based data supporting most of the base edit capability */
@@ -30,4 +31,5 @@ export interface BaseResourceNoData {
   saveOutcome?: fhir4b.OperationOutcome;
   showOutcome?: boolean;
   showAdvancedSettings?: boolean;
+  fhirServerUrl: string | undefined;
 }
