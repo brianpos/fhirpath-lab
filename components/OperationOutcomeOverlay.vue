@@ -90,9 +90,9 @@
 }
 
 .issue-list {
-  display: table;
+  display: block;
   border-spacing: 8px;
-  max-height: 80vh;
+  max-height: 75vh;
   overflow-y: auto;
 }
 
