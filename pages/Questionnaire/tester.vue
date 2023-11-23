@@ -333,7 +333,7 @@ export default Vue.extend({
       this.windowWidth = window.innerWidth
     }
     window.document.title = "Questionnaire Tester";
-    
+
     const resourceEditorSettings: Partial<ace.Ace.EditorOptions> = {
       wrap: "free",
       minLines: 15,
@@ -367,6 +367,11 @@ export default Vue.extend({
     if (this.$route.query.fhirserver) {
       this.fhirServerUrl = this.$route.query.fhirserver as string;
     }
+
+    if (this.$route.query.id) {
+      this.resourceId = this.$route.query.id as string;
+    }
+
     // this.searchFhirServer();
     this.downloadTestResource();
   },
