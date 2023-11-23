@@ -77,7 +77,7 @@
             Variables
           </v-tab>
           <v-tab>
-            <v-icon left> mdi-file-document-edit-outline </v-icon>
+            <v-icon left> mdi-bug-play-outline </v-icon>
             Renderer
           </v-tab>
 

@@ -4,20 +4,20 @@
           <v-icon> mdi-close </v-icon>
         </v-btn>
         <template  v-for="(issue, index) in outcome.issue">
-          <div class="issue-item" :key="index" v-if="!hideIssue(issue)">
-            <span>
+          <div class="issue-item" :key="index" v-if="!hideIssue(issue)" @click="helpWithIssue(issue)">
+            <span class="issue-severity">
               <nobr>
               <v-icon v-if="issue.severity === 'error' || issue.severity === 'fatal'" color="red">mdi-alert-octagon</v-icon>
               <v-icon v-if="issue.severity === 'warning'" color="orange">mdi-alert</v-icon>
-            <span
-              :class="severityClassName(issue.severity)"
-              v-text="issue.severity"
-            />
-            </nobr>
-            <template v-if="issue.code">
-              <br/>
-            <nobr class="issue-code">(<span v-text="issue.code" />)</nobr>
-            </template>
+              <span
+                :class="severityClassName(issue.severity)"
+                v-text="issue.severity"
+              />
+              </nobr>
+              <template v-if="issue.code">
+                <br/>
+              <nobr class="issue-code">(<span v-text="issue.code" />)</nobr>
+              </template>
             </span>
             <span class="details">
             <span style="max-height:100px; display: block; overflow-y: auto" v-text="issueDescription(issue)" />
@@ -35,7 +35,7 @@
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .inline-panel-issues {
   border-top: solid thin silver;
   border-bottom: solid thin silver;
@@ -44,6 +44,15 @@
   padding-left: 8px;
   padding-right: 8px;
   padding-top: 8px;
+}
+
+.issue-item:hover {
+  background-color: $tab-backcolor;
+}
+
+.issue-item .issue-severity:hover {
+  text-shadow: 1px 1px 1px #aaa;
+  cursor: pointer;
 }
 
 .issue-item {
@@ -112,6 +121,9 @@ export default Vue.extend({
       if (severity === "error") return "fp-error";
       if (severity === "warning") return "fp-warning";
       return "";
+    },
+    helpWithIssue(issue: fhir4b.OperationOutcomeIssue){
+      this.$emit("help-with-issue", issue);
     },
     close() {
       this.$emit("close");

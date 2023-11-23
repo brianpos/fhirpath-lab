@@ -1,11 +1,8 @@
 <template>
-  <div>
+  <div style="position: relative;">
     <template v-if="questionnaire">
+      <v-btn style="position: fixed; right:34px; z-index: 2;" color="primary" @click="logResponse()">Log response</v-btn>
       <Renderer :questionnaire="questionnaire"/>
-      <v-btn color="primary" @click="logResponse()">Log response</v-btn>
-<!--      <div>-->
-<!--        <pre>{{ JSON.stringify(response, null, 2) }}</pre>-->
-<!--      </div>-->
     </template>
     <template v-else>
       <p>No questionnaire provided</p>
@@ -37,6 +34,7 @@ export default Vue.extend({
       const response = getResponse();
       // this.response = response;
       console.log(response)
+      this.$emit('response', response);
     }
   },
   props: {

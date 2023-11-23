@@ -12,72 +12,60 @@
         </div>
         <div v-for="(message, index) in messages" :key="index">
           <v-scroll-x-transition mode="out-in" :appear="true">
-          <div
-            :class="[
+            <div :class="[
               'message',
               message.user === 'Author'
                 ? 'message-right'
                 : 'message-left',
-            ]"
-            v-show="message.visible"
-          >
-            <div class="message-content">
-              <v-icon>
-                {{
-                  message.user === "Author"
+            ]" v-show="message.visible">
+              <div class="message-content">
+                <v-icon>
+                  {{
+                    message.user === "Author"
                     ? "mdi-face-man"
                     : message.user === "System"
-                    ? "mdi-information-outline"
-                    : "mdi-brain"
-                }}
-              </v-icon>
-              <span class="message-user">{{ message.user }}</span
-              >: <span style="pointer-events: none;" @click="applySuggestion" v-html="convertHtml(message.text)" />
+                      ? "mdi-information-outline"
+                      : "mdi-brain"
+                  }}
+                </v-icon>
+                <span class="message-user">{{ message.user }}</span>: <span style="pointer-events: none;"
+                  @click="applySuggestion" v-html="convertHtml(message.text)" />
+              </div>
             </div>
-          </div>
           </v-scroll-x-transition>
         </div>
       </div>
       <div class="messages suggestions" v-if="messages.length == 0">
         <div v-for="(message, index) in suggestions" :key="index">
           <v-scroll-x-transition mode="out-in" :appear="true">
-          <div class="message message-right" @click="sendAuthorMessage(message)">
-            <div class="message-content">
-              <span v-text="message" />
+            <div class="message message-right" @click="sendAuthorMessage(message)">
+              <div class="message-content">
+                <span v-html="convertHtml(message)" />
+              </div>
             </div>
-          </div>
           </v-scroll-x-transition>
         </div>
       </div>
     </v-card-text>
     <v-card-actions>
-      <v-tooltip bottom >
+      <v-tooltip bottom>
         <template v-slot:activator="{ on, attrs }">
-          <v-btn icon 
-            v-bind="attrs" v-on="on"
-            @click="resetConversation"><v-icon>mdi-broom</v-icon></v-btn>
+          <v-btn icon v-bind="attrs" v-on="on" @click="resetConversation"><v-icon>mdi-broom</v-icon></v-btn>
         </template>
         <span>Reset chat</span>
       </v-tooltip>
-      <v-textarea
-        dense
-        label="Message"
-        rows="2"
-        v-model="newMessage"
-        clearable
-        :loading="thinking"
-        @keyup.enter.prevent="sendAuthorMessage()"
-        messages="AI-generated content may be incorrect"
-      ><template v-slot:loader>
-        <v-progress-linear v-if="thinking" indeterminate></v-progress-linear>
-      </template></v-textarea>
+      <v-textarea dense label="Message" rows="2" v-model="newMessage" clearable :loading="thinking"
+        @keyup.enter.prevent="sendAuthorMessage()" messages="AI-generated content may be incorrect"><template
+          v-slot:loader>
+          <v-progress-linear v-if="thinking" indeterminate></v-progress-linear>
+        </template></v-textarea>
       <v-btn color="primary" @click="sendAuthorMessage()">Send</v-btn>
     </v-card-actions>
   </v-card>
 </template>  
     
 <script lang="ts">
-import { Component, Vue } from "vue-property-decorator";
+import { Component, Prop, Vue } from "vue-property-decorator";
 import { Message } from "../types/chat-types";
 import { marked } from "marked";
 import { ChatMessage } from "@azure/openai";
@@ -87,15 +75,14 @@ export default class Chat extends Vue {
   newMessage = "";
   public messages: Message[] = [];
   public thinking: boolean = false;
-  suggestions: string[] = [
+  @Prop({ default: () => [
     "Do you have any recommendations for this expression?",
     "What would happen if some of the properties were missing?",
     "What if there were multiple values returned in any collections?",
     "remove the trace",
     "create a new expression to read a patient's MRN identifier",
     "create a new expression to read a patient's name",
-
-  ];
+  ]}) readonly suggestions!: string[];
 
   public setThinking(thinking: boolean) {
     this.thinking = thinking;
@@ -113,15 +100,29 @@ export default class Chat extends Vue {
     this.$emit("reset-conversation");
   }
 
-  applySuggestion(event : MouseEvent & {target: HTMLElement}) {
+  applySuggestion(event: MouseEvent & { target: HTMLElement }) {
+    var expression = event.target?.innerText;
+    if (expression.length > 0) {
+      expression = expression.trim();
+    }
+    console.log(event.target?.className + ' applied', expression);
     if (event.target?.className === "language-fhirpath") {
-      console.log('Suggestion applied', event.target?.innerText);
-      // Your logic to apply the suggestion
-      this.$emit("apply-suggested-expression", event.target?.innerText);
+      this.$emit("apply-suggested-expression", expression);
+
+    } else if (event.target?.className === "language-fhircontext") {
+      this.$emit("apply-suggested-context", expression);
+
+    } else if (event.target?.className === "language-questionnaire") {
+      this.$emit("apply-suggested-questionnaire", expression);
+      
+    } else if (event.target?.className === "language-item") {
+      this.$emit("apply-suggested-item", expression);
+      
+    } else if (event.target?.className === "language-fhir") {
+      this.$emit("apply-suggested-fhir", expression);
+      
     } else {
-      console.log('Context suggestion applied', event.target?.innerText);
-      // Your logic to apply the suggestion
-      this.$emit("apply-suggested-context", event.target?.innerText);
+      this.$emit("apply-suggested-json", expression);
     }
   }
 
@@ -138,15 +139,14 @@ export default class Chat extends Vue {
     return conversationHistory;
   }
 
-  
-    getConversationChat(): Array<ChatMessage> {
+
+  getConversationChat(): Array<ChatMessage> {
     const conversationHistory = this.messages
-      .map((message) => { return {"role": this.mapUserName(message.user), "content":  message.text };});
+      .map((message) => { return { "role": this.mapUserName(message.user), "content": message.text }; });
     return conversationHistory;
   }
 
-  mapUserName(role: string): string
-  {
+  mapUserName(role: string): string {
     if (role === "Author") return "user";
     if (role === "System") return "system";
     return "assistant";
@@ -158,7 +158,7 @@ export default class Chat extends Vue {
 
     if (messageText) {
       const message: Message = { "user": messageUser, "text": messageText, visible: visible };
-       this.messages.push(message);
+      this.messages.push(message);
     }
     this.scrollToBottom();
   }
@@ -172,8 +172,7 @@ export default class Chat extends Vue {
 }
 </script>  
   
-<style >
-
+<style lang="scss">
 @font-face {
   font-family: 'Material Icons';
   font-style: normal;
@@ -181,30 +180,121 @@ export default class Chat extends Vue {
   src: url(https://fonts.gstatic.com/s/materialicons/v140/flUhRq6tzZclQEJ-Vdg-IuiaDsNc.woff2) format('woff2');
 }
 
-.language-fhirpath,
-.language-fhircontext {  
-  position: relative;  
-}  
-  
+.message pre:has(.language-fhirpath),
+.message pre:has(.language-fhircontext),
+.message pre:has(.language-questionnaire),
+.message pre:has(.language-item),
+.message pre:has(.language-fhir),
+.message pre:has(.language-log),
+.message pre:has(.language-json) {
+  position: relative;
+  padding: 8px 8px 8px 16px;
+  border: solid 1px #ddd;
+}
+
+.message pre code {
+  padding-left: 0;
+}
+
 .language-fhirpath::after,
-.language-fhircontext::after {  
-  content: 'output';
+.language-fhircontext::after,
+.language-questionnaire::after,
+.language-item::after,
+.language-fhir::after,
+.language-json::after {
+  content: 'assignment_return';
   font-family: 'Material Icons';
-  font-size: medium;
-  position: absolute;  
-  right: -20px; /* Adjust this value to position the indicator as needed */  
-  cursor: pointer;  
-  pointer-events:auto;
-} 
+  font-size: x-large;
+  color: $card-header-color;
+  position: absolute;
+  right: 0;
+  /* Adjust this value to position the indicator as needed */
+  top: 0;
+  cursor: pointer;
+  pointer-events: auto;
+  margin: 8px;
+}
+
+.language-fhirpath:hover::after,
+.language-fhircontext:hover::after,
+.language-questionnaire:hover::after,
+.language-item:hover::after,
+.language-fhir:hover::after,
+.language-json:hover::after {
+  color: #1976d2;
+}
+
+
+.language-item::after,
+.language-fhir::after,
+.language-json::after {
+  content: 'content_copy';
+}
+
+.language-fhirpath::before,
+.language-fhircontext::before,
+.language-questionnaire::before,
+.language-item::before,
+.language-fhir::before,
+.language-log::before,
+.language-json::before {
+  font-size: small;
+  font-style: italic;
+  position: absolute;
+  right: 0;
+  /* Adjust this value to position the indicator as needed */
+  bottom: 0;
+  margin: 4px;
+  color: #ddd;
+}
+
+.language-log::before {
+  content: '(log)';
+}
+
+.language-fhirpath::before {
+  content: '(fhirpath)';
+}
+.language-fhircontext::before {
+  content: '(context)';
+}
+
+.language-questionnaire::before {
+  content: '(questionnaire)';
+}
+
+.language-item::before {
+  content: '(item)';
+}
+
+.language-fhir::before {
+  content: '(fhir)';
+}
+
+.language-json::before {
+  content: '(json)';
+}
+
+.message pre:has(code) {
+  background-color: ghostwhite;
+}
 
 .message pre code {
   white-space: pre-wrap;
+  background-color: unset !important;
+}
+
+div.message-content span p {
+  margin-bottom: 8px;
+}
+
+div.message-content span :last-child {
+  margin-bottom: 0px;
 }
 
 </style>
 
-<style scoped>
-
+<style scoped lang="scss">
 .messages {
   padding-left: 10px;
   padding-right: 10px;
@@ -256,6 +346,7 @@ export default class Chat extends Vue {
   font-weight: bold;
   color: #9c27b0;
 }
+
 .user-icon {
   margin-right: 0.5em;
 }

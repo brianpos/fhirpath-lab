@@ -890,13 +890,11 @@ interface IFhirPathProps
 }
 
 export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFhirPathProps>({
-  head: {
-    title: "FhirPathTester",
-  },
   async mounted() {
     window.onresize = () => {
-        this.windowWidth = window.innerWidth
+      this.windowWidth = window.innerWidth
     }
+    window.document.title = "FhirPath Tester";
     this.showAdvancedSettings = settings.showAdvancedSettings();
     this.defaultProviderField = settings.getDefaultProviderField();
     if (settings.getOpenAIKey())
