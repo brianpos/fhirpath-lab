@@ -101,28 +101,28 @@ export default class Chat extends Vue {
   }
 
   applySuggestion(event: MouseEvent & { target: HTMLElement }) {
-    var expression = event.target?.innerText;
-    if (expression.length > 0) {
-      expression = expression.trim();
+    var valueString = event.target?.innerText;
+    if (valueString.length > 0) {
+      valueString = valueString.trim();
     }
-    console.log(event.target?.className + ' applied', expression);
+    console.log(event.target?.className + ' applied', valueString);
     if (event.target?.className === "language-fhirpath") {
-      this.$emit("apply-suggested-expression", expression);
+      this.$emit("apply-suggested-expression", valueString);
 
     } else if (event.target?.className === "language-fhircontext") {
-      this.$emit("apply-suggested-context", expression);
+      this.$emit("apply-suggested-context", valueString);
 
     } else if (event.target?.className === "language-questionnaire") {
-      this.$emit("apply-suggested-questionnaire", expression);
+      this.$emit("apply-suggested-questionnaire", valueString);
       
     } else if (event.target?.className === "language-item") {
-      this.$emit("apply-suggested-item", expression);
+      this.$emit("apply-suggested-item", valueString);
       
     } else if (event.target?.className === "language-fhir") {
-      this.$emit("apply-suggested-fhir", expression);
+      this.$emit("apply-suggested-fhir", valueString);
       
     } else {
-      this.$emit("apply-suggested-json", expression);
+      this.$emit("apply-suggested-json", valueString);
     }
   }
 
