@@ -213,6 +213,14 @@ const mapFunctionReferences = new Map<string, ISpecFunctionDetails>([
   ["lowBoundary ", { title: 'lowBoundary : T', specUrl: "https://hl7.org/fhir/fhirpath.html#functions"}],
   ["highBoundary ", { title: 'highBoundary : T', specUrl: "https://hl7.org/fhir/fhirpath.html#functions"}],
   ["comparable", { title: 'comparable(quantity) : boolean', specUrl: "https://hl7.org/fhir/fhirpath.html#functions"}],
+
+  // SDC Extensions to fhirpath (linked from the SDC specification)
+  ["ordinal", { title: 'ordinal() : decimal', specUrl: "https://build.fhir.org/ig/HL7/sdc/expressions.html#fhirpath-supplements"}],
+  ["answers", { title: 'answers() : QuestionnaireItem#Answer', specUrl: "https://build.fhir.org/ig/HL7/sdc/expressions.html#fhirpath-supplements"}],
+  ["sum", { title: 'sum() : decimal | integer | quantity', specUrl: "https://build.fhir.org/ig/HL7/sdc/expressions.html#fhirpath-supplements"}],
+  ["min", { title: 'min() : decimal | integer | quantity', specUrl: "https://build.fhir.org/ig/HL7/sdc/expressions.html#fhirpath-supplements"}],
+  ["max", { title: 'max() : decimal | integer | quantity', specUrl: "https://build.fhir.org/ig/HL7/sdc/expressions.html#fhirpath-supplements"}],
+  ["avg", { title: 'avg() : decimal | integer | quantity', specUrl: "https://build.fhir.org/ig/HL7/sdc/expressions.html#fhirpath-supplements"}],
 ]);
 
 const mapOperatorReferences = new Map<string, ISpecFunctionDetails>([
