@@ -233,12 +233,6 @@ const mapOperatorReferences = new Map<string, ISpecFunctionDetails>([
   ["implies", { outlineNo: '6.5.5', title: 'implies', specUrl: "http://hl7.org/fhirpath/N1/#implies"}],
 ]);
 
-// Workaround to include the definition of the parse function
-// (which is actually there, just not in the definition)
-declare module "fhirpath" {
-  export function parse(expression: string): any;
-}
-
 export interface JsonNode {
   id?: string;
   ExpressionType: string;
