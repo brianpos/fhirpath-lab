@@ -3,6 +3,10 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+## 12 January 2023 (dev)
+* Update version of fhirpath.js included to 3.9.0 (with the prototype `withVariable()` function)
+* Include links to the SDC extended functions
+
 ## 17 November 2023 (dev)
 * IPS demo also has a validate questionnaire feature - using the forms-lab Q def validation service
 
