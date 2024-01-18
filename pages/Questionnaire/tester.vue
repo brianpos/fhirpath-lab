@@ -496,6 +496,15 @@ export default Vue.extend({
       this.resourceId = this.$route.query.id as string;
     }
 
+    if (this.$route.query.tab) {
+      this.$nextTick(() => {
+        const tabString = this.$route.query.tab as string;
+        if (parseInt(tabString) >= 0){
+          this.tab = parseInt(tabString);
+        }
+      });
+    }
+
     // this.searchFhirServer();
     this.downloadTestResource();
   },
