@@ -1,12 +1,15 @@
 <template>
-  <div :class="raw && raw.status === 'draft'
-    ? 'draft-page-background'
-    : raw && raw.status === 'active'
-      ? 'active-page-background'
-      : raw && raw.status === 'retired'
+  <div
+    :class="
+      raw && raw.status === 'draft'
+        ? 'draft-page-background'
+        : raw && raw.status === 'active'
+        ? 'active-page-background'
+        : raw && raw.status === 'retired'
         ? 'retired-page-background'
         : ''
-    ">
+    "
+  >
     <template>
       <HeaderNavbar @close-settings="settingsClosed" />
     </template>
@@ -14,74 +17,106 @@
     <div class="container-fluid bd-layout" style="padding-top: 80px">
       <v-card>
         <v-toolbar flat color="primary">
-          <v-toolbar-title v-if="raw"><span v-text="raw.title" /> (<span v-text="raw.status" />)<span v-if="raw.version">
-              - {{ raw.version }}</span></v-toolbar-title>
+          <v-toolbar-title v-if="raw"
+            ><span v-text="raw.title" /> (<span v-text="raw.status" />)<span
+              v-if="raw.version"
+            >
+              - {{ raw.version }}</span
+            ></v-toolbar-title
+          >
           <v-spacer />
           <v-btn v-if="false && enableSave && !readonly" icon title="save">
             <v-icon @click="saveData" :disabled="saving">
               mdi-content-save
             </v-icon>
           </v-btn>
-          <v-btn icon dark title="Show Details, Publishing and other informational tabs"
-            @click="showDetails = !showDetails">
-            <v-icon v-if="!showDetails">
-              mdi-eye-off-outline
-            </v-icon>
-            <v-icon v-if="showDetails">
-              mdi-eye-outline
-            </v-icon>
+          <v-btn
+            icon
+            dark
+            title="Show Details, Publishing and other informational tabs"
+            @click="showDetails = !showDetails"
+          >
+            <v-icon v-if="!showDetails"> mdi-eye-off-outline </v-icon>
+            <v-icon v-if="showDetails"> mdi-eye-outline </v-icon>
           </v-btn>
         </v-toolbar>
-        <v-tabs vertical v-model="tab">
-          <v-tab>
+        <v-tabs vertical v-model="tab" @change="changeTab">
+          <v-tab v-on:click="tabClicked">
             <v-icon left> mdi-code-json </v-icon>
             Questionnaire
           </v-tab>
-          <v-tab>
+          <v-tab v-on:click="tabClicked" v-show="hasDebugMessages">
             <v-icon left> mdi-bug-outline </v-icon>
             Debug
           </v-tab>
-          <v-tab>
-            <v-icon left> mdi-clipboard-text-outline </v-icon>
-            Response
-          </v-tab>
-          <v-tab>
+          <v-tab v-on:click="tabClicked">
             <v-icon left> mdi-card-bulleted-settings-outline </v-icon>
-            Details
+            <i>Details</i>
           </v-tab>
           <v-tab v-show="showDetails">
             <v-icon left> mdi-download-network-outline </v-icon>
-            Publishing
+            <i>Publishing</i>
           </v-tab>
-          <v-tab v-show="showDetails">
+          <v-tab v-show="showDetails" v-on:click="tabClicked">
             <v-icon left> mdi-file-tree </v-icon>
-            Fields
+            <i>Fields</i>
           </v-tab>
-          <v-tab v-show="showDetails && showAdvancedSettings">
+          <v-tab
+            v-show="showDetails && showAdvancedSettings"
+            v-on:click="tabClicked"
+          >
             <v-icon left> mdi-tray-arrow-down </v-icon>
-            Pre-Population
+            <i>Pre-Population</i>
           </v-tab>
-          <v-tab v-show="showDetails && showAdvancedSettings">
+          <v-tab
+            v-show="showDetails && showAdvancedSettings"
+            v-on:click="tabClicked"
+          >
             <v-icon left> mdi-application-variable-outline </v-icon>
-            Variables
+            <i>Variables</i>
           </v-tab>
-          <v-tab>
+          <v-tab v-on:click="tabClicked">
             <v-icon left> mdi-bug-play-outline </v-icon>
-            Renderer
+            CSIRO Renderer
           </v-tab>
-          <v-tab v-show="showAdvancedSettings && chatEnabled" :class="chatActiveClass" v-on:click="tabClicked">
+          <v-tab v-on:click="tabClicked">
+            <v-icon left> mdi-bug-play-outline </v-icon>
+            LHC-Forms
+          </v-tab>
+          <v-tab v-on:click="responseTabClicked">
+            <v-icon left> mdi-clipboard-text-outline </v-icon>
+            Response
+          </v-tab>
+          <v-tab
+            v-show="showAdvancedSettings && chatEnabled"
+            :class="chatActiveClass"
+            v-on:click="tabClicked"
+          >
             <v-icon left> mdi-brain </v-icon>
             AI Chat
           </v-tab>
 
-          <v-tabs-items class="custom-tab" style="height: calc(100vh - 168px)" touchless v-model="tab">
+          <v-tabs-items
+            class="custom-tab"
+            style="height: calc(100vh - 168px)"
+            touchless
+            v-model="tab"
+          >
             <v-tab-item :eager="true">
               <!-- Questionnaire -->
               <v-card flat>
                 <v-card-text>
                   <p class="fl-tab-header">Questionnaire</p>
-                  <v-text-field label="Test Resource Id" v-model="resourceId" hide-details="auto" autocomplete="off"
-                    @input="updateNow" autocorrect="off" autocapitalize="off" spellcheck="false">
+                  <v-text-field
+                    label="Test Resource Id"
+                    v-model="resourceId"
+                    hide-details="auto"
+                    autocomplete="off"
+                    @input="updateNow"
+                    autocorrect="off"
+                    autocapitalize="off"
+                    spellcheck="false"
+                  >
                     <template v-slot:append>
                       <v-btn icon small tile @click="resourceId = undefined">
                         <v-icon> mdi-close </v-icon>
@@ -89,15 +124,25 @@
                       <v-btn icon small tile @click="downloadTestResource">
                         <v-icon> mdi-download </v-icon>
                       </v-btn>
-                      <v-btn small icon tile @click="reformatTestResource"><v-icon title="Format json" dark>
-                          mdi-format-indent-increase </v-icon></v-btn>
-                      <v-btn small icon tile @click="validateQuestionnaire"><v-icon title="Validate Questionnaire" dark>
-                          mdi-note-check-outline </v-icon></v-btn>
+                      <v-btn small icon tile @click="reformatTestResource"
+                        ><v-icon title="Format json" dark>
+                          mdi-format-indent-increase
+                        </v-icon></v-btn
+                      >
+                      <v-btn small icon tile @click="validateQuestionnaire"
+                        ><v-icon title="Validate Questionnaire" dark>
+                          mdi-note-check-outline
+                        </v-icon></v-btn
+                      >
                     </template>
                   </v-text-field>
                   <br />
                   <!-- <label class="v-label theme--light bare-label">Test Resource JSON <i>{{ resourceJsonChangedMessage() }}</i></label> -->
-                  <div class="resource" width="100%" ref="aceEditorResourceJsonTab"></div>
+                  <div
+                    class="resource"
+                    width="100%"
+                    ref="aceEditorResourceJsonTab"
+                  ></div>
                   <!-- <div class="ace_editor_footer"></div> -->
                 </v-card-text>
               </v-card>
@@ -109,33 +154,38 @@
                 <v-card-text>
                   <p class="fl-tab-header">Debug</p>
                   <label>Validation Results:</label>
-                  <OperationOutcomePanel :outcome="saveOutcome" title="Error Saving" @close="clearOutcome2"
-                    @help-with-issue="helpWithIssue" />
-                </v-card-text>
-              </v-card>
-            </v-tab-item>
-
-            <v-tab-item :eager="true">
-              <!-- Response -->
-              <v-card flat>
-                <v-card-text>
-                  <p class="fl-tab-header">Questionnaire Response</p>
-                  <div class="resource" width="100%" ref="aceEditorResponseJsonTab"></div>
+                  <OperationOutcomePanel
+                    :outcome="saveOutcome"
+                    title="Error Saving"
+                    @close="clearOutcome2"
+                    @help-with-issue="helpWithIssue"
+                  />
                 </v-card-text>
               </v-card>
             </v-tab-item>
 
             <v-tab-item>
               <!-- Details -->
-              <conformance-resource-details-tab v-if="raw" :raw="raw" :readonly="readonly"
-                :showAdvancedSettings="showAdvancedSettings" @update="updateNow" />
+              <conformance-resource-details-tab
+                v-if="raw"
+                :raw="raw"
+                :readonly="readonly"
+                :showAdvancedSettings="showAdvancedSettings"
+                @update="updateNow"
+              />
             </v-tab-item>
 
             <v-tab-item>
               <!-- Publishing -->
-              <conformance-resource-publishing-tab v-if="raw" :raw="raw" :publishedVersions="publishedVersions"
-                :lockPublisher="false" :readonly="readonly" :showAdvancedSettings="showAdvancedSettings"
-                @update="updateNow" />
+              <conformance-resource-publishing-tab
+                v-if="raw"
+                :raw="raw"
+                :publishedVersions="publishedVersions"
+                :lockPublisher="false"
+                :readonly="readonly"
+                :showAdvancedSettings="showAdvancedSettings"
+                @update="updateNow"
+              />
             </v-tab-item>
 
             <v-tab-item>
@@ -143,8 +193,12 @@
               <v-card flat>
                 <v-card-text>
                   <p class="fl-tab-header">Fields</p>
-                  <EditorFieldsSection v-if="raw" v-bind:items="flatModel" :readonly="readonly"
-                    :showAdvancedSettings="showAdvancedSettings" />
+                  <EditorFieldsSection
+                    v-if="raw"
+                    v-bind:items="flatModel"
+                    :readonly="readonly"
+                    :showAdvancedSettings="showAdvancedSettings"
+                  />
                 </v-card-text>
               </v-card>
             </v-tab-item>
@@ -154,7 +208,10 @@
               <v-card flat>
                 <v-card-text>
                   <p class="fl-tab-header">Pre-Population</p>
-                  <EditorPrePolulationSection v-if="raw" v-bind:items="flatModel" />
+                  <EditorPrePolulationSection
+                    v-if="raw"
+                    v-bind:items="flatModel"
+                  />
                 </v-card-text>
               </v-card>
             </v-tab-item>
@@ -164,7 +221,11 @@
               <v-card flat>
                 <v-card-text>
                   <p class="fl-tab-header">Variables</p>
-                  <EditorVariablesSection v-if="raw" v-bind:questionnaire="raw" v-bind:items="flatModel" />
+                  <EditorVariablesSection
+                    v-if="raw"
+                    v-bind:questionnaire="raw"
+                    v-bind:items="flatModel"
+                  />
                 </v-card-text>
               </v-card>
             </v-tab-item>
@@ -173,28 +234,75 @@
               <!-- CSIRO Renderer -->
               <v-card flat>
                 <v-card-text>
-                  <p class="fl-tab-header">Renderer</p>
-                  <EditorRendererSection v-if="raw" v-bind:questionnaire="raw"
-                    @response="processUpdatedQuestionnaireResponse" />
+                  <p class="fl-tab-header">CSIRO Renderer</p>
+                  <EditorRendererSection
+                    v-if="raw"
+                    v-bind:questionnaire="raw"
+                    @response="processUpdatedQuestionnaireResponse"
+                  />
                 </v-card-text>
               </v-card>
             </v-tab-item>
+
+            <v-tab-item :eager="true">
+              <!-- NLM LForms Renderer -->
+              <v-card flat>
+                <v-card-text>
+                  <p class="fl-tab-header">LHC-Forms</p>
+                  <EditorNLMRendererSection
+                    v-if="raw"
+                    v-bind:questionnaire="raw"
+                    @response="processUpdatedQuestionnaireResponse"
+                  />
+                </v-card-text>
+              </v-card>
+            </v-tab-item>
+
+            <v-tab-item :eager="true">
+              <!-- Response -->
+              <v-card flat>
+                <v-card-text>
+                  <p class="fl-tab-header">Questionnaire Response</p>
+                  <div
+                    class="resource"
+                    width="100%"
+                    ref="aceEditorResponseJsonTab"
+                  ></div>
+                </v-card-text>
+              </v-card>
+            </v-tab-item>
+
             <v-tab-item>
               <!-- AI Chat -->
               <v-card flat>
                 <v-card-text>
-                  <p class="fl-tab-header" title="Questionnaire and Structured Data Capture AI Chat">SDC AI Chat</p>
-                  <Chat class="chat" ref="chatComponent" @send-message="handleSendMessage"
-                    :suggestions="chatPropmtOptions" @reset-conversation="resetConversation"
-                    @apply-suggested-expression="applySuggestedExpression" />
+                  <p
+                    class="fl-tab-header"
+                    title="Questionnaire and Structured Data Capture AI Chat"
+                  >
+                    SDC AI Chat
+                  </p>
+                  <Chat
+                    class="chat"
+                    ref="chatComponent"
+                    @send-message="handleSendMessage"
+                    :suggestions="chatPromptOptions"
+                    @reset-conversation="resetConversation"
+                    @apply-suggested-expression="applySuggestedExpression"
+                  />
                 </v-card-text>
               </v-card>
             </v-tab-item>
           </v-tabs-items>
         </v-tabs>
       </v-card>
-      <OperationOutcomeOverlay v-if="showOutcome" :saveOutcome="saveOutcome" :showOutcome="showOutcome"
-        title="Error Saving" @close="clearOutcome" />
+      <OperationOutcomeOverlay
+        v-if="showOutcome"
+        :saveOutcome="saveOutcome"
+        :showOutcome="showOutcome"
+        title="Error Saving"
+        @close="clearOutcome"
+      />
     </div>
     <table-loading v-if="saving || loadingData" />
   </div>
@@ -216,13 +324,13 @@
   height: calc(100vh - 200px);
 }
 
-.custom-tab>div {
+.custom-tab > div {
   flex-direction: row;
   // height: calc(100vh - 168px);
   // overflow-y: auto;
 }
 
-.custom-tab>div>div {
+.custom-tab > div > div {
   height: calc(100vh - 168px);
   overflow-y: auto;
 }
@@ -240,7 +348,7 @@
 }
 
 @media (max-width: 596px) {
-  .custom-tab>div>div {
+  .custom-tab > div > div {
     height: calc(100vh - 168px);
   }
 
@@ -257,7 +365,7 @@
   }
 }
 
-.custom-tab>div>div {
+.custom-tab > div > div {
   flex: 1;
 }
 </style>
@@ -297,7 +405,12 @@ import "ace-builds/src-noconflict/mode-json";
 import "ace-builds/src-noconflict/theme-chrome";
 import Chat from "~/components/Chat.vue";
 import { ChatMessage } from "@azure/openai";
-import { EvaluateChatPrompt, GetSystemPrompt, IOpenAISettings } from "~/helpers/openai_utils";
+import {
+  EvaluateChatPrompt,
+  GetSystemPrompt,
+  IOpenAISettings,
+} from "~/helpers/openai_utils";
+import { Consola } from "consola";
 
 // import "fhirclient";
 // import { FHIR } from "fhirclient";
@@ -330,8 +443,8 @@ export default Vue.extend({
   //   components: { fhirqItem },
   mounted() {
     window.onresize = () => {
-      this.windowWidth = window.innerWidth
-    }
+      this.windowWidth = window.innerWidth;
+    };
     window.document.title = "Questionnaire Tester";
 
     const resourceEditorSettings: Partial<ace.Ace.EditorOptions> = {
@@ -345,21 +458,32 @@ export default Vue.extend({
       showPrintMargin: false,
       theme: "ace/theme/chrome",
       mode: "ace/mode/json",
-      wrapBehavioursEnabled: true
+      wrapBehavioursEnabled: true,
     };
-    var editorResourceJsonDiv: any = this.$refs.aceEditorResourceJsonTab as Element;
+    var editorResourceJsonDiv: any = this.$refs
+      .aceEditorResourceJsonTab as Element;
     if (editorResourceJsonDiv) {
-      this.resourceJsonEditor = ace.edit(editorResourceJsonDiv, resourceEditorSettings);
+      this.resourceJsonEditor = ace.edit(
+        editorResourceJsonDiv,
+        resourceEditorSettings
+      );
       if (this.raw)
         this.resourceJsonEditor?.setValue(JSON.stringify(this.raw, null, 2));
       this.resourceJsonEditor?.clearSelection();
-      this.resourceJsonEditor.session.on("change", this.resourceJsonChangedEvent);
+      this.resourceJsonEditor.session.on(
+        "change",
+        this.resourceJsonChangedEvent
+      );
     }
 
     // Also add in the QResponse editor too
-    var editorQResponseJsonDiv: any = this.$refs.aceEditorResponseJsonTab as Element;
+    var editorQResponseJsonDiv: any = this.$refs
+      .aceEditorResponseJsonTab as Element;
     if (editorQResponseJsonDiv) {
-      this.questionnaireResponseJsonEditor = ace.edit(editorQResponseJsonDiv, resourceEditorSettings);
+      this.questionnaireResponseJsonEditor = ace.edit(
+        editorQResponseJsonDiv,
+        resourceEditorSettings
+      );
     }
 
     this.showAdvancedSettings = settings.showAdvancedSettings();
@@ -376,13 +500,16 @@ export default Vue.extend({
     this.downloadTestResource();
   },
   computed: {
-    chatPropmtOptions(): string[] {
-      const defaultPromptOptions =
-        [
-          'create an item to capture the patient\'s name',
-          'create an item to capture a US postcode with validation on the format',
-          'update all the linkIds to be more meaningful'
-        ];
+    hasDebugMessages(): boolean {
+      if (this.saveOutcome == undefined) return false;
+      return this.saveOutcome?.issue?.length > 0;
+    },
+    chatPromptOptions(): string[] {
+      const defaultPromptOptions = [
+        "create an item to capture the patient's name",
+        "create an item to capture a US postcode with validation on the format",
+        "update all the linkIds to be more meaningful",
+      ];
       var promptOptions = [];
       if (this.helpWithError) {
         promptOptions.push(this.helpWithError);
@@ -391,36 +518,112 @@ export default Vue.extend({
       return promptOptions;
     },
     expressionVisible(): boolean {
-      return this.primaryTab === 0 || (this.secondaryTab === 0 && this.windowWidth > 999);
+      return (
+        this.primaryTab === 0 ||
+        (this.secondaryTab === 0 && this.windowWidth > 999)
+      );
     },
     resourceVisible(): boolean {
-      return this.primaryTab === 1 || (this.secondaryTab === 1 && this.windowWidth > 999);
+      return (
+        this.primaryTab === 1 ||
+        (this.secondaryTab === 1 && this.windowWidth > 999)
+      );
     },
     variablesVisible(): boolean {
-      return this.primaryTab === 2 || (this.secondaryTab === 2 && this.windowWidth > 999);
+      return (
+        this.primaryTab === 2 ||
+        (this.secondaryTab === 2 && this.windowWidth > 999)
+      );
     },
     traceVisible(): boolean {
-      return this.primaryTab === 3 || (this.secondaryTab === 3 && this.windowWidth > 999);
+      return (
+        this.primaryTab === 3 ||
+        (this.secondaryTab === 3 && this.windowWidth > 999)
+      );
     },
     astVisible(): boolean {
-      return this.primaryTab === 4 || (this.secondaryTab === 4 && this.windowWidth > 999);
+      return (
+        this.primaryTab === 4 ||
+        (this.secondaryTab === 4 && this.windowWidth > 999)
+      );
     },
     chatVisible(): boolean {
-      return this.primaryTab === 5 || (this.secondaryTab === 5 && this.windowWidth > 999);
+      return (
+        this.primaryTab === 5 ||
+        (this.secondaryTab === 5 && this.windowWidth > 999)
+      );
     },
     debugVisible(): boolean {
-      return this.primaryTab === 6 || (this.secondaryTab === 6 && this.windowWidth > 999);
+      return (
+        this.primaryTab === 6 ||
+        (this.secondaryTab === 6 && this.windowWidth > 999)
+      );
     },
 
-    expressionActiveClass(): string { return this.secondaryTab === 0 && this.windowWidth > 999 || this.primaryTab === 0 ? "v-tab--active" : "" },
-    resourceActiveClass(): string { return this.secondaryTab === 1 && this.windowWidth > 999 || this.primaryTab === 1 ? "v-tab--active" : "" },
-    variablesActiveClass(): string { return this.secondaryTab === 2 && this.windowWidth > 999 || this.primaryTab === 2 ? "v-tab--active" : "" },
-    traceActiveClass(): string { return this.secondaryTab === 3 && this.windowWidth > 999 || this.primaryTab === 3 ? "v-tab--active" : "" },
-    astActiveClass(): string { return this.secondaryTab === 4 && this.windowWidth > 999 || this.primaryTab === 4 ? "v-tab--active" : "" },
-    chatActiveClass(): string { return this.secondaryTab === 5 && this.windowWidth > 999 || this.primaryTab === 5 ? "v-tab--active" : "" },
-    debugActiveClass(): string { return this.secondaryTab === 6 && this.windowWidth > 999 || this.primaryTab === 6 ? "v-tab--active" : "" },
+    expressionActiveClass(): string {
+      return (this.secondaryTab === 0 && this.windowWidth > 999) ||
+        this.primaryTab === 0
+        ? "v-tab--active"
+        : "";
+    },
+    resourceActiveClass(): string {
+      return (this.secondaryTab === 1 && this.windowWidth > 999) ||
+        this.primaryTab === 1
+        ? "v-tab--active"
+        : "";
+    },
+    variablesActiveClass(): string {
+      return (this.secondaryTab === 2 && this.windowWidth > 999) ||
+        this.primaryTab === 2
+        ? "v-tab--active"
+        : "";
+    },
+    traceActiveClass(): string {
+      return (this.secondaryTab === 3 && this.windowWidth > 999) ||
+        this.primaryTab === 3
+        ? "v-tab--active"
+        : "";
+    },
+    astActiveClass(): string {
+      return (this.secondaryTab === 4 && this.windowWidth > 999) ||
+        this.primaryTab === 4
+        ? "v-tab--active"
+        : "";
+    },
+    chatActiveClass(): string {
+      return (this.secondaryTab === 5 && this.windowWidth > 999) ||
+        this.primaryTab === 5
+        ? "v-tab--active"
+        : "";
+    },
+    debugActiveClass(): string {
+      return (this.secondaryTab === 6 && this.windowWidth > 999) ||
+        this.primaryTab === 6
+        ? "v-tab--active"
+        : "";
+    },
   },
   methods: {
+    responseTabClicked(e: KeyboardEvent | MouseEvent): void {
+      // Workaround to refresh the display in the response editor when it is updated while the form is not visible
+      // https://github.com/ajaxorg/ace/issues/2497#issuecomment-102633605
+      setTimeout(() => {
+        if (this.questionnaireResponseJsonEditor) {
+          var editorQResponseJsonDiv: any = this.$refs
+            .aceEditorResponseJsonTab as Element;
+          if (editorQResponseJsonDiv) {
+            console.log("focusing editor");
+            editorQResponseJsonDiv.focus();
+          }
+          this.questionnaireResponseJsonEditor.resize();
+          this.updateNow();
+          console.log("refreshing editor");
+        }
+      });
+
+      // then do the other handler too
+      this.tabClicked(e);
+    },
     tabClicked(e: KeyboardEvent | MouseEvent): void {
       this.lastTabClicked = e;
     },
@@ -428,10 +631,13 @@ export default Vue.extend({
       // Primary tab is the one that is "locked" and only changeable when clicking with control
       // The secondary tab is the one that is "switched" when clicking without control
       if (this.primaryTab !== selectTab) {
-        if (this.lastTabClicked && (this.lastTabClicked as MouseEvent).ctrlKey || this.windowWidth <= 999) {
+        if (
+          (this.lastTabClicked &&
+            (this.lastTabClicked as MouseEvent).ctrlKey) ||
+          this.windowWidth <= 999
+        ) {
           this.primaryTab = selectTab;
-        }
-        else {
+        } else {
           this.secondaryTab = selectTab;
         }
       }
@@ -446,14 +652,24 @@ export default Vue.extend({
     clearOutcome2() {
       this.showOutcome = undefined;
       this.saveOutcome = undefined;
+      if (this.tab == 1) this.tab = 0;
     },
     helpWithIssue(issue: fhir4b.OperationOutcomeIssue) {
-      console.log('Help me with: ', issue);
-      var issueText = "How can I resolve this issue from validating the Questionnaire?";
+      console.log("Help me with: ", issue);
+      var issueText =
+        "How can I resolve this issue from validating the Questionnaire?";
       if (issue.details?.text) issueText += "\r\n\r\n" + issue.details.text;
-      if (issue.expression) issueText += "\r\n\r\nLocation: \`" + issue.expression.join("\`\r\n\r\n") + "\`";
-      if (issue.location) issueText += "\r\n\r\nLocation (alternate): \`" + issue.location.join("\`\r\n\r\n") + "\`";
-      if (issue.diagnostics) issueText += "\r\n\r\nDiagnostics:\r\n\`\`\` log\r\n" + issue.diagnostics + "\r\n\`\`\`";
+      if (issue.expression)
+        issueText +=
+          "\r\n\r\nLocation: `" + issue.expression.join("`\r\n\r\n") + "`";
+      if (issue.location)
+        issueText +=
+          "\r\n\r\nLocation (alternate): `" +
+          issue.location.join("`\r\n\r\n") +
+          "`";
+      if (issue.diagnostics)
+        issueText +=
+          "\r\n\r\nDiagnostics:\r\n``` log\r\n" + issue.diagnostics + "\r\n```";
       this.helpWithError = issueText;
     },
     DeleteItem(item: FlattenedQuestionnaireItem) {
@@ -467,14 +683,13 @@ export default Vue.extend({
     },
 
     processUpdatedQuestionnaireResponse(value: fhir4b.QuestionnaireResponse) {
-      if (this.questionnaireResponseJsonEditor){
+      if (this.questionnaireResponseJsonEditor) {
         this.questionnaireResponse = value;
-        this.questionnaireResponseJsonEditor.setValue(JSON.stringify(this.questionnaireResponse, null, 2));
+        this.questionnaireResponseJsonEditor.setValue(
+          JSON.stringify(this.questionnaireResponse, null, 2)
+        );
         this.questionnaireResponseJsonEditor.clearSelection();
-        this.$nextTick(() => {
-          this.questionnaireResponseJsonEditor?.renderer.updateFull(true);
-          this.$forceUpdate();
-        });
+        this.tab = 9;
       }
     },
 
@@ -497,14 +712,14 @@ export default Vue.extend({
 
     resourceJsonChangedMessage(): string | undefined {
       if (this.resourceJsonChanged && this.resourceId) {
-        return '(modified)';
+        return "(modified)";
       }
     },
 
     resourceJsonChangedEvent() {
       this.resourceJsonChanged = true;
       this.enableSave = true;
-      console.log('enable save resourceJSON');
+      console.log("enable save resourceJSON");
 
       if (this.resourceJsonEditor) {
         const jsonValue = this.resourceJsonEditor.getValue();
@@ -514,8 +729,7 @@ export default Vue.extend({
           if (this.raw) {
             this.flatModel = FlattenedQuestionnaireItems(this.raw);
           }
-        }
-        catch { }
+        } catch {}
       }
     },
 
@@ -525,15 +739,18 @@ export default Vue.extend({
         const jsonValue = this.resourceJsonEditor.getValue();
         // send this to the forms-lab server for validation
         try {
-          const response = await fetch("https://fhir.forms-lab.com/Questionnaire/$validate", {
-            method: "POST",
-            cache: "no-cache",
-            headers: {
-              accept: "application/json",
-              "Content-Type": "application/json"
-            },
-            body: jsonValue
-          });
+          const response = await fetch(
+            "https://fhir.forms-lab.com/Questionnaire/$validate",
+            {
+              method: "POST",
+              cache: "no-cache",
+              headers: {
+                accept: "application/json",
+                "Content-Type": "application/json",
+              },
+              body: jsonValue,
+            }
+          );
           const raw = await response.json();
           console.log(JSON.stringify(raw, null, 4));
           this.saveOutcome = raw;
@@ -548,11 +765,12 @@ export default Vue.extend({
       if (this.resourceJsonEditor) {
         const jsonValue = this.resourceJsonEditor.getValue();
         try {
-          this.resourceJsonEditor.setValue(JSON.stringify(JSON.parse(jsonValue), null, 4));
+          this.resourceJsonEditor.setValue(
+            JSON.stringify(JSON.parse(jsonValue), null, 4)
+          );
           this.resourceJsonEditor.clearSelection();
           this.resourceJsonEditor.renderer.updateFull(true);
-        }
-        catch { }
+        } catch {}
       }
     },
 
@@ -560,18 +778,22 @@ export default Vue.extend({
       try {
         if (!this.resourceId) return;
         let url = this.resourceId;
-        if (this.resourceId && !this.resourceId.startsWith('http'))
-          url = settings.getFhirServerExamplesUrl() + '/' + this.resourceId;
+        if (this.resourceId && !this.resourceId.startsWith("http"))
+          url = settings.getFhirServerExamplesUrl() + "/" + this.resourceId;
 
         // if trying to use the hl7 example servers, that should be over https
-        if (url.startsWith("http://build.fhir.org/")
-          || url.startsWith("http://hl7.org/fhir/"))
+        if (
+          url.startsWith("http://build.fhir.org/") ||
+          url.startsWith("http://hl7.org/fhir/")
+        )
           url = "https://" + url.substring(7);
 
         // If this is trying to download a hl7 example, run it through the downloader proxy
         // as the HL7 servers don't have CORS for us
-        if (url.startsWith("https://build.fhir.org/")
-          || url.startsWith("https://hl7.org/fhir/"))
+        if (
+          url.startsWith("https://build.fhir.org/") ||
+          url.startsWith("https://hl7.org/fhir/")
+        )
           url = settings.dotnet_server_downloader() + "?url=" + url;
 
         if (this.cancelSource) this.cancelSource.cancel("new download started");
@@ -580,11 +802,11 @@ export default Vue.extend({
         let token = this.cancelSource.token;
         let headers: AxiosRequestHeaders = {
           "Cache-Control": "no-cache",
-          "Accept": requestFhirAcceptHeaders
-        }
+          Accept: requestFhirAcceptHeaders,
+        };
         const response = await axios.get<fhir4b.Resource>(url, {
           cancelToken: token,
-          headers: headers
+          headers: headers,
         });
         if (token.reason) {
           console.log(token.reason);
@@ -603,11 +825,14 @@ export default Vue.extend({
               this.raw = results as fhir4b.Questionnaire;
               if (this.raw) {
                 this.flatModel = FlattenedQuestionnaireItems(this.raw);
-                const formBaseUrl = url.substring(0, url.indexOf("/Questionnaire/" + this.raw.id));
+                const formBaseUrl = url.substring(
+                  0,
+                  url.indexOf("/Questionnaire/" + this.raw.id)
+                );
                 if (this.raw.url) {
                   await loadPublishedVersions<fhir4b.Questionnaire>(
                     formBaseUrl,
-                    'Questionnaire',
+                    "Questionnaire",
                     this.raw.url,
                     this
                   );
@@ -622,21 +847,38 @@ export default Vue.extend({
         if (axios.isAxiosError(err)) {
           const serverError = err as AxiosError<fhir4b.OperationOutcome>;
           if (serverError && serverError.response) {
-            if (serverError.response.data?.resourceType == 'OperationOutcome') {
+            if (serverError.response.data?.resourceType == "OperationOutcome") {
               this.saveOutcome = serverError.response.data;
             } else {
               if (serverError.response.status == 404)
-                this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
-              this.saveOutcome?.issue.push({ code: 'not-found', severity: 'error', details: { text: 'Test resource not found' } });
+                this.saveOutcome = {
+                  resourceType: "OperationOutcome",
+                  issue: [],
+                };
+              this.saveOutcome?.issue.push({
+                code: "not-found",
+                severity: "error",
+                details: { text: "Test resource not found" },
+              });
             }
             this.showOutcome = true;
             return serverError.response.data;
           }
-          this.saveOutcome = CreateOperationOutcome("fatal", "exception", "Server: " + err.message, undefined, err.code);
+          this.saveOutcome = CreateOperationOutcome(
+            "fatal",
+            "exception",
+            "Server: " + err.message,
+            undefined,
+            err.code
+          );
           this.showOutcome = true;
           return;
         }
-        this.saveOutcome = CreateOperationOutcome("fatal", "exception", "Client: " + err);
+        this.saveOutcome = CreateOperationOutcome(
+          "fatal",
+          "exception",
+          "Client: " + err
+        );
         this.showOutcome = true;
       }
     },
@@ -646,11 +888,12 @@ export default Vue.extend({
       if (this.resourceJsonEditor) {
         const jsonValue = this.resourceJsonEditor.getValue();
         try {
-          this.resourceJsonEditor.setValue(JSON.stringify(JSON.parse(updatedExpression), null, 4));
+          this.resourceJsonEditor.setValue(
+            JSON.stringify(JSON.parse(updatedExpression), null, 4)
+          );
           this.resourceJsonEditor.clearSelection();
           this.resourceJsonEditor.renderer.updateFull(true);
-        }
-        catch { }
+        } catch {}
       }
     },
 
@@ -662,7 +905,7 @@ export default Vue.extend({
       console.log("Message sent:", message);
       const chat = this.$refs.chatComponent as Chat;
 
-      // Perform any additional actions with the message here  
+      // Perform any additional actions with the message here
       const systemPrompt = GetSystemPrompt();
 
       this.openAIexpressionExplanationLoading = true;
@@ -674,11 +917,9 @@ export default Vue.extend({
         if (jsonValue.length > 0) {
           try {
             var obj = JSON.parse(jsonValue) as fhir4b.Questionnaire;
-            if (obj.text)
-              delete obj.text;
+            if (obj.text) delete obj.text;
             jsonValue = JSON.stringify(obj);
-          }
-          catch (err) {
+          } catch (err) {
             console.log(err);
           }
           userQuestionContext += `Based on the FHIR Questionnaire\r\n\`\`\` json\r\n  ${jsonValue}\n\n\`\`\`\r\n`;
@@ -700,12 +941,14 @@ export default Vue.extend({
       prompt = prompt.concat(chat.getConversationChat());
 
       const resultOfQuestion = await EvaluateChatPrompt(
-        prompt, this.GetAISettings(),
+        prompt,
+        this.GetAISettings(),
         1,
-        4000);
+        4000
+      );
       // this.openAIexpressionExplanationMessage = "(Generated by OpenAI " + settings.getOpenAIModel() + ")";
       this.openAIexpressionExplanationLoading = false;
-      chat.addMessage("FhirPath AI", resultOfQuestion ?? '', true);
+      chat.addMessage("FhirPath AI", resultOfQuestion ?? "", true);
       chat.setThinking(false);
     },
 
@@ -816,7 +1059,10 @@ export default Vue.extend({
     },
 
     async saveData() {
-      const outcome = await saveFhirResource(this.fhirServerUrl ?? settings.getFhirServerUrl(), this);
+      const outcome = await saveFhirResource(
+        this.fhirServerUrl ?? settings.getFhirServerUrl(),
+        this
+      );
       if (!outcome) {
         if (this.raw?.id) {
           if (this.$route.params.id.endsWith(":new")) {
@@ -863,7 +1109,8 @@ export default Vue.extend({
       secondaryTab: 1,
       windowWidth: window.innerWidth,
       resourceJsonChanged: false,
-      resourceId: "https://sqlonfhir-r4.azurewebsites.net/fhir/Questionnaire/coding-sampler",
+      resourceId:
+        "https://sqlonfhir-r4.azurewebsites.net/fhir/Questionnaire/coding-sampler",
       openAILastContext: "",
       openAIexpressionExplanationLoading: false,
       helpWithError: undefined,
@@ -878,6 +1125,6 @@ export default Vue.extend({
       publishedVersions: [],
       ...BaseResource_defaultValues,
     };
-  }
+  },
 });
 </script>

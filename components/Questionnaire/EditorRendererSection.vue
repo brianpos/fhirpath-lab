@@ -1,7 +1,7 @@
 <template>
   <div style="position: relative;">
     <template v-if="questionnaire">
-      <v-btn style="position: fixed; right:34px; z-index: 2;" color="primary" @click="logResponse()">Log response</v-btn>
+      <v-btn style="position: fixed; right:34px; z-index: 2;" color="primary" @click="logResponse()">Show Response</v-btn>
       <Renderer :questionnaire="questionnaire"/>
     </template>
     <template v-else>
