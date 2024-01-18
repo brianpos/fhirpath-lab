@@ -30,6 +30,7 @@ import Vue, { PropType } from "vue";
 import { applyReactInVue } from "vuereact-combined";
 import { SmartFormsRenderer, getResponse } from "@aehrc/smart-forms-renderer";
 import { Questionnaire, QuestionnaireResponse } from "fhir/r4";
+import { settings } from "~/helpers/user_settings";
 
 import FHIR from "fhirclient";
 
@@ -74,7 +75,7 @@ export default Vue.extend({
 
     // Set the context vars
     var fhirContext = FHIR.client(
-      "https://sqlonfhir-r4.azurewebsites.net/fhir"
+      settings.getFhirServerExamplesUrl()
     );
     var fhirContextVars = { LaunchPatient: "Patient/123" };
     LForms.Util.setFHIRContext(fhirContext, fhirContextVars);
