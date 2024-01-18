@@ -1110,7 +1110,7 @@ export default Vue.extend({
       windowWidth: window.innerWidth,
       resourceJsonChanged: false,
       resourceId:
-        "https://sqlonfhir-r4.azurewebsites.net/fhir/Questionnaire/coding-sampler",
+        "https://sqlonfhir-r4.azurewebsites.net/fhir/Questionnaire/bit-of-everything",
       openAILastContext: "",
       openAIexpressionExplanationLoading: false,
       helpWithError: undefined,
