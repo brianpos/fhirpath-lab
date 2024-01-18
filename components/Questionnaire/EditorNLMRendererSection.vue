@@ -8,6 +8,10 @@
         >Show Response</v-btn
       >
       <div id="myFormContainer"></div>
+      <div class="errors" v-show="lforms_error != undefined">
+        <h5>Errors rendering questionnaire:</h5>
+        <div>{{ lforms_error }}</div>
+      </div>
     </template>
     <template v-else>
       <p>No questionnaire provided</p>
@@ -53,6 +57,10 @@ declare global {
   }
 }
 
+interface LFormsRendererData {
+  lforms_error?: string;
+}
+
 export default Vue.extend({
   // data() {
   //   return {
@@ -73,12 +81,14 @@ export default Vue.extend({
 
     // Now render the form to the display
     if (window.LForms) {
+      this.lforms_error = undefined;
       await LForms.Util.addFormToPage(
         this.questionnaire,
         "myFormContainer",
         {}
       ).catch((e: any) => {
         console.error("Breaking news:", e);
+        this.lforms_error = e.toString();
       });
     }
   },
@@ -104,16 +114,23 @@ export default Vue.extend({
       immediate: true,
       handler() {
         if (window.LForms) {
+          this.lforms_error = undefined;
           LForms.Util.addFormToPage(
             this.questionnaire,
             "myFormContainer",
             {}
           ).catch((e: any) => {
             console.error("Breaking news:", e);
+            this.lforms_error = e.toString();
           });
         }
       },
     },
+  },
+  data(): LFormsRendererData {
+    return {
+      lforms_error: undefined,
+    };
   },
 });
 </script>
