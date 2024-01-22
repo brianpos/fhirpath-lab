@@ -116,21 +116,45 @@
                     autocorrect="off"
                     autocapitalize="off"
                     spellcheck="false"
-                    :title="'Resource Id to download from the examples server\r\nAbsolute (requires CORS support) or relative to ' + exampleServerUrl">
+                    :title="
+                      'Resource Id to download from the examples server\r\nAbsolute (requires CORS support) or relative to ' +
+                      exampleServerUrl
+                    "
+                  >
                     <template v-slot:append>
-                      <v-btn icon small tile v-show="resourceId" @click="resourceId = undefined" title="Clear Test Resource ID">
+                      <v-btn
+                        icon
+                        small
+                        tile
+                        v-show="resourceId"
+                        @click="resourceId = undefined"
+                        title="Clear Test Resource ID"
+                      >
                         <v-icon> mdi-close </v-icon>
                       </v-btn>
-                      <v-btn icon small tile :disabled="resourceId === undefined" @click="downloadTestResource" :title="downloadTestResourceButtonTitle">
+                      <v-btn
+                        icon
+                        small
+                        tile
+                        :disabled="resourceId === undefined"
+                        @click="downloadTestResource"
+                        :title="downloadTestResourceButtonTitle"
+                      >
                         <v-icon> mdi-download </v-icon>
                       </v-btn>
                       <v-btn small icon tile @click="reformatTestResource"
-                        ><v-icon title="Re-format the Questionnaire json below" dark>
+                        ><v-icon
+                          title="Re-format the Questionnaire json below"
+                          dark
+                        >
                           mdi-format-indent-increase
                         </v-icon></v-btn
                       >
                       <v-btn small icon tile @click="validateQuestionnaire"
-                        ><v-icon title="Validate the below Questionnaire json using the fhirpath-lab server" dark>
+                        ><v-icon
+                          title="Validate the below Questionnaire json using the fhirpath-lab server"
+                          dark
+                        >
                           mdi-note-check-outline
                         </v-icon></v-btn
                       >
@@ -138,6 +162,19 @@
                   </v-text-field>
                   <br />
                   <!-- <label class="v-label theme--light bare-label">Test Resource JSON <i>{{ resourceJsonChangedMessage() }}</i></label> -->
+                  <v-tooltip bottom>
+                    <template v-slot:activator="{ on, attrs }">
+                      <v-btn
+                        class="resetButton"
+                        icon
+                        v-bind="attrs"
+                        v-on="on"
+                        @click="resetQuestionnaire"
+                        ><v-icon>mdi-broom</v-icon></v-btn
+                      >
+                    </template>
+                    <span>Reset Questionnaire definition</span>
+                  </v-tooltip>
                   <div
                     class="resource"
                     width="100%"
@@ -309,6 +346,12 @@
 </template>
 
 <style scoped  lang="scss">
+.resetButton {
+  right: 34px;
+  position: absolute;
+  z-index: 100;
+}
+
 .v-window-item--active {
   overflow-y: auto;
   overflow-x: hidden;
@@ -499,7 +542,7 @@ export default Vue.extend({
     if (this.$route.query.tab) {
       this.$nextTick(() => {
         const tabString = this.$route.query.tab as string;
-        if (parseInt(tabString) >= 0){
+        if (parseInt(tabString) >= 0) {
           this.tab = parseInt(tabString);
         }
       });
@@ -611,8 +654,8 @@ export default Vue.extend({
         ? "v-tab--active"
         : "";
     },
-    downloadTestResourceButtonTitle() : string {
-      return 'Download test resource from ' + this.exampleServerUrl;
+    downloadTestResourceButtonTitle(): string {
+      return "Download test resource from " + this.exampleServerUrl;
     },
     exampleServerUrl(): string {
       return settings.getFhirServerExamplesUrl();
@@ -728,6 +771,31 @@ export default Vue.extend({
     resourceJsonChangedMessage(): string | undefined {
       if (this.resourceJsonChanged && this.resourceId) {
         return "(modified)";
+      }
+    },
+
+    resetQuestionnaire() {
+      // Create a new example questionnaire resource to start a fresh from
+      // defaulting in the publisher and a random canonical url
+      if (this.resourceJsonEditor) {
+        const jsonValue: Questionnaire = {
+          resourceType: "Questionnaire",
+          url: '',
+          version: "0.1",
+          name: "R" + settings.createRandomID().replaceAll("-", "_"),
+          title: '',
+          status: "draft",
+        };
+        if (settings.getDefaultNewCanonicalBase())
+          jsonValue.url = settings.getDefaultNewCanonicalBase() + '/Questionnaire/' + jsonValue.name;
+        if (settings.getDefaultProviderField())
+          jsonValue.publisher = settings.getDefaultProviderField();
+        jsonValue.item = [];
+        try {
+          this.resourceJsonEditor.setValue(JSON.stringify(jsonValue, null, 4));
+          this.resourceJsonEditor.clearSelection();
+          this.resourceJsonEditor.renderer.updateFull(true);
+        } catch {}
       }
     },
 
