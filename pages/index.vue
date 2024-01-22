@@ -55,7 +55,7 @@
         </v-btn>
         <a href="Questionnaire/tester" class="link-plain-text">
           <div>
-            (Not so) Secret test page for testing FHIR Questionnaires using the <a href="https://build.fhir.org/ig/FHIR/sdc">SDC</a> specification
+            (Not so) Secret test page for testing FHIR Questionnaires using the <a href="https://build.fhir.org/ig/HL7/sdc">SDC</a> specification
           </div>
         </a>
       </div>
