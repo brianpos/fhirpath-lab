@@ -116,21 +116,21 @@
                     autocorrect="off"
                     autocapitalize="off"
                     spellcheck="false"
-                  >
+                    :title="'Resource Id to download from the examples server\r\nAbsolute (requires CORS support) or relative to ' + exampleServerUrl">
                     <template v-slot:append>
-                      <v-btn icon small tile @click="resourceId = undefined">
+                      <v-btn icon small tile v-show="resourceId" @click="resourceId = undefined" title="Clear Test Resource ID">
                         <v-icon> mdi-close </v-icon>
                       </v-btn>
-                      <v-btn icon small tile @click="downloadTestResource">
+                      <v-btn icon small tile :disabled="resourceId === undefined" @click="downloadTestResource" :title="downloadTestResourceButtonTitle">
                         <v-icon> mdi-download </v-icon>
                       </v-btn>
                       <v-btn small icon tile @click="reformatTestResource"
-                        ><v-icon title="Format json" dark>
+                        ><v-icon title="Re-format the Questionnaire json below" dark>
                           mdi-format-indent-increase
                         </v-icon></v-btn
                       >
                       <v-btn small icon tile @click="validateQuestionnaire"
-                        ><v-icon title="Validate Questionnaire" dark>
+                        ><v-icon title="Validate the below Questionnaire json using the fhirpath-lab server" dark>
                           mdi-note-check-outline
                         </v-icon></v-btn
                       >
@@ -610,6 +610,12 @@ export default Vue.extend({
         this.primaryTab === 6
         ? "v-tab--active"
         : "";
+    },
+    downloadTestResourceButtonTitle() : string {
+      return 'Download test resource from ' + this.exampleServerUrl;
+    },
+    exampleServerUrl(): string {
+      return settings.getFhirServerExamplesUrl();
     },
   },
   methods: {
