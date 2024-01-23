@@ -23,7 +23,7 @@
             <span style="max-height:100px; display: block; overflow-y: auto" v-text="issueDescription(issue)" />
             <template v-if="issue.expression">
               <br />
-              <v-btn icon v-if="issue.__position" :title="issueLinkTitle" @click="navigateToIssue(issue)">
+              <v-btn x-small icon v-if="issue.__position" :title="issueLinkTitle" @click="navigateToIssue(issue)">
                 <v-icon>
                   mdi-target
                 </v-icon>

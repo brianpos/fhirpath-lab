@@ -739,7 +739,7 @@ export default Vue.extend({
             this.updateNow();
           }
         }
-      }, 500);
+      });
     },
     helpWithIssue(issue: fhir4b.OperationOutcomeIssue) {
       console.log("Help me with: ", issue);
