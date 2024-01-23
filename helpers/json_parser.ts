@@ -4,6 +4,9 @@ import Lexer from "~/json-parser/JSON5Lexer";
 import Parser, { ArrContext, Json5Context, KeyContext, NumberContext, ObjContext, PairContext, ValueContext } from "~/json-parser/JSON5Parser";
 import Listener from "~/json-parser/JSON5Listener";
 
+import { choiceTypePaths, path2Type } from "fhirpath/fhir-context/r4";
+import { pathsDefinedElsewhere } from "fhirpath/fhir-context/r4";
+
 export interface IWithPosition {
   /** Positional information attached to the interface */
   __position?: IJsonNodePosition;
@@ -39,6 +42,8 @@ export interface IJsonNode {
 
   /** The full path to the node */
   Path?: string;
+
+  DataType?: string;
 
   /** properties of the object, or items in an array */
   children?: IJsonNode[];
@@ -112,6 +117,7 @@ class PathListener extends Listener {
     if (parentNode.isArray) {
       var node: IJsonNode = {
         Path: parentNode.Path + '[' + parentNode.children?.length + ']',
+        DataType: parentNode.DataType,
         position: { line: ctx.start.line, column: ctx.start.column, prop_start_pos: ctx.start.start, prop_stop_pos: ctx.start.stop },
         children: []
       };
@@ -164,11 +170,41 @@ class PathListener extends Listener {
         node.Path = nodeParent.Path + "." + node.text;
       else
         node.Path = node.text;
+
+      if (nodeParent.DataType) {
+        // Check if the type is a known choice type
+        // choiceTypePaths[]
+        var typePath = nodeParent.DataType + '.' + node.text;
+
+        // Then check if the definition is actually somewhere else...
+        if (pathsDefinedElsewhere[typePath] !== undefined)
+          typePath = pathsDefinedElsewhere[typePath];
+
+        if (path2Type[typePath] !== undefined)
+          node.DataType = path2Type[typePath];
+        else {
+          // if the path isn't known, then this is likely to be
+          // a backbone element, in which case the type in fhirpath.js
+          // is the dotted path to the element, so we can use that
+          node.DataType = typePath;
+        }
+
+        // check if this type is a choice type
+        // which will then change the name to remove the choice type
+        const lp = node.Path.toLowerCase();
+        const ldt = node.DataType.toLowerCase();
+        if (lp.endsWith(ldt) && !lp.endsWith('.' + ldt)) {
+          const choiceType = node.text.substring(0, node.text.length - node.DataType.length);
+          if (choiceTypePaths[nodeParent.DataType + "." + choiceType] !== undefined) {
+            node.text = choiceType;
+            node.Path = nodeParent.Path + "." + node.text;
+          }
+        }
+      }
     }
     else {
       node.Path = node.text;
     }
-
   }
   // exitKey = (ctx: KeyContext) => {}
 
@@ -179,6 +215,7 @@ class PathListener extends Listener {
       if (this.parentStack2.length > 1) {
         let nodeParent = this.parentStack2[this.parentStack2.length - 2];
         nodeParent.Path = ctx.getText().replace(/^"/, '').replace(/"$/, '');
+        nodeParent.DataType = nodeParent.Path;
       }
     }
   }
