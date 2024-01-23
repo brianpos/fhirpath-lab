@@ -194,8 +194,10 @@
                   <OperationOutcomePanel
                     :outcome="saveOutcome"
                     title="Error Saving"
+                    issueLinkTitle="Goto issue in Questionnaire"
                     @close="clearOutcome2"
                     @help-with-issue="helpWithIssue"
+                    @navigate-to-issue="navigateToIssue"
                   />
                 </v-card-text>
               </v-card>
@@ -423,7 +425,7 @@ import {
 import axios, { AxiosRequestHeaders, AxiosResponse } from "axios";
 import { AxiosError } from "axios";
 import { CancelTokenSource } from "axios";
-import { Questionnaire, Bundle } from "fhir/r4b";
+import { Questionnaire, Bundle, OperationOutcomeIssue } from "fhir/r4b";
 import { settings } from "~/helpers/user_settings";
 import { marked } from "marked";
 import { formatDate, parseDate } from "~/helpers/datetime";
@@ -440,6 +442,14 @@ import {
   CreateOperationOutcome,
 } from "~/helpers/searchFhir";
 import { BaseResource_defaultValues } from "~/models/BaseResourceTableData";
+
+import {
+  parseJson,
+  IJsonNode,
+  findNodeByPath,
+  IJsonNodePosition,
+  IWithPosition,
+} from "~/helpers/json_parser";
 
 import "ace-builds";
 import ace from "ace-builds";
@@ -712,6 +722,25 @@ export default Vue.extend({
       this.saveOutcome = undefined;
       if (this.tab == 1) this.tab = 0;
     },
+    navigateToIssue(issue: fhir4b.OperationOutcomeIssue & IWithPosition) {
+      console.log("Navigate to: ", issue);
+      this.tab = 0;
+      setTimeout(() => {
+        if (this.resourceJsonEditor) {
+          this.resourceJsonEditor.clearSelection();
+          if (issue.__position) {
+            var position: IJsonNodePosition = issue.__position;
+            this.resourceJsonEditor.focus();
+            this.resourceJsonEditor.gotoLine(
+              position.line,
+              position.column,
+              true
+            );
+            this.updateNow();
+          }
+        }
+      }, 500);
+    },
     helpWithIssue(issue: fhir4b.OperationOutcomeIssue) {
       console.log("Help me with: ", issue);
       var issueText =
@@ -780,14 +809,17 @@ export default Vue.extend({
       if (this.resourceJsonEditor) {
         const jsonValue: Questionnaire = {
           resourceType: "Questionnaire",
-          url: '',
+          url: "",
           version: "0.1",
           name: "R" + settings.createRandomID().replaceAll("-", "_"),
-          title: '',
+          title: "",
           status: "draft",
         };
         if (settings.getDefaultNewCanonicalBase())
-          jsonValue.url = settings.getDefaultNewCanonicalBase() + '/Questionnaire/' + jsonValue.name;
+          jsonValue.url =
+            settings.getDefaultNewCanonicalBase() +
+            "/Questionnaire/" +
+            jsonValue.name;
         if (settings.getDefaultProviderField())
           jsonValue.publisher = settings.getDefaultProviderField();
         jsonValue.item = [];
@@ -812,6 +844,20 @@ export default Vue.extend({
           if (this.raw) {
             this.flatModel = FlattenedQuestionnaireItems(this.raw);
           }
+          if (this.saveOutcome && this.saveOutcome.issue) {
+            this.setSaveOutcomePositionInformation(
+              jsonValue,
+              this.saveOutcome.issue
+            );
+            // refresh the binding
+            const outcome = this.saveOutcome;
+            this.$nextTick(() => {
+              this.saveOutcome = undefined;
+              this.$nextTick(() => {
+                this.saveOutcome = outcome;
+              });
+            });
+          }
         } catch {}
       }
     },
@@ -820,6 +866,7 @@ export default Vue.extend({
       if (this.resourceJsonEditor) {
         this.loadingData = true;
         const jsonValue = this.resourceJsonEditor.getValue();
+
         // send this to the forms-lab server for validation
         try {
           const response = await fetch(
@@ -835,15 +882,52 @@ export default Vue.extend({
             }
           );
           const raw = await response.json();
-          console.log(JSON.stringify(raw, null, 4));
           this.saveOutcome = raw;
           this.showOutcome = true;
+
+          // Scan the resource for valid paths
+          var ast: IJsonNode | undefined = parseJson(jsonValue);
+          console.log(ast);
+          // and markup the locations in the outcome object
+          if (this.saveOutcome && this.saveOutcome.issue) {
+            this.setSaveOutcomePositionInformation(
+              jsonValue,
+              this.saveOutcome.issue
+            );
+          }
+          console.log(JSON.stringify(raw, null, 4));
         } catch (error) {
           console.log(error);
         }
         this.loadingData = false;
       }
     },
+
+    setSaveOutcomePositionInformation(
+      jsonValue: string,
+      issues: OperationOutcomeIssue[]
+    ) {
+      var ast: IJsonNode | undefined = parseJson(jsonValue);
+      for (const issue of issues) {
+        const typedIssue = issue as OperationOutcomeIssue & IWithPosition;
+        // remove any existing position information (since may be changed/removed)
+        if (typedIssue.__position) delete typedIssue.__position;
+
+        if (issue.expression) {
+          for (const expression of issue.expression) {
+            if (ast) {
+              var node = findNodeByPath(ast, expression);
+              if (node) {
+                // inject the position information onto the issue
+                // so that UI can use it
+                typedIssue.__position = node.position;
+              }
+            }
+          }
+        }
+      }
+    },
+
     reformatTestResource() {
       if (this.resourceJsonEditor) {
         const jsonValue = this.resourceJsonEditor.getValue();
@@ -853,6 +937,12 @@ export default Vue.extend({
           );
           this.resourceJsonEditor.clearSelection();
           this.resourceJsonEditor.renderer.updateFull(true);
+          if (this.saveOutcome && this.saveOutcome.issue) {
+            this.setSaveOutcomePositionInformation(
+              jsonValue,
+              this.saveOutcome.issue
+            );
+          }
         } catch {}
       }
     },

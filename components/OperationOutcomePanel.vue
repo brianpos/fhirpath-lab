@@ -23,9 +23,14 @@
             <span style="max-height:100px; display: block; overflow-y: auto" v-text="issueDescription(issue)" />
             <template v-if="issue.expression">
               <br />
+              <v-btn icon v-if="issue.__position" :title="issueLinkTitle" @click="navigateToIssue(issue)">
+                <v-icon>
+                  mdi-target
+                </v-icon>
+              </v-btn>
               <span v-if="issue.expression" v-text="issue.expression" />
             </template>
-            <template v-if="issue.location">
+            <template v-if="issue.location && !issue.__position">
               <br />
               <span v-if="issue.location" v-text="issue.location" />
             </template>
@@ -97,6 +102,7 @@ import { BaseResourceNoData } from "~/models/BaseResourceTableData";
 export default Vue.extend({
   props: {
     title: String,
+    issueLinkTitle: String,
     outcome: Object as PropType<fhir4b.OperationOutcome>,
   },
   methods: {
@@ -124,6 +130,9 @@ export default Vue.extend({
     },
     helpWithIssue(issue: fhir4b.OperationOutcomeIssue){
       this.$emit("help-with-issue", issue);
+    },
+    navigateToIssue(issue: fhir4b.OperationOutcomeIssue){
+      this.$emit("navigate-to-issue", issue);
     },
     close() {
       this.$emit("close");

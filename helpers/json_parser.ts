@@ -4,6 +4,11 @@ import Lexer from "~/json-parser/JSON5Lexer";
 import Parser, { ArrContext, Json5Context, KeyContext, NumberContext, ObjContext, PairContext, ValueContext } from "~/json-parser/JSON5Parser";
 import Listener from "~/json-parser/JSON5Listener";
 
+export interface IWithPosition {
+  /** Positional information attached to the interface */
+  __position?: IJsonNodePosition;
+}
+
 /**
  * Positional information about a JSON node.
  * (Broken into property declaration and value declaration)
