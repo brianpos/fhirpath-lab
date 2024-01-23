@@ -19,6 +19,7 @@
     "@types/fhir": "^0.0.36",
     "@types/lz-string": "^1.3.34",
     "ace-builds": "^1.6.0",
+    "antlr4": "^4.13.1-patch-1",
     "axios": "^0.24.0",
     "bootstrap": "^4.6.0",
     "bootstrap-vue": "^2.21.2",
@@ -35,9 +36,9 @@
     "marked": "^4.0.10",
     "minimist": ">=1.2.6",
     "nuxt": "^2.15.7",
-    "vue-property-decorator": "^9.1.2",
     "vue-application-insights": "^1.0.7",
     "vue-easytable": "^2.11.0",
+    "vue-property-decorator": "^9.1.2",
     "vuereact-combined": "^1.2.11"
   },
   "devDependencies": {

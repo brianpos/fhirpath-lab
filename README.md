@@ -138,3 +138,18 @@ _(this set of issues are known but not on the main issues list as don't plan to 
 * Environment Variables using the quoted format cannot include escaped values in them e.g. `` %`tes\`t` ``
 * Environmant Variable processing in the JAVA engine doesn't support resource framgents
 * Sharing an expression via the share link doesn't include resource JSON or environment variable values _(plan to support this only via saved Library resources in the future)_
+
+## JSON Parsing
+The project uses a custom json ANTLR4 parser to parse the json into a tree structure that can be used to navigate the json structure. This is used to provide the json path functionality, and also to provide the json tree view in the test resource page.
+
+The grammar file comes from:
+https://github.com/antlr/grammars-v4/blob/master/json5/JSON5.g4
+
+Followed the instructions here to actually generate the parser:
+https://github.com/antlr/antlr4/blob/master/doc/typescript-target.md
+$ pip install antlr4-tools
+$ antlr4 -Dlanguage=TypeScript JSON5.g4
+
+// Wow, maybe later I can get the antlr4 based parser working
+in the ace editor
+https://github.com/antlr/antlr4/blob/master/doc/ace-javascript-target.md
