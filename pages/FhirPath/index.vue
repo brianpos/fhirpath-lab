@@ -2473,10 +2473,10 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
 
       // Validate the test fhir resource object
       let resourceJson = this.getResourceJson();
-      // if (resourceJson) {
-      //   let rawObj: object;
-      //   try {
-      //     rawObj = JSON.parse(resourceJson)
+       if (resourceJson) {
+         let rawObj: object;
+         try {
+           rawObj = JSON.parse(resourceJson)
       //     let resource: fhir.FhirResource | null = fhir.resourceFactory(rawObj);
       //     if (resource) {
       //       const issues: fhir.FtsIssue[] = resource.doModelValidation();
@@ -2486,14 +2486,15 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       //         this.showOutcome = true;
       //       }
       //     }
-      //   } catch (err) {
-      //     console.log(err);
-      //     this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
-      //     this.saveOutcome?.issue.push({ code: 'exception', severity: 'error', details: { text: `Failed to parse the resource: ${err}` } });
-      //     this.showOutcome = true;
-      //     this.loadingData = false;
-      //   }
-      // }
+         } catch (err) {
+           console.log(err);
+           this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
+           this.saveOutcome?.issue.push({ code: 'exception', severity: 'error', details: { text: `Failed to parse the resource: ${err}` } });
+           this.showOutcome = true;
+           this.loadingData = false;
+          return;
+        }
+      }
 
       this.saveLastUsedParameters(false);
 
