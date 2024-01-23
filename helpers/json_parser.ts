@@ -216,12 +216,13 @@ class PathListener extends Listener {
 
   enterValue = (ctx: ValueContext) => {
     let node = this.parentStack2[this.parentStack2.length - 1];
-    if (node.Path == 'resourceType') {
+    if (node.text == 'resourceType') {
       // This is the root node which defines the actual resource type.
       if (this.parentStack2.length > 1) {
         let nodeParent = this.parentStack2[this.parentStack2.length - 2];
-        nodeParent.Path = ctx.getText().replace(/^"/, '').replace(/"$/, '');
-        nodeParent.DataType = nodeParent.Path;
+        if (!nodeParent.Path || nodeParent.Path.length == 0)
+          nodeParent.Path = ctx.getText().replace(/^"/, '').replace(/"$/, '');
+        nodeParent.DataType = ctx.getText().replace(/^"/, '').replace(/"$/, '');
       }
     }
   }

@@ -1415,6 +1415,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
 
         const jsonValue = this.getResourceJson();
         const astJson: IJsonNode | undefined = parseJson(jsonValue+'');
+        console.log("JSON fhir-paths: ", astJson);
 
         const results = response.data;
         if (results) {
