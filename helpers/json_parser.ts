@@ -56,13 +56,19 @@ export interface IJsonNode {
 }
 
 export function findNodeByPath(node: IJsonNode, path: string): IJsonNode | undefined {
+  if (node.DataType && !path.startsWith(node.DataType))
+    return findChildNodeByPath(node, node.DataType + '.' + path);
+  return findChildNodeByPath(node, path);
+}
+
+function findChildNodeByPath(node: IJsonNode, path: string): IJsonNode | undefined {
   if (node.Path == path)
     return node;
 
   // Scan any children for the path
   if (node.children) {
     for (let child of node.children) {
-      let found = findNodeByPath(child, path);
+      let found = findChildNodeByPath(child, path);
       if (found)
         return found;
     }
