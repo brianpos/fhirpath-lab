@@ -135,6 +135,11 @@
                           <v-simple-table :key="i1">
                             <tr v-if="r2.context">
                               <td class="context" colspan="2">
+                                <v-btn x-small v-if="r2.position" style="float:right;" icon title="Goto context" @click="navigateToContext(r2.context)">
+                                  <v-icon>
+                                    mdi-target
+                                  </v-icon>
+                                </v-btn>
                                 <div>Context: <b>{{ r2.context }}</b></div>
                               </td>
                             </tr>
@@ -221,6 +226,11 @@
                           <v-simple-table :key="i1">
                             <tr v-if="r2.context">
                               <td class="context" colspan="3">
+                                <v-btn v-if="r2.position" x-small style="float:right;" icon title="Goto context" @click="navigateToContext(r2.context)">
+                                  <v-icon>
+                                    mdi-target
+                                  </v-icon>
+                                </v-btn>
                                 <div>Context: <b>{{ r2.context }}</b></div>
                               </td>
                             </tr>
@@ -525,6 +535,7 @@ import { VueElement, nextTick } from "@vue/runtime-dom";
 import { LibraryData } from "~/models/LibraryTableData";
 import { BaseResource_defaultValues } from "~/models/BaseResourceTableData";
 import { DomainResource, FhirResource, Resource } from "fhir/r4b";
+import { findNodeByPath, IJsonNode, IJsonNodePosition, parseJson } from "~/helpers/json_parser";
 
 const shareTooltipText = 'Copy a sharable link to this test expression';
 const shareZulipTooltipText = 'Copy a sharable link for Zulip to this test expression';
@@ -739,6 +750,7 @@ interface ResultItem {
 
 interface ResultData {
   context?: string;
+  position?: IJsonNodePosition;
   result: ResultItem[];
   trace: TraceData[];
 }
@@ -842,6 +854,7 @@ interface IFhirPathMethods
   saveLastUsedParameters(loadCompleted: boolean): void;
   createNewLibrary(): void;
   saveLibrary(): void;
+  navigateToContext(elementPath: string): void;
 
   GetAISettings(): IOpenAISettings;
   handleSendMessage(message: string): void;
@@ -890,13 +903,11 @@ interface IFhirPathProps
 }
 
 export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFhirPathProps>({
-  head: {
-    title: "FhirPathTester",
-  },
   async mounted() {
     window.onresize = () => {
-        this.windowWidth = window.innerWidth
+      this.windowWidth = window.innerWidth
     }
+    window.document.title = "FhirPath Tester";
     this.showAdvancedSettings = settings.showAdvancedSettings();
     this.defaultProviderField = settings.getDefaultProviderField();
     if (settings.getOpenAIKey())
@@ -1402,6 +1413,10 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         this.cancelSource = undefined;
         this.loadingData = false;
 
+        const jsonValue = this.getResourceJson();
+        const astJson: IJsonNode | undefined = parseJson(jsonValue+'');
+        console.log("JSON fhir-paths: ", astJson);
+
         const results = response.data;
         if (results) {
           this.setResultJson(JSON.stringify(results, null, 4));
@@ -1441,6 +1456,10 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
               // Anything else is a result
               // scan over the parts (values)
               let resultItem: ResultData = { context: entry.valueString, result: [], trace: [] };
+              if (!this.selectedEngine.includes('R5') && astJson && entry.valueString){
+                const node = findNodeByPath(astJson, entry.valueString);
+                if (node) resultItem.position = node.position;
+              }
               if (entry.part) {
                 for (var part of entry.part) {
                   if (part.name === 'trace') {
@@ -1897,9 +1916,13 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
           if (err.message) {
             this.saveOutcome = CreateOperationOutcome('fatal', 'exception', err.message);
             this.showOutcome = true;
+            return;
           }
         }
       }
+
+      const astJson: IJsonNode | undefined = parseJson(resourceJson+'');
+
       // debugger;
       var environment: Record<string, any> = { resource: fhirData, rootResource: fhirData };
       for (let v of this.variables) {
@@ -1952,8 +1975,13 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       for (let contextNode of contextNodes) {
         let resData: ResultData;
         const index = contextNodes.indexOf(contextNode);
-        if (contextExpression)
+        if (contextExpression){
           resData = { context: `${contextExpression}[${index}]`, result: [], trace: [] };
+          if (astJson){
+            const node = findNodeByPath(astJson, resData.context+'');
+            if (node?.position) resData.position = node.position;
+          }
+        }
         else
           resData = { result: [], trace: [] };
 
@@ -2096,8 +2124,13 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       for (let contextNode of contextNodes) {
         let resData: ResultData;
         const index = contextNodes.indexOf(contextNode);
-        if (contextExpression)
+        if (contextExpression){
           resData = { context: `${contextExpression}[${index}]`, result: [], trace: [] };
+          // if (astJson){
+          //   const node = findNodeByPath(astJson, resData.context+'');
+          //   if (node?.position) resData.position = node.position;
+          // }
+        }
         else
           resData = { result: [], trace: [] };
 
@@ -2441,10 +2474,10 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
 
       // Validate the test fhir resource object
       let resourceJson = this.getResourceJson();
-      // if (resourceJson) {
-      //   let rawObj: object;
-      //   try {
-      //     rawObj = JSON.parse(resourceJson)
+       if (resourceJson) {
+         let rawObj: object;
+         try {
+           rawObj = JSON.parse(resourceJson)
       //     let resource: fhir.FhirResource | null = fhir.resourceFactory(rawObj);
       //     if (resource) {
       //       const issues: fhir.FtsIssue[] = resource.doModelValidation();
@@ -2454,14 +2487,15 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       //         this.showOutcome = true;
       //       }
       //     }
-      //   } catch (err) {
-      //     console.log(err);
-      //     this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
-      //     this.saveOutcome?.issue.push({ code: 'exception', severity: 'error', details: { text: `Failed to parse the resource: ${err}` } });
-      //     this.showOutcome = true;
-      //     this.loadingData = false;
-      //   }
-      // }
+         } catch (err) {
+           console.log(err);
+           this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
+           this.saveOutcome?.issue.push({ code: 'exception', severity: 'error', details: { text: `Failed to parse the resource: ${err}` } });
+           this.showOutcome = true;
+           this.loadingData = false;
+          return;
+        }
+      }
 
       this.saveLastUsedParameters(false);
 
@@ -2598,6 +2632,35 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       if (this.prevFocus){
           this.prevFocus.focus();
         }
+    },
+
+    navigateToContext(elementPath: string) {
+      // Move the cursor in the test resource JSON editor to the element
+      setTimeout(() => {
+        const jsonValue = this.getResourceJson();
+        if (this.resourceJsonEditor && jsonValue) {
+          var ast: IJsonNode | undefined = parseJson(jsonValue);
+          console.log(ast);
+          if (ast) {
+              var node = findNodeByPath(ast, elementPath);
+              if (node) {
+                // inject the position information onto the issue
+                // so that UI can use it
+                this.resourceJsonEditor.clearSelection();
+                if (node.position) {
+                  this.resourceJsonEditor.focus();
+                  this.resourceJsonEditor.gotoLine(
+                    node.position.line,
+                    node.position.column,
+                    true
+                  );
+                  this.updateNow();
+                }
+              }
+            }
+        }
+      });
+
     },
   },
   data(): FhirPathData {

@@ -3,7 +3,11 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
-## 12 January 2023 (dev)
+# 24 January 2024 (dev)
+* Questionnaire test page added (with initial support for NLM lforms and CSIRO questionnaire renderers)
+* FhirPath test page now has a link from the context header (in results and trace) to the raw JSON resource to ease navigation
+
+## 12 January 2024 (dev)
 * Update version of fhirpath.js included to 3.9.0 (with the prototype `withVariable()` function)
 * Include links to the SDC extended functions
 

@@ -326,6 +326,11 @@ export function GetSystemPrompt(): string {
     * If a FHIRPath context is provided, do not include that at the start of the expression.
     * If no FHIRPath expression is provided, then assume the expression provided is the context.
     * Any fhir context for a fhirpath expression should be provided in a markdown block with the language \`fhircontext\`.
+    * You may also provide guidance on working with FHIR Questionnaires and HL7 Structured Data Capture (SDC).
+    * Questionnaire validations should use the SDC constraint extension.
+    * When recommending a change to a questionnaire, provide the change in a markdown block with the language \`questionnaire\`, and provide the complete resource JSON so that it can be copied (if the resource is large, omit the text narrative property), unless explicitly asked for a summary only.
+    * When recommending a change to a questionnaire item, provide the change in a markdown block with the language \`item\`.
+    * Any general fhir resource snippits whould be provided in a markdown block with the language \`fhir\`.
     * Reflect on your answer to check for accuracy and clarity, and report any possible issues with the answer.
     
     Question:

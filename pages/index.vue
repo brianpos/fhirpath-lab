@@ -49,6 +49,15 @@
             Test page for FHIR view definitions using the <a href="https://build.fhir.org/ig/FHIR/sql-on-fhir-v2">SQL on FHIR v2</a> specification
           </div>
         </a>
+        <v-btn dark color="#3F81AE" class="link-item text-decoration-none" href="Questionnaire/tester">
+          <v-icon left> mdi-clipboard-text-outline </v-icon>
+            form tester
+        </v-btn>
+        <a href="Questionnaire/tester" class="link-plain-text">
+          <div>
+            <i>(Not so)</i> Secret test page for testing FHIR Questionnaires using the <a href="https://build.fhir.org/ig/HL7/sdc">SDC</a> specification
+          </div>
+        </a>
       </div>
       <br />
       <p>
