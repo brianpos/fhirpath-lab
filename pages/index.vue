@@ -50,12 +50,12 @@
           </div>
         </a>
         <v-btn dark color="#3F81AE" class="link-item text-decoration-none" href="Questionnaire/tester">
-          <v-icon left> mdi-database-search </v-icon>
+          <v-icon left> mdi-clipboard-text-outline </v-icon>
             form tester
         </v-btn>
         <a href="Questionnaire/tester" class="link-plain-text">
           <div>
-            (Not so) Secret test page for testing FHIR Questionnaires using the <a href="https://build.fhir.org/ig/HL7/sdc">SDC</a> specification
+            <i>(Not so)</i> Secret test page for testing FHIR Questionnaires using the <a href="https://build.fhir.org/ig/HL7/sdc">SDC</a> specification
           </div>
         </a>
       </div>

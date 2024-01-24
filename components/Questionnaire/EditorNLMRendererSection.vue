@@ -49,7 +49,8 @@ declare namespace LForms.Util {
   function getFormFHIRData(
     resourceType: "QuestionnaireResponse", //
     fhirVersion: string,
-    formId: string
+    formId: string,
+    options?: object
   ): QuestionnaireResponse;
 }
 declare global {
@@ -74,20 +75,16 @@ export default Vue.extend({
     console.log("Importing NLM scripts done");
 
     // Set the context vars
-    var fhirContext = FHIR.client(
-      settings.getFhirServerExamplesUrl()
-    );
+    var fhirContext = FHIR.client(settings.getFhirServerExamplesUrl());
     var fhirContextVars = { LaunchPatient: "Patient/123" };
     LForms.Util.setFHIRContext(fhirContext, fhirContextVars);
 
     // Now render the form to the display
     if (window.LForms) {
       this.lforms_error = undefined;
-      await LForms.Util.addFormToPage(
-        this.questionnaire,
-        "myFormContainer",
-        {}
-      ).catch((e: any) => {
+      await LForms.Util.addFormToPage(this.questionnaire, "myFormContainer", {
+        prepopulate: false,
+      }).catch((e: any) => {
         console.error("Breaking news:", e);
         this.lforms_error = e.toString();
       });
@@ -114,16 +111,19 @@ export default Vue.extend({
     questionnaire: {
       immediate: true,
       handler() {
-        if (window.LForms) {
-          this.lforms_error = undefined;
-          LForms.Util.addFormToPage(
-            this.questionnaire,
-            "myFormContainer",
-            {}
-          ).catch((e: any) => {
+        if (window.LForms && this.questionnaire?.resourceType === "Questionnaire") {
+          try {
+            this.lforms_error = undefined;
+            LForms.Util.addFormToPage(this.questionnaire, "myFormContainer", {
+              prepopulate: false,
+            }).catch((e: any) => {
+              console.error("Breaking news:", e);
+              this.lforms_error = e.toString();
+            });
+          } catch (e) {
             console.error("Breaking news:", e);
             this.lforms_error = e.toString();
-          });
+          }
         }
       },
     },
