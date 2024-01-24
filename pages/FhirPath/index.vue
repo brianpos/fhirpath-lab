@@ -1948,7 +1948,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       if (contextExpression) {
         // scan over each of the expressions
         try {
-          this.processedByEngine = `fhirpath.js-3.4.0+ (r4b)`;
+          this.processedByEngine = `fhirpath.js-`+fhirpath.version+`+ (r4b)`;
           contextNodes = fhirpath.evaluate(fhirData, contextExpression, environment, fhirpath_r4_model);
         }
         catch (err: any) {
@@ -1961,7 +1961,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       }
       else {
         try {
-          this.processedByEngine = `fhirpath.js-3.4.0+ (r4b)`;
+          this.processedByEngine = `fhirpath.js-`+fhirpath.version+`+ (r4b)`;
           contextNodes = fhirpath.evaluate(fhirData, "%resource", environment, fhirpath_r4_model);
         }
         catch (err: any) {
@@ -2089,7 +2089,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       if (contextExpression) {
         // scan over each of the expressions
         try {
-          this.processedByEngine = `fhirpath.js-3.4.0+ (r5)`;
+          this.processedByEngine = `fhirpath.js-`+fhirpath.version+`+ (r5)`;
           contextNodes = fhirpath.evaluate(fhirData, contextExpression, environment, fhirpath_r5_model);
         }
         catch (err: any) {
@@ -2106,7 +2106,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       }
       else {
         try {
-          this.processedByEngine = `fhirpath.js-3.4.0+ (r5)`;
+          this.processedByEngine = `fhirpath.js-`+fhirpath.version+`+ (r5)`;
           contextNodes = fhirpath.evaluate(fhirData, "%resource", environment, fhirpath_r5_model);
         }
         catch (err: any) {

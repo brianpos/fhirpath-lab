@@ -72,10 +72,10 @@
         These are the versions of each of the fhirpath engines in use:
       </p>
       <ul style="padding-left: 40px">
-        <li>Firely SDK FHIRPath Engine v5.2.0 <i>(server side)</i></li>
-        <li>FHIRPath.js v3.5.0</li>
-        <li>HAPI FHIRPath v6.8.0 <i>(server side)</i></li>
-        <li>IBM FHIRPath v4.11.1 (LinuxForHealth)<i>(server side)</i></li>
+        <li>Firely SDK FHIRPath Engine v5.3.0 <i>(server side)</i></li>
+        <li>FHIRPath.js v{{ fhirpathVersion }} - <i>plus prototype withVariable()</i></li>
+        <li>HAPI FHIRPath v6.10.2 <i>(server side)</i></li>
+        <li>IBM FHIRPath v4.11.1 (LinuxForHealth) <i>(server side)</i></li>
         <li>Dotnet FHIRMappingLanguage Engine v5.1.0 <i>(server side)</i></li>
       </ul>
       <br />
@@ -207,6 +207,13 @@ h5 {
 </style>
 <script lang="ts">
 import Vue from "vue";
+import fhirpath from "fhirpath";
 
-export default Vue.extend({});
+export default Vue.extend({
+  computed: {
+    fhirpathVersion() {
+      return fhirpath.version;
+    },
+  },
+});
 </script>
