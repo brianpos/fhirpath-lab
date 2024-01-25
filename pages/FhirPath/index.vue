@@ -389,6 +389,13 @@
 .v-treeview-node {
   border-top: thin solid silver;
 }
+
+.resultSelection {
+  position: absolute;
+  z-index: 20;
+  background-color: #9acd3220;
+}
+
 </style>
 
 <style lang="scss" scoped>
@@ -2654,6 +2661,22 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
                     node.position.column,
                     true
                   );
+
+                  if (node.position.value_stop_pos){
+                    let substr = jsonValue.substring(node.position.prop_start_pos, node.position.value_stop_pos+1);
+                    const endRowOffset = substr.split(/\r\n|\r|\n/).length;
+                    const endRow = node.position.line + endRowOffset - 1;
+                    const endCollOffset = substr.split(/\r\n|\r|\n/)[endRowOffset - 1].length;
+                    const endCol = node.position.column + (endCollOffset > 1 ? endCollOffset + 1 : endCollOffset);
+                    const range = new ace.Range(node.position.line-1, node.position.column, endRow-1, endCol);
+                    // this.resourceJsonEditor.session.selection.setRange(range);
+
+                    const selectionMarker = this.resourceJsonEditor.session.addMarker(range, "resultSelection", "fillLine", true);
+                    // after 1.5 seconds remove the highlight.
+                    setTimeout(() => {
+                      this.resourceJsonEditor?.session.removeMarker(selectionMarker);
+                    }, 1500);
+                  }
                   this.updateNow();
                 }
               }

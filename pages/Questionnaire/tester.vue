@@ -347,7 +347,15 @@
   </div>
 </template>
 
-<style scoped  lang="scss">
+<style lang="scss">
+.resultSelection {
+  position: absolute;
+  z-index: 20;
+  background-color: #9acd3220;
+}
+</style>
+
+<style scoped lang="scss">
 .resetButton {
   right: 34px;
   position: absolute;
@@ -736,6 +744,40 @@ export default Vue.extend({
               position.column,
               true
             );
+
+            const jsonValue = this.resourceJsonEditor.getValue();
+            if (position.value_stop_pos) {
+              let substr = jsonValue.substring(
+                position.prop_start_pos,
+                position.value_stop_pos + 1
+              );
+              const endRowOffset = substr.split(/\r\n|\r|\n/).length;
+              const endRow = position.line + endRowOffset - 1;
+              const endCollOffset =
+                substr.split(/\r\n|\r|\n/)[endRowOffset - 1].length;
+              const endCol =
+                position.column +
+                (endCollOffset > 1 ? endCollOffset + 1 : endCollOffset);
+              const range = new ace.Range(
+                position.line - 1,
+                position.column,
+                endRow - 1,
+                endCol
+              );
+              // this.resourceJsonEditor.session.selection.setRange(range);
+
+              const selectionMarker = this.resourceJsonEditor.session.addMarker(
+                range,
+                "resultSelection",
+                "fillLine",
+                true
+              );
+              // after 1.5 seconds remove the highlight.
+              setTimeout(() => {
+                this.resourceJsonEditor?.session.removeMarker(selectionMarker);
+              }, 1500);
+            }
+
             this.updateNow();
           }
         }

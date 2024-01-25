@@ -3,6 +3,10 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+# 25 January 2024 (dev)
+* fixed issue with primitive extensions not selecting correctly in the context navigator
+* Add brief highlight to the navigated node in the JSON when selecting from trace/error list
+
 # 24 January 2024 (dev)
 * Questionnaire test page added (with initial support for NLM lforms and CSIRO questionnaire renderers)
 * FhirPath test page now has a link from the context header (in results and trace) to the raw JSON resource to ease navigation
