@@ -1350,6 +1350,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     settingsClosed() {
       this.showAdvancedSettings = settings.showAdvancedSettings();
       this.defaultProviderField = settings.getDefaultProviderField();
+      this.terminologyServer = settings.getFhirTerminologyServerUrl();
       this.chatEnabled = settings.getOpenAIKey() !== undefined;
       this.$forceUpdate();
     },
