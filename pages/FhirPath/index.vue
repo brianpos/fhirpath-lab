@@ -29,7 +29,7 @@
           </v-tooltip>
           <v-tooltip bottom color="primary">
             <template v-slot:activator="{ on, attrs }">
-              <v-btn icon dark  @click="copyZulipShareLinkToClipboard" 
+              <v-btn icon dark  @click="copyZulipShareLinkToClipboard"
               :hidden="!showShareLink()"  v-bind="attrs" v-on="on" @mouseenter="updateZulipShareText">
                 <svg class="brand-logo" role="img" aria-label="Zulip" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" height="25">
                     <path fill="hsl(0, 0%, 100%)" d="M 473.09 122.97 c 0 22.69 -10.19 42.85 -25.72 55.08 L 296.61 312.69 c -2.8 2.4 -6.44 -1.47 -4.42 -4.7 l 55.3 -110.72 c 1.55 -3.1 -0.46 -6.91 -3.64 -6.91 H 129.36 c -33.22 0 -60.4 -30.32 -60.4 -67.37 c 0 -37.06 27.18 -67.37 60.4 -67.37 h 283.33 c 33.22 -0.02 60.4 30.3 60.4 67.35 z M 129.36 506.05 h 283.33 c 33.22 0 60.4 -30.32 60.4 -67.37 c 0 -37.06 -27.18 -67.37 -60.4 -67.37 H 198.2 c -3.18 0 -5.19 -3.81 -3.64 -6.91 l 55.3 -110.72 c 2.02 -3.23 -1.62 -7.1 -4.42 -4.7 L 94.68 383.6 c -15.53 12.22 -25.72 32.39 -25.72 55.08 c 0 37.05 27.18 67.37 60.4 67.37 z"></path>
@@ -149,16 +149,16 @@
                       <v-card-text>
                         <p class="fl-tab-header">Variables</p>
                           <template v-for="(v1, index) in variables">
-                          <v-textarea :auto-grow="!v1[1].resourceId" :rows="(!v1[1].resourceId?1:5)" 
-                            :label="v1[0]" hide-details="auto" :value="v1[1].data" 
+                          <v-textarea :auto-grow="!v1[1].resourceId" :rows="(!v1[1].resourceId?1:5)"
+                            :label="v1[0]" hide-details="auto" :value="v1[1].data"
                             autocorrect="off" autocapitalize="off" spellcheck="false"
-                            @input="updateVariableValue(v1[0])" :key="index" 
+                            @input="updateVariableValue(v1[0])" :key="index"
                             :messages="variableMessages(v1[1])" :error-messages="variableErrorMessages(v1[1])" :error="(!!v1[1].errorMessage)">
                               <template v-slot:append>
                               <v-btn icon small tile @click="variables.set(v1[0], { name: v1[0], data: v1[1].resourceId }); $forceUpdate()">
                                   <v-icon> mdi-close </v-icon>
                                 </v-btn>
-                                <v-btn icon small tile @click="downloadVariableResource(v1[0])" :hidden="!isValidFhirUrl(v1[1])"> 
+                                <v-btn icon small tile @click="downloadVariableResource(v1[0])" :hidden="!isValidFhirUrl(v1[1])">
                                   <v-icon> mdi-download </v-icon>
                                 </v-btn>
                               </template>
@@ -223,8 +223,8 @@
                     <v-card flat>
                       <v-card-text>
                         <p class="fl-tab-header">FhirPath AI Chat</p>
-                        <Chat class="chat" ref="chatComponent" 
-                            @send-message="handleSendMessage" 
+                        <Chat class="chat" ref="chatComponent"
+                            @send-message="handleSendMessage"
                             @reset-conversation="resetConversation"
                             @apply-suggested-context="applySuggestedContext"
                             @apply-suggested-expression="applySuggestedExpression"/>
@@ -697,7 +697,7 @@ function getValue(entry: fhir4b.ParametersParameter): ResultItem[] {
     result.push({ type: entry.name, value: JSON.parse(extVal) });
   if (entry.name == "empty-string")
     result.push({ type: "empty-string", value: "" });
-  
+
   return result;
 }
 function getTraceValue(entry: fhir4b.ParametersParameter): TraceData[] {
@@ -1092,7 +1092,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
             if (url.indexOf(frt+"/") > 0 || url.indexOf(frt+"?") > 0) return true;
           }
           return false;
-        } 
+        }
 
         // if the first component is a FHIR resource type, then we'll let that go too.
         for (const frt of fhirResourceTypes){
@@ -1425,12 +1425,12 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         let url = this.resourceId;
         if (this.resourceId && !this.resourceId.startsWith('http'))
           url = settings.getFhirServerUrl() + '/' + this.resourceId;
-        
+
         // if trying to use the hl7 example servers, that should be over https
         if (url.startsWith("http://build.fhir.org/")
             || url.startsWith("http://hl7.org/fhir/"))
             url = "https://" + url.substring(7);
-        
+
         // If this is trying to download a hl7 example, run it through the downloader proxy
         // as the HL7 servers don't have CORS for us
         if (url.startsWith("https://build.fhir.org/")
@@ -1506,7 +1506,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         if (url.startsWith("http://build.fhir.org/")
             || url.startsWith("http://hl7.org/fhir/"))
             url = "https://" + url.substring(7);
-        
+
         if (url.startsWith("https://build.fhir.org/")
           || url.startsWith("https://hl7.org/fhir/"))
           url = settings.dotnet_server_downloader() + "?url=" + url;
@@ -1615,16 +1615,16 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         this.expressionContextEditor.renderer.updateFull(true);
       }
     },
-    
+
     resetConversation(): void {
       this.openAILastContext = "";
     },
 
-    async handleSendMessage(message: string) {  
+    async handleSendMessage(message: string) {
       console.log("Message sent:", message);
       const chat = this.$refs.chatComponent as Chat;
 
-      // Perform any additional actions with the message here  
+      // Perform any additional actions with the message here
       const systemPrompt = GetSystemPrompt();
 
       this.openAIexpressionExplanationLoading = true;
@@ -1673,7 +1673,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
 
       const resultOfQuestion = await EvaluateChatPrompt(
           prompt, this.GetAISettings(),
-          0, 
+          0,
           1000);
       this.openAIexpressionExplanationMessage = "(Generated by OpenAI "+settings.getOpenAIModel()+")";
       this.openAIexpressionExplanationLoading = false;
@@ -1685,8 +1685,8 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       if (!this.getResourceJson() && this.resourceId) {
         await this.downloadTestResource();
       }
-      // removing this constraint as there are expression tests 
-      // that you can do that don't require a resource.  
+      // removing this constraint as there are expression tests
+      // that you can do that don't require a resource.
       // if (!this.resourceJson) {
       //   return;
       // }
@@ -1793,7 +1793,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         try {
           let useExpression = this.getFhirpathExpression() ?? '';
           let path = {
-            base: resData.context??'', 
+            base: resData.context??'',
             expression: useExpression
           }
           let res: any[] = fhirpath.evaluate(contextNode, path, environment, fhirpath_r4_model, { traceFn: tracefunction });
@@ -1819,8 +1819,8 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       if (!this.getResourceJson() && this.resourceId) {
         await this.downloadTestResource();
       }
-      // removing this constraint as there are expression tests 
-      // that you can do that don't require a resource.  
+      // removing this constraint as there are expression tests
+      // that you can do that don't require a resource.
       // if (!this.resourceJson) {
       //   return;
       // }
@@ -1925,7 +1925,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         try {
           let useExpression = this.getFhirpathExpression() ?? '';
           let path = {
-            base: resData.context??'', 
+            base: resData.context??'',
             expression: useExpression
           }
           let res: any[] = fhirpath.evaluate(contextNode, path, environment, fhirpath_r5_model, { traceFn: tracefunction });
@@ -1953,7 +1953,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       }
       return false;
 
-      // The copy link is hidden when the protocol is not secure (https) as 
+      // The copy link is hidden when the protocol is not secure (https) as
       // that's a browser security issue for accessing the clipboard
       // if (window?.location?.protocol === "https://") {
       //   return true;
@@ -2080,7 +2080,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       const astTab2 = this.$refs.astTabComponent2 as ParseTreeTab;
       astTab2?.clearDisplay();
       this.expressionParseOutcome = undefined;
-      
+
       // const astTab = this.$refs.astTabComponent as ParseTreeTab;
       // astTab.displayTreeForExpression(this.getContextExpression() ?? '', this.getFhirpathExpression() ?? '');
 
@@ -2189,7 +2189,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
 
         if (!this.getResourceJson() && this.resourceId) {
           await this.downloadTestResource();
-          resourceJson = this.getResourceJson();        
+          resourceJson = this.getResourceJson();
         }
 
         (this as any).$appInsights?.trackEvent({ name: 'evaluate HAPI' });
@@ -2202,7 +2202,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
 
         if (!this.getResourceJson() && this.resourceId) {
           await this.downloadTestResource();
-          resourceJson = this.getResourceJson();        
+          resourceJson = this.getResourceJson();
         }
 
         (this as any).$appInsights?.trackEvent({ name: 'evaluate HAPI' });
@@ -2213,13 +2213,21 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
 
         if (!this.getResourceJson() && this.resourceId) {
           await this.downloadTestResource();
-          resourceJson = this.getResourceJson();        
+          resourceJson = this.getResourceJson();
         }
 
         (this as any).$appInsights?.trackEvent({ name: 'evaluate IBM' });
       }
       else {
         (this as any).$appInsights?.trackEvent({ name: 'evaluate FirelySDK' });
+      }
+
+      if (this.selectedEngine == "fhirpath-py") {
+        url = settings.python_server_r4b();
+        if (!this.getResourceJson() && this.resourceId) {
+          await this.downloadTestResource();
+          resourceJson = this.getResourceJson();
+        }
       }
 
       if (resourceJson) {
@@ -2273,6 +2281,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         ".NET (firely-R5)",
         "fhirpath.js (R5)",
         "java (HAPI-R5)",
+        "fhirpath-py",
       ],
       shareToolTipMessage: shareTooltipText,
       shareZulipToolTipMessage: shareZulipTooltipText,

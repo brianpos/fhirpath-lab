@@ -5,5 +5,6 @@
     "java_server_r4b": "https://fhirpath-lab-java2.azurewebsites.net/fhir/$fhirpath",
     "java_server_r5": "https://fhirpath-lab-java2.azurewebsites.net/fhir5/$fhirpath-r5",
     "ibm_server_r4b": "https://fhirpath-lab-java2.azurewebsites.net/fhir/$fhirpath-ibm",
-    "mapper_server": "https://fhir-mapping-lab2.azurewebsites.net/StructureMap/$transform?debug=true"
+    "mapper_server": "https://fhir-mapping-lab2.azurewebsites.net/StructureMap/$transform?debug=true",
+    "python_server_r4b": "http://localhost:8081/fhir/$fhirpath"
 }
