@@ -71,6 +71,9 @@ export namespace settings {
     export function mapper_server(): string {
         return serverConnections.mapper_server;
     }
+    export function python_server_r4b(): string {
+      return serverConnections.python_server_r4b;
+  }
 
     export function getSearchData(type: string): ConformanceSearchData | undefined {
         const sdJson = localStorage.getItem(`search_${type}`);
@@ -206,10 +209,10 @@ export namespace settings {
 
             if (settings.defaultProviderField) localStorage.setItem("settings_defaultProviderField", settings.defaultProviderField);
             if (settings.defaultNewCanonicalBase) localStorage.setItem("settings_defaultNewCanonicalBase", settings.defaultNewCanonicalBase);
-            
+
             if (settings.openAIKey) localStorage.setItem("settings_openAIkey", settings.openAIKey);
             else localStorage.removeItem("settings_openAIkey");
-            
+
             if (settings.openAIBasePath) localStorage.setItem("settings_openAIBasePath", settings.openAIBasePath);
             else localStorage.removeItem("settings_openAIBasePath");
             if (settings.openAIApiVersion) localStorage.setItem("settings_openAIApiVersion", settings.openAIApiVersion);
