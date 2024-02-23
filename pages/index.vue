@@ -48,7 +48,7 @@
         (defaulting test resource ID "example")
       </p>
       <p>
-        <b>Note:</b> As the .net and java fhirpath engines don't run in the browser this data is sent to a cloud
+        <b>Note:</b> As the .net, java and python fhirpath engines don't run in the browser this data is sent to a cloud
         service to process these requests. None of this data is persisted outside the call itself.
         Using individually identifiable data with this test utility is prohibited.<br/>
         These are the versions of each of the fhirpath engines in use:
@@ -59,6 +59,7 @@
         <li>HAPI FHIRPath v6.6.2 <i>(server side)</i></li>
         <li>IBM FHIRPath v4.11.1 (LinuxForHealth)<i>(server side)</i></li>
         <li>Dotnet FHIRMappingLanguage Engine v5.1.0 <i>(server side)</i></li>
+        <li>FHIRPath-py v1.1.0 <i>(server side)</i></li>
       </ul>
       <br />
       <h5>Disclaimers:</h5>
@@ -86,7 +87,8 @@
           <a href="https://github.com/brianpos/fhirpath-lab" target="_blank">fhirpath-lab</a><br />
           <a href="https://github.com/HL7/fhirpath.js" target="_blank">fhirpath.js</a><br />
           <a href="https://github.com/FirelyTeam/firely-net-common/tree/develop/src/Hl7.FhirPath"
-            target="_blank">FirelySDK fhirpath (.net)</a>
+            target="_blank">FirelySDK fhirpath (.net)</a><br />
+          <a href="https://github.com/beda-software/fhirpath-py" target="_blank">fhirpath-py</a><br />
         </div>
       </div>
       <br/>
