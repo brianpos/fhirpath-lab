@@ -1,8 +1,8 @@
 import antlr4 from "antlr4";
 import { ParseTreeWalker } from "antlr4";
-import Lexer from "~/json-parser/JSON5Lexer";
-import Parser, { ArrContext, Json5Context, KeyContext, NumberContext, ObjContext, PairContext, ValueContext } from "~/json-parser/JSON5Parser";
-import Listener from "~/json-parser/JSON5Listener";
+import Lexer from "../json-parser/JSON5Lexer";
+import Parser, { ArrContext, Json5Context, KeyContext, NumberContext, ObjContext, PairContext, ValueContext } from "../json-parser/JSON5Parser";
+import Listener from "../json-parser/JSON5Listener";
 
 import { choiceTypePaths, path2Type } from "fhirpath/fhir-context/r4";
 import { pathsDefinedElsewhere } from "fhirpath/fhir-context/r4";
