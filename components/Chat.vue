@@ -31,16 +31,41 @@
                 <span class="message-user">{{ message.user }}</span>: <span style="pointer-events: none;"
                   @click="applySuggestion" v-html="convertHtml(message.text)" />
               </div>
+              <div v-if="message.user !== 'Author'" class="ai-chat-logging">
+                <v-btn v-if="openAIFeedbackEnabled === true" x-small icon @click="logHappy(index)" title="Like"><v-icon>mdi-thumb-up-outline</v-icon></v-btn>
+                <v-btn v-if="openAIFeedbackEnabled" x-small icon @click="logSad(index)" title="Dislike"><v-icon>mdi-thumb-down-outline</v-icon></v-btn>
+                <v-btn x-small icon @click="shareViaClipboard(index)" title="Copy Conversation to clipboard"><v-icon>mdi-share-variant-outline</v-icon></v-btn>
+              </div>
             </div>
           </v-scroll-x-transition>
         </div>
       </div>
       <div class="messages suggestions" v-if="messages.length == 0">
-        <div v-for="(message, index) in suggestions" :key="index">
+        <div v-for="(message, index) in suggestionsWhenEmpty" :key="index">
           <v-scroll-x-transition mode="out-in" :appear="true">
             <div class="message message-right" @click="sendAuthorMessage(message)">
               <div class="message-content">
+                <template v-if="index==0">
+                  <img alt="" style="width: 32px; height: 32px; margin-top: -6px; margin-right: -6px; display:inline;" src="/Square44x44Logo.scale-150.png"/>
+                  <span class="message-user">suggestions</span>:
+                </template>
                 <span v-html="convertHtml(message)" />
+              </div>
+            </div>
+          </v-scroll-x-transition>
+        </div>
+      </div>
+      <div class="messages suggestions">
+        <div v-for="(message, index) in suggestions" :key="index">
+          <v-scroll-x-transition mode="out-in" :appear="true">
+            <div class="message message-right" @click="sendAuthorMessage(message); removeSuggestion(message)">
+              <div class="message-content">
+                <template v-if="messages.length > 0">
+                <img alt="" style="width: 32px; height: 32px; margin-top: -6px; margin-right: -6px; display:inline;" src="/Square44x44Logo.scale-150.png"/>
+                <span class="message-user">suggestion</span>:</template> <span v-html="convertHtml(message)" />
+              </div>
+              <div class="ai-chat-logging" style="position: absolute; right: 6px; top: 6px;">
+                <v-btn x-small icon @click.stop="removeSuggestion(message)" title="Ignore suggestion"><v-icon>mdi-close</v-icon></v-btn>
               </div>
             </div>
           </v-scroll-x-transition>
@@ -69,20 +94,73 @@ import { Component, Prop, Vue } from "vue-property-decorator";
 import { Message } from "../types/chat-types";
 import { marked } from "marked";
 import { ChatMessage } from "@azure/openai";
+import { LogConversation } from "../helpers/openai_logger";
+import { settings } from "~/helpers/user_settings";
 
 @Component
 export default class Chat extends Vue {
   newMessage = "";
   public messages: Message[] = [];
   public thinking: boolean = false;
-  @Prop({ default: () => [
-    "Do you have any recommendations for this expression?",
-    "What would happen if some of the properties were missing?",
-    "What if there were multiple values returned in any collections?",
-    "remove the trace",
-    "create a new expression to read a patient's MRN identifier",
-    "create a new expression to read a patient's name",
-  ]}) readonly suggestions!: string[];
+  @Prop()
+  public readonly publisher: string | undefined;
+  @Prop()
+  public readonly feature?: string;
+  @Prop({
+    default: () => [
+      "Do you have any recommendations for this expression?",
+      "What would happen if some of the properties were missing?",
+      "What if there were multiple values returned in any collections?",
+      "remove the trace",
+      "create a new expression to read a patient's MRN identifier",
+      "create a new expression to read a patient's name",
+    ]
+  }) readonly suggestionsWhenEmpty!: string[];
+  @Prop({
+    default: () => [
+    ]
+  }) readonly suggestions!: string[];
+  @Prop()
+  public readonly openAIFeedbackEnabled?: boolean;
+
+  public removeSuggestion(suggestion: string){
+    this.$emit("remove-suggestion", suggestion);
+    this.scrollToBottom();
+  }
+
+  public logHappy(index: number) {
+    const messages = this.messages.slice(0, index+1);
+    LogConversation(
+      settings.getDefaultProviderField()!,
+      this.feature ?? 'unknown',
+      "like",
+      undefined,
+      messages,
+      settings.dotnet_server_r4b().replace("/$fhirpath","")
+    );
+  }
+
+  public logSad(index: number) {
+    const messages = this.messages.slice(0, index+1);
+    LogConversation(
+      settings.getDefaultProviderField()!,
+      this.feature ?? 'unknown',
+      "dislike",
+      undefined,
+      messages,
+      settings.dotnet_server_r4b().replace("/$fhirpath","")
+    );
+  }
+
+  public shareViaClipboard(index: number) {
+    const messages = this.messages.slice(0, index+1);
+    const conversationHistory = this.messages
+      .map((message) => `**${message.user}:**\n ${message.text}`)
+      .join("\n\n").replace('\n\n\n','\n\n');
+    const conversation = conversationHistory;
+     
+    navigator.clipboard.writeText(conversation);
+  }
 
   public setThinking(thinking: boolean) {
     this.thinking = thinking;
@@ -114,13 +192,13 @@ export default class Chat extends Vue {
 
     } else if (event.target?.className === "language-questionnaire") {
       this.$emit("apply-suggested-questionnaire", valueString);
-      
+
     } else if (event.target?.className === "language-item") {
       this.$emit("apply-suggested-item", valueString);
-      
+
     } else if (event.target?.className === "language-fhir") {
       this.$emit("apply-suggested-fhir", valueString);
-      
+
     } else {
       this.$emit("apply-suggested-json", valueString);
     }
@@ -152,12 +230,15 @@ export default class Chat extends Vue {
     return "assistant";
   }
 
-  public addMessage(user: string, text: string, visible: boolean): void {
+  public addMessage(user: string, text: string, visible: boolean, model_name?: string): void {
     const messageUser = user;
     const messageText = text || this.newMessage.trim();
 
     if (messageText) {
       const message: Message = { "user": messageUser, "text": messageText, visible: visible };
+      if (model_name) {
+        message.model_name = model_name;
+      }
       this.messages.push(message);
     }
     this.scrollToBottom();
@@ -255,6 +336,7 @@ export default class Chat extends Vue {
 .language-fhirpath::before {
   content: '(fhirpath)';
 }
+
 .language-fhircontext::before {
   content: '(context)';
 }
@@ -291,10 +373,13 @@ div.message-content span p {
 div.message-content span :last-child {
   margin-bottom: 0px;
 }
-
 </style>
 
 <style scoped lang="scss">
+.ai-chat-logging {
+  text-align: right;
+}
+
 .messages {
   padding-left: 10px;
   padding-right: 10px;
@@ -309,6 +394,7 @@ div.message-content span :last-child {
 .suggestions .message {
   font-style: italic;
   cursor: pointer;
+  background-color: #D2F5FFaa;
 }
 
 .suggestions .message:hover {
@@ -336,6 +422,7 @@ div.message-content span :last-child {
   margin-left: 30%;
   border-radius: 8px;
   border-top-right-radius: 0;
+  position: relative;
 }
 
 .message-right .message-content {
