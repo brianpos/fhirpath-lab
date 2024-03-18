@@ -3,6 +3,12 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+# 20 Feb 2024 (dev/prod) - from the dotnet server fhirpath tester
+* dotnet tester now supports 3 custom functions - for helping with debugging
+  - propname(): The name of the property that the current node is in (if it is a property and not the result of a calculation)
+  - pathname(): The full simple path to the current node (if it is a property and not the result of a calculation)
+  - shortpathname(): The same as pathname, but without indexers if the property is not natively a collection
+
 # 25 January 2024 (dev)
 * fixed issue with primitive extensions not selecting correctly in the context navigator
 * Add brief highlight to the navigated node in the JSON when selecting from trace/error list
