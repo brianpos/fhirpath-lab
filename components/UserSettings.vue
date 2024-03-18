@@ -95,6 +95,15 @@
             v-if="showAdvancedSettings && openAIKey"
             title="Used to access the Open AI API in the fhirpath tester section of this app to discuss fhirpath expressions"
           />
+          <v-checkbox
+            label="Enable AI Chat Feedback"
+            v-model="openAIFeedbackEnabled"
+            v-if="showAdvancedSettings && openAIKey && (defaultProviderField == 'Say the magic word' || openAIFeedbackEnabled)"
+            messages="Permits user initiated feedback to the FhirPath Lab to help improve the AI Chat."
+            title="Using the lab with real patient data is not permitted, and any data entered into the AI Chat Feedback will be used to improve the AI Chat only.
+NEVER SEND REAL PATIENT DATA."
+          />
+          <br/>
 
           <v-text-field
             label="List Page Size"
@@ -285,6 +294,7 @@ export default Vue.extend({
       this.openAIApiVersion = values.openAIApiVersion;
       this.openAIBasePath = values.openAIBasePath;
       this.openAIModel = values.openAIModel;
+      this.openAIFeedbackEnabled = values.openAIFeedbackEnabled;
       this.showAdvancedSettings = values.showAdvancedSettings;
       this.pageSize = values.pageSize;
 
@@ -314,6 +324,7 @@ export default Vue.extend({
       openAIApiVersion: undefined,
       openAIBasePath: undefined,
       openAIModel: undefined,
+      openAIFeedbackEnabled: false,
       showAdvancedSettings: true,
       pageSize: 10,
 

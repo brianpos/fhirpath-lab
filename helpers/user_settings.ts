@@ -17,6 +17,7 @@ export declare interface UserSettingsData {
     openAIKey?: string;
     openAIModel?: string; // gpt-3.5-turbo, gpt-4
     showAIKey: boolean;
+    openAIFeedbackEnabled?: boolean; // will the send feedback buttons be enabled/shown
 
     showAdvancedSettings: boolean;
     pageSize: number;
@@ -171,6 +172,15 @@ export namespace settings {
             return undefined;
         }
     }
+    export function getOpenAIFeedbackEnabled(): boolean|undefined {
+        try {
+            return localStorage.getItem("settings_openAIFeedbackEnabled") === 'true';
+        }
+        catch {
+            console.log("error reading the OpenAI Feedback Enabled configuration value");
+            return undefined;
+        }
+    }
 
     export function getOpenAIBasePath(): string|undefined {
         try {
@@ -221,6 +231,7 @@ export namespace settings {
             openAIBasePath: localStorage.getItem("settings_openAIBasePath") ?? undefined,
             openAIApiVersion: localStorage.getItem("settings_openAIApiVersion") ?? undefined,
             openAIModel: localStorage.getItem("settings_openAIModel") ?? undefined,
+            openAIFeedbackEnabled: localStorage.getItem("settings_openAIFeedbackEnabled") === 'true',
             showAIKey: false,
             showAdvancedSettings: !localStorage.getItem("settings_showAdvancedSettings") ? false : true,
             pageSize: Number.parseInt(localStorage.getItem("settings_pageSize") ?? "10", 10),
@@ -259,6 +270,9 @@ export namespace settings {
             else localStorage.removeItem("settings_openAIApiVersion");
             if (settings.openAIModel) localStorage.setItem("settings_openAIModel", settings.openAIModel);
             else localStorage.removeItem("settings_openAIModel");
+            if (settings.openAIFeedbackEnabled) localStorage.setItem("settings_openAIFeedbackEnabled", settings.openAIFeedbackEnabled ? 'true' : 'false');
+            else localStorage.removeItem("settings_openAIFeedbackEnabled");
+
 
             if (settings.showAdvancedSettings) localStorage.setItem("settings_showAdvancedSettings", settings.showAdvancedSettings ? 'true' : 'false');
             else localStorage.removeItem("settings_showAdvancedSettings");
