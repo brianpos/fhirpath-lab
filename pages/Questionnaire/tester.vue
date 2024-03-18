@@ -40,74 +40,10 @@
             <v-icon v-if="showDetails"> mdi-eye-outline </v-icon>
           </v-btn>
         </v-toolbar>
-        <v-tabs vertical v-model="tab" @change="changeTab">
-          <v-tab v-on:click="tabClicked">
-            <v-icon left> mdi-code-json </v-icon>
-            Questionnaire
-          </v-tab>
-          <v-tab v-on:click="tabClicked" v-show="hasDebugMessages">
-            <v-icon left> mdi-bug-outline </v-icon>
-            Debug
-          </v-tab>
-          <v-tab v-on:click="tabClicked">
-            <v-icon left> mdi-card-bulleted-settings-outline </v-icon>
-            <i>Details</i>
-          </v-tab>
-          <v-tab v-show="showDetails">
-            <v-icon left> mdi-download-network-outline </v-icon>
-            <i>Publishing</i>
-          </v-tab>
-          <v-tab v-show="showDetails" v-on:click="tabClicked">
-            <v-icon left> mdi-file-tree </v-icon>
-            <i>Fields</i>
-          </v-tab>
-          <v-tab
-            v-show="showDetails && showAdvancedSettings"
-            v-on:click="tabClicked"
-          >
-            <v-icon left> mdi-tray-arrow-down </v-icon>
-            <i>Pre-Population</i>
-          </v-tab>
-          <v-tab
-            v-show="showDetails && showAdvancedSettings"
-            v-on:click="tabClicked"
-          >
-            <v-icon left> mdi-application-variable-outline </v-icon>
-            <i>Variables</i>
-          </v-tab>
-          <v-tab v-on:click="tabClicked">
-            <v-icon left> mdi-bug-play-outline </v-icon>
-            CSIRO Renderer
-          </v-tab>
-          <v-tab v-on:click="tabClicked">
-            <v-icon left> mdi-bug-play-outline </v-icon>
-            LHC-Forms
-          </v-tab>
-          <v-tab v-on:click="responseTabClicked">
-            <v-icon left> mdi-clipboard-text-outline </v-icon>
-            Response
-          </v-tab>
-          <v-tab
-            v-show="showAdvancedSettings && chatEnabled"
-            :class="chatActiveClass"
-            v-on:click="tabClicked"
-          >
-            <v-icon left> mdi-brain </v-icon>
-            AI Chat
-          </v-tab>
 
-          <v-tabs-items
-            class="custom-tab"
-            style="height: calc(100vh - 168px)"
-            touchless
-            v-model="tab"
-          >
-            <v-tab-item :eager="true">
-              <!-- Questionnaire -->
-              <v-card flat>
-                <v-card-text>
-                  <p class="fl-tab-header">Questionnaire</p>
-                  <v-text-field
+        <twin-pane-tab :tabs="tabDetails" @change="tabChanged" :eager="true" ref="twinTabControl">
+          <template v-slot:Questionnaire>
+            <v-text-field
                     label="Test Resource Id"
                     v-model="resourceId"
                     hide-details="auto"
@@ -181,16 +117,10 @@
                     ref="aceEditorResourceJsonTab"
                   ></div>
                   <!-- <div class="ace_editor_footer"></div> -->
-                </v-card-text>
-              </v-card>
-            </v-tab-item>
+          </template>
 
-            <v-tab-item>
-              <!-- Debug -->
-              <v-card flat>
-                <v-card-text>
-                  <p class="fl-tab-header">Debug</p>
-                  <label>Validation Results:</label>
+          <template v-slot:Debug>
+            <label>Validation Results:</label>
                   <OperationOutcomePanel
                     :outcome="saveOutcome"
                     title="Error Saving"
@@ -199,129 +129,84 @@
                     @help-with-issue="helpWithIssue"
                     @navigate-to-issue="navigateToIssue"
                   />
-                </v-card-text>
-              </v-card>
-            </v-tab-item>
+          </template>
 
-            <v-tab-item>
+          <template v-slot:Details>
               <!-- Details -->
               <conformance-resource-details-tab
                 v-if="raw"
                 :raw="raw"
+                :hideHeader="true"
                 :readonly="readonly"
                 :showAdvancedSettings="showAdvancedSettings"
                 @update="updateNow"
               />
-            </v-tab-item>
+          </template>
 
-            <v-tab-item>
+          <template v-slot:Publishing>
               <!-- Publishing -->
               <conformance-resource-publishing-tab
                 v-if="raw"
                 :raw="raw"
+                :hideHeader="true"
                 :publishedVersions="publishedVersions"
                 :lockPublisher="false"
                 :readonly="readonly"
                 :showAdvancedSettings="showAdvancedSettings"
                 @update="updateNow"
               />
-            </v-tab-item>
+          </template>
 
-            <v-tab-item>
-              <!-- Fields -->
-              <v-card flat>
-                <v-card-text>
-                  <p class="fl-tab-header">Fields</p>
-                  <EditorFieldsSection
+          <template v-slot:Fields>
+            <EditorFieldsSection
                     v-if="raw"
                     v-bind:items="flatModel"
                     :readonly="readonly"
                     :showAdvancedSettings="showAdvancedSettings"
                   />
-                </v-card-text>
-              </v-card>
-            </v-tab-item>
+          </template>
 
-            <v-tab-item>
-              <!-- Pre-Population -->
-              <v-card flat>
-                <v-card-text>
-                  <p class="fl-tab-header">Pre-Population</p>
-                  <EditorPrePolulationSection
+          <template v-slot:Pre-Population>
+            <EditorPrePolulationSection
                     v-if="raw"
                     v-bind:items="flatModel"
                   />
-                </v-card-text>
-              </v-card>
-            </v-tab-item>
+          </template>
 
-            <v-tab-item>
-              <!-- Variables -->
-              <v-card flat>
-                <v-card-text>
-                  <p class="fl-tab-header">Variables</p>
-                  <EditorVariablesSection
+          <template v-slot:Variables>
+            <EditorVariablesSection
                     v-if="raw"
                     v-bind:questionnaire="raw"
                     v-bind:items="flatModel"
                   />
-                </v-card-text>
-              </v-card>
-            </v-tab-item>
+          </template>
 
-            <v-tab-item>
-              <!-- CSIRO Renderer -->
-              <v-card flat>
-                <v-card-text>
-                  <p class="fl-tab-header">CSIRO Renderer</p>
-                  <EditorRendererSection
+          <template v-slot:CSIRO_Renderer>
+            <EditorRendererSection
                     v-if="raw"
                     v-bind:questionnaire="raw"
                     @response="processUpdatedQuestionnaireResponse"
                   />
-                </v-card-text>
-              </v-card>
-            </v-tab-item>
+          </template>
 
-            <v-tab-item :eager="true">
-              <!-- NLM LForms Renderer -->
-              <v-card flat>
-                <v-card-text>
-                  <p class="fl-tab-header">LHC-Forms</p>
-                  <EditorNLMRendererSection
+          <template v-slot:LHC-Forms>
+            <EditorNLMRendererSection
                     v-if="raw"
                     v-bind:questionnaire="raw"
                     @response="processUpdatedQuestionnaireResponse"
                   />
-                </v-card-text>
-              </v-card>
-            </v-tab-item>
+          </template>
 
-            <v-tab-item :eager="true">
-              <!-- Response -->
-              <v-card flat>
-                <v-card-text>
-                  <p class="fl-tab-header">Questionnaire Response</p>
+          <template v-slot:Response>
                   <div
                     class="resource"
                     width="100%"
                     ref="aceEditorResponseJsonTab"
                   ></div>
-                </v-card-text>
-              </v-card>
-            </v-tab-item>
+          </template>
 
-            <v-tab-item>
-              <!-- AI Chat -->
-              <v-card flat>
-                <v-card-text>
-                  <p
-                    class="fl-tab-header"
-                    title="Questionnaire and Structured Data Capture AI Chat"
-                  >
-                    SDC AI Chat
-                  </p>
-                  <Chat
+          <template v-slot:AI_Chat>
+            <Chat
                     class="chat"
                     ref="chatComponent"
                     feature="QuestionnaireTester"
@@ -331,12 +216,10 @@
                     :suggestions="chatPromptOptions"
                     @reset-conversation="resetConversation"
                     @apply-suggested-expression="applySuggestedExpression"
+                    @apply-suggested-questionnaire="applySuggestedExpression"
                   />
-                </v-card-text>
-              </v-card>
-            </v-tab-item>
-          </v-tabs-items>
-        </v-tabs>
+          </template>
+        </twin-pane-tab>
       </v-card>
       <OperationOutcomeOverlay
         v-if="showOutcome"
@@ -365,32 +248,6 @@
   z-index: 100;
 }
 
-.v-window-item--active {
-  overflow-y: auto;
-  overflow-x: hidden;
-  min-height: 576px;
-  // max-height: calc(100vh - 240px);
-}
-
-.resource {
-  height: calc(100vh - 280px);
-}
-
-.chat {
-  height: calc(100vh - 200px);
-}
-
-.custom-tab > div {
-  flex-direction: row;
-  // height: calc(100vh - 168px);
-  // overflow-y: auto;
-}
-
-.custom-tab > div > div {
-  height: calc(100vh - 168px);
-  overflow-y: auto;
-}
-
 .resource {
   height: calc(100vh - 280px);
 }
@@ -404,9 +261,6 @@
 }
 
 @media (max-width: 596px) {
-  .custom-tab > div > div {
-    height: calc(100vh - 168px);
-  }
 
   .resource {
     height: calc(100vh - 320px - 48px);
@@ -419,10 +273,6 @@
   .debug {
     height: calc(100vh - 196px - 48px);
   }
-}
-
-.custom-tab > div > div {
-  flex: 1;
 }
 </style>
 
@@ -475,6 +325,7 @@ import {
   IOpenAISettings,
 } from "~/helpers/openai_utils";
 import { Consola } from "consola";
+import TwinPaneTab, { TabData } from "~/components/TwinPaneTab.vue";
 
 // import "fhirclient";
 // import { FHIR } from "fhirclient";
@@ -485,12 +336,8 @@ import { Consola } from "consola";
 // https://dev.to/andynoir/draggable-table-row-with-vuejs-vuetify-and-sortablejs-1o7l
 
 interface IQuestionnaireTesterData extends QuestionnaireData {
-  lastTabClicked: KeyboardEvent | MouseEvent | undefined;
   cancelSource?: CancelTokenSource;
-  primaryTab: number;
   showDetails: boolean;
-  secondaryTab: number;
-  windowWidth: number;
   resourceId: string | undefined;
   chatEnabled: boolean;
   loadingData: boolean;
@@ -507,9 +354,6 @@ interface IQuestionnaireTesterData extends QuestionnaireData {
 export default Vue.extend({
   //   components: { fhirqItem },
   mounted() {
-    window.onresize = () => {
-      this.windowWidth = window.innerWidth;
-    };
     window.document.title = "Questionnaire Tester";
 
     const resourceEditorSettings: Partial<ace.Ace.EditorOptions> = {
@@ -566,7 +410,7 @@ export default Vue.extend({
       this.$nextTick(() => {
         const tabString = this.$route.query.tab as string;
         if (parseInt(tabString) >= 0) {
-          this.tab = parseInt(tabString);
+          this.selectTab(parseInt(tabString));
         }
       });
     }
@@ -592,90 +436,79 @@ export default Vue.extend({
       promptOptions.push(...defaultPromptOptions);
       return promptOptions;
     },
-    expressionVisible(): boolean {
-      return (
-        this.primaryTab === 0 ||
-        (this.secondaryTab === 0 && this.windowWidth > 999)
-      );
-    },
-    resourceVisible(): boolean {
-      return (
-        this.primaryTab === 1 ||
-        (this.secondaryTab === 1 && this.windowWidth > 999)
-      );
-    },
-    variablesVisible(): boolean {
-      return (
-        this.primaryTab === 2 ||
-        (this.secondaryTab === 2 && this.windowWidth > 999)
-      );
-    },
-    traceVisible(): boolean {
-      return (
-        this.primaryTab === 3 ||
-        (this.secondaryTab === 3 && this.windowWidth > 999)
-      );
-    },
-    astVisible(): boolean {
-      return (
-        this.primaryTab === 4 ||
-        (this.secondaryTab === 4 && this.windowWidth > 999)
-      );
-    },
-    chatVisible(): boolean {
-      return (
-        this.primaryTab === 5 ||
-        (this.secondaryTab === 5 && this.windowWidth > 999)
-      );
-    },
-    debugVisible(): boolean {
-      return (
-        this.primaryTab === 6 ||
-        (this.secondaryTab === 6 && this.windowWidth > 999)
-      );
-    },
 
-    expressionActiveClass(): string {
-      return (this.secondaryTab === 0 && this.windowWidth > 999) ||
-        this.primaryTab === 0
-        ? "v-tab--active"
-        : "";
-    },
-    resourceActiveClass(): string {
-      return (this.secondaryTab === 1 && this.windowWidth > 999) ||
-        this.primaryTab === 1
-        ? "v-tab--active"
-        : "";
-    },
-    variablesActiveClass(): string {
-      return (this.secondaryTab === 2 && this.windowWidth > 999) ||
-        this.primaryTab === 2
-        ? "v-tab--active"
-        : "";
-    },
-    traceActiveClass(): string {
-      return (this.secondaryTab === 3 && this.windowWidth > 999) ||
-        this.primaryTab === 3
-        ? "v-tab--active"
-        : "";
-    },
-    astActiveClass(): string {
-      return (this.secondaryTab === 4 && this.windowWidth > 999) ||
-        this.primaryTab === 4
-        ? "v-tab--active"
-        : "";
-    },
-    chatActiveClass(): string {
-      return (this.secondaryTab === 5 && this.windowWidth > 999) ||
-        this.primaryTab === 5
-        ? "v-tab--active"
-        : "";
-    },
-    debugActiveClass(): string {
-      return (this.secondaryTab === 6 && this.windowWidth > 999) ||
-        this.primaryTab === 6
-        ? "v-tab--active"
-        : "";
+    tabDetails(): TabData[] {
+      return [
+        {
+          iconName: "mdi-code-json",
+          tabName: "Questionnaire",
+          show: true,
+          enabled: true,
+        },
+        {
+          iconName: "mdi-bug-outline",
+          tabName: "Debug",
+          show: this.hasDebugMessages,
+          enabled: true,
+        },
+        {
+          iconName: "mdi-card-bulleted-settings-outline",
+          tabName: "Details",
+          show: true,
+          enabled: true,
+        },
+        {
+          iconName: "mdi-download-network-outline",
+          tabName: "Publishing",
+          show: this.showDetails,
+          enabled: true,
+        },
+        {
+          iconName: "mdi-file-tree",
+          tabName: "Fields",
+          show: this.showDetails,
+          enabled: true,
+        },
+        {
+          iconName: "mdi-tray-arrow-down",
+          tabName: "Pre-Population",
+          show: this.showDetails && this.showAdvancedSettings!,
+          enabled: true,
+        },
+        {
+          iconName: "mdi-application-variable-outline",
+          tabName: "Variables",
+          show: this.showDetails && this.showAdvancedSettings!,
+          enabled: true,
+        },
+        {
+          iconName: "mdi-bug-play-outline",
+          tabName: "CSIRO Renderer",
+          title: "CSIRO Renderer",
+          show: true,
+          enabled: true,
+        },
+        {
+          iconName: "mdi-bug-play-outline",
+          tabName: "LHC-Forms",
+          title: "NLM LHC-Forms Renderer",
+          show: true,
+          enabled: true,
+        },
+        {
+          iconName: "mdi-clipboard-text-outline",
+          tabName: "Response",
+          show: true,
+          enabled: true,
+        },
+        {
+          iconName: "mdi-brain",
+          tabName: "AI Chat",
+          title: "Questionnaire and Structured Data Capture AI Chat",
+          show: this.showAdvancedSettings! && this.chatEnabled,
+          enabled: true,
+        }
+      ];
     },
     downloadTestResourceButtonTitle(): string {
       return "Download test resource from " + this.exampleServerUrl;
@@ -685,7 +518,11 @@ export default Vue.extend({
     },
   },
   methods: {
-    responseTabClicked(e: KeyboardEvent | MouseEvent): void {
+    tabChanged(index: Number): void {
+
+      if (index !== 9)
+        return;
+    
       // Workaround to refresh the display in the response editor when it is updated while the form is not visible
       // https://github.com/ajaxorg/ace/issues/2497#issuecomment-102633605
       setTimeout(() => {
@@ -701,28 +538,6 @@ export default Vue.extend({
           console.log("refreshing editor");
         }
       });
-
-      // then do the other handler too
-      this.tabClicked(e);
-    },
-    tabClicked(e: KeyboardEvent | MouseEvent): void {
-      this.lastTabClicked = e;
-    },
-    changeTab(selectTab: number): void {
-      // Primary tab is the one that is "locked" and only changeable when clicking with control
-      // The secondary tab is the one that is "switched" when clicking without control
-      if (this.primaryTab !== selectTab) {
-        if (
-          (this.lastTabClicked &&
-            (this.lastTabClicked as MouseEvent).ctrlKey) ||
-          this.windowWidth <= 999
-        ) {
-          this.primaryTab = selectTab;
-        } else {
-          this.secondaryTab = selectTab;
-        }
-      }
-      this.lastTabClicked = undefined;
     },
     settingsClosed() {
       this.showAdvancedSettings = settings.showAdvancedSettings();
@@ -734,13 +549,13 @@ export default Vue.extend({
     clearOutcome2() {
       this.showOutcome = undefined;
       this.saveOutcome = undefined;
-      if (this.tab == 1) this.tab = 0;
+      if (this.tab == 1) this.selectTab(0);
     },
     navigateToIssue(issue: fhir4b.OperationOutcomeIssue & IWithPosition) {
       console.log("Navigate to: ", issue);
-      this.tab = 0;
       setTimeout(() => {
-        if (this.resourceJsonEditor) {
+        if (this.resourceJsonEditor && issue.expression && !issue.expression[0].startsWith("QuestionnaireResponse")) {
+          this.selectTab(0);
           this.resourceJsonEditor.clearSelection();
           if (issue.__position) {
             var position: IJsonNodePosition = issue.__position;
@@ -824,7 +639,7 @@ export default Vue.extend({
           JSON.stringify(this.questionnaireResponse, null, 2)
         );
         this.questionnaireResponseJsonEditor.clearSelection();
-        this.tab = 9;
+        this.selectTab(9);
       }
     },
 
@@ -1118,6 +933,11 @@ export default Vue.extend({
       }
     },
 
+    selectTab(tabIndex: number) {
+      let tabControl: TwinPaneTab = this.$refs.twinTabControl as TwinPaneTab;
+      if (tabControl)
+      tabControl.selectTab(tabIndex);
+    },
     resetConversation(): void {
       this.openAILastContext = "";
     },
@@ -1325,10 +1145,6 @@ export default Vue.extend({
       showDetails: false,
       loadingData: false,
       cancelSource: undefined,
-      lastTabClicked: undefined,
-      primaryTab: 0,
-      secondaryTab: 1,
-      windowWidth: window.innerWidth,
       resourceJsonChanged: false,
       resourceId:
         "https://sqlonfhir-r4.azurewebsites.net/fhir/Questionnaire/bit-of-everything",
