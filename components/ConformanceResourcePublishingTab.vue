@@ -1,7 +1,7 @@
 <template>
   <v-card flat>
     <v-card-text>
-      <p class="fl-tab-header">Publishing</p>
+      <p v-if="!hideHeader" class="fl-tab-header">Publishing</p>
       <v-form>
         <v-row no-gutters>
             <v-textarea auto-grow rows="1"
@@ -153,6 +153,7 @@ import { DateTime } from "luxon";
 
 export default Vue.extend({
   props: {
+    hideHeader: Boolean,
     readonly: Boolean,
     lockPublisher: Boolean,
     showAdvancedSettings: Boolean,

@@ -1,7 +1,7 @@
 <template>
   <v-card flat>
     <v-card-text>
-      <p class="fl-tab-header">Details</p>
+      <p v-if="!hideHeader" class="fl-tab-header">Details</p>
       <v-form>
         <v-text-field label="Title" v-if="(raw.resourceType !== 'SearchParameter')" v-model="raw.title" :readonly="readonly" hide-details="auto"
           @input="notifyChange" />
@@ -53,6 +53,7 @@ export default Vue.extend({
     this.initializeDropdowns();
   },
   props: {
+    hideHeader: Boolean,
     readonly: Boolean,
     showAdvancedSettings: Boolean,
     raw: Object as PropType<ConformanceResourceInterface>,
