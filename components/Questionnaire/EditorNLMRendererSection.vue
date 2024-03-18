@@ -1,16 +1,15 @@
 <template>
-  <div style="position: relative">
+  <div>
     <template v-if="questionnaire">
-      <v-btn
-        style="position: fixed; right: 34px; z-index: 2"
-        color="primary"
-        @click="logResponse()"
-        >Show Response</v-btn
-      >
-      <div id="myFormContainer"></div>
-      <div class="errors" v-show="lforms_error != undefined">
-        <h5>Errors rendering questionnaire:</h5>
-        <div>{{ lforms_error }}</div>
+      <v-btn style="position: absolute; right: 34px; z-index: 2; margin-top: 4px;" color="primary"
+        title="Show the QuestionnaireResponse based on the data in the LHC-Forms renderer"
+        @click="logResponse()">Show Response</v-btn>
+      <div class="q-host">
+        <div id="myFormContainer"></div>
+        <div class="errors" v-show="lforms_error != undefined">
+          <h5>Errors rendering questionnaire:</h5>
+          <div>{{ lforms_error }}</div>
+        </div>
       </div>
     </template>
     <template v-else>
@@ -22,6 +21,13 @@
 <style scoped>
 pre {
   font-size: 0.75em;
+}
+
+.q-host {
+  position: relative;
+  overflow-y: auto;
+  overflow-x: hidden;
+  height: calc(100vh - 200px);
 }
 </style>
 
@@ -70,9 +76,14 @@ export default Vue.extend({
   //   };
   // },
   async mounted() {
-    console.log("Importing NLM scripts");
-    await loadLForms("34.3.1");
-    console.log("Importing NLM scripts done");
+    try {
+      console.log("Importing NLM scripts");
+      await loadLForms("34.3.1");
+      console.log("Importing NLM scripts done");
+    }
+    catch (e) {
+      console.error("Error loading LForms", e);
+    }
 
     // Set the context vars
     var fhirContext = FHIR.client(settings.getFhirServerExamplesUrl());
