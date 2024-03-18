@@ -4,3 +4,6 @@ declare module "fhirpath" {
     export function parse(expression: string): any;
     export const version :string;
   }
+
+  declare module 'fhirpath/fhir-context/r4';
+  
