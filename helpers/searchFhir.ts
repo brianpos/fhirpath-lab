@@ -299,7 +299,7 @@ export async function loadPublishedVersions<TData extends ConformanceResourceInt
       });
     var result: TData[] = [];
     if (response?.data?.entry) {
-      for (var entry of response.data.entry) {
+      for (let entry of response.data.entry) {
         if (entry.resource?.resourceType === resourceType) {
           result.push(entry.resource as TData);
         }
@@ -497,7 +497,7 @@ export const searchPublishingStatuses = [
 export function toSearchDisplay_UseContext(data: UsageContext[] | undefined): string | undefined {
   var result = "";
   if (data) {
-    for (var item of data) {
+    for (let item of data) {
       if (item.valueCodeableConcept) {
         if (result) result += ', ';
         result += toSearchDisplay_CodeableConcept([item.valueCodeableConcept]);
@@ -510,7 +510,7 @@ export function toSearchDisplay_UseContext(data: UsageContext[] | undefined): st
 export function toSearchDisplay_CodeableConcept(data: CodeableConcept[] | undefined): string | undefined {
   var result = "";
   if (data) {
-    for (var item of data) {
+    for (let item of data) {
       if (item.text) {
         if (result) result += ', ';
         result += item.text;
@@ -531,7 +531,7 @@ export function toSearchDisplay_CodeableConcept(data: CodeableConcept[] | undefi
 export function toSearchDisplay_Coding(data: Coding[] | undefined): string | undefined {
   var result = "";
   if (data) {
-    for (var coding of data) {
+    for (let coding of data) {
       if (coding.display || coding.code) {
         if (result) result += ', ';
         result += coding.display ?? coding.code;
@@ -544,7 +544,7 @@ export function toSearchDisplay_Coding(data: Coding[] | undefined): string | und
 export function toSearchDisplay_Address(data: Address[] | undefined): string | undefined {
   var result = "";
   if (data) {
-    for (var addr of data) {
+    for (let addr of data) {
       if (addr.text) {
         if (result) result += ', ';
         result += addr.text;
@@ -568,7 +568,7 @@ export function toSearchDisplay_Address(data: Address[] | undefined): string | u
 export function toSearchDisplay_Telecom(data: ContactPoint[] | undefined): string | undefined {
   var result = "";
   if (data) {
-    for (var cp of data) {
+    for (let cp of data) {
       if (result) result += ', ';
       result += `${cp.system}: ${cp.value}`;
     }

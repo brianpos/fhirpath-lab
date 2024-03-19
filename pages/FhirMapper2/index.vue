@@ -459,7 +459,7 @@ function getValue(entry: fhir4b.ParametersParameter): ResultData | undefined {
 function getTraceValue(entry: fhir4b.ParametersParameter): TraceData[] {
   let result: TraceData[] = [];
   if (entry.part) {
-    for (var part of entry.part) {
+    for (let part of entry.part) {
       const val = getValue(part);
       if (part.name === "debug"){
         result.push({ name: entry.valueString ?? '', type: part.name, value: val?.value });
@@ -756,7 +756,7 @@ group SetEntryData(source src: Patient, target entry)
           this.trace = [];
 
           if (this.raw.parameter) {
-            for (var entry of this.raw.parameter) {
+            for (let entry of this.raw.parameter) {
               if (entry.name === 'parameters') {
                 // read the processing engine version
                 if (entry.part && entry.part.length > 0 && entry.part[0].name === 'evaluator') {

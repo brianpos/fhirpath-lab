@@ -4,7 +4,7 @@
       <p v-if="!hideHeader" class="fl-tab-header">Publishing</p>
       <v-form>
         <v-row no-gutters>
-            <v-textarea auto-grow rows="1"
+            <v-textarea auto-grow :rows="1"
               label="Canonical URL"
               v-model="raw.url"
               :readonly="readonly || raw.status !== 'draft'"

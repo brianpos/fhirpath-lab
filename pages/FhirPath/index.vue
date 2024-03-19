@@ -659,7 +659,7 @@ function getValue(entry: fhir4b.ParametersParameter): ResultItem[] {
 function getTraceValue(entry: fhir4b.ParametersParameter): TraceData[] {
   let result: TraceData[] = [];
   if (entry.part) {
-    for (var part of entry.part) {
+    for (let part of entry.part) {
       const val = getValue(part);
       let valueData : TraceData = { name: entry.valueString ?? '', type: part.name };
       if (val.length > 0)
@@ -991,8 +991,9 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
 
     selectTab(tabIndex: number) {
       let tabControl: TwinPaneTab = this.$refs.twinTabControl as TwinPaneTab;
-      if (tabControl)
+      if (tabControl){
         tabControl.selectTab(tabIndex);
+      }
     },
 
     readParametersFromQuery(): TestFhirpathData {
@@ -1265,7 +1266,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
 
     hasTraceData(): boolean {
       if (this.results.length === 0) return false;
-      for (var rd of this.results) {
+      for (let rd of this.results) {
         if (rd.trace.length > 0) return true;
       }
       return false;
@@ -1322,7 +1323,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
 
           this.results = [];
           if (this.raw.parameter) {
-            for (var entry of this.raw.parameter) {
+            for (let entry of this.raw.parameter) {
               if (entry.name === 'parameters'){
                 // read the processing engine version
                 if (entry.part && entry.part.length > 0 && entry.part[0].name === 'evaluator'){
@@ -1331,7 +1332,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
 
                 if (entry.part)
                 {
-                  for (var part of entry.part) {
+                  for (let part of entry.part) {
                     if (part.name === 'parseDebugTree' && part.valueString) {
                       let ast: JsonNode = JSON.parse(part.valueString);
                       const astTab = this.$refs.astTabComponent2 as ParseTreeTab;
@@ -1353,7 +1354,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
                 if (node) resultItem.position = node.position;
               }
               if (entry.part) {
-                for (var part of entry.part) {
+                for (let part of entry.part) {
                   if (part.name === 'trace') {
                     resultItem.trace.push(...getTraceValue(part));
                   }
@@ -1441,7 +1442,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
             if (this.resourceId?.startsWith("#") && this.library?.contained){
               var resource: Resource|DomainResource|undefined = undefined;
               var newContained: FhirResource[] = [];
-              for (var n=0; n < this.library.contained.length; n++){
+              for (let n=0; n < this.library.contained.length; n++){
                 if (rId === "#"+this.library.contained[n].id){
                   resource = this.library.contained[n];
                 }
@@ -1881,7 +1882,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
 
         let tracefunction = function (x: any, label: string): void {
           if (Array.isArray(x)) {
-            for (var item of x) {
+            for (let item of x) {
               if (typeof item.getTypeInfo === "function") {
                 let ti = item.getTypeInfo();
                 // console.log(ti);
@@ -1908,7 +1909,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
           let res: any[] = fhirpath.evaluate(contextNode, path, environment, fhirpath_r4_model, { traceFn: tracefunction });
           this.results.push(resData);
 
-          for (var item of res) {
+          for (let item of res) {
             resData.result.push({ type: Object.prototype.toString.call(item ?? '').substring(8).replace(']', ''), value: item });
           }
         }
@@ -2030,7 +2031,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
 
         let tracefunction = function (x: any, label: string): void {
           if (Array.isArray(x)) {
-            for (var item of x) {
+            for (let item of x) {
               if (typeof item.getTypeInfo === "function") {
                 let ti = item.getTypeInfo();
                 // console.log(ti);
@@ -2057,7 +2058,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
           let res: any[] = fhirpath.evaluate(contextNode, path, environment, fhirpath_r5_model, { traceFn: tracefunction });
           this.results.push(resData);
 
-          for (var item of res) {
+          for (let item of res) {
             resData.result.push({ type: Object.prototype.toString.call(item ?? '').substring(8).replace(']', ''), value: item });
           }
         }
