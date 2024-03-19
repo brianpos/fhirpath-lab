@@ -198,6 +198,75 @@
           </template>
 
           <template v-slot:Response>
+            <v-text-field
+                    label="Test QuestionnaireResponse Resource Id"
+                    v-model="qrResourceId"
+                    readonly
+                    hide-details="auto"
+                    autocomplete="off"
+                    @input="updateNow"
+                    autocorrect="off"
+                    autocapitalize="off"
+                    spellcheck="false"
+                    :title="
+                      'Resource Id to download from the examples server\r\nAbsolute (requires CORS support) or relative to ' +
+                      exampleServerUrl
+                    "
+                  >
+                    <template v-slot:append>
+                      <v-btn
+                        icon
+                        small
+                        tile
+                        v-show="qrResourceId"
+                        @click="qrResourceId = undefined"
+                        title="Clear Test QuestionnaireResponse Resource ID"
+                      >
+                        <v-icon> mdi-close </v-icon>
+                      </v-btn>
+                      <v-btn
+                        icon
+                        small
+                        tile
+                        :disabled="qrResourceId === undefined"
+                        @click="downloadTestResource"
+                        :title="downloadTestResourceButtonTitle"
+                      >
+                        <v-icon> mdi-download </v-icon>
+                      </v-btn>
+                      <v-btn small icon tile @click="reformatTestQR_Resource"
+                        ><v-icon
+                          title="Re-format the QuestionnaireResponse json below"
+                          dark
+                        >
+                          mdi-format-indent-increase
+                        </v-icon></v-btn
+                      >
+                      <v-btn small icon tile @click="validateQuestionnaireResponse"
+                        ><v-icon
+                          title="Validate the below QuestionnaireResponse json using the fhirpath-lab server"
+                          dark
+                        >
+                          mdi-note-check-outline
+                        </v-icon></v-btn
+                      >
+                    </template>
+                  </v-text-field>
+                  <br />
+                  <!-- <label class="v-label theme--light bare-label">Test Resource JSON <i>{{ resourceJsonChangedMessage() }}</i></label> -->
+                  <v-tooltip bottom>
+                    <template v-slot:activator="{ on, attrs }">
+                      <v-btn
+                        class="resetButton"
+                        icon
+                        v-bind="attrs"
+                        v-on="on"
+                        @click="resetQuestionnaireResponse"
+                        ><v-icon>mdi-broom</v-icon></v-btn
+                      >
+                    </template>
+                    <span>Reset test QuestionnaireResponse</span>
+                  </v-tooltip>
                   <div
                     class="resource"
                     width="100%"
@@ -340,6 +409,7 @@ interface IQuestionnaireTesterData extends QuestionnaireData {
   cancelSource?: CancelTokenSource;
   showDetails: boolean;
   resourceId: string | undefined;
+  qrResourceId: string | undefined;
   chatEnabled: boolean;
   loadingData: boolean;
   resourceJsonChanged: boolean;
@@ -769,6 +839,33 @@ export default Vue.extend({
       }
     },
 
+    resetQuestionnaireResponse() {
+      // Create a new example questionnaire resource to start a fresh from
+      // defaulting in the publisher and a random canonical url
+      if (this.questionnaireResponseJsonEditor && this.resourceJsonEditor) {
+
+        const jsonValue: QuestionnaireResponse = {
+          resourceType: "QuestionnaireResponse",
+          questionnaire: "",
+          status: "completed",
+        };
+
+        const jsonValueQuestionnaireDefinition = this.resourceJsonEditor.getValue();
+        try {
+            const qDef = JSON.parse(jsonValueQuestionnaireDefinition);
+            if (qDef?.url){
+              jsonValue.questionnaire = qDef.url;
+            }
+        } catch {}
+
+        try {
+          this.questionnaireResponseJsonEditor.setValue(JSON.stringify(jsonValue, null, 2));
+          this.questionnaireResponseJsonEditor.clearSelection();
+          this.questionnaireResponseJsonEditor.renderer.updateFull(true);
+        } catch {}
+      }
+    },    
+
     resourceJsonChangedEvent() {
       this.resourceJsonChanged = true;
       this.enableSave = true;
@@ -961,6 +1058,25 @@ export default Vue.extend({
           );
           this.resourceJsonEditor.clearSelection();
           this.resourceJsonEditor.renderer.updateFull(true);
+          if (this.saveOutcome && this.saveOutcome.issue) {
+            this.setSaveOutcomePositionInformation(
+              jsonValue,
+              this.saveOutcome.issue
+            );
+          }
+        } catch {}
+      }
+    },
+
+    reformatTestQR_Resource() {
+      if (this.questionnaireResponseJsonEditor) {
+        const jsonValue = this.questionnaireResponseJsonEditor.getValue();
+        try {
+          this.questionnaireResponseJsonEditor.setValue(
+            JSON.stringify(JSON.parse(jsonValue), null, 2)
+          );
+          this.questionnaireResponseJsonEditor.clearSelection();
+          this.questionnaireResponseJsonEditor.renderer.updateFull(true);
           if (this.saveOutcome && this.saveOutcome.issue) {
             this.setSaveOutcomePositionInformation(
               jsonValue,
@@ -1315,6 +1431,7 @@ export default Vue.extend({
       resourceJsonChanged: false,
       resourceId:
         "https://sqlonfhir-r4.azurewebsites.net/fhir/Questionnaire/bit-of-everything",
+      qrResourceId: undefined,
       openAILastContext: "",
       openAIexpressionExplanationLoading: false,
       openAIFeedbackEnabled: false,
