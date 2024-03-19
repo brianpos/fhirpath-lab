@@ -3,6 +3,10 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+# 19 March 2024 (dev)
+* Refactored the twin pane tab control into the fhirpath and form tester pages
+* Twin pane tab control now has the lock left/right buttons and auto tab switcher features
+
 # 20 Feb 2024 (dev/prod) - from the dotnet server fhirpath tester
 * dotnet tester now supports 3 custom functions - for helping with debugging
   - propname(): The name of the property that the current node is in (if it is a property and not the result of a calculation)

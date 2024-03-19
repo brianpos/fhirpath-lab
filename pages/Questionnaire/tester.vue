@@ -514,6 +514,11 @@ export default Vue.extend({
           }
         });
       }
+      else {
+        let tabControl: TwinPaneTab = this.$refs.twinTabControl as TwinPaneTab;
+        if (tabControl && tabControl.singleTabMode())
+          this.selectTab(0);
+     }
 
       // this.searchFhirServer();
       this.downloadTestResource();

@@ -62,7 +62,7 @@
             <span>Save the Library</span>
           </v-tooltip>
         </v-toolbar>
-        <twin-pane-tab :tabs="tabDetails" ref="twinTabControl" @mounted="twinPaneMounted">
+        <twin-pane-tab :tabs="tabDetails" ref="twinTabControl" @mounted="twinPaneMounted" @change="tabChanged">
           <template v-slot:Expression>
             <label class="v-label theme--light bare-label">Context Expression (optional)</label>
             <!-- <v-input label="Context Expression (optional)" hide-details="auto" :value="contextExpression">
@@ -688,6 +688,7 @@ interface IFhirPathMethods
   settingsClosed(): void;
   updateNow():void;
   selectTab(selectTab: number): void;
+  tabChanged(index: Number): void;
 
   getContextExpression(): string | undefined;
   getFhirpathExpression(): string | undefined;
@@ -954,6 +955,9 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     }
 
     this.selectTab(1);
+    let tabControl: TwinPaneTab = this.$refs.twinTabControl as TwinPaneTab;
+    if (tabControl && tabControl.singleTabMode())
+      this.selectTab(0);
 
     await this.applyParameters(data);
     await this.evaluateFhirPathExpression();
@@ -962,6 +966,27 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     updateNow() {
       this.$forceUpdate();
       this.enableSave = true;
+    },
+
+    tabChanged(index: Number): void {
+      // Workaround to refresh the display in the response editor when it is updated while the form is not visible
+      // https://github.com/ajaxorg/ace/issues/2497#issuecomment-102633605
+      if (index === 6)
+      {
+        setTimeout(() => {
+          if (this.debugEditor) {
+            var editorHtmlElement: any = this.$refs
+              .aceEditorDebug as Element;
+            if (editorHtmlElement) {
+              console.log("focusing editor");
+              editorHtmlElement.focus();
+            }
+            this.debugEditor.resize();
+            this.updateNow();
+            console.log("refreshing editor");
+          }
+        });
+      }
     },
 
     selectTab(tabIndex: number) {
