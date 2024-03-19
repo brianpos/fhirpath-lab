@@ -213,7 +213,9 @@
                     :openAIFeedbackEnabled="openAIFeedbackEnabled"
                     :publisher="defaultProviderField"
                     @send-message="handleSendMessage"
+                    :suggestionsWhenEmpty="chatPromptOptionsWhenEmpty"
                     :suggestions="chatPromptOptions"
+                    @remove-suggestion="removeSuggestion"
                     @reset-conversation="resetConversation"
                     @apply-suggested-expression="applySuggestedExpression"
                     @apply-suggested-questionnaire="applySuggestedExpression"
@@ -286,7 +288,7 @@ import {
 import axios, { AxiosRequestHeaders, AxiosResponse } from "axios";
 import { AxiosError } from "axios";
 import { CancelTokenSource } from "axios";
-import { Questionnaire, Bundle, OperationOutcomeIssue } from "fhir/r4b";
+import { Questionnaire, Bundle, OperationOutcomeIssue, QuestionnaireResponse } from "fhir/r4b";
 import { settings } from "~/helpers/user_settings";
 import { marked } from "marked";
 import { formatDate, parseDate } from "~/helpers/datetime";
@@ -350,27 +352,46 @@ interface IQuestionnaireTesterData extends QuestionnaireData {
   questionnaireResponse?: fhir4b.QuestionnaireResponse;
 }
 
+function getPriorityIssue(issues: OperationOutcomeIssue[] | undefined): OperationOutcomeIssue | undefined {
+  if (issues && issues.length > 0) {
+    for (const issue of issues) {
+      if (issue.severity === "fatal") return issue;
+      if (issue.severity === "error") return issue;
+    }
+    for (const issue of issues) {
+      if (issue.severity === "warning") return issue;
+    }
+    // we shouldn't return any information messages
+    // (which are the only types left)
+  }
+  return undefined;
+}
+
 export default Vue.extend({
   //   components: { fhirqItem },
   mounted() {
     window.document.title = "Questionnaire Tester";
   },
   computed: {
+    defaultProviderField(): string | undefined {
+      return settings.getDefaultProviderField();
+    },
     hasDebugMessages(): boolean {
       if (this.saveOutcome == undefined) return false;
       return this.saveOutcome?.issue?.length > 0;
     },
-    chatPromptOptions(): string[] {
-      const defaultPromptOptions = [
+    chatPromptOptionsWhenEmpty(): string[] {
+      return [
         "create an item to capture the patient's name",
         "create an item to capture a US postcode with validation on the format",
         "update all the linkIds to be more meaningful",
       ];
+    },
+    chatPromptOptions(): string[] {
       var promptOptions = [];
       if (this.helpWithError) {
         promptOptions.push(this.helpWithError);
       }
-      promptOptions.push(...defaultPromptOptions);
       return promptOptions;
     },
 
@@ -525,8 +546,9 @@ export default Vue.extend({
     },
     tabChanged(index: Number): void {
 
-      if (index !== 9)
+      if (index !== 9){
         return;
+      }
     
       // Workaround to refresh the display in the response editor when it is updated while the form is not visible
       // https://github.com/ajaxorg/ace/issues/2497#issuecomment-102633605
@@ -601,6 +623,54 @@ export default Vue.extend({
               // after 1.5 seconds remove the highlight.
               setTimeout(() => {
                 this.resourceJsonEditor?.session.removeMarker(selectionMarker);
+              }, 1500);
+            }
+
+            this.updateNow();
+          }
+        }
+        else if (this.questionnaireResponseJsonEditor) {
+          this.selectTab(9);
+          this.questionnaireResponseJsonEditor.clearSelection();
+          if (issue.__position) {
+            var position: IJsonNodePosition = issue.__position;
+            this.questionnaireResponseJsonEditor.focus();
+            this.questionnaireResponseJsonEditor.gotoLine(
+              position.line,
+              position.column,
+              true
+            );
+
+            const jsonValue = this.questionnaireResponseJsonEditor.getValue();
+            if (position.value_stop_pos) {
+              let substr = jsonValue.substring(
+                position.prop_start_pos,
+                position.value_stop_pos + 1
+              );
+              const endRowOffset = substr.split(/\r\n|\r|\n/).length;
+              const endRow = position.line + endRowOffset - 1;
+              const endCollOffset =
+                substr.split(/\r\n|\r|\n/)[endRowOffset - 1].length;
+              const endCol =
+                position.column +
+                (endCollOffset > 1 ? endCollOffset + 1 : endCollOffset);
+              const range = new ace.Range(
+                position.line - 1,
+                position.column,
+                endRow - 1,
+                endCol
+              );
+              // this.resourceJsonEditor.session.selection.setRange(range);
+
+              const selectionMarker = this.questionnaireResponseJsonEditor.session.addMarker(
+                range,
+                "resultSelection",
+                "fillLine",
+                true
+              );
+              // after 1.5 seconds remove the highlight.
+              setTimeout(() => {
+                this.questionnaireResponseJsonEditor?.session.removeMarker(selectionMarker);
               }, 1500);
             }
 
@@ -762,6 +832,91 @@ export default Vue.extend({
               jsonValue,
               this.saveOutcome.issue
             );
+            // and grab the first item to send to the chat AI
+            const priorityIssue = getPriorityIssue(this.saveOutcome.issue);
+            if (priorityIssue){
+              this.helpWithIssue(priorityIssue);
+            }
+          }
+          console.log(JSON.stringify(raw, null, 4));
+        } catch (error) {
+          console.log(error);
+        }
+        this.loadingData = false;
+      }
+    },
+
+    async validateQuestionnaireResponse() {
+      if (this.resourceJsonEditor && this.questionnaireResponseJsonEditor) {
+        this.loadingData = true;
+        const jsonValueQ = this.resourceJsonEditor.getValue();
+        let jsonValueQR = this.questionnaireResponseJsonEditor.getValue();
+        const rawJsonValueQR = jsonValueQR;
+
+        // embed the Q in the QR as a contained resource
+        try {
+          let qDef = JSON.parse(jsonValueQ);
+          if (!qDef.id) qDef.id = settings.createRandomID();
+          delete qDef.meta;
+          let qrWithContainedQ = JSON.parse(jsonValueQR);
+          qrWithContainedQ.questionnaire = '#' + qDef.id;
+          qrWithContainedQ.contained = [qDef];
+          jsonValueQR = JSON.stringify(qrWithContainedQ, null, 2);
+        } catch {}
+
+
+        // send this to the forms-lab server for validation
+        try {
+          const response = await fetch(
+            "https://fhir.forms-lab.com/QuestionnaireResponse/$validate",
+            {
+              method: "POST",
+              cache: "no-cache",
+              headers: {
+                accept: "application/json",
+                "Content-Type": "application/json",
+              },
+              body: jsonValueQR,
+            }
+          );
+          const raw = await response.json();
+          this.saveOutcome = raw;
+          this.showOutcome = true;
+
+          // Scan the resource for valid paths
+          var ast: IJsonNode | undefined = parseJson(rawJsonValueQR);
+          console.log(ast);
+          // and markup the locations in the outcome object
+          if (this.saveOutcome && this.saveOutcome.issue) {
+            // before marking up the position information, tweak the path info in the issues
+            // to rehome the paths in the contained Q to the Q definition
+            for (const issue of this.saveOutcome.issue) {
+              if (issue.expression) {
+                issue.expression = issue.expression.map((expression) => {
+                  if (expression.startsWith("QuestionnaireResponse.contained[0]")) {
+                    // rehome the path to the Q definition
+                    return expression.replace("QuestionnaireResponse.contained[0]", "Questionnaire");
+                  }
+                  return expression;
+                });
+              }
+            }
+
+            this.setSaveOutcomePositionInformation(
+              rawJsonValueQR,
+              this.saveOutcome.issue
+            );
+            // also bind in the location information from the questionnaire
+            this.setSaveOutcomePositionInformation(
+              jsonValueQ,
+              this.saveOutcome.issue,
+              false
+            );
+            // and grab the first item to send to the chat AI
+            const priorityIssue = getPriorityIssue(this.saveOutcome.issue);
+            if (priorityIssue){
+              this.helpWithIssue(priorityIssue);
+            }
           }
           console.log(JSON.stringify(raw, null, 4));
         } catch (error) {
@@ -773,13 +928,14 @@ export default Vue.extend({
 
     setSaveOutcomePositionInformation(
       jsonValue: string,
-      issues: OperationOutcomeIssue[]
+      issues: OperationOutcomeIssue[],
+      resetExistingPositions: boolean = true
     ) {
       var ast: IJsonNode | undefined = parseJson(jsonValue);
       for (const issue of issues) {
         const typedIssue = issue as OperationOutcomeIssue & IWithPosition;
         // remove any existing position information (since may be changed/removed)
-        if (typedIssue.__position) delete typedIssue.__position;
+        if (typedIssue.__position && resetExistingPositions) delete typedIssue.__position;
 
         if (issue.expression) {
           for (const expression of issue.expression) {
@@ -940,11 +1096,17 @@ export default Vue.extend({
 
     selectTab(tabIndex: number) {
       let tabControl: TwinPaneTab = this.$refs.twinTabControl as TwinPaneTab;
-      if (tabControl)
-      tabControl.selectTab(tabIndex);
+      if (tabControl){
+        tabControl.selectTab(tabIndex);
+      }
     },
     resetConversation(): void {
       this.openAILastContext = "";
+    },
+
+    removeSuggestion(suggestion: string): void {
+      console.log("remove suggestion: " + suggestion);
+      this.helpWithError = undefined;
     },
 
     async handleSendMessage(message: string) {
