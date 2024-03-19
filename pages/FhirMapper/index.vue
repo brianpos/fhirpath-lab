@@ -243,7 +243,6 @@ import "ace-builds/src-noconflict/mode-text";
 import "ace-builds/src-noconflict/mode-json";
 import "ace-builds/src-noconflict/mode-xml";
 import "ace-builds/src-noconflict/theme-chrome";
-import { JSONReporter } from "consola";
 
 interface FhirMapConverterData {
   loadingData: boolean;

@@ -3,7 +3,7 @@
     <v-col>
       <v-tabs vertical @change="changeTab" v-model="selectedTabValue">
         <template v-for="(tabDetail, index) in tabs">
-          <v-tab :title="tabDetail.title" :class="tabIsActiveClass(index)" v-on:click="tabClicked"
+          <v-tab :key="index" :title="tabDetail.title" :class="tabIsActiveClass(index)" v-on:click="tabClicked"
             :disabled="!tabIsEnabled(index)" v-show="tabDetail.show">
             <v-icon left> {{ tabDetail.iconName }} </v-icon>
             {{ tabDetail.tabName }}
@@ -27,7 +27,7 @@
         <v-tabs-items class="custom-tab" style="height: calc(100vh - 168px)" touchless v-model="selectedTabValue">
 
           <template v-for="(tabDetail, index) in tabs">
-            <v-scroll-x-transition mode="out-in" :hide-on-leave="true">
+            <v-scroll-x-transition :key="index" mode="out-in" :hide-on-leave="true">
               <div v-show="tabIsVisible(index)" :eager="true" v-bind:style="tabStyleForOrder(index)" class="tab-scroll-parent">
                 <v-card flat>
                   <v-card-text>
@@ -252,6 +252,7 @@ export default class TwinPaneTab extends Vue {
       // if the boundary has transitioned, then we need to re-activate the locked/selectableTabs
       this.windowWidth = window.innerWidth
     }
+    this.$emit("mounted");
   }
 }
 

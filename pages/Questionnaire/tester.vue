@@ -41,7 +41,7 @@
           </v-btn>
         </v-toolbar>
 
-        <twin-pane-tab :tabs="tabDetails" @change="tabChanged" :eager="true" ref="twinTabControl">
+        <twin-pane-tab :tabs="tabDetails" @change="tabChanged" :eager="true" ref="twinTabControl" @mounted="twinPaneMounted">
           <template v-slot:Questionnaire>
             <v-text-field
                     label="Test Resource Id"
@@ -324,7 +324,6 @@ import {
   GetSystemPrompt,
   IOpenAISettings,
 } from "~/helpers/openai_utils";
-import { Consola } from "consola";
 import TwinPaneTab, { TabData } from "~/components/TwinPaneTab.vue";
 
 // import "fhirclient";
@@ -355,68 +354,6 @@ export default Vue.extend({
   //   components: { fhirqItem },
   mounted() {
     window.document.title = "Questionnaire Tester";
-
-    const resourceEditorSettings: Partial<ace.Ace.EditorOptions> = {
-      wrap: "free",
-      minLines: 15,
-      // maxLines: 30,
-      highlightActiveLine: true,
-      showGutter: true,
-      fontSize: 14,
-      cursorStyle: "slim",
-      showPrintMargin: false,
-      theme: "ace/theme/chrome",
-      mode: "ace/mode/json",
-      wrapBehavioursEnabled: true,
-    };
-    var editorResourceJsonDiv: any = this.$refs
-      .aceEditorResourceJsonTab as Element;
-    if (editorResourceJsonDiv) {
-      this.resourceJsonEditor = ace.edit(
-        editorResourceJsonDiv,
-        resourceEditorSettings
-      );
-      if (this.raw)
-        this.resourceJsonEditor?.setValue(JSON.stringify(this.raw, null, 2));
-      this.resourceJsonEditor?.clearSelection();
-      this.resourceJsonEditor.session.on(
-        "change",
-        this.resourceJsonChangedEvent
-      );
-    }
-
-    // Also add in the QResponse editor too
-    var editorQResponseJsonDiv: any = this.$refs
-      .aceEditorResponseJsonTab as Element;
-    if (editorQResponseJsonDiv) {
-      this.questionnaireResponseJsonEditor = ace.edit(
-        editorQResponseJsonDiv,
-        resourceEditorSettings
-      );
-    }
-
-    this.showAdvancedSettings = settings.showAdvancedSettings();
-    this.openAIFeedbackEnabled = settings.getOpenAIFeedbackEnabled();
-
-    if (this.$route.query.fhirserver) {
-      this.fhirServerUrl = this.$route.query.fhirserver as string;
-    }
-
-    if (this.$route.query.id) {
-      this.resourceId = this.$route.query.id as string;
-    }
-
-    if (this.$route.query.tab) {
-      this.$nextTick(() => {
-        const tabString = this.$route.query.tab as string;
-        if (parseInt(tabString) >= 0) {
-          this.selectTab(parseInt(tabString));
-        }
-      });
-    }
-
-    // this.searchFhirServer();
-    this.downloadTestResource();
   },
   computed: {
     hasDebugMessages(): boolean {
@@ -518,6 +455,69 @@ export default Vue.extend({
     },
   },
   methods: {
+    async twinPaneMounted(): Promise<void> {
+      const resourceEditorSettings: Partial<ace.Ace.EditorOptions> = {
+        wrap: "free",
+        minLines: 15,
+        // maxLines: 30,
+        highlightActiveLine: true,
+        showGutter: true,
+        fontSize: 14,
+        cursorStyle: "slim",
+        showPrintMargin: false,
+        theme: "ace/theme/chrome",
+        mode: "ace/mode/json",
+        wrapBehavioursEnabled: true,
+      };
+      var editorResourceJsonDiv: any = this.$refs
+        .aceEditorResourceJsonTab as Element;
+      if (editorResourceJsonDiv) {
+        this.resourceJsonEditor = ace.edit(
+          editorResourceJsonDiv,
+          resourceEditorSettings
+        );
+        if (this.raw)
+          this.resourceJsonEditor?.setValue(JSON.stringify(this.raw, null, 2));
+        this.resourceJsonEditor?.clearSelection();
+        this.resourceJsonEditor.session.on(
+          "change",
+          this.resourceJsonChangedEvent
+        );
+      }
+
+      // Also add in the QResponse editor too
+      var editorQResponseJsonDiv: any = this.$refs
+        .aceEditorResponseJsonTab as Element;
+      if (editorQResponseJsonDiv) {
+        this.questionnaireResponseJsonEditor = ace.edit(
+          editorQResponseJsonDiv,
+          resourceEditorSettings
+        );
+      }
+
+      this.showAdvancedSettings = settings.showAdvancedSettings();
+      this.openAIFeedbackEnabled = settings.getOpenAIFeedbackEnabled();
+
+      if (this.$route.query.fhirserver) {
+        this.fhirServerUrl = this.$route.query.fhirserver as string;
+      }
+
+      if (this.$route.query.id) {
+        this.resourceId = this.$route.query.id as string;
+      }
+
+      if (this.$route.query.tab) {
+        this.$nextTick(() => {
+          const tabString = this.$route.query.tab as string;
+          if (parseInt(tabString) >= 0) {
+            this.selectTab(parseInt(tabString));
+          }
+        });
+      }
+
+      // this.searchFhirServer();
+      this.downloadTestResource();
+    },
     tabChanged(index: Number): void {
 
       if (index !== 9)

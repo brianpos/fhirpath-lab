@@ -62,7 +62,7 @@
             <span>Save the Library</span>
           </v-tooltip>
         </v-toolbar>
-        <twin-pane-tab :tabs="tabDetails" ref="twinTabControl">
+        <twin-pane-tab :tabs="tabDetails" ref="twinTabControl" @mounted="twinPaneMounted">
           <template v-slot:Expression>
             <label class="v-label theme--light bare-label">Context Expression (optional)</label>
             <!-- <v-input label="Context Expression (optional)" hide-details="auto" :value="contextExpression">
@@ -672,6 +672,7 @@ function getTraceValue(entry: fhir4b.ParametersParameter): TraceData[] {
 
 interface IFhirPathMethods
 {
+  twinPaneMounted(): Promise<void>;
   readParametersFromQuery(): TestFhirpathData;
   applyParameters(p: TestFhirpathData): void;
   variableMessages(variable: VariableData): string | undefined;
@@ -742,6 +743,7 @@ interface IFhirPathProps
     // astTabComponent: ParseTreeTab,
     astTabComponent2: ParseTreeTab,
     libDetailsTabComponent: HTMLElement,
+    demo2: HTMLElement,
   },
 }
 
@@ -763,6 +765,82 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         ace.config.set('workerPath', CDN);
     }
 
+
+  },
+  computed: {
+    tabDetails(): TabData[] {
+      return [
+        {
+          iconName: "mdi-function-variant",
+          tabName: "Expression",
+          show: true,
+          enabled: true,
+        },
+        {
+          iconName: "mdi-clipboard-text-outline",
+          tabName: "Resource",
+          show: true,
+          enabled: true,
+        },
+        {
+          iconName: "mdi-application-variable-outline",
+          tabName: "Variables",
+          show: this.variables.size > 0,
+          enabled: true,
+        },
+        {
+          iconName: "mdi-format-list-bulleted",
+          tabName: "Trace",
+          show: true,
+          enabled: this.hasTraceData(),
+        },
+        {
+          iconName: "mdi-file-tree",
+          tabName: "AST",
+          tabHeaderName: "Abstract Syntax Tree",
+          title: "Abstract Syntax Tree",
+          show: true,
+          enabled: true,
+        },
+        {
+          iconName: "mdi-brain",
+          tabName: "AI Chat",
+          tabHeaderName: "FHIRPath AI Chat",
+          title: "FHIRPath AI Chat",
+          show: this.showAdvancedSettings && this.chatEnabled,
+          enabled: true,
+        },
+        {
+          iconName: "mdi-bug-outline",
+          tabName: "Debug",
+          show: this.showAdvancedSettings,
+          enabled: true,
+        },
+        {
+          iconName: "mdi-card-bulleted-settings-outline",
+          tabName: "Library",
+          tabHeaderName: "Library Details",
+          show: this.showAdvancedSettings && this.library !== undefined,
+          enabled: true,
+        },
+        {
+          iconName: "mdi-download-network-outline",
+          tabName: "Publishing",
+          tabHeaderName: "Library Publishing",
+          show: this.showAdvancedSettings && this.library !== undefined,
+          enabled: true,
+        }
+      ];
+    },
+    enableSaveLibrary(): boolean {
+      return this.enableSave && this.library != undefined && this.showAdvancedSettings && this.defaultProviderField == this.library.publisher;
+    },
+    enableCreateLibrary(): boolean {
+      return this.library == undefined && this.showAdvancedSettings && ((this.defaultProviderField?.length ?? 0) > 0);
+    },
+  },
+  methods: {
+    async twinPaneMounted(): Promise<void> {
     // Update the editor's Mode
     var editorCtxtDiv: any = this.$refs.aceEditorContextExpression as Element;
     if (editorCtxtDiv) {
@@ -881,79 +959,6 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     await this.evaluateFhirPathExpression();
     this.loadingData = false;
   },
-  computed: {
-    tabDetails(): TabData[] {
-      return [
-        {
-          iconName: "mdi-function-variant",
-          tabName: "Expression",
-          show: true,
-          enabled: true,
-        },
-        {
-          iconName: "mdi-clipboard-text-outline",
-          tabName: "Resource",
-          show: true,
-          enabled: true,
-        },
-        {
-          iconName: "mdi-application-variable-outline",
-          tabName: "Variables",
-          show: this.variables.size > 0,
-          enabled: true,
-        },
-        {
-          iconName: "mdi-format-list-bulleted",
-          tabName: "Trace",
-          show: true,
-          enabled: this.hasTraceData(),
-        },
-        {
-          iconName: "mdi-file-tree",
-          tabName: "AST",
-          tabHeaderName: "Abstract Syntax Tree",
-          title: "Abstract Syntax Tree",
-          show: true,
-          enabled: true,
-        },
-        {
-          iconName: "mdi-brain",
-          tabName: "AI Chat",
-          tabHeaderName: "FHIRPath AI Chat",
-          title: "FHIRPath AI Chat",
-          show: this.showAdvancedSettings && this.chatEnabled,
-          enabled: true,
-        },
-        {
-          iconName: "mdi-bug-outline",
-          tabName: "Debug",
-          show: this.showAdvancedSettings,
-          enabled: true,
-        },
-        {
-          iconName: "mdi-card-bulleted-settings-outline",
-          tabName: "Library",
-          tabHeaderName: "Library Details",
-          show: this.showAdvancedSettings && this.library !== undefined,
-          enabled: true,
-        },
-        {
-          iconName: "mdi-download-network-outline",
-          tabName: "Publishing",
-          tabHeaderName: "Library Publishing",
-          show: this.showAdvancedSettings && this.library !== undefined,
-          enabled: true,
-        }
-      ];
-    },
-    enableSaveLibrary(): boolean {
-      return this.enableSave && this.library != undefined && this.showAdvancedSettings && this.defaultProviderField == this.library.publisher;
-    },
-    enableCreateLibrary(): boolean {
-      return this.library == undefined && this.showAdvancedSettings && ((this.defaultProviderField?.length ?? 0) > 0);
-    },
-  },
-  methods: {
     updateNow() {
       this.$forceUpdate();
       this.enableSave = true;
