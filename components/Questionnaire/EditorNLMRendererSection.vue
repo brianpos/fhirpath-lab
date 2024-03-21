@@ -85,13 +85,14 @@ export default Vue.extend({
       console.error("Error loading LForms", e);
     }
 
-    // Set the context vars
-    var fhirContext = FHIR.client(settings.getFhirServerExamplesUrl());
-    var fhirContextVars = { LaunchPatient: "Patient/123" };
-    LForms.Util.setFHIRContext(fhirContext, fhirContextVars);
-
     // Now render the form to the display
     if (window.LForms) {
+
+      // Set the context vars
+      var fhirContext = FHIR.client(settings.getFhirServerExamplesUrl());
+      var fhirContextVars = { LaunchPatient: "Patient/123" };
+      LForms.Util.setFHIRContext(fhirContext, fhirContextVars);
+
       this.lforms_error = undefined;
       await LForms.Util.addFormToPage(this.questionnaire, "myFormContainer", {
         prepopulate: false,
