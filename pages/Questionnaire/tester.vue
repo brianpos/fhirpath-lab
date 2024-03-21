@@ -399,7 +399,7 @@ import {
   GetSystemPrompt,
   IOpenAISettings,
 } from "~/helpers/openai_utils";
-import { DetectDataRequiredForQuery } from "~/helpers/openai_form_tester";
+import { DetectDataRequiredForQuery, GetQuestionnaireSystemPrompt } from "~/helpers/openai_form_tester";
 import TwinPaneTab, { TabData } from "~/components/TwinPaneTab.vue";
 import * as jsonpatch from 'fast-json-patch';
 
@@ -458,9 +458,10 @@ export default Vue.extend({
     },
     chatPromptOptionsWhenEmpty(): string[] {
       return [
-        "create an item to capture the patient's name",
-        "create an item to capture a US postcode with validation on the format",
-        "update all the linkIds to be more meaningful",
+        "Create an item to capture the patient's name",
+        "Create an item to capture a US postcode with validation on the format",
+        "Update all the linkIds to be more meaningful",
+        "Review the text labels in this form for clarity, inclusive language, ambiguous language, or other issues and make some recommendations.",
       ];
     },
     chatPromptOptions(): string[] {
@@ -1271,17 +1272,18 @@ export default Vue.extend({
       console.log("remove suggestion: " + suggestion);
       this.helpWithError = undefined;
     },
-
+ 
     async handleSendMessage(message: string) {
       console.log("Message sent:", message);
       const chat = this.$refs.chatComponent as Chat;
 
-      // Perform any additional actions with the message here
-      const systemPrompt = GetSystemPrompt();
-
       this.openAIexpressionExplanationLoading = true;
       // this.openAIexpressionExplanationMessage = "Asking question...";
       chat.setThinking(true);
+
+      // Perform any additional actions with the message here
+      const systemPrompt = GetQuestionnaireSystemPrompt();
+
       let userQuestionContext: string = "";
       if (this.resourceJsonEditor) {
         var jsonValue = this.resourceJsonEditor.getValue();
