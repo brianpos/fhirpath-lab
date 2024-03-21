@@ -27,6 +27,7 @@
     "consola": "^2.15.3",
     "core-js": "^3.15.1",
     "express": "^4.17.2",
+    "fast-json-patch": "^3.1.1",
     "fhir-extension-helpers": "^0.3.0",
     "fhir-sdc-helpers": "^0.1.0",
     "fhirclient": "^2.5.2",

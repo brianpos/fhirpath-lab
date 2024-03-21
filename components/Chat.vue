@@ -199,6 +199,9 @@ export default class Chat extends Vue {
     } else if (event.target?.className === "language-fhir") {
       this.$emit("apply-suggested-fhir", valueString);
 
+    } else if (event.target?.className === "language-jsonpatch") {
+      this.$emit("apply-suggested-jsonpatch", valueString);
+
     } else {
       this.$emit("apply-suggested-json", valueString);
     }
@@ -267,6 +270,7 @@ export default class Chat extends Vue {
 .message pre:has(.language-item),
 .message pre:has(.language-fhir),
 .message pre:has(.language-log),
+.message pre:has(.language-jsonpatch),
 .message pre:has(.language-json) {
   position: relative;
   padding: 8px 8px 8px 16px;
@@ -282,6 +286,7 @@ export default class Chat extends Vue {
 .language-questionnaire::after,
 .language-item::after,
 .language-fhir::after,
+.language-jsonpatch::after,
 .language-json::after {
   content: 'assignment_return';
   font-family: 'Material Icons';
@@ -301,6 +306,7 @@ export default class Chat extends Vue {
 .language-questionnaire:hover::after,
 .language-item:hover::after,
 .language-fhir:hover::after,
+.language-jsonpatch:hover::after,
 .language-json:hover::after {
   color: #1976d2;
 }
@@ -318,6 +324,7 @@ export default class Chat extends Vue {
 .language-item::before,
 .language-fhir::before,
 .language-log::before,
+.language-jsonpatch::before,
 .language-json::before {
   font-size: small;
   font-style: italic;
@@ -355,6 +362,10 @@ export default class Chat extends Vue {
 
 .language-json::before {
   content: '(json)';
+}
+
+.language-jsonpatch::before {
+  content: '(patch)';
 }
 
 .message pre:has(code) {

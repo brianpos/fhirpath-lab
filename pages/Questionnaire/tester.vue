@@ -286,8 +286,12 @@
                     :suggestions="chatPromptOptions"
                     @remove-suggestion="removeSuggestion"
                     @reset-conversation="resetConversation"
-                    @apply-suggested-expression="applySuggestedExpression"
-                    @apply-suggested-questionnaire="applySuggestedExpression"
+                    @apply-suggested-expression="copySuggestionToClipboard"
+                    @apply-suggested-questionnaire="applySuggestedQuestionnaire"
+                    @apply-suggested-item="applySuggestedItem"
+                    @apply-suggested-fhir="copySuggestionToClipboard"
+                    @apply-suggested-json="copySuggestionToClipboard"
+                    @apply-suggested-jsonpatch="applySuggestedJsonPatch"
                   />
           </template>
         </twin-pane-tab>
@@ -395,7 +399,9 @@ import {
   GetSystemPrompt,
   IOpenAISettings,
 } from "~/helpers/openai_utils";
+import { DetectDataRequiredForQuery } from "~/helpers/openai_form_tester";
 import TwinPaneTab, { TabData } from "~/components/TwinPaneTab.vue";
+import * as jsonpatch from 'fast-json-patch';
 
 // import "fhirclient";
 // import { FHIR } from "fhirclient";
@@ -1196,7 +1202,12 @@ export default Vue.extend({
       }
     },
 
-    applySuggestedExpression(updatedExpression: string): void {
+    copySuggestionToClipboard(suggestion: string) {
+      console.log('Copied suggestion to clipboard: ', suggestion)
+      navigator.clipboard.writeText(suggestion);
+    },
+
+    applySuggestedQuestionnaire(updatedExpression: string): void {
       // before blindly applying the updated text, do some cleaning of the context
       if (this.resourceJsonEditor) {
         const jsonValue = this.resourceJsonEditor.getValue();
@@ -1206,7 +1217,43 @@ export default Vue.extend({
           );
           this.resourceJsonEditor.clearSelection();
           this.resourceJsonEditor.renderer.updateFull(true);
-        } catch {}
+        } catch(err) {
+          console.log("Error applying json patch: ", err);
+        }
+      }
+    },
+
+    applySuggestedItem(updatedExpression: string): void {
+      // before blindly applying the updated text, do some cleaning of the context
+      if (this.resourceJsonEditor) {
+        const jsonValue = this.resourceJsonEditor.getValue();
+        try {
+          this.resourceJsonEditor.setValue(
+            JSON.stringify(JSON.parse(updatedExpression), null, 4)
+          );
+          this.resourceJsonEditor.clearSelection();
+          this.resourceJsonEditor.renderer.updateFull(true);
+        } catch(err) {
+          console.log("Error applying json patch: ", err);
+        }
+      }
+    },
+
+    applySuggestedJsonPatch(jsonPatchString: string){
+      if (this.resourceJsonEditor) {
+        const jsonValue = this.resourceJsonEditor.getValue();
+        try {
+          var jsonPatch = JSON.parse(jsonPatchString);
+          var jsonValueObj = JSON.parse(jsonValue);
+          jsonPatch.forEach((patch: any) => {
+            jsonValueObj = jsonpatch.applyPatch(jsonValueObj, [patch]).newDocument;
+          });
+          this.resourceJsonEditor.setValue(JSON.stringify(jsonValueObj, null, 4));
+          this.resourceJsonEditor.clearSelection();
+          this.resourceJsonEditor.renderer.updateFull(true);
+        } catch(err) {
+          console.log("Error applying json patch: ", err);
+        }
       }
     },
 
