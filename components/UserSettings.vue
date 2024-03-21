@@ -95,6 +95,13 @@
             v-if="showAdvancedSettings && openAIKey"
             title="Used to access the Open AI API in the fhirpath tester section of this app to discuss fhirpath expressions"
           />
+          <v-text-field
+            label="Open AI Fast Model"
+            hide-details="auto"
+            v-model="openAIFastModel"
+            v-if="showAdvancedSettings && openAIKey"
+            title="Used to access the Open AI API in the fhirpath tester section of this app to discuss fhirpath expressions (usually a cheaper/faster model)"
+          />
           <v-checkbox
             label="Enable AI Chat Feedback"
             v-model="openAIFeedbackEnabled"
@@ -294,6 +301,7 @@ export default Vue.extend({
       this.openAIApiVersion = values.openAIApiVersion;
       this.openAIBasePath = values.openAIBasePath;
       this.openAIModel = values.openAIModel;
+      this.openAIFastModel = values.openAIFastModel;
       this.openAIFeedbackEnabled = values.openAIFeedbackEnabled;
       this.showAdvancedSettings = values.showAdvancedSettings;
       this.pageSize = values.pageSize;
@@ -324,6 +332,7 @@ export default Vue.extend({
       openAIApiVersion: undefined,
       openAIBasePath: undefined,
       openAIModel: undefined,
+      openAIFastModel: undefined,
       openAIFeedbackEnabled: false,
       showAdvancedSettings: true,
       pageSize: 10,

@@ -16,6 +16,7 @@ export declare interface UserSettingsData {
     openAIBasePath?: string; // empty will use the chatGPT system default, not Azure
     openAIKey?: string;
     openAIModel?: string; // gpt-3.5-turbo, gpt-4
+    openAIFastModel?: string; // gpt-3.5-turbo, gpt-4 (use in places where require a quick response, but lower quality is ok)
     showAIKey: boolean;
     openAIFeedbackEnabled?: boolean; // will the send feedback buttons be enabled/shown
 
@@ -212,6 +213,16 @@ export namespace settings {
         }
     }
 
+    export function getOpenAIFastModel(): string|undefined {
+        try {
+            return localStorage.getItem("settings_openAIFastModel") ?? undefined;
+        }
+        catch {
+            console.log("error reading the OpenAI Fast Model configuration value");
+            return undefined;
+        }
+    }
+
     export function showAdvancedSettings(): boolean {
         return !localStorage.getItem("settings_showAdvancedSettings") ? false : true;
     }
@@ -231,6 +242,7 @@ export namespace settings {
             openAIBasePath: localStorage.getItem("settings_openAIBasePath") ?? undefined,
             openAIApiVersion: localStorage.getItem("settings_openAIApiVersion") ?? undefined,
             openAIModel: localStorage.getItem("settings_openAIModel") ?? undefined,
+            openAIFastModel: localStorage.getItem("settings_openAIFastModel") ?? undefined,
             openAIFeedbackEnabled: localStorage.getItem("settings_openAIFeedbackEnabled") === 'true',
             showAIKey: false,
             showAdvancedSettings: !localStorage.getItem("settings_showAdvancedSettings") ? false : true,
@@ -270,6 +282,8 @@ export namespace settings {
             else localStorage.removeItem("settings_openAIApiVersion");
             if (settings.openAIModel) localStorage.setItem("settings_openAIModel", settings.openAIModel);
             else localStorage.removeItem("settings_openAIModel");
+            if (settings.openAIFastModel) localStorage.setItem("settings_openAIFastModel", settings.openAIFastModel);
+            else localStorage.removeItem("settings_openAIFastModel");
             if (settings.openAIFeedbackEnabled) localStorage.setItem("settings_openAIFeedbackEnabled", settings.openAIFeedbackEnabled ? 'true' : 'false');
             else localStorage.removeItem("settings_openAIFeedbackEnabled");
 
