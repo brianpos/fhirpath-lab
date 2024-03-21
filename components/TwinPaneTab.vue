@@ -11,16 +11,17 @@
         </template>
         <div class="lock-unlock-panel" style="margin-left: auto; padding: 8px 1px;">
           <div>
-            <v-btn-toggle v-model="paneLocked" tile mandatory>
-              <v-btn class="btn-lock-toggle" small title="Lock left pane" value="left" @click="toggleLeft">
-                <v-icon small v-if="paneLocked == 'left'">mdi-lock-outline</v-icon>
-                <v-icon small v-if="paneLocked !== 'left'">mdi-lock-open-variant-outline</v-icon>
-              </v-btn>
-              <v-btn class="btn-lock-toggle" small title="Lock right pane" value="right" @click="toggleRight">
-                <v-icon small v-if="paneLocked !== 'left'">mdi-lock-outline</v-icon>
-                <v-icon small v-if="paneLocked == 'left'">mdi-lock-open-variant-outline</v-icon>
-              </v-btn>
-            </v-btn-toggle>
+            <v-btn class="btn-lock-toggle" elevation="0" tile small title="Lock left panel" value="left" @click="toggleLeft">
+              <v-icon small v-if="paneLocked == 'left'">mdi-lock-outline</v-icon>
+              <v-icon small v-if="paneLocked !== 'left'">mdi-lock-open-variant-outline</v-icon>
+            </v-btn>
+            <v-btn class="btn-lock-toggle" elevation="0" tile small title="Swap panels" @click="toggleLockPane">
+              <v-icon small>mdi-swap-horizontal</v-icon>
+            </v-btn>
+            <v-btn class="btn-lock-toggle" elevation="0" tile small title="Lock right panel" value="right" @click="toggleRight">
+              <v-icon small v-if="paneLocked !== 'left'">mdi-lock-outline</v-icon>
+              <v-icon small v-if="paneLocked == 'left'">mdi-lock-open-variant-outline</v-icon>
+            </v-btn>
           </div>
         </div>
 
