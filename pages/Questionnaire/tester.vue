@@ -286,11 +286,13 @@
                     :suggestions="chatPromptOptions"
                     @remove-suggestion="removeSuggestion"
                     @reset-conversation="resetConversation"
+                    @apply-suggested-context="copySuggestionToClipboard"
                     @apply-suggested-expression="copySuggestionToClipboard"
                     @apply-suggested-questionnaire="applySuggestedQuestionnaire"
                     @apply-suggested-item="applySuggestedItem"
                     @apply-suggested-fhir="copySuggestionToClipboard"
                     @apply-suggested-json="copySuggestionToClipboard"
+                    @apply-suggested-fsh="copySuggestionToClipboard"
                     @apply-suggested-jsonpatch="applySuggestedJsonPatch"
                   />
           </template>
@@ -619,7 +621,7 @@ export default Vue.extend({
      }
 
       // this.searchFhirServer();
-      this.downloadTestResource();
+      await this.downloadTestResource();
     },
     tabChanged(index: Number): void {
 

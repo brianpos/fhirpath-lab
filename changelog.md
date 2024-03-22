@@ -3,6 +3,11 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+# 22 March 2024 (dev)
+* Updated the fhirpath.js library to 3.10.4 (still with the prototype `withVariable()` function that is now called `defineVariable`)
+* added some sample conversations that I've had with the Questionnaire AI (in the form of a chatbot) on the questionnaire test page
+* AI Chat prompt refinements (and supporting jsonpatch markdown blocks)
+
 # 19 March 2024 (dev)
 * Refactored the twin pane tab control into the fhirpath and form tester pages
 * Twin pane tab control now has the lock left/right buttons and auto tab switcher features

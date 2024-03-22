@@ -192,7 +192,14 @@
                 @send-message="handleSendMessage" 
                 @reset-conversation="resetConversation"
                 @apply-suggested-context="applySuggestedContext"
-                @apply-suggested-expression="applySuggestedExpression"/>
+                @apply-suggested-expression="applySuggestedExpression"
+                @apply-suggested-questionnaire="copySuggestionToClipboard"
+                @apply-suggested-item="copySuggestionToClipboard"
+                @apply-suggested-fhir="copySuggestionToClipboard"
+                @apply-suggested-json="copySuggestionToClipboard"
+                @apply-suggested-fsh="copySuggestionToClipboard"
+                @apply-suggested-jsonpatch="copySuggestionToClipboard"
+                />
           </template>
 
           <template v-slot:Debug>
@@ -721,6 +728,7 @@ interface IFhirPathMethods
   GetAISettings(): IOpenAISettings;
   handleSendMessage(message: string): void;
   resetConversation(): void;
+  copySuggestionToClipboard(suggestion: string): void;
   applySuggestedExpression(updatedExpression: string): void;
   applySuggestedContext(updatedExpression: string): void;
 }
@@ -1695,6 +1703,11 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         this.expressionEditor.clearSelection();
         this.expressionEditor.renderer.updateFull(true);
       }
+    },
+
+    copySuggestionToClipboard(suggestion: string) {
+      console.log('Copied suggestion to clipboard: ', suggestion)
+      navigator.clipboard.writeText(suggestion);
     },
 
     applySuggestedContext(updatedExpression: string): void {
