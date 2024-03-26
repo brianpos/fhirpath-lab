@@ -78,7 +78,7 @@ export default Vue.extend({
   async mounted() {
     try {
       console.log("Importing NLM scripts");
-      await loadLForms("34.3.1");
+      await loadLForms("35.0.4");
       console.log("Importing NLM scripts done");
     }
     catch (e) {
