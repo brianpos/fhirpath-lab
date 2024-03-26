@@ -10,17 +10,24 @@ import { SmartFormsRenderer } from "@aehrc/smart-forms-renderer";
 function SmartFormsRendererWithFocus(props: any) {
 
   React.useEffect(() => {
-    const l = function(event: any) {
-        var element = event.target;
-        if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
-            const linkId = element.getAttribute('id');
-            props.onFocus && props.onFocus(linkId);
-        }
-    }
-    document.addEventListener('focus', l, true); 
-    return () => document.removeEventListener('focus', l);
+    const handleClick: EventListener = (event) => {
+      const linkId = (event.currentTarget as HTMLElement).getAttribute('data-linkid');
+      if (linkId) {
+        props.onFocus && props.onFocus(linkId);
+      }
+    };
 
-  }, [])
+    const boxes = document.querySelectorAll('[data-linkid]');
+    boxes.forEach((box) => {
+      box.addEventListener('click', handleClick);
+    });
+
+    return () => {
+      boxes.forEach((box) => {
+        box.removeEventListener('click', handleClick);
+      });
+    };
+  });
 
   return SmartFormsRenderer(props);
 }
