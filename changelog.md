@@ -3,6 +3,9 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+# 26 March 2024 (dev)
+* Add ability to use the CSIRO renderer to navigate to an item in the questionnaire definition json tab
+
 # 22 March 2024 (dev)
 * Updated the fhirpath.js library to 3.10.4 (still with the prototype `withVariable()` function that is now called `defineVariable`)
 * added some sample conversations that I've had with the Questionnaire AI (in the form of a chatbot) on the questionnaire test page

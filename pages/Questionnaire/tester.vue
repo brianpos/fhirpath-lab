@@ -186,6 +186,7 @@
                     v-if="raw"
                     v-bind:questionnaire="raw"
                     @response="processUpdatedQuestionnaireResponse"
+                    @highlight-path="highlightPath"
                   />
           </template>
 
@@ -363,7 +364,7 @@ import {
 import axios, { AxiosRequestHeaders, AxiosResponse } from "axios";
 import { AxiosError } from "axios";
 import { CancelTokenSource } from "axios";
-import { Questionnaire, Bundle, OperationOutcomeIssue, QuestionnaireResponse } from "fhir/r4b";
+import { Questionnaire, Bundle, OperationOutcomeIssue, QuestionnaireResponse, QuestionnaireItem } from "fhir/r4b";
 import { settings } from "~/helpers/user_settings";
 import { marked } from "marked";
 import { formatDate, parseDate } from "~/helpers/datetime";
@@ -509,6 +510,7 @@ export default Vue.extend({
         {
           iconName: "mdi-tray-arrow-down",
           tabName: "Pre-Population",
+          title: "Pre-Population Configuration",
           show: this.showDetails && this.showAdvancedSettings!,
           enabled: true,
         },
@@ -656,6 +658,138 @@ export default Vue.extend({
       this.showOutcome = undefined;
       this.saveOutcome = undefined;
       if (this.tab == 1) this.selectTab(0);
+    },
+    getItemPath(items: QuestionnaireItem[], linkId: string, basePath: string): string | undefined {
+      for (let index = 0; index < items.length; index++) {
+        const myPath = basePath + ".item[" + index + "]";
+        let item = items[index];
+        if (item.linkId === linkId) {
+          return myPath;
+        }
+        if (item.item) {
+          let childPath = this.getItemPath(item.item, linkId, myPath);
+          if (childPath) return childPath;
+        }
+      }
+    },
+    highlightPath(linkId: string) {
+      console.log("Highlight path: ", linkId);
+      setTimeout(() => {
+
+        // The Questionnaire Definition part
+        if (this.resourceJsonEditor) {
+          // prepare the ast
+          const jsonValue = this.resourceJsonEditor.getValue();
+          const ast = parseJson(jsonValue);
+          if (ast){
+            // convert the simple linkId to a full path
+            let q = JSON.parse(jsonValue) as Questionnaire;
+            if (q.item){
+              let path = this.getItemPath(q.item, linkId, 'Questionnaire');
+              if (path){
+                const node = findNodeByPath(ast, path);
+                if (node && node.position){
+                  // We found it, so move line selected
+                  this.resourceJsonEditor.clearSelection();
+                  this.resourceJsonEditor.gotoLine(
+                    node.position.line,
+                    node.position.column,
+                    true
+                  );
+
+                  // and Highlight the line
+                      if (node.position.value_stop_pos) {
+                        let substr = jsonValue.substring(
+                          node.position.prop_start_pos,
+                          node.position.value_stop_pos + 1
+                        );
+                        const endRowOffset = substr.split(/\r\n|\r|\n/).length;
+                        const endRow = node.position.line + endRowOffset - 1;
+                        const endCollOffset =
+                          substr.split(/\r\n|\r|\n/)[endRowOffset - 1].length;
+                        const endCol =
+                        node.position.column +
+                          (endCollOffset > 1 ? endCollOffset + 1 : endCollOffset);
+                        const range = new ace.Range(
+                          node.position.line - 1,
+                          node.position.column,
+                          endRow - 1,
+                          endCol
+                        );
+                        // this.resourceJsonEditor.session.selection.setRange(range);
+
+                        const selectionMarker = this.resourceJsonEditor.session.addMarker(
+                          range,
+                          "resultSelection",
+                          "fillLine",
+                          true
+                        );
+                        // after 1.5 seconds remove the highlight.
+                        setTimeout(() => {
+                          this.resourceJsonEditor?.session.removeMarker(selectionMarker);
+                        }, 1500);
+                      }
+
+                      this.updateNow();                  
+                    }
+                  }
+                }
+              }
+            }
+
+
+
+
+      //     }
+      //   }
+      //   else if (this.questionnaireResponseJsonEditor && path.startsWith("QuestionnaireResponse")) {
+      //     this.questionnaireResponseJsonEditor.clearSelection();
+      //     if (issue.__position) {
+      //       var position: IJsonNodePosition = issue.__position;
+      //       this.questionnaireResponseJsonEditor.focus();
+      //       this.questionnaireResponseJsonEditor.gotoLine(
+      //         position.line,
+      //         position.column,
+      //         true
+      //       );
+
+      //       const jsonValue = this.questionnaireResponseJsonEditor.getValue();
+      //       if (position.value_stop_pos) {
+      //         let substr = jsonValue.substring(
+      //           position.prop_start_pos,
+      //           position.value_stop_pos + 1
+      //         );
+      //         const endRowOffset = substr.split(/\r\n|\r|\n/).length;
+      //         const endRow = position.line + endRowOffset - 1;
+      //         const endCollOffset =
+      //           substr.split(/\r\n|\r|\n/)[endRowOffset - 1].length;
+      //         const endCol =
+      //           position.column +
+      //           (endCollOffset > 1 ? endCollOffset + 1 : endCollOffset);
+      //         const range = new ace.Range(
+      //           position.line - 1,
+      //           position.column,
+      //           endRow - 1,
+      //           endCol
+      //         );
+      //         // this.resourceJsonEditor.session.selection.setRange(range);
+
+      //         const selectionMarker = this.questionnaireResponseJsonEditor.session.addMarker(
+      //           range,
+      //           "resultSelection",
+      //           "fillLine",
+      //           true
+      //         );
+      //         // after 1.5 seconds remove the highlight.
+      //         setTimeout(() => {
+      //           this.questionnaireResponseJsonEditor?.session.removeMarker(selectionMarker);
+      //         }, 1500);
+      //       }
+
+      //       this.updateNow();
+      //     }
+      //   }
+      });
     },
     navigateToIssue(issue: fhir4b.OperationOutcomeIssue & IWithPosition) {
       console.log("Navigate to: ", issue);
