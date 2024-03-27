@@ -13,7 +13,7 @@
     "dockerize": "docker build -t fhirpath-lab ."
   },
   "dependencies": {
-    "@aehrc/smart-forms-renderer": "^0.16.0",
+    "@aehrc/smart-forms-renderer": "^0.17.0",
     "@azure/openai": "^1.0.0-beta.2",
     "@nuxtjs/applicationinsights": "^1.2.2",
     "@types/ace": "0.0.48",
