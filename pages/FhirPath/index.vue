@@ -377,7 +377,7 @@ import axios, { AxiosRequestHeaders, AxiosResponse } from "axios";
 import { AxiosError } from "axios";
 import { CancelTokenSource } from "axios";
 import { addExtension, addExtensionStringValue, clearExtension, getExtensionCodingValues, getExtensionReferenceValue, getExtensionStringValue, setExtension, setExtensionStringValue } from "fhir-extension-helpers";
-import { InvertTree, JsonNode } from "~/components/ParseTreeTab.vue";
+import { fpjsNode, GetExternalVariablesUsed, InvertTree, JsonNode } from "~/components/ParseTreeTab.vue";
 // import { getPreferredTerminologyServerFromSDC } from "fhir-sdc-helpers";
 import fhirpath from "fhirpath";
 import fhirpath_r4_model from "fhirpath/fhir-context/r4";
@@ -1186,41 +1186,63 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       const session = this.expressionEditor?.session;
       if (session){
 
+        let ast: fpjsNode | undefined = undefined;
         if (this.selectedEngine.indexOf("fhirpath.js") != -1){
           const astTab2 = this.$refs.astTabComponent2 as ParseTreeTab;
-          astTab2?.displayTreeForExpression(this.getContextExpression() ?? '', this.getFhirpathExpression() ?? '');
+          ast = astTab2?.displayTreeForExpression(this.getContextExpression() ?? '', this.getFhirpathExpression() ?? '');
         }
-        // const astTab = this.$refs.astTabComponent as ParseTreeTab;
-        // astTab.displayTreeForExpression(this.getContextExpression() ?? '', this.getFhirpathExpression() ?? '');
 
-        const count = session.doc.getLength();
         // accumulate the variables
         let updatedVariables = new Map<string, any>();
-        for (let row = 0; row<= count; row++){
-          if (session.doc.getLine(row).includes("%")){
-            const tkns = this.expressionEditor?.session.getTokens(row);
-            if (tkns){
-              for (const tkn of tkns){
-                if (tkn.type === "fhir_variable"){
-                  const varName = canonicalVariableName(tkn.value);
-                  if (isSystemVariableName(varName)) continue;
 
-                  if (!this.variables.has(varName)){
-                    // console.log(tkn.value + ' ' + varName);
-                    updatedVariables.set(varName, { name: varName,  data: undefined });
-                    // provide default implementation values for known env vars
-                    switch(varName){
-                      case 'ucum': updatedVariables.set(varName, "http://unitsofmeasure.org"); break;
+        // check if there are any variables in the AST
+        if (ast){
+          let varsUsed = GetExternalVariablesUsed(ast);
+          for (const varName of varsUsed){
+            if (isSystemVariableName(varName)) continue;
+
+            if (!this.variables.has(varName)){
+              // console.log(tkn.value + ' ' + varName);
+              updatedVariables.set(varName, { name: varName,  data: undefined });
+              // provide default implementation values for known env vars
+              switch(varName){
+                case 'ucum': updatedVariables.set(varName, "http://unitsofmeasure.org"); break;
+              }
+            }
+            else {
+              updatedVariables.set(varName, this.variables.get(varName));
+            }
+          }
+        }
+        else {
+          const count = session.doc.getLength();
+          for (let row = 0; row<= count; row++){
+            if (session.doc.getLine(row).includes("%")){
+              const tkns = this.expressionEditor?.session.getTokens(row);
+              if (tkns){
+                for (const tkn of tkns){
+                  if (tkn.type === "fhir_variable"){
+                    const varName = canonicalVariableName(tkn.value);
+                    if (isSystemVariableName(varName)) continue;
+
+                    if (!this.variables.has(varName)){
+                      // console.log(tkn.value + ' ' + varName);
+                      updatedVariables.set(varName, { name: varName,  data: undefined });
+                      // provide default implementation values for known env vars
+                      switch(varName){
+                        case 'ucum': updatedVariables.set(varName, "http://unitsofmeasure.org"); break;
+                      }
                     }
-                  }
-                  else {
-                    updatedVariables.set(varName, this.variables.get(varName));
+                    else {
+                      updatedVariables.set(varName, this.variables.get(varName));
+                    }
                   }
                 }
               }
             }
           }
         }
+
         this.variables = updatedVariables;
         this.enableSave = true;
         console.log('enable save expr change');

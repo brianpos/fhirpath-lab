@@ -3,6 +3,10 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+## 3 April 2024 (dev)
+* include the `defineVariable` function link to the docs in the AST
+* while dynamically scanning the resource for used variables ensure than none defined using `defineVariable` are included in the list that the user should enter are included.
+
 # 26 March 2024 (dev)
 * Add ability to use the CSIRO renderer to navigate to an item in the questionnaire definition json tab
 
