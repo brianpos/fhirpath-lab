@@ -185,6 +185,9 @@ const mapFunctionReferences = new Map<string, ISpecFunctionDetails>([
   ["timeOfDay", { outlineNo: '5.9.2b', title: 'timeOfDay() : Time', specUrl: "http://hl7.org/fhirpath/N1/#timeofday-time"}],
   ["today", { outlineNo: '5.9.2c', title: 'today() : Date', specUrl: "http://hl7.org/fhirpath/N1/#today-date"}],
 
+  // Section 5.10 (utility functions in the CI build)
+  ["defineVariable", { outlineNo: '5.10.3', title: 'defineVariable(name : string [, expr: expression]]) : collection', specUrl: "https://build.fhir.org/ig/HL7/FHIRPath/index.html#definevariablename-string--expr-expression"}],
+
   // Section 6.3: Types
   ["is", { outlineNo: '6.3.2', title: 'is(type : type specifier)', specUrl: "http://hl7.org/fhirpath/N1/#istype-type-specifier"}],
   ["as", { outlineNo: '6.3.4', title: 'as(type : type specifier)', specUrl: "http://hl7.org/fhirpath/N1/#as-type-specifier"}],
