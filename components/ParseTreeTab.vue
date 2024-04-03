@@ -253,11 +253,36 @@ export interface JsonNode {
   SpecUrl?: string;
 }
 
-interface fpjsNode {
+/** Fhirpath.js AST Node interface */
+export interface fpjsNode {
   children?: fpjsNode[];
   terminalNodeText?: string[];
   text: string;
   type: string;
+}
+
+export function GetExternalVariablesUsed(node: fpjsNode, ignoreVar: string[] = []) : string[] {
+  let result: string[] = [];
+  if (node.type === 'Functn') {
+    if (node.text.startsWith('defineVariable') && node.children?.length === 2){
+      var varName = node.children[1].text.substring(1, node.children[1].text.length - 1);
+      ignoreVar.push(varName);
+    }
+  }
+  if (node.type === 'TermExpression' && node.text?.startsWith('%')){
+    let varName = node.text.substring(1);
+    if (!ignoreVar.includes(varName) && !result.includes(varName)){
+      result.push(varName);
+    }
+  }
+  if (node.children) {
+    node.children.forEach((element) => {
+      let childResult = GetExternalVariablesUsed(element, ignoreVar);
+      // merge the childResult into the overall result removing duplicates
+      result = result.concat(childResult.filter((item) => !result.includes(item)));
+    });
+  }
+  return result;
 }
 
 export function AllocateNodeIds(ast: JsonNode, startAt: number = 0): number {
@@ -528,7 +553,7 @@ export default class ParseTreeTab extends Vue {
     }
   }
 
-  public displayTreeForExpression(context: string, expression: string) {
+  public displayTreeForExpression(context: string, expression: string): fpjsNode | undefined {
     this.warnMissingTypeCalc = false;
     this.parseErrorMessage = undefined;
 
@@ -557,6 +582,7 @@ export default class ParseTreeTab extends Vue {
           this.astOpenInverted.push(i.toString());
         }
       }
+      return ast;
     } catch (err: any) {
       console.log(err);
       this.parseErrorMessage = err?.message;
