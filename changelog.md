@@ -3,6 +3,9 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+## 8 April 2024 (dev)
+* Toggle single/dual pane view on the FHIRPath and Form Tester pages
+
 ## 3 April 2024 (dev)
 * include the `defineVariable` function link to the docs in the AST
 * while dynamically scanning the resource for used variables ensure than none defined using `defineVariable` are included in the list that the user should enter are included.

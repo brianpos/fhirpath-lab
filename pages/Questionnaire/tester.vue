@@ -613,6 +613,9 @@ export default Vue.extend({
           const tabString = this.$route.query.tab as string;
           if (parseInt(tabString) >= 0) {
             this.selectTab(parseInt(tabString));
+            let tabControl: TwinPaneTab = this.$refs.twinTabControl as TwinPaneTab;
+            if (tabControl)
+              tabControl.setSinglePanelMode(true);
           }
         });
       }

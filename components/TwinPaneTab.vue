@@ -11,16 +11,22 @@
         </template>
         <div class="lock-unlock-panel" style="margin-left: auto; padding: 8px 1px;">
           <div>
-            <v-btn class="btn-lock-toggle" elevation="0" tile small title="Lock left panel" value="left" @click="toggleLeft">
+            <v-btn v-if="!forceSinglePanel" class="btn-lock-toggle" elevation="0" tile small title="Lock left panel" value="left" @click="toggleLeft">
               <v-icon small v-if="paneLocked == 'left'">mdi-lock-outline</v-icon>
               <v-icon small v-if="paneLocked !== 'left'">mdi-lock-open-variant-outline</v-icon>
             </v-btn>
-            <v-btn class="btn-lock-toggle" elevation="0" tile small title="Swap panels" @click="toggleLockPane">
+            <v-btn v-if="!forceSinglePanel" class="btn-lock-toggle" elevation="0" tile small title="Swap panels" @click="toggleLockPane">
               <v-icon small>mdi-swap-horizontal</v-icon>
             </v-btn>
-            <v-btn class="btn-lock-toggle" elevation="0" tile small title="Lock right panel" value="right" @click="toggleRight">
+            <v-btn v-if="!forceSinglePanel" class="btn-lock-toggle" elevation="0" tile small title="Lock right panel" value="right" @click="toggleRight">
               <v-icon small v-if="paneLocked !== 'left'">mdi-lock-outline</v-icon>
               <v-icon small v-if="paneLocked == 'left'">mdi-lock-open-variant-outline</v-icon>
+            </v-btn>
+            <v-btn v-if="!forceSinglePanel" class="btn-lock-toggle" v-model="forceSinglePanel" elevation="0" tile small title="Single panel view" @click="forceSinglePanel = !forceSinglePanel">
+              <v-icon small>mdi-chevron-double-left</v-icon>
+            </v-btn>
+            <v-btn v-if="forceSinglePanel" class="btn-lock-toggle" v-model="forceSinglePanel" elevation="0" tile small title="Dual panel view" @click="forceSinglePanel = !forceSinglePanel">
+              <v-icon small>mdi-chevron-double-right</v-icon>
             </v-btn>
           </div>
         </div>
@@ -107,6 +113,11 @@
   }
 }
 
+.btn-lock-toggle {
+    min-width: unset !important;
+    padding: 3px !important;
+  }
+
 
 .custom-tab>div>div {
   flex: 1;
@@ -147,6 +158,7 @@ export default class TwinPaneTab extends Vue {
   // Properties visible to the local template
   public selectedTabValue: number = 2;
   public paneLocked: 'left' | 'right' = 'left';
+  public forceSinglePanel: boolean = false;
 
   // Internal variables
   lockedTab: number = 0;
@@ -155,7 +167,7 @@ export default class TwinPaneTab extends Vue {
   lastTabClicked: KeyboardEvent | MouseEvent | undefined = undefined;
 
   public singleTabMode(): boolean {
-    return this.windowWidth <= 999;
+    return this.windowWidth <= 999 || this.forceSinglePanel;
   }
 
   public selectTab(tabIndex: number): void {
