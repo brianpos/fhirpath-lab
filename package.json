@@ -31,7 +31,7 @@
     "fhir-extension-helpers": "^0.3.0",
     "fhir-sdc-helpers": "^0.1.0",
     "fhirclient": "^2.5.2",
-    "fhirpath": "github:brianpos/fhirpath.js#feature/experiment-variable-3.4.10",
+    "fhirpath": "github:brianpos/fhirpath.js#feature/experiment-variable-3.11.0",
     "lforms-loader": "^3.0.0",
     "luxon": "^3.4.3",
     "lz-string": "^1.4.4",
