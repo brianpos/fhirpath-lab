@@ -170,6 +170,10 @@ export default class TwinPaneTab extends Vue {
     return this.windowWidth <= 999 || this.forceSinglePanel;
   }
 
+  /** Set the value of the SinglePanel mode */
+  public setSinglePanelMode(value: boolean): void {
+    this.forceSinglePanel = value;
+  }
   public selectTab(tabIndex: number): void {
     if ((this.lockedTab === tabIndex || this.selectableTab === tabIndex) && !this.singleTabMode()) {
       return;
