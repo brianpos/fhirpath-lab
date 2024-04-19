@@ -155,7 +155,11 @@ export default class Chat extends Vue {
   public shareViaClipboard(index: number) {
     const messages = this.messages.slice(0, index+1);
     const conversationHistory = this.messages
-      .map((message) => `**${message.user}:**\n ${message.text}`)
+      .map((message) => { 
+        if (message.model_name)
+          return `**${message.user}** *(${message.model_name})* **:**\n ${message.text}`;
+        return `**${message.user}:**\n ${message.text}`;
+       })
       .join("\n\n").replace('\n\n\n','\n\n');
     const conversation = conversationHistory;
      
