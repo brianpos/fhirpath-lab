@@ -3,6 +3,10 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+## 20 April 2024 (dev)
+* Updated to the public main branch of fhirpath.js (3.13.0) now that the defineVariable function is included in the main branch
+* sharing Fhirpath AI chat via clipboard now includes the name of the model that a message is from
+
 ## 8 April 2024 (dev)
 * Toggle single/dual pane view on the FHIRPath and Form Tester pages
 
