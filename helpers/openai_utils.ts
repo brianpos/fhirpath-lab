@@ -1,4 +1,5 @@
 import { OpenAI, ClientOptions } from "openai";
+import { FinalRequestOptions, Headers } from "openai/core";
 import { ChatCompletionCreateParamsNonStreaming, ChatCompletionMessageParam } from "openai/resources/chat/completions";
 
 export interface IOpenAISettings {
@@ -15,6 +16,28 @@ export interface OpenAiError {
 interface OpenAiErrorDetail {
     code: number;
     message: string;
+}
+
+class MyOpenAIClient extends OpenAI {
+    constructor(options: ClientOptions) {
+        super(options);
+    }
+    protected defaultHeaders(opts: FinalRequestOptions<unknown>): Headers {
+        let headers = super.defaultHeaders(opts);
+        // If there is no authorization header then don't need the other settings too,
+        // as this is not the actual OpenAI endpoints.
+        if (headers['Authorization'] === 'Bearer ') {
+            delete headers['X-Stainless-Arch'];
+            delete headers['X-Stainless-OS'];
+            delete headers['X-Stainless-Lang'];
+            delete headers['X-Stainless-Package-Version'];
+            delete headers['X-Stainless-Runtime'];
+            delete headers['X-Stainless-Runtime-Version'];
+            delete headers['Authorization'];
+        }
+        console.log(headers);
+        return headers;
+    }
 }
 
 export async function EvaluateChatPrompt(
@@ -39,8 +62,8 @@ export async function EvaluateChatPrompt(
                 clientOptions.baseURL = settings.openAIBasePath + settings.openAIModel;
             }
         }
-        
-        client = new OpenAI(clientOptions);
+
+        client = new MyOpenAIClient(clientOptions);
 
         let reqBody: ChatCompletionCreateParamsNonStreaming = {
             model: settings.openAIModel ?? "",

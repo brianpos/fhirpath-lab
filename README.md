@@ -54,10 +54,16 @@ What can I do with it:
 | Field | Value | Description |
 | - | - | - |
 | API Key | - | *Leave this field blank - local ollama installation doesn't require an api key!* |
-| Base Path | `http://localhost:5000/v1` | The base path to the Ollama deployment |
+| Base Path | `http://localhost:11434/v1` | The base path to the Ollama deployment |
 | API Version | - | *Leave this field blank - only used by Azure deployments*
 | Model | `llama3` | The model to use for the AI responses |
 | Fast Model | `llama3` | The model to use for the fast responses |
+
+You will also need to update your ollama configuration to permit the fhirpath-lab to access it.
+This is done through a system environment variable
+> OLLAMA_ORIGINS=https://dev-fhirpath-lab.com;https://fhirpath-lab.com
+
+https://github.com/ollama/ollama/blob/main/docs/faq.md#how-can-i-allow-additional-web-origins-to-access-ollama
 
 > Note: You can replace the model name(s) with any you have access to and want to try out.
 
