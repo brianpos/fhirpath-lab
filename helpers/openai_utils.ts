@@ -22,6 +22,7 @@ class MyOpenAIClient extends OpenAI {
     constructor(options: ClientOptions) {
         super(options);
     }
+    // https://github.com/openai/openai-node/blob/4c041e03013dbd7de5bfeb02db42c5e657217167/src/core.ts#L206
     protected defaultHeaders(opts: FinalRequestOptions<unknown>): Headers {
         let headers = super.defaultHeaders(opts);
         // If there is no authorization header then don't need the other settings too,
@@ -35,7 +36,6 @@ class MyOpenAIClient extends OpenAI {
             delete headers['X-Stainless-Runtime-Version'];
             delete headers['Authorization'];
         }
-        console.log(headers);
         return headers;
     }
 }
