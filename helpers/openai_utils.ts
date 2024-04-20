@@ -1,4 +1,5 @@
-import { ChatMessage, OpenAIClient, AzureKeyCredential, OpenAIKeyCredential, OpenAIClientOptions } from "@azure/openai";
+import { OpenAI, ClientOptions } from "openai";
+import { ChatCompletionCreateParamsNonStreaming, ChatCompletionMessageParam } from "openai/resources/chat/completions";
 
 export interface IOpenAISettings {
     openAIKey: string;
@@ -17,39 +18,47 @@ interface OpenAiErrorDetail {
 }
 
 export async function EvaluateChatPrompt(
-    messages: Array<ChatMessage>,
+    messages: Array<ChatCompletionMessageParam>,
     settings: IOpenAISettings,
     temperature: number,
     max_tokens?: number): Promise<string | undefined> {
 
     try {
         let client = null;
+        // this is all in browser with client side use of client's own keys, so we can allow browser
+        let clientOptions: ClientOptions = { dangerouslyAllowBrowser: true };
+        if (settings.openAIKey)
+            clientOptions.apiKey = settings.openAIKey;
+        else
+            clientOptions.apiKey = '';
         if (settings.openAIBasePath) {
-            client = new OpenAIClient(settings.openAIBasePath ?? "",
-                new AzureKeyCredential(settings.openAIKey),
-                { apiVersion: settings.openAIApiVersion });
+            clientOptions.baseURL = settings.openAIBasePath;
+            if (settings.openAIApiVersion) {
+                clientOptions.defaultQuery = { 'api-version': settings.openAIApiVersion };
+                clientOptions.defaultHeaders = { 'api-key': settings.openAIKey };
+                clientOptions.baseURL = settings.openAIBasePath + settings.openAIModel;
+            }
         }
-        else {
-            const opts: OpenAIClientOptions = {
-                credentials: { apiKeyHeaderName: "Authorization" }
-            };
-            client = new OpenAIClient(new OpenAIKeyCredential(settings.openAIKey), opts);
-        }
+        
+        client = new OpenAI(clientOptions);
 
-        const result = await client.getChatCompletions(settings.openAIModel ?? "", messages, {
+        let reqBody: ChatCompletionCreateParamsNonStreaming = {
+            model: settings.openAIModel ?? "",
+            messages: messages,
             temperature: temperature,
-            maxTokens: max_tokens
-        });
-        return result.choices[0].message?.content;
+            max_tokens: max_tokens
+        };
+        const result = await client.chat.completions.create(reqBody);
+        return result.choices[0].message?.content ?? undefined;
 
-    } catch (err) {
+    } catch (err: any) {
         console.log(err);
         return err.message ?? err.error?.message;
     }
 };
 
-export function CreatePrompt(): Array<ChatMessage> {
-    let prompt: Array<ChatMessage> = [];
+export function CreatePrompt(): Array<ChatCompletionMessageParam> {
+    let prompt: Array<ChatCompletionMessageParam> = [];
 
     prompt.push({ role: "system", content: GetSystemPrompt() });
 

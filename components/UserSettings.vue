@@ -59,11 +59,17 @@
             v-model="defaultNewCanonicalBase"
           />
           <v-text-field
+            label="List Page Size"
+            hide-details="auto"
+            v-model="pageSize"
+          />
+          <br/>
+          <v-text-field
             label="Open AI API Key"
             hide-details="auto"
             :type="AiDisplayType"
             v-model="openAIKey"
-            :visible="showAdvancedSettings && (defaultProviderField == 'Say the magic word' || openAIKey)"
+            v-if="showAiModelSettings"
             title="Used to access the Open AI API in the fhirpath tester section of this app to explain fhirpath expressions"
           >
           <template v-slot:append>
@@ -78,28 +84,28 @@
             label="Open AI Base Path"
             hide-details="auto"
             v-model="openAIBasePath"
-            v-if="showAdvancedSettings && openAIKey"
+            v-if="showAiModelSettings"
             title="Used to access the Open AI API in the fhirpath tester section of this app to discuss fhirpath expressions"
           />
           <v-text-field
             label="Open AI API Version"
             hide-details="auto"
             v-model="openAIApiVersion"
-            v-if="showAdvancedSettings && openAIKey"
-            title="Used to access the Open AI API in the fhirpath tester section of this app to discuss fhirpath expressions"
+            v-if="openAIBasePath && openAIBasePath.includes('openai.azure.com')"
+            title="The API version to use to access the Azure deployed model(s)"
           />
           <v-text-field
             label="Open AI Model"
             hide-details="auto"
             v-model="openAIModel"
-            v-if="showAdvancedSettings && openAIKey"
+            v-if="showAiModelSettings"
             title="Used to access the Open AI API in the fhirpath tester section of this app to discuss fhirpath expressions"
           />
           <v-text-field
             label="Open AI Fast Model"
             hide-details="auto"
             v-model="openAIFastModel"
-            v-if="showAdvancedSettings && openAIKey"
+            v-if="showAiModelSettings"
             title="Used to access the Open AI API in the fhirpath tester section of this app to discuss fhirpath expressions (usually a cheaper/faster model)"
           />
           <v-checkbox
@@ -112,11 +118,6 @@ NEVER SEND REAL PATIENT DATA."
           />
           <br/>
 
-          <v-text-field
-            label="List Page Size"
-            hide-details="auto"
-            v-model="pageSize"
-          />
           <!-- <v-checkbox
             label="Sync Favourites"
             v-model="syncFavourites"
@@ -177,6 +178,11 @@ export default Vue.extend({
     this.readUserSettings();
   },
   computed:{
+    showAiModelSettings: function(): boolean {
+      return this.showAdvancedSettings && (this.defaultProviderField == 'Say the magic word')
+       || this.openAIKey != undefined && this.openAIKey != ''
+       || this.openAIBasePath != undefined && this.openAIBasePath != '';
+    },
     AiDisplayType: function(): string {
       if (this.showAIKey) {
         return "";

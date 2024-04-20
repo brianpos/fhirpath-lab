@@ -762,7 +762,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     this.showAdvancedSettings = settings.showAdvancedSettings();
     this.defaultProviderField = settings.getDefaultProviderField();
     this.openAIFeedbackEnabled = settings.getOpenAIFeedbackEnabled();
-    if (settings.getOpenAIKey())
+    if (settings.getOpenAIKey() || settings.getOpenAIBasePath())
       this.chatEnabled = true;
     this.terminologyServer = settings.getFhirTerminologyServerUrl();
 
@@ -816,7 +816,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
           tabName: "AI Chat",
           tabHeaderName: "FHIRPath AI Chat",
           title: "FHIRPath AI Chat",
-          show: this.showAdvancedSettings && this.chatEnabled,
+          show: this.chatEnabled,
           enabled: true,
         },
         {
@@ -1265,7 +1265,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       this.showAdvancedSettings = settings.showAdvancedSettings();
       this.defaultProviderField = settings.getDefaultProviderField();
       this.terminologyServer = settings.getFhirTerminologyServerUrl();
-      this.chatEnabled = settings.getOpenAIKey() !== undefined;
+      this.chatEnabled = settings.getOpenAIKey() !== undefined || settings.getOpenAIBasePath() !== undefined;
       this.openAIFeedbackEnabled = settings.getOpenAIFeedbackEnabled();
       this.$forceUpdate();
     },

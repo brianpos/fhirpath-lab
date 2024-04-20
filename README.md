@@ -26,7 +26,40 @@ What can I do with it:
 * create a new expression to return the patient's MRN identifier value
 * create a new expression to return the patient's name
 * correct the coding where clause to handle the presence of multiple types
-* help me with this operationoutcome against this resource (will provide ability to copy the resource into the test resource page, and the outcome expressions into the context)
+* help me with this OperationOutcome against this resource (will provide ability to copy the resource into the test resource page, and the outcome expressions into the context)
+
+#### Using OpenAI Direct
+| Field | Value | Description |
+| - | - | - |
+| API Key | `sk-xxxx` | Your OpenAI API key |
+| Base Path | - | *Leave this field blank - uses the default OpenAI API endpoint* |
+| API Version | - | *Leave this field blank - only used by Azure deployments*
+| Model | `gpt-4` | The model to use for the AI responses |
+| Fast Model | `gpt-35-turbo` | The model to use for the fast responses |
+
+> Note: You can replace the model name(s) with any you have access to and want to try out.
+
+#### Using an Azure deployed OpenAI model
+| Field | Value | Description |
+| - | - | - |
+| API Key | `xxxx` | Your Azure Resource endpoint key |
+| Base Path | `https://xxxx.openai.azure.com/openai/deployments/` | The base path to the Azure OpenAI deployment - replace the xxxx with your Azure resource name. |
+| API Version | `2024-02-01` | The version of the API to use - recommend using the latest version available<br/>https://learn.microsoft.com/en-us/azure/ai-services/openai/reference |
+| Model | `gpt-4` | The model to use for the AI responses |
+| Fast Model | `gpt-35-turbo` | The model to use for the fast responses |
+
+> Note: You can replace the model name(s) with any you have access to and want to try out.
+
+#### Using a locally deployed ollama model
+| Field | Value | Description |
+| - | - | - |
+| API Key | - | *Leave this field blank - local ollama installation doesn't require an api key!* |
+| Base Path | `http://localhost:5000/v1` | The base path to the Ollama deployment |
+| API Version | - | *Leave this field blank - only used by Azure deployments*
+| Model | `llama3` | The model to use for the AI responses |
+| Fast Model | `llama3` | The model to use for the fast responses |
+
+> Note: You can replace the model name(s) with any you have access to and want to try out.
 
 ## Test Launch API
 Direct access to launch the test page can be done and pass through test data as parameters:
