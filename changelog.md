@@ -6,6 +6,7 @@
 ## 20 April 2024 (dev)
 * Updated to the public main branch of fhirpath.js (3.13.0) now that the defineVariable function is included in the main branch
 * sharing Fhirpath AI chat via clipboard now includes the name of the model that a message is from
+* Changed the npm package for accessing AI projects to the `openai@4.38.1` npm package
 
 ## 8 April 2024 (dev)
 * Toggle single/dual pane view on the FHIRPath and Form Tester pages
