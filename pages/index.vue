@@ -74,7 +74,7 @@
       <ul style="padding-left: 40px">
         <li>Firely SDK FHIRPath Engine v5.3.0 <i>(server side)</i></li>
         <li>FHIRPath.js v{{ fhirpathVersion }}</li>
-        <li>HAPI FHIRPath v6.10.2 <i>(server side)</i></li>
+        <li>HAPI FHIRPath v7.0.2 <i>(server side)</i></li>
         <li>IBM FHIRPath v4.11.1 (LinuxForHealth) <i>(server side)</i></li>
         <li>Dotnet FHIRMappingLanguage Engine v5.1.0 <i>(server side)</i></li>
       </ul>
