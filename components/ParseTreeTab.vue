@@ -6,6 +6,11 @@
     <v-treeview :items="astInverted ? astInvertedTree : astTree" :open="astInverted ? astOpenInverted : astOpen"
       activatable :dense="true" item-key="id" item-text="Name" item-children="Arguments" open-on-click>
       <template v-slot:prepend="{ item }">
+        <v-btn v-if="item.Position != undefined" @click.stop x-small style="float:left;" icon title="Goto node in expression" @click="navigateToExpressionNode(item)">
+          <v-icon>
+            mdi-target
+          </v-icon>
+        </v-btn>
         <v-icon v-if="item.ReturnType && item.ReturnType.length == 0" color="red">
           mdi-alert-octagon
         </v-icon>
@@ -53,9 +58,11 @@
           ">
           <i><b>(no return type calculated)</b></i>
         </template>
-        <!-- <template>
-        {{ item.id }}
-      </template> -->
+      </template>
+      <template v-if="showAdvancedSettings" v-slot:append="{ item }">
+        <v-btn v-if="item.Position != undefined" @click.stop x-small style="float:right;" icon title="Goto node in expression" @click="navigateToExpressionNode(item)">
+          ({{ item.Position }} {{ item.Length }})
+        </v-btn>
       </template>
     </v-treeview>
     <v-checkbox v-model="astInverted" label="Inverted Tree"></v-checkbox>
@@ -72,7 +79,7 @@ a:hover {
 }
 </style>
 <script lang="ts">
-import { Component, Vue } from "vue-property-decorator";
+import { Component, Prop, Vue } from "vue-property-decorator";
 import fhirpath from "fhirpath";
 import fhirpath_r4_model from "fhirpath/fhir-context/r4";
 import fhirpath_r5_model from "fhirpath/fhir-context/r5";
@@ -250,6 +257,12 @@ export interface JsonNode {
   Name: string;
   Arguments?: JsonNode[];
   ReturnType?: string;
+  Position?: number;
+  Length?: number;
+  Line?: number;
+  Column?: number;
+
+  /** URL to the Specification for this node - Augmented by the Lab */
   SpecUrl?: string;
 }
 
@@ -321,6 +334,8 @@ export function InvertTree(ast: JsonNode): JsonNode[] {
     Arguments: [],
     ReturnType: ast.ReturnType,
   };
+  if (ast.Position != undefined) rootItem.Position = ast.Position;
+  if (ast.Length != undefined) rootItem.Length = ast.Length;
 
   let result: JsonNode[] = [];
   if (ast.Arguments && ast.Arguments.length > 0) {
@@ -507,9 +522,16 @@ export default class ParseTreeTab extends Vue {
   astInvertedTree: JsonNode[] = [];
   astOpen: string[] = [];
   astOpenInverted: string[] = [];
+  @Prop()
+  public showAdvancedSettings: boolean = false;
+  public expression: string = "";
   public astInverted: boolean = false;
   public warnMissingTypeCalc: boolean = false;
   public parseErrorMessage: string | undefined = "";
+
+  navigateToExpressionNode(node: JsonNode) {
+    this.$emit("navigateToExpressionNode", node);
+  }
 
   nodeTooltip(node: JsonNode): string | undefined {
     if (mapFunctionReferences.has(node.Name)) {
@@ -542,6 +564,7 @@ export default class ParseTreeTab extends Vue {
     this.parseErrorMessage = undefined;
 
     this.astTree = [node];
+    console.log("AST:", JSON.stringify(this.astTree, null, 2));
     var lastId = AllocateNodeCollectionIds(this.astTree);
     for (let i = 0; i < lastId; i++) {
       this.astOpen.push(i.toString());
@@ -555,9 +578,14 @@ export default class ParseTreeTab extends Vue {
   }
 
   public displayTreeForExpression(context: string, expression: string): fpjsNode | undefined {
+    this.expression = expression;
     this.warnMissingTypeCalc = false;
     this.parseErrorMessage = undefined;
 
+    if (expression == "") {
+      this.clearDisplay();
+      return undefined;
+    }
     try {
       var ast: fpjsNode = fhirpath.parse(expression);
       if (ast.children && ast.children.length > 0) {

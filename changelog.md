@@ -3,6 +3,9 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+## 1 May 2024 (dev)
+* Preliminary work for displaying navigation markers from the AST to the actual expression in the FHIRPath tester (coming soon for dotnet)
+
 ## 20 April 2024 (dev)
 * Updated to the public main branch of fhirpath.js (3.13.0) now that the defineVariable function is included in the main branch
 * sharing Fhirpath AI chat via clipboard now includes the name of the model that a message is from

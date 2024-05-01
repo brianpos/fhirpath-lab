@@ -181,7 +181,7 @@
 
           <template v-slot:AST>
             <OperationOutcomePanel :outcome="expressionParseOutcome" @close="expressionParseOutcome = undefined" />
-                        <parse-tree-tab ref="astTabComponent2"></parse-tree-tab>
+            <parse-tree-tab ref="astTabComponent2" :showAdvancedSettings="showAdvancedSettings" @navigateToExpressionNode="navigateToExpressionNode"></parse-tree-tab>
           </template>
 
           <template v-slot:AI_Chat>
@@ -724,6 +724,8 @@ interface IFhirPathMethods
   createNewLibrary(): void;
   saveLibrary(): void;
   navigateToContext(elementPath: string): void;
+  navigateToExpressionNode(node: JsonNode): void;
+  highlightText(editor?: ace.Ace.Editor, startPosition?: number, length?: number): void;
 
   GetAISettings(): IOpenAISettings;
   handleSendMessage(message: string): void;
@@ -968,6 +970,8 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       this.selectTab(0);
 
     await this.applyParameters(data);
+    // refresh the variables
+    this.fhirpathExpressionChangedEvent();
     await this.evaluateFhirPathExpression();
     this.loadingData = false;
   },
@@ -2562,6 +2566,49 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         }
     },
 
+    highlightText(editor?: ace.Ace.Editor, startPosition?: number, length?: number): void {
+      if (!editor || startPosition == undefined || length == undefined) return;
+      let value = editor.getValue();
+
+      // determine the starting line/column from the raw position in the string
+      let textBeforeSelection = value.substring(0, startPosition);
+      let startLine = textBeforeSelection.split(/\r\n|\r|\n/).length;
+      let startColumn = textBeforeSelection.length - textBeforeSelection.lastIndexOf('\n') - 1;
+      let selectedText = value.substring(startPosition, startPosition + length);
+      // console.log("Highlighting: ", selectedText);
+      
+      // determining the ending line/column from the length of the selected text
+      let endLine = startLine + selectedText.split(/\r\n|\r|\n/).length - 1;
+      let endColumn = selectedText.length - selectedText.lastIndexOf('\n') - 1;
+      if (startLine == endLine) {
+        endColumn = startColumn + selectedText.length;
+      }
+      const range = new ace.Range(startLine-1, startColumn, endLine-1, endColumn);
+      // console.log("Range: ", range);
+      
+      editor.clearSelection();
+      editor.focus();
+      editor.gotoLine(startLine, startColumn, true);
+      // editor.selection.setRange(range);
+
+      const selectionMarker = editor.session.addMarker(range, "resultSelection", "fillLine", true);
+      // after 1.5 seconds remove the highlight.
+      setTimeout(() => {
+        // console.log("Removing marker", selectionMarker);
+        editor.session.removeMarker(selectionMarker);
+      }, 1500);
+      this.updateNow();
+    },
+
+    navigateToExpressionNode(node: JsonNode){
+      // Move the cursor in the test resource JSON editor to the element
+      this.selectTab(0);
+      setTimeout(() => {
+        console.log("Highlighting node: ", node);
+        this.highlightText(this.expressionEditor, node.Position, node.Length);
+      });
+    },
+
     navigateToContext(elementPath: string) {
       // Move the cursor in the test resource JSON editor to the element
       this.selectTab(1);
@@ -2591,7 +2638,6 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
                     const endCollOffset = substr.split(/\r\n|\r|\n/)[endRowOffset - 1].length;
                     const endCol = node.position.column + (endCollOffset > 1 ? endCollOffset + 1 : endCollOffset);
                     const range = new ace.Range(node.position.line-1, node.position.column, endRow-1, endCol);
-                    // this.resourceJsonEditor.session.selection.setRange(range);
 
                     const selectionMarker = this.resourceJsonEditor.session.addMarker(range, "resultSelection", "fillLine", true);
                     // after 1.5 seconds remove the highlight.
