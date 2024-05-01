@@ -59,7 +59,7 @@
           <i><b>(no return type calculated)</b></i>
         </template>
       </template>
-      <template v-if="showAdvancedSettings" v-slot:append="{ item }">
+      <template v-if="showAdvancedSettings && showPositionInformation" v-slot:append="{ item }">
         <v-btn v-if="item.Position != undefined" @click.stop x-small style="float:right;" icon title="Goto node in expression" @click="navigateToExpressionNode(item)">
           ({{ item.Position }} {{ item.Length }})
         </v-btn>
@@ -529,6 +529,14 @@ export default class ParseTreeTab extends Vue {
   public warnMissingTypeCalc: boolean = false;
   public parseErrorMessage: string | undefined = "";
 
+  get showPositionInformation(): boolean {
+    var tree = this.astInverted ? this.astInvertedTree : this.astTree;
+    if (!tree || tree.length <= 0) 
+      return false;
+    if (tree[0].Position == undefined) 
+      return false;
+    return true;
+  }
   navigateToExpressionNode(node: JsonNode) {
     this.$emit("navigateToExpressionNode", node);
   }
