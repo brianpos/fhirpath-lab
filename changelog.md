@@ -3,6 +3,9 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+## 1 May 2024 (dev)
+* Preliminary work for displaying navigation markers from the AST to the actual expression in the FHIRPath tester (coming soon for dotnet)
+
 ## 8 April 2024 (dev)
 * Toggle single/dual pane view on the FHIRPath and Form Tester pages
 
