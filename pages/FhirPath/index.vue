@@ -680,6 +680,7 @@ function getTraceValue(entry: fhir4b.ParametersParameter): TraceData[] {
 interface IFhirPathMethods
 {
   twinPaneMounted(): Promise<void>;
+  CtrlEnterHandler(event: KeyboardEvent): void;
   readParametersFromQuery(): TestFhirpathData;
   applyParameters(p: TestFhirpathData): void;
   variableMessages(variable: VariableData): string | undefined;
@@ -775,9 +776,13 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         ace.config.set('themePath', CDN);
         ace.config.set('workerPath', CDN);
     }
-
-
+    document.addEventListener('keypress', this.CtrlEnterHandler);
   },
+
+  beforeDestroy() {
+    document.removeEventListener('keypress', this.CtrlEnterHandler);
+  },
+
   computed: {
     tabDetails(): TabData[] {
       return [
@@ -851,6 +856,12 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     },
   },
   methods: {
+    CtrlEnterHandler(event: KeyboardEvent): void {
+      if (event.ctrlKey && event.key === "\n") {
+        this.evaluateFhirPathExpression();
+      }
+    },
+    
     async twinPaneMounted(): Promise<void> {
     // Update the editor's Mode
     var editorCtxtDiv: any = this.$refs.aceEditorContextExpression as Element;

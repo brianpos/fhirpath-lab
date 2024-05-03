@@ -3,6 +3,9 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+## 3 May 2024 (dev)
+* Add new shortcut to test an expression using ctrl+enter in the fhirpath tester
+
 ## 1 May 2024 (dev)
 * Preliminary work for displaying navigation markers from the AST to the actual expression in the FHIRPath tester (coming soon for dotnet)
 
