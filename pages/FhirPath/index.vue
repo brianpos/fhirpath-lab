@@ -69,7 +69,7 @@
             </v-input> -->
             <v-tooltip bottom >
               <template v-slot:activator="{ on, attrs }">
-                <v-btn icon style="right: 20px; position: absolute; padding-top: 20px;"
+                <v-btn icon style="right: 20px; position: absolute; top: 20px; z-index:2;"
                   v-bind="attrs" v-on="on"
                   @click="resetExpression"><v-icon>mdi-broom</v-icon></v-btn>
               </template>
@@ -861,7 +861,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         this.evaluateFhirPathExpression();
       }
     },
-    
+
     async twinPaneMounted(): Promise<void> {
     // Update the editor's Mode
     var editorCtxtDiv: any = this.$refs.aceEditorContextExpression as Element;
