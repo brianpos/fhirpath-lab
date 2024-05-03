@@ -9,39 +9,53 @@
       </p>
       <br />
       <div>
-        <v-text-field label="Field" v-model="fieldname"/>
+        <v-text-field label="Field" v-model="fieldname" />
       </div>
       <div class="home-grid">
-        <v-textarea label="Value"
-          title="The Description is shown alongside the Title when a user is selecting the Questionnaire from a directory. This field supports Markdown formatting"
-          v-model="description" auto-grow hide-details="auto" clearable
-          rows="2" />
-        <span class="markdown"
-          title="(preview) The Description is shown alongside the Title when a user is selecting the Questionnaire from a directory."
-          v-html="convertHtml(description)" />
+        <v-textarea label="Value" v-model="description" auto-grow hide-details="auto" clearable rows="2" />
+        <span class="markdown" v-html="convertHtml(description)" />
 
       </div>
-      <div>
-        <pre class="extractme" v-text="JSON.stringify(description, null, 2)" />
-        <pre class="extractme" v-text="convertXml(description)" />
-      </div>
       <br />
+      <v-textarea label="JSON formatted property" outlined @paste="loadFromJson" :value="convertJson(description)"
+        @focus="event => event.target.select()" auto-grow hide-details="auto" clearable rows="2">
+        <template v-slot:append>
+          <v-btn icon small tile @click="copyToClipboard(convertJson(description))" title="Copy JSON fragment">
+            <v-icon> mdi-content-copy </v-icon>
+          </v-btn>
+        </template>
+      </v-textarea>
+      <br />
+      <v-textarea label="XML formatted property" outlined @paste="loadFromXml" :value="convertXml(description)" auto-grow
+        @focus="event => event.target.select()" hide-details="auto" clearable rows="2">
+        <template v-slot:append>
+          <v-btn icon small tile @click="copyToClipboard(convertXml(description))" title="Copy XML fragment">
+            <v-icon> mdi-content-copy </v-icon>
+          </v-btn>
+        </template>
+      </v-textarea>
+      <br />
+      <div>
+        You can copy the XML or JSON fragment from your fhir resource and paste it into the corresponding field
+        to be able to quiclky edit it in the other fields, then use the copy button to put the result back into your
+        resource (triggers on paste).
+      </div>
     </div>
   </div>
 </template>
 
 <style lang="scss">
-span.markdown > blockquote {
-    padding-left: 8px;
-    border-left: lightblue 4px solid;
+span.markdown>blockquote {
+  padding-left: 8px;
+  border-left: lightblue 4px solid;
 }
-
 </style>
 
 <style lang="scss" scoped>
 span.markdown p {
-    margin-bottom: 8px;
+  margin-bottom: 8px;
 }
+
 .home-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -161,20 +175,64 @@ export default Vue.extend({
       const stgs = settings.load();
 
     },
+    loadFromJson(event: ClipboardEvent) {
+      const data = event.clipboardData?.getData('text');
+      console.log('paste JSON: ', data);
+      event.preventDefault();
+      try {
+        const obj = JSON.parse("{" + data + "}");
+        console.log('paste JSON: ', Object.keys(obj));
+        var keys = Object.keys(obj);
+        if (keys && keys.length === 1) {
+          this.fieldname = Object.keys(obj)[0]
+          this.description = obj[this.fieldname];
+        }
+      }
+      catch (err) {
+        console.log('paste JSON err: ', err);
+      }
+    },
+    loadFromXml(event: ClipboardEvent) {
+      const data = event.clipboardData?.getData('text');
+      console.log('paste XML: ', data);
+      event.preventDefault();
+
+      try {
+        if (data?.startsWith("<")) {
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(data, "application/xml");
+          this.fieldname = doc.documentElement.nodeName;
+          console.log(doc.documentElement.attributes[0].nodeValue);
+          this.description = doc.documentElement.attributes[0].nodeValue + "";
+        }
+      }
+      catch (err) {
+        console.log('paste XML err: ', err);
+      }
+    },
+    copyToClipboard(value: string) {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(value);
+      }
+    },
     /** Convert the parameter data into a HTML from markdown format */
     convertHtml(field: string | undefined): string {
       if (!field) return "";
       return marked(field);
     },
+    convertJson(field: string | undefined): string {
+      if (!field) return "";
+      return '"' + this.fieldname + '": ' + JSON.stringify(field, null, 2);
+    },
     convertXml(field: string | undefined): string {
       if (!field) return "";
-      return "<"+this.fieldname+" value=" + JSON.stringify(field)
-                  .replaceAll('&', "&amp;")
-                  .replaceAll("\\n", "&#xD;")
-                  .replaceAll('\\"', "&quot;")
-                  .replaceAll('<', "&lt;")
-                  .replaceAll('>', "&gt;")
-                   + " />";
+      return "<" + this.fieldname + " value=" + JSON.stringify(field)
+        .replaceAll('&', "&amp;")
+        .replaceAll("\\n", "&#xD;")
+        .replaceAll('\\"', "&quot;")
+        .replaceAll('<', "&lt;")
+        .replaceAll('>', "&gt;")
+        + " />";
     },
   },
   data() {

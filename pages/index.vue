@@ -40,6 +40,24 @@
             Test page for mapping to/from FHIR resources using the <a href="https://www.hl7.org/fhir/mapping-language.html">FHIR Mapping Language</a>
           </div>
         </a>
+        <v-btn dark color="#3F81AE" class="link-item text-decoration-none" href="sqlonfhir">
+          <v-icon left> mdi-database-search </v-icon>
+            sql-on-fhir
+        </v-btn>
+        <a href="sqlonfhir" class="link-plain-text">
+          <div>
+            Test page for FHIR view definitions using the <a href="https://build.fhir.org/ig/FHIR/sql-on-fhir-v2">SQL on FHIR v2</a> specification
+          </div>
+        </a>
+        <v-btn dark color="#3F81AE" class="link-item text-decoration-none" href="Questionnaire/tester">
+          <v-icon left> mdi-clipboard-text-outline </v-icon>
+            form tester
+        </v-btn>
+        <a href="Questionnaire/tester" class="link-plain-text">
+          <div>
+            <i>(Not so)</i> Secret test page for testing FHIR Questionnaires using the <a href="https://build.fhir.org/ig/HL7/sdc">SDC</a> specification
+          </div>
+        </a>
       </div>
       <br />
       <p>
@@ -54,10 +72,10 @@
         These are the versions of each of the fhirpath engines in use:
       </p>
       <ul style="padding-left: 40px">
-        <li>Firely SDK FHIRPath Engine v5.2.0 <i>(server side)</i></li>
-        <li>FHIRPath.js v3.5.0</li>
-        <li>HAPI FHIRPath v6.6.2 <i>(server side)</i></li>
-        <li>IBM FHIRPath v4.11.1 (LinuxForHealth)<i>(server side)</i></li>
+        <li>Firely SDK FHIRPath Engine v5.3.0 <i>(server side)</i></li>
+        <li>FHIRPath.js v{{ fhirpathVersion }}</li>
+        <li>HAPI FHIRPath v7.0.2 <i>(server side)</i></li>
+        <li>IBM FHIRPath v4.11.1 (LinuxForHealth) <i>(server side)</i></li>
         <li>Dotnet FHIRMappingLanguage Engine v5.1.0 <i>(server side)</i></li>
       </ul>
       <br />
@@ -189,6 +207,13 @@ h5 {
 </style>
 <script lang="ts">
 import Vue from "vue";
+import fhirpath from "fhirpath";
 
-export default Vue.extend({});
+export default Vue.extend({
+  computed: {
+    fhirpathVersion() {
+      return fhirpath.version;
+    },
+  },
+});
 </script>

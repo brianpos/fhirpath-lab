@@ -1,10 +1,10 @@
 <template>
   <v-card flat>
     <v-card-text>
-      <p class="fl-tab-header">Publishing</p>
+      <p v-if="!hideHeader" class="fl-tab-header">Publishing</p>
       <v-form>
         <v-row no-gutters>
-            <v-textarea auto-grow rows="1"
+            <v-textarea auto-grow :rows="1"
               label="Canonical URL"
               v-model="raw.url"
               :readonly="readonly || raw.status !== 'draft'"
@@ -29,6 +29,7 @@
               class="version"
               :items="statuses"
               v-model="raw.status"
+              :readonly="readonly"
               hide-details="auto"
               @input="notifyStatusChange"
             />
@@ -50,7 +51,7 @@
           label="Publisher"
           v-show="showAdvancedSettings"
           v-model="raw.publisher"
-          :readonly="readonly"
+          :readonly="readonly || lockPublisher"
           @input="notifyChange"
           hide-details="auto"
         />
@@ -63,12 +64,12 @@
           @input="notifyChange"
           auto-grow
           hide-details="auto"
-          clearable
+          :clearable="!readonly"
           rows="2"
         />
         <span class="markdown" v-html="convertHtml(raw.copyright)" />
       </v-form>
-      <v-simple-table>
+      <v-simple-table v-if="publishedVersions">
         <template v-slot:default>
           <thead>
             <tr>
@@ -152,7 +153,9 @@ import { DateTime } from "luxon";
 
 export default Vue.extend({
   props: {
+    hideHeader: Boolean,
     readonly: Boolean,
+    lockPublisher: Boolean,
     showAdvancedSettings: Boolean,
     raw: Object as PropType<ConformanceResourceInterface>,
     publishedVersions: {
@@ -179,10 +182,11 @@ export default Vue.extend({
   },
   methods: {
     notifyChange() {
-      this.$emit("update");
+      if (!this.readonly)
+        this.$emit("update");
     },
     notifyStatusChange() {
-      if (this.raw.status === "active") {
+      if (!this.readonly && this.raw.status === "active") {
         // status was changed to publishing, so set the date
         this.raw.date =
           DateTime.now().toISODate() + "T" + DateTime.now().toISOTime();

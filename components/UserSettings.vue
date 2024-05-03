@@ -34,6 +34,11 @@
             :clearable="!FhirServerSupportsSmartAuth"
           />
           <v-text-field
+            label="FHIR Server for Examples"
+            v-model="fhirServerExamplesUrl"
+            hide-details="auto"
+          />
+          <v-text-field
             label="FHIR Terminology Server"
             v-model="fhirTerminologyServerUrl"
             hide-details="auto"
@@ -54,11 +59,17 @@
             v-model="defaultNewCanonicalBase"
           />
           <v-text-field
+            label="List Page Size"
+            hide-details="auto"
+            v-model="pageSize"
+          />
+          <br/>
+          <v-text-field
             label="Open AI API Key"
             hide-details="auto"
             :type="AiDisplayType"
             v-model="openAIKey"
-            :visible="showAdvancedSettings && (defaultProviderField == 'Say the magic word' || openAIKey)"
+            v-if="showAiModelSettings"
             title="Used to access the Open AI API in the fhirpath tester section of this app to explain fhirpath expressions"
           >
           <template v-slot:append>
@@ -73,29 +84,40 @@
             label="Open AI Base Path"
             hide-details="auto"
             v-model="openAIBasePath"
-            v-if="showAdvancedSettings && openAIKey"
+            v-if="showAiModelSettings"
             title="Used to access the Open AI API in the fhirpath tester section of this app to discuss fhirpath expressions"
           />
           <v-text-field
             label="Open AI API Version"
             hide-details="auto"
             v-model="openAIApiVersion"
-            v-if="showAdvancedSettings && openAIKey"
-            title="Used to access the Open AI API in the fhirpath tester section of this app to discuss fhirpath expressions"
+            v-if="openAIBasePath && openAIBasePath.includes('openai.azure.com')"
+            title="The API version to use to access the Azure deployed model(s)"
           />
           <v-text-field
             label="Open AI Model"
             hide-details="auto"
             v-model="openAIModel"
-            v-if="showAdvancedSettings && openAIKey"
+            v-if="showAiModelSettings"
             title="Used to access the Open AI API in the fhirpath tester section of this app to discuss fhirpath expressions"
           />
-
           <v-text-field
-            label="List Page Size"
+            label="Open AI Fast Model"
             hide-details="auto"
-            v-model="pageSize"
+            v-model="openAIFastModel"
+            v-if="showAiModelSettings"
+            title="Used to access the Open AI API in the fhirpath tester section of this app to discuss fhirpath expressions (usually a cheaper/faster model)"
           />
+          <v-checkbox
+            label="Enable AI Chat Feedback"
+            v-model="openAIFeedbackEnabled"
+            v-if="showAdvancedSettings && openAIKey && (defaultProviderField == 'Say the magic word' || openAIFeedbackEnabled)"
+            messages="Permits user initiated feedback to the FhirPath Lab to help improve the AI Chat."
+            title="Using the lab with real patient data is not permitted, and any data entered into the AI Chat Feedback will be used to improve the AI Chat only.
+NEVER SEND REAL PATIENT DATA."
+          />
+          <br/>
+
           <!-- <v-checkbox
             label="Sync Favourites"
             v-model="syncFavourites"
@@ -156,6 +178,11 @@ export default Vue.extend({
     this.readUserSettings();
   },
   computed:{
+    showAiModelSettings: function(): boolean {
+      return this.showAdvancedSettings && (this.defaultProviderField == 'Say the magic word')
+       || this.openAIKey != undefined && this.openAIKey != ''
+       || this.openAIBasePath != undefined && this.openAIBasePath != '';
+    },
     AiDisplayType: function(): string {
       if (this.showAIKey) {
         return "";
@@ -226,7 +253,7 @@ export default Vue.extend({
                 });
 
                 const wkj = responseWKJ.data;
-                console.log(wkj);
+                // console.log(wkj);
                 if (wkj.token_endpoint && wkj.authorization_endpoint) this.FhirServerSupportsSmartAuth = true;
               }
               catch(err){
@@ -264,11 +291,12 @@ export default Vue.extend({
       this.loadingFhirServerAuthData = false;
     },
     async readUserSettings() {
-      console.log("read User Settings");
+      // console.log("read User Settings");
       const values = settings.load();
-      console.log(values);
+      // console.log(values);
 
       this.fhirServerUrl = values.fhirServerUrl;
+      this.fhirServerExamplesUrl = values.fhirServerExamplesUrl;
       this.OAuthClientId = values.OAuthClientId;
       this.fhirTerminologyServerUrl = values.fhirTerminologyServerUrl;
       this.syncFavourites = values.syncFavourites;
@@ -279,6 +307,8 @@ export default Vue.extend({
       this.openAIApiVersion = values.openAIApiVersion;
       this.openAIBasePath = values.openAIBasePath;
       this.openAIModel = values.openAIModel;
+      this.openAIFastModel = values.openAIFastModel;
+      this.openAIFeedbackEnabled = values.openAIFeedbackEnabled;
       this.showAdvancedSettings = values.showAdvancedSettings;
       this.pageSize = values.pageSize;
 
@@ -286,16 +316,17 @@ export default Vue.extend({
       await this.checkFhirServerSmartAuthCapabilities();
     },
     async writeUserSettings() {
-      console.log("write User Settings");
+      // console.log("write User Settings");
       settings.save(this);
       const values = settings.load();
-      console.log(values);
+      // console.log(values);
       this.closeSettings();
     },
   },
   data(): IControlData {
     return {
       fhirServerUrl: undefined,
+      fhirServerExamplesUrl: undefined,
       OAuthClientId: undefined,
       fhirTerminologyServerUrl: undefined,
       syncFavourites: false,
@@ -307,6 +338,8 @@ export default Vue.extend({
       openAIApiVersion: undefined,
       openAIBasePath: undefined,
       openAIModel: undefined,
+      openAIFastModel: undefined,
+      openAIFeedbackEnabled: false,
       showAdvancedSettings: true,
       pageSize: 10,
 

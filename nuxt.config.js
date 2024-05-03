@@ -74,7 +74,9 @@ export default {
     transpile: [
       "vue-easytable",
       "@fhir-typescript/r4b-core",
-      "fhirpath"
+      "fhirpath",
+      "ucum-lhc",
+      "openai",
     ]
   }
 }

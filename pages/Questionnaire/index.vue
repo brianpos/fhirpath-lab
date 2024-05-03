@@ -270,11 +270,11 @@ export default Vue.extend({
       if (!contexts) return false;
       var result = false;
       var newCodings = this.searchUseContexts ?? [];
-      for (var val of contexts) {
+      for (let val of contexts) {
         if (!val.valueCodeableConcept || !val.valueCodeableConcept.coding)
           continue;
 
-        for (var coding of val.valueCodeableConcept.coding) {
+        for (let coding of val.valueCodeableConcept.coding) {
           if (
             this.searchUseContexts?.filter((value, index, array) => {
               if (value.system !== coding.system) return false;

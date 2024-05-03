@@ -76,6 +76,10 @@
             <v-icon left> mdi-application-variable-outline </v-icon>
             Variables
           </v-tab>
+          <v-tab>
+            <v-icon left> mdi-bug-play-outline </v-icon>
+            Renderer
+          </v-tab>
 
           <v-tabs-items touchless v-model="tab">
             <v-tab-item>
@@ -93,6 +97,7 @@
               <conformance-resource-publishing-tab
                 :raw="raw"
                 :publishedVersions="publishedVersions"
+                :lockPublisher="false"
                 :readonly="readonly"
                 :showAdvancedSettings="showAdvancedSettings"
                 @update="updateNow"
@@ -166,6 +171,18 @@
                 </v-card-text>
               </v-card>
             </v-tab-item>
+
+            <v-tab-item>
+              <!-- CSIRO Renderer -->
+              <v-card flat>
+                <v-card-text>
+                  <p class="fl-tab-header">Renderer</p>
+                  <EditorRendererSection
+                    v-if="raw"
+                    v-bind:questionnaire="raw" />
+                </v-card-text>
+              </v-card>
+            </v-tab-item>
           </v-tabs-items>
         </v-tabs>
       </v-card>
@@ -236,6 +253,9 @@ import { BaseResource_defaultValues } from "~/models/BaseResourceTableData";
 export default Vue.extend({
   //   components: { fhirqItem },
   mounted() {
+    if (this.$route.query.fhirserver){
+      this.fhirServerUrl = this.$route.query.fhirserver as string;
+    }
     this.searchFhirServer();
   },
   methods: {
@@ -317,7 +337,7 @@ export default Vue.extend({
         return newResource;
       };
       await loadCanonicalResource(
-        settings.getFhirServerUrl(),
+        this.fhirServerUrl ?? settings.getFhirServerUrl(),
         this,
         this,
         "Questionnaire",
@@ -369,7 +389,7 @@ export default Vue.extend({
     },
 
     async saveData() {
-      const outcome = await saveFhirResource(settings.getFhirServerUrl(), this);
+      const outcome = await saveFhirResource(this.fhirServerUrl ?? settings.getFhirServerUrl(), this);
       if (!outcome) {
         if (this.raw?.id) {
           if (this.$route.params.id.endsWith(":new")) {

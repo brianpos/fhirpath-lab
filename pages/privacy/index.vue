@@ -7,7 +7,7 @@
       <h5>Disclaimers:</h5>
       <p>
         Written by Brian Postlethwaite to support the FHIR community and is provided AS-IS.<br />
-        This is not a Microsoft product, and does not come with any waranties explicit or implied.
+        This is not a Microsoft product, and does not come with any warranties explicit or implied.
       </p>
       <h5>Licensing:</h5>
       <p>

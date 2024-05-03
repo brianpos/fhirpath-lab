@@ -1,4 +1,6 @@
-import { ChatMessage, OpenAIClient, AzureKeyCredential, OpenAIKeyCredential, OpenAIClientOptions } from "@azure/openai";
+import { OpenAI, ClientOptions } from "openai";
+import { FinalRequestOptions, Headers } from "openai/core";
+import { ChatCompletionCreateParamsNonStreaming, ChatCompletionMessageParam } from "openai/resources/chat/completions";
 
 export interface IOpenAISettings {
     openAIKey: string;
@@ -16,40 +18,70 @@ interface OpenAiErrorDetail {
     message: string;
 }
 
+class MyOpenAIClient extends OpenAI {
+    constructor(options: ClientOptions) {
+        super(options);
+    }
+    // https://github.com/openai/openai-node/blob/4c041e03013dbd7de5bfeb02db42c5e657217167/src/core.ts#L206
+    protected defaultHeaders(opts: FinalRequestOptions<unknown>): Headers {
+        let headers = super.defaultHeaders(opts);
+        // If there is no authorization header then don't need the other settings too,
+        // as this is not the actual OpenAI endpoints.
+        if (headers['Authorization'] === 'Bearer ') {
+            delete headers['X-Stainless-Arch'];
+            delete headers['X-Stainless-OS'];
+            delete headers['X-Stainless-Lang'];
+            delete headers['X-Stainless-Package-Version'];
+            delete headers['X-Stainless-Runtime'];
+            delete headers['X-Stainless-Runtime-Version'];
+            delete headers['Authorization'];
+        }
+        return headers;
+    }
+}
+
 export async function EvaluateChatPrompt(
-    messages: Array<ChatMessage>,
+    messages: Array<ChatCompletionMessageParam>,
     settings: IOpenAISettings,
     temperature: number,
     max_tokens?: number): Promise<string | undefined> {
 
     try {
         let client = null;
+        // this is all in browser with client side use of client's own keys, so we can allow browser
+        let clientOptions: ClientOptions = { dangerouslyAllowBrowser: true };
+        if (settings.openAIKey)
+            clientOptions.apiKey = settings.openAIKey;
+        else
+            clientOptions.apiKey = '';
         if (settings.openAIBasePath) {
-            client = new OpenAIClient(settings.openAIBasePath ?? "",
-                new AzureKeyCredential(settings.openAIKey),
-                { apiVersion: settings.openAIApiVersion });
-        }
-        else {
-            const opts: OpenAIClientOptions = {
-                credentials: { apiKeyHeaderName: "Authorization" }
-            };
-            client = new OpenAIClient(new OpenAIKeyCredential(settings.openAIKey), opts);
+            clientOptions.baseURL = settings.openAIBasePath;
+            if (settings.openAIApiVersion) {
+                clientOptions.defaultQuery = { 'api-version': settings.openAIApiVersion };
+                clientOptions.defaultHeaders = { 'api-key': settings.openAIKey };
+                clientOptions.baseURL = settings.openAIBasePath + settings.openAIModel;
+            }
         }
 
-        const result = await client.getChatCompletions(settings.openAIModel ?? "", messages, {
+        client = new MyOpenAIClient(clientOptions);
+
+        let reqBody: ChatCompletionCreateParamsNonStreaming = {
+            model: settings.openAIModel ?? "",
+            messages: messages,
             temperature: temperature,
-            maxTokens: max_tokens
-        });
-        return result.choices[0].message?.content;
+            max_tokens: max_tokens
+        };
+        const result = await client.chat.completions.create(reqBody);
+        return result.choices[0].message?.content ?? undefined;
 
-    } catch (err) {
+    } catch (err: any) {
         console.log(err);
         return err.message ?? err.error?.message;
     }
 };
 
-export function CreatePrompt(): Array<ChatMessage> {
-    let prompt: Array<ChatMessage> = [];
+export function CreatePrompt(): Array<ChatCompletionMessageParam> {
+    let prompt: Array<ChatCompletionMessageParam> = [];
 
     prompt.push({ role: "system", content: GetSystemPrompt() });
 
@@ -326,6 +358,11 @@ export function GetSystemPrompt(): string {
     * If a FHIRPath context is provided, do not include that at the start of the expression.
     * If no FHIRPath expression is provided, then assume the expression provided is the context.
     * Any fhir context for a fhirpath expression should be provided in a markdown block with the language \`fhircontext\`.
+    * You may also provide guidance on working with FHIR Questionnaires and HL7 Structured Data Capture (SDC).
+    * Questionnaire validations should use the SDC constraint extension.
+    * When recommending a change to a questionnaire, provide the change in a markdown block with the language \`questionnaire\`, and provide the complete resource JSON so that it can be copied (if the resource is large, omit the text narrative property), unless explicitly asked for a summary only.
+    * When recommending a change to a questionnaire item, provide the change in a markdown block with the language \`item\`.
+    * Any general fhir resource snippits whould be provided in a markdown block with the language \`fhir\`.
     * Reflect on your answer to check for accuracy and clarity, and report any possible issues with the answer.
     
     Question:

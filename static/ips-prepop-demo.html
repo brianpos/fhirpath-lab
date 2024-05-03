@@ -1,0 +1,2240 @@
+<html>
+
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+
+    <!-- lhforms renderer preview-->
+    <link href="https://clinicaltables.nlm.nih.gov/lforms-versions/33.4.1/webcomponent/styles.css" media="screen"
+        rel="stylesheet" />
+
+    <!-- for material design icons -->
+    <script src="https://code.iconify.design/1/1.0.6/iconify.min.js"></script>
+
+    <title>IPS pre-pop demo</title>
+
+    <style>
+        .lhc-form .lhc-item-group-title {
+            background: #458ac5;
+            color: white;
+        }
+
+        .lhc-form .lhc-item-group-title .question {
+            color: white;
+        }
+
+        .lhc-layout-horizontal .lhc-form-horizontal-table-title {
+            background: #458ac5;
+            color: white;
+            padding: 4px 8px;
+        }
+
+        .lhc-item-question.lhc-active-row {
+            background-color: rgb(210, 245, 255);
+        }
+
+        .lhc-form input[type=text],
+        .lhc-form input[type=number] {
+            border: 0px solid #ced5d9;
+        }
+
+        .lhc-layout-horizontal .lhc-form-horizontal-table-header {
+            border-radius: 0;
+        }
+
+        .question {
+            color: rgba(0, 0, 0, 0.54);
+        }
+    </style>
+    <!-- Brian's custom styling for the fhirpath-lab -->
+    <style>
+        .editor {
+            height: calc(100vh - 250px);
+        }
+
+        .editorIPS {
+            height: calc(100vh - 348px);
+        }
+
+        .layout {
+            height: calc(100vh - 80px);
+            display: grid;
+            grid-template-columns: auto auto auto auto;
+            gap: 8px;
+        }
+
+        .layout>div {
+            /* border: 4px dashed green; */
+            max-height: calc(100vh - 108px);
+            overflow-y: auto;
+            padding: 8px;
+            width: calc(25vw - 10px);
+        }
+
+        .layout>div:nth-child(n + 5) {
+            border: 1px dashed silver;
+            height: calc(100vh - 108px);
+            overflow-y: auto;
+            padding: 8px;
+            width: calc(25vw - 10px);
+        }
+
+        #prefill-error {
+            color: red;
+            font-style: bold;
+            white-space: pre-wrap;
+        }
+
+        #prefill-status {
+            padding-left: 8px;
+        }
+
+        @media (max-width: 1250px) {
+            .layout {
+                grid-template-columns: auto auto;
+                grid-template-rows: unset;
+            }
+
+            .layout>div:nth-child(n + 5) {
+                /* height: unset; */
+                /* max-height: calc(70vh - 108px); */
+                width: calc(50vw - 10px);
+                /* overflow-y: unset; */
+            }
+
+            .layout>div {
+                /* height: unset;
+                max-height: calc(70vh - 108px); */
+                width: calc(50vw - 10px);
+                /* overflow-y: unset; */
+            }
+
+            .editor {
+                height: calc(70vh - 250px);
+            }
+
+            .editorIPS {
+                height: calc(70vh - 348px);
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .layout {
+                grid-template-columns: unset;
+                grid-template-rows: auto auto auto auto;
+            }
+
+            .layout>div>h2 {
+                font-size: 16px;
+            }
+
+            .layout>div {
+                /* height: unset; */
+                /* max-height: calc(70vh - 108px); */
+                width: calc(100vw - 10px);
+                /* overflow-y: unset; */
+            }
+
+            .layout>div:nth-child(n + 5) {
+                /* height: unset;
+                max-height: calc(70vh - 108px); */
+                width: calc(100vw - 10px);
+                /* overflow-y: unset; */
+            }
+
+            .editor {
+                height: calc(70vh - 250px);
+            }
+
+            .editorIPS {
+                height: calc(70vh - 348px);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="container-fluid">
+            <span class="navbar-brand">IPS Pre-population demonstration</span>
+        </div>
+    </nav>
+    <div class="container2 layout">
+        <div>
+            <h2>Intake Form</h2>
+            <div class="input-group">
+                <input id="urlQuestionnaire" width="0" class="form-control" type="text" name="" placeholder=""
+                    value="https://fhir.forms-lab.com/Questionnaire/ips-prepop6">
+                <button class="input-group-text" id="btnDownloadQuestionnaire"><span class="iconify"
+                        data-icon="mdi-download"></span></button>
+                <button class="input-group-text" id="btnFormatQuestionnaire"><span class="iconify"
+                        data-icon="mdi-format-indent-increase"></span></button>
+            </div>
+            <div>
+                <div id="myFormContainer"></div>
+            </div>
+        </div>
+        <div>
+            <h2>Auto-populate</h2>
+            <p>
+                You can partially complete this form using data from an International Patient Summary (IPS) formatted
+                medical record.<br />
+                Warning: This will clear any data already entered in the form.<br />
+                Select one of the below options to retrieve your medical record.
+            </p>
+            <label class="form-label">Direct IPS Address</label>
+            <div class="input-group">
+                <input id="urlIPS" width="0" class="form-control" type="text" name=""
+                    placeholder="Direct URL to IPS Bundle"
+                    value="https://hapi.fhir.org/baseR4/Patient/1221256/$summary">
+                <button class="input-group-text" id="btnDownloadIPS"><span class="iconify"
+                        data-icon="mdi-download"></span></button>
+            </div>
+            <label class="form-label">Smart Health Link (QR code)</label>
+            <div class="input-group">
+                <input id="shlink" width="0" class="form-control" type="text" name="" placeholder=""
+                    value="https://shlink.ips.health/ips#shlink:/eyJ1cmwiOiJodHRwczovL2FwaS52YXh4LmxpbmsvYXBpL3NobC8wMTNxS1YwZWRQWTdyVWNZYWpEa0V1ejZ0eGJ3WGs1Ums0N2tHanZrS1NBIiwiZmxhZyI6IiIsImtleSI6Ijh0bXpKQ0tvdDVKSHd2dmVNTzBsWmNJaXRGY3NpRmdzVWxFYTltVGN6TDgiLCJsYWJlbCI6IlNITCBmcm9tIDIwMjMtMDgtMjkifQ">
+                <button class="input-group-text" id="btnDownloadSHLink"><span class="iconify"
+                        data-icon="mdi-download"></span></button>
+            </div>
+            <p>
+                <i>Or manually enter your IPS Bundle into the editor below</i>
+                <br />
+            <div class="form-inline">
+                <button id="prepopQuestionnaire" class="btn btn-primary">Pre-fill from Medical Record</button>
+                <label id="prefill-status"></label>
+                <label id="prefill-error"></label>
+            </div>
+            </p>
+            <p>
+                <a href="http://hl7.org/fhir/uv/ips" target="_blank">IPS</a> is a standard for
+                exchanging
+                patient data. It is a bundle of FHIR resources that can be used to pre-populate a form.
+            </p>
+            <br />
+            <p>
+            <div class="btn-group" role="group" aria-label="First group">
+                <div class="input-group-text">Debug View: </div>
+                <button class="btn btn-outline-secondary" id="btnNone">None</button>
+                <button class="btn btn-outline-primary" id="btnInput">Input</button>
+                <button class="btn btn-outline-secondary" id="btnProcessing">Processing</button>
+            </div>
+            </p>
+        </div>
+        <div class="view-input">
+            <h2>Questionnaire Definition
+                <button id="renderQuestionnaire" class="btn btn-primary">Render</button>
+                <button id="validateQuestionnaire" class="btn btn-primary">Validate</button>
+            </h2>
+            <div id="editorQuestionnaire" class="editor"></div>
+        </div>
+        <div class="view-input">
+            <h2>IPS Bundle</h2>
+            <div id="editorIPS" class="editor"></div>
+        </div>
+        <div class="output">
+            <h2>Prepop Request</h2>
+            <div id="editorPrePopParams" class="editor"></div>
+        </div>
+        <div class="output">
+            <h2>Prepop Response</h2>
+            <div id="editorQR" class="editor"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+        crossorigin="anonymous"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.24.1/ace.js"
+        integrity="sha512-qoTuZAi37gnhWcmNJlzdcWsWlUnI+kWSAd4lGkfNJTPaDKz5JT8buB77B30bTCnX0mdk5tZdvKYZtss+DNgUFQ=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script
+        src="https://clinicaltables.nlm.nih.gov/lforms-versions/33.4.1/webcomponent/assets/lib/zone.min.js"></script>
+    <script src="https://clinicaltables.nlm.nih.gov/lforms-versions/33.4.1/webcomponent/scripts.js"></script>
+    <script src="https://clinicaltables.nlm.nih.gov/lforms-versions/33.4.1/webcomponent/runtime.js"></script>
+    <script src="https://clinicaltables.nlm.nih.gov/lforms-versions/33.4.1/webcomponent/polyfills.js"></script>
+    <script src="https://clinicaltables.nlm.nih.gov/lforms-versions/33.4.1/webcomponent/main.js"></script>
+    <script src="https://clinicaltables.nlm.nih.gov/lforms-versions/33.4.1/fhir/R4/lformsFHIR.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fhirclient@2/build/fhir-client.min.js"></script>
+
+    <script type="text/javascript">
+        var options = { prepopulate: false }; // this form is doing the pre-pop
+        var formDefinition = { resourceType: "Questionnaire" };
+        var editorQuestionnaire;
+        var editorIPS;
+        var editorQR;
+        var editorPrePopParams;
+
+        $(document).ready(function () {
+            $(".output").hide();
+
+            editorIPS = ace.edit("editorIPS");
+            editorIPS.setTheme("ace/theme/solarized_light");
+            editorIPS.session.setMode("ace/mode/json");
+            editorIPS.setValue(JSON.stringify(sampleIPS, null, 4));
+
+            editorQuestionnaire = ace.edit("editorQuestionnaire");
+            editorQuestionnaire.setTheme("ace/theme/solarized_light");
+            editorQuestionnaire.session.setMode("ace/mode/json");
+
+            editorQR = ace.edit("editorQR");
+            editorQR.setTheme("ace/theme/solarized_light");
+            editorQR.session.setMode("ace/mode/json");
+
+            editorPrePopParams = ace.edit("editorPrePopParams");
+            editorPrePopParams.setTheme("ace/theme/solarized_light");
+            editorPrePopParams.session.setMode("ace/mode/json");
+
+            var fhirContext = {
+                fhir: FHIR.client({
+                    serverUrl: "https://sqlonfhir-r4.azurewebsites.net/fhir",
+                    tokenResponse: { patient: "https://sqlonfhir-r4.azurewebsites.net/fhir/Patient/example" }
+                })
+            };
+            LForms.Util.setFHIRContext(fhirContext.fhir);
+            LForms.Util.addFormToPage(formDefinition, 'myFormContainer', options);
+        });
+
+        $("#btnNone").click(function () {
+            $(".view-input").hide();
+            $(".output").hide();
+
+            $("#btnNone").addClass("btn-outline-primary");
+            $("#btnNone").removeClass("btn-outline-secondary");
+            $("#btnInput").removeClass("btn-outline-primary");
+            $("#btnInput").addClass("btn-outline-secondary");
+            $("#btnProcessing").removeClass("btn-outline-primary");
+            $("#btnProcessing").addClass("btn-outline-secondary");
+        });
+
+        $("#btnInput").click(function () {
+            $(".view-input").show();
+            $(".output").hide();
+
+            $("#btnNone").removeClass("btn-outline-primary");
+            $("#btnNone").addClass("btn-outline-secondary");
+            $("#btnInput").addClass("btn-outline-primary");
+            $("#btnInput").removeClass("btn-outline-secondary");
+            $("#btnProcessing").removeClass("btn-outline-primary");
+            $("#btnProcessing").addClass("btn-outline-secondary");
+        });
+
+        $("#btnProcessing").click(function () {
+            $(".view-input").hide();
+            $(".output").show();
+
+            $("#btnNone").removeClass("btn-outline-primary");
+            $("#btnNone").addClass("btn-outline-secondary");
+            $("#btnInput").removeClass("btn-outline-primary");
+            $("#btnInput").addClass("btn-outline-secondary");
+            $("#btnProcessing").addClass("btn-outline-primary");
+            $("#btnProcessing").removeClass("btn-outline-secondary");
+        });
+
+        $("#btnDownloadQuestionnaire").click(async function () {
+            $("#prefill-error").text("");
+            editorQuestionnaire.setValue("loading ...");
+            editorQuestionnaire.clearSelection();
+            const questionnaireURL = $("#urlQuestionnaire").val();
+            const response = await fetch(questionnaireURL, { cache: "no-cache", headers: { accept: "application/json" } });
+            const raw = await response.text();
+            editorQuestionnaire.setValue(raw);
+            editorQuestionnaire.clearSelection();
+
+            // Now check if this is JSON then render it bare to the preview
+            try {
+                const json = JSON.parse(raw);
+                editorQuestionnaire.setValue(JSON.stringify(json, null, 4));
+                editorQuestionnaire.clearSelection();
+                LForms.Util.addFormToPage(json, 'myFormContainer', options);
+            }
+            catch (err) {
+                console.log(err);
+            }
+        });
+
+        $("#btnFormatQuestionnaire").click(function () {
+            editorQuestionnaire.setValue(JSON.stringify(JSON.parse(editorQuestionnaire.getValue()), null, 4));
+            formDefinition = JSON.parse(editorQuestionnaire.getValue());
+            editorQuestionnaire.clearSelection();
+        });
+
+        $("#renderQuestionnaire").click(function () {
+            formDefinition = JSON.parse(editorQuestionnaire.getValue());
+            LForms.Util.addFormToPage(formDefinition, 'myFormContainer', options);
+        });
+
+        $("#validateQuestionnaire").click(async function () {
+            $("#prefill-error").text("validating...");
+            formDefinition = JSON.parse(editorQuestionnaire.getValue());
+            const bodyContent = JSON.stringify(formDefinition, null, 4);
+
+            // send this to the forms-lab server for validation
+            try {
+                const response = await fetch("https://fhir.forms-lab.com/Questionnaire/$validate", {
+                    method: "POST",
+                    cache: "no-cache",
+                    headers: {
+                        accept: "application/json",
+                        "Content-Type": "application/json"
+                    },
+                    body: bodyContent
+                });
+                const raw = await response.json();
+                console.log(JSON.stringify(raw, null, 4));
+                $("#prefill-error").text(JSON.stringify(raw, null, 4));
+            } catch (error) {
+                console.log(error);
+            }
+        });
+
+        $("#btnDownloadIPS").click(async function () {
+            $("#prefill-status").text("loading IPS Bundle direct ...");
+            $("#prefill-error").text("");
+            editorIPS.setValue("loading IPS Bundle direct ...");
+            editorIPS.clearSelection();
+            const ipsURL = $("#urlIPS").val();
+            const response = await fetch(ipsURL, { cache: "no-cache", headers: { accept: "application/json" } });
+            const raw = await response.text();
+            try {
+                const json = JSON.parse(raw);
+                editorIPS.setValue(JSON.stringify(json, null, 4));
+                editorIPS.clearSelection();
+
+                // And then use this data to pre-fill the form
+                await PreFillFromIPSBundle();
+            }
+            catch (err) {
+                console.log(err);
+                editorIPS.setValue(raw);
+                editorIPS.clearSelection();
+                $("#prefill-error").text(err.message);
+            }
+            $("#prefill-status").text("");
+        });
+
+        $("#prepopQuestionnaire").click(async function () {
+            $("#prefill-error").text("");
+            await PreFillFromIPSBundle();
+            $("#prefill-status").text("");
+        });
+
+        async function PreFillFromIPSBundle() {
+            try {
+                formDefinition = JSON.parse(editorQuestionnaire.getValue());
+            } catch (err) {
+                $("#prefill-error").text("Can't read form definition");
+                return;
+            }
+            try {
+                var ipsBundle = JSON.parse(editorIPS.getValue());
+                const prepopParams = {
+                    resourceType: "Parameters",
+                    "parameter": [
+                        {
+                            "name": "subject",
+                            "valueReference": {
+                                "display": "intake patient"
+                            }
+                        },
+                        {
+                            "name": "questionnaire",
+                            "resource": formDefinition
+                        },
+                        {
+                            "name": "context",
+                            "part": [
+                                {
+                                    "name": "name",
+                                    "valueString": "ips"
+                                },
+                                {
+                                    "name": "content",
+                                    "resource": ipsBundle
+                                }]
+                        }]
+                };
+                const bodyContent = JSON.stringify(prepopParams, null, 4);
+                editorPrePopParams.setValue(bodyContent);
+                editorPrePopParams.clearSelection();
+                // Use the FHIR $populate operation to pre-populate the form
+                // from Brian's forms-lab demo server
+                const response = await fetch("https://fhir.forms-lab.com/Questionnaire/$populate", {
+                    method: "POST",
+                    cache: "no-cache",
+                    headers: {
+                        accept: "application/json",
+                        "Content-Type": "application/json"
+                    },
+                    body: bodyContent
+                });
+                const raw = await response.text();
+
+                editorQR.setValue(raw);
+                editorQR.clearSelection();
+
+                try {
+                    var jsonOutput = JSON.parse(raw);
+                    if (jsonOutput.resourceType === "OperationOutcome") {
+                        $("#prefill-error").text("Unable to pre-populate form, refer to outcome");
+                    }
+                }
+                catch (err) {
+                    console.log(err);
+                    $("#prefill-error").text(err.message);
+                }
+
+                // TODO: Render the pre-populated data
+                $("#prefill-status").text("completing pre-fill ...");
+                var lhcQ = LForms.Util.convertFHIRQuestionnaireToLForms(formDefinition, "R4");
+                var lhcQR = LForms.Util.mergeFHIRDataIntoLForms("QuestionnaireResponse", JSON.parse(raw), lhcQ, "R4")
+                LForms.Util.addFormToPage(lhcQR, 'myFormContainer', options);
+            }
+            catch (err) {
+                console.log(err);
+                $("#prefill-error").text(err.message);
+            }
+        }
+
+        $("#lhcSubmit").click(function () {
+            // details on how to use the LHC widget are here:
+            // https://lhncbc.github.io/lforms/#fhirSupport
+            var response = LForms.Util.getFormFHIRData("QuestionnaireResponse", "R4");
+            response.questionnaire = formDefinition.url;
+            if (formDefinition.version)
+                response.questionnaire += "|" + formDefinition.version;
+            response.subject = { reference: "https://sqlonfhir-r4.azurewebsites.net/fhir/Patient/example" };
+            response.author = { reference: "https://sqlonfhir-r4.azurewebsites.net/fhir/Practitioner/example" };
+            delete response.meta;
+            console.log(response);
+            $("#lhcSubmitRawResult").text(JSON.stringify(response, null, 4));
+            $('#savingMessage').text("saving content ...");
+            // clear any prior validation messages
+            $('#errorMessages').text("");
+            $('#savedQuestionnaireResposeId').text("");
+            $('#savedQuestionnaireResposeId').attr("href", "");
+            $.ajax({
+                url: "/QuestionnaireResponse",
+                type: "POST",
+                headers: {
+                    Accept: "application/fhir+json",
+                    'Content-Type': "application/fhir+json"
+                },
+                data: JSON.stringify(response),
+                success: function (data) {
+                    // PMS TODO: Do whatever is appropriate after completing the script.
+                    // saving the QR locally, or retrieving the PDF/HTML output for it to store
+                    $('#savingMessage').text("Save complete: ");
+                    $('#savedQuestionnaireResposeId').text("QuestionnaireResponse/" + data.id);
+                    $('#savedQuestionnaireResposeId').attr("href", "/QuestionnaireResponse/" + data.id);
+                    $("#lhcSubmitRawResult").text(JSON.stringify(data, null, 4));
+                },
+                error: function (ex, a, b) {
+                    $('#savingMessage').text("complete - with error");
+
+                    if (ex.responseJSON !== undefined && ex.responseJSON.issue !== undefined) {
+                        // and throw something in the box at the bottom
+                        // $('#divQuestionnaire').displayErrorAndWarningMessages(ex.responseJSON, true, false);
+                        for (var i = 0; i < ex.responseJSON.issue.length; i++) {
+                            addToResultMessages(ex.responseJSON.issue[i]);
+                        }
+                    }
+                    else {
+                        $('#divQuestionnaire').displayErrorAndWarningMessages({}, true, false);
+                        addToResultMessages({ message: JSON.stringify(ex) });
+                    }
+                }
+            });
+        });
+        function addToResultMessages(issue) {
+            var divError = $("<div></div>");
+            if (issue.message !== undefined) {
+                divError.text(issue.message);
+                divError.addClass("fhirq-validation-error");
+            }
+            else {
+                divError.text(issue.details.text);
+                if (issue.severity === 'warning')
+                    divError.addClass("fhirq-validation-warning");
+                else
+                    divError.addClass("fhirq-validation-error");
+            }
+            divError.appendTo('#errorMessages');
+        }
+
+        var sampleIPS =
+        {
+            "resourceType": "Bundle",
+            "identifier": {
+                "system": "urn:ietf:rfc:4122",
+                "value": "5167916f-cfdd-4698-9b78-829ad0fe55cf"
+            },
+            "type": "document",
+            "timestamp": "2023-08-25T04:32:25.467+00:00",
+            "entry": [
+                {
+                    "fullUrl": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d",
+                    "resource": {
+                        "resourceType": "Composition",
+                        "status": "final",
+                        "type": {
+                            "coding": [
+                                {
+                                    "system": "http://loinc.org",
+                                    "code": "60591-5",
+                                    "display": "Patient Summary Document"
+                                }
+                            ]
+                        },
+                        "subject": {
+                            "reference": "Patient/98549f1a-e0d5-4454-849c-f5b97d3ed299"
+                        },
+                        "date": "2023-08-25T04:32:25+00:00",
+                        "author": [
+                            {
+                                "reference": "urn:uuid:2cca093b-7ba7-42f9-870c-12c0870baca2"
+                            }
+                        ],
+                        "title": "Patient Summary as of 08/25/2023",
+                        "confidentiality": "N",
+                        "section": [
+                            {
+                                "title": "Allergies and Intolerances",
+                                "code": {
+                                    "coding": [
+                                        {
+                                            "system": "http://loinc.org",
+                                            "code": "48765-2",
+                                            "display": "Allergies and Adverse Reactions"
+                                        }
+                                    ]
+                                },
+                                "text": {
+                                    "status": "generated",
+                                    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><table class=\"hapiPropertyTable\"><caption>Allergies And Intolerances</caption><thead><tr><th>Allergen</th><th>Status</th><th>Category</th><th>Reaction</th><th>Severity</th><th>Comments</th><th>Onset</th></tr></thead><tbody><tr id=\"AllergiesAndIntolerances-urn:uuid:2c60512e-9932-4dfd-a22f-3a173d4f39d7\"><td> No information about allergies </td><td> active </td><td/><td/><td/><td/><td/></tr></tbody></table></div>"
+                                },
+                                "entry": [
+                                    {
+                                        "reference": "urn:uuid:2c60512e-9932-4dfd-a22f-3a173d4f39d7"
+                                    }
+                                ]
+                            },
+                            {
+                                "title": "Medication List",
+                                "code": {
+                                    "coding": [
+                                        {
+                                            "system": "http://loinc.org",
+                                            "code": "10160-0",
+                                            "display": "Medication List"
+                                        }
+                                    ]
+                                },
+                                "text": {
+                                    "status": "generated",
+                                    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><table class=\"hapiPropertyTable\"><caption>Medication Summary: Medication Requests</caption><thead><tr><th>Medication</th><th>Status</th><th>Route</th><th>Sig</th><th>Comments</th><th>Authored Date</th></tr></thead><tbody><tr id=\"MedicationSummary-ce18fde3-8e69-4820-8bf4-0015a6185115\"><td> atorvastatin 40mg Oral Tablet </td><td>Active</td><td/><td> 40 mg/day </td><td/><td/></tr></tbody></table><table class=\"hapiPropertyTable\"><caption>Medication Summary: Medication Statements</caption><thead><tr><th>Medication</th><th>Status</th><th>Route</th><th>Sig</th><th>Date</th></tr></thead><tbody><tr id=\"MedicationSummary-d41ac499-c7e8-45fa-9246-69028bae178f\"><td/><td>Active</td><td> Nasal use </td><td/><td/></tr><tr id=\"MedicationSummary-c8b1d1d0-6654-4e55-a1f4-a832f463cf94\"><td/><td>Active</td><td> Oral use </td><td/><td/></tr><tr id=\"MedicationSummary-345da5a7-872a-4d10-83e3-08ad9feec597\"><td/><td>Active</td><td> Oral use </td><td/><td/></tr></tbody></table></div>"
+                                },
+                                "entry": [
+                                    {
+                                        "reference": "MedicationStatement/d41ac499-c7e8-45fa-9246-69028bae178f"
+                                    },
+                                    {
+                                        "reference": "MedicationStatement/c8b1d1d0-6654-4e55-a1f4-a832f463cf94"
+                                    },
+                                    {
+                                        "reference": "MedicationStatement/345da5a7-872a-4d10-83e3-08ad9feec597"
+                                    },
+                                    {
+                                        "reference": "MedicationRequest/ce18fde3-8e69-4820-8bf4-0015a6185115"
+                                    }
+                                ]
+                            },
+                            {
+                                "title": "Problem List",
+                                "code": {
+                                    "coding": [
+                                        {
+                                            "system": "http://loinc.org",
+                                            "code": "11450-4",
+                                            "display": "Problem List"
+                                        }
+                                    ]
+                                },
+                                "text": {
+                                    "status": "generated",
+                                    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><table class=\"hapiPropertyTable\"><caption>Problem List</caption><thead><tr><th>Medical Problems</th><th>Status</th><th>Comments</th><th>Onset Date</th></tr></thead><tbody/></table></div>"
+                                },
+                                "entry": [
+                                    {
+                                        "reference": "Condition/29f1316b-0ad4-429f-95b0-1b61ccfec704"
+                                    },
+                                    {
+                                        "reference": "Condition/5297de1d-f952-4050-9dc6-e1218fb24951"
+                                    },
+                                    {
+                                        "reference": "Condition/3c317eb4-343b-4093-8f35-83a9483d92b0"
+                                    }
+                                ]
+                            },
+                            {
+                                "title": "History of Immunizations",
+                                "code": {
+                                    "coding": [
+                                        {
+                                            "system": "http://loinc.org",
+                                            "code": "11369-6",
+                                            "display": "History of Immunizations"
+                                        }
+                                    ]
+                                },
+                                "text": {
+                                    "status": "generated",
+                                    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><table class=\"hapiPropertyTable\"><caption>Immunizations</caption><thead><tr><th>Immunization</th><th>Status</th><th>Dose Number</th><th>Manufacturer</th><th>Lot Number</th><th>Comments</th><th>Date</th></tr></thead><tbody><tr id=\"Immunizations-964494c1-e0e0-433e-81e6-2eb4c4201186\"><td> Tdap </td><td>COMPLETED</td><td/><td/><td>C2825AA</td><td/><td> Tue Sep 18 00:00:00 UTC 2007 </td></tr><tr id=\"Immunizations-c1b08178-e73d-4dc5-a6a8-ef202de500d2\"><td> Poliovirus inactivated IPV (IPOL) </td><td>COMPLETED</td><td/><td/><td>Z0872</td><td/><td> Tue Sep 18 00:00:00 UTC 2007 </td></tr><tr id=\"Immunizations-6b01880b-766a-4c83-8562-068e4c80b212\"><td> Hepatitis A, unspecified </td><td>COMPLETED</td><td/><td/><td>AHAVB195AB</td><td/><td> Tue Sep 18 00:00:00 UTC 2007 </td></tr><tr id=\"Immunizations-3acbcc22-7950-44ae-a256-914ef0046854\"><td> Hepatitis A, unspecified </td><td>COMPLETED</td><td/><td/><td>AHAVB251AA</td><td/><td> Tue Sep 16 00:00:00 UTC 2008 </td></tr><tr id=\"Immunizations-e63b8d84-7a52-4b87-8967-5aafca4dc855\"><td> Typhoid live (Vivotif) </td><td>COMPLETED</td><td/><td/><td/><td/><td> Mon Sep 15 00:00:00 UTC 2008 </td></tr><tr id=\"Immunizations-d021ddd0-14bd-4d62-a580-998b1844fa1c\"><td> Yellow fever live (YF-VAX) </td><td>COMPLETED</td><td/><td/><td>UF426AA</td><td/><td> Fri Nov 21 00:00:00 UTC 2008 </td></tr><tr id=\"Immunizations-44db5eb7-4779-4018-8cac-9c08a2983ca0\"><td> Tdap </td><td>COMPLETED</td><td/><td/><td/><td/><td> Tue Sep 22 00:00:00 UTC 2020 </td></tr><tr id=\"Immunizations-3f5be1ca-5aed-4f97-aa9a-37e8b68da374\"><td> COVID-19 Pfizer mRNA monovalent 12 yrs and older (purple cap) </td><td>COMPLETED</td><td/><td/><td>EL0140</td><td/><td> Sat Dec 26 00:00:00 UTC 2020 </td></tr><tr id=\"Immunizations-54ce58c1-3b31-4db3-a5c2-7addb9236d24\"><td> COVID-19 Pfizer mRNA monovalent 12 yrs and older (purple cap) </td><td>COMPLETED</td><td/><td/><td>EL0140</td><td/><td> Sun Jan 17 00:00:00 UTC 2021 </td></tr><tr id=\"Immunizations-fb614759-5946-464b-aa11-de85cd337dee\"><td> Influenza quadrivalent recombinant (Flublok) </td><td>COMPLETED</td><td/><td/><td/><td/><td> Tue Sep 22 00:00:00 UTC 2020 </td></tr><tr id=\"Immunizations-780d49f2-525c-43ff-9d8f-410a67fdf12f\"><td> Influenza quadrivalent PF </td><td>COMPLETED</td><td/><td/><td>7LX9G</td><td/><td> Sat Sep 25 00:00:00 UTC 2021 </td></tr><tr id=\"Immunizations-dd94410f-79be-4fb3-8bf9-1540f1f48cbd\"><td> COVID-19 Moderna mRNA monovalent 12 yrs and older </td><td>COMPLETED</td><td/><td/><td/><td/><td> Fri Oct 15 00:00:00 UTC 2021 </td></tr><tr id=\"Immunizations-d96ee1fa-66c6-41ba-9d69-803b4e693134\"><td> COVID-19 Moderna mRNA monovalent 12 yrs and older </td><td>COMPLETED</td><td/><td/><td>027L21A</td><td/><td> Wed Feb 09 00:00:00 UTC 2022 </td></tr><tr id=\"Immunizations-eca1769e-595f-4c82-bb1c-ab576742b65a\"><td> Influenza quadrivalent MDCK PF (Flucelvax) </td><td>COMPLETED</td><td/><td/><td/><td/><td> Tue Oct 02 00:00:00 UTC 2018 </td></tr><tr id=\"Immunizations-690a34d9-7955-41b8-9d64-c7c35d675b58\"><td> Influenza quadrivalent MDCK PF (Flucelvax) </td><td>COMPLETED</td><td/><td/><td/><td/><td> Wed Oct 02 00:00:00 UTC 2019 </td></tr><tr id=\"Immunizations-d82c724e-5f16-4748-9946-51f76156feb3\"><td> Influenza, unspecified </td><td>COMPLETED</td><td/><td/><td/><td/><td> Tue Oct 18 00:00:00 UTC 2022 </td></tr></tbody></table></div>"
+                                },
+                                "entry": [
+                                    {
+                                        "reference": "Immunization/964494c1-e0e0-433e-81e6-2eb4c4201186"
+                                    },
+                                    {
+                                        "reference": "Immunization/c1b08178-e73d-4dc5-a6a8-ef202de500d2"
+                                    },
+                                    {
+                                        "reference": "Immunization/6b01880b-766a-4c83-8562-068e4c80b212"
+                                    },
+                                    {
+                                        "reference": "Immunization/3acbcc22-7950-44ae-a256-914ef0046854"
+                                    },
+                                    {
+                                        "reference": "Immunization/e63b8d84-7a52-4b87-8967-5aafca4dc855"
+                                    },
+                                    {
+                                        "reference": "Immunization/d021ddd0-14bd-4d62-a580-998b1844fa1c"
+                                    },
+                                    {
+                                        "reference": "Immunization/44db5eb7-4779-4018-8cac-9c08a2983ca0"
+                                    },
+                                    {
+                                        "reference": "Immunization/3f5be1ca-5aed-4f97-aa9a-37e8b68da374"
+                                    },
+                                    {
+                                        "reference": "Immunization/54ce58c1-3b31-4db3-a5c2-7addb9236d24"
+                                    },
+                                    {
+                                        "reference": "Immunization/fb614759-5946-464b-aa11-de85cd337dee"
+                                    },
+                                    {
+                                        "reference": "Immunization/780d49f2-525c-43ff-9d8f-410a67fdf12f"
+                                    },
+                                    {
+                                        "reference": "Immunization/dd94410f-79be-4fb3-8bf9-1540f1f48cbd"
+                                    },
+                                    {
+                                        "reference": "Immunization/d96ee1fa-66c6-41ba-9d69-803b4e693134"
+                                    },
+                                    {
+                                        "reference": "Immunization/eca1769e-595f-4c82-bb1c-ab576742b65a"
+                                    },
+                                    {
+                                        "reference": "Immunization/690a34d9-7955-41b8-9d64-c7c35d675b58"
+                                    },
+                                    {
+                                        "reference": "Immunization/d82c724e-5f16-4748-9946-51f76156feb3"
+                                    }
+                                ]
+                            },
+                            {
+                                "title": "Social History",
+                                "code": {
+                                    "coding": [
+                                        {
+                                            "system": "http://loinc.org",
+                                            "code": "29762-2",
+                                            "display": "Social History"
+                                        }
+                                    ]
+                                },
+                                "text": {
+                                    "status": "generated",
+                                    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><table class=\"hapiPropertyTable\"><caption>Social History</caption><thead><tr><th>Code</th><th>Result</th><th>Unit</th><th>Comments</th><th>Date</th></tr></thead><tbody><tr id=\"SocialHistory-cd1cb4ea-6771-4713-bcf5-0f3f1e7422e4\"><td> Tobacco smoking status </td><td> Former smoker </td><td/><td/><td> Mon Jul 15 00:00:00 UTC 2019 </td></tr></tbody></table></div>"
+                                },
+                                "entry": [
+                                    {
+                                        "reference": "Observation/cd1cb4ea-6771-4713-bcf5-0f3f1e7422e4"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                },
+                {
+                    "fullUrl": "urn:uuid:98549f1a-e0d5-4454-849c-f5b97d3ed299",
+                    "resource": {
+                        "resourceType": "Patient",
+                        "id": "98549f1a-e0d5-4454-849c-f5b97d3ed299",
+                        "meta": {
+                            "versionId": "2",
+                            "lastUpdated": "2023-07-04T04:44:00.261+00:00",
+                            "source": "#Jtzk3baX2Qmcxufi"
+                        },
+                        "text": {
+                            "status": "generated",
+                            "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><div class=\"hapiHeaderText\">Maria <b>GRAVITATE </b></div><table class=\"hapiPropertyTable\"><tbody><tr><td>Identifier</td><td>maria-1</td></tr><tr><td>Date of birth</td><td><span>05 May 1946</span></td></tr></tbody></table></div>"
+                        },
+                        "extension": [
+                            {
+                                "url": "http://hl7.org/fhir/StructureDefinition/patient-citizenship",
+                                "extension": [
+                                    {
+                                        "url": "code",
+                                        "valueCodeableConcept": {
+                                            "coding": [
+                                                {
+                                                    "system": "urn:iso:std:iso:3166",
+                                                    "code": "NO",
+                                                    "display": "Alderney"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                ]
+                            }
+                        ],
+                        "identifier": [
+                            {
+                                "system": "https://www.gravitatehealth.eu/sid/doc",
+                                "value": "maria-1"
+                            }
+                        ],
+                        "active": true,
+                        "name": [
+                            {
+                                "family": "Gravitate",
+                                "given": [
+                                    "Maria"
+                                ]
+                            }
+                        ],
+                        "gender": "female",
+                        "birthDate": "1946-05-05"
+                    }
+                },
+                {
+                    "fullUrl": "urn:uuid:29f1316b-0ad4-429f-95b0-1b61ccfec704",
+                    "resource": {
+                        "resourceType": "Condition",
+                        "id": "29f1316b-0ad4-429f-95b0-1b61ccfec704",
+                        "meta": {
+                            "versionId": "1",
+                            "lastUpdated": "2022-09-27T15:22:03.752+00:00",
+                            "source": "#9tq7NEAGjJqK3DbA"
+                        },
+                        "extension": [
+                            {
+                                "url": "http://hl7.org/fhir/StructureDefinition/NarrativeLink",
+                                "valueUrl": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#PastHistoryOfIllnesses-29f1316b-0ad4-429f-95b0-1b61ccfec704"
+                            }
+                        ],
+                        "clinicalStatus": {
+                            "coding": [
+                                {
+                                    "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
+                                    "code": "active"
+                                }
+                            ]
+                        },
+                        "code": {
+                            "coding": [
+                                {
+                                    "system": "http://snomed.info/sct",
+                                    "code": "38341003",
+                                    "display": "HT - Hypertension"
+                                }
+                            ],
+                            "text": "Hypertension"
+                        },
+                        "subject": {
+                            "reference": "Patient/98549f1a-e0d5-4454-849c-f5b97d3ed299",
+                            "display": "Maria Gravitate"
+                        },
+                        "onsetDateTime": "1993"
+                    }
+                },
+                {
+                    "fullUrl": "urn:uuid:5297de1d-f952-4050-9dc6-e1218fb24951",
+                    "resource": {
+                        "resourceType": "Condition",
+                        "id": "5297de1d-f952-4050-9dc6-e1218fb24951",
+                        "meta": {
+                            "versionId": "1",
+                            "lastUpdated": "2022-09-27T15:22:03.957+00:00",
+                            "source": "#orbIHVNvHLR8seuR"
+                        },
+                        "extension": [
+                            {
+                                "url": "http://hl7.org/fhir/StructureDefinition/NarrativeLink",
+                                "valueUrl": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#PastHistoryOfIllnesses-5297de1d-f952-4050-9dc6-e1218fb24951"
+                            }
+                        ],
+                        "clinicalStatus": {
+                            "coding": [
+                                {
+                                    "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
+                                    "code": "active"
+                                }
+                            ]
+                        },
+                        "code": {
+                            "coding": [
+                                {
+                                    "system": "http://snomed.info/sct",
+                                    "code": "42343007",
+                                    "display": "Congestive heart failure"
+                                }
+                            ],
+                            "text": "Congestive heart failure"
+                        },
+                        "subject": {
+                            "reference": "Patient/98549f1a-e0d5-4454-849c-f5b97d3ed299",
+                            "display": "Maria Gravitate"
+                        },
+                        "onsetDateTime": "2015",
+                        "asserter": {
+                            "reference": "urn:uuid:1ece89c5-fda3-4db9-ace6-decbe6c603d8",
+                            "display": "Dr. Anna Karlsson"
+                        }
+                    }
+                },
+                {
+                    "fullUrl": "urn:uuid:3c317eb4-343b-4093-8f35-83a9483d92b0",
+                    "resource": {
+                        "resourceType": "Condition",
+                        "id": "3c317eb4-343b-4093-8f35-83a9483d92b0",
+                        "meta": {
+                            "versionId": "1",
+                            "lastUpdated": "2022-09-27T15:22:04.132+00:00",
+                            "source": "#pSpU9DOoJO9lxSzT"
+                        },
+                        "extension": [
+                            {
+                                "url": "http://hl7.org/fhir/StructureDefinition/NarrativeLink",
+                                "valueUrl": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#PastHistoryOfIllnesses-3c317eb4-343b-4093-8f35-83a9483d92b0"
+                            }
+                        ],
+                        "clinicalStatus": {
+                            "coding": [
+                                {
+                                    "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
+                                    "code": "active"
+                                }
+                            ]
+                        },
+                        "code": {
+                            "coding": [
+                                {
+                                    "system": "http://snomed.info/sct",
+                                    "code": "9014002",
+                                    "display": "Psoriasis"
+                                }
+                            ],
+                            "text": "Psoriasis"
+                        },
+                        "subject": {
+                            "reference": "Patient/98549f1a-e0d5-4454-849c-f5b97d3ed299",
+                            "display": "Maria Gravitate"
+                        },
+                        "asserter": {
+                            "reference": "urn:uuid:1ece89c5-fda3-4db9-ace6-decbe6c603d8",
+                            "display": "Dr. Anna Karlsson"
+                        }
+                    }
+                },
+                {
+                    "fullUrl": "urn:uuid:d41ac499-c7e8-45fa-9246-69028bae178f",
+                    "resource": {
+                        "resourceType": "MedicationStatement",
+                        "id": "d41ac499-c7e8-45fa-9246-69028bae178f",
+                        "meta": {
+                            "versionId": "1",
+                            "lastUpdated": "2022-09-27T15:22:04.319+00:00",
+                            "source": "#wOHXO3dHsmGHTjyu"
+                        },
+                        "extension": [
+                            {
+                                "url": "http://hl7.org/fhir/StructureDefinition/NarrativeLink",
+                                "valueUrl": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#MedicationSummary-d41ac499-c7e8-45fa-9246-69028bae178f"
+                            }
+                        ],
+                        "status": "active",
+                        "medicationReference": {
+                            "reference": "urn:uuid:9ac3356c-4ea4-4814-84c3-235484f2ef19",
+                            "display": "Oxymetazoline hydrochloride  0.05 mg / 1 ml Spray"
+                        },
+                        "subject": {
+                            "reference": "Patient/98549f1a-e0d5-4454-849c-f5b97d3ed299",
+                            "display": "Maria Gravitate"
+                        },
+                        "dosage": [
+                            {
+                                "route": {
+                                    "coding": [
+                                        {
+                                            "system": "http://standardterms.edqm.eu",
+                                            "code": "20049000",
+                                            "display": "Nasal use"
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "fullUrl": "urn:uuid:c8b1d1d0-6654-4e55-a1f4-a832f463cf94",
+                    "resource": {
+                        "resourceType": "MedicationStatement",
+                        "id": "c8b1d1d0-6654-4e55-a1f4-a832f463cf94",
+                        "meta": {
+                            "versionId": "1",
+                            "lastUpdated": "2022-09-27T15:22:04.512+00:00",
+                            "source": "#04VlRAon7aVsuXz3"
+                        },
+                        "extension": [
+                            {
+                                "url": "http://hl7.org/fhir/StructureDefinition/NarrativeLink",
+                                "valueUrl": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#MedicationSummary-c8b1d1d0-6654-4e55-a1f4-a832f463cf94"
+                            }
+                        ],
+                        "status": "active",
+                        "medicationReference": {
+                            "reference": "urn:uuid:de131e15-ed13-4b31-b38c-3204a84d99c4",
+                            "display": "Irbesartan 75 mg Tablet"
+                        },
+                        "subject": {
+                            "reference": "Patient/98549f1a-e0d5-4454-849c-f5b97d3ed299",
+                            "display": "Maria Gravitate"
+                        },
+                        "dosage": [
+                            {
+                                "route": {
+                                    "coding": [
+                                        {
+                                            "system": "http://standardterms.edqm.eu",
+                                            "code": "20053000",
+                                            "display": "Oral use"
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "fullUrl": "urn:uuid:345da5a7-872a-4d10-83e3-08ad9feec597",
+                    "resource": {
+                        "resourceType": "MedicationStatement",
+                        "id": "345da5a7-872a-4d10-83e3-08ad9feec597",
+                        "meta": {
+                            "versionId": "1",
+                            "lastUpdated": "2022-09-27T15:22:04.692+00:00",
+                            "source": "#7AMDW3kPh9ZNItZo"
+                        },
+                        "extension": [
+                            {
+                                "url": "http://hl7.org/fhir/StructureDefinition/NarrativeLink",
+                                "valueUrl": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#MedicationSummary-345da5a7-872a-4d10-83e3-08ad9feec597"
+                            }
+                        ],
+                        "status": "active",
+                        "medicationReference": {
+                            "reference": "urn:uuid:b50ae644-e0b7-4007-809f-26f493cbe36b",
+                            "display": "Dimethyl fumarate 30 mg Tablet"
+                        },
+                        "subject": {
+                            "reference": "Patient/98549f1a-e0d5-4454-849c-f5b97d3ed299",
+                            "display": "Maria Gravitate"
+                        },
+                        "dosage": [
+                            {
+                                "route": {
+                                    "coding": [
+                                        {
+                                            "system": "http://standardterms.edqm.eu",
+                                            "code": "20053000",
+                                            "display": "Oral use"
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "fullUrl": "urn:uuid:ce18fde3-8e69-4820-8bf4-0015a6185115",
+                    "resource": {
+                        "resourceType": "MedicationRequest",
+                        "id": "ce18fde3-8e69-4820-8bf4-0015a6185115",
+                        "meta": {
+                            "versionId": "1",
+                            "lastUpdated": "2023-03-06T12:21:40.305+00:00",
+                            "source": "#WOpDEhc2S5DbdlCJ"
+                        },
+                        "extension": [
+                            {
+                                "url": "http://hl7.org/fhir/StructureDefinition/NarrativeLink",
+                                "valueUrl": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#MedicationSummary-ce18fde3-8e69-4820-8bf4-0015a6185115"
+                            }
+                        ],
+                        "status": "active",
+                        "intent": "order",
+                        "medicationCodeableConcept": {
+                            "coding": [
+                                {
+                                    "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+                                    "code": "617311",
+                                    "display": "atorvastatin 40mg Oral Tablet"
+                                }
+                            ]
+                        },
+                        "subject": {
+                            "reference": "Patient/1"
+                        },
+                        "dosageInstruction": [
+                            {
+                                "text": "40 mg/day",
+                                "timing": {
+                                    "repeat": {
+                                        "frequency": 1,
+                                        "period": 1,
+                                        "periodUnit": "d"
+                                    }
+                                },
+                                "doseAndRate": [
+                                    {
+                                        "doseQuantity": {
+                                            "value": 40,
+                                            "unit": "mg",
+                                            "system": "http://unitsofmeasure.org",
+                                            "code": "mg"
+                                        }
+                                    }
+                                ]
+                            }
+                        ],
+                        "dispenseRequest": {
+                            "validityPeriod": {
+                                "start": "2021-01-01"
+                            }
+                        }
+                    }
+                },
+                {
+                    "fullUrl": "urn:uuid:cd1cb4ea-6771-4713-bcf5-0f3f1e7422e4",
+                    "resource": {
+                        "resourceType": "Observation",
+                        "id": "cd1cb4ea-6771-4713-bcf5-0f3f1e7422e4",
+                        "meta": {
+                            "versionId": "1",
+                            "lastUpdated": "2023-03-06T12:22:34.546+00:00",
+                            "source": "#debfrTqVyCZeylXl"
+                        },
+                        "text": {
+                            "status": "generated",
+                            "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p><b>Generated Narrative: Observation</b><a name=\"tobacco-use-example\"> </a></p><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Resource Observation &quot;tobacco-use-example&quot; </p></div><p><b>status</b>: final</p><p><b>code</b>: Tobacco smoking status <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"https://loinc.org/\">LOINC</a>#72166-2)</span></p><p><b>subject</b>: <a href=\"Patient-patient-example-female.html\">Patient/patient-example-female</a> &quot; DELAROSA&quot;</p><p><b>effective</b>: 2019-07-15</p><p><b>value</b>: Former smoker <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"https://loinc.org/\">LOINC</a>#LA15920-4)</span></p></div>"
+                        },
+                        "extension": [
+                            {
+                                "url": "http://hl7.org/fhir/StructureDefinition/NarrativeLink",
+                                "valueUrl": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#SocialHistory-cd1cb4ea-6771-4713-bcf5-0f3f1e7422e4"
+                            }
+                        ],
+                        "status": "final",
+                        "category": [
+                            {
+                                "coding": [
+                                    {
+                                        "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                                        "code": "social-history"
+                                    }
+                                ]
+                            }
+                        ],
+                        "code": {
+                            "coding": [
+                                {
+                                    "system": "http://loinc.org",
+                                    "code": "72166-2",
+                                    "display": "Tobacco smoking status"
+                                }
+                            ]
+                        },
+                        "subject": {
+                            "reference": "Patient/1"
+                        },
+                        "effectiveDateTime": "2019-07-15",
+                        "valueCodeableConcept": {
+                            "coding": [
+                                {
+                                    "system": "http://loinc.org",
+                                    "code": "LA15920-4",
+                                    "display": "Former smoker"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "fullUrl": "urn:uuid:964494c1-e0e0-433e-81e6-2eb4c4201186",
+                    "resource": {
+                        "resourceType": "Immunization",
+                        "id": "964494c1-e0e0-433e-81e6-2eb4c4201186",
+                        "meta": {
+                            "versionId": "1",
+                            "lastUpdated": "2023-06-16T15:50:45.057+00:00",
+                            "source": "#g6waZ4xdqRCSFpMi"
+                        },
+                        "extension": [
+                            {
+                                "url": "http://hl7.org/fhir/StructureDefinition/NarrativeLink",
+                                "valueUrl": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#Immunizations-964494c1-e0e0-433e-81e6-2eb4c4201186"
+                            }
+                        ],
+                        "identifier": [
+                            {
+                                "use": "usual",
+                                "system": "urn:oid:1.2.840.114350.1.13.91.2.7.2.768076",
+                                "value": "1922175"
+                            }
+                        ],
+                        "status": "completed",
+                        "vaccineCode": {
+                            "coding": [
+                                {
+                                    "system": "http://hl7.org/fhir/sid/cvx",
+                                    "code": "115"
+                                }
+                            ],
+                            "text": "Tdap"
+                        },
+                        "patient": {
+                            "reference": "Patient/98549f1a-e0d5-4454-849c-f5b97d3ed299"
+                        },
+                        "occurrenceDateTime": "2007-09-18",
+                        "primarySource": true,
+                        "manufacturer": {
+                            "display": "Sanofi Pasteur"
+                        },
+                        "lotNumber": "C2825AA",
+                        "site": {
+                            "coding": [
+                                {
+                                    "system": "urn:oid:1.2.840.114350.1.13.91.2.7.10.768076.4040",
+                                    "code": "7",
+                                    "display": "Left Deltoid"
+                                }
+                            ],
+                            "text": "Left Deltoid"
+                        },
+                        "route": {
+                            "coding": [
+                                {
+                                    "system": "urn:oid:1.2.840.114350.1.13.91.2.7.10.768076.4030",
+                                    "code": "2",
+                                    "display": "Intramuscular"
+                                }
+                            ],
+                            "text": "Intramuscular"
+                        }
+                    }
+                },
+                {
+                    "fullUrl": "urn:uuid:c1b08178-e73d-4dc5-a6a8-ef202de500d2",
+                    "resource": {
+                        "resourceType": "Immunization",
+                        "id": "c1b08178-e73d-4dc5-a6a8-ef202de500d2",
+                        "meta": {
+                            "versionId": "1",
+                            "lastUpdated": "2023-06-16T15:50:57.731+00:00",
+                            "source": "#w1TFpl3oUbkIstSB"
+                        },
+                        "extension": [
+                            {
+                                "url": "http://hl7.org/fhir/StructureDefinition/NarrativeLink",
+                                "valueUrl": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#Immunizations-c1b08178-e73d-4dc5-a6a8-ef202de500d2"
+                            }
+                        ],
+                        "identifier": [
+                            {
+                                "use": "usual",
+                                "system": "urn:oid:1.2.840.114350.1.13.91.2.7.2.768076",
+                                "value": "1922176"
+                            }
+                        ],
+                        "status": "completed",
+                        "vaccineCode": {
+                            "coding": [
+                                {
+                                    "system": "http://hl7.org/fhir/sid/cvx",
+                                    "code": "10"
+                                }
+                            ],
+                            "text": "Poliovirus inactivated IPV (IPOL)"
+                        },
+                        "patient": {
+                            "reference": "Patient/98549f1a-e0d5-4454-849c-f5b97d3ed299"
+                        },
+                        "occurrenceDateTime": "2007-09-18",
+                        "primarySource": true,
+                        "manufacturer": {
+                            "display": "Aventis Behring LLC"
+                        },
+                        "lotNumber": "Z0872",
+                        "site": {
+                            "coding": [
+                                {
+                                    "system": "urn:oid:1.2.840.114350.1.13.91.2.7.10.768076.4040",
+                                    "code": "14",
+                                    "display": "Left Arm"
+                                }
+                            ],
+                            "text": "Left Arm"
+                        },
+                        "route": {
+                            "coding": [
+                                {
+                                    "system": "urn:oid:1.2.840.114350.1.13.91.2.7.10.768076.4030",
+                                    "code": "5",
+                                    "display": "Subcutaneous"
+                                }
+                            ],
+                            "text": "Subcutaneous"
+                        }
+                    }
+                },
+                {
+                    "fullUrl": "urn:uuid:6b01880b-766a-4c83-8562-068e4c80b212",
+                    "resource": {
+                        "resourceType": "Immunization",
+                        "id": "6b01880b-766a-4c83-8562-068e4c80b212",
+                        "meta": {
+                            "versionId": "1",
+                            "lastUpdated": "2023-06-16T15:51:12.281+00:00",
+                            "source": "#L01DKnisdROzYRm3"
+                        },
+                        "extension": [
+                            {
+                                "url": "http://hl7.org/fhir/StructureDefinition/NarrativeLink",
+                                "valueUrl": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#Immunizations-6b01880b-766a-4c83-8562-068e4c80b212"
+                            }
+                        ],
+                        "identifier": [
+                            {
+                                "use": "usual",
+                                "system": "urn:oid:1.2.840.114350.1.13.91.2.7.2.768076",
+                                "value": "1922177"
+                            }
+                        ],
+                        "status": "completed",
+                        "vaccineCode": {
+                            "coding": [
+                                {
+                                    "system": "http://hl7.org/fhir/sid/cvx",
+                                    "code": "85"
+                                }
+                            ],
+                            "text": "Hepatitis A, unspecified"
+                        },
+                        "patient": {
+                            "reference": "Patient/98549f1a-e0d5-4454-849c-f5b97d3ed299"
+                        },
+                        "occurrenceDateTime": "2007-09-18",
+                        "primarySource": true,
+                        "manufacturer": {
+                            "display": "GlaxoSmithKline"
+                        },
+                        "lotNumber": "AHAVB195AB",
+                        "site": {
+                            "coding": [
+                                {
+                                    "system": "urn:oid:1.2.840.114350.1.13.91.2.7.10.768076.4040",
+                                    "code": "7",
+                                    "display": "Left Deltoid"
+                                }
+                            ],
+                            "text": "Left Deltoid"
+                        },
+                        "route": {
+                            "coding": [
+                                {
+                                    "system": "urn:oid:1.2.840.114350.1.13.91.2.7.10.768076.4030",
+                                    "code": "2",
+                                    "display": "Intramuscular"
+                                }
+                            ],
+                            "text": "Intramuscular"
+                        }
+                    }
+                },
+                {
+                    "fullUrl": "urn:uuid:3acbcc22-7950-44ae-a256-914ef0046854",
+                    "resource": {
+                        "resourceType": "Immunization",
+                        "id": "3acbcc22-7950-44ae-a256-914ef0046854",
+                        "meta": {
+                            "versionId": "1",
+                            "lastUpdated": "2023-06-16T15:51:23.026+00:00",
+                            "source": "#eiDQ2dWAO3GfuukI"
+                        },
+                        "extension": [
+                            {
+                                "url": "http://hl7.org/fhir/StructureDefinition/NarrativeLink",
+                                "valueUrl": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#Immunizations-3acbcc22-7950-44ae-a256-914ef0046854"
+                            }
+                        ],
+                        "identifier": [
+                            {
+                                "use": "usual",
+                                "system": "urn:oid:1.2.840.114350.1.13.91.2.7.2.768076",
+                                "value": "2119113"
+                            }
+                        ],
+                        "status": "completed",
+                        "vaccineCode": {
+                            "coding": [
+                                {
+                                    "system": "http://hl7.org/fhir/sid/cvx",
+                                    "code": "85"
+                                }
+                            ],
+                            "text": "Hepatitis A, unspecified"
+                        },
+                        "patient": {
+                            "reference": "Patient/98549f1a-e0d5-4454-849c-f5b97d3ed299"
+                        },
+                        "occurrenceDateTime": "2008-09-16",
+                        "primarySource": true,
+                        "manufacturer": {
+                            "display": "GlaxoSmithKline"
+                        },
+                        "lotNumber": "AHAVB251AA",
+                        "expirationDate": "2010-10-09",
+                        "site": {
+                            "coding": [
+                                {
+                                    "system": "urn:oid:1.2.840.114350.1.13.91.2.7.10.768076.4040",
+                                    "code": "7",
+                                    "display": "Left Deltoid"
+                                }
+                            ],
+                            "text": "Left Deltoid"
+                        },
+                        "route": {
+                            "coding": [
+                                {
+                                    "system": "urn:oid:1.2.840.114350.1.13.91.2.7.10.768076.4030",
+                                    "code": "2",
+                                    "display": "Intramuscular"
+                                }
+                            ],
+                            "text": "Intramuscular"
+                        }
+                    }
+                },
+                {
+                    "fullUrl": "urn:uuid:e63b8d84-7a52-4b87-8967-5aafca4dc855",
+                    "resource": {
+                        "resourceType": "Immunization",
+                        "id": "e63b8d84-7a52-4b87-8967-5aafca4dc855",
+                        "meta": {
+                            "versionId": "1",
+                            "lastUpdated": "2023-06-16T15:51:34.245+00:00",
+                            "source": "#PmHvH8aIF0yVduKc"
+                        },
+                        "extension": [
+                            {
+                                "url": "http://hl7.org/fhir/StructureDefinition/NarrativeLink",
+                                "valueUrl": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#Immunizations-e63b8d84-7a52-4b87-8967-5aafca4dc855"
+                            }
+                        ],
+                        "identifier": [
+                            {
+                                "use": "usual",
+                                "system": "urn:oid:1.2.840.114350.1.13.91.2.7.2.768076",
+                                "value": "2167912"
+                            }
+                        ],
+                        "status": "completed",
+                        "vaccineCode": {
+                            "coding": [
+                                {
+                                    "system": "http://hl7.org/fhir/sid/cvx",
+                                    "code": "25"
+                                }
+                            ],
+                            "text": "Typhoid live (Vivotif)"
+                        },
+                        "patient": {
+                            "reference": "Patient/98549f1a-e0d5-4454-849c-f5b97d3ed299"
+                        },
+                        "occurrenceDateTime": "2008-09-15",
+                        "primarySource": true,
+                        "reportOrigin": {
+                            "coding": [
+                                {
+                                    "system": "urn:oid:1.2.840.114350.1.13.91.2.7.10.768076.4082"
+                                }
+                            ],
+                            "text": "Confirmed"
+                        }
+                    }
+                },
+                {
+                    "fullUrl": "urn:uuid:d021ddd0-14bd-4d62-a580-998b1844fa1c",
+                    "resource": {
+                        "resourceType": "Immunization",
+                        "id": "d021ddd0-14bd-4d62-a580-998b1844fa1c",
+                        "meta": {
+                            "versionId": "1",
+                            "lastUpdated": "2023-06-16T15:51:46.096+00:00",
+                            "source": "#kuVofLlTzr9HE7V6"
+                        },
+                        "extension": [
+                            {
+                                "url": "http://hl7.org/fhir/StructureDefinition/NarrativeLink",
+                                "valueUrl": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#Immunizations-d021ddd0-14bd-4d62-a580-998b1844fa1c"
+                            }
+                        ],
+                        "identifier": [
+                            {
+                                "use": "usual",
+                                "system": "urn:oid:1.2.840.114350.1.13.91.2.7.2.768076",
+                                "value": "2167990"
+                            }
+                        ],
+                        "status": "completed",
+                        "vaccineCode": {
+                            "coding": [
+                                {
+                                    "system": "http://hl7.org/fhir/sid/cvx",
+                                    "code": "37"
+                                }
+                            ],
+                            "text": "Yellow fever live (YF-VAX)"
+                        },
+                        "patient": {
+                            "reference": "Patient/98549f1a-e0d5-4454-849c-f5b97d3ed299"
+                        },
+                        "occurrenceDateTime": "2008-11-21",
+                        "primarySource": true,
+                        "reportOrigin": {
+                            "coding": [
+                                {
+                                    "system": "urn:oid:1.2.840.114350.1.13.91.2.7.10.768076.4082"
+                                }
+                            ],
+                            "text": "Confirmed"
+                        },
+                        "manufacturer": {
+                            "display": "Sanofi Pasteur"
+                        },
+                        "lotNumber": "UF426AA",
+                        "expirationDate": "2009-06-02",
+                        "site": {
+                            "coding": [
+                                {
+                                    "system": "urn:oid:1.2.840.114350.1.13.91.2.7.10.768076.4040",
+                                    "code": "14",
+                                    "display": "Left Arm"
+                                }
+                            ],
+                            "text": "Left Arm"
+                        },
+                        "route": {
+                            "coding": [
+                                {
+                                    "system": "urn:oid:1.2.840.114350.1.13.91.2.7.10.768076.4030",
+                                    "code": "5",
+                                    "display": "Subcutaneous"
+                                }
+                            ],
+                            "text": "Subcutaneous"
+                        },
+                        "doseQuantity": {
+                            "value": 0.5,
+                            "unit": "mL",
+                            "system": "urn:oid:1.2.840.114350.1.13.91.2.7.10.768076.4019",
+                            "code": "1"
+                        }
+                    }
+                },
+                {
+                    "fullUrl": "urn:uuid:44db5eb7-4779-4018-8cac-9c08a2983ca0",
+                    "resource": {
+                        "resourceType": "Immunization",
+                        "id": "44db5eb7-4779-4018-8cac-9c08a2983ca0",
+                        "meta": {
+                            "versionId": "1",
+                            "lastUpdated": "2023-06-16T15:51:56.141+00:00",
+                            "source": "#4wfPO9T7p3BAzrcH"
+                        },
+                        "extension": [
+                            {
+                                "url": "http://hl7.org/fhir/StructureDefinition/NarrativeLink",
+                                "valueUrl": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#Immunizations-44db5eb7-4779-4018-8cac-9c08a2983ca0"
+                            }
+                        ],
+                        "identifier": [
+                            {
+                                "use": "usual",
+                                "system": "urn:oid:1.2.840.114350.1.13.91.2.7.2.768076",
+                                "value": "18470093"
+                            }
+                        ],
+                        "status": "completed",
+                        "vaccineCode": {
+                            "coding": [
+                                {
+                                    "system": "http://hl7.org/fhir/sid/cvx",
+                                    "code": "115"
+                                }
+                            ],
+                            "text": "Tdap"
+                        },
+                        "patient": {
+                            "reference": "Patient/98549f1a-e0d5-4454-849c-f5b97d3ed299"
+                        },
+                        "occurrenceDateTime": "2020-09-22",
+                        "primarySource": false,
+                        "reportOrigin": {
+                            "coding": [
+                                {
+                                    "system": "urn:oid:1.2.840.114350.1.13.91.2.7.10.768076.4082"
+                                }
+                            ],
+                            "text": "Outside Medical Record"
+                        }
+                    }
+                },
+                {
+                    "fullUrl": "urn:uuid:3f5be1ca-5aed-4f97-aa9a-37e8b68da374",
+                    "resource": {
+                        "resourceType": "Immunization",
+                        "id": "3f5be1ca-5aed-4f97-aa9a-37e8b68da374",
+                        "meta": {
+                            "versionId": "1",
+                            "lastUpdated": "2023-06-16T15:52:07.216+00:00",
+                            "source": "#E7eq9DlI4LO5SXZQ"
+                        },
+                        "extension": [
+                            {
+                                "url": "http://hl7.org/fhir/StructureDefinition/NarrativeLink",
+                                "valueUrl": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#Immunizations-3f5be1ca-5aed-4f97-aa9a-37e8b68da374"
+                            }
+                        ],
+                        "identifier": [
+                            {
+                                "use": "usual",
+                                "system": "urn:oid:1.2.840.114350.1.13.91.2.7.2.768076",
+                                "value": "21452788"
+                            }
+                        ],
+                        "status": "completed",
+                        "vaccineCode": {
+                            "coding": [
+                                {
+                                    "system": "http://hl7.org/fhir/sid/cvx",
+                                    "code": "208"
+                                }
+                            ],
+                            "text": "COVID-19 Pfizer mRNA monovalent 12 yrs and older (purple cap)"
+                        },
+                        "patient": {
+                            "reference": "Patient/98549f1a-e0d5-4454-849c-f5b97d3ed299"
+                        },
+                        "occurrenceDateTime": "2020-12-26",
+                        "primarySource": false,
+                        "reportOrigin": {
+                            "coding": [
+                                {
+                                    "system": "urn:oid:1.2.840.114350.1.13.91.2.7.10.768076.4082"
+                                }
+                            ],
+                            "text": "Auto Reconciled From Outside Source"
+                        },
+                        "location": {
+                            "display": "CHINOOK COUNTY BUILDING"
+                        },
+                        "manufacturer": {
+                            "display": "Pfizer, Inc"
+                        },
+                        "lotNumber": "EL0140",
+                        "site": {
+                            "coding": [
+                                {
+                                    "system": "urn:oid:1.2.840.114350.1.13.91.2.7.10.768076.4040",
+                                    "code": "7",
+                                    "display": "Left Deltoid"
+                                }
+                            ],
+                            "text": "Left Deltoid"
+                        },
+                        "route": {
+                            "coding": [
+                                {
+                                    "system": "urn:oid:1.2.840.114350.1.13.91.2.7.10.768076.4030",
+                                    "code": "2",
+                                    "display": "Intramuscular"
+                                }
+                            ],
+                            "text": "Intramuscular"
+                        }
+                    }
+                },
+                {
+                    "fullUrl": "urn:uuid:54ce58c1-3b31-4db3-a5c2-7addb9236d24",
+                    "resource": {
+                        "resourceType": "Immunization",
+                        "id": "54ce58c1-3b31-4db3-a5c2-7addb9236d24",
+                        "meta": {
+                            "versionId": "1",
+                            "lastUpdated": "2023-06-16T15:52:16.446+00:00",
+                            "source": "#9mS6C4ZZcCMhF2Ik"
+                        },
+                        "extension": [
+                            {
+                                "url": "http://hl7.org/fhir/StructureDefinition/NarrativeLink",
+                                "valueUrl": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#Immunizations-54ce58c1-3b31-4db3-a5c2-7addb9236d24"
+                            }
+                        ],
+                        "identifier": [
+                            {
+                                "use": "usual",
+                                "system": "urn:oid:1.2.840.114350.1.13.91.2.7.2.768076",
+                                "value": "21452789"
+                            }
+                        ],
+                        "status": "completed",
+                        "vaccineCode": {
+                            "coding": [
+                                {
+                                    "system": "http://hl7.org/fhir/sid/cvx",
+                                    "code": "208"
+                                }
+                            ],
+                            "text": "COVID-19 Pfizer mRNA monovalent 12 yrs and older (purple cap)"
+                        },
+                        "patient": {
+                            "reference": "Patient/98549f1a-e0d5-4454-849c-f5b97d3ed299"
+                        },
+                        "occurrenceDateTime": "2021-01-17",
+                        "primarySource": false,
+                        "reportOrigin": {
+                            "coding": [
+                                {
+                                    "system": "urn:oid:1.2.840.114350.1.13.91.2.7.10.768076.4082"
+                                }
+                            ],
+                            "text": "Auto Reconciled From Outside Source"
+                        },
+                        "location": {
+                            "display": "CHINOOK COUNTY BUILDING"
+                        },
+                        "manufacturer": {
+                            "display": "Pfizer, Inc"
+                        },
+                        "lotNumber": "EL0140",
+                        "site": {
+                            "coding": [
+                                {
+                                    "system": "urn:oid:1.2.840.114350.1.13.91.2.7.10.768076.4040",
+                                    "code": "7",
+                                    "display": "Left Deltoid"
+                                }
+                            ],
+                            "text": "Left Deltoid"
+                        },
+                        "route": {
+                            "coding": [
+                                {
+                                    "system": "urn:oid:1.2.840.114350.1.13.91.2.7.10.768076.4030",
+                                    "code": "2",
+                                    "display": "Intramuscular"
+                                }
+                            ],
+                            "text": "Intramuscular"
+                        }
+                    }
+                },
+                {
+                    "fullUrl": "urn:uuid:fb614759-5946-464b-aa11-de85cd337dee",
+                    "resource": {
+                        "resourceType": "Immunization",
+                        "id": "fb614759-5946-464b-aa11-de85cd337dee",
+                        "meta": {
+                            "versionId": "1",
+                            "lastUpdated": "2023-06-16T15:52:24.710+00:00",
+                            "source": "#rgjdSXYxbgs6xNuS"
+                        },
+                        "extension": [
+                            {
+                                "url": "http://hl7.org/fhir/StructureDefinition/NarrativeLink",
+                                "valueUrl": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#Immunizations-fb614759-5946-464b-aa11-de85cd337dee"
+                            }
+                        ],
+                        "identifier": [
+                            {
+                                "use": "usual",
+                                "system": "urn:oid:1.2.840.114350.1.13.91.2.7.2.768076",
+                                "value": "23870090"
+                            }
+                        ],
+                        "status": "completed",
+                        "vaccineCode": {
+                            "coding": [
+                                {
+                                    "system": "http://hl7.org/fhir/sid/cvx",
+                                    "code": "185"
+                                }
+                            ],
+                            "text": "Influenza quadrivalent recombinant (Flublok)"
+                        },
+                        "patient": {
+                            "reference": "Patient/98549f1a-e0d5-4454-849c-f5b97d3ed299"
+                        },
+                        "occurrenceDateTime": "2020-09-22",
+                        "primarySource": false,
+                        "location": {
+                            "display": "BARTELL DRUGS #14"
+                        },
+                        "doseQuantity": {
+                            "value": 0.5,
+                            "unit": "mL",
+                            "system": "urn:oid:1.2.840.114350.1.13.91.2.7.10.768076.4019",
+                            "code": "1"
+                        }
+                    }
+                },
+                {
+                    "fullUrl": "urn:uuid:780d49f2-525c-43ff-9d8f-410a67fdf12f",
+                    "resource": {
+                        "resourceType": "Immunization",
+                        "id": "780d49f2-525c-43ff-9d8f-410a67fdf12f",
+                        "meta": {
+                            "versionId": "1",
+                            "lastUpdated": "2023-06-16T15:52:34.990+00:00",
+                            "source": "#e1ZBr5YCtq0D3xpf"
+                        },
+                        "extension": [
+                            {
+                                "url": "http://hl7.org/fhir/StructureDefinition/NarrativeLink",
+                                "valueUrl": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#Immunizations-780d49f2-525c-43ff-9d8f-410a67fdf12f"
+                            }
+                        ],
+                        "identifier": [
+                            {
+                                "use": "usual",
+                                "system": "urn:oid:1.2.840.114350.1.13.91.2.7.2.768076",
+                                "value": "23870091"
+                            }
+                        ],
+                        "status": "completed",
+                        "vaccineCode": {
+                            "coding": [
+                                {
+                                    "system": "http://hl7.org/fhir/sid/cvx",
+                                    "code": "150"
+                                }
+                            ],
+                            "text": "Influenza quadrivalent PF"
+                        },
+                        "patient": {
+                            "reference": "Patient/98549f1a-e0d5-4454-849c-f5b97d3ed299"
+                        },
+                        "occurrenceDateTime": "2021-09-25",
+                        "primarySource": false,
+                        "location": {
+                            "display": "BARTELL DRUG 6973"
+                        },
+                        "manufacturer": {
+                            "display": "GlaxoSmithKline"
+                        },
+                        "lotNumber": "7LX9G",
+                        "site": {
+                            "coding": [
+                                {
+                                    "system": "urn:oid:1.2.840.114350.1.13.91.2.7.10.768076.4040",
+                                    "code": "14",
+                                    "display": "Left Arm"
+                                }
+                            ],
+                            "text": "Left Arm"
+                        },
+                        "route": {
+                            "coding": [
+                                {
+                                    "system": "urn:oid:1.2.840.114350.1.13.91.2.7.10.768076.4030",
+                                    "code": "2",
+                                    "display": "Intramuscular"
+                                }
+                            ],
+                            "text": "Intramuscular"
+                        },
+                        "doseQuantity": {
+                            "value": 0.5,
+                            "unit": "mL",
+                            "system": "urn:oid:1.2.840.114350.1.13.91.2.7.10.768076.4019",
+                            "code": "1"
+                        }
+                    }
+                },
+                {
+                    "fullUrl": "urn:uuid:dd94410f-79be-4fb3-8bf9-1540f1f48cbd",
+                    "resource": {
+                        "resourceType": "Immunization",
+                        "id": "dd94410f-79be-4fb3-8bf9-1540f1f48cbd",
+                        "meta": {
+                            "versionId": "1",
+                            "lastUpdated": "2023-06-16T15:52:43.255+00:00",
+                            "source": "#Tzq7JnyPKoL64sVl"
+                        },
+                        "extension": [
+                            {
+                                "url": "http://hl7.org/fhir/StructureDefinition/NarrativeLink",
+                                "valueUrl": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#Immunizations-dd94410f-79be-4fb3-8bf9-1540f1f48cbd"
+                            }
+                        ],
+                        "identifier": [
+                            {
+                                "use": "usual",
+                                "system": "urn:oid:1.2.840.114350.1.13.91.2.7.2.768076",
+                                "value": "23871020"
+                            }
+                        ],
+                        "status": "completed",
+                        "vaccineCode": {
+                            "coding": [
+                                {
+                                    "system": "http://hl7.org/fhir/sid/cvx",
+                                    "code": "207"
+                                }
+                            ],
+                            "text": "COVID-19 Moderna mRNA monovalent 12 yrs and older"
+                        },
+                        "patient": {
+                            "reference": "Patient/98549f1a-e0d5-4454-849c-f5b97d3ed299"
+                        },
+                        "occurrenceDateTime": "2021-10-15",
+                        "primarySource": false,
+                        "reportOrigin": {
+                            "coding": [
+                                {
+                                    "system": "urn:oid:1.2.840.114350.1.13.91.2.7.10.768076.4082"
+                                }
+                            ],
+                            "text": "Patient reported"
+                        }
+                    }
+                },
+                {
+                    "fullUrl": "urn:uuid:d96ee1fa-66c6-41ba-9d69-803b4e693134",
+                    "resource": {
+                        "resourceType": "Immunization",
+                        "id": "d96ee1fa-66c6-41ba-9d69-803b4e693134",
+                        "meta": {
+                            "versionId": "1",
+                            "lastUpdated": "2023-06-16T15:52:51.506+00:00",
+                            "source": "#K840Y0I4RTK8Ak8A"
+                        },
+                        "extension": [
+                            {
+                                "url": "http://hl7.org/fhir/StructureDefinition/NarrativeLink",
+                                "valueUrl": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#Immunizations-d96ee1fa-66c6-41ba-9d69-803b4e693134"
+                            }
+                        ],
+                        "identifier": [
+                            {
+                                "use": "usual",
+                                "system": "urn:oid:1.2.840.114350.1.13.91.2.7.2.768076",
+                                "value": "27984800"
+                            }
+                        ],
+                        "status": "completed",
+                        "vaccineCode": {
+                            "coding": [
+                                {
+                                    "system": "http://hl7.org/fhir/sid/cvx",
+                                    "code": "207"
+                                }
+                            ],
+                            "text": "COVID-19 Moderna mRNA monovalent 12 yrs and older"
+                        },
+                        "patient": {
+                            "reference": "Patient/98549f1a-e0d5-4454-849c-f5b97d3ed299"
+                        },
+                        "occurrenceDateTime": "2022-02-09",
+                        "primarySource": false,
+                        "location": {
+                            "display": "CVS PHARMACY - #10387"
+                        },
+                        "manufacturer": {
+                            "display": "Moderna US, Inc"
+                        },
+                        "lotNumber": "027L21A",
+                        "site": {
+                            "coding": [
+                                {
+                                    "system": "urn:oid:1.2.840.114350.1.13.91.2.7.10.768076.4040",
+                                    "code": "7",
+                                    "display": "Left Deltoid"
+                                }
+                            ],
+                            "text": "Left Deltoid"
+                        },
+                        "route": {
+                            "coding": [
+                                {
+                                    "system": "urn:oid:1.2.840.114350.1.13.91.2.7.10.768076.4030",
+                                    "code": "2",
+                                    "display": "Intramuscular"
+                                }
+                            ],
+                            "text": "Intramuscular"
+                        }
+                    }
+                },
+                {
+                    "fullUrl": "urn:uuid:eca1769e-595f-4c82-bb1c-ab576742b65a",
+                    "resource": {
+                        "resourceType": "Immunization",
+                        "id": "eca1769e-595f-4c82-bb1c-ab576742b65a",
+                        "meta": {
+                            "versionId": "1",
+                            "lastUpdated": "2023-06-16T15:52:59.190+00:00",
+                            "source": "#gVD5fHLIdYfbuYu8"
+                        },
+                        "extension": [
+                            {
+                                "url": "http://hl7.org/fhir/StructureDefinition/NarrativeLink",
+                                "valueUrl": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#Immunizations-eca1769e-595f-4c82-bb1c-ab576742b65a"
+                            }
+                        ],
+                        "identifier": [
+                            {
+                                "use": "usual",
+                                "system": "urn:oid:1.2.840.114350.1.13.91.2.7.2.768076",
+                                "value": "27984801"
+                            }
+                        ],
+                        "status": "completed",
+                        "vaccineCode": {
+                            "coding": [
+                                {
+                                    "system": "http://hl7.org/fhir/sid/cvx",
+                                    "code": "171"
+                                }
+                            ],
+                            "text": "Influenza quadrivalent MDCK PF (Flucelvax)"
+                        },
+                        "patient": {
+                            "reference": "Patient/98549f1a-e0d5-4454-849c-f5b97d3ed299"
+                        },
+                        "occurrenceDateTime": "2018-10-02",
+                        "primarySource": false,
+                        "location": {
+                            "display": "External Claim"
+                        }
+                    }
+                },
+                {
+                    "fullUrl": "urn:uuid:690a34d9-7955-41b8-9d64-c7c35d675b58",
+                    "resource": {
+                        "resourceType": "Immunization",
+                        "id": "690a34d9-7955-41b8-9d64-c7c35d675b58",
+                        "meta": {
+                            "versionId": "1",
+                            "lastUpdated": "2023-06-16T15:53:06.545+00:00",
+                            "source": "#0yUeSINRQdF6j84R"
+                        },
+                        "extension": [
+                            {
+                                "url": "http://hl7.org/fhir/StructureDefinition/NarrativeLink",
+                                "valueUrl": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#Immunizations-690a34d9-7955-41b8-9d64-c7c35d675b58"
+                            }
+                        ],
+                        "identifier": [
+                            {
+                                "use": "usual",
+                                "system": "urn:oid:1.2.840.114350.1.13.91.2.7.2.768076",
+                                "value": "27984802"
+                            }
+                        ],
+                        "status": "completed",
+                        "vaccineCode": {
+                            "coding": [
+                                {
+                                    "system": "http://hl7.org/fhir/sid/cvx",
+                                    "code": "171"
+                                }
+                            ],
+                            "text": "Influenza quadrivalent MDCK PF (Flucelvax)"
+                        },
+                        "patient": {
+                            "reference": "Patient/98549f1a-e0d5-4454-849c-f5b97d3ed299"
+                        },
+                        "occurrenceDateTime": "2019-10-02",
+                        "primarySource": false,
+                        "location": {
+                            "display": "External Claim"
+                        }
+                    }
+                },
+                {
+                    "fullUrl": "urn:uuid:d82c724e-5f16-4748-9946-51f76156feb3",
+                    "resource": {
+                        "resourceType": "Immunization",
+                        "id": "d82c724e-5f16-4748-9946-51f76156feb3",
+                        "meta": {
+                            "versionId": "1",
+                            "lastUpdated": "2023-06-16T15:53:16.636+00:00",
+                            "source": "#ZCqNGdzmfhFWhKlS"
+                        },
+                        "extension": [
+                            {
+                                "url": "http://hl7.org/fhir/StructureDefinition/NarrativeLink",
+                                "valueUrl": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#Immunizations-d82c724e-5f16-4748-9946-51f76156feb3"
+                            }
+                        ],
+                        "identifier": [
+                            {
+                                "use": "usual",
+                                "system": "urn:oid:1.2.840.114350.1.13.91.2.7.2.768076",
+                                "value": "27984803"
+                            }
+                        ],
+                        "status": "completed",
+                        "vaccineCode": {
+                            "coding": [
+                                {
+                                    "system": "http://hl7.org/fhir/sid/cvx",
+                                    "code": "88"
+                                }
+                            ],
+                            "text": "Influenza, unspecified"
+                        },
+                        "patient": {
+                            "reference": "Patient/98549f1a-e0d5-4454-849c-f5b97d3ed299"
+                        },
+                        "occurrenceDateTime": "2022-10-18",
+                        "primarySource": false
+                    }
+                },
+                {
+                    "fullUrl": "urn:uuid:2c60512e-9932-4dfd-a22f-3a173d4f39d7",
+                    "resource": {
+                        "resourceType": "AllergyIntolerance",
+                        "extension": [
+                            {
+                                "url": "http://hl7.org/fhir/StructureDefinition/NarrativeLink",
+                                "valueUrl": "urn:uuid:23d4e971-d6b5-4b8d-8a09-9917352c6c4d#AllergiesAndIntolerances-urn:uuid:2c60512e-9932-4dfd-a22f-3a173d4f39d7"
+                            }
+                        ],
+                        "clinicalStatus": {
+                            "coding": [
+                                {
+                                    "system": "http://terminology.hl7.org/CodeSystem/allergyintolerance-clinical",
+                                    "code": "active"
+                                }
+                            ]
+                        },
+                        "code": {
+                            "coding": [
+                                {
+                                    "system": "http://hl7.org/fhir/uv/ips/CodeSystem/absent-unknown-uv-ips",
+                                    "code": "no-allergy-info",
+                                    "display": "No information about allergies"
+                                }
+                            ]
+                        },
+                        "patient": {
+                            "reference": "Patient/98549f1a-e0d5-4454-849c-f5b97d3ed299"
+                        }
+                    }
+                },
+                {
+                    "fullUrl": "urn:uuid:2cca093b-7ba7-42f9-870c-12c0870baca2",
+                    "resource": {
+                        "resourceType": "Organization",
+                        "name": "More Informatics, Inc",
+                        "address": [
+                            {
+                                "line": [
+                                    "59 Washington St."
+                                ],
+                                "city": "Wellesley",
+                                "state": "MA",
+                                "postalCode": "02481",
+                                "country": "USA"
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    </script>
+    <script type="module">
+        import * as shlClient from 'https://demo.vaxx.link/viewer/index.js';
+        import { verify } from 'https://demo.vaxx.link/viewer/shc-decoder.js';
+        var shl;
+
+        $("#btnDownloadSHLink").click(async function () {
+            $("#prefill-status").text("loading Smart Health Link ...");
+            $("#prefill-error").text("");
+            editorIPS.setValue("loading Smart Health Link ...");
+            editorIPS.clearSelection();
+
+            shl = $("#shlink").val().match(/shlink:\/.*/)?.[0];
+            if (shl) {
+                await retrieve()
+            }
+            $("#prefill-status").text("");
+        });
+
+
+        async function retrieve() {
+            const recipient = "IPS Viewer Demonstration";
+
+            let passcode;
+            const needPasscode = shlClient.flag({ shl }).includes('P');
+            if (needPasscode) {
+                passcode = prompt("Enter passcode for SMART Health Link");
+            }
+
+            const retrieved = await shlClient.retrieve({
+                shl,
+                passcode,
+                recipient
+            });
+
+            const decoded = await Promise.all(retrieved.shcs.map(verify));
+            const data = decoded[0].fhirBundle
+
+            editorIPS.setValue(JSON.stringify(data, null, 4));
+            editorIPS.clearSelection();
+
+            // And then use this data to pre-fill the form
+            try {
+                await PreFillFromIPSBundle();
+            }
+            catch (err) {
+                console.log(err);
+            }
+        }
+    </script>
+</body>
+
+</html>

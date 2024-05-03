@@ -6,15 +6,20 @@ export declare interface UserSettingsData {
     fhirServerUrl?: string;
     OAuthClientId?: string;
     fhirTerminologyServerUrl?: string;
+    fhirServerExamplesUrl?: string;
     syncFavourites: boolean;
     favouritesListId?: string;
     defaultProviderField?: string;
     defaultNewCanonicalBase?: string;
+
     openAIApiVersion?: string; // 2023-03-15-preview
     openAIBasePath?: string; // empty will use the chatGPT system default, not Azure
     openAIKey?: string;
     openAIModel?: string; // gpt-3.5-turbo, gpt-4
+    openAIFastModel?: string; // gpt-3.5-turbo, gpt-4 (use in places where require a quick response, but lower quality is ok)
     showAIKey: boolean;
+    openAIFeedbackEnabled?: boolean; // will the send feedback buttons be enabled/shown
+
     showAdvancedSettings: boolean;
     pageSize: number;
 }
@@ -71,6 +76,9 @@ export namespace settings {
     export function mapper_server(): string {
         return serverConnections.mapper_server;
     }
+    export function mapper_server_java(): string {
+        return serverConnections.mapper_server_java;
+    }
 
     export function getSearchData(type: string): ConformanceSearchData | undefined {
         const sdJson = localStorage.getItem(`search_${type}`);
@@ -98,6 +106,17 @@ export namespace settings {
             return "https://sqlonfhir-r4.azurewebsites.net/fhir";
         }
     }
+
+    export function getFhirServerExamplesUrl(): string {
+        try {
+            return localStorage.getItem("settings_fhirServerExamplesURL") ?? "https://hapi.fhir.org/baseR4";
+        }
+        catch {
+            console.log("error reading the FHIR Server Examples URL configuration value");
+            return "https://hapi.fhir.org/baseR4";
+        }
+    }
+
     export function getOAuthClientId(): string|undefined {
         try {
             return localStorage.getItem("settings_OAuthClientId") ?? undefined;
@@ -116,6 +135,26 @@ export namespace settings {
             return "https://sqlonfhir-r4.azurewebsites.net/fhir";
         }
     }
+    export function getDefaultProviderField(): string|undefined {
+        try {
+            return localStorage.getItem("settings_defaultProviderField") ?? undefined;
+        }
+        catch {
+            console.log("error reading the defaultProviderField configuration value");
+            return undefined;
+        }
+    }
+
+    export function getDefaultNewCanonicalBase(): string|undefined {
+        try {
+            return localStorage.getItem("settings_defaultNewCanonicalBase") ?? undefined;
+        }
+        catch {
+            console.log("error reading the defaultNewCanonicalBase configuration value");
+            return undefined;
+        }
+    }
+
     export function getPageSize(): number {
         try {
             return Number.parseInt(localStorage.getItem("settings_pageSize") ?? "10");
@@ -131,6 +170,15 @@ export namespace settings {
         }
         catch {
             console.log("error reading the OpenAI API key configuration value");
+            return undefined;
+        }
+    }
+    export function getOpenAIFeedbackEnabled(): boolean|undefined {
+        try {
+            return localStorage.getItem("settings_openAIFeedbackEnabled") === 'true';
+        }
+        catch {
+            console.log("error reading the OpenAI Feedback Enabled configuration value");
             return undefined;
         }
     }
@@ -165,6 +213,16 @@ export namespace settings {
         }
     }
 
+    export function getOpenAIFastModel(): string|undefined {
+        try {
+            return localStorage.getItem("settings_openAIFastModel") ?? undefined;
+        }
+        catch {
+            console.log("error reading the OpenAI Fast Model configuration value");
+            return undefined;
+        }
+    }
+
     export function showAdvancedSettings(): boolean {
         return !localStorage.getItem("settings_showAdvancedSettings") ? false : true;
     }
@@ -172,6 +230,7 @@ export namespace settings {
     export function load(): UserSettingsData {
         return {
             fhirServerUrl: localStorage.getItem("settings_fhirServerURL") ?? "https://sqlonfhir-r4.azurewebsites.net/fhir",
+            fhirServerExamplesUrl: localStorage.getItem("settings_fhirServerExamplesURL") ?? "https://hapi.fhir.org/baseR4",
             OAuthClientId: localStorage.getItem("settings_OAuthClientId") ?? undefined,
             fhirTerminologyServerUrl: localStorage.getItem("settings_fhirTerminologyServerURL") ?? "https://sqlonfhir-r4.azurewebsites.net/fhir",
             syncFavourites: localStorage.getItem("settings_syncFavourites") === 'true',
@@ -183,6 +242,8 @@ export namespace settings {
             openAIBasePath: localStorage.getItem("settings_openAIBasePath") ?? undefined,
             openAIApiVersion: localStorage.getItem("settings_openAIApiVersion") ?? undefined,
             openAIModel: localStorage.getItem("settings_openAIModel") ?? undefined,
+            openAIFastModel: localStorage.getItem("settings_openAIFastModel") ?? undefined,
+            openAIFeedbackEnabled: localStorage.getItem("settings_openAIFeedbackEnabled") === 'true',
             showAIKey: false,
             showAdvancedSettings: !localStorage.getItem("settings_showAdvancedSettings") ? false : true,
             pageSize: Number.parseInt(localStorage.getItem("settings_pageSize") ?? "10", 10),
@@ -193,6 +254,9 @@ export namespace settings {
         try {
             if (settings.fhirServerUrl?.endsWith('/')) settings.fhirServerUrl = settings.fhirServerUrl.substring(0, settings.fhirServerUrl.length - 1);
             if (settings.fhirServerUrl) localStorage.setItem("settings_fhirServerURL", settings.fhirServerUrl);
+
+            if (settings.fhirServerExamplesUrl?.endsWith('/')) settings.fhirServerExamplesUrl = settings.fhirServerExamplesUrl.substring(0, settings.fhirServerExamplesUrl.length - 1);
+            if (settings.fhirServerExamplesUrl) localStorage.setItem("settings_fhirServerExamplesURL", settings.fhirServerExamplesUrl);
 
             if (settings.OAuthClientId) localStorage.setItem("settings_OAuthClientId", settings.OAuthClientId);
             else localStorage.removeItem("settings_OAuthClientId");
@@ -205,7 +269,9 @@ export namespace settings {
             if (settings.syncFavourites && settings.favouritesListId) localStorage.setItem("settings_favouritesListId", settings.favouritesListId);
 
             if (settings.defaultProviderField) localStorage.setItem("settings_defaultProviderField", settings.defaultProviderField);
+            else localStorage.removeItem("settings_defaultProviderField");
             if (settings.defaultNewCanonicalBase) localStorage.setItem("settings_defaultNewCanonicalBase", settings.defaultNewCanonicalBase);
+            else localStorage.removeItem("settings_defaultNewCanonicalBase");
             
             if (settings.openAIKey) localStorage.setItem("settings_openAIkey", settings.openAIKey);
             else localStorage.removeItem("settings_openAIkey");
@@ -216,6 +282,11 @@ export namespace settings {
             else localStorage.removeItem("settings_openAIApiVersion");
             if (settings.openAIModel) localStorage.setItem("settings_openAIModel", settings.openAIModel);
             else localStorage.removeItem("settings_openAIModel");
+            if (settings.openAIFastModel) localStorage.setItem("settings_openAIFastModel", settings.openAIFastModel);
+            else localStorage.removeItem("settings_openAIFastModel");
+            if (settings.openAIFeedbackEnabled) localStorage.setItem("settings_openAIFeedbackEnabled", settings.openAIFeedbackEnabled ? 'true' : 'false');
+            else localStorage.removeItem("settings_openAIFeedbackEnabled");
+
 
             if (settings.showAdvancedSettings) localStorage.setItem("settings_showAdvancedSettings", settings.showAdvancedSettings ? 'true' : 'false');
             else localStorage.removeItem("settings_showAdvancedSettings");

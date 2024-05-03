@@ -38,239 +38,211 @@
             </template>
             <span v-text="shareZulipToolTipMessage"></span>
           </v-tooltip>
+
+          <v-tooltip bottom color="primary" v-show="showAdvancedSettings">
+            <template v-slot:activator="{ on, attrs }">
+              <v-btn icon dark @click="createNewLibrary" v-bind="attrs" v-on="on"
+                :hidden="!enableCreateLibrary">
+                <v-icon>
+                  mdi-content-save-plus
+                </v-icon>
+              </v-btn>
+            </template>
+            <span>Share this expression in Library</span>
+          </v-tooltip>
+          <v-tooltip bottom color="primary" v-show="showAdvancedSettings">
+            <template v-slot:activator="{ on, attrs }">
+              <v-btn icon dark @click="saveLibrary" v-bind="attrs" v-on="on"
+              :hidden="!enableSaveLibrary">
+                <v-icon>
+                  mdi-content-save
+                </v-icon>
+              </v-btn>
+            </template>
+            <span>Save the Library</span>
+          </v-tooltip>
         </v-toolbar>
-        <v-row dense>
-          <v-col>
-            <v-tabs vertical v-model="tab" @change="changeTab">
-              <v-tab :class="expressionActiveClass" v-on:click="tabClicked">
-                <v-icon left> mdi-function-variant </v-icon>
-                Expression
-              </v-tab>
-              <v-tab :class="resourceActiveClass" v-on:click="tabClicked">
-                <v-icon left> mdi-clipboard-text-outline </v-icon>
-                Resource
-              </v-tab>
-              <v-tab v-show="variables.size > 0" :class="variablesActiveClass" v-on:click="tabClicked">
-                <v-icon left> mdi-application-variable-outline </v-icon>
-                Variables
-              </v-tab>
-              <v-tab :disabled="!hasTraceData()" :class="traceActiveClass" v-on:click="tabClicked">
-                <v-icon left> mdi-format-list-bulleted </v-icon>
-                Trace
-              </v-tab>
-              <v-tab :class="astActiveClass" v-on:click="tabClicked">
-                <v-icon left> mdi-file-tree </v-icon>
-                AST
-              </v-tab>
-              <v-tab v-show="showAdvancedSettings && chatEnabled" :class="chatActiveClass" v-on:click="tabClicked">
-                <v-icon left> mdi-brain </v-icon>
-                AI Chat
-              </v-tab>
-              <v-tab v-show="showAdvancedSettings" :class="debugActiveClass" v-on:click="tabClicked">
-                <v-icon left> mdi-bug-outline </v-icon>
-                Debug
-              </v-tab>
+        <twin-pane-tab :tabs="tabDetails" ref="twinTabControl" @mounted="twinPaneMounted" @change="tabChanged">
+          <template v-slot:Expression>
+            <label class="v-label theme--light bare-label">Context Expression (optional)</label>
+            <!-- <v-input label="Context Expression (optional)" hide-details="auto" :value="contextExpression">
+            </v-input> -->
+            <v-tooltip bottom >
+              <template v-slot:activator="{ on, attrs }">
+                <v-btn icon style="right: 20px; position: absolute; top: 20px; z-index:2;"
+                  v-bind="attrs" v-on="on"
+                  @click="resetExpression"><v-icon>mdi-broom</v-icon></v-btn>
+              </template>
+              <span>Reset Expression and context</span>
+            </v-tooltip>
+            <div height="85px" width="100%" ref="aceEditorContextExpression"></div>
+            <div class="ace_editor_footer"></div>
 
-              <v-tabs-items class="custom-tab" style="height: calc(100vh - 168px)" touchless v-model="tab">
+            <label class="v-label theme--light bare-label">Fhirpath Expression</label>
+            <div height="85px" width="100%" ref="aceEditorExpression"></div>
+            <div class="ace_editor_footer"></div>
+            <!-- <parse-tree-tab v-show="false" ref="astTabComponent"></parse-tree-tab> -->
 
-                <v-scroll-x-transition mode="out-in" :hide-on-leave="true">
-                  <div v-show="expressionVisible" :eager="true" >
-                    <!-- Expression -->
-                    <v-card flat>
-                      <v-card-text>
-                        <p class="fl-tab-header">Expression</p>
-                        <label class="v-label theme--light bare-label">Context Expression (optional)</label>
-                        <!-- <v-input label="Context Expression (optional)" hide-details="auto" :value="contextExpression">
-                        </v-input> -->
-                        <div height="85px" width="100%" ref="aceEditorContextExpression"></div>
-                        <div class="ace_editor_footer"></div>
+            <div class="results">RESULTS <span class="processedBy">{{ processedByEngine }}</span></div>
+            <OperationOutcomePanel :outcome="expressionParseOutcome" @close="expressionParseOutcome = undefined" />
+            <template v-for="(r2, i1) in results">
+              <v-simple-table :key="i1">
+                <tr v-if="r2.context">
+                  <td class="context" colspan="2">
+                    <v-btn x-small v-if="r2.position" style="float:right;" icon title="Goto context" @click="navigateToContext(r2.context)">
+                      <v-icon>
+                        mdi-target
+                      </v-icon>
+                    </v-btn>
+                    <div>Context: <b>{{ r2.context }}</b></div>
+                  </td>
+                </tr>
+                <template v-for="(v1, index) in r2.result">
+                  <tr :key="index">
+                    <td class="result-value">
+                      <div class="code-json">{{ v1.value }}</div>
+                    </td>
+                    <td class="result-type"><i v-if="v1.type">({{ v1.type }})</i></td>
+                  </tr>
+                </template>
+              </v-simple-table>
+            </template>
+          </template> 
 
-                        <label class="v-label theme--light bare-label">Fhirpath Expression</label>
-                        <div height="85px" width="100%" ref="aceEditorExpression"></div>
-                        <div class="ace_editor_footer"></div>
-                        <!-- <parse-tree-tab v-show="false" ref="astTabComponent"></parse-tree-tab> -->
-
-                        <div class="results">RESULTS <span class="processedBy">{{ processedByEngine }}</span></div>
-                        <OperationOutcomePanel :outcome="expressionParseOutcome" @close="expressionParseOutcome = undefined" />
-                        <template v-for="(r2, i1) in results">
-                          <v-simple-table :key="i1">
-                            <tr v-if="r2.context">
-                              <td class="context" colspan="2">
-                                <div>Context: <b>{{ r2.context }}</b></div>
-                              </td>
-                            </tr>
-                            <template v-for="(v1, index) in r2.result">
-                              <tr :key="index">
-                                <td class="result-value">
-                                  <div class="code-json">{{ v1.value }}</div>
-                                </td>
-                                <td class="result-type"><i v-if="v1.type">({{ v1.type }})</i></td>
-                              </tr>
-                            </template>
-                          </v-simple-table>
-                        </template>
-                      </v-card-text>
-                    </v-card>
-                  </div>
-                </v-scroll-x-transition>
-
-                <v-scroll-x-transition mode="out-in" :hide-on-leave="true">
-                  <div v-show="resourceVisible" :eager="true" style="order:1;">
-                    <!-- Resource -->
-                    <v-card flat>
-                      <v-card-text>
-                        <p class="fl-tab-header">Resource</p>
-                        <v-text-field label="Test Resource Id" v-model="resourceId" hide-details="auto" autocomplete="off"
+          <template v-slot:Resource>
+            <v-text-field label="Test Resource Id" v-model="resourceId" hide-details="auto" autocomplete="off" @input="updateNow"
                           autocorrect="off" autocapitalize="off" spellcheck="false">
-                          <template v-slot:append>
-                            <v-btn icon small tile @click="resourceId = undefined">
-                              <v-icon> mdi-close </v-icon>
-                            </v-btn>
-                            <v-btn icon small tile @click="downloadTestResource">
-                              <v-icon> mdi-download </v-icon>
-                            </v-btn>
-                            <v-btn small icon tile @click="reformatTestResource"><v-icon title="Format json" dark> mdi-format-indent-increase </v-icon></v-btn>
-                          </template>
-                        </v-text-field>
-                        <label class="v-label theme--light bare-label">Test Resource JSON <i>{{ resourceJsonChangedMessage() }}</i></label>
-                        <div class="resource" width="100%" ref="aceEditorResourceJsonTab"></div>
-                        <!-- <div class="ace_editor_footer"></div> -->
-                        <v-text-field label="Terminology Server" v-model="terminologyServer" hide-details="auto"
-                          autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
-                      </v-card-text>
-                    </v-card>
-                  </div>
-                </v-scroll-x-transition>
+              <template v-slot:append>
+                <v-btn icon small tile @click="resourceId = undefined">
+                  <v-icon> mdi-close </v-icon>
+                </v-btn>
+                <v-btn icon small tile @click="downloadTestResource">
+                  <v-icon> mdi-download </v-icon>
+                </v-btn>
+                <v-btn small icon tile @click="reformatTestResource"><v-icon title="Format json" dark> mdi-format-indent-increase </v-icon></v-btn>
+              </template>
+            </v-text-field>
+            <label class="v-label theme--light bare-label">Test Resource JSON <i>{{ resourceJsonChangedMessage() }}</i></label>
+            <div class="resource" width="100%" ref="aceEditorResourceJsonTab"></div>
+            <!-- <div class="ace_editor_footer"></div> -->
+          </template>
 
-                <v-scroll-x-transition mode="out-in" :hide-on-leave="true">
-                  <div v-show="variablesVisible" >
-                    <!-- Variables -->
-                    <v-card flat>
-                      <v-card-text>
-                        <p class="fl-tab-header">Variables</p>
-                          <template v-for="(v1, index) in variables">
-                          <v-textarea :auto-grow="!v1[1].resourceId" :rows="(!v1[1].resourceId?1:5)" 
-                            :label="v1[0]" hide-details="auto" :value="v1[1].data" 
-                            autocorrect="off" autocapitalize="off" spellcheck="false"
-                            @input="updateVariableValue(v1[0])" :key="index" 
-                            :messages="variableMessages(v1[1])" :error-messages="variableErrorMessages(v1[1])" :error="(!!v1[1].errorMessage)">
-                              <template v-slot:append>
-                              <v-btn icon small tile @click="variables.set(v1[0], { name: v1[0], data: v1[1].resourceId }); $forceUpdate()">
-                                  <v-icon> mdi-close </v-icon>
-                                </v-btn>
-                                <v-btn icon small tile @click="downloadVariableResource(v1[0])" :hidden="!isValidFhirUrl(v1[1])"> 
-                                  <v-icon> mdi-download </v-icon>
-                                </v-btn>
-                              </template>
-                            </v-textarea>
-                            <!-- <div class="code-json">{{ JSON.stringify(v1[1], null, 2) }}</div> -->
-                          </template>
-                          <br/>
-                          <label><i>Note: This variables tab is only visible when there are variables in the expression.
-                            To add another variable, name it in the fhirpath expression.<br/>
-                            Also note that the variables are not supported in the context expression.</i></label>
-                      </v-card-text>
-                    </v-card>
-                  </div>
-                </v-scroll-x-transition>
+          <template v-slot:Variables>
+            <template v-for="(v1, index) in variables">
+              <v-textarea :auto-grow="!v1[1].resourceId" :rows="(!v1[1].resourceId?1:5)" 
+                :label="v1[0]" hide-details="auto" :value="v1[1].data" 
+                autocorrect="off" autocapitalize="off" spellcheck="false"
+                @input="updateVariableValue(v1[0])" :key="index" 
+                :messages="variableMessages(v1[1])" :error-messages="variableErrorMessages(v1[1])" :error="(!!v1[1].errorMessage)">
+                <template v-slot:append>
+                <v-btn icon small tile @click="variables.set(v1[0], { name: v1[0], data: v1[1].resourceId }); $forceUpdate()">
+                    <v-icon> mdi-close </v-icon>
+                  </v-btn>
+                  <v-btn icon small tile @click="downloadVariableResource(v1[0])" :hidden="!isValidFhirUrl(v1[1])"> 
+                    <v-icon> mdi-download </v-icon>
+                  </v-btn>
+                </template>
+              </v-textarea>
+              <!-- <div class="code-json">{{ JSON.stringify(v1[1], null, 2) }}</div> -->
+            </template>
+            <br/>
+            <label><i>Note: This variables tab is only visible when there are variables in the expression.
+              To add another variable, name it in the fhirpath expression.<br/>
+              Also note that the variables are not supported in the context expression.</i></label>
+          </template>
 
-                <v-scroll-x-transition mode="out-in" :hide-on-leave="true">
-                  <div v-show="traceVisible" >
-                    <!-- Trace -->
-                    <v-card flat>
-                      <v-card-text>
-                        <p class="fl-tab-header">Trace</p>
-                        <template v-for="(r2, i1) in results">
-                          <v-simple-table :key="i1">
-                            <tr v-if="r2.context">
-                              <td class="context" colspan="3">
-                                <div>Context: <b>{{ r2.context }}</b></div>
-                              </td>
-                            </tr>
-                            <template v-for="(v1, index) in r2.trace">
-                              <tr :key="index">
-                                <td class="result-type"><b>{{ v1.name }}</b></td>
-                                <td class="result-value">
-                                  <div class="code-json" v-if="v1.value != null">{{ v1.value }}</div>
-                                  <div class="code-json" v-if="v1.value == null && v1.type == 'empty-string'"><i>""</i></div>
-                                </td>
-                                <td class="result-type"><i v-if="v1.type">({{ v1.type }})</i></td>
-                              </tr>
-                            </template>
-                          </v-simple-table>
-                        </template>
-                      </v-card-text>
-                    </v-card>
-                  </div>
-                </v-scroll-x-transition>
+          <template v-slot:Trace>
+            <template v-for="(r2, i1) in results">
+              <v-simple-table :key="i1">
+                <tr v-if="r2.context">
+                  <td class="context" colspan="3">
+                    <v-btn v-if="r2.position" x-small style="float:right;" icon title="Goto context" @click="navigateToContext(r2.context)">
+                      <v-icon>
+                        mdi-target
+                      </v-icon>
+                    </v-btn>
+                    <div>Context: <b>{{ r2.context }}</b></div>
+                  </td>
+                </tr>
+                <template v-for="(v1, index) in r2.trace">
+                  <tr :key="index">
+                    <td class="result-type"><b>{{ v1.name }}</b></td>
+                    <td class="result-value">
+                      <div class="code-json" v-if="v1.value != null">{{ v1.value }}</div>
+                      <div class="code-json" v-if="v1.value == null && v1.type == 'empty-string'"><i>""</i></div>
+                    </td>
+                    <td class="result-type"><i v-if="v1.type">({{ v1.type }})</i></td>
+                  </tr>
+                </template>
+              </v-simple-table>
+            </template>
+            
+          </template>
 
-                <v-scroll-x-transition mode="out-in" :hide-on-leave="true">
-                  <div v-show="astVisible" :eager="true">
-                    <!-- AST abstract syntax tree -->
-                    <v-card flat>
-                      <v-card-text>
-                        <p class="fl-tab-header">Abstract Syntax Tree</p>
-                        <OperationOutcomePanel :outcome="expressionParseOutcome" @close="expressionParseOutcome = undefined" />
-                        <parse-tree-tab ref="astTabComponent2"></parse-tree-tab>
-                      </v-card-text>
-                    </v-card>
-                  </div>
-                </v-scroll-x-transition>
+          <template v-slot:AST>
+            <OperationOutcomePanel :outcome="expressionParseOutcome" @close="expressionParseOutcome = undefined" />
+            <parse-tree-tab ref="astTabComponent2" :showAdvancedSettings="showAdvancedSettings" @navigateToExpressionNode="navigateToExpressionNode"></parse-tree-tab>
+          </template>
 
-                <v-scroll-x-transition mode="out-in" :hide-on-leave="true">
-                  <div v-show="chatVisible" :eager="true">
-                    <!-- Chat -->
-                    <v-card flat>
-                      <v-card-text>
-                        <p class="fl-tab-header">FhirPath AI Chat</p>
-                        <Chat class="chat" ref="chatComponent" 
-                            @send-message="handleSendMessage" 
-                            @reset-conversation="resetConversation"
-                            @apply-suggested-context="applySuggestedContext"
-                            @apply-suggested-expression="applySuggestedExpression"/>
-                      </v-card-text>
-                    </v-card>
-                  </div>
-                </v-scroll-x-transition>
+          <template v-slot:AI_Chat>
+            <Chat class="chat" ref="chatComponent" 
+              feature="FHIRPathTester"
+              :openAIFeedbackEnabled="openAIFeedbackEnabled"
+              :publisher="defaultProviderField"
+                @send-message="handleSendMessage" 
+                @reset-conversation="resetConversation"
+                @apply-suggested-context="applySuggestedContext"
+                @apply-suggested-expression="applySuggestedExpression"
+                @apply-suggested-questionnaire="copySuggestionToClipboard"
+                @apply-suggested-item="copySuggestionToClipboard"
+                @apply-suggested-fhir="copySuggestionToClipboard"
+                @apply-suggested-json="copySuggestionToClipboard"
+                @apply-suggested-fsh="copySuggestionToClipboard"
+                @apply-suggested-jsonpatch="copySuggestionToClipboard"
+                />
+          </template>
 
-                <v-scroll-x-transition mode="out-in" :hide-on-leave="true">
-                  <div v-show="debugVisible" :eager="true">
-                    <!-- Debug -->
-                    <v-card flat>
-                      <v-card-text>
-                        <p class="fl-tab-header">Debug</p>
-                        <div class="debug" ref="aceEditorDebug"></div>
-                      </v-card-text>
-                    </v-card>
-                  </div>
-                </v-scroll-x-transition>
+          <template v-slot:Debug>
+            <div class="debug" ref="aceEditorDebug"></div>
+          </template>
 
-              </v-tabs-items>
-            </v-tabs>
-          </v-col>
-        </v-row>
+          <template v-slot:Library>
+            <conformance-resource-details-tab ref="libDetailsTabComponent"
+            v-if="library"
+                          :raw="library"
+                          :hideHeader="true"
+                          :showAdvancedSettings="showAdvancedSettings"
+                          :readonly="!enableSaveLibrary"
+                          @update="updateNow"
+                        >
+                        </conformance-resource-details-tab>
+          </template>
+
+          <template v-slot:Publishing>
+            <conformance-resource-publishing-tab
+                          v-if="library"
+                          :raw="library"
+                          :hideHeader="true"
+                          :lockPublisher="true"
+                          :showAdvancedSettings="showAdvancedSettings"
+                          :readonly="!enableSaveLibrary"
+                          @update="updateNow"
+                        />
+          </template>
+
+        </twin-pane-tab>
       </v-card>
 
       <br />
       <OperationOutcomeOverlay style="z-index: 8" v-if="showOutcome" :saveOutcome="saveOutcome" :showOutcome="showOutcome" title="Error"
         @close="clearOutcome" />
     </div>
-    <!-- <code class="code-json">{{ JSON.stringify(results, null, 4) }}</code> -->
   </div>
 </template>
 
 <style lang="scss">
-.custom-tab > div {
-  flex-direction: row;
-  // height: calc(100vh - 168px);
-  // overflow-y: auto;
-}
-.custom-tab > div > div {
-  height: calc(100vh - 168px);
-  overflow-y: auto;
-}
 .resource {
-  height: calc(100vh - 320px);
+  height: calc(100vh - 280px);
 }
 .chat {
   height: calc(100vh - 200px);
@@ -279,9 +251,6 @@
   height: calc(100vh - 196px);
 }
 @media (max-width: 596px) {
-  .custom-tab > div > div {
-    height: calc(100vh - 168px);
-  }
   .resource {
     height: calc(100vh - 320px - 48px);
   }
@@ -291,9 +260,6 @@
   .debug {
     height: calc(100vh - 196px - 48px);
   }
-}
-.custom-tab > div > div{
-  flex: 1;
 }
 </style>
 
@@ -305,6 +271,13 @@
 .v-treeview-node {
   border-top: thin solid silver;
 }
+
+.resultSelection {
+  position: absolute;
+  z-index: 20;
+  background-color: #9acd3220;
+}
+
 </style>
 
 <style lang="scss" scoped>
@@ -317,20 +290,6 @@
 <style lang="scss" scoped >
 tr.ve-table-body-tr {
   cursor: pointer;
-}
-
-.left-resource {
-  display: none;
-}
-
-@media (max-width: 1000px) {
-  .left-resource {
-    display: flex;
-  }
-
-  .right-resource {
-    display: none;
-  }
 }
 
 .engineselector {
@@ -349,10 +308,6 @@ td {
 
 .progress-button {
   max-width: 25px;
-}
-
-.fl-toolbar {
-  margin-bottom: 6px;
 }
 
 .result-type {
@@ -415,12 +370,14 @@ import {
   requestFhirAcceptHeaders,
   requestFhirContentTypeHeaders,
   fhirResourceTypes,
+  saveFhirResource,
+  CreateOperationOutcome,
 } from "~/helpers/searchFhir";
 import axios, { AxiosRequestHeaders, AxiosResponse } from "axios";
 import { AxiosError } from "axios";
 import { CancelTokenSource } from "axios";
-import { getExtensionStringValue } from "fhir-extension-helpers";
-import { InvertTree, JsonNode } from "~/components/ParseTreeTab.vue";
+import { addExtension, addExtensionStringValue, clearExtension, getExtensionCodingValues, getExtensionReferenceValue, getExtensionStringValue, setExtension, setExtensionStringValue } from "fhir-extension-helpers";
+import { fpjsNode, GetExternalVariablesUsed, InvertTree, JsonNode } from "~/components/ParseTreeTab.vue";
 // import { getPreferredTerminologyServerFromSDC } from "fhir-sdc-helpers";
 import fhirpath from "fhirpath";
 import fhirpath_r4_model from "fhirpath/fhir-context/r4";
@@ -444,6 +401,13 @@ import { VariableData, EncodeTestFhirpathData, DecodeTestFhirpathData, TestFhirp
 import { EvaluateChatPrompt, GetSystemPrompt, IOpenAISettings } from "~/helpers/openai_utils";
 import { ChatMessage } from "@azure/openai";
 import ParseTreeTab from "~/components/ParseTreeTab.vue";
+import ConformanceResourceDetailsTab from "~/components/ConformanceResourceDetailsTab.vue";
+import { VueElement, nextTick } from "@vue/runtime-dom";
+import { LibraryData } from "~/models/LibraryTableData";
+import { BaseResource_defaultValues } from "~/models/BaseResourceTableData";
+import { DomainResource, FhirResource, Resource } from "fhir/r4b";
+import { findNodeByPath, IJsonNode, IJsonNodePosition, parseJson } from "~/helpers/json_parser";
+import TwinPaneTab, { TabData } from "~/components/TwinPaneTab.vue";
 
 const shareTooltipText = 'Copy a sharable link to this test expression';
 const shareZulipTooltipText = 'Copy a sharable link for Zulip to this test expression';
@@ -622,13 +586,9 @@ interface FhirPathData {
   saveOutcome?: fhir4b.OperationOutcome;
   showOutcome?: boolean;
   showAdvancedSettings: boolean;
+  defaultProviderField: string | undefined;
   terminologyServer: string;
   cancelSource?: CancelTokenSource;
-  tab: any;
-  lastTabClicked: KeyboardEvent | MouseEvent | undefined;
-  primaryTab: number;
-  secondaryTab: number;
-  windowWidth: number;
   results: ResultData[];
   selectedEngine: string;
   executionEngines: string[];
@@ -642,11 +602,13 @@ interface FhirPathData {
   processedByEngine?: string;
   openAIexpressionExplanationLoading: boolean;
   openAIexpressionExplanationMessage?: string;
+  openAIFeedbackEnabled?: boolean;
   chatEnabled: boolean;
   showChat: boolean;
   openAILastContext: string;
   expressionParseOutcome?: fhir4b.OperationOutcome;
   astInverted: boolean;
+  enableSave: boolean;
 }
 
 interface ResultItem {
@@ -656,6 +618,7 @@ interface ResultItem {
 
 interface ResultData {
   context?: string;
+  position?: IJsonNodePosition;
   result: ResultItem[];
   trace: TraceData[];
 }
@@ -703,7 +666,7 @@ function getValue(entry: fhir4b.ParametersParameter): ResultItem[] {
 function getTraceValue(entry: fhir4b.ParametersParameter): TraceData[] {
   let result: TraceData[] = [];
   if (entry.part) {
-    for (var part of entry.part) {
+    for (let part of entry.part) {
       const val = getValue(part);
       let valueData : TraceData = { name: entry.valueString ?? '', type: part.name };
       if (val.length > 0)
@@ -716,19 +679,24 @@ function getTraceValue(entry: fhir4b.ParametersParameter): TraceData[] {
 
 interface IFhirPathMethods
 {
+  twinPaneMounted(): Promise<void>;
+  CtrlEnterHandler(event: KeyboardEvent): void;
   readParametersFromQuery(): TestFhirpathData;
   applyParameters(p: TestFhirpathData): void;
   variableMessages(variable: VariableData): string | undefined;
   variableErrorMessages(variable: VariableData): string | undefined;
+  resetExpression(): void;
   isValidFhirUrl(variable: VariableData): boolean;
   resourceJsonChangedEvent(): void;
   updateVariableValue(name: string): void;
   fhirpathExpressionChangedEvent(): void;
+  fhirpathContextExpressionChangedEvent(): void;
   resourceJsonChangedMessage(): string | undefined;
   tabTitle(): void;
   settingsClosed(): void;
-  tabClicked(e: KeyboardEvent | MouseEvent): void;
-  changeTab(selectTab: number): void;
+  updateNow():void;
+  selectTab(selectTab: number): void;
+  tabChanged(index: Number): void;
 
   getContextExpression(): string | undefined;
   getFhirpathExpression(): string | undefined;
@@ -754,31 +722,26 @@ interface IFhirPathMethods
   evaluateFhirPathExpression(): void;
   checkFocus(event: any): void;
   saveLastUsedParameters(loadCompleted: boolean): void;
+  createNewLibrary(): void;
+  saveLibrary(): void;
+  navigateToContext(elementPath: string): void;
+  navigateToExpressionNode(node: JsonNode): void;
+  highlightText(editor?: ace.Ace.Editor, startPosition?: number, length?: number): void;
 
   GetAISettings(): IOpenAISettings;
   handleSendMessage(message: string): void;
   resetConversation(): void;
+  copySuggestionToClipboard(suggestion: string): void;
   applySuggestedExpression(updatedExpression: string): void;
   applySuggestedContext(updatedExpression: string): void;
 }
 
 interface IFhirPathComputed
 {
-  expressionVisible: boolean;
-  variablesVisible: boolean;
-  traceVisible: boolean;
-  chatVisible: boolean;
-  resourceVisible: boolean;
-  debugVisible: boolean;
-  astVisible: boolean;
+  tabDetails: TabData[];
 
-  expressionActiveClass: string;
-  variablesActiveClass: string;
-  traceActiveClass: string;
-  chatActiveClass: string;
-  resourceActiveClass: string;
-  debugActiveClass: string;
-  astActiveClass: string;
+  enableSaveLibrary: boolean;
+  enableCreateLibrary: boolean;
 }
 
 interface IFhirPathProps
@@ -791,19 +754,18 @@ interface IFhirPathProps
     chatComponent: Chat,
     // astTabComponent: ParseTreeTab,
     astTabComponent2: ParseTreeTab,
+    libDetailsTabComponent: HTMLElement,
+    demo2: HTMLElement,
   },
 }
 
 export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFhirPathProps>({
-  head: {
-    title: "FhirPathTester",
-  },
   async mounted() {
-    window.onresize = () => {
-        this.windowWidth = window.innerWidth
-    }
+    window.document.title = "FhirPath Tester";
     this.showAdvancedSettings = settings.showAdvancedSettings();
-    if (settings.getOpenAIKey())
+    this.defaultProviderField = settings.getDefaultProviderField();
+    this.openAIFeedbackEnabled = settings.getOpenAIFeedbackEnabled();
+    if (settings.getOpenAIKey() || settings.getOpenAIBasePath())
       this.chatEnabled = true;
     this.terminologyServer = settings.getFhirTerminologyServerUrl();
 
@@ -814,7 +776,93 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         ace.config.set('themePath', CDN);
         ace.config.set('workerPath', CDN);
     }
+    document.addEventListener('keypress', this.CtrlEnterHandler);
+  },
 
+  beforeDestroy() {
+    document.removeEventListener('keypress', this.CtrlEnterHandler);
+  },
+
+  computed: {
+    tabDetails(): TabData[] {
+      return [
+        {
+          iconName: "mdi-function-variant",
+          tabName: "Expression",
+          show: true,
+          enabled: true,
+        },
+        {
+          iconName: "mdi-clipboard-text-outline",
+          tabName: "Resource",
+          show: true,
+          enabled: true,
+        },
+        {
+          iconName: "mdi-application-variable-outline",
+          tabName: "Variables",
+          show: this.variables.size > 0,
+          enabled: true,
+        },
+        {
+          iconName: "mdi-format-list-bulleted",
+          tabName: "Trace",
+          show: true,
+          enabled: this.hasTraceData(),
+        },
+        {
+          iconName: "mdi-file-tree",
+          tabName: "AST",
+          tabHeaderName: "Abstract Syntax Tree",
+          title: "Abstract Syntax Tree",
+          show: true,
+          enabled: true,
+        },
+        {
+          iconName: "mdi-brain",
+          tabName: "AI Chat",
+          tabHeaderName: "FHIRPath AI Chat",
+          title: "FHIRPath AI Chat",
+          show: this.chatEnabled,
+          enabled: true,
+        },
+        {
+          iconName: "mdi-bug-outline",
+          tabName: "Debug",
+          show: this.showAdvancedSettings,
+          enabled: true,
+        },
+        {
+          iconName: "mdi-card-bulleted-settings-outline",
+          tabName: "Library",
+          tabHeaderName: "Library Details",
+          show: this.showAdvancedSettings && this.library !== undefined,
+          enabled: true,
+        },
+        {
+          iconName: "mdi-download-network-outline",
+          tabName: "Publishing",
+          tabHeaderName: "Library Publishing",
+          show: this.showAdvancedSettings && this.library !== undefined,
+          enabled: true,
+        }
+      ];
+    },
+    enableSaveLibrary(): boolean {
+      return this.enableSave && this.library != undefined && this.showAdvancedSettings && this.defaultProviderField == this.library.publisher;
+    },
+    enableCreateLibrary(): boolean {
+      return this.library == undefined && this.showAdvancedSettings && ((this.defaultProviderField?.length ?? 0) > 0);
+    },
+  },
+  methods: {
+    CtrlEnterHandler(event: KeyboardEvent): void {
+      if (event.ctrlKey && event.key === "\n") {
+        this.evaluateFhirPathExpression();
+      }
+    },
+
+    async twinPaneMounted(): Promise<void> {
     // Update the editor's Mode
     var editorCtxtDiv: any = this.$refs.aceEditorContextExpression as Element;
     if (editorCtxtDiv) {
@@ -836,6 +884,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         setCustomHighlightRules(this.expressionContextEditor, FhirPathHightlighter_Rules);
         this.expressionContextEditor.setValue("name"); // default value
         this.expressionContextEditor.clearSelection();
+        this.expressionContextEditor.on("change", this.fhirpathContextExpressionChangedEvent);
       }
     }
 
@@ -925,66 +974,59 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     // Read in any parameters from the URL
       data = this.readParametersFromQuery();
     }
+
+    this.selectTab(1);
+    let tabControl: TwinPaneTab = this.$refs.twinTabControl as TwinPaneTab;
+    if (tabControl && tabControl.singleTabMode())
+      this.selectTab(0);
+
     await this.applyParameters(data);
+    // refresh the variables
+    this.fhirpathExpressionChangedEvent();
     await this.evaluateFhirPathExpression();
     this.loadingData = false;
   },
-  computed: {
-    expressionVisible(): boolean {
-      return this.primaryTab === 0 || (this.secondaryTab === 0 && this.windowWidth > 999);
-    },
-    resourceVisible(): boolean {
-      return this.primaryTab === 1 || (this.secondaryTab === 1 && this.windowWidth > 999);
-    },
-    variablesVisible(): boolean {
-      return this.primaryTab === 2 || (this.secondaryTab === 2 && this.windowWidth > 999);
-    },
-    traceVisible(): boolean {
-      return this.primaryTab === 3 || (this.secondaryTab === 3 && this.windowWidth > 999);
-    },
-    astVisible(): boolean {
-      return this.primaryTab === 4 || (this.secondaryTab === 4 && this.windowWidth > 999);
-    },
-    chatVisible(): boolean {
-      return this.primaryTab === 5 || (this.secondaryTab === 5 && this.windowWidth > 999);
-    },
-    debugVisible(): boolean {
-      return this.primaryTab === 6 || (this.secondaryTab === 6 && this.windowWidth > 999);
+    updateNow() {
+      this.$forceUpdate();
+      this.enableSave = true;
     },
 
-    expressionActiveClass(): string { return this.secondaryTab === 0 && this.windowWidth > 999 || this.primaryTab === 0 ? "v-tab--active" : "" },
-    resourceActiveClass(): string { return this.secondaryTab === 1 && this.windowWidth > 999 || this.primaryTab === 1 ? "v-tab--active" : "" },
-    variablesActiveClass(): string { return this.secondaryTab === 2 && this.windowWidth > 999 || this.primaryTab === 2 ? "v-tab--active" : "" },
-    traceActiveClass(): string { return this.secondaryTab === 3 && this.windowWidth > 999 || this.primaryTab === 3 ? "v-tab--active" : "" },
-    astActiveClass(): string { return this.secondaryTab === 4 && this.windowWidth > 999 || this.primaryTab === 4 ? "v-tab--active" : "" },
-    chatActiveClass(): string { return this.secondaryTab === 5 && this.windowWidth > 999 || this.primaryTab === 5 ? "v-tab--active" : "" },
-    debugActiveClass(): string { return this.secondaryTab === 6 && this.windowWidth > 999 || this.primaryTab === 6 ? "v-tab--active" : "" },
-  },
-  methods: {
-    tabClicked(e: KeyboardEvent | MouseEvent): void{
-      this.lastTabClicked = e;
-    },
-    changeTab(selectTab: number): void {
-      // Primary tab is the one that is "locked" and only changeable when clicking with control
-      // The secondary tab is the one that is "switched" when clicking without control
-      if (this.primaryTab !== selectTab){
-        if (this.lastTabClicked && (this.lastTabClicked as MouseEvent).ctrlKey || this.windowWidth <= 999) {
-          this.primaryTab = selectTab;
-        }
-        else {
-          this.secondaryTab = selectTab;
-        }
+    tabChanged(index: Number): void {
+      // Workaround to refresh the display in the response editor when it is updated while the form is not visible
+      // https://github.com/ajaxorg/ace/issues/2497#issuecomment-102633605
+      if (index === 6)
+      {
+        setTimeout(() => {
+          if (this.debugEditor) {
+            var editorHtmlElement: any = this.$refs
+              .aceEditorDebug as Element;
+            if (editorHtmlElement) {
+              console.log("focusing editor");
+              editorHtmlElement.focus();
+            }
+            this.debugEditor.resize();
+            this.updateNow();
+            console.log("refreshing editor");
+          }
+        });
       }
-      this.lastTabClicked = undefined;
     },
-    readParametersFromQuery(): TestFhirpathData{
+
+    selectTab(tabIndex: number) {
+      let tabControl: TwinPaneTab = this.$refs.twinTabControl as TwinPaneTab;
+      if (tabControl){
+        tabControl.selectTab(tabIndex);
+      }
+    },
+
+    readParametersFromQuery(): TestFhirpathData {
       let data: TestFhirpathData = {
         expression: this.$route.query.expression as string
       };
-    if (this.$route.query.libaryId as string) {
-        data.libraryId = this.$route.query.libaryId as string;
-    }
-    else {
+      if (this.$route.query.libaryId as string) {
+          data.libraryId = this.$route.query.libaryId as string;
+      }
+      else {
         if (this.$route.query.context) {
           data.context = this.$route.query.context as string;
         }
@@ -1006,6 +1048,27 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
           data.engine = this.$route.query.engine as string ?? '';
         }
 
+        if (this.$route.query){
+          // iterate all the query parameters and look for variables identified by the prefix "var-"
+          for (const [key, value] of Object.entries(this.$route.query)) {
+            if (key.startsWith("var-")) {
+              const varName = key.substring(4);
+              const varValue = value as string;
+              data.variables = data.variables ?? [];
+              data.variables.push({ name: varName, data: varValue });
+            }
+          }
+          this.$nextTick(async () => {
+            for (const variable of this.variables) {
+              if (variable[1].data?.startsWith("http://") || variable[1].data?.startsWith("https://")) {
+                // if the variable value is a resource reference, download the resource instead
+                console.log("Downloading variable: " + variable[0] + " = " + variable[1].data);
+                await this.downloadVariableResource(variable[0]);
+              }
+            }
+          });
+        }
+
         if (this.$route.query.terminologyServer) {
           data.terminologyServer = this.$route.query.terminologyServer as string ?? '';
         }
@@ -1019,7 +1082,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       else {
         if (p.expression) {
           if (p.exampletype) {
-            this.resourceId = `${settings.getFhirServerUrl()}/${p.exampletype}/example`;
+            this.resourceId = `${settings.getFhirServerExamplesUrl()}/${p.exampletype}/example`;
         }
         else {
             if (p.resource) {
@@ -1065,6 +1128,17 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         }
       }
   },
+  resetExpression():void {
+    if (this.expressionEditor) {
+      this.expressionEditor.setValue('');
+      this.expressionEditor.clearSelection();
+      this.expressionEditor.focus();
+    }
+    if (this.expressionContextEditor) {
+      this.expressionContextEditor.setValue('');
+      this.expressionContextEditor.clearSelection();
+    }
+  },
     variableMessages(variable: VariableData): string | undefined{
       if (variable.resourceId) return variable.resourceId;
       if (variable.data?.startsWith("[")) return "(array)";
@@ -1104,6 +1178,8 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     },
     resourceJsonChangedEvent(){
       this.resourceJsonChanged = true;
+      this.enableSave = true;
+      console.log('enable save resourceJSON');
     },
     updateVariableValue(name: string): void{
       const ie: InputEvent = event as InputEvent;
@@ -1117,51 +1193,78 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       else{
         this.variables.set(name, { name:name, data: value });
       }
+      this.enableSave = true;
+      console.log('enable save update var');
     },
     fhirpathExpressionChangedEvent(){
       // Check the expression to see if there are any variables in there
       const session = this.expressionEditor?.session;
       if (session){
 
+        let ast: fpjsNode | undefined = undefined;
         if (this.selectedEngine.indexOf("fhirpath.js") != -1){
           const astTab2 = this.$refs.astTabComponent2 as ParseTreeTab;
-          astTab2?.displayTreeForExpression(this.getContextExpression() ?? '', this.getFhirpathExpression() ?? '');
+          ast = astTab2?.displayTreeForExpression(this.getContextExpression() ?? '', this.getFhirpathExpression() ?? '');
         }
-        // const astTab = this.$refs.astTabComponent as ParseTreeTab;
-        // astTab.displayTreeForExpression(this.getContextExpression() ?? '', this.getFhirpathExpression() ?? '');
 
-        const count = session.doc.getLength();
         // accumulate the variables
         let updatedVariables = new Map<string, any>();
-        for (let row = 0; row<= count; row++){
-          if (session.doc.getLine(row).includes("%")){
-            const tkns = this.expressionEditor?.session.getTokens(row);
-            if (tkns){
-              for (const tkn of tkns){
-                if (tkn.type === "fhir_variable"){
-                  const varName = canonicalVariableName(tkn.value);
-                  if (isSystemVariableName(varName)) continue;
 
-                  if (!this.variables.has(varName)){
-                    // console.log(tkn.value + ' ' + varName);
-                    updatedVariables.set(varName, { name: varName,  data: undefined });
-                    // provide default implementation values for known env vars
-                    switch(varName){
-                      case 'ucum': updatedVariables.set(varName, "http://unitsofmeasure.org"); break;
+        // check if there are any variables in the AST
+        if (ast){
+          let varsUsed = GetExternalVariablesUsed(ast);
+          for (const varName of varsUsed){
+            if (isSystemVariableName(varName)) continue;
+
+            if (!this.variables.has(varName)){
+              // console.log(tkn.value + ' ' + varName);
+              updatedVariables.set(varName, { name: varName,  data: undefined });
+              // provide default implementation values for known env vars
+              switch(varName){
+                case 'ucum': updatedVariables.set(varName, "http://unitsofmeasure.org"); break;
+              }
+            }
+            else {
+              updatedVariables.set(varName, this.variables.get(varName));
+            }
+          }
+        }
+        else {
+          const count = session.doc.getLength();
+          for (let row = 0; row<= count; row++){
+            if (session.doc.getLine(row).includes("%")){
+              const tkns = this.expressionEditor?.session.getTokens(row);
+              if (tkns){
+                for (const tkn of tkns){
+                  if (tkn.type === "fhir_variable"){
+                    const varName = canonicalVariableName(tkn.value);
+                    if (isSystemVariableName(varName)) continue;
+
+                    if (!this.variables.has(varName)){
+                      // console.log(tkn.value + ' ' + varName);
+                      updatedVariables.set(varName, { name: varName,  data: undefined });
+                      // provide default implementation values for known env vars
+                      switch(varName){
+                        case 'ucum': updatedVariables.set(varName, "http://unitsofmeasure.org"); break;
+                      }
                     }
-                  }
-                  else {
-                    updatedVariables.set(varName, this.variables.get(varName));
+                    else {
+                      updatedVariables.set(varName, this.variables.get(varName));
+                    }
                   }
                 }
               }
             }
           }
         }
+
         this.variables = updatedVariables;
+        this.enableSave = true;
+        console.log('enable save expr change');
       }
-      if (this.tab === 2){
-      }
+    },
+    fhirpathContextExpressionChangedEvent(): void {
+      this.enableSave = true;
     },
     resourceJsonChangedMessage(): string | undefined {
       if (this.resourceJsonChanged && this.resourceId){
@@ -1175,7 +1278,10 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     },
     settingsClosed() {
       this.showAdvancedSettings = settings.showAdvancedSettings();
-      this.chatEnabled = settings.getOpenAIKey() !== undefined;
+      this.defaultProviderField = settings.getDefaultProviderField();
+      this.terminologyServer = settings.getFhirTerminologyServerUrl();
+      this.chatEnabled = settings.getOpenAIKey() !== undefined || settings.getOpenAIBasePath() !== undefined;
+      this.openAIFeedbackEnabled = settings.getOpenAIFeedbackEnabled();
       this.$forceUpdate();
     },
 
@@ -1205,7 +1311,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
 
     hasTraceData(): boolean {
       if (this.results.length === 0) return false;
-      for (var rd of this.results) {
+      for (let rd of this.results) {
         if (rd.trace.length > 0) return true;
       }
       return false;
@@ -1245,6 +1351,10 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         this.cancelSource = undefined;
         this.loadingData = false;
 
+        const jsonValue = this.getResourceJson();
+        const astJson: IJsonNode | undefined = parseJson(jsonValue+'');
+        console.log("JSON fhir-paths: ", astJson);
+
         const results = response.data;
         if (results) {
           this.setResultJson(JSON.stringify(results, null, 4));
@@ -1258,7 +1368,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
 
           this.results = [];
           if (this.raw.parameter) {
-            for (var entry of this.raw.parameter) {
+            for (let entry of this.raw.parameter) {
               if (entry.name === 'parameters'){
                 // read the processing engine version
                 if (entry.part && entry.part.length > 0 && entry.part[0].name === 'evaluator'){
@@ -1267,7 +1377,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
 
                 if (entry.part)
                 {
-                  for (var part of entry.part) {
+                  for (let part of entry.part) {
                     if (part.name === 'parseDebugTree' && part.valueString) {
                       let ast: JsonNode = JSON.parse(part.valueString);
                       const astTab = this.$refs.astTabComponent2 as ParseTreeTab;
@@ -1284,8 +1394,12 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
               // Anything else is a result
               // scan over the parts (values)
               let resultItem: ResultData = { context: entry.valueString, result: [], trace: [] };
+              if (!this.selectedEngine.includes('R5') && astJson && entry.valueString){
+                const node = findNodeByPath(astJson, entry.valueString);
+                if (node) resultItem.position = node.position;
+              }
               if (entry.part) {
-                for (var part of entry.part) {
+                for (let part of entry.part) {
                   if (part.name === 'trace') {
                     resultItem.trace.push(...getTraceValue(part));
                   }
@@ -1315,7 +1429,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       }
     },
 
-    async downloadLibrary(libraryId: string) {
+    async downloadLibrary(libraryId: string): Promise<void> {
       try {
         let url = libraryId;
         if (!libraryId.startsWith('http'))
@@ -1354,21 +1468,45 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
             this.expressionContextEditor.clearSelection();
           }
 
+          // And variables
+          var libVariables = getExtensionCodingValues(this.library, "http://fhir.forms-lab.com/StructureDefinition/variable");
+          if (libVariables){
+            for (let v of libVariables){
+              this.variables.set(v.code??'', { name: v.code??'', data: v.display });
+            }
+          }
+
           // and test resource IDs
-          const rId = getExtensionStringValue(this.library, "http://fhir.forms-lab.com/StructureDefinition/resource-id");
+          const rId = getExtensionStringValue(this.library, "http://fhir.forms-lab.com/StructureDefinition/resource-id")
+          ?? getExtensionReferenceValue(this.library, "http://fhir.forms-lab.com/StructureDefinition/resource-id")?.reference;
           if (rId) {
             this.resourceId = rId;
             if (this.resourceJsonEditor) {
               this.resourceJsonEditor.setValue('');
               this.resourceJsonChanged = false;
-            if (this.resourceId?.startsWith("#") && this.library?.contained && this.library.contained[0]) {
-              this.resourceId = undefined;
-                const resourceJson = JSON.stringify(this.library.contained[0], null, 4); // really should lookup by ID
-                if (resourceJson) {
-                  this.resourceJsonEditor.setValue(resourceJson);
-                  this.resourceJsonChanged = false;
+            if (this.resourceId?.startsWith("#") && this.library?.contained){
+              var resource: Resource|DomainResource|undefined = undefined;
+              var newContained: FhirResource[] = [];
+              for (let n=0; n < this.library.contained.length; n++){
+                if (rId === "#"+this.library.contained[n].id){
+                  resource = this.library.contained[n];
                 }
-                this.resourceJsonEditor.clearSelection();
+                else {
+                  newContained.push(this.library.contained[n])
+                }
+              }
+              if (resource) {
+                this.resourceId = undefined;
+                if (this.library.contained.length > 1 && resource as DomainResource){
+                  (resource as DomainResource).contained = newContained;
+                }
+                  const resourceJson = JSON.stringify(resource, null, 4); // really should lookup by ID
+                  if (resourceJson) {
+                    this.resourceJsonEditor.setValue(resourceJson);
+                    this.resourceJsonChanged = false;
+                  }
+                  this.resourceJsonEditor.clearSelection();
+                }
               }
             }
           }
@@ -1384,6 +1522,10 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
           //   this.terminologyServer = ts;
           // }
         }
+        this.$nextTick(() => {
+          this.enableSave = false;
+          console.log('disable save - loaded');
+        });
       } catch (err) {
         this.loadingData = false;
         if (axios.isAxiosError(err)) {
@@ -1399,11 +1541,14 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
               this.saveOutcome?.issue.push({ code: 'not-found', severity: 'error', details: { text: `Library resource ${libraryId} not found` } });
             }
             this.showOutcome = true;
-            return serverError.response.data;
+            return;
           }
-        } else {
-          console.log("Client Error:", err);
+          this.saveOutcome = CreateOperationOutcome("fatal", "exception", "Server: " + err.message, undefined, err.code);
+          this.showOutcome = true;
+          return;
         }
+        this.saveOutcome = CreateOperationOutcome("fatal", "exception", "Client: " + err);
+        this.showOutcome = true;
       }
     },
 
@@ -1424,7 +1569,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         if (!this.resourceId) return;
         let url = this.resourceId;
         if (this.resourceId && !this.resourceId.startsWith('http'))
-          url = settings.getFhirServerUrl() + '/' + this.resourceId;
+          url = settings.getFhirServerExamplesUrl() + '/' + this.resourceId;
         
         // if trying to use the hl7 example servers, that should be over https
         if (url.startsWith("http://build.fhir.org/")
@@ -1485,13 +1630,12 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
             this.showOutcome = true;
             return serverError.response.data;
           }
-          // console.log("Axios Error:", err);
-          this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
-          this.saveOutcome?.issue.push({ code: 'unknown', severity: 'fatal', details: { text: err.message }, diagnostics: err.code });
+          this.saveOutcome = CreateOperationOutcome("fatal", "exception", "Server: " + err.message, undefined, err.code);
           this.showOutcome = true;
-        } else {
-          console.log("Client Error:", err);
+          return;
         }
+        this.saveOutcome = CreateOperationOutcome("fatal", "exception", "Client: " + err);
+        this.showOutcome = true;
       }
     },
 
@@ -1500,7 +1644,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         if (!this.variables.get(name)) return;
         let url = this.variables.get(name)?.resourceId ?? this.variables.get(name)?.data;
         if (url && !url.startsWith('http'))
-          url = settings.getFhirServerUrl() + '/' + url;
+          url = settings.getFhirServerExamplesUrl() + '/' + url;
 
         // if trying to use the hl7 example servers, that should be over https
         if (url.startsWith("http://build.fhir.org/")
@@ -1552,9 +1696,12 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
             this.showOutcome = true;
             return serverError.response.data;
           }
-        } else {
-          console.log("Client Error:", err);
+          this.saveOutcome = CreateOperationOutcome("fatal", "exception", "Server: " + err.message, undefined, err.code);
+          this.showOutcome = true;
+          return;
         }
+        this.saveOutcome = CreateOperationOutcome("fatal", "exception", "Client: " + err);
+        this.showOutcome = true;
       }
     },
 
@@ -1567,6 +1714,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       };
     },
     applySuggestedExpression(updatedExpression: string): void {
+      this.selectTab(0);
       if (this.expressionEditor) {
         // before blindly applying the updated text, do some cleaning of the context
         let fhirData : fhir4b.Resource = { resourceType: 'Patient' }; // some dummy data
@@ -1594,7 +1742,13 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       }
     },
 
+    copySuggestionToClipboard(suggestion: string) {
+      console.log('Copied suggestion to clipboard: ', suggestion)
+      navigator.clipboard.writeText(suggestion);
+    },
+
     applySuggestedContext(updatedExpression: string): void {
+      this.selectTab(0);
       if (this.expressionContextEditor) {
         // before blindly applying the updated text, do some cleaning of the context
         let fhirData : fhir4b.Resource = { resourceType: 'Patient' }; // some dummy data
@@ -1677,7 +1831,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
           1000);
       this.openAIexpressionExplanationMessage = "(Generated by OpenAI "+settings.getOpenAIModel()+")";
       this.openAIexpressionExplanationLoading = false;
-      chat.addMessage("FhirPath AI", resultOfQuestion ?? '', true);
+      chat.addMessage("FhirPath AI", resultOfQuestion ?? '', true, settings.getOpenAIModel());
       chat.setThinking(false);
     },
 
@@ -1705,12 +1859,15 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         catch (err: any) {
           console.log(err);
           if (err.message) {
-            this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
-            this.saveOutcome?.issue.push({ code: 'exception', severity: 'fatal', details: { text: err.message } });
+            this.saveOutcome = CreateOperationOutcome('fatal', 'exception', err.message);
             this.showOutcome = true;
+            return;
           }
         }
       }
+
+      const astJson: IJsonNode | undefined = parseJson(resourceJson+'');
+
       // debugger;
       var environment: Record<string, any> = { resource: fhirData, rootResource: fhirData };
       for (let v of this.variables) {
@@ -1736,28 +1893,26 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       if (contextExpression) {
         // scan over each of the expressions
         try {
-          this.processedByEngine = `fhirpath.js-3.4.0+ (r4b)`;
+          this.processedByEngine = `fhirpath.js-`+fhirpath.version+` (r4b)`;
           contextNodes = fhirpath.evaluate(fhirData, contextExpression, environment, fhirpath_r4_model);
         }
         catch (err: any) {
           console.log(err);
           if (err.message) {
-            this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
-            this.saveOutcome?.issue.push({ code: 'exception', severity: 'fatal', details: { text: err.message } });
+            this.saveOutcome = CreateOperationOutcome('fatal', 'exception', err.message);
             this.showOutcome = true;
           }
         }
       }
       else {
         try {
-          this.processedByEngine = `fhirpath.js-3.4.0+ (r4b)`;
+          this.processedByEngine = `fhirpath.js-`+fhirpath.version+` (r4b)`;
           contextNodes = fhirpath.evaluate(fhirData, "%resource", environment, fhirpath_r4_model);
         }
         catch (err: any) {
           console.log(err);
           if (err.message) {
-            this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
-            this.saveOutcome?.issue.push({ code: 'exception', severity: 'fatal', details: { text: err.message } });
+            this.saveOutcome = CreateOperationOutcome('fatal', 'exception', err.message);
             this.showOutcome = true;
           }
         }
@@ -1765,14 +1920,19 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       for (let contextNode of contextNodes) {
         let resData: ResultData;
         const index = contextNodes.indexOf(contextNode);
-        if (contextExpression)
+        if (contextExpression){
           resData = { context: `${contextExpression}[${index}]`, result: [], trace: [] };
+          if (astJson){
+            const node = findNodeByPath(astJson, resData.context+'');
+            if (node?.position) resData.position = node.position;
+          }
+        }
         else
           resData = { result: [], trace: [] };
 
         let tracefunction = function (x: any, label: string): void {
           if (Array.isArray(x)) {
-            for (var item of x) {
+            for (let item of x) {
               if (typeof item.getTypeInfo === "function") {
                 let ti = item.getTypeInfo();
                 // console.log(ti);
@@ -1799,15 +1959,18 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
           let res: any[] = fhirpath.evaluate(contextNode, path, environment, fhirpath_r4_model, { traceFn: tracefunction });
           this.results.push(resData);
 
-          for (var item of res) {
+          for (let item of res) {
             resData.result.push({ type: Object.prototype.toString.call(item ?? '').substring(8).replace(']', ''), value: item });
           }
         }
         catch (err: any) {
           console.log(err);
           if (err.message) {
-            this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
-            this.saveOutcome?.issue.push({ code: 'exception', severity: 'fatal', details: { text: err.message } });
+            this.saveOutcome = CreateOperationOutcome('fatal', 'exception', err.message);
+            this.showOutcome = true;
+          }
+          else{
+            this.saveOutcome = CreateOperationOutcome('fatal', 'exception', err);
             this.showOutcome = true;
           }
         }
@@ -1838,8 +2001,11 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         catch (err: any) {
           console.log(err);
           if (err.message) {
-            this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
-            this.saveOutcome?.issue.push({ code: 'exception', severity: 'fatal', details: { text: err.message } });
+            this.saveOutcome = CreateOperationOutcome('fatal', 'exception', err.message);
+            this.showOutcome = true;
+          }
+          else {
+            this.saveOutcome = CreateOperationOutcome('fatal', 'exception', err);
             this.showOutcome = true;
           }
         }
@@ -1868,28 +2034,34 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       if (contextExpression) {
         // scan over each of the expressions
         try {
-          this.processedByEngine = `fhirpath.js-3.4.0+ (r5)`;
+          this.processedByEngine = `fhirpath.js-`+fhirpath.version+` (r5)`;
           contextNodes = fhirpath.evaluate(fhirData, contextExpression, environment, fhirpath_r5_model);
         }
         catch (err: any) {
           console.log(err);
           if (err.message) {
-            this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
-            this.saveOutcome?.issue.push({ code: 'exception', severity: 'fatal', details: { text: err.message } });
+            this.saveOutcome = CreateOperationOutcome('fatal', 'exception', err.message);
+            this.showOutcome = true;
+          }
+          else {
+            this.saveOutcome = CreateOperationOutcome('fatal', 'exception', err);
             this.showOutcome = true;
           }
         }
       }
       else {
         try {
-          this.processedByEngine = `fhirpath.js-3.4.0+ (r5)`;
+          this.processedByEngine = `fhirpath.js-`+fhirpath.version+` (r5)`;
           contextNodes = fhirpath.evaluate(fhirData, "%resource", environment, fhirpath_r5_model);
         }
         catch (err: any) {
           console.log(err);
           if (err.message) {
-            this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
-            this.saveOutcome?.issue.push({ code: 'exception', severity: 'fatal', details: { text: err.message } });
+            this.saveOutcome = CreateOperationOutcome('fatal', 'exception', err.message);
+            this.showOutcome = true;
+          }
+          else {
+            this.saveOutcome = CreateOperationOutcome('fatal', 'exception', err);
             this.showOutcome = true;
           }
         }
@@ -1897,14 +2069,19 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       for (let contextNode of contextNodes) {
         let resData: ResultData;
         const index = contextNodes.indexOf(contextNode);
-        if (contextExpression)
+        if (contextExpression){
           resData = { context: `${contextExpression}[${index}]`, result: [], trace: [] };
+          // if (astJson){
+          //   const node = findNodeByPath(astJson, resData.context+'');
+          //   if (node?.position) resData.position = node.position;
+          // }
+        }
         else
           resData = { result: [], trace: [] };
 
         let tracefunction = function (x: any, label: string): void {
           if (Array.isArray(x)) {
-            for (var item of x) {
+            for (let item of x) {
               if (typeof item.getTypeInfo === "function") {
                 let ti = item.getTypeInfo();
                 // console.log(ti);
@@ -1931,15 +2108,18 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
           let res: any[] = fhirpath.evaluate(contextNode, path, environment, fhirpath_r5_model, { traceFn: tracefunction });
           this.results.push(resData);
 
-          for (var item of res) {
+          for (let item of res) {
             resData.result.push({ type: Object.prototype.toString.call(item ?? '').substring(8).replace(']', ''), value: item });
           }
         }
         catch (err: any) {
           console.log(err);
           if (err.message) {
-            this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
-            this.saveOutcome?.issue.push({ code: 'exception', severity: 'fatal', details: { text: err.message } });
+            this.saveOutcome = CreateOperationOutcome('fatal', 'exception', err.message);
+            this.showOutcome = true;
+          }
+          else {
+            this.saveOutcome = CreateOperationOutcome('fatal', 'exception', err);
             this.showOutcome = true;
           }
         }
@@ -1989,7 +2169,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
           shareUrl += `&resource=${encodeURIComponent(this.resourceId)}`;
         }
         else {
-          shareUrl += `&resource=${encodeURIComponent(settings.getFhirServerUrl() + '/' + this.resourceId)}`;
+          shareUrl += `&resource=${encodeURIComponent(settings.getFhirServerExamplesUrl() + '/' + this.resourceId)}`;
         }
       }
       const resourceJson = this.getResourceJson();
@@ -2047,6 +2227,159 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       console.log(DecodeTestFhirpathData(compressedData));
     },
 
+    createNewLibrary(){
+      if (!this.getFhirpathExpression())
+        return;
+
+      const newName = settings.createRandomID();
+      this.library = {
+        resourceType: "Library",
+        name: newName.replace('-','_'),
+        status: "draft",
+        type: {
+          coding: [
+            {
+              system: "http://terminology.hl7.org/CodeSystem/library-type",
+              code: "logic-library",
+              display: "Logic Library",
+            },
+          ],
+        },
+        useContext: [
+          {
+            code: {
+              system: "http://terminology.hl7.org/CodeSystem/usage-context-type",
+              code: "user",
+              display: "User Type"
+            },
+            valueCodeableConcept: {
+              coding: [
+                {
+                  code: "fhirpath-lab",
+                  display: "FHIRPath Lab Shared"
+                }
+              ]
+            }
+          }
+        ],
+        content: [
+          {
+            contentType: "text/fhirpath",
+            data: window.btoa(this.getFhirpathExpression()??'')
+          }
+        ],
+        publisher: settings.getDefaultProviderField(),
+        url: settings.getDefaultNewCanonicalBase() + "/Library/" + newName,
+        version: '0.1',
+      }
+      this.selectTab(7);
+      this.enableSave = true;
+      this.$nextTick(() => {
+        const detailsTab = this.$refs.libDetailsTabComponent as any;
+        if (detailsTab)
+          detailsTab.$el.focus();
+      });
+    },
+
+    async saveLibrary(){
+      if (this.library){
+        // update the library, then save it!
+        this.loadingData = true;
+        // Set the base expression
+        if (this.library.content && this.library.content.length > 0)
+        {
+          this.library.content[0].data = window.btoa(this.getFhirpathExpression()??'');
+        }
+        else
+        {
+          this.library.content = [
+            {
+              contentType: "text/fhirpath",
+              data: window.btoa(this.getFhirpathExpression()??'')
+            }
+          ];
+        }
+
+        // Set the context expression
+        const contextExpression = this.getContextExpression();
+        if (contextExpression)
+          setExtensionStringValue(this.library, "http://fhir.forms-lab.com/StructureDefinition/context-expression", contextExpression);
+        else
+          clearExtension(this.library, "http://fhir.forms-lab.com/StructureDefinition/context-expression");
+
+        // set the resource content
+        const resourceJson = this.getResourceJson();
+        if (resourceJson && this.resourceJsonChanged)
+        {
+          const jsonObject = JSON.parse(resourceJson);
+          if (!jsonObject.id)
+            jsonObject.id = settings.createRandomID();
+          setExtension(this.library, 
+          {
+            url: "http://fhir.forms-lab.com/StructureDefinition/resource-id", 
+            valueReference: { reference: "#" + jsonObject.id }
+          });
+          if (jsonObject.contained){
+            this.library.contained = jsonObject.contained;
+            delete jsonObject.contained;
+          } else {
+            this.library.contained = [];
+          }
+          this.library.contained?.push(jsonObject);
+        }
+        else
+        {
+          // set the resource ID
+          if (this.resourceId)
+            setExtensionStringValue(this.library, "http://fhir.forms-lab.com/StructureDefinition/resource-id", this.resourceId);
+          else
+            clearExtension(this.library, "http://fhir.forms-lab.com/StructureDefinition/resource-id");
+        }
+
+        // set the variables included
+        clearExtension(this.library, "http://fhir.forms-lab.com/StructureDefinition/variable");
+        for (let v of this.variables) {
+          let value = v[1].data;
+          var ev = addExtension(this.library, {
+            url: "http://fhir.forms-lab.com/StructureDefinition/variable", 
+            valueCoding: {
+               code: v[1].name,
+               display: value
+               }
+          });
+        }
+
+        // now save the content
+        var data: LibraryData = {
+          raw: this.library,
+          publishedVersions: [],
+          ...BaseResource_defaultValues,
+        }
+
+        const outcome = await saveFhirResource(settings.getFhirServerUrl(), data);
+        this.loadingData = false;
+        console.log(outcome);
+        if (data.raw && !outcome)
+        {
+          this.library = data.raw;
+          this.enableSave = false;
+        }
+        if (outcome) {
+          this.saveOutcome = outcome;
+          this.showOutcome = true;
+          if (this.raw?.id) {
+            if (this.$route.params.id.endsWith(":new")) {
+              let href = this.$route.fullPath.replaceAll(
+                this.$route.params.id,
+                this.raw?.id
+              );
+              window.history.pushState({}, "", href);
+            }
+          }
+        }
+      }
+    },
+
     checkFocus(event: any) {
       if (event.relatedTarget) {
         this.prevFocus = event.relatedTarget;
@@ -2086,10 +2419,10 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
 
       // Validate the test fhir resource object
       let resourceJson = this.getResourceJson();
-      // if (resourceJson) {
-      //   let rawObj: object;
-      //   try {
-      //     rawObj = JSON.parse(resourceJson)
+       if (resourceJson) {
+         let rawObj: object;
+         try {
+           rawObj = JSON.parse(resourceJson)
       //     let resource: fhir.FhirResource | null = fhir.resourceFactory(rawObj);
       //     if (resource) {
       //       const issues: fhir.FtsIssue[] = resource.doModelValidation();
@@ -2099,14 +2432,15 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       //         this.showOutcome = true;
       //       }
       //     }
-      //   } catch (err) {
-      //     console.log(err);
-      //     this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
-      //     this.saveOutcome?.issue.push({ code: 'exception', severity: 'error', details: { text: `Failed to parse the resource: ${err}` } });
-      //     this.showOutcome = true;
-      //     this.loadingData = false;
-      //   }
-      // }
+         } catch (err) {
+           console.log(err);
+           this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
+           this.saveOutcome?.issue.push({ code: 'exception', severity: 'error', details: { text: `Failed to parse the resource: ${err}` } });
+           this.showOutcome = true;
+           this.loadingData = false;
+          return;
+        }
+      }
 
       this.saveLastUsedParameters(false);
 
@@ -2185,7 +2519,6 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         // https://github.com/jkiddo/fhirpath-tester/blob/main/src/main/java/org/example/Evaluator.java (brianpos fork of this)
         // https://docs.microsoft.com/en-us/azure/devops/pipelines/ecosystems/java-function?view=azure-devops
         url = settings.java_server_r4b();
-        astTab2?.clearDisplay("AST not supported");
 
         if (!this.getResourceJson() && this.resourceId) {
           await this.downloadTestResource();
@@ -2198,7 +2531,6 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         // https://github.com/jkiddo/fhirpath-tester/blob/main/src/main/java/org/example/Evaluator.java (brianpos fork of this)
         // https://docs.microsoft.com/en-us/azure/devops/pipelines/ecosystems/java-function?view=azure-devops
         url = settings.java_server_r5();
-        astTab2?.clearDisplay("AST not supported");
 
         if (!this.getResourceJson() && this.resourceId) {
           await this.downloadTestResource();
@@ -2227,7 +2559,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       }
       else {
         if (!this.resourceId?.startsWith('http')) {
-          p.parameter?.push({ name: "resource", valueString: settings.getFhirServerUrl() + '/' + this.resourceId });
+          p.parameter?.push({ name: "resource", valueString: settings.getFhirServerExamplesUrl() + '/' + this.resourceId });
         }
         else {
           p.parameter?.push({ name: "resource", valueString: this.resourceId });
@@ -2244,15 +2576,98 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
           this.prevFocus.focus();
         }
     },
+
+    highlightText(editor?: ace.Ace.Editor, startPosition?: number, length?: number): void {
+      if (!editor || startPosition == undefined || length == undefined) return;
+      let value = editor.getValue();
+
+      // determine the starting line/column from the raw position in the string
+      let textBeforeSelection = value.substring(0, startPosition);
+      let startLine = textBeforeSelection.split(/\r\n|\r|\n/).length;
+      let startColumn = textBeforeSelection.length - textBeforeSelection.lastIndexOf('\n') - 1;
+      let selectedText = value.substring(startPosition, startPosition + length);
+      // console.log("Highlighting: ", selectedText);
+      
+      // determining the ending line/column from the length of the selected text
+      let endLine = startLine + selectedText.split(/\r\n|\r|\n/).length - 1;
+      let endColumn = selectedText.length - selectedText.lastIndexOf('\n') - 1;
+      if (startLine == endLine) {
+        endColumn = startColumn + selectedText.length;
+      }
+      const range = new ace.Range(startLine-1, startColumn, endLine-1, endColumn);
+      // console.log("Range: ", range);
+      
+      editor.clearSelection();
+      editor.focus();
+      editor.gotoLine(startLine, startColumn, true);
+      // editor.selection.setRange(range);
+
+      const selectionMarker = editor.session.addMarker(range, "resultSelection", "fillLine", true);
+      // after 1.5 seconds remove the highlight.
+      setTimeout(() => {
+        // console.log("Removing marker", selectionMarker);
+        editor.session.removeMarker(selectionMarker);
+      }, 1500);
+      this.updateNow();
+    },
+
+    navigateToExpressionNode(node: JsonNode){
+      // Move the cursor in the test resource JSON editor to the element
+      this.selectTab(0);
+      setTimeout(() => {
+        console.log("Highlighting node: ", node);
+        this.highlightText(this.expressionEditor, node.Position, node.Length);
+      });
+    },
+
+    navigateToContext(elementPath: string) {
+      // Move the cursor in the test resource JSON editor to the element
+      this.selectTab(1);
+      setTimeout(() => {
+        const jsonValue = this.getResourceJson();
+        if (this.resourceJsonEditor && jsonValue) {
+          var ast: IJsonNode | undefined = parseJson(jsonValue);
+          console.log(ast);
+          if (ast) {
+              var node = findNodeByPath(ast, elementPath);
+              if (node) {
+                // inject the position information onto the issue
+                // so that UI can use it
+                this.resourceJsonEditor.clearSelection();
+                if (node.position) {
+                  this.resourceJsonEditor.focus();
+                  this.resourceJsonEditor.gotoLine(
+                    node.position.line,
+                    node.position.column,
+                    true
+                  );
+
+                  if (node.position.value_stop_pos){
+                    let substr = jsonValue.substring(node.position.prop_start_pos, node.position.value_stop_pos+1);
+                    const endRowOffset = substr.split(/\r\n|\r|\n/).length;
+                    const endRow = node.position.line + endRowOffset - 1;
+                    const endCollOffset = substr.split(/\r\n|\r|\n/)[endRowOffset - 1].length;
+                    const endCol = node.position.column + (endCollOffset > 1 ? endCollOffset + 1 : endCollOffset);
+                    const range = new ace.Range(node.position.line-1, node.position.column, endRow-1, endCol);
+
+                    const selectionMarker = this.resourceJsonEditor.session.addMarker(range, "resultSelection", "fillLine", true);
+                    // after 1.5 seconds remove the highlight.
+                    setTimeout(() => {
+                      this.resourceJsonEditor?.session.removeMarker(selectionMarker);
+                    }, 1500);
+                  }
+                  this.updateNow();
+                }
+              }
+            }
+        }
+      });
+
+    },
   },
   data(): FhirPathData {
     return {
       prevFocus: null,
-      tab: null,
-      lastTabClicked: undefined,
-      primaryTab: 0,
-      secondaryTab: 1,
-      windowWidth: window.innerWidth,
       library: undefined,
       raw: undefined,
       resourceId: undefined,
@@ -2262,6 +2677,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       saveOutcome: undefined,
       showOutcome: false,
       showAdvancedSettings: false,
+      defaultProviderField: undefined,
       terminologyServer: 'https://sqlonfhir-r4.azurewebsites.net/fhir',
       results: [],
       selectedEngine: "fhirpath.js",
@@ -2284,11 +2700,13 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       processedByEngine: undefined,
       openAIexpressionExplanationLoading: false,
       openAIexpressionExplanationMessage: "",
+      openAIFeedbackEnabled: false,
       showChat: false,
       chatEnabled: false,
       openAILastContext: "",
       expressionParseOutcome: undefined,
       astInverted: true,
+      enableSave: false
     };
   },
 });

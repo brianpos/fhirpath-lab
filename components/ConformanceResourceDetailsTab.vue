@@ -1,27 +1,31 @@
 <template>
   <v-card flat>
     <v-card-text>
-      <p class="fl-tab-header">Details</p>
+      <p v-if="!hideHeader" class="fl-tab-header">Details</p>
       <v-form>
         <v-text-field label="Title" v-if="(raw.resourceType !== 'SearchParameter')" v-model="raw.title" :readonly="readonly" hide-details="auto"
           @input="notifyChange" />
         <v-checkbox v-show="showAdvancedSettings" label="Experimental" v-model="raw.experimental" :readonly="readonly"
           dense hide-details="auto" @click="notifyChange" />
 
-        <v-textarea label="Description"
+        <v-textarea label="Description" v-if="!readonly"
           title="The Description is shown alongside the Title when a user is selecting the Questionnaire from a directory. This field supports Markdown formatting"
-          v-model="raw.description" :readonly="readonly" @input="notifyChange" auto-grow hide-details="auto" clearable
+          v-model="raw.description" :readonly="readonly" @input="notifyChange" auto-grow hide-details="auto" :clearable="!readonly"
           rows="2" />
+          <label class="v-label theme--light bare-label" v-if="readonly">Description</label>
         <span class="markdown"
           title="(preview) The Description is shown alongside the Title when a user is selecting the Questionnaire from a directory."
           v-html="convertHtml(raw.description)" />
+          <br/>
 
-        <v-textarea label="Purpose"
+        <v-textarea label="Purpose" v-if="!readonly"
           title="The Purpose describes why this Questionnaire was created. This field supports Markdown formatting"
-          v-model="raw.purpose" :readonly="readonly" @input="notifyChange" auto-grow hide-details="auto" clearable
+          v-model="raw.purpose" :readonly="readonly" @input="notifyChange" auto-grow hide-details="auto" :clearable="!readonly"
           rows="2" />
+          <label class="v-label theme--light bare-label" v-if="readonly">Purpose</label>
         <span class="markdown" title="(preview) The Purpose describes why this Questionnaire was created."
           v-html="convertHtml(raw.purpose)" />
+          <br/>
 
         <v-text-field label="Name" v-show="(showAdvancedSettings && raw.resourceType !=='SubscriptionTopic')" v-model="raw.name" :readonly="readonly"
           hide-details="auto" @input="notifyChange" spellcheck="false" />
@@ -49,6 +53,7 @@ export default Vue.extend({
     this.initializeDropdowns();
   },
   props: {
+    hideHeader: Boolean,
     readonly: Boolean,
     showAdvancedSettings: Boolean,
     raw: Object as PropType<ConformanceResourceInterface>,
@@ -59,7 +64,8 @@ export default Vue.extend({
 
     },
     notifyChange() {
-      this.$emit("update");
+      if (!this.readonly)
+        this.$emit("update");
     },
     /** Convert the parameter data into a HTML from markdown format */
     convertHtml(field: string | undefined): string {

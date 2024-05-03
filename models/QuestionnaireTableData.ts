@@ -39,7 +39,7 @@ export function FlattenedQuestionnaireItems(q: Questionnaire): FlattenedQuestion
 
 function FlattenedChildItems(items: QuestionnaireItem[], parent?:FlattenedQuestionnaireItem): FlattenedQuestionnaireItem[] {
   var result: FlattenedQuestionnaireItem[] = [];
-  for (var item of items){
+  for (let item of items){
     var node = {item: item, parent: parent};
     result.push(node);
     if (item.item) result.push(... FlattenedChildItems(item.item, node));

@@ -1,0 +1,76 @@
+# fhirpath-lab change log
+![](static/Square44x44Logo.scale-150.png "Fhirpath-lab logo")
+
+> **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
+
+## 3 May 2024 (dev)
+* Add new shortcut to test an expression using ctrl+enter in the fhirpath tester
+
+## 1 May 2024 (dev)
+* Preliminary work for displaying navigation markers from the AST to the actual expression in the FHIRPath tester (coming soon for dotnet)
+
+## 20 April 2024 (dev)
+* Updated to the public main branch of fhirpath.js (3.13.0) now that the defineVariable function is included in the main branch
+* sharing Fhirpath AI chat via clipboard now includes the name of the model that a message is from
+* Changed the npm package for accessing AI projects to the `openai@4.38.1` npm package
+
+## 8 April 2024 (dev)
+* Toggle single/dual pane view on the FHIRPath and Form Tester pages
+
+## 3 April 2024 (dev)
+* include the `defineVariable` function link to the docs in the AST
+* while dynamically scanning the resource for used variables ensure than none defined using `defineVariable` are included in the list that the user should enter are included.
+
+# 26 March 2024 (dev)
+* Add ability to use the CSIRO renderer to navigate to an item in the questionnaire definition json tab
+
+# 22 March 2024 (dev)
+* Updated the fhirpath.js library to 3.10.4 (still with the prototype `withVariable()` function that is now called `defineVariable`)
+* added some sample conversations that I've had with the Questionnaire AI (in the form of a chatbot) on the questionnaire test page
+* AI Chat prompt refinements (and supporting jsonpatch markdown blocks)
+
+# 19 March 2024 (dev)
+* Refactored the twin pane tab control into the fhirpath and form tester pages
+* Twin pane tab control now has the lock left/right buttons and auto tab switcher features
+
+# 20 Feb 2024 (dev/prod) - from the dotnet server fhirpath tester
+* dotnet tester now supports 3 custom functions - for helping with debugging
+  - propname(): The name of the property that the current node is in (if it is a property and not the result of a calculation)
+  - pathname(): The full simple path to the current node (if it is a property and not the result of a calculation)
+  - shortpathname(): The same as pathname, but without indexers if the property is not natively a collection
+
+# 25 January 2024 (dev)
+* fixed issue with primitive extensions not selecting correctly in the context navigator
+* Add brief highlight to the navigated node in the JSON when selecting from trace/error list
+
+# 24 January 2024 (dev)
+* Questionnaire test page added (with initial support for NLM lforms and CSIRO questionnaire renderers)
+* FhirPath test page now has a link from the context header (in results and trace) to the raw JSON resource to ease navigation
+
+## 12 January 2024 (dev)
+* Update version of fhirpath.js included to 3.9.0 (with the prototype `withVariable()` function)
+* Include links to the SDC extended functions
+
+## 17 November 2023 (dev)
+* IPS demo also has a validate questionnaire feature - using the forms-lab Q def validation service
+
+## 2 November 2023 (dev)
+* FHIR Map test page now uses the examples server address from the settings page
+* The HAPI fhir map engine (hosted with the fhirpath-lab) is now available to test on the FHIR Map test page
+* First draft of the sqlonfhir-v2 test page (has known issues) now available
+
+## 12 October 2023 (dev)
+* From the AST view provide hyperlinks to the fhirpath spec for functions (i.e. link `join` to the relevant bookmark in the spec)
+
+## 25 September 2023
+* Variables can be passed through the URL using the `?var-xxx=value` syntax to set a variable called `xxx` in an expression (and used `%xxx`)
+* Fix bug with library resources saving/loading contained resources in the test resource
+* Better handling of errors when loading/saving library resources from the server
+* progress indicator when saving a library resource
+
+## 7 September 2023
+* Addition of the `Reset expression and context` button to the test page
+* Removal of the Terminology Server URL from the resource page (still uses the value in the settings page)
+* Add new settings URL for where to retrieve example resources from (changes default from sqlonfhir-r4 to the public HAPI demo server)
+* Support creating and editing Library resources from the fhirpath expression test page
+    * requires `Show Advanced Properties` and a `Default Provider Field` to be set in the settings page
