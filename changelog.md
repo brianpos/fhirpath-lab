@@ -3,7 +3,12 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
-## 3 May 2024 (dev)
+## 4 May 2024
+* Update to 36.0.3 of the NLM LForms
+* Update to 0.25.2 of CSIRO's questionnaire renderer
+
+## 3 May 2024
+* Release dev version to production!
 * Add new shortcut to test an expression using ctrl+enter in the fhirpath tester
 
 ## 1 May 2024 (dev)
