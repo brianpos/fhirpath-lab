@@ -3,6 +3,9 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+## 6 May 2024
+* Update landing page to indicate that 5.8.1 of the FirelySDK is now being used
+
 ## 4 May 2024
 * Update to 36.0.3 of the NLM LForms
 * Update to 0.25.2 of CSIRO's questionnaire renderer
