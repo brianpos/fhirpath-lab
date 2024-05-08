@@ -174,11 +174,32 @@ export default class TwinPaneTab extends Vue {
   public setSinglePanelMode(value: boolean): void {
     this.forceSinglePanel = value;
   }
+
+  /** Get the index of the tab based on the tabName */
+  public getTabIndex(name: string){
+    return this.tabs.findIndex((tab, index) => tab.tabName.toLowerCase() === name.toLowerCase() || name == index.toString());
+  }
+
   public selectTab(tabIndex: number): void {
     if ((this.lockedTab === tabIndex || this.selectableTab === tabIndex) && !this.singleTabMode()) {
       return;
     }
     this.changeTab(tabIndex);
+  }
+
+  /** Select the 2 tabs into the control, and lock one of them - unsets the forceSinglePanel mode too */
+  public selectTabs(leftIndex: number, rightIndex: number, paneLocked: 'left' | 'right'): void {
+    this.forceSinglePanel = false;
+    this.paneLocked = paneLocked;
+    if (paneLocked === 'left') {
+      this.lockedTab = leftIndex;
+      this.selectableTab = rightIndex;
+    } else {
+      this.lockedTab = rightIndex;
+      this.selectableTab = leftIndex;
+    }
+    this.$emit("change", this.selectableTab);
+    this.lastTabClicked = undefined;
   }
 
   tabIsEnabled(index: number): boolean {

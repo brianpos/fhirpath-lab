@@ -41,261 +41,261 @@
           </v-btn>
         </v-toolbar>
 
-        <twin-pane-tab :tabs="tabDetails" @change="tabChanged" :eager="true" ref="twinTabControl" @mounted="twinPaneMounted">
+        <twin-pane-tab
+          :tabs="tabDetails"
+          @change="tabChanged"
+          :eager="true"
+          ref="twinTabControl"
+          @mounted="twinPaneMounted"
+        >
           <template v-slot:Questionnaire>
             <v-text-field
-                    label="Test Resource Id"
-                    v-model="resourceId"
-                    hide-details="auto"
-                    autocomplete="off"
-                    @input="updateNow"
-                    autocorrect="off"
-                    autocapitalize="off"
-                    spellcheck="false"
-                    :title="
-                      'Resource Id to download from the examples server\r\nAbsolute (requires CORS support) or relative to ' +
-                      exampleServerUrl
-                    "
+              label="Test Resource Id"
+              v-model="resourceId"
+              hide-details="auto"
+              autocomplete="off"
+              @input="updateNow"
+              autocorrect="off"
+              autocapitalize="off"
+              spellcheck="false"
+              :title="
+                'Resource Id to download from the examples server\r\nAbsolute (requires CORS support) or relative to ' +
+                exampleServerUrl
+              "
+            >
+              <template v-slot:append>
+                <v-btn
+                  icon
+                  small
+                  tile
+                  v-show="resourceId"
+                  @click="resourceId = undefined"
+                  title="Clear Test Resource ID"
+                >
+                  <v-icon> mdi-close </v-icon>
+                </v-btn>
+                <v-btn
+                  icon
+                  small
+                  tile
+                  :disabled="resourceId === undefined"
+                  @click="downloadTestResource"
+                  :title="downloadTestResourceButtonTitle"
+                >
+                  <v-icon> mdi-download </v-icon>
+                </v-btn>
+                <v-btn small icon tile @click="reformatTestResource"
+                  ><v-icon title="Re-format the Questionnaire json below" dark>
+                    mdi-format-indent-increase
+                  </v-icon></v-btn
+                >
+                <v-btn small icon tile @click="validateQuestionnaire"
+                  ><v-icon
+                    title="Validate the below Questionnaire json using the fhirpath-lab server"
+                    dark
                   >
-                    <template v-slot:append>
-                      <v-btn
-                        icon
-                        small
-                        tile
-                        v-show="resourceId"
-                        @click="resourceId = undefined"
-                        title="Clear Test Resource ID"
-                      >
-                        <v-icon> mdi-close </v-icon>
-                      </v-btn>
-                      <v-btn
-                        icon
-                        small
-                        tile
-                        :disabled="resourceId === undefined"
-                        @click="downloadTestResource"
-                        :title="downloadTestResourceButtonTitle"
-                      >
-                        <v-icon> mdi-download </v-icon>
-                      </v-btn>
-                      <v-btn small icon tile @click="reformatTestResource"
-                        ><v-icon
-                          title="Re-format the Questionnaire json below"
-                          dark
-                        >
-                          mdi-format-indent-increase
-                        </v-icon></v-btn
-                      >
-                      <v-btn small icon tile @click="validateQuestionnaire"
-                        ><v-icon
-                          title="Validate the below Questionnaire json using the fhirpath-lab server"
-                          dark
-                        >
-                          mdi-note-check-outline
-                        </v-icon></v-btn
-                      >
-                    </template>
-                  </v-text-field>
-                  <br />
-                  <!-- <label class="v-label theme--light bare-label">Test Resource JSON <i>{{ resourceJsonChangedMessage() }}</i></label> -->
-                  <v-tooltip bottom>
-                    <template v-slot:activator="{ on, attrs }">
-                      <v-btn
-                        class="resetButton"
-                        icon
-                        v-bind="attrs"
-                        v-on="on"
-                        @click="resetQuestionnaire"
-                        ><v-icon>mdi-broom</v-icon></v-btn
-                      >
-                    </template>
-                    <span>Reset Questionnaire definition</span>
-                  </v-tooltip>
-                  <div
-                    class="resource"
-                    width="100%"
-                    ref="aceEditorResourceJsonTab"
-                  ></div>
-                  <!-- <div class="ace_editor_footer"></div> -->
+                    mdi-note-check-outline
+                  </v-icon></v-btn
+                >
+              </template>
+            </v-text-field>
+            <br />
+            <!-- <label class="v-label theme--light bare-label">Test Resource JSON <i>{{ resourceJsonChangedMessage() }}</i></label> -->
+            <v-tooltip bottom>
+              <template v-slot:activator="{ on, attrs }">
+                <v-btn
+                  class="resetButton"
+                  icon
+                  v-bind="attrs"
+                  v-on="on"
+                  @click="resetQuestionnaire"
+                  ><v-icon>mdi-broom</v-icon></v-btn
+                >
+              </template>
+              <span>Reset Questionnaire definition</span>
+            </v-tooltip>
+            <div
+              class="resource"
+              width="100%"
+              ref="aceEditorResourceJsonTab"
+            ></div>
+            <!-- <div class="ace_editor_footer"></div> -->
           </template>
 
           <template v-slot:Debug>
             <label>Validation Results:</label>
-                  <OperationOutcomePanel
-                    :outcome="saveOutcome"
-                    title="Error Saving"
-                    issueLinkTitle="Goto issue in Questionnaire"
-                    @close="clearOutcome2"
-                    @help-with-issue="helpWithIssue"
-                    @navigate-to-issue="navigateToIssue"
-                  />
+            <OperationOutcomePanel
+              :outcome="saveOutcome"
+              title="Error Saving"
+              issueLinkTitle="Goto issue in Questionnaire"
+              @close="clearOutcome2"
+              @help-with-issue="helpWithIssue"
+              @navigate-to-issue="navigateToIssue"
+            />
           </template>
 
           <template v-slot:Details>
-              <!-- Details -->
-              <conformance-resource-details-tab
-                v-if="raw"
-                :raw="raw"
-                :hideHeader="true"
-                :readonly="readonly"
-                :showAdvancedSettings="showAdvancedSettings"
-                @update="updateNow"
-              />
+            <!-- Details -->
+            <conformance-resource-details-tab
+              v-if="raw"
+              :raw="raw"
+              :hideHeader="true"
+              :readonly="readonly"
+              :showAdvancedSettings="showAdvancedSettings"
+              @update="updateNow"
+            />
           </template>
 
           <template v-slot:Publishing>
-              <!-- Publishing -->
-              <conformance-resource-publishing-tab
-                v-if="raw"
-                :raw="raw"
-                :hideHeader="true"
-                :publishedVersions="publishedVersions"
-                :lockPublisher="false"
-                :readonly="readonly"
-                :showAdvancedSettings="showAdvancedSettings"
-                @update="updateNow"
-              />
+            <!-- Publishing -->
+            <conformance-resource-publishing-tab
+              v-if="raw"
+              :raw="raw"
+              :hideHeader="true"
+              :publishedVersions="publishedVersions"
+              :lockPublisher="false"
+              :readonly="readonly"
+              :showAdvancedSettings="showAdvancedSettings"
+              @update="updateNow"
+            />
           </template>
 
           <template v-slot:Fields>
             <EditorFieldsSection
-                    v-if="raw"
-                    v-bind:items="flatModel"
-                    :readonly="readonly"
-                    :showAdvancedSettings="showAdvancedSettings"
-                  />
+              v-if="raw"
+              v-bind:items="flatModel"
+              :readonly="readonly"
+              :showAdvancedSettings="showAdvancedSettings"
+            />
           </template>
 
           <template v-slot:Pre-Population>
-            <EditorPrePolulationSection
-                    v-if="raw"
-                    v-bind:items="flatModel"
-                  />
+            <EditorPrePolulationSection v-if="raw" v-bind:items="flatModel" />
           </template>
 
           <template v-slot:Variables>
             <EditorVariablesSection
-                    v-if="raw"
-                    v-bind:questionnaire="raw"
-                    v-bind:items="flatModel"
-                  />
+              v-if="raw"
+              v-bind:questionnaire="raw"
+              v-bind:items="flatModel"
+            />
           </template>
 
           <template v-slot:CSIRO_Renderer>
             <EditorRendererSection
-                    v-if="raw"
-                    v-bind:questionnaire="raw"
-                    @response="processUpdatedQuestionnaireResponse"
-                    @highlight-path="highlightPath"
-                  />
+              v-if="raw"
+              v-bind:questionnaire="raw"
+              @response="processUpdatedQuestionnaireResponse"
+              @highlight-path="highlightPath"
+            />
           </template>
 
           <template v-slot:LHC-Forms>
             <EditorNLMRendererSection
-                    v-if="raw"
-                    v-bind:questionnaire="raw"
-                    @response="processUpdatedQuestionnaireResponse"
-                  />
+              v-if="raw"
+              v-bind:questionnaire="raw"
+              @response="processUpdatedQuestionnaireResponse"
+            />
           </template>
 
           <template v-slot:Response>
             <v-text-field
-                    label="Test QuestionnaireResponse Resource Id"
-                    v-model="qrResourceId"
-                    readonly
-                    hide-details="auto"
-                    autocomplete="off"
-                    @input="updateNow"
-                    autocorrect="off"
-                    autocapitalize="off"
-                    spellcheck="false"
-                    :title="
-                      'Resource Id to download from the examples server\r\nAbsolute (requires CORS support) or relative to ' +
-                      exampleServerUrl
-                    "
+              label="Test QuestionnaireResponse Resource Id"
+              v-model="qrResourceId"
+              readonly
+              hide-details="auto"
+              autocomplete="off"
+              @input="updateNow"
+              autocorrect="off"
+              autocapitalize="off"
+              spellcheck="false"
+              :title="
+                'Resource Id to download from the examples server\r\nAbsolute (requires CORS support) or relative to ' +
+                exampleServerUrl
+              "
+            >
+              <template v-slot:append>
+                <v-btn
+                  icon
+                  small
+                  tile
+                  v-show="qrResourceId"
+                  @click="qrResourceId = undefined"
+                  title="Clear Test QuestionnaireResponse Resource ID"
+                >
+                  <v-icon> mdi-close </v-icon>
+                </v-btn>
+                <v-btn
+                  icon
+                  small
+                  tile
+                  :disabled="qrResourceId === undefined"
+                  @click="downloadTestResource"
+                  :title="downloadTestResourceButtonTitle"
+                >
+                  <v-icon> mdi-download </v-icon>
+                </v-btn>
+                <v-btn small icon tile @click="reformatTestQR_Resource"
+                  ><v-icon
+                    title="Re-format the QuestionnaireResponse json below"
+                    dark
                   >
-                    <template v-slot:append>
-                      <v-btn
-                        icon
-                        small
-                        tile
-                        v-show="qrResourceId"
-                        @click="qrResourceId = undefined"
-                        title="Clear Test QuestionnaireResponse Resource ID"
-                      >
-                        <v-icon> mdi-close </v-icon>
-                      </v-btn>
-                      <v-btn
-                        icon
-                        small
-                        tile
-                        :disabled="qrResourceId === undefined"
-                        @click="downloadTestResource"
-                        :title="downloadTestResourceButtonTitle"
-                      >
-                        <v-icon> mdi-download </v-icon>
-                      </v-btn>
-                      <v-btn small icon tile @click="reformatTestQR_Resource"
-                        ><v-icon
-                          title="Re-format the QuestionnaireResponse json below"
-                          dark
-                        >
-                          mdi-format-indent-increase
-                        </v-icon></v-btn
-                      >
-                      <v-btn small icon tile @click="validateQuestionnaireResponse"
-                        ><v-icon
-                          title="Validate the below QuestionnaireResponse json using the fhirpath-lab server"
-                          dark
-                        >
-                          mdi-note-check-outline
-                        </v-icon></v-btn
-                      >
-                    </template>
-                  </v-text-field>
-                  <br />
-                  <!-- <label class="v-label theme--light bare-label">Test Resource JSON <i>{{ resourceJsonChangedMessage() }}</i></label> -->
-                  <v-tooltip bottom>
-                    <template v-slot:activator="{ on, attrs }">
-                      <v-btn
-                        class="resetButton"
-                        icon
-                        v-bind="attrs"
-                        v-on="on"
-                        @click="resetQuestionnaireResponse"
-                        ><v-icon>mdi-broom</v-icon></v-btn
-                      >
-                    </template>
-                    <span>Reset test QuestionnaireResponse</span>
-                  </v-tooltip>
-                  <div
-                    class="resource"
-                    width="100%"
-                    ref="aceEditorResponseJsonTab"
-                  ></div>
+                    mdi-format-indent-increase
+                  </v-icon></v-btn
+                >
+                <v-btn small icon tile @click="validateQuestionnaireResponse"
+                  ><v-icon
+                    title="Validate the below QuestionnaireResponse json using the fhirpath-lab server"
+                    dark
+                  >
+                    mdi-note-check-outline
+                  </v-icon></v-btn
+                >
+              </template>
+            </v-text-field>
+            <br />
+            <!-- <label class="v-label theme--light bare-label">Test Resource JSON <i>{{ resourceJsonChangedMessage() }}</i></label> -->
+            <v-tooltip bottom>
+              <template v-slot:activator="{ on, attrs }">
+                <v-btn
+                  class="resetButton"
+                  icon
+                  v-bind="attrs"
+                  v-on="on"
+                  @click="resetQuestionnaireResponse"
+                  ><v-icon>mdi-broom</v-icon></v-btn
+                >
+              </template>
+              <span>Reset test QuestionnaireResponse</span>
+            </v-tooltip>
+            <div
+              class="resource"
+              width="100%"
+              ref="aceEditorResponseJsonTab"
+            ></div>
           </template>
 
           <template v-slot:AI_Chat>
             <Chat
-                    class="chat"
-                    ref="chatComponent"
-                    feature="QuestionnaireTester"
-                    :openAIFeedbackEnabled="openAIFeedbackEnabled"
-                    :publisher="defaultProviderField"
-                    @send-message="handleSendMessage"
-                    :suggestionsWhenEmpty="chatPromptOptionsWhenEmpty"
-                    :suggestions="chatPromptOptions"
-                    @remove-suggestion="removeSuggestion"
-                    @reset-conversation="resetConversation"
-                    @apply-suggested-context="copySuggestionToClipboard"
-                    @apply-suggested-expression="copySuggestionToClipboard"
-                    @apply-suggested-questionnaire="applySuggestedQuestionnaire"
-                    @apply-suggested-item="applySuggestedItem"
-                    @apply-suggested-fhir="copySuggestionToClipboard"
-                    @apply-suggested-json="copySuggestionToClipboard"
-                    @apply-suggested-fsh="copySuggestionToClipboard"
-                    @apply-suggested-jsonpatch="applySuggestedJsonPatch"
-                  />
+              class="chat"
+              ref="chatComponent"
+              feature="QuestionnaireTester"
+              :openAIFeedbackEnabled="openAIFeedbackEnabled"
+              :publisher="defaultProviderField"
+              @send-message="handleSendMessage"
+              :suggestionsWhenEmpty="chatPromptOptionsWhenEmpty"
+              :suggestions="chatPromptOptions"
+              @remove-suggestion="removeSuggestion"
+              @reset-conversation="resetConversation"
+              @apply-suggested-context="copySuggestionToClipboard"
+              @apply-suggested-expression="copySuggestionToClipboard"
+              @apply-suggested-questionnaire="applySuggestedQuestionnaire"
+              @apply-suggested-item="applySuggestedItem"
+              @apply-suggested-fhir="copySuggestionToClipboard"
+              @apply-suggested-json="copySuggestionToClipboard"
+              @apply-suggested-fsh="copySuggestionToClipboard"
+              @apply-suggested-jsonpatch="applySuggestedJsonPatch"
+            />
           </template>
         </twin-pane-tab>
       </v-card>
@@ -339,7 +339,6 @@
 }
 
 @media (max-width: 596px) {
-
   .resource {
     height: calc(100vh - 320px - 48px);
   }
@@ -364,7 +363,13 @@ import {
 import axios, { AxiosRequestHeaders, AxiosResponse } from "axios";
 import { AxiosError } from "axios";
 import { CancelTokenSource } from "axios";
-import { Questionnaire, Bundle, OperationOutcomeIssue, QuestionnaireResponse, QuestionnaireItem } from "fhir/r4b";
+import {
+  Questionnaire,
+  Bundle,
+  OperationOutcomeIssue,
+  QuestionnaireResponse,
+  QuestionnaireItem,
+} from "fhir/r4b";
 import { settings } from "~/helpers/user_settings";
 import { marked } from "marked";
 import { formatDate, parseDate } from "~/helpers/datetime";
@@ -402,9 +407,12 @@ import {
   GetSystemPrompt,
   IOpenAISettings,
 } from "~/helpers/openai_utils";
-import { DetectDataRequiredForQuery, GetQuestionnaireSystemPrompt } from "~/helpers/openai_form_tester";
+import {
+  DetectDataRequiredForQuery,
+  GetQuestionnaireSystemPrompt,
+} from "~/helpers/openai_form_tester";
 import TwinPaneTab, { TabData } from "~/components/TwinPaneTab.vue";
-import * as jsonpatch from 'fast-json-patch';
+import * as jsonpatch from "fast-json-patch";
 
 // import "fhirclient";
 // import { FHIR } from "fhirclient";
@@ -431,7 +439,9 @@ interface IQuestionnaireTesterData extends QuestionnaireData {
   questionnaireResponse?: fhir4b.QuestionnaireResponse;
 }
 
-function getPriorityIssue(issues: OperationOutcomeIssue[] | undefined): OperationOutcomeIssue | undefined {
+function getPriorityIssue(
+  issues: OperationOutcomeIssue[] | undefined
+): OperationOutcomeIssue | undefined {
   if (issues && issues.length > 0) {
     for (const issue of issues) {
       if (issue.severity === "fatal") return issue;
@@ -546,7 +556,7 @@ export default Vue.extend({
           title: "Questionnaire and Structured Data Capture AI Chat",
           show: this.chatEnabled,
           enabled: true,
-        }
+        },
       ];
     },
     downloadTestResourceButtonTitle(): string {
@@ -608,32 +618,41 @@ export default Vue.extend({
         this.resourceId = this.$route.query.id as string;
       }
 
-      if (this.$route.query.tab) {
-        this.$nextTick(() => {
-          const tabString = this.$route.query.tab as string;
-          if (parseInt(tabString) >= 0) {
-            let tabControl: TwinPaneTab = this.$refs.twinTabControl as TwinPaneTab;
-            if (tabControl)
+      let tabControl: TwinPaneTab = this.$refs.twinTabControl as TwinPaneTab;
+      if (tabControl) {
+        if (this.$route.query.tab) {
+          this.$nextTick(() => {
+            const tabString = this.$route.query.tab as string;
+            // String tab mode
+            if (tabString.includes(",")) {
+              const tabParts = tabString.split(",");
+              if (tabParts.length == 2) {
+                if (tabControl) {
+                  tabControl.selectTabs(
+                    tabControl.getTabIndex(tabParts[0]),
+                    tabControl.getTabIndex(tabParts[1]),
+                    "left"
+                  );
+                }
+              }
+            } else {
               tabControl.setSinglePanelMode(true);
-            this.selectTab(parseInt(tabString));
-          }
-        });
+              this.selectTab(tabControl.getTabIndex(tabString));
+            }
+          });
+        } else {
+          if (tabControl.singleTabMode()) this.selectTab(0);
+        }
       }
-      else {
-        let tabControl: TwinPaneTab = this.$refs.twinTabControl as TwinPaneTab;
-        if (tabControl && tabControl.singleTabMode())
-          this.selectTab(0);
-     }
 
       // this.searchFhirServer();
       await this.downloadTestResource();
     },
     tabChanged(index: Number): void {
-
-      if (index !== 9){
+      if (index !== 9) {
         return;
       }
-    
+
       // Workaround to refresh the display in the response editor when it is updated while the form is not visible
       // https://github.com/ajaxorg/ace/issues/2497#issuecomment-102633605
       setTimeout(() => {
@@ -662,7 +681,11 @@ export default Vue.extend({
       this.saveOutcome = undefined;
       if (this.tab == 1) this.selectTab(0);
     },
-    getItemPath(items: QuestionnaireItem[], linkId: string, basePath: string): string | undefined {
+    getItemPath(
+      items: QuestionnaireItem[],
+      linkId: string,
+      basePath: string
+    ): string | undefined {
       for (let index = 0; index < items.length; index++) {
         const myPath = basePath + ".item[" + index + "]";
         let item = items[index];
@@ -678,20 +701,19 @@ export default Vue.extend({
     highlightPath(linkId: string) {
       console.log("Highlight path: ", linkId);
       setTimeout(() => {
-
         // The Questionnaire Definition part
         if (this.resourceJsonEditor) {
           // prepare the ast
           const jsonValue = this.resourceJsonEditor.getValue();
           const ast = parseJson(jsonValue);
-          if (ast){
+          if (ast) {
             // convert the simple linkId to a full path
             let q = JSON.parse(jsonValue) as Questionnaire;
-            if (q.item){
-              let path = this.getItemPath(q.item, linkId, 'Questionnaire');
-              if (path){
+            if (q.item) {
+              let path = this.getItemPath(q.item, linkId, "Questionnaire");
+              if (path) {
                 const node = findNodeByPath(ast, path);
-                if (node && node.position){
+                if (node && node.position) {
                   // We found it, so move line selected
                   this.resourceJsonEditor.clearSelection();
                   this.resourceJsonEditor.gotoLine(
@@ -701,103 +723,107 @@ export default Vue.extend({
                   );
 
                   // and Highlight the line
-                      if (node.position.value_stop_pos) {
-                        let substr = jsonValue.substring(
-                          node.position.prop_start_pos,
-                          node.position.value_stop_pos + 1
-                        );
-                        const endRowOffset = substr.split(/\r\n|\r|\n/).length;
-                        const endRow = node.position.line + endRowOffset - 1;
-                        const endCollOffset =
-                          substr.split(/\r\n|\r|\n/)[endRowOffset - 1].length;
-                        const endCol =
-                        node.position.column +
-                          (endCollOffset > 1 ? endCollOffset + 1 : endCollOffset);
-                        const range = new ace.Range(
-                          node.position.line - 1,
-                          node.position.column,
-                          endRow - 1,
-                          endCol
-                        );
-                        // this.resourceJsonEditor.session.selection.setRange(range);
+                  if (node.position.value_stop_pos) {
+                    let substr = jsonValue.substring(
+                      node.position.prop_start_pos,
+                      node.position.value_stop_pos + 1
+                    );
+                    const endRowOffset = substr.split(/\r\n|\r|\n/).length;
+                    const endRow = node.position.line + endRowOffset - 1;
+                    const endCollOffset =
+                      substr.split(/\r\n|\r|\n/)[endRowOffset - 1].length;
+                    const endCol =
+                      node.position.column +
+                      (endCollOffset > 1 ? endCollOffset + 1 : endCollOffset);
+                    const range = new ace.Range(
+                      node.position.line - 1,
+                      node.position.column,
+                      endRow - 1,
+                      endCol
+                    );
+                    // this.resourceJsonEditor.session.selection.setRange(range);
 
-                        const selectionMarker = this.resourceJsonEditor.session.addMarker(
-                          range,
-                          "resultSelection",
-                          "fillLine",
-                          true
-                        );
-                        // after 1.5 seconds remove the highlight.
-                        setTimeout(() => {
-                          this.resourceJsonEditor?.session.removeMarker(selectionMarker);
-                        }, 1500);
-                      }
-
-                      this.updateNow();                  
-                    }
+                    const selectionMarker =
+                      this.resourceJsonEditor.session.addMarker(
+                        range,
+                        "resultSelection",
+                        "fillLine",
+                        true
+                      );
+                    // after 1.5 seconds remove the highlight.
+                    setTimeout(() => {
+                      this.resourceJsonEditor?.session.removeMarker(
+                        selectionMarker
+                      );
+                    }, 1500);
                   }
+
+                  this.updateNow();
                 }
               }
             }
+          }
+        }
 
+        //     }
+        //   }
+        //   else if (this.questionnaireResponseJsonEditor && path.startsWith("QuestionnaireResponse")) {
+        //     this.questionnaireResponseJsonEditor.clearSelection();
+        //     if (issue.__position) {
+        //       var position: IJsonNodePosition = issue.__position;
+        //       this.questionnaireResponseJsonEditor.focus();
+        //       this.questionnaireResponseJsonEditor.gotoLine(
+        //         position.line,
+        //         position.column,
+        //         true
+        //       );
 
+        //       const jsonValue = this.questionnaireResponseJsonEditor.getValue();
+        //       if (position.value_stop_pos) {
+        //         let substr = jsonValue.substring(
+        //           position.prop_start_pos,
+        //           position.value_stop_pos + 1
+        //         );
+        //         const endRowOffset = substr.split(/\r\n|\r|\n/).length;
+        //         const endRow = position.line + endRowOffset - 1;
+        //         const endCollOffset =
+        //           substr.split(/\r\n|\r|\n/)[endRowOffset - 1].length;
+        //         const endCol =
+        //           position.column +
+        //           (endCollOffset > 1 ? endCollOffset + 1 : endCollOffset);
+        //         const range = new ace.Range(
+        //           position.line - 1,
+        //           position.column,
+        //           endRow - 1,
+        //           endCol
+        //         );
+        //         // this.resourceJsonEditor.session.selection.setRange(range);
 
+        //         const selectionMarker = this.questionnaireResponseJsonEditor.session.addMarker(
+        //           range,
+        //           "resultSelection",
+        //           "fillLine",
+        //           true
+        //         );
+        //         // after 1.5 seconds remove the highlight.
+        //         setTimeout(() => {
+        //           this.questionnaireResponseJsonEditor?.session.removeMarker(selectionMarker);
+        //         }, 1500);
+        //       }
 
-      //     }
-      //   }
-      //   else if (this.questionnaireResponseJsonEditor && path.startsWith("QuestionnaireResponse")) {
-      //     this.questionnaireResponseJsonEditor.clearSelection();
-      //     if (issue.__position) {
-      //       var position: IJsonNodePosition = issue.__position;
-      //       this.questionnaireResponseJsonEditor.focus();
-      //       this.questionnaireResponseJsonEditor.gotoLine(
-      //         position.line,
-      //         position.column,
-      //         true
-      //       );
-
-      //       const jsonValue = this.questionnaireResponseJsonEditor.getValue();
-      //       if (position.value_stop_pos) {
-      //         let substr = jsonValue.substring(
-      //           position.prop_start_pos,
-      //           position.value_stop_pos + 1
-      //         );
-      //         const endRowOffset = substr.split(/\r\n|\r|\n/).length;
-      //         const endRow = position.line + endRowOffset - 1;
-      //         const endCollOffset =
-      //           substr.split(/\r\n|\r|\n/)[endRowOffset - 1].length;
-      //         const endCol =
-      //           position.column +
-      //           (endCollOffset > 1 ? endCollOffset + 1 : endCollOffset);
-      //         const range = new ace.Range(
-      //           position.line - 1,
-      //           position.column,
-      //           endRow - 1,
-      //           endCol
-      //         );
-      //         // this.resourceJsonEditor.session.selection.setRange(range);
-
-      //         const selectionMarker = this.questionnaireResponseJsonEditor.session.addMarker(
-      //           range,
-      //           "resultSelection",
-      //           "fillLine",
-      //           true
-      //         );
-      //         // after 1.5 seconds remove the highlight.
-      //         setTimeout(() => {
-      //           this.questionnaireResponseJsonEditor?.session.removeMarker(selectionMarker);
-      //         }, 1500);
-      //       }
-
-      //       this.updateNow();
-      //     }
-      //   }
+        //       this.updateNow();
+        //     }
+        //   }
       });
     },
     navigateToIssue(issue: fhir4b.OperationOutcomeIssue & IWithPosition) {
       console.log("Navigate to: ", issue);
       setTimeout(() => {
-        if (this.resourceJsonEditor && issue.expression && !issue.expression[0].startsWith("QuestionnaireResponse")) {
+        if (
+          this.resourceJsonEditor &&
+          issue.expression &&
+          !issue.expression[0].startsWith("QuestionnaireResponse")
+        ) {
           this.selectTab(0);
           this.resourceJsonEditor.clearSelection();
           if (issue.__position) {
@@ -844,8 +870,7 @@ export default Vue.extend({
 
             this.updateNow();
           }
-        }
-        else if (this.questionnaireResponseJsonEditor) {
+        } else if (this.questionnaireResponseJsonEditor) {
           this.selectTab(9);
           this.questionnaireResponseJsonEditor.clearSelection();
           if (issue.__position) {
@@ -878,15 +903,18 @@ export default Vue.extend({
               );
               // this.resourceJsonEditor.session.selection.setRange(range);
 
-              const selectionMarker = this.questionnaireResponseJsonEditor.session.addMarker(
-                range,
-                "resultSelection",
-                "fillLine",
-                true
-              );
+              const selectionMarker =
+                this.questionnaireResponseJsonEditor.session.addMarker(
+                  range,
+                  "resultSelection",
+                  "fillLine",
+                  true
+                );
               // after 1.5 seconds remove the highlight.
               setTimeout(() => {
-                this.questionnaireResponseJsonEditor?.session.removeMarker(selectionMarker);
+                this.questionnaireResponseJsonEditor?.session.removeMarker(
+                  selectionMarker
+                );
               }, 1500);
             }
 
@@ -989,28 +1017,30 @@ export default Vue.extend({
       // Create a new example questionnaire resource to start a fresh from
       // defaulting in the publisher and a random canonical url
       if (this.questionnaireResponseJsonEditor && this.resourceJsonEditor) {
-
         const jsonValue: QuestionnaireResponse = {
           resourceType: "QuestionnaireResponse",
           questionnaire: "",
           status: "completed",
         };
 
-        const jsonValueQuestionnaireDefinition = this.resourceJsonEditor.getValue();
+        const jsonValueQuestionnaireDefinition =
+          this.resourceJsonEditor.getValue();
         try {
-            const qDef = JSON.parse(jsonValueQuestionnaireDefinition);
-            if (qDef?.url){
-              jsonValue.questionnaire = qDef.url;
-            }
+          const qDef = JSON.parse(jsonValueQuestionnaireDefinition);
+          if (qDef?.url) {
+            jsonValue.questionnaire = qDef.url;
+          }
         } catch {}
 
         try {
-          this.questionnaireResponseJsonEditor.setValue(JSON.stringify(jsonValue, null, 2));
+          this.questionnaireResponseJsonEditor.setValue(
+            JSON.stringify(jsonValue, null, 2)
+          );
           this.questionnaireResponseJsonEditor.clearSelection();
           this.questionnaireResponseJsonEditor.renderer.updateFull(true);
         } catch {}
       }
-    },    
+    },
 
     resourceJsonChangedEvent() {
       this.resourceJsonChanged = true;
@@ -1077,7 +1107,7 @@ export default Vue.extend({
             );
             // and grab the first item to send to the chat AI
             const priorityIssue = getPriorityIssue(this.saveOutcome.issue);
-            if (priorityIssue){
+            if (priorityIssue) {
               this.helpWithIssue(priorityIssue);
             }
           }
@@ -1102,11 +1132,10 @@ export default Vue.extend({
           if (!qDef.id) qDef.id = settings.createRandomID();
           delete qDef.meta;
           let qrWithContainedQ = JSON.parse(jsonValueQR);
-          qrWithContainedQ.questionnaire = '#' + qDef.id;
+          qrWithContainedQ.questionnaire = "#" + qDef.id;
           qrWithContainedQ.contained = [qDef];
           jsonValueQR = JSON.stringify(qrWithContainedQ, null, 2);
         } catch {}
-
 
         // send this to the forms-lab server for validation
         try {
@@ -1136,9 +1165,14 @@ export default Vue.extend({
             for (const issue of this.saveOutcome.issue) {
               if (issue.expression) {
                 issue.expression = issue.expression.map((expression) => {
-                  if (expression.startsWith("QuestionnaireResponse.contained[0]")) {
+                  if (
+                    expression.startsWith("QuestionnaireResponse.contained[0]")
+                  ) {
                     // rehome the path to the Q definition
-                    return expression.replace("QuestionnaireResponse.contained[0]", "Questionnaire");
+                    return expression.replace(
+                      "QuestionnaireResponse.contained[0]",
+                      "Questionnaire"
+                    );
                   }
                   return expression;
                 });
@@ -1157,7 +1191,7 @@ export default Vue.extend({
             );
             // and grab the first item to send to the chat AI
             const priorityIssue = getPriorityIssue(this.saveOutcome.issue);
-            if (priorityIssue){
+            if (priorityIssue) {
               this.helpWithIssue(priorityIssue);
             }
           }
@@ -1178,7 +1212,8 @@ export default Vue.extend({
       for (const issue of issues) {
         const typedIssue = issue as OperationOutcomeIssue & IWithPosition;
         // remove any existing position information (since may be changed/removed)
-        if (typedIssue.__position && resetExistingPositions) delete typedIssue.__position;
+        if (typedIssue.__position && resetExistingPositions)
+          delete typedIssue.__position;
 
         if (issue.expression) {
           for (const expression of issue.expression) {
@@ -1343,7 +1378,7 @@ export default Vue.extend({
     },
 
     copySuggestionToClipboard(suggestion: string) {
-      console.log('Copied suggestion to clipboard: ', suggestion)
+      console.log("Copied suggestion to clipboard: ", suggestion);
       navigator.clipboard.writeText(suggestion);
     },
 
@@ -1357,7 +1392,7 @@ export default Vue.extend({
           );
           this.resourceJsonEditor.clearSelection();
           this.resourceJsonEditor.renderer.updateFull(true);
-        } catch(err) {
+        } catch (err) {
           console.log("Error applying json patch: ", err);
         }
       }
@@ -1373,25 +1408,29 @@ export default Vue.extend({
           );
           this.resourceJsonEditor.clearSelection();
           this.resourceJsonEditor.renderer.updateFull(true);
-        } catch(err) {
+        } catch (err) {
           console.log("Error applying json patch: ", err);
         }
       }
     },
 
-    applySuggestedJsonPatch(jsonPatchString: string){
+    applySuggestedJsonPatch(jsonPatchString: string) {
       if (this.resourceJsonEditor) {
         const jsonValue = this.resourceJsonEditor.getValue();
         try {
           var jsonPatch = JSON.parse(jsonPatchString);
           var jsonValueObj = JSON.parse(jsonValue);
           jsonPatch.forEach((patch: any) => {
-            jsonValueObj = jsonpatch.applyPatch(jsonValueObj, [patch]).newDocument;
+            jsonValueObj = jsonpatch.applyPatch(jsonValueObj, [
+              patch,
+            ]).newDocument;
           });
-          this.resourceJsonEditor.setValue(JSON.stringify(jsonValueObj, null, 4));
+          this.resourceJsonEditor.setValue(
+            JSON.stringify(jsonValueObj, null, 4)
+          );
           this.resourceJsonEditor.clearSelection();
           this.resourceJsonEditor.renderer.updateFull(true);
-        } catch(err) {
+        } catch (err) {
           console.log("Error applying json patch: ", err);
         }
       }
@@ -1399,7 +1438,7 @@ export default Vue.extend({
 
     selectTab(tabIndex: number) {
       let tabControl: TwinPaneTab = this.$refs.twinTabControl as TwinPaneTab;
-      if (tabControl){
+      if (tabControl) {
         tabControl.selectTab(tabIndex);
       }
     },
@@ -1411,7 +1450,7 @@ export default Vue.extend({
       console.log("remove suggestion: " + suggestion);
       this.helpWithError = undefined;
     },
- 
+
     async handleSendMessage(message: string) {
       console.log("Message sent:", message);
       const chat = this.$refs.chatComponent as Chat;
@@ -1460,7 +1499,12 @@ export default Vue.extend({
       );
       // this.openAIexpressionExplanationMessage = "(Generated by OpenAI " + settings.getOpenAIModel() + ")";
       this.openAIexpressionExplanationLoading = false;
-      chat.addMessage("FhirPath AI", resultOfQuestion ?? "", true, settings.getOpenAIModel());
+      chat.addMessage(
+        "FhirPath AI",
+        resultOfQuestion ?? "",
+        true,
+        settings.getOpenAIModel()
+      );
       chat.setThinking(false);
     },
 

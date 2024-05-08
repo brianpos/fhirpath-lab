@@ -3,6 +3,9 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+## 9 May 2024
+* Update the Questionnaire test page to select the tab(s) by name as well as index, and also support a `,` to select 2 tabs at once
+
 ## 6 May 2024
 * Update landing page to indicate that 5.8.1 of the FirelySDK is now being used
 
