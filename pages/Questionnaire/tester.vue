@@ -544,7 +544,7 @@ export default Vue.extend({
           iconName: "mdi-brain",
           tabName: "AI Chat",
           title: "Questionnaire and Structured Data Capture AI Chat",
-          show: this.showAdvancedSettings! && this.chatEnabled,
+          show: this.chatEnabled,
           enabled: true,
         }
       ];
