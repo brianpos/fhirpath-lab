@@ -111,7 +111,7 @@
           <v-checkbox
             label="Enable AI Chat Feedback"
             v-model="openAIFeedbackEnabled"
-            v-if="showAdvancedSettings && openAIKey && (defaultProviderField == 'Say the magic word' || openAIFeedbackEnabled)"
+            v-if="showAdvancedSettings && openAIKey && (defaultProviderField == 'Enable feedback' || openAIFeedbackEnabled)"
             messages="Permits user initiated feedback to the FhirPath Lab to help improve the AI Chat."
             title="Using the lab with real patient data is not permitted, and any data entered into the AI Chat Feedback will be used to improve the AI Chat only.
 NEVER SEND REAL PATIENT DATA."
