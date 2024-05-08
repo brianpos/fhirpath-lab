@@ -323,7 +323,7 @@
 .resetButton {
   right: 34px;
   position: absolute;
-  z-index: 100;
+  z-index: 7;
 }
 
 .resource {
