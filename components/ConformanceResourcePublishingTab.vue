@@ -34,7 +34,7 @@
               @input="notifyStatusChange"
             />
             <a
-              v-if="raw.status !== 'draft' && raw.id"
+              v-if="raw.status !== 'draft' && raw.id && raw.resourceType == 'Library'"
               v-bind:href="'/' + raw.resourceType + '/' + raw.id + ':new'"
               target="_blank"
             >
