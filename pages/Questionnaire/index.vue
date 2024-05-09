@@ -13,7 +13,6 @@
           :previous="previousPage"
           :next="nextPage"
           :last="lastPage"
-          :add="addNewQuestionnaire"
           :showAdd="false"
         />
       </template>
@@ -201,9 +200,6 @@ export default Vue.extend({
         await this.searchPage(this.lastPageLink);
       }
     },
-    async addNewQuestionnaire() {
-      this.$router.push("/Questionnaire/:new");
-    },
 
     async searchPage(url: string) {
       await searchPage(this, url, (entries) => {
@@ -308,7 +304,7 @@ export default Vue.extend({
       if (!persistentOrgTypesStr) return;
 
       const persistentOrgTypes = JSON.parse(persistentOrgTypesStr) as {
-        system: string;
+        system?: string | undefined;
         code: string;
         display: string;
       }[];
@@ -332,11 +328,12 @@ export default Vue.extend({
               console.log("click::", row, rowIndex, event);
               var data: QuestionnaireTableData = row;
               console.log("row data::", data);
+              const selectedResourceId = settings.getFhirServerUrl() + '/Questionnaire/' + data.id;
               if (event.ctrlKey){
-                window.open("/Questionnaire/" + data.id, '_blank'); 
+                window.open("/Questionnaire/tester?id=" + selectedResourceId, '_blank'); 
               }
               else{
-                this.$router.push("/Questionnaire/" + data.id);
+                this.$router.push("/Questionnaire/tester?id=" + selectedResourceId);
               }
             },
             contextmenu: (event: PointerEvent) => {

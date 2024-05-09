@@ -51,9 +51,9 @@
             <v-list-item href="/SearchParameter">
               <v-list-item-title>Search Parameters</v-list-item-title>
             </v-list-item>
-            <!-- <v-list-item href="/Questionnaire">
+            <v-list-item href="/Questionnaire">
               <v-list-item-title>Questionnaires</v-list-item-title>
-            </v-list-item> -->
+            </v-list-item>
             <v-list-item href="/SubscriptionTopic">
               <v-list-item-title>Subscription Topics</v-list-item-title>
             </v-list-item>

@@ -254,7 +254,7 @@ export default Vue.extend({
       if (!persistentOrgTypesStr) return;
 
       const persistentOrgTypes = JSON.parse(persistentOrgTypesStr) as {
-        system: string;
+        system?: string | undefined;
         code: string;
         display: string;
       }[];
