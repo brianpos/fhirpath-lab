@@ -6,6 +6,7 @@
 ## 9 May 2024
 * Update the Questionnaire test page to select the tab(s) by name as well as index, and also support a `,` to select 2 tabs at once
 * Update the Questionnaire search page to open the questionnaire tester tab rather than the ghost page from the forms-lab
+* Improve reliability of the UseContexts search box on library and questionnaire resources (including some defaults)
 
 ## 6 May 2024
 * Update landing page to indicate that 5.8.1 of the FirelySDK is now being used

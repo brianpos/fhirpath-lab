@@ -150,6 +150,7 @@ import { ConformanceResourceTableData } from "~/models/ConformanceResourceTableD
 import { settings } from "~/helpers/user_settings";
 import { EasyTableDefinition_defaultValues } from "~/models/EasyTableDefinition";
 import { ConformanceSearchData } from "models/ConformanceSearchData";
+import { loadCustomUseContexts, mergeUseContexts, saveCustomUseContexts } from "~/helpers/useContext_helpers";
 
 export default Vue.extend({
   head: {
@@ -165,7 +166,7 @@ export default Vue.extend({
       this.searchForUseContext = searchData.useContext;
     }
     this.searchFhirServer();
-    this.checkCustomUseContexts();
+    this.searchUseContexts = loadCustomUseContexts("questionnaire", this.defaultUseContexts);
   },
   methods: {
     settingsClosed() {
@@ -206,8 +207,11 @@ export default Vue.extend({
         var updateRequired = false;
         this.tableData = entries.map<QuestionnaireTableData>((post) => {
           var vs = post.resource as fhir4b.Questionnaire;
-          updateRequired =
-            updateRequired || this.includeCustomUseContexts(vs?.useContext);
+          const mergeResult = mergeUseContexts(this.searchUseContexts, vs?.useContext);
+          if (mergeResult.changed){
+            this.searchUseContexts = mergeResult.contexts;
+            updateRequired = true;
+          }
           return {
             id: vs?.id ?? "",
             title: vs?.title ?? vs?.name ?? "(none)",
@@ -224,7 +228,7 @@ export default Vue.extend({
             ),
           };
         });
-        if (updateRequired) this.updateCustomUseContexts();
+        if (updateRequired) saveCustomUseContexts("questionnaire", this.searchUseContexts, this.defaultUseContexts);
       });
     },
 
@@ -260,63 +264,6 @@ export default Vue.extend({
         useContext: this.searchForUseContext,
       };
       settings.saveSearchData("Questionnaire", searchData);
-    },
-
-    includeCustomUseContexts(contexts?: UsageContext[]): boolean {
-      if (!contexts) return false;
-      var result = false;
-      var newCodings = this.searchUseContexts ?? [];
-      for (let val of contexts) {
-        if (!val.valueCodeableConcept || !val.valueCodeableConcept.coding)
-          continue;
-
-        for (let coding of val.valueCodeableConcept.coding) {
-          if (
-            this.searchUseContexts?.filter((value, index, array) => {
-              if (value.system !== coding.system) return false;
-              if (value.code !== coding.code) return false;
-              return true;
-            }).length === 0
-          ) {
-            // add this item to the orgTypes
-            if (coding.code && coding.display) {
-              let codingVal = {
-                system: coding.system,
-                code: coding.code,
-                display: coding.display,
-              };
-              newCodings.push(codingVal);
-              result = true;
-              console.log(
-                `New Usage Context: ${coding.system}|${coding.code} ${coding.display}`
-              );
-            }
-          }
-        }
-      }
-      if (result) this.searchUseContexts = newCodings;
-      return result;
-    },
-
-    async checkCustomUseContexts() {
-      // check local storage for other types
-      const persistentOrgTypesStr = localStorage.getItem("use-contexts");
-      if (!persistentOrgTypesStr) return;
-
-      const persistentOrgTypes = JSON.parse(persistentOrgTypesStr) as {
-        system?: string | undefined;
-        code: string;
-        display: string;
-      }[];
-      this.searchUseContexts = persistentOrgTypes;
-    },
-
-    async updateCustomUseContexts() {
-      console.log("Updating custom Use Contexts list (based on content)");
-      localStorage.setItem(
-        "use-contexts",
-        JSON.stringify(this.searchUseContexts)
-      );
     },
   },
   data(): QuestionnaireTableDefinition {
@@ -393,6 +340,11 @@ export default Vue.extend({
       searchForUseContext: [],
       searchForPublisher: undefined,
       searchPublishingStatuses: searchPublishingStatuses,
+      defaultUseContexts: [
+        { code: "demo", display: "Demonstration" },
+        { system: "http://fhir.forms-lab.com/CodeSystem/contexts", code: "devdays", display: "DevDays Demo" },
+        { code: "extract", display: "Extract Demonstration" },
+      ],
       searchUseContexts: [],
       ... EasyTableDefinition_defaultValues
     };
