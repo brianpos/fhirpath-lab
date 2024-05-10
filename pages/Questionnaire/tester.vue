@@ -10,9 +10,7 @@
         : ''
     "
   >
-    <template>
-      <HeaderNavbar @close-settings="settingsClosed" />
-    </template>
+    <HeaderNavbar @close-settings="settingsClosed" />
 
     <div class="container-fluid bd-layout" style="padding-top: 80px">
       <v-card>
@@ -1145,6 +1143,14 @@ export default Vue.extend({
           qrWithContainedQ.questionnaire = "#" + qDef.id;
           qrWithContainedQ.contained = [qDef];
           jsonValueQR = JSON.stringify(qrWithContainedQ, null, 2);
+        } catch {}
+
+        // Add a subject and authored date if not present
+        try {
+          let qr = JSON.parse(jsonValueQR);
+          if (!qr.subject) qr.subject = { reference: "Patient/123" };
+          if (!qr.authored) qr.authored = new Date().toISOString();
+          jsonValueQR = JSON.stringify(qr, null, 2);
         } catch {}
 
         // send this to the forms-lab server for validation

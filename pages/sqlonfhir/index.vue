@@ -30,35 +30,14 @@
             <span v-text="shareZulipToolTipMessage"></span>
           </v-tooltip>
         </v-toolbar>
-        <v-row dense>
-          <v-col>
-            <v-tabs vertical v-model="tab" @change="changeTab">
-              <v-tab :class="expressionActiveClass" v-on:click="tabClicked" title="View Definition">
-                <v-icon left> mdi-function-variant </v-icon>
-                View Def
-              </v-tab>
-              <v-tab :class="resourceActiveClass" v-on:click="tabClicked">
-                <v-icon left> mdi-clipboard-text-outline </v-icon>
-                Resource
-              </v-tab>
-              <v-tab :class="resultsActiveClass" v-on:click="tabClicked">
-                <v-icon left> mdi-table-large </v-icon>
-                Results
-              </v-tab>
-              <v-tab :disabled="true" :class="traceActiveClass" v-on:click="tabClicked">
-                <v-icon left> mdi-format-list-bulleted </v-icon>
-                Trace
-              </v-tab>
-
-              <v-tabs-items class="custom-tab" style="height: calc(100vh - 168px)" touchless v-model="tab">
-
-                <v-scroll-x-transition mode="out-in" :hide-on-leave="true">
-                  <div v-show="expressionVisible" :eager="true">
-                    <!-- Expression -->
-                    <v-card flat>
-                      <v-card-text>
-                        <p class="fl-tab-header">View Definition</p>
-                        <v-tooltip bottom>
+        <twin-pane-tab
+          :tabs="tabDetails"
+          @change="tabChanged"
+          :eager="true"
+          ref="twinTabControl"
+        >
+        <template v-slot:View_Def>
+          <v-tooltip bottom>
                           <template v-slot:activator="{ on, attrs }">
                             <v-btn icon style="right: 20px; position: absolute; padding-top: 20px;" v-bind="attrs"
                               v-on="on" @click="resetExpression"><v-icon>mdi-broom</v-icon></v-btn>
@@ -66,24 +45,34 @@
                           <span>Reset View Definition</span>
                         </v-tooltip>
 
-                        <label class="v-label theme--light bare-label">SQL on FHIR v2 View Definition</label>
+                        <label class="v-label theme--light bare-label" style="transform: translateY(-4px) scale(0.75); transform-origin: left;">SQL on FHIR v2 View Definition</label>
                         <div height="85px" width="100%" ref="aceEditorExpression"></div>
                         <div class="ace_editor_footer"></div>
 
                         <OperationOutcomePanel :outcome="expressionParseOutcome"
                           @close="expressionParseOutcome = undefined" />
-                      </v-card-text>
-                    </v-card>
-                  </div>
-                </v-scroll-x-transition>
-
-                <v-scroll-x-transition mode="out-in" :hide-on-leave="true">
-                  <div v-show="resultsVisible" :eager="true">
-                    <!-- Results table -->
-                    <v-card flat>
-                      <v-card-text>
-                        <p class="fl-tab-header">Results Table</p>
-                        <v-simple-table>
+          </template>
+          <template v-slot:Resource>
+            <v-text-field label="Test Resource Id" v-model="resourceId" hide-details="auto" autocomplete="off"
+                          @input="updateNow" autocorrect="off" autocapitalize="off" spellcheck="false">
+                          <template v-slot:append>
+                            <v-btn icon small tile @click="resourceId = undefined">
+                              <v-icon> mdi-close </v-icon>
+                            </v-btn>
+                            <v-btn icon small tile @click="downloadTestResource">
+                              <v-icon> mdi-download </v-icon>
+                            </v-btn>
+                            <v-btn small icon tile @click="reformatTestResource"><v-icon title="Format json" dark>
+                                mdi-format-indent-increase </v-icon></v-btn>
+                          </template>
+                        </v-text-field>
+                        <label class="v-label theme--light bare-label"style="transform: scale(0.75); transform-origin: left;">Test Resource JSON <i>{{
+                          resourceJsonChangedMessage() }}</i></label>
+                        <div class="resource" width="100%" ref="aceEditorResourceJsonTab"></div>
+                        <!-- <div class="ace_editor_footer"></div> -->
+          </template>
+          <template v-slot:Results>
+            <v-simple-table>
                           <tr>
                             <template v-for="(r2, i1) in outputColumns">
                               <th class="context" colspan="2" :key="i1">
@@ -101,17 +90,8 @@
                             </tr>
                           </template>
                         </v-simple-table>
-                      </v-card-text>
-                    </v-card>
-                  </div>
-                </v-scroll-x-transition>
-
-                <v-scroll-x-transition mode="out-in" :hide-on-leave="true">
-                  <div v-show="traceVisible">
-                    <!-- Trace -->
-                    <v-card flat>
-                      <v-card-text>
-                        <p class="fl-tab-header">Trace</p>
+          </template>
+          <template v-slot:Trace>
                         <!-- <template v-for="(r2, i1) in results">
                           <v-simple-table :key="i1">
                             <tr v-if="r2.context">
@@ -131,64 +111,18 @@
                             </template>
                           </v-simple-table>
                         </template> -->
-                      </v-card-text>
-                    </v-card>
-                  </div>
-                </v-scroll-x-transition>
-
-                <v-scroll-x-transition mode="out-in" :hide-on-leave="true">
-                  <div v-show="resourceVisible" :eager="true" style="order:1;">
-                    <!-- Resource -->
-                    <v-card flat>
-                      <v-card-text>
-                        <p class="fl-tab-header">Resource</p>
-                        <v-text-field label="Test Resource Id" v-model="resourceId" hide-details="auto" autocomplete="off"
-                          @input="updateNow" autocorrect="off" autocapitalize="off" spellcheck="false">
-                          <template v-slot:append>
-                            <v-btn icon small tile @click="resourceId = undefined">
-                              <v-icon> mdi-close </v-icon>
-                            </v-btn>
-                            <v-btn icon small tile @click="downloadTestResource">
-                              <v-icon> mdi-download </v-icon>
-                            </v-btn>
-                            <v-btn small icon tile @click="reformatTestResource"><v-icon title="Format json" dark>
-                                mdi-format-indent-increase </v-icon></v-btn>
-                          </template>
-                        </v-text-field>
-                        <label class="v-label theme--light bare-label">Test Resource JSON <i>{{
-                          resourceJsonChangedMessage() }}</i></label>
-                        <div class="resource" width="100%" ref="aceEditorResourceJsonTab"></div>
-                        <!-- <div class="ace_editor_footer"></div> -->
-                      </v-card-text>
-                    </v-card>
-                  </div>
-                </v-scroll-x-transition>
-
-              </v-tabs-items>
-            </v-tabs>
-          </v-col>
-        </v-row>
+                      </template>
+        </twin-pane-tab>
       </v-card>
 
       <br />
       <OperationOutcomeOverlay style="z-index: 8" v-if="showOutcome" :saveOutcome="saveOutcome" :showOutcome="showOutcome"
         title="Error" @close="clearOutcome" />
     </div>
-    <!-- <code class="code-json">{{ JSON.stringify(results, null, 4) }}</code> -->
   </div>
 </template>
 
 <style lang="scss">
-.custom-tab>div {
-  flex-direction: row;
-  // height: calc(100vh - 168px);
-  // overflow-y: auto;
-}
-
-.custom-tab>div>div {
-  height: calc(100vh - 168px);
-  overflow-y: auto;
-}
 
 .resource {
   height: calc(100vh - 280px);
@@ -219,10 +153,6 @@
     height: calc(100vh - 196px - 48px);
   }
 }
-
-.custom-tab>div>div {
-  flex: 1;
-}
 </style>
 
 <style>
@@ -247,28 +177,6 @@ tr.ve-table-body-tr {
   cursor: pointer;
 }
 
-.left-resource {
-  display: none;
-}
-
-@media (max-width: 1000px) {
-  .left-resource {
-    display: flex;
-  }
-
-  .right-resource {
-    display: none;
-  }
-}
-
-.engineselector {
-  max-width: 18ch;
-}
-
-.tool-button {
-  max-width: 10ch;
-}
-
 td {
   vertical-align: top;
   height: unset !important;
@@ -279,64 +187,8 @@ th {
   padding: 8px;
 }
 
-.progress-button {
-  max-width: 25px;
-}
-
-.fl-toolbar {
-  margin-bottom: 6px;
-}
-
-.result-type {
-  border-bottom: silver 1px solid;
-}
-
-.result-value {
-  width: 100%;
-  border-bottom: silver 1px solid;
-}
-
-.bare-label {
-  transform-origin: top left;
-  transform: scale(0.75);
-  margin-top: 8px;
-  height: 20px;
-}
-
-.results {
-  padding: 4px 12px;
-  color: white;
-  font-style: bold;
-  font-size: 1.25rem;
-  line-height: 1.5;
-  background-color: $card-header-color;
-  margin-top: 10px;
-}
-
-.context {
-  border-bottom: silver 1px solid;
-  background-color: $tab-backcolor;
-}
-
-.empty-data {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: min(200px, 80vh);
-  width: 100%;
-  color: #666;
-  font-size: 16px;
-  border: 1px solid #eee;
-  border-top: 0;
-}
-
 .code-json {
   white-space: pre-wrap;
-}
-
-.processedBy {
-  float: right;
-  font-size: small;
 }
 </style>
 
@@ -370,6 +222,7 @@ import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from
 import { EncodeTestFhirpathData, DecodeTestFhirpathData, TestFhirpathData } from "~/models/testenginemodel";
 
 import { DomainResource, FhirResource, Resource } from "fhir/r4b";
+import { TabData } from "~/components/TwinPaneTab.vue";
 
 const shareTooltipText = 'Copy a sharable link to this test expression';
 const shareZulipTooltipText = 'Copy a sharable link for Zulip to this test expression';
@@ -581,11 +434,6 @@ interface FhirPathData {
   defaultProviderField: string | undefined;
   cancelSource?: CancelTokenSource;
   tab: any;
-  lastTabClicked: KeyboardEvent | MouseEvent | undefined;
-  primaryTab: number;
-  secondaryTab: number;
-  windowWidth: number;
-  singleColBreakWidth: number;
   shareToolTipMessage: string;
   shareZulipToolTipMessage: string;
   expressionEditor?: ace.Ace.Editor;
@@ -601,10 +449,9 @@ interface IFhirPathMethods {
   fhirpathExpressionChangedEvent(): void;
   resourceJsonChangedMessage(): string | undefined;
   tabTitle(): void;
+  tabChanged(index: Number): void;
   settingsClosed(): void;
   updateNow(): void;
-  tabClicked(e: KeyboardEvent | MouseEvent): void;
-  changeTab(selectTab: number): void;
 
   getFhirpathExpression(): string | undefined;
   getResourceJson(): string | undefined;
@@ -628,18 +475,7 @@ interface IFhirPathMethods {
 }
 
 interface IFhirPathComputed {
-  expressionVisible: boolean;
-  resultsVisible: boolean;
-  traceVisible: boolean;
-  resourceVisible: boolean;
-  debugVisible: boolean;
-
-  expressionActiveClass: string;
-  resultsActiveClass: string;
-  traceActiveClass: string;
-  resourceActiveClass: string;
-  debugActiveClass: string;
-
+  tabDetails: TabData[];
   outputColumns: string[];
 }
 
@@ -655,115 +491,122 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     title: "FhirPathTester",
   },
   async mounted() {
-    window.onresize = () => {
-      this.windowWidth = window.innerWidth
-    }
     this.showAdvancedSettings = settings.showAdvancedSettings();
     this.defaultProviderField = settings.getDefaultProviderField();
 
-    const CDN = 'https://cdn.jsdelivr.net/npm/ace-builds@1.6.0/src-min-noconflict';
-    if (true) {
-      ace.config.set('basePath', CDN);
-      ace.config.set('modePath', CDN);
-      ace.config.set('themePath', CDN);
-      ace.config.set('workerPath', CDN);
-    }
+    this.$nextTick(async () => {
+      const CDN = 'https://cdn.jsdelivr.net/npm/ace-builds@1.6.0/src-min-noconflict';
+      if (true) {
+        ace.config.set('basePath', CDN);
+        ace.config.set('modePath', CDN);
+        ace.config.set('themePath', CDN);
+        ace.config.set('workerPath', CDN);
+      }
 
-    // Update the editor's Mode
-    var editorDiv: any = this.$refs.aceEditorExpression as Element;
-    if (editorDiv) {
-      this.expressionEditor = ace.edit(editorDiv, {
+      // Update the editor's Mode
+      var editorDiv: any = this.$refs.aceEditorExpression as Element;
+      if (editorDiv) {
+        this.expressionEditor = ace.edit(editorDiv, {
+          wrap: "free",
+          minLines: 3,
+          maxLines: Infinity,
+          highlightActiveLine: false,
+          showGutter: true,
+          fontSize: 16,
+          cursorStyle: "slim",
+          showPrintMargin: false,
+          theme: "ace/theme/chrome",
+          mode: "ace/mode/json",
+          wrapBehavioursEnabled: true
+        });
+
+        setCustomHighlightRules(this.expressionEditor, FhirPathHightlighter_Rules);
+        this.expressionEditor.setValue(exampleSqlonfhirViewDefinition);
+        this.expressionEditor.clearSelection();
+        this.expressionEditor.on("change", this.fhirpathExpressionChangedEvent)
+      }
+
+      const resourceEditorSettings: Partial<ace.Ace.EditorOptions> = {
         wrap: "free",
-        minLines: 3,
-        maxLines: Infinity,
-        highlightActiveLine: false,
+        minLines: 15,
+        // maxLines: 30,
+        highlightActiveLine: true,
         showGutter: true,
-        fontSize: 16,
+        fontSize: 14,
         cursorStyle: "slim",
         showPrintMargin: false,
         theme: "ace/theme/chrome",
         mode: "ace/mode/json",
         wrapBehavioursEnabled: true
-      });
-
-      setCustomHighlightRules(this.expressionEditor, FhirPathHightlighter_Rules);
-      this.expressionEditor.setValue(exampleSqlonfhirViewDefinition);
-      this.expressionEditor.clearSelection();
-      this.expressionEditor.on("change", this.fhirpathExpressionChangedEvent)
-    }
-
-    const resourceEditorSettings: Partial<ace.Ace.EditorOptions> = {
-      wrap: "free",
-      minLines: 15,
-      // maxLines: 30,
-      highlightActiveLine: true,
-      showGutter: true,
-      fontSize: 14,
-      cursorStyle: "slim",
-      showPrintMargin: false,
-      theme: "ace/theme/chrome",
-      mode: "ace/mode/json",
-      wrapBehavioursEnabled: true
-    };
-    var editorResourceJsonDiv: any = this.$refs.aceEditorResourceJsonTab as Element;
-    if (editorResourceJsonDiv) {
-      this.resourceJsonEditor = ace.edit(editorResourceJsonDiv, resourceEditorSettings);
-      this.resourceJsonEditor?.setValue(JSON.stringify(JSON.parse(examplePatient), null, 2));
-      this.resourceJsonEditor?.clearSelection();
-      this.resourceJsonEditor.session.on("change", this.resourceJsonChangedEvent);
-    }
-
-    // read the values that were last used (stored in the local storage)
-    const lastUsed = settings.loadLastUsedParameters();
-    console.log(lastUsed);
-    if (lastUsed && lastUsed.loadCompleted) {
-      const p: TestFhirpathData = {
-        expression: lastUsed.expression ?? '',
-        context: lastUsed.context,
-        resource: lastUsed.resourceId,
-        resourceJson: lastUsed.resourceJson,
-        engine: lastUsed.engine,
       };
-      // await this.applyParameters(p);
-    }
-    // Check for the encoded parameters first
-    const parameters = this.$route.query.parameters as string;
-    let data: TestFhirpathData;
-    if (parameters) {
-      // special parameter that encodes all the stuff inside
-      data = DecodeTestFhirpathData(parameters);
-      console.log(data);
-    }
-    else {
-      // Read in any parameters from the URL
-      data = this.readParametersFromQuery();
-    }
-    await this.applyParameters(data);
-    await this.evaluateFhirPathExpression();
-    this.loadingData = false;
+      var editorResourceJsonDiv: any = this.$refs.aceEditorResourceJsonTab as Element;
+      if (editorResourceJsonDiv) {
+        this.resourceJsonEditor = ace.edit(editorResourceJsonDiv, resourceEditorSettings);
+        this.resourceJsonEditor?.setValue(JSON.stringify(JSON.parse(examplePatient), null, 2));
+        this.resourceJsonEditor?.clearSelection();
+        this.resourceJsonEditor.session.on("change", this.resourceJsonChangedEvent);
+      }
+
+      // read the values that were last used (stored in the local storage)
+      const lastUsed = settings.loadLastUsedParameters();
+      console.log(lastUsed);
+      if (lastUsed && lastUsed.loadCompleted) {
+        const p: TestFhirpathData = {
+          expression: lastUsed.expression ?? '',
+          context: lastUsed.context,
+          resource: lastUsed.resourceId,
+          resourceJson: lastUsed.resourceJson,
+          engine: lastUsed.engine,
+        };
+        // await this.applyParameters(p);
+      }
+      // Check for the encoded parameters first
+      const parameters = this.$route.query.parameters as string;
+      let data: TestFhirpathData;
+      if (parameters) {
+        // special parameter that encodes all the stuff inside
+        data = DecodeTestFhirpathData(parameters);
+        console.log(data);
+      }
+      else {
+        // Read in any parameters from the URL
+        data = this.readParametersFromQuery();
+      }
+      await this.applyParameters(data);
+      await this.evaluateFhirPathExpression();
+      this.loadingData = false;
+    });
   },
   computed: {
-    expressionVisible(): boolean {
-      return this.primaryTab === 0 || (this.secondaryTab === 0 && this.windowWidth > this.singleColBreakWidth);
+    tabDetails(): TabData[] {
+      return [
+        {
+          iconName: "mdi-function-variant",
+          tabName: "View Def",
+          tabHeaderName: "View Definition",
+          show: true,
+          enabled: true,
+        },
+        {
+          iconName: "mdi-clipboard-text-outline",
+          tabName: "Resource",
+          show: true,
+          enabled: true,
+        },
+        {
+          iconName: "mdi-table-large",
+          tabName: "Results",
+          show: true,
+          enabled: true,
+        },
+        {
+          iconName: "mdi-format-list-bulleted",
+          tabName: "Trace",
+          show: true,
+          enabled: false,
+        },
+      ];
     },
-    resourceVisible(): boolean {
-      return this.primaryTab === 1 || (this.secondaryTab === 1 && this.windowWidth > this.singleColBreakWidth);
-    },
-    resultsVisible(): boolean {
-      return this.primaryTab === 2 || (this.secondaryTab === 2 && this.windowWidth > this.singleColBreakWidth);
-    },
-    traceVisible(): boolean {
-      return this.primaryTab === 3 || (this.secondaryTab === 3 && this.windowWidth > this.singleColBreakWidth);
-    },
-    debugVisible(): boolean {
-      return this.primaryTab === 4 || (this.secondaryTab === 4 && this.windowWidth > this.singleColBreakWidth);
-    },
-
-    expressionActiveClass(): string { return this.secondaryTab === 0 && this.windowWidth > this.singleColBreakWidth || this.primaryTab === 0 ? "v-tab--active" : "" },
-    resourceActiveClass(): string { return this.secondaryTab === 1 && this.windowWidth > this.singleColBreakWidth || this.primaryTab === 1 ? "v-tab--active" : "" },
-    resultsActiveClass(): string { return this.secondaryTab === 2 && this.windowWidth > this.singleColBreakWidth || this.primaryTab === 2 ? "v-tab--active" : "" },
-    traceActiveClass(): string { return this.secondaryTab === 3 && this.windowWidth > this.singleColBreakWidth || this.primaryTab === 3 ? "v-tab--active" : "" },
-    debugActiveClass(): string { return this.secondaryTab === 4 && this.windowWidth > this.singleColBreakWidth || this.primaryTab === 4 ? "v-tab--active" : "" },
     outputColumns(): string[] {
       if (this.outputResult.length > 0) {
         const first = this.outputResult[0];
@@ -778,30 +621,29 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     updateNow() {
       this.$forceUpdate();
     },
-    tabClicked(e: KeyboardEvent | MouseEvent): void {
-      if (this.lastTabClicked?.target === e.target) {
-        // This is a same tab click to request to switch to single column mode
-        if (this.singleColBreakWidth === 99999) {
-          this.singleColBreakWidth = 999;
-        }
-        else {
-          this.singleColBreakWidth = 99999;
-        }
+    tabChanged(index: Number): void {
+      if (index == 0){
+        setTimeout(() => {
+        if (this.expressionEditor){
+            this.expressionEditor.resize();
+          }
+        });
       }
-      this.lastTabClicked = e;
-    },
-    changeTab(selectTab: number): void {
-      // Primary tab is the one that is "locked" and only changeable when clicking with control
-      // The secondary tab is the one that is "switched" when clicking without control
-      if (this.primaryTab !== selectTab) {
-        if (this.lastTabClicked && (this.lastTabClicked as MouseEvent).ctrlKey || this.windowWidth <= this.singleColBreakWidth) {
-          this.primaryTab = selectTab;
-        }
-        else {
-          this.secondaryTab = selectTab;
-        }
+
+      if (index == 1){
+        setTimeout(() => {
+        if (this.resourceJsonEditor){
+            this.resourceJsonEditor.resize();
+          }
+        });
       }
-      // this.lastTabClicked = undefined;
+
+      if (index == 3) {
+        // Workaround to refresh the display in the response editor when it is updated while the form is not visible
+        // https://github.com/ajaxorg/ace/issues/2497#issuecomment-102633605
+        setTimeout(() => {
+        });
+      }
     },
     readParametersFromQuery(): TestFhirpathData {
       let data: TestFhirpathData = {
@@ -1175,11 +1017,6 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       prevFocus: null,
       outputResult: [],
       tab: null,
-      lastTabClicked: undefined,
-      primaryTab: 0,
-      secondaryTab: 1,
-      windowWidth: window.innerWidth,
-      singleColBreakWidth: 999,
       resourceId: undefined,
       resourceType: 'Patient',
       resourceJsonChanged: false,
