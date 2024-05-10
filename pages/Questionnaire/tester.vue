@@ -156,6 +156,7 @@
               :lockPublisher="false"
               :readonly="readonly"
               :showAdvancedSettings="showAdvancedSettings"
+              :navigationLinkPrefix="'tester?id='+fhirServerUrl+'/Questionnaire/'"
               @update="updateNow"
             />
           </template>
@@ -612,6 +613,9 @@ export default Vue.extend({
 
       if (this.$route.query.fhirserver) {
         this.fhirServerUrl = this.$route.query.fhirserver as string;
+      }
+      else {
+        this.fhirServerUrl = settings.getFhirServerUrl();
       }
 
       if (this.$route.query.id) {

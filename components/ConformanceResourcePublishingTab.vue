@@ -104,7 +104,7 @@
               <template v-if="item.id !== raw.id">
                 <td>
                   <a
-                    v-bind:href="item.id"
+                    v-bind:href="(navigationLinkPrefix? navigationLinkPrefix : '') + item.id"
                     target="_blank"
                     v-bind:title="item.title"
                     >{{ item.id }}</a
@@ -160,6 +160,10 @@ export default Vue.extend({
     raw: Object as PropType<ConformanceResourceInterface>,
     publishedVersions: {
       type: Array as PropType<ConformanceResourceInterface[]>,
+      required: false,
+    },
+    navigationLinkPrefix: {
+      type: String,
       required: false,
     },
   },
