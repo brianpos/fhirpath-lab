@@ -3,6 +3,9 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+## 11 May 2024
+* Update the LForms renderer to 36.0.4
+
 ## 10 May 2024
 * Resolve CSIRO renderer tracking linkId when tabs are in the form being rendered (Thanks Sean)
 * Update the publishing tab on the Questionnaire test page to correctly link to the tester page
