@@ -653,25 +653,31 @@ export default Vue.extend({
       await this.downloadTestResource();
     },
     tabChanged(index: Number): void {
-      if (index !== 9) {
-        return;
+      if (index == 0){
+        setTimeout(() => {
+        if (this.resourceJsonEditor){
+            this.resourceJsonEditor.resize();
+          }
+        });
       }
 
-      // Workaround to refresh the display in the response editor when it is updated while the form is not visible
-      // https://github.com/ajaxorg/ace/issues/2497#issuecomment-102633605
-      setTimeout(() => {
-        if (this.questionnaireResponseJsonEditor) {
-          var editorQResponseJsonDiv: any = this.$refs
-            .aceEditorResponseJsonTab as Element;
-          if (editorQResponseJsonDiv) {
-            console.log("focusing editor");
-            editorQResponseJsonDiv.focus();
+      if (index == 9) {
+        // Workaround to refresh the display in the response editor when it is updated while the form is not visible
+        // https://github.com/ajaxorg/ace/issues/2497#issuecomment-102633605
+        setTimeout(() => {
+          if (this.questionnaireResponseJsonEditor) {
+            var editorQResponseJsonDiv: any = this.$refs
+              .aceEditorResponseJsonTab as Element;
+            if (editorQResponseJsonDiv) {
+              console.log("focusing editor");
+              editorQResponseJsonDiv.focus();
+            }
+            this.questionnaireResponseJsonEditor.resize();
+            this.updateNow();
+            console.log("refreshing editor");
           }
-          this.questionnaireResponseJsonEditor.resize();
-          this.updateNow();
-          console.log("refreshing editor");
-        }
-      });
+        });
+      }
     },
     settingsClosed() {
       this.showAdvancedSettings = settings.showAdvancedSettings();

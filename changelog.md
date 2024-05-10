@@ -6,6 +6,7 @@
 ## 10 May 2024
 * Resolve CSIRO renderer tracking linkId when tabs are in the form being rendered (Thanks Sean)
 * Update the publishing tab on the Questionnaire test page to correctly link to the tester page
+* resolve issue with JSON editors resizing correctly when the twintabpanel changes modes/tabs
 
 ## 9 May 2024
 * Update the Questionnaire test page to select the tab(s) by name as well as index, and also support a `,` to select 2 tabs at once

@@ -994,6 +994,28 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     tabChanged(index: Number): void {
       // Workaround to refresh the display in the response editor when it is updated while the form is not visible
       // https://github.com/ajaxorg/ace/issues/2497#issuecomment-102633605
+      if (index === 0)
+      {
+        setTimeout(() => {
+          if (this.expressionContextEditor) {
+            this.expressionContextEditor.resize();
+            this.updateNow();
+          }
+          if (this.expressionEditor) {
+            this.expressionEditor.resize();
+            this.updateNow();
+          }
+        });
+      }
+      if (index === 1)
+      {
+        setTimeout(() => {
+          if (this.resourceJsonEditor) {
+            this.resourceJsonEditor.resize();
+            this.updateNow();
+          }
+        });
+      }
       if (index === 6)
       {
         setTimeout(() => {

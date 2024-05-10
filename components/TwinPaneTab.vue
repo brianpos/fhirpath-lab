@@ -22,10 +22,10 @@
               <v-icon small v-if="paneLocked !== 'left'">mdi-lock-outline</v-icon>
               <v-icon small v-if="paneLocked == 'left'">mdi-lock-open-variant-outline</v-icon>
             </v-btn>
-            <v-btn v-if="!forceSinglePanel" class="btn-lock-toggle" v-model="forceSinglePanel" elevation="0" tile small title="Single panel view" @click="forceSinglePanel = !forceSinglePanel">
+            <v-btn v-if="!forceSinglePanel" class="btn-lock-toggle" v-model="forceSinglePanel" elevation="0" tile small title="Single panel view" @click="setSinglePanelMode(!forceSinglePanel)">
               <v-icon small>mdi-chevron-double-left</v-icon>
             </v-btn>
-            <v-btn v-if="forceSinglePanel" class="btn-lock-toggle" v-model="forceSinglePanel" elevation="0" tile small title="Dual panel view" @click="forceSinglePanel = !forceSinglePanel">
+            <v-btn v-if="forceSinglePanel" class="btn-lock-toggle" v-model="forceSinglePanel" elevation="0" tile small title="Dual panel view" @click="setSinglePanelMode(!forceSinglePanel)">
               <v-icon small>mdi-chevron-double-right</v-icon>
             </v-btn>
           </div>
@@ -173,6 +173,12 @@ export default class TwinPaneTab extends Vue {
   /** Set the value of the SinglePanel mode */
   public setSinglePanelMode(value: boolean): void {
     this.forceSinglePanel = value;
+    if (!value){
+      this.$emit("change", this.lockedTab);
+      this.$emit("change", this.selectableTab);
+    } else {
+      this.$emit("change", this.selectableTab);
+    }
   }
 
   /** Get the index of the tab based on the tabName */
@@ -198,6 +204,8 @@ export default class TwinPaneTab extends Vue {
       this.lockedTab = rightIndex;
       this.selectableTab = leftIndex;
     }
+    // Notify the parent component of the change
+    this.$emit("change", this.lockedTab);
     this.$emit("change", this.selectableTab);
     this.lastTabClicked = undefined;
   }
