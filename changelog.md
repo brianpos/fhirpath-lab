@@ -3,6 +3,9 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+## 10 May 2024
+* Resolve CSIRO renderer tracking linkId when tabs are in the form being rendered (Thanks Sean)
+
 ## 9 May 2024
 * Update the Questionnaire test page to select the tab(s) by name as well as index, and also support a `,` to select 2 tabs at once
 * Update the Questionnaire search page to open the questionnaire tester tab rather than the ghost page from the forms-lab
