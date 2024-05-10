@@ -35,6 +35,7 @@
           @change="tabChanged"
           :eager="true"
           ref="twinTabControl"
+          @mounted="twinPaneMounted"
         >
         <template v-slot:View_Def>
           <v-tooltip bottom>
@@ -449,6 +450,7 @@ interface IFhirPathMethods {
   fhirpathExpressionChangedEvent(): void;
   resourceJsonChangedMessage(): string | undefined;
   tabTitle(): void;
+  twinPaneMounted(): Promise<void>;
   tabChanged(index: Number): void;
   settingsClosed(): void;
   updateNow(): void;
@@ -493,89 +495,6 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
   async mounted() {
     this.showAdvancedSettings = settings.showAdvancedSettings();
     this.defaultProviderField = settings.getDefaultProviderField();
-
-    this.$nextTick(async () => {
-      const CDN = 'https://cdn.jsdelivr.net/npm/ace-builds@1.6.0/src-min-noconflict';
-      if (true) {
-        ace.config.set('basePath', CDN);
-        ace.config.set('modePath', CDN);
-        ace.config.set('themePath', CDN);
-        ace.config.set('workerPath', CDN);
-      }
-
-      // Update the editor's Mode
-      var editorDiv: any = this.$refs.aceEditorExpression as Element;
-      if (editorDiv) {
-        this.expressionEditor = ace.edit(editorDiv, {
-          wrap: "free",
-          minLines: 3,
-          maxLines: Infinity,
-          highlightActiveLine: false,
-          showGutter: true,
-          fontSize: 16,
-          cursorStyle: "slim",
-          showPrintMargin: false,
-          theme: "ace/theme/chrome",
-          mode: "ace/mode/json",
-          wrapBehavioursEnabled: true
-        });
-
-        setCustomHighlightRules(this.expressionEditor, FhirPathHightlighter_Rules);
-        this.expressionEditor.setValue(exampleSqlonfhirViewDefinition);
-        this.expressionEditor.clearSelection();
-        this.expressionEditor.on("change", this.fhirpathExpressionChangedEvent)
-      }
-
-      const resourceEditorSettings: Partial<ace.Ace.EditorOptions> = {
-        wrap: "free",
-        minLines: 15,
-        // maxLines: 30,
-        highlightActiveLine: true,
-        showGutter: true,
-        fontSize: 14,
-        cursorStyle: "slim",
-        showPrintMargin: false,
-        theme: "ace/theme/chrome",
-        mode: "ace/mode/json",
-        wrapBehavioursEnabled: true
-      };
-      var editorResourceJsonDiv: any = this.$refs.aceEditorResourceJsonTab as Element;
-      if (editorResourceJsonDiv) {
-        this.resourceJsonEditor = ace.edit(editorResourceJsonDiv, resourceEditorSettings);
-        this.resourceJsonEditor?.setValue(JSON.stringify(JSON.parse(examplePatient), null, 2));
-        this.resourceJsonEditor?.clearSelection();
-        this.resourceJsonEditor.session.on("change", this.resourceJsonChangedEvent);
-      }
-
-      // read the values that were last used (stored in the local storage)
-      const lastUsed = settings.loadLastUsedParameters();
-      console.log(lastUsed);
-      if (lastUsed && lastUsed.loadCompleted) {
-        const p: TestFhirpathData = {
-          expression: lastUsed.expression ?? '',
-          context: lastUsed.context,
-          resource: lastUsed.resourceId,
-          resourceJson: lastUsed.resourceJson,
-          engine: lastUsed.engine,
-        };
-        // await this.applyParameters(p);
-      }
-      // Check for the encoded parameters first
-      const parameters = this.$route.query.parameters as string;
-      let data: TestFhirpathData;
-      if (parameters) {
-        // special parameter that encodes all the stuff inside
-        data = DecodeTestFhirpathData(parameters);
-        console.log(data);
-      }
-      else {
-        // Read in any parameters from the URL
-        data = this.readParametersFromQuery();
-      }
-      await this.applyParameters(data);
-      await this.evaluateFhirPathExpression();
-      this.loadingData = false;
-    });
   },
   computed: {
     tabDetails(): TabData[] {
@@ -618,6 +537,90 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     },
   },
   methods: {
+    async twinPaneMounted(): Promise<void> {
+      this.$nextTick(async () => {
+        const CDN = 'https://cdn.jsdelivr.net/npm/ace-builds@1.6.0/src-min-noconflict';
+        if (true) {
+          ace.config.set('basePath', CDN);
+          ace.config.set('modePath', CDN);
+          ace.config.set('themePath', CDN);
+          ace.config.set('workerPath', CDN);
+        }
+
+        // Update the editor's Mode
+        var editorDiv: any = this.$refs.aceEditorExpression as Element;
+        if (editorDiv) {
+          this.expressionEditor = ace.edit(editorDiv, {
+            wrap: "free",
+            minLines: 3,
+            maxLines: Infinity,
+            highlightActiveLine: false,
+            showGutter: true,
+            fontSize: 16,
+            cursorStyle: "slim",
+            showPrintMargin: false,
+            theme: "ace/theme/chrome",
+            mode: "ace/mode/json",
+            wrapBehavioursEnabled: true
+          });
+
+          setCustomHighlightRules(this.expressionEditor, FhirPathHightlighter_Rules);
+          this.expressionEditor.setValue(exampleSqlonfhirViewDefinition);
+          this.expressionEditor.clearSelection();
+          this.expressionEditor.on("change", this.fhirpathExpressionChangedEvent)
+        }
+
+        const resourceEditorSettings: Partial<ace.Ace.EditorOptions> = {
+          wrap: "free",
+          minLines: 15,
+          // maxLines: 30,
+          highlightActiveLine: true,
+          showGutter: true,
+          fontSize: 14,
+          cursorStyle: "slim",
+          showPrintMargin: false,
+          theme: "ace/theme/chrome",
+          mode: "ace/mode/json",
+          wrapBehavioursEnabled: true
+        };
+        var editorResourceJsonDiv: any = this.$refs.aceEditorResourceJsonTab as Element;
+        if (editorResourceJsonDiv) {
+          this.resourceJsonEditor = ace.edit(editorResourceJsonDiv, resourceEditorSettings);
+          this.resourceJsonEditor?.setValue(JSON.stringify(JSON.parse(examplePatient), null, 2));
+          this.resourceJsonEditor?.clearSelection();
+          this.resourceJsonEditor.session.on("change", this.resourceJsonChangedEvent);
+        }
+
+        // read the values that were last used (stored in the local storage)
+        const lastUsed = settings.loadLastUsedParameters();
+        console.log(lastUsed);
+        if (lastUsed && lastUsed.loadCompleted) {
+          const p: TestFhirpathData = {
+            expression: lastUsed.expression ?? '',
+            context: lastUsed.context,
+            resource: lastUsed.resourceId,
+            resourceJson: lastUsed.resourceJson,
+            engine: lastUsed.engine,
+          };
+          // await this.applyParameters(p);
+        }
+        // Check for the encoded parameters first
+        const parameters = this.$route.query.parameters as string;
+        let data: TestFhirpathData;
+        if (parameters) {
+          // special parameter that encodes all the stuff inside
+          data = DecodeTestFhirpathData(parameters);
+          console.log(data);
+        }
+        else {
+          // Read in any parameters from the URL
+          data = this.readParametersFromQuery();
+        }
+        await this.applyParameters(data);
+        await this.evaluateFhirPathExpression();
+        this.loadingData = false;
+      });
+    },
     updateNow() {
       this.$forceUpdate();
     },
