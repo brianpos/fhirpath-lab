@@ -6,6 +6,7 @@
           v-if="HasDynamicBehaviours(item.item)"
           v-bind:class="item.item.type === 'group' ? 'group' : ''"
           v-bind:key="index"
+          @click="highlightPath(item.item.linkId)"
         >
           <td class="col-linkid">
             <span :title="item.item.text"> {{ item.item.linkId }}</span>
@@ -91,6 +92,9 @@ export default {
     items: Array as PropType<FlattenedQuestionnaireItem[]>,
   },
   methods: {
+    highlightPath(linkId: string) {
+      this.$emit('highlight-path', linkId);
+    },
     MinCardinality(item: QuestionnaireItem): string {
       const minOccurs = structuredDataCapture.getMinOccurs(item);
       if (minOccurs) return `${minOccurs}`;

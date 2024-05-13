@@ -22,6 +22,7 @@
           v-bind:class="item.item.type === 'group' ? 'group' : ''"
           v-for="(item, index) in filteredItems()"
           v-bind:key="index"
+          @click="highlightPath(item.item.linkId)"
         >
           <td>{{ item.item.linkId }}</td>
           <td>{{ item.item.type }}</td>
@@ -84,6 +85,10 @@ export default Vue.extend({
     readVariables(from: fhir4b.Element | undefined): fhir4b.Expression[] {
       if (!from) return [];
       return structuredDataCapture.getVariables(from) ?? [];
+    },
+
+    highlightPath(linkId: string) {
+      this.$emit('highlight-path', linkId);
     },
 
     MinCardinality(item: QuestionnaireItem): string {

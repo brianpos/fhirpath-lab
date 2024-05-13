@@ -165,11 +165,14 @@
               v-bind:items="flatModel"
               :readonly="readonly"
               :showAdvancedSettings="showAdvancedSettings"
-            />
+              @highlight-path="highlightPath"
+          />
           </template>
 
           <template v-slot:Pre-Population>
-            <EditorPrePolulationSection v-if="raw" v-bind:items="flatModel" />
+            <EditorPrePolulationSection v-if="raw" v-bind:items="flatModel" 
+              @highlight-path="highlightPath"
+            />
           </template>
 
           <template v-slot:Variables>
@@ -177,6 +180,7 @@
               v-if="raw"
               v-bind:questionnaire="raw"
               v-bind:items="flatModel"
+              @highlight-path="highlightPath"
             />
           </template>
 
@@ -194,6 +198,7 @@
               v-if="raw"
               v-bind:questionnaire="raw"
               @response="processUpdatedQuestionnaireResponse"
+              @highlight-path="highlightPath"
             />
           </template>
 

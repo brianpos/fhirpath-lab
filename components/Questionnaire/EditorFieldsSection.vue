@@ -18,6 +18,7 @@
         v-bind:class="item.item.type === 'group' ? 'group' : ''"
         v-for="(item, index) in items"
         v-bind:key="index"
+        @click="highlightPath(item.item.linkId)"
       >
         <td v-show="showAdvancedSettings" class="col-linkid">
           {{ item.item.linkId }}
@@ -158,6 +159,9 @@ export default Vue.extend({
     };
   },
   methods: {
+    highlightPath(linkId: string) {
+      this.$emit('highlight-path', linkId);
+    },
     MinCardinality(item: QuestionnaireItem): string {
       const minOccurs = structuredDataCapture.getMinOccurs(item);
       if (minOccurs) return `${minOccurs}`;

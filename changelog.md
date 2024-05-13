@@ -3,6 +3,9 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+13 May 2024
+* Include nav shortcuts from the fields, variables, behaviors and pre-pop sections in the questionnaire tester page
+
 ## 11 May 2024
 * Update the LForms renderer to 36.0.4
 
