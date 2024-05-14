@@ -23,17 +23,17 @@ $tab-color: rgba(0, 0, 0, 0.87);
 
 .retired-page-background {
   background-color: thistle;
-  padding-bottom: 24px;
+  padding-bottom: 0;
 }
 
 .draft-page-background {
   background-color: lightgray;
-  padding-bottom: 24px;
+  padding-bottom: 0;
 }
 
 .active-page-background {
   // background-color: #d8f3dc;
-  padding-bottom: 24px;
+  padding-bottom: 0;
 }
 
 @media (max-width: 596px) {
