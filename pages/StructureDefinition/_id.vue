@@ -27,105 +27,81 @@
             </v-icon>
           </v-btn>
         </v-toolbar>
-        <v-tabs vertical v-model="tab">
-          <v-tab>
-            <v-icon left> mdi-card-bulleted-settings-outline </v-icon>
-            Details
-          </v-tab>
-          <v-tab>
-            <v-icon left> mdi-download-network-outline </v-icon>
-            Publishing
-          </v-tab>
-          <v-tab>
-            <v-icon left> mdi-file-tree </v-icon>
-            Elements
-          </v-tab>
 
-          <v-tabs-items touchless v-model="tab">
-            <v-tab-item>
+        <twin-pane-tab :tabs="tabDetails" @mounted="twinPaneMounted" ref="twinTabControl">
+          <template v-slot:Details>
               <!-- Details -->
               <conformance-resource-details-tab :raw="raw" :readonly="readonly"
-                :showAdvancedSettings="showAdvancedSettings" @update="updateNow" />
-            </v-tab-item>
+              :hideHeader="true" :showAdvancedSettings="showAdvancedSettings" @update="updateNow" />
+          </template>
 
-            <v-tab-item>
+          <template v-slot:Publishing>
               <!-- Publishing -->
               <conformance-resource-publishing-tab :raw="raw" :publishedVersions="publishedVersions"
-                :lockPublisher="false"
+                :lockPublisher="false" :hideHeader="true"
                 :readonly="readonly" :showAdvancedSettings="showAdvancedSettings" @update="updateNow" />
-            </v-tab-item>
+          </template>
 
-            <v-tab-item>
+          <template v-slot:Elements>
               <!-- Content -->
-              <v-card flat>
-                <v-card-text>
-                  <p class="fl-tab-header">Elements</p>
+              <p v-if="!hasAnyNonStandardConstraints()">
+                <v-simple-table>
+                  <thead>
+                    <tr>
+                      <th>Path</th>
+                      <th>Description & Constraints</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td class="path"></td>
+                      <td>
+                        <i>(No constraints defined in the differential)</i>
+                      </td>
+                    </tr>
+                  </tbody>
+                </v-simple-table>
+              </p>
 
-                  <p v-if="!hasAnyNonStandardConstraints()">
-                    <v-simple-table>
-                      <thead>
-                        <tr>
-                          <th>Path</th>
-                          <th>Description & Constraints</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr>
-                          <td class="path"></td>
-                          <td>
-                            <i>(No constraints defined in the differential)</i>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </v-simple-table>
-                  </p>
+              <p v-if="hasAnyNonStandardConstraints()">
+                <v-simple-table>
+                  <thead>
+                    <tr>
+                      <th>Path</th>
+                      <th>Description & Constraints</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <template v-for="(element, index) in elements()">
+                      <tr :key="index" v-if="hasNonStandardConstraint(element) && element.constraint">
+                        <td class="path" v-text="element.path"></td>
+                        <td>
+                          {{ element.definition }}
+                          <template v-for="(constraint, indexConstraint) in element.constraint">
+                            <div :key="indexConstraint" v-if="!isStandardConstraint(constraint)">
+                              <b>{{ constraint.key }}</b> {{ constraint.human }}<br />
+                              <debuggable-fhir-path-expression
+                                :readonly="true" :href="testExpressionPath(element, constraint)"
+                                label="Expression" :minLines="2"
+                                :value="constraint.expression" />
+                            </div>
+                          </template>
+                        </td>
+                      </tr>
+                    </template>
+                  </tbody>
+                </v-simple-table>
+              </p>
+          </template>
 
-                  <p v-if="hasAnyNonStandardConstraints()">
-                    <v-simple-table>
-                      <thead>
-                        <tr>
-                          <th>Path</th>
-                          <th>Description & Constraints</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <template v-for="(element, index) in elements()">
-                          <tr :key="index" v-if="hasNonStandardConstraint(element) && element.constraint">
-                            <td class="path" v-text="element.path"></td>
-                            <td>
-                              {{ element.definition }}
-                              <template v-for="(constraint, indexConstraint) in element.constraint">
-                                <div :key="indexConstraint" v-if="!isStandardConstraint(constraint)">
-                                  <b>{{ constraint.key }}</b> {{ constraint.human }}<br />
-                                  <debuggable-fhir-path-expression
-                                    :readonly="true" :href="testExpressionPath(element, constraint)"
-                                    label="Expression" :minLines="2"
-                                    :value="constraint.expression" />
-                                </div>
-                              </template>
-                            </td>
-                          </tr>
-                        </template>
-                      </tbody>
-                    </v-simple-table>
-                  </p>
-                </v-card-text>
-              </v-card>
-            </v-tab-item>
-          </v-tabs-items>
-        </v-tabs>
+          <template v-slot:json>
+            <code><pre v-text="JSON.stringify(raw, null, 2)" /></code>
+          </template>
+        </twin-pane-tab>
       </v-card>
       <br />
       <OperationOutcomeOverlay v-if="showOutcome" :saveOutcome="saveOutcome" :showOutcome="showOutcome"
         title="Error Saving" @close="clearOutcome" />
-      <v-expansion-panels accordion>
-        <v-expansion-panel>
-          <v-expansion-panel-header>Raw JSON</v-expansion-panel-header>
-          <v-expansion-panel-content>
-            <code><pre v-text="JSON.stringify(raw, null, 2)" /></code>
-          </v-expansion-panel-content>
-        </v-expansion-panel>
-      </v-expansion-panels>
     </div>
     <table-loading v-if="saving || !raw" />
   </div>
@@ -167,6 +143,7 @@ import {
   unsetFavourite,
 } from "~/helpers/favourites";
 import { BaseResource_defaultValues } from "~/models/BaseResourceTableData";
+import TwinPaneTab from "~/components/TwinPaneTab.vue";
 
 export default Vue.extend({
   mounted() {
@@ -176,6 +153,13 @@ export default Vue.extend({
     this.searchFhirServer();
   },
   methods: {
+    async twinPaneMounted(): Promise<void> {
+      // set the tab pane into single pane mode
+      let tabControl: TwinPaneTab = this.$refs.twinTabControl as TwinPaneTab;
+      if (tabControl) {
+        tabControl.setSinglePanelMode(true);
+      }
+    },
     elements(){
       return this.raw?.snapshot?.element || this.raw?.differential?.element || [];
     },
@@ -190,7 +174,7 @@ export default Vue.extend({
     },
     hasNonStandardConstraint(element: ElementDefinition) {
       if (!element.constraint) return false;
-      for (var constraint of element.constraint) {
+      for (let constraint of element.constraint) {
         if (!this.isStandardConstraint(constraint)) return true;
       }
       return false;
@@ -293,6 +277,33 @@ export default Vue.extend({
     return {
       raw: null,
       publishedVersions: [],
+      tabDetails: [
+        {
+          iconName: "mdi-card-bulleted-settings-outline",
+          tabName: "Details",
+          show: true,
+          enabled: true,
+        },
+        {
+          iconName: "mdi-download-network-outline",
+          tabName: "Publishing",
+          show: true,
+          enabled: true,
+        },
+        {
+          iconName: "mdi-file-tree",
+          tabName: "Elements",
+          title: "Show the elements from the snapshot, or definition that have constraints",
+          show: true,
+          enabled: true,
+        },
+        {
+          iconName: "mdi-code-json",
+          tabName: "json",
+          show: true,
+          enabled: true,
+        }
+      ],
       ...BaseResource_defaultValues,
     };
   },
