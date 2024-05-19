@@ -116,6 +116,7 @@
 
 <script lang="ts">
 import { Questionnaire, QuestionnaireResponse, Parameters } from "fhir/r4b";
+import { Questionnaire as QuestionnaireR4, Patient as PatientR4, Practitioner as PractitionerR4, Encounter as EncounterR4 } from "fhir/r4";
 import { Component, Prop, Vue } from "vue-property-decorator";
 
 import "ace-builds";
@@ -132,6 +133,8 @@ import { settings } from "~/helpers/user_settings";
 import { loadFhirResource } from "~/helpers/searchFhir";
 import { BaseResourceData } from "~/models/BaseResourceTableData";
 import { json } from "express";
+import { FetchResourceCallback, populateQuestionnaire } from "@aehrc/sdc-populate";
+import axios from "axios";
 
 interface LaunchContextData {
   id: string | undefined;
@@ -147,11 +150,11 @@ export default class QuestionnaireExtractTest extends Vue {
 
   // https://github.com/LHNCBC/lforms-fhir-app/blob/157be10a006eb6886c5421c5dd2606e795d8d9d8/source/js/fhir.service.js#L135C55-L136C43
   /*
-  From the NLM render component 
+  From the NLM render component
    *      var fhirContext = FHIR.client(settings.getFhirServerExamplesUrl());
         var fhirContextVars = { LaunchPatient: "Patient/123" };
         LForms.Util.setFHIRContext(fhirContext, fhirContextVars);
-  
+
         this.lforms_error = undefined;
         await LForms.Util.addFormToPage(this.questionnaire, "myFormContainer", {
           prepopulate: false,
@@ -159,7 +162,7 @@ export default class QuestionnaireExtractTest extends Vue {
           console.error("Breaking news:", e);
           this.lforms_error = e.toString();
         });
-   
+
    */
 
   // Properties visible to the local template
@@ -351,8 +354,87 @@ export default class QuestionnaireExtractTest extends Vue {
     }
   }
 
+  // Note: No way to POST batch bundles yet, the populate library will individually process each batch entry
+  static fetchResourceCallbackCSIROPrePopulation: FetchResourceCallback =
+    async (query: string, requestConfig: { sourceFhirServer: string }) => {
+      let { sourceFhirServer } = requestConfig;
+
+      const headers = {
+        Accept: "application/json;charset=utf-8",
+      };
+
+      if (!sourceFhirServer.endsWith("/")) {
+        sourceFhirServer += "/";
+      }
+
+      // When query is an absolute URL, use it as is
+      if (/^(https?|ftp):\/\/[^\s/$.?#].[^\s]*$/.test(query)) {
+        return axios.get(query, {
+          headers: headers,
+        });
+      }
+
+      // When query is a relative URL, append it to the client endpoint
+      return axios.get(sourceFhirServer + query, {
+        headers: headers,
+      });
+    };
+
   async runCSIROPrePopulation(): Promise<QuestionnaireResponse | undefined> {
-    console.log('Running CSIRO pre-pop');
+    let patientResource: PatientR4 | undefined = undefined;
+    let userResource: PractitionerR4 | undefined = undefined;
+    let encounterResource: EncounterR4 | undefined = undefined;
+    for (let [, value] of this.launchContextValues) {
+      if (value && value.data) {
+        try {
+          const resource = JSON.parse(value.data);
+
+          switch (resource.resourceType) {
+            case "Patient":
+              patientResource = resource as PatientR4;
+              break;
+            case "Practitioner":
+              userResource = resource as PractitionerR4;
+              break;
+            case "Encounter":
+              encounterResource = resource as EncounterR4;
+              break;
+          }
+        } catch (err) {
+          console.log(err);
+        }
+      }
+    }
+
+    if (!this.questionnaire) {
+      console.log("No patient resource provided");
+      return;
+    }
+
+    if (!patientResource) {
+      console.log("No patient resource provided");
+      return;
+    }
+
+    const { populateSuccess, populateResult } = await populateQuestionnaire({
+      questionnaire: this.questionnaire as QuestionnaireR4,
+      fetchResourceCallback:
+      QuestionnaireExtractTest.fetchResourceCallbackCSIROPrePopulation,
+      requestConfig: {
+        sourceFhirServer: this.sourceFhirServer,
+      },
+      patient: patientResource as PatientR4,
+      user: userResource ? (userResource as PractitionerR4) : undefined,
+      encounter: encounterResource ? (encounterResource as EncounterR4) : undefined,
+    });
+
+    if (!populateSuccess || !populateResult) {
+      console.log("Failed to populate the questionnaire");
+      return;
+    }
+
+    this.$emit("response", populateResult.populatedResponse);
+
     return undefined;
   }
 
