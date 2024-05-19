@@ -63,6 +63,12 @@ export default Vue.extend({
         if (!response.meta.tag) response.meta.tag = [];
         response.meta.tag!.push({ code: 'csiro:generated' });
       }
+
+      // remove the lforms tag if it was there.
+      if (response.meta?.tag?.find(t => t.code?.startsWith('lforms'))) {
+        response.meta.tag = response.meta.tag!.filter(t => !t.code?.startsWith('lforms'));
+      }
+
       // this.response = response;
       console.log(response)
       this.$emit('response', response);
