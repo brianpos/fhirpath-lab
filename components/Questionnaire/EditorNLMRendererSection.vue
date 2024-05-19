@@ -2,8 +2,8 @@
   <div>
     <template v-if="questionnaire">
       <v-btn style="position: absolute; right: 34px; z-index: 2; margin-top: 4px;" color="primary"
-        title="Show the QuestionnaireResponse based on the data in the LHC-Forms renderer"
-        @click="logResponse()">Show Response</v-btn>
+        title="Show the QuestionnaireResponse based on the data in the LHC-Forms renderer" @click="logResponse()">Show
+        Response</v-btn>
       <div class="q-host">
         <div id="myFormContainer"></div>
         <div class="errors" v-show="lforms_error != undefined">
@@ -111,6 +111,34 @@ export default Vue.extend({
       );
       console.log(response);
       this.$emit("response", response);
+    },
+
+    async prePopLForms(sourceFhirServer: string, subjectId: string) {
+      console.log("Prepopulating LForms with data from", sourceFhirServer, subjectId);
+      if (window.LForms) {
+
+        // Set the context vars
+        let setupServer = {
+          serverUrl: sourceFhirServer,
+          tokenResponse: { patient: subjectId }
+        };
+        var fhirContext = FHIR.client(setupServer);
+        // Not sure if we should be adding others in here or not
+        // and put the other context vars in here (such as source-query which isn't internally handled by the LForms renderer)
+        var fhirContextVars = { };
+        LForms.Util.setFHIRContext(fhirContext, fhirContextVars);
+
+        this.lforms_error = undefined;
+        await LForms.Util.addFormToPage(this.questionnaire, "myFormContainer", {
+          prepopulate: true,
+        }).catch((e: any) => {
+          console.error("Breaking news:", e);
+          this.lforms_error = e.toString();
+        });
+
+        // just echo it out - so that it will show the response
+        this.logResponse();
+      }
     },
   },
   props: {
