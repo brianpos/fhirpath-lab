@@ -195,6 +195,7 @@
 
           <template v-slot:LHC-Forms>
             <EditorNLMRendererSection
+              ref="lhcFormsRenderer"
               v-if="raw"
               v-bind:questionnaire="raw"
               @response="processUpdatedQuestionnaireResponse"
@@ -277,6 +278,16 @@
               width="100%"
               ref="aceEditorResponseJsonTab"
             ></div>
+          </template>
+
+          <template v-slot:PrePop>
+              <QuestionnairePrepopTest ref="prepopTester" v-bind:questionnaire="raw"
+                @response="processUpdatedQuestionnaireResponseFromPrePopTester"
+                @pre-pop-lforms="prePopLForms"
+               />
+          </template>
+
+          <template v-slot:Extract>
           </template>
 
           <template v-slot:AI_Chat>
@@ -405,6 +416,9 @@ import "ace-builds/src-noconflict/mode-text";
 import "ace-builds/src-noconflict/mode-json";
 import "ace-builds/src-noconflict/theme-chrome";
 import Chat from "~/components/Chat.vue";
+import QuestionnaireExtractTest from "~/components/QuestionnaireExtractTest";
+import { EditorNLMRendererSection } from "~/components/Questionnaire/EditorNLMRendererSection";
+import { structuredDataCaptureHelpers as sdc }  from "~/helpers/structureddatacapture-helpers";
 import { ChatMessage } from "@azure/openai";
 import {
   EvaluateChatPrompt,
@@ -464,6 +478,13 @@ export default Vue.extend({
   //   components: { fhirqItem },
   mounted() {
     window.document.title = "Questionnaire Tester";
+    const CDN = 'https://cdn.jsdelivr.net/npm/ace-builds@1.6.0/src-min-noconflict';
+    if (true) {
+        ace.config.set('basePath', CDN);
+        ace.config.set('modePath', CDN);
+        ace.config.set('themePath', CDN);
+        ace.config.set('workerPath', CDN);
+    }
   },
   computed: {
     defaultProviderField(): string | undefined {
@@ -525,13 +546,20 @@ export default Vue.extend({
           iconName: "mdi-tray-arrow-down",
           tabName: "Pre-Population",
           title: "Pre-Population Configuration",
-          show: this.showDetails && this.showAdvancedSettings!,
+          show: this.showDetails && this.showAdvancedSettings! && sdc.hasPrePopulation(this.raw),
           enabled: true,
         },
         {
           iconName: "mdi-application-variable-outline",
           tabName: "Variables",
           show: this.showDetails && this.showAdvancedSettings!,
+          enabled: true,
+        },
+        {
+          iconName: "mdi-tray-arrow-down",
+          tabName: "PrePop",
+          title: "Pre-Population Tester",
+          show: sdc.hasPrePopulation(this.raw),
           enabled: true,
         },
         {
@@ -884,7 +912,7 @@ export default Vue.extend({
             this.updateNow();
           }
         } else if (this.questionnaireResponseJsonEditor) {
-          this.selectTab(9);
+          this.selectTab(10);
           this.questionnaireResponseJsonEditor.clearSelection();
           if (issue.__position) {
             var position: IJsonNodePosition = issue.__position;
@@ -964,6 +992,23 @@ export default Vue.extend({
       }
     },
 
+    prePopLForms(sourceFhirServer: string, subjectId: string){
+      if (this.$refs.lhcFormsRenderer) {
+        let lhcFormsRenderer = (this.$refs.lhcFormsRenderer as EditorNLMRendererSection)
+        lhcFormsRenderer.prePopLForms(sourceFhirServer, subjectId)
+      }
+    },
+
+    processUpdatedQuestionnaireResponseFromPrePopTester(value: fhir4b.QuestionnaireResponse, renderer?: string) {
+      this.processUpdatedQuestionnaireResponse(value);
+
+      if (renderer == "lforms pre-pop") {
+        this.selectTab(9);
+      }
+      if (renderer == "CSIRO pre-pop") {
+        this.selectTab(8);
+      }
+    },
     processUpdatedQuestionnaireResponse(value: fhir4b.QuestionnaireResponse) {
       if (this.questionnaireResponseJsonEditor) {
         this.questionnaireResponse = value;
@@ -971,7 +1016,7 @@ export default Vue.extend({
           JSON.stringify(this.questionnaireResponse, null, 2)
         );
         this.questionnaireResponseJsonEditor.clearSelection();
-        this.selectTab(9);
+        this.selectTab(10);
       }
     },
 

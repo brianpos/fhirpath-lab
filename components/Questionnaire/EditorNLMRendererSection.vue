@@ -35,7 +35,7 @@ pre {
 import Vue, { PropType } from "vue";
 import { applyReactInVue } from "vuereact-combined";
 import { SmartFormsRenderer, getResponse } from "@aehrc/smart-forms-renderer";
-import { Questionnaire, QuestionnaireResponse } from "fhir/r4";
+import { Questionnaire, QuestionnaireResponse } from "fhir/r4b";
 import { settings } from "~/helpers/user_settings";
 
 import FHIR from "fhirclient";
