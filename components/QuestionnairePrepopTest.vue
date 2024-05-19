@@ -3,7 +3,7 @@
     <v-text-field label="Subject Type" v-if="questionnaire" readonly :value="questionnaire.subjectType" />
     <v-text-field v-if="questionnaire && questionnaire.subjectType" :label="questionnaire.subjectType + ' Id (subject)'"
       v-model="subjectId" />
-    <v-text-field label="Populating from" readonly v-model="sourceFhirServer" />
+    <v-text-field label="Populating from" v-model="sourceFhirServer" />
     <v-text-field v-if="!questionnaire || !questionnaire.subjectType" label="Patient Id" v-model="subjectId" />
 
     <template v-if="launchContexts && launchContexts.length > 0">

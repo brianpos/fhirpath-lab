@@ -1,290 +1,157 @@
 <template>
-  <div
-    :class="
-      raw && raw.status === 'draft'
+  <div :class="raw && raw.status === 'draft'
         ? 'draft-page-background'
         : raw && raw.status === 'active'
         ? 'active-page-background'
         : raw && raw.status === 'retired'
         ? 'retired-page-background'
         : ''
-    "
-  >
+    ">
     <HeaderNavbar @close-settings="settingsClosed" />
 
     <div class="container-fluid bd-layout" style="padding-top: 80px">
       <v-card>
         <v-toolbar flat color="primary">
-          <v-toolbar-title v-if="raw"
-            ><span v-text="raw.title" /> (<span v-text="raw.status" />)<span
-              v-if="raw.version"
-            >
-              - {{ raw.version }}</span
-            ></v-toolbar-title
-          >
+          <v-toolbar-title v-if="raw"><span v-text="raw.title" /> (<span v-text="raw.status" />)<span
+              v-if="raw.version">
+              - {{ raw.version }}</span></v-toolbar-title>
           <v-spacer />
           <v-btn v-if="false && enableSave && !readonly" icon title="save">
             <v-icon @click="saveData" :disabled="saving">
               mdi-content-save
             </v-icon>
           </v-btn>
-          <v-btn
-            icon
-            dark
-            title="Show Details, Publishing and other informational tabs"
-            @click="showDetails = !showDetails"
-          >
+          <v-btn icon dark title="Show Details, Publishing and other informational tabs"
+            @click="showDetails = !showDetails">
             <v-icon v-if="!showDetails"> mdi-eye-off-outline </v-icon>
             <v-icon v-if="showDetails"> mdi-eye-outline </v-icon>
           </v-btn>
         </v-toolbar>
 
-        <twin-pane-tab
-          :tabs="tabDetails"
-          @change="tabChanged"
-          :eager="true"
-          ref="twinTabControl"
-          @mounted="twinPaneMounted"
-        >
+        <twin-pane-tab :tabs="tabDetails" @change="tabChanged" :eager="true" ref="twinTabControl"
+          @mounted="twinPaneMounted">
           <template v-slot:Questionnaire>
-            <v-text-field
-              label="Test Resource Id"
-              v-model="resourceId"
-              hide-details="auto"
-              autocomplete="off"
-              @input="updateNow"
-              autocorrect="off"
-              autocapitalize="off"
-              spellcheck="false"
-              :title="
-                'Resource Id to download from the examples server\r\nAbsolute (requires CORS support) or relative to ' +
+            <v-text-field label="Test Resource Id" v-model="resourceId" hide-details="auto" autocomplete="off"
+              @input="updateNow" autocorrect="off" autocapitalize="off" spellcheck="false" :title="'Resource Id to download from the examples server\r\nAbsolute (requires CORS support) or relative to ' +
                 exampleServerUrl
-              "
-            >
+                ">
               <template v-slot:append>
-                <v-btn
-                  icon
-                  small
-                  tile
-                  v-show="resourceId"
-                  @click="resourceId = undefined"
-                  title="Clear Test Resource ID"
-                >
+                <v-btn icon small tile v-show="resourceId" @click="resourceId = undefined"
+                  title="Clear Test Resource ID">
                   <v-icon> mdi-close </v-icon>
                 </v-btn>
-                <v-btn
-                  icon
-                  small
-                  tile
-                  :disabled="resourceId === undefined"
-                  @click="downloadTestResource"
-                  :title="downloadTestResourceButtonTitle"
-                >
+                <v-btn icon small tile :disabled="resourceId === undefined" @click="downloadTestResource"
+                  :title="downloadTestResourceButtonTitle">
                   <v-icon> mdi-download </v-icon>
                 </v-btn>
-                <v-btn small icon tile @click="reformatTestResource"
-                  ><v-icon title="Re-format the Questionnaire json below" dark>
+                <v-btn small icon tile @click="reformatTestResource"><v-icon
+                    title="Re-format the Questionnaire json below" dark>
                     mdi-format-indent-increase
-                  </v-icon></v-btn
-                >
-                <v-btn small icon tile @click="validateQuestionnaire"
-                  ><v-icon
-                    title="Validate the below Questionnaire json using the fhirpath-lab server"
-                    dark
-                  >
+                  </v-icon></v-btn>
+                <v-btn small icon tile @click="validateQuestionnaire"><v-icon
+                    title="Validate the below Questionnaire json using the fhirpath-lab server" dark>
                     mdi-note-check-outline
-                  </v-icon></v-btn
-                >
+                  </v-icon></v-btn>
               </template>
             </v-text-field>
             <br />
             <!-- <label class="v-label theme--light bare-label">Test Resource JSON <i>{{ resourceJsonChangedMessage() }}</i></label> -->
             <v-tooltip bottom>
               <template v-slot:activator="{ on, attrs }">
-                <v-btn
-                  class="resetButton"
-                  icon
-                  v-bind="attrs"
-                  v-on="on"
-                  @click="resetQuestionnaire"
-                  ><v-icon>mdi-broom</v-icon></v-btn
-                >
+                <v-btn class="resetButton" icon v-bind="attrs" v-on="on"
+                  @click="resetQuestionnaire"><v-icon>mdi-broom</v-icon></v-btn>
               </template>
               <span>Reset Questionnaire definition</span>
             </v-tooltip>
-            <div
-              class="resource"
-              width="100%"
-              ref="aceEditorResourceJsonTab"
-            ></div>
+            <div class="resource" width="100%" ref="aceEditorResourceJsonTab"></div>
             <!-- <div class="ace_editor_footer"></div> -->
           </template>
 
           <template v-slot:Debug>
             <label>Validation Results:</label>
-            <OperationOutcomePanel
-              :outcome="saveOutcome"
-              title="Error Saving"
-              issueLinkTitle="Goto issue in Questionnaire"
-              @close="clearOutcome2"
-              @help-with-issue="helpWithIssue"
-              @navigate-to-issue="navigateToIssue"
-            />
+            <OperationOutcomePanel :outcome="saveOutcome" title="Error Saving"
+              issueLinkTitle="Goto issue in Questionnaire" @close="clearOutcome2" @help-with-issue="helpWithIssue"
+              @navigate-to-issue="navigateToIssue" />
           </template>
 
           <template v-slot:Details>
             <!-- Details -->
-            <conformance-resource-details-tab
-              v-if="raw"
-              :raw="raw"
-              :hideHeader="true"
-              :readonly="readonly"
-              :showAdvancedSettings="showAdvancedSettings"
-              @update="updateNow"
-            />
+            <conformance-resource-details-tab v-if="raw" :raw="raw" :hideHeader="true" :readonly="readonly"
+              :showAdvancedSettings="showAdvancedSettings" @update="updateNow" />
           </template>
 
           <template v-slot:Publishing>
             <!-- Publishing -->
-            <conformance-resource-publishing-tab
-              v-if="raw"
-              :raw="raw"
-              :hideHeader="true"
-              :publishedVersions="publishedVersions"
-              :lockPublisher="false"
-              :readonly="readonly"
+            <conformance-resource-publishing-tab v-if="raw" :raw="raw" :hideHeader="true"
+              :publishedVersions="publishedVersions" :lockPublisher="false" :readonly="readonly"
               :showAdvancedSettings="showAdvancedSettings"
-              :navigationLinkPrefix="'tester?id='+fhirServerUrl+'/Questionnaire/'"
-              @update="updateNow"
-            />
+              :navigationLinkPrefix="'tester?id=' + fhirServerUrl + '/Questionnaire/'" @update="updateNow" />
           </template>
 
           <template v-slot:Fields>
-            <EditorFieldsSection
-              v-if="raw"
-              v-bind:items="flatModel"
-              :readonly="readonly"
-              :showAdvancedSettings="showAdvancedSettings"
-              @highlight-path="highlightPath"
-          />
+            <EditorFieldsSection v-if="raw" v-bind:items="flatModel" :readonly="readonly"
+              :showAdvancedSettings="showAdvancedSettings" @highlight-path="highlightPath" />
           </template>
 
           <template v-slot:Pre-Population>
-            <EditorPrePolulationSection v-if="raw" v-bind:items="flatModel" 
-              @highlight-path="highlightPath"
-            />
+            <EditorPrePolulationSection v-if="raw" v-bind:items="flatModel" @highlight-path="highlightPath" />
           </template>
 
           <template v-slot:Variables>
-            <EditorVariablesSection
-              v-if="raw"
-              v-bind:questionnaire="raw"
-              v-bind:items="flatModel"
-              @highlight-path="highlightPath"
-            />
+            <EditorVariablesSection v-if="raw" v-bind:questionnaire="raw" v-bind:items="flatModel"
+              @highlight-path="highlightPath" />
           </template>
 
           <template v-slot:CSIRO_Renderer>
-            <EditorRendererSection
-              v-if="raw"
-              v-bind:questionnaire="raw"
-              @response="processUpdatedQuestionnaireResponse"
-              @highlight-path="highlightPath"
-            />
+            <EditorRendererSection ref="csiroFormsRenderer" v-if="raw" v-bind:questionnaire="raw"
+              @response="processUpdatedQuestionnaireResponse" @highlight-path="highlightPath" />
           </template>
 
           <template v-slot:LHC-Forms>
-            <EditorNLMRendererSection
-              ref="lhcFormsRenderer"
-              v-if="raw"
-              v-bind:questionnaire="raw"
-              @response="processUpdatedQuestionnaireResponse"
-              @highlight-path="highlightPath"
-            />
+            <EditorNLMRendererSection ref="lhcFormsRenderer" v-if="raw" v-bind:questionnaire="raw"
+              @response="processUpdatedQuestionnaireResponse" @highlight-path="highlightPath" />
           </template>
 
           <template v-slot:Response>
-            <v-text-field
-              label="Test QuestionnaireResponse Resource Id"
-              v-model="qrResourceId"
-              readonly
-              hide-details="auto"
-              autocomplete="off"
-              @input="updateNow"
-              autocorrect="off"
-              autocapitalize="off"
-              spellcheck="false"
-              :title="
-                'Resource Id to download from the examples server\r\nAbsolute (requires CORS support) or relative to ' +
+            <v-text-field label="Test QuestionnaireResponse Resource Id" v-model="qrResourceId" readonly
+              hide-details="auto" autocomplete="off" @input="updateNow" autocorrect="off" autocapitalize="off"
+              spellcheck="false" :title="'Resource Id to download from the examples server\r\nAbsolute (requires CORS support) or relative to ' +
                 exampleServerUrl
-              "
-            >
+                ">
               <template v-slot:append>
-                <v-btn
-                  icon
-                  small
-                  tile
-                  v-show="qrResourceId"
-                  @click="qrResourceId = undefined"
-                  title="Clear Test QuestionnaireResponse Resource ID"
-                >
+                <v-btn icon small tile v-show="qrResourceId" @click="qrResourceId = undefined"
+                  title="Clear Test QuestionnaireResponse Resource ID">
                   <v-icon> mdi-close </v-icon>
                 </v-btn>
-                <v-btn
-                  icon
-                  small
-                  tile
-                  :disabled="qrResourceId === undefined"
-                  @click="downloadTestResource"
-                  :title="downloadTestResourceButtonTitle"
-                >
+                <v-btn icon small tile :disabled="qrResourceId === undefined" @click="downloadTestResource"
+                  :title="downloadTestResourceButtonTitle">
                   <v-icon> mdi-download </v-icon>
                 </v-btn>
-                <v-btn small icon tile @click="reformatTestQR_Resource"
-                  ><v-icon
-                    title="Re-format the QuestionnaireResponse json below"
-                    dark
-                  >
+                <v-btn small icon tile @click="reformatTestQR_Resource"><v-icon
+                    title="Re-format the QuestionnaireResponse json below" dark>
                     mdi-format-indent-increase
-                  </v-icon></v-btn
-                >
-                <v-btn small icon tile @click="validateQuestionnaireResponse"
-                  ><v-icon
-                    title="Validate the below QuestionnaireResponse json using the fhirpath-lab server"
-                    dark
-                  >
+                  </v-icon></v-btn>
+                <v-btn small icon tile @click="validateQuestionnaireResponse"><v-icon
+                    title="Validate the below QuestionnaireResponse json using the fhirpath-lab server" dark>
                     mdi-note-check-outline
-                  </v-icon></v-btn
-                >
+                  </v-icon></v-btn>
               </template>
             </v-text-field>
             <br />
             <!-- <label class="v-label theme--light bare-label">Test Resource JSON <i>{{ resourceJsonChangedMessage() }}</i></label> -->
             <v-tooltip bottom>
               <template v-slot:activator="{ on, attrs }">
-                <v-btn
-                  class="resetButton"
-                  icon
-                  v-bind="attrs"
-                  v-on="on"
-                  @click="resetQuestionnaireResponse"
-                  ><v-icon>mdi-broom</v-icon></v-btn
-                >
+                <v-btn class="resetButton" icon v-bind="attrs" v-on="on"
+                  @click="resetQuestionnaireResponse"><v-icon>mdi-broom</v-icon></v-btn>
               </template>
               <span>Reset test QuestionnaireResponse</span>
             </v-tooltip>
-            <div
-              class="resource"
-              width="100%"
-              ref="aceEditorResponseJsonTab"
-            ></div>
+            <div class="resource" width="100%" ref="aceEditorResponseJsonTab"></div>
           </template>
 
           <template v-slot:PrePop>
               <QuestionnairePrepopTest ref="prepopTester" v-bind:questionnaire="raw"
-                @response="processUpdatedQuestionnaireResponseFromPrePopTester"
-                @pre-pop-lforms="prePopLForms"
-               />
+              @response="processUpdatedQuestionnaireResponseFromPrePopTester" @pre-pop-lforms="prePopLForms" />
           </template>
 
           <template v-slot:Extract>
@@ -314,13 +181,8 @@
           </template>
         </twin-pane-tab>
       </v-card>
-      <OperationOutcomeOverlay
-        v-if="showOutcome"
-        :saveOutcome="saveOutcome"
-        :showOutcome="showOutcome"
-        title="Error Saving"
-        @close="clearOutcome"
-      />
+      <OperationOutcomeOverlay v-if="showOutcome" :saveOutcome="saveOutcome" :showOutcome="showOutcome"
+        title="Error Saving" @close="clearOutcome" />
     </div>
     <table-loading v-if="saving || loadingData" />
   </div>
@@ -418,7 +280,8 @@ import "ace-builds/src-noconflict/theme-chrome";
 import Chat from "~/components/Chat.vue";
 import QuestionnaireExtractTest from "~/components/QuestionnaireExtractTest";
 import { EditorNLMRendererSection } from "~/components/Questionnaire/EditorNLMRendererSection";
-import { structuredDataCaptureHelpers as sdc }  from "~/helpers/structureddatacapture-helpers";
+import { EditorRendererSection } from "~/components/Questionnaire/EditorRendererSection";
+import { structuredDataCaptureHelpers as sdc } from "~/helpers/structureddatacapture-helpers";
 import { ChatMessage } from "@azure/openai";
 import {
   EvaluateChatPrompt,
@@ -684,9 +547,9 @@ export default Vue.extend({
       await this.downloadTestResource();
     },
     tabChanged(index: Number): void {
-      if (index == 0){
+      if (index == 0) {
         setTimeout(() => {
-        if (this.resourceJsonEditor){
+          if (this.resourceJsonEditor) {
             this.resourceJsonEditor.resize();
           }
         });
@@ -992,7 +855,7 @@ export default Vue.extend({
       }
     },
 
-    prePopLForms(sourceFhirServer: string, subjectId: string){
+    prePopLForms(sourceFhirServer: string, subjectId: string) {
       if (this.$refs.lhcFormsRenderer) {
         let lhcFormsRenderer = (this.$refs.lhcFormsRenderer as EditorNLMRendererSection)
         lhcFormsRenderer.prePopLForms(sourceFhirServer, subjectId)
@@ -1001,6 +864,16 @@ export default Vue.extend({
 
     processUpdatedQuestionnaireResponseFromPrePopTester(value: fhir4b.QuestionnaireResponse, renderer?: string) {
       this.processUpdatedQuestionnaireResponse(value);
+
+      if (this.$refs.csiroFormsRenderer as EditorRendererSection) {
+        let csiroFormsRenderer = (this.$refs.csiroFormsRenderer as EditorRendererSection)
+        csiroFormsRenderer.renderQuestionnaireResponse(value, this.raw);
+      }
+
+      if (this.$refs.lhcFormsRenderer) {
+        let lhcFormsRenderer = (this.$refs.lhcFormsRenderer as EditorNLMRendererSection)
+        lhcFormsRenderer.renderQuestionnaireResponse(value, this.raw);
+      }
 
       if (renderer == "lforms pre-pop") {
         this.selectTab(9);
@@ -1017,6 +890,22 @@ export default Vue.extend({
         );
         this.questionnaireResponseJsonEditor.clearSelection();
         this.selectTab(10);
+
+        if (this.$refs.csiroFormsRenderer as EditorRendererSection) {
+          let csiroFormsRenderer = (this.$refs.csiroFormsRenderer as EditorRendererSection)
+          csiroFormsRenderer.renderQuestionnaireResponse(value, this.raw);
+        }
+
+        if (this.$refs.lhcFormsRenderer) {
+          let lhcFormsRenderer = (this.$refs.lhcFormsRenderer as EditorNLMRendererSection)
+          lhcFormsRenderer.renderQuestionnaireResponse(value, this.raw);
+        }
+
+        if (this.$refs.extractTester as QuestionnaireExtractTest) {
+          (this.$refs.extractTester as QuestionnaireExtractTest).setValue(
+            JSON.stringify(this.questionnaireResponse, null, 2)
+          );
+        }
       }
     },
 
@@ -1067,7 +956,7 @@ export default Vue.extend({
           this.resourceJsonEditor.setValue(JSON.stringify(jsonValue, null, 4));
           this.resourceJsonEditor.clearSelection();
           this.resourceJsonEditor.renderer.updateFull(true);
-        } catch {}
+        } catch { }
       }
     },
 
@@ -1088,7 +977,7 @@ export default Vue.extend({
           if (qDef?.url) {
             jsonValue.questionnaire = qDef.url;
           }
-        } catch {}
+        } catch { }
 
         try {
           this.questionnaireResponseJsonEditor.setValue(
@@ -1096,7 +985,7 @@ export default Vue.extend({
           );
           this.questionnaireResponseJsonEditor.clearSelection();
           this.questionnaireResponseJsonEditor.renderer.updateFull(true);
-        } catch {}
+        } catch { }
       }
     },
 
@@ -1127,7 +1016,7 @@ export default Vue.extend({
               });
             });
           }
-        } catch {}
+        } catch { }
       }
     },
 
@@ -1193,7 +1082,7 @@ export default Vue.extend({
           qrWithContainedQ.questionnaire = "#" + qDef.id;
           qrWithContainedQ.contained = [qDef];
           jsonValueQR = JSON.stringify(qrWithContainedQ, null, 2);
-        } catch {}
+        } catch { }
 
         // Add a subject and authored date if not present
         try {
@@ -1201,7 +1090,7 @@ export default Vue.extend({
           if (!qr.subject) qr.subject = { reference: "Patient/123" };
           if (!qr.authored) qr.authored = new Date().toISOString();
           jsonValueQR = JSON.stringify(qr, null, 2);
-        } catch {}
+        } catch { }
 
         // send this to the forms-lab server for validation
         try {
@@ -1311,7 +1200,7 @@ export default Vue.extend({
               this.saveOutcome.issue
             );
           }
-        } catch {}
+        } catch { }
       }
     },
 
@@ -1330,7 +1219,7 @@ export default Vue.extend({
               this.saveOutcome.issue
             );
           }
-        } catch {}
+        } catch { }
       }
     },
 
