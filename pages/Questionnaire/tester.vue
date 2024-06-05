@@ -170,7 +170,7 @@
           </template>
 
           <template v-slot:Pre-Population>
-            <EditorPrePolulationSection v-if="raw" v-bind:items="flatModel" 
+            <EditorPrePolulationSection v-if="raw" v-bind:items="flatModel"
               @highlight-path="highlightPath"
             />
           </template>
@@ -181,6 +181,14 @@
               v-bind:questionnaire="raw"
               v-bind:items="flatModel"
               @highlight-path="highlightPath"
+            />
+          </template>
+
+          <template v-slot:Aidbox_Forms>
+            <EditorAidboxFormsSection
+              v-if="raw"
+              v-bind:questionnaire="raw"
+              @response="processUpdatedQuestionnaireResponse"
             />
           </template>
 
@@ -536,6 +544,13 @@ export default Vue.extend({
         },
         {
           iconName: "mdi-bug-play-outline",
+          tabName: "Aidbox Forms",
+          title: "Aidbox Forms",
+          show: true,
+          enabled: true,
+        },
+        {
+          iconName: "mdi-bug-play-outline",
           tabName: "CSIRO Renderer",
           title: "CSIRO Renderer",
           show: true,
@@ -884,7 +899,7 @@ export default Vue.extend({
             this.updateNow();
           }
         } else if (this.questionnaireResponseJsonEditor) {
-          this.selectTab(9);
+          this.selectTab(10);
           this.questionnaireResponseJsonEditor.clearSelection();
           if (issue.__position) {
             var position: IJsonNodePosition = issue.__position;
@@ -971,7 +986,7 @@ export default Vue.extend({
           JSON.stringify(this.questionnaireResponse, null, 2)
         );
         this.questionnaireResponseJsonEditor.clearSelection();
-        this.selectTab(9);
+        this.selectTab(10);
       }
     },
 
