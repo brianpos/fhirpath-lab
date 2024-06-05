@@ -3,6 +3,12 @@ export default {
   target: 'static',
   ssr: false,
 
+  vue: {
+    config: {
+      ignoredElements: ['aidbox-form-renderer']
+    }
+  },
+
   // Global page headers: https://go.nuxtjs.dev/config-head
   head: {
     title: 'fhirpath-lab',
