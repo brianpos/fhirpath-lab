@@ -3,7 +3,16 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
-13 May 2024
+## 8 June 2024
+* Update the Ace editor to the 1.34.2/0.0.48
+* Update the CSIRO pre-pop to 2.2.0
+* Update the CSIRO renderer to 0.35.0
+* Update axios to 1.7.2 (rectifying some security vulnerabilities)
+* remove bootstrap-vue
+* Update marked to 11.0.0
+* Remove use of the EasyTable component (converted to Vuetify datatable) 
+
+## 13 May 2024
 * Include nav shortcuts from the fields, variables, behaviors and pre-pop sections in the questionnaire tester page
 
 ## 11 May 2024

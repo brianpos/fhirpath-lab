@@ -184,9 +184,8 @@ export default class QuestionnaireExtractTest extends Vue {
     return false;
   }
 
-  public get sourceFhirServer(): string {
-    return settings.getFhirServerExamplesUrl();
-  }
+  public sourceFhirServer: string = "";
+  
   public get isIPSPrepopulate(): boolean {
     let isIPS = this.launchContexts?.find((lc) => lc.name === 'ips') !== undefined;
     return isIPS;
@@ -521,6 +520,7 @@ export default class QuestionnaireExtractTest extends Vue {
   mounted(): void {
     this.internalValue = JSON.stringify(this.questionnaire, null, 2);
     this.ensureEditorIsCreated();
+    this.sourceFhirServer = settings.getFhirServerExamplesUrl();
   }
 
   updated(): void {

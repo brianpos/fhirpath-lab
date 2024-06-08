@@ -7,7 +7,11 @@
         ? 'retired-page-background'
         : ''
     ">
-    <HeaderNavbar @close-settings="settingsClosed" />
+    <HeaderNavbar
+      :favourites="isFavourite"
+      :toggleFavourite="toggleFavourite"
+      @close-settings="settingsClosed"
+    />
 
     <div class="container-fluid bd-layout" style="padding-top: 80px">
       <v-card>
@@ -576,6 +580,13 @@ export default Vue.extend({
     settingsClosed() {
       this.showAdvancedSettings = settings.showAdvancedSettings();
       this.openAIFeedbackEnabled = settings.getOpenAIFeedbackEnabled();
+    },
+    toggleFavourite() {
+      this.isFavourite = !this.isFavourite;
+      if (this.isFavourite && this.raw?.id)
+        setFavourite(this.raw.resourceType, this.raw.id);
+      if (!this.isFavourite && this.raw?.id)
+        unsetFavourite(this.raw.resourceType, this.raw.id);
     },
     clearOutcome() {
       this.showOutcome = undefined;
@@ -1278,6 +1289,7 @@ export default Vue.extend({
                   0,
                   url.indexOf("/Questionnaire/" + this.raw.id)
                 );
+                this.isFavourite = isFavourite(this.raw.resourceType, this.raw.id);
                 if (this.raw.url) {
                   await loadPublishedVersions<fhir4b.Questionnaire>(
                     formBaseUrl,

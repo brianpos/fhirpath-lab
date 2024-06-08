@@ -44,9 +44,10 @@ import { marked } from "marked";
 import { formatDate } from "~/helpers/datetime";
 
 export default Vue.extend({
-  props: ["data2", "simple", "modelValue"],
+  props: ["data2", "simple", "modelValue", "row"],
   created() {
-    if (this.$vnode.data) this.data = (this.$vnode.data as any).row;
+    this.data = this.row;
+    // if (this.$vnode.data) this.data = (this.$vnode.data as any).row;
     // console.log(this.data);
   },
   methods: {

@@ -22,14 +22,36 @@
     <div class="container-fluid bd-layout" style="padding-top: 114px">
       <OperationOutcomeOverlay v-if="outcome" :saveOutcome="outcome" :showOutcome="(outcome != undefined)"
         title="Search Errors/Warnings" :popupWhenErrors="false" @close="outcome = undefined" />
-      <ve-table
-        :columns="columns"
-        :table-data="tableData"
+        <v-data-table
+        :headers="columns"
+        :items="tableData"
         :event-custom-option="eventCustomOption"
-      />
-      <div v-show="showEmpty && !loadingData" class="empty-data">
-        (No results)
-      </div>
+        :expand-option="expandOption"
+        row-key-field-name="id"
+        :fixed-header="true"
+        :items-per-page="-1"
+        :disable-pagination="true"
+        show-expand
+        @row:click="navigateSelection"
+        :expanded.sync="expanded"
+      >
+        <template v-slot:item.title="{ index, item }">
+          <a @click="navigateSelection(item)">{{ item.title }}</a>
+        </template>
+        <template v-slot:expanded-item="{ headers, item }">
+          <td :colspan="headers.length">
+            <conformance-resource-preview-row :row="item" />
+          </td>
+        </template>
+        <template v-slot:item.favourite="{ index, item}">
+          <FavIcon v-if="item.favourite"/>
+        </template>
+        <template slot="no-data">
+          <div v-show="showEmpty && !loadingData" class="empty-data">
+            (No results)
+          </div>
+        </template>
+      </v-data-table> 
     </div>
     <table-loading v-if="loadingData" />
   </div>
@@ -105,6 +127,15 @@ export default Vue.extend({
       const url = `${settings.getFhirServerUrl()}/List?_count=${settings.getPageSize()}&_summary=true`;
       await this.searchPage(url);
     },
+    navigateSelection(data: ListTableData, event: PointerEvent) {
+      const selectedResourceId = data.id;
+      if (event?.ctrlKey) {
+        window.open("/List/" + selectedResourceId, '_blank');
+      }
+      else {
+        this.$router.push("/List/" + selectedResourceId);
+      }
+    },
   },
   data(): ListTableDefinition {
     return {
@@ -130,12 +161,12 @@ export default Vue.extend({
         },
       },
       columns: [
-        { field: "title", key: "a", title: "Name", align: "left" },
-        { field: "version", key: "v", title: "Version", align: "left" },
-        { field: "status", key: "c", title: "Status", align: "left" },
-        { field: "date", key: "b", title: "Publish Date", align: "left" },
-        { field: "publisher", key: "d", title: "Publisher", align: "left" },
-        { field: "id", key: "id", title: "ID", align: "left" },
+        { value: "title", key: "a", text: "Name", align: "start", sortable: false },
+        { value: "version", key: "v", text: "Version", align: "start", sortable: false },
+        { value: "status", key: "c", text: "Status", align: "start", sortable: false },
+        { value: "date", key: "b", text: "Publish Date", align: "start", sortable: false },
+        { value: "publisher", key: "d", text: "Publisher", align: "start", sortable: false },
+        { value: "id", key: "id", text: "ID", align: "start", sortable: false },
       ],
       tableData: [],
       outcome: undefined,

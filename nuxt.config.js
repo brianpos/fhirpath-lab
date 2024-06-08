@@ -32,7 +32,6 @@ export default {
 
   // Plugins to run before rendering page: https://go.nuxtjs.dev/config-plugins
   plugins: [
-    "~/plugins/vue-easytable"
   ],
 
   // Auto import components: https://go.nuxtjs.dev/config-components
@@ -72,11 +71,12 @@ export default {
     // how to get 3rd party components working in Nuxt
     // https://www.youtube.com/watch?v=j7l5e2ID0aw&t=7s
     transpile: [
-      "vue-easytable",
-      "@fhir-typescript/r4b-core",
+            "@fhir-typescript/r4b-core",
       "fhirpath",
       "ucum-lhc",
+"lforms-loader",
       "openai",
+"marked",
     ]
   }
 }

@@ -1,4 +1,4 @@
-import { Questionnaire, QuestionnaireItem, Element, CodeableConcept } from "fhir/r4"
+import { Questionnaire, QuestionnaireItem, Element, CodeableConcept } from "fhir/r4b"
 import extensionHelpers from "fhir-extension-helpers";
 
 /** Helper methods  */

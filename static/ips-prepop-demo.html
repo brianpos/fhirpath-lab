@@ -541,7 +541,7 @@
                     if (ex.responseJSON !== undefined && ex.responseJSON.issue !== undefined) {
                         // and throw something in the box at the bottom
                         // $('#divQuestionnaire').displayErrorAndWarningMessages(ex.responseJSON, true, false);
-                        for (var i = 0; i < ex.responseJSON.issue.length; i++) {
+                        for (let i = 0; i < ex.responseJSON.issue.length; i++) {
                             addToResultMessages(ex.responseJSON.issue[i]);
                         }
                     }
