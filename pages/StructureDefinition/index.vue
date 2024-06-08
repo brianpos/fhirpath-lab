@@ -50,7 +50,7 @@ tr.ve-table-body-tr {
         title="Search Errors/Warnings" :popupWhenErrors="false" @close="outcome = undefined" />
 
       <v-data-table :headers="columns" :items="tableData" :event-custom-option="eventCustomOption"
-        :expand-option="expandOption" row-key-field-name="id" :fixed-header="true" :items-per-page="-1"
+        row-key-field-name="id" :fixed-header="true" :items-per-page="-1"
         :disable-pagination="true" show-expand @row:click="navigateSelection" :expanded.sync="expanded">
         <template v-slot:item.title="{ index, item }">
           <a @click="navigateSelection(item)">{{ item.title }}</a>
@@ -227,19 +227,6 @@ export default Vue.extend({
               event.preventDefault();
             },
           };
-        },
-      },
-      expandOption: {
-        trigger: "icon",
-        render: (
-          {
-            row,
-            column,
-            rowIndex,
-          }: { row: ConformanceResourceTableData; column: any; rowIndex: number },
-          h: any
-        ): any => {
-          return h("ConformanceResourcePreviewRow", { row: row }) as VNode;
         },
       },
       columns: [

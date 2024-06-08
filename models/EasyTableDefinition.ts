@@ -35,8 +35,6 @@ export default interface EasyTableDefinition<TData> extends EasyTableDefinitionR
    * https://happy-coding-clans.github.io/vue-easytable/#/en/doc/table/cell-custom
    */
   renderBodyCell?: (cellData: { row: TData, column: EasyTableColumn<TData>, rowIndex: number }, h: any) => VNode;
-
-  expandOption?: { trigger?: 'row' | 'cell' | 'icon'; render: (cellData: { row: TData, column: EasyTableColumn<TData>, rowIndex: number }, h: any) => VNode; };
 }
 
 export interface EasyTableDefinitionRaw {

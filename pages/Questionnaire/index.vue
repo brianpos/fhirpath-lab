@@ -71,7 +71,6 @@
         :headers="columns"
         :items="tableData"
         :event-custom-option="eventCustomOption"
-        :expand-option="expandOption"
         row-key-field-name="id"
         :fixed-header="true"
         :items-per-page="-1"
@@ -307,23 +306,6 @@ export default Vue.extend({
               event.preventDefault();
             },
           };
-        },
-      },
-      expandOption: {
-        trigger: "icon",
-        render: (
-          {
-            row,
-            column,
-            rowIndex,
-          }: {
-            row: ConformanceResourceTableData;
-            column: any;
-            rowIndex: number;
-          },
-          h: any
-        ): any => {
-          return h("ConformanceResourcePreviewRow", { row: row }) as VNode;
         },
       },
       columns: [

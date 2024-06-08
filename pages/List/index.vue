@@ -26,7 +26,6 @@
         :headers="columns"
         :items="tableData"
         :event-custom-option="eventCustomOption"
-        :expand-option="expandOption"
         row-key-field-name="id"
         :fixed-header="true"
         :items-per-page="-1"
