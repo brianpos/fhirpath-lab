@@ -282,9 +282,9 @@ import "ace-builds/src-noconflict/mode-text";
 import "ace-builds/src-noconflict/mode-json";
 import "ace-builds/src-noconflict/theme-chrome";
 import Chat from "~/components/Chat.vue";
-import QuestionnaireExtractTest from "~/components/QuestionnaireExtractTest";
-import { EditorNLMRendererSection } from "~/components/Questionnaire/EditorNLMRendererSection";
-import { EditorRendererSection } from "~/components/Questionnaire/EditorRendererSection";
+import QuestionnaireExtractTest from "~/components/QuestionnaireExtractTest.vue";
+import EditorNLMRendererSection from "~/components/Questionnaire/EditorNLMRendererSection.vue";
+import EditorRendererSection from "~/components/Questionnaire/EditorRendererSection.vue";
 import { structuredDataCaptureHelpers as sdc } from "~/helpers/structureddatacapture-helpers";
 import { ChatCompletionCreateParamsNonStreaming, ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import {
@@ -869,12 +869,12 @@ export default Vue.extend({
     processUpdatedQuestionnaireResponseFromPrePopTester(value: fhir4b.QuestionnaireResponse, renderer?: string) {
       this.processUpdatedQuestionnaireResponse(value);
 
-      if (this.$refs.csiroFormsRenderer as EditorRendererSection) {
+      if (this.$refs.csiroFormsRenderer && this.raw != null) {
         let csiroFormsRenderer = (this.$refs.csiroFormsRenderer as EditorRendererSection)
         csiroFormsRenderer.renderQuestionnaireResponse(value, this.raw);
       }
 
-      if (this.$refs.lhcFormsRenderer) {
+      if (this.$refs.lhcFormsRenderer && this.raw != null) {
         let lhcFormsRenderer = (this.$refs.lhcFormsRenderer as EditorNLMRendererSection)
         lhcFormsRenderer.renderQuestionnaireResponse(value, this.raw);
       }
@@ -895,12 +895,12 @@ export default Vue.extend({
         this.questionnaireResponseJsonEditor.clearSelection();
         this.selectTab(10);
 
-        if (this.$refs.csiroFormsRenderer as EditorRendererSection) {
+        if (this.$refs.csiroFormsRenderer && this.raw != null) {
           let csiroFormsRenderer = (this.$refs.csiroFormsRenderer as EditorRendererSection)
           csiroFormsRenderer.renderQuestionnaireResponse(value, this.raw);
         }
 
-        if (this.$refs.lhcFormsRenderer) {
+        if (this.$refs.lhcFormsRenderer && this.raw != null) {
           let lhcFormsRenderer = (this.$refs.lhcFormsRenderer as EditorNLMRendererSection)
           lhcFormsRenderer.renderQuestionnaireResponse(value, this.raw);
         }
