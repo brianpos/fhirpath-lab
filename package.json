@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@aehrc/sdc-populate": "^2.2.0",
-    "@aehrc/smart-forms-renderer": "^0.35.0",
+    "@aehrc/smart-forms-renderer": "^0.25.2",
     "@nuxtjs/applicationinsights": "^1.2.2",
     "@types/ace": "^0.0.52",
     "@types/fhir": "^0.0.41",
@@ -35,7 +35,7 @@
     "lforms-loader": "^3.0.2",
     "luxon": "^3.4.3",
     "lz-string": "^1.4.4",
-    "marked": "^11.0.0",
+    "marked": "^4.0.10",
     "minimist": ">=1.2.6",
     "notistack": "^3.0.1",
     "nuxt": "^2.15.7",
