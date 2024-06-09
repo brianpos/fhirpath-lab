@@ -495,6 +495,14 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
   async mounted() {
     this.showAdvancedSettings = settings.showAdvancedSettings();
     this.defaultProviderField = settings.getDefaultProviderField();
+    
+    const CDN = 'https://cdn.jsdelivr.net/npm/ace-builds@1.34.2/src-min-noconflict';
+        if (true) {
+          ace.config.set('basePath', CDN);
+          ace.config.set('modePath', CDN);
+          ace.config.set('themePath', CDN);
+          ace.config.set('workerPath', CDN);
+        }
   },
   computed: {
     tabDetails(): TabData[] {
@@ -539,14 +547,6 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
   methods: {
     async twinPaneMounted(): Promise<void> {
       this.$nextTick(async () => {
-        const CDN = 'https://cdn.jsdelivr.net/npm/ace-builds@1.6.0/src-min-noconflict';
-        if (true) {
-          ace.config.set('basePath', CDN);
-          ace.config.set('modePath', CDN);
-          ace.config.set('themePath', CDN);
-          ace.config.set('workerPath', CDN);
-        }
-
         // Update the editor's Mode
         var editorDiv: any = this.$refs.aceEditorExpression as Element;
         if (editorDiv) {

@@ -769,7 +769,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       this.chatEnabled = true;
     this.terminologyServer = settings.getFhirTerminologyServerUrl();
 
-    const CDN = 'https://cdn.jsdelivr.net/npm/ace-builds@1.6.0/src-min-noconflict';
+    const CDN = 'https://cdn.jsdelivr.net/npm/ace-builds@1.34.2/src-min-noconflict';
     if (true) {
         ace.config.set('basePath', CDN);
         ace.config.set('modePath', CDN);
