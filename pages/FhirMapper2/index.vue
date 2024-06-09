@@ -473,11 +473,11 @@ function getTraceValue(entry: fhir4b.ParametersParameter): TraceData[] {
 }
 
 export default Vue.extend({
-  components: {
-  },
-  head: {
-    title: "FhirPathTester",
-  },
+  // components: {
+  // },
+  // head: {
+  //   title: "FhirPathTester",
+  // },
   async mounted() {
     const CDN = 'https://cdn.jsdelivr.net/npm/ace-builds@1.6.0/src-min-noconflict';
     if (true) {

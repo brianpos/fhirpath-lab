@@ -68,10 +68,11 @@ import { formatDate } from "~/helpers/datetime";
 import { EasyTableDefinition_defaultValues } from "~/models/EasyTableDefinition";
 
 export default Vue.extend({
-  head: {
-    title: "List",
-  },
+  // head: {
+  //   title: "List",
+  // },
   mounted() {
+    document.title = "List";
     this.showAdvancedSettings = settings.showAdvancedSettings();
     this.searchFhirServer();
   },

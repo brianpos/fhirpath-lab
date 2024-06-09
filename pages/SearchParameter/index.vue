@@ -98,10 +98,11 @@ import { EasyTableDefinition_defaultValues } from "~/models/EasyTableDefinition"
 import { ConformanceSearchData } from "models/ConformanceSearchData";
 
 export default Vue.extend({
-  head: {
-    title: "Search Parameter",
-  },
+  // head: {
+  //   title: "Search Parameter",
+  // },
   mounted() {
+    document.title = "Search Parameter";
     this.showAdvancedSettings = settings.showAdvancedSettings();
     const searchData = settings.getSearchData("SearchParameter");
     if (searchData) {

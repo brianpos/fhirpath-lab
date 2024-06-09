@@ -161,10 +161,11 @@ import { loadCustomUseContexts, mergeUseContexts, saveCustomUseContexts } from "
 import ConformanceResourcePreviewRow from "~/components/ConformanceResourcePreviewRow.vue";
 
 export default Vue.extend({
-  head: {
-    title: "Questionnaire",
-  },
+  // head: {
+  //   title: "Questionnaire",
+  // },
   mounted() {
+    document.title = "Questionnaire";
     this.showAdvancedSettings = settings.showAdvancedSettings();
     const searchData = settings.getSearchData("Questionnaire");
     if (searchData) {

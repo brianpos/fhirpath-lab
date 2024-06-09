@@ -107,9 +107,9 @@ import { EasyTableDefinition_defaultValues } from "~/models/EasyTableDefinition"
 import { ConformanceSearchData } from "models/ConformanceSearchData";
 
 export default Vue.extend({
-  head: {
-    title: "Structure Map",
-  },
+  // head: {
+  //   title: "Structure Map",
+  // },
   mounted() {
     this.showAdvancedSettings = settings.showAdvancedSettings();
     const searchData = settings.getSearchData("StructureMap");

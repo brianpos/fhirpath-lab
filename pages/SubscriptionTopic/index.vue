@@ -130,9 +130,9 @@ import { EasyTableDefinition_defaultValues } from "~/models/EasyTableDefinition"
 import { ConformanceSearchData } from "models/ConformanceSearchData";
 
 export default Vue.extend({
-  head: {
-    title: "Subscription Topic",
-  },
+  // head: {
+  //   title: "Subscription Topic",
+  // },
   mounted() {
     this.showAdvancedSettings = settings.showAdvancedSettings();
     const searchData = settings.getSearchData("SubscriptionTopic");

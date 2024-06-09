@@ -489,9 +489,9 @@ interface IFhirPathProps {
 }
 
 export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFhirPathProps>({
-  head: {
-    title: "FhirPathTester",
-  },
+  // head: {
+  //   title: "FhirPathTester",
+  // },
   async mounted() {
     this.showAdvancedSettings = settings.showAdvancedSettings();
     this.defaultProviderField = settings.getDefaultProviderField();

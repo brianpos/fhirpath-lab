@@ -98,10 +98,13 @@ import { EasyTableDefinition_defaultValues } from "~/models/EasyTableDefinition"
 import { ConformanceSearchData } from "models/ConformanceSearchData";
 
 export default Vue.extend({
-  head: {
-    title: "Structure Definition",
-  },
+  // head: {
+  //   title: "Structure Definition",
+  // },
   mounted() {
+    this.$nextTick(() => {
+      document.title = "Structure Definition";
+    });
     this.showAdvancedSettings = settings.showAdvancedSettings();
     const searchData = settings.getSearchData("StructureDefinition");
     if (searchData) {

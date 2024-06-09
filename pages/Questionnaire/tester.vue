@@ -655,7 +655,7 @@ export default Vue.extend({
                       this.resourceJsonEditor.session.addMarker(
                         range,
                         "resultSelection",
-                        "fillLine",
+                        "fullLine",
                         true
                       );
                     // after 1.5 seconds remove the highlight.
@@ -767,7 +767,7 @@ export default Vue.extend({
               const selectionMarker = this.resourceJsonEditor.session.addMarker(
                 range,
                 "resultSelection",
-                "fillLine",
+                "fullLine",
                 true
               );
               // after 1.5 seconds remove the highlight.
@@ -815,7 +815,7 @@ export default Vue.extend({
                 this.questionnaireResponseJsonEditor.session.addMarker(
                   range,
                   "resultSelection",
-                  "fillLine",
+                  "fullLine",
                   true
                 );
               // after 1.5 seconds remove the highlight.

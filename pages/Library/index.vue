@@ -112,10 +112,11 @@ import { ConformanceSearchData } from "models/ConformanceSearchData";
 import { loadCustomUseContexts, mergeUseContexts, saveCustomUseContexts } from "~/helpers/useContext_helpers";
 
 export default Vue.extend({
-  head: {
-    title: "Library",
-  },
+  // head: {
+  //   title: "Library",
+  // },
   mounted() {
+    document.title = "Library";
     this.showAdvancedSettings = settings.showAdvancedSettings();
     const searchData = settings.getSearchData("Library");
     if (searchData) {
