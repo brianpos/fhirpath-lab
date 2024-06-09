@@ -174,15 +174,6 @@ tr.v-data-table__expanded__content > td {
   // background-color: rgba(173, 216, 230, 0.199);
 }
 
-.container, .container-fluid, .container-lg, .container-md, .container-sm, .container-xl {
-  width: 100%;
-  padding-right: 15px;
-  padding-left: 15px;
-  margin-right: auto;
-  margin-left: auto;
-}
-
-
 /* We don't use the data footer in any of the lab's tables, so hide them (nav panes)*/
 .v-data-footer {
   display: none;
