@@ -5,7 +5,7 @@ export interface ConformanceResourceTableDefinition<TData> extends BaseResourceT
   searchForStatus?: string;
   searchForUseContext?: { system?: string, code: string; display: string; }[];
 
-  searchUseContexts?: FhirpathLabUseContexts[];
+  searchUseContexts: FhirpathLabUseContexts[];
   defaultUseContexts?: FhirpathLabUseContexts[];
   searchPublishingStatuses: string[];
 }

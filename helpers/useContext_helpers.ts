@@ -92,7 +92,7 @@ export function saveCustomUseContexts(suffix: string, contexts: FhirpathLabUseCo
 
   // remove any default contexts
   const storeContexts = contexts.filter((value, index, array) => {
-    return excludingDefaults.filter((exValue, exIndex, exArray) => {
+    return excludingDefaults?.filter((exValue, exIndex, exArray) => {
       if (value.system !== exValue.system) return false;
       if (value.code !== exValue.code) return false;
       return true;

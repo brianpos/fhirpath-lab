@@ -253,6 +253,7 @@ export default Vue.extend({
       searchForStatus: undefined,
       searchForPublisher: undefined,
       searchPublishingStatuses: searchPublishingStatuses,
+      searchUseContexts: [],
       ...EasyTableDefinition_defaultValues
     };
   },

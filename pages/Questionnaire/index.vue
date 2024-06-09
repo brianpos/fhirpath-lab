@@ -175,7 +175,7 @@ export default Vue.extend({
       this.searchForUseContext = searchData.useContext;
     }
     this.searchFhirServer();
-    this.searchUseContexts = loadCustomUseContexts("questionnaire", this.defaultUseContexts);
+    this.searchUseContexts = loadCustomUseContexts("questionnaire", this.defaultUseContexts!);
   },
   methods: {
     settingsClosed() {
@@ -237,7 +237,7 @@ export default Vue.extend({
             ),
           };
         });
-        if (updateRequired) saveCustomUseContexts("questionnaire", this.searchUseContexts, this.defaultUseContexts);
+        if (updateRequired) saveCustomUseContexts("questionnaire", this.searchUseContexts, this.defaultUseContexts!);
       });
     },
 

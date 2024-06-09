@@ -126,7 +126,7 @@ export default Vue.extend({
       this.searchForUseContext = searchData.useContext;
     }
     this.searchFhirServer();
-    this.searchUseContexts = loadCustomUseContexts("library", this.defaultUseContexts);
+    this.searchUseContexts = loadCustomUseContexts("library", this.defaultUseContexts!);
   },
   methods: {
     settingsClosed() {
@@ -190,7 +190,7 @@ export default Vue.extend({
               post.resource?.id
             ),
           };
-          if (updateRequired) saveCustomUseContexts("library", this.searchUseContexts, this.defaultUseContexts);
+          if (updateRequired) saveCustomUseContexts("library", this.searchUseContexts, this.defaultUseContexts!);
         });
       });
     },

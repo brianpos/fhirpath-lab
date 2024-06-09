@@ -93,7 +93,7 @@
 import { Component, Prop, Vue } from "vue-property-decorator";
 import { Message } from "../types/chat-types";
 import { marked } from "marked";
-// import { ChatMessage } from "@azure/openai";
+import { ChatCompletionCreateParamsNonStreaming, ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import { LogConversation } from "../helpers/openai_logger";
 import { settings } from "~/helpers/user_settings";
 
@@ -123,44 +123,44 @@ export default class Chat extends Vue {
   @Prop()
   public readonly openAIFeedbackEnabled?: boolean;
 
-  public removeSuggestion(suggestion: string){
+  public removeSuggestion(suggestion: string) {
     this.$emit("remove-suggestion", suggestion);
     this.scrollToBottom();
   }
 
   public logHappy(index: number) {
-    const messages = this.messages.slice(0, index+1);
+    const messages = this.messages.slice(0, index + 1);
     LogConversation(
       settings.getDefaultProviderField()!,
       this.feature ?? 'unknown',
       "like",
       undefined,
       messages,
-      settings.dotnet_server_r4b().replace("/$fhirpath","")
+      settings.dotnet_server_r4b().replace("/$fhirpath", "")
     );
   }
 
   public logSad(index: number) {
-    const messages = this.messages.slice(0, index+1);
+    const messages = this.messages.slice(0, index + 1);
     LogConversation(
       settings.getDefaultProviderField()!,
       this.feature ?? 'unknown',
       "dislike",
       undefined,
       messages,
-      settings.dotnet_server_r4b().replace("/$fhirpath","")
+      settings.dotnet_server_r4b().replace("/$fhirpath", "")
     );
   }
 
   public shareViaClipboard(index: number) {
-    const messages = this.messages.slice(0, index+1);
+    const messages = this.messages.slice(0, index + 1);
     const conversationHistory = this.messages
       .map((message) => { 
         if (message.model_name)
           return `**${message.user}** *(${message.model_name})* **:**\n ${message.text}`;
         return `**${message.user}:**\n ${message.text}`;
        })
-      .join("\n\n").replace('\n\n\n','\n\n');
+      .join("\n\n").replace('\n\n\n', '\n\n');
     const conversation = conversationHistory;
      
     navigator.clipboard.writeText(conversation);
@@ -228,13 +228,19 @@ export default class Chat extends Vue {
   }
 
 
-  getConversationChat(): Array<ChatMessage> {
+  getConversationChat(): Array<ChatCompletionMessageParam> {
     const conversationHistory = this.messages
-      .map((message) => { return { "role": this.mapUserName(message.user), "content": message.text }; });
+      .map((message) => {
+        let msg: ChatCompletionMessageParam = {
+          role: this.mapUserName(message.user),
+          content: message.text
+        };
+        return msg;
+      });
     return conversationHistory;
   }
 
-  mapUserName(role: string): string {
+  mapUserName(role: string): 'user' | 'system' | 'assistant' {
     if (role === "Author") return "user";
     if (role === "System") return "system";
     return "assistant";
@@ -464,4 +470,3 @@ div.message-content span :last-child {
   margin-right: 0.5em;
 }
 </style>  
-  
