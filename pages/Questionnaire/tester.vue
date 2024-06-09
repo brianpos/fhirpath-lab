@@ -581,13 +581,6 @@ export default Vue.extend({
       this.showAdvancedSettings = settings.showAdvancedSettings();
       this.openAIFeedbackEnabled = settings.getOpenAIFeedbackEnabled();
     },
-    toggleFavourite() {
-      this.isFavourite = !this.isFavourite;
-      if (this.isFavourite && this.raw?.id)
-        setFavourite(this.raw.resourceType, this.raw.id);
-      if (!this.isFavourite && this.raw?.id)
-        unsetFavourite(this.raw.resourceType, this.raw.id);
-    },
     clearOutcome() {
       this.showOutcome = undefined;
     },
