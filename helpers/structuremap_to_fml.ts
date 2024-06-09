@@ -39,23 +39,23 @@ class StructureMapUtilitiesRender {
         let prefixesTgt: { [key: string]: string } = {};
         let prefix: string = 's';
         cm.group?.forEach(cg => {
-            if (!prefixesSrc[cg.source]) {
+            if (cg.source && !prefixesSrc[cg.source]) {
                 prefixesSrc[cg.source] = prefix;
                 b.push(`  prefix ${prefix} = "${cg.source}"\n`);
                 prefix = String.fromCharCode(prefix.charCodeAt(0) + 1);
             }
-            if (!prefixesTgt[cg.target]) {
+            if (cg.target && !prefixesTgt[cg.target]) {
                 prefixesTgt[cg.target] = prefix;
                 b.push(`  prefix ${prefix} = "${cg.target}"\n`);
                 prefix = String.fromCharCode(prefix.charCodeAt(0) + 1);
             }
         });
         b.push('');
-        cm.group?.forEach(cg => {
-            cg.element?.forEach(ce => {
-                b.push(`  ${prefixesSrc[cg.source]}:"${ce.code}" ${this.getChar(ce.equivalence)} ${prefixesTgt[cg.target]}:"${ce.target[0].code}"`);
-            });
-        });
+        // cm.group?.forEach(cg => {
+        //     cg.element?.forEach(ce => {
+        //         b.push(`  ${prefixesSrc[cg.source!]}:"${ce.target.eq}" ${this.getChar(ce.equivalence)} ${prefixesTgt[cg.target!]}:"${ce.target[0].code}"`);
+        //     });
+        // });
         b.push('}\n\n');
     }
 
@@ -231,9 +231,9 @@ class StructureMapUtilitiesRender {
         if (rs.listMode) {
             b.push(` ${rs.listMode}`);
         }
-        if (rs.defaultValue) {
-            b.push(` default "${this.escapeJson(rs.defaultValue.toString())}"`);
-        }
+        // if (rs.defaultValue) {
+        //     b.push(` default "${this.escapeJson(rs.defaultValue.toString())}"`);
+        // }
         if (!abbreviate && rs.variable) {
             b.push(` as ${rs.variable}`);
         }

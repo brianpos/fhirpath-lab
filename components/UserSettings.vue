@@ -267,7 +267,8 @@ export default Vue.extend({
                   }
                 } else {
                   console.log(err);
-                  this.FhirServerErrorMessage = err.message;
+                  if (err instanceof Error)
+                    this.FhirServerErrorMessage = err.message;
                 }
               }
             }
@@ -284,7 +285,8 @@ export default Vue.extend({
           }
         } else {
           console.log(err);
-          this.FhirServerErrorMessage = err.message;
+          if (err instanceof Error)
+            this.FhirServerErrorMessage = err.message;
         }
       }
 

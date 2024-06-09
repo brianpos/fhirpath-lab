@@ -179,7 +179,7 @@ export default Vue.extend({
               console.error("Breaking news:", e);
               this.lforms_error = e.toString();
             });
-          } catch (e) {
+          } catch (e: any) {
             console.error("Breaking news:", e);
             this.lforms_error = e.toString();
           }
