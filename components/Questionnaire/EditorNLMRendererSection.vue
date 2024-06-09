@@ -111,7 +111,7 @@ export default class EditorNLMRendererSection extends Vue {
         await LForms.Util.addFormToPage(this.questionnaire, "myFormContainer", {
           prepopulate: false,
         });
-      } catch (e) {
+      } catch (e: any) {
         console.error("Breaking news:", e);
         this.lforms_error = e.toString();
       }
@@ -156,7 +156,7 @@ export default class EditorNLMRendererSection extends Vue {
         });
         // just echo it out - so that it will show the response
         this.logResponse();
-      } catch (e) {
+      } catch (e: any) {
         console.error("Breaking news:", e);
         this.lforms_error = e.toString();
       }
@@ -171,7 +171,7 @@ export default class EditorNLMRendererSection extends Vue {
         LForms.Util.addFormToPage(this.questionnaire, "myFormContainer", {
           prepopulate: false,
         });
-      } catch (e) {
+      } catch (e: any) {
         console.error("Breaking news:", e);
         this.lforms_error = e.toString();
       }
