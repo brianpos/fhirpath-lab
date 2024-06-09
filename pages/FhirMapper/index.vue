@@ -268,10 +268,11 @@ interface IFhirMapConverterComputed {
 }
 
 export default Vue.extend<FhirMapConverterData, IFhirMapConverterMethods, IFhirMapConverterComputed>({
-  head: {
-    title: "FML Converter",
-  },
+  // head: {
+  //   title: "FML Converter",
+  // },
   async mounted() {
+    document.title = "FML Converter";
     const CDN = 'https://cdn.jsdelivr.net/npm/ace-builds@1.6.0/src-min-noconflict';
     if (true) {
       ace.config.set('basePath', CDN);
@@ -401,7 +402,7 @@ group SetEntryData(source src: Patient, target entry)
         this.cancelSource = axios.CancelToken.source();
         this.loadingData = true;
         let token = this.cancelSource.token;
-        let headers: AxiosRequestHeaders = {
+        let headers = {
           "Cache-Control": "no-cache",
           "Content-Type": requestFhirMapAcceptHeaders,
           "Accept": contentType

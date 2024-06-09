@@ -3,19 +3,19 @@ import { FinalRequestOptions, Headers } from "openai/core";
 import { ChatCompletionCreateParamsNonStreaming, ChatCompletionMessageParam } from "openai/resources/chat/completions";
 
 export interface IOpenAISettings {
-    openAIKey: string;
-    openAIBasePath: string | undefined;
-    openAIApiVersion: string | undefined;
-    openAIModel: string | undefined;
+  openAIKey: string;
+  openAIBasePath: string | undefined;
+  openAIApiVersion: string | undefined;
+  openAIModel: string | undefined;
 }
 
 export interface OpenAiError {
-    error: OpenAiErrorDetail;
+  error: OpenAiErrorDetail;
 }
 
 interface OpenAiErrorDetail {
-    code: number;
-    message: string;
+  code: number;
+  message: string;
 }
 
 class MyOpenAIClient extends OpenAI {
@@ -83,9 +83,9 @@ export async function EvaluateChatPrompt(
 export function CreatePrompt(): Array<ChatCompletionMessageParam> {
     let prompt: Array<ChatCompletionMessageParam> = [];
 
-    prompt.push({ role: "system", content: GetSystemPrompt() });
+  prompt.push({ role: "system", content: GetSystemPrompt() });
 
-    return prompt;
+  return prompt;
 }
 
 const fhirpathFunctions = `empty
@@ -344,10 +344,10 @@ fragment HEX
 `;
 
 export function GetSystemPrompt(): string {
-    // ---
-    // `+ fhirpathGrammar +`
-    // ---
-    const systemPrompt = `
+  // ---
+  // `+ fhirpathGrammar +`
+  // ---
+  const systemPrompt = `
     * You are a casual, helpful assistant with a detailed understanding of both FHIR structures and the FHIRPath language that provides concise responses with suggested follow-up questions.
     * only use this subset of FHIRPath functions: ${fhirpathFunctions.split('\n').join(', ')}.
     * 'concat' and '$join' are not valid fhirpath functions.
@@ -384,5 +384,5 @@ export function GetSystemPrompt(): string {
          ).value
       \`\`\`
       `;
-    return systemPrompt;
+  return systemPrompt;
 }

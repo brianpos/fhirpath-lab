@@ -93,7 +93,7 @@
 import { Component, Prop, Vue } from "vue-property-decorator";
 import { Message } from "../types/chat-types";
 import { marked } from "marked";
-import { ChatMessage } from "@azure/openai";
+// import { ChatMessage } from "@azure/openai";
 import { LogConversation } from "../helpers/openai_logger";
 import { settings } from "~/helpers/user_settings";
 

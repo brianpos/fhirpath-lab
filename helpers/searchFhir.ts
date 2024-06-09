@@ -214,7 +214,7 @@ export async function searchPage<T>(host: EasyTableDefinition<T>, url: string, m
     host.cancelSource = axios.CancelToken.source();
     host.loadingData = true;
     let token = host.cancelSource.token;
-    let headers: AxiosRequestHeaders = { "Accept": requestFhirAcceptHeaders };
+    let headers = { "Accept": requestFhirAcceptHeaders };
     const response = await axios.get<Bundle>(url, {
       cancelToken: token,
       headers: headers
@@ -288,7 +288,7 @@ export function calculateNextVersion(versions: (string | undefined)[]): string {
 export async function loadPublishedVersions<TData extends ConformanceResourceInterface>(serverBaseUrl: string, resourceType: string, canonicalUrl: string, data: WithPublishingHistory<TData>) {
   const urlRequest = `${serverBaseUrl}/${resourceType}?url=${canonicalUrl}&_summary=true`;
   try {
-    let headers: AxiosRequestHeaders = {
+    let headers = {
       'Cache-Control': 'no-cache',
       "Accept": requestFhirAcceptHeaders
     };
@@ -342,7 +342,7 @@ export async function loadFhirResource<TData extends fhir4b.FhirResource>(server
     }
 
     urlRequest = `${serverBaseUrl}/${resourceType}/${loadResourceId}`;
-    let headers: AxiosRequestHeaders = {
+    let headers = {
       'Cache-Control': 'no-cache',
       "Accept": requestFhirAcceptHeaders
     };
@@ -421,7 +421,7 @@ export async function saveFhirResource<TData extends fhir4b.FhirResource>(server
     data.saveOutcome = undefined;
 
     var response: AxiosResponse<TData, any>;
-    let headers: AxiosRequestHeaders = {
+    let headers = {
       'Cache-Control': 'no-cache',
       "Accept": requestFhirAcceptHeaders,
       'Content-Type': requestFhirContentTypeHeaders

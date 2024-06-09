@@ -286,7 +286,7 @@ import QuestionnaireExtractTest from "~/components/QuestionnaireExtractTest";
 import { EditorNLMRendererSection } from "~/components/Questionnaire/EditorNLMRendererSection";
 import { EditorRendererSection } from "~/components/Questionnaire/EditorRendererSection";
 import { structuredDataCaptureHelpers as sdc } from "~/helpers/structureddatacapture-helpers";
-import { ChatMessage } from "@azure/openai";
+import { ChatCompletionCreateParamsNonStreaming, ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import {
   EvaluateChatPrompt,
   GetSystemPrompt,
@@ -710,7 +710,7 @@ export default Vue.extend({
         //         const selectionMarker = this.questionnaireResponseJsonEditor.session.addMarker(
         //           range,
         //           "resultSelection",
-        //           "fillLine",
+        //           "fullLine",
         //           true
         //         );
         //         // after 1.5 seconds remove the highlight.
@@ -1253,7 +1253,7 @@ export default Vue.extend({
         this.cancelSource = axios.CancelToken.source();
         this.loadingData = true;
         let token = this.cancelSource.token;
-        let headers: AxiosRequestHeaders = {
+        let headers = {
           "Cache-Control": "no-cache",
           Accept: requestFhirAcceptHeaders,
         };
@@ -1447,7 +1447,7 @@ export default Vue.extend({
       // userQuestion += message;
       // chat.addMessage("Author", userQuestion, true);
 
-      let prompt: Array<ChatMessage> = [];
+      let prompt: Array<ChatCompletionMessageParam> = [];
       prompt.push({ role: "system", content: systemPrompt });
       prompt = prompt.concat(chat.getConversationChat());
 

@@ -812,7 +812,7 @@ group SetEntryData(source src: Patient, target entry)
         this.cancelSource = axios.CancelToken.source();
         this.loadingData = true;
         let token = this.cancelSource.token;
-        let headers: AxiosRequestHeaders = {
+        let headers = {
           "Cache-Control": "no-cache",
           "Accept": requestFhirAcceptHeaders
         }
@@ -878,7 +878,7 @@ group SetEntryData(source src: Patient, target entry)
         this.cancelSource = axios.CancelToken.source();
         this.loadingData = true;
         let token = this.cancelSource.token;
-        let headers: AxiosRequestHeaders = {
+        let headers = {
           "Cache-Control": "no-cache",
           "Accept": requestFhirMapAcceptHeaders
         }

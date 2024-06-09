@@ -4,13 +4,7 @@ import {
   IOpenAISettings,
 } from "~/helpers/openai_utils";
 import Chat from "~/components/Chat.vue";
-import {
-  ChatMessage,
-  OpenAIClient,
-  AzureKeyCredential,
-  OpenAIKeyCredential,
-  OpenAIClientOptions,
-} from "@azure/openai";
+import { ChatCompletionCreateParamsNonStreaming, ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import { types } from "fhirpath";
 
 // 1. Determine data required for Query
@@ -48,7 +42,7 @@ export async function DetectDataRequiredForQuery(
   settings: IOpenAISettings,
   query: string
 ): Promise<IDataRequired> {
-  let prompt: Array<ChatMessage> = [];
+  let prompt: Array<ChatCompletionMessageParam> = [];
 
   let systemPrompt = `
 You are a background system assisting with verifying what data would be required to answer a provided question.
@@ -75,6 +69,7 @@ What data would be required to answer the following question:
   }
 
   return {
+    Mode: "unknown", 
     QuestionnaireDefinition: 1,
     QuestionnaireResponse: 1,
     FocusedQuestionnaireItem: 1,

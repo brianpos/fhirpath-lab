@@ -399,7 +399,7 @@ import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from
 import { VariableData, EncodeTestFhirpathData, DecodeTestFhirpathData, TestFhirpathData } from "~/models/testenginemodel";
 
 import { EvaluateChatPrompt, GetSystemPrompt, IOpenAISettings } from "~/helpers/openai_utils";
-import { ChatMessage } from "@azure/openai";
+import { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import ParseTreeTab from "~/components/ParseTreeTab.vue";
 import ConformanceResourceDetailsTab from "~/components/ConformanceResourceDetailsTab.vue";
 import { VueElement, nextTick } from "@vue/runtime-dom";
@@ -1461,7 +1461,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         this.cancelSource = axios.CancelToken.source();
         this.loadingData = true;
         let token = this.cancelSource.token;
-        let headers: AxiosRequestHeaders = {
+        let headers = {
             "Cache-Control": "no-cache",
             "Accept": requestFhirAcceptHeaders
           }
@@ -1608,7 +1608,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         this.cancelSource = axios.CancelToken.source();
         this.loadingData = true;
         let token = this.cancelSource.token;
-        let headers: AxiosRequestHeaders = {
+        let headers = {
             "Cache-Control": "no-cache",
             "Accept": requestFhirAcceptHeaders
           }
@@ -1681,7 +1681,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         this.cancelSource = axios.CancelToken.source();
         this.loadingData = true;
         let token = this.cancelSource.token;
-        let headers: AxiosRequestHeaders = {
+        let headers = {
             "Cache-Control": "no-cache",
             "Accept": requestFhirAcceptHeaders
           }
@@ -1843,7 +1843,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       // userQuestion += message;
       // chat.addMessage("Author", userQuestion, true);
 
-      let prompt: Array<ChatMessage> = [];
+      let prompt: Array<ChatCompletionMessageParam> = [];
       prompt.push({ role: "system", content: systemPrompt});
       prompt = prompt.concat(chat.getConversationChat());
 
@@ -2624,7 +2624,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       editor.gotoLine(startLine, startColumn, true);
       // editor.selection.setRange(range);
 
-      const selectionMarker = editor.session.addMarker(range, "resultSelection", "fillLine", true);
+      const selectionMarker = editor.session.addMarker(range, "resultSelection", "fullLine", true);
       // after 1.5 seconds remove the highlight.
       setTimeout(() => {
         // console.log("Removing marker", selectionMarker);
@@ -2672,7 +2672,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
                     const endCol = node.position.column + (endCollOffset > 1 ? endCollOffset + 1 : endCollOffset);
                     const range = new ace.Range(node.position.line-1, node.position.column, endRow-1, endCol);
 
-                    const selectionMarker = this.resourceJsonEditor.session.addMarker(range, "resultSelection", "fillLine", true);
+                    const selectionMarker = this.resourceJsonEditor.session.addMarker(range, "resultSelection", "fullLine", true);
                     // after 1.5 seconds remove the highlight.
                     setTimeout(() => {
                       this.resourceJsonEditor?.session.removeMarker(selectionMarker);

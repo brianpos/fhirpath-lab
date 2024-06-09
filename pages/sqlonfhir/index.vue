@@ -201,7 +201,7 @@ import {
   requestFhirAcceptHeaders,
   CreateOperationOutcome,
 } from "~/helpers/searchFhir";
-import axios, { AxiosRequestHeaders, AxiosResponse } from "axios";
+import axios from "axios";
 import { AxiosError } from "axios";
 import { CancelTokenSource } from "axios";
 import fhirpath from "fhirpath";
@@ -808,7 +808,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         this.cancelSource = axios.CancelToken.source();
         this.loadingData = true;
         let token = this.cancelSource.token;
-        let headers: AxiosRequestHeaders = {
+        let headers = {
           "Cache-Control": "no-cache",
           "Accept": requestFhirAcceptHeaders
         }
