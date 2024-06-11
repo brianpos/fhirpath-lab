@@ -159,6 +159,8 @@
           </template>
 
           <template v-slot:Extract>
+            <QuestionnaireExtractTest ref="extractTester" v-bind:questionnaire="raw"
+              v-bind:questionnaireResponse="questionnaireResponse" />
           </template>
 
           <template v-slot:AI_Chat>
@@ -447,6 +449,13 @@ export default Vue.extend({
           iconName: "mdi-clipboard-text-outline",
           tabName: "Response",
           show: true,
+          enabled: true,
+        },
+        {
+          iconName: "mdi-tray-arrow-up",
+          tabName: "Extract",
+          title: "Data Extraction",
+          show: sdc.hasDataExtract(this.raw),
           enabled: true,
         },
         {
@@ -859,24 +868,24 @@ export default Vue.extend({
       }
     },
 
-    prePopLForms(sourceFhirServer: string, subjectId: string) {
+    async prePopLForms(sourceFhirServer: string, subjectId: string) {
       if (this.$refs.lhcFormsRenderer) {
         let lhcFormsRenderer = (this.$refs.lhcFormsRenderer as EditorNLMRendererSection)
-        lhcFormsRenderer.prePopLForms(sourceFhirServer, subjectId)
+        await lhcFormsRenderer.prePopLForms(sourceFhirServer, subjectId)
       }
     },
 
-    processUpdatedQuestionnaireResponseFromPrePopTester(value: fhir4b.QuestionnaireResponse, renderer?: string) {
+    async processUpdatedQuestionnaireResponseFromPrePopTester(value: fhir4b.QuestionnaireResponse, renderer?: string) {
       this.processUpdatedQuestionnaireResponse(value);
 
       if (this.$refs.csiroFormsRenderer && this.raw != null) {
         let csiroFormsRenderer = (this.$refs.csiroFormsRenderer as EditorRendererSection)
-        csiroFormsRenderer.renderQuestionnaireResponse(value, this.raw);
+        await csiroFormsRenderer.renderQuestionnaireResponse(value, this.raw);
       }
 
       if (this.$refs.lhcFormsRenderer && this.raw != null) {
         let lhcFormsRenderer = (this.$refs.lhcFormsRenderer as EditorNLMRendererSection)
-        lhcFormsRenderer.renderQuestionnaireResponse(value, this.raw);
+        await lhcFormsRenderer.renderQuestionnaireResponse(value, this.raw);
       }
 
       if (renderer == "lforms pre-pop") {
@@ -886,7 +895,7 @@ export default Vue.extend({
         this.selectTab(8);
       }
     },
-    processUpdatedQuestionnaireResponse(value: fhir4b.QuestionnaireResponse) {
+    async processUpdatedQuestionnaireResponse(value: fhir4b.QuestionnaireResponse) {
       if (this.questionnaireResponseJsonEditor) {
         this.questionnaireResponse = value;
         this.questionnaireResponseJsonEditor.setValue(
@@ -897,12 +906,12 @@ export default Vue.extend({
 
         if (this.$refs.csiroFormsRenderer && this.raw != null) {
           let csiroFormsRenderer = (this.$refs.csiroFormsRenderer as EditorRendererSection)
-          csiroFormsRenderer.renderQuestionnaireResponse(value, this.raw);
+          await csiroFormsRenderer.renderQuestionnaireResponse(value, this.raw);
         }
 
         if (this.$refs.lhcFormsRenderer && this.raw != null) {
           let lhcFormsRenderer = (this.$refs.lhcFormsRenderer as EditorNLMRendererSection)
-          lhcFormsRenderer.renderQuestionnaireResponse(value, this.raw);
+          await lhcFormsRenderer.renderQuestionnaireResponse(value, this.raw);
         }
 
         if (this.$refs.extractTester as QuestionnaireExtractTest) {

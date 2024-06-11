@@ -3,6 +3,9 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+## 11 June 2024
+* Include a POC of the $extract Questionnaire tester
+
 ## 8 June 2024
 * Update the Ace editor to the 1.34.2/0.0.48
 * Update the CSIRO pre-pop to 2.2.0
