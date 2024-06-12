@@ -2572,9 +2572,24 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
 
         (this as any).$appInsights?.trackEvent({ name: 'evaluate IBM' });
       }
+      else if (this.selectedEngine == "Clojure (Aidbox)") {
+        url = settings.clojure_server_r4();
+        if (!this.getResourceJson() && this.resourceId) {
+          await this.downloadTestResource();
+          resourceJson = this.getResourceJson();
+        }
+      }
+      else if (this.selectedEngine == "Clojure (Aidbox-R5)") {
+        url = settings.clojure_server_r5();
+        if (!this.getResourceJson() && this.resourceId) {
+          await this.downloadTestResource();
+          resourceJson = this.getResourceJson();
+        }
+      }
       else {
         (this as any).$appInsights?.trackEvent({ name: 'evaluate FirelySDK' });
       }
+
 
       if (resourceJson) {
         p.parameter?.push({ name: "resource", resource: JSON.parse(resourceJson) });
@@ -2704,6 +2719,8 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       results: [],
       selectedEngine: "fhirpath.js",
       executionEngines: [
+        "Clojure (Aidbox)"
+        "Clojure (Aidbox-R5)"
         ".NET (firely)",
         "fhirpath.js",
         "java (HAPI)",
