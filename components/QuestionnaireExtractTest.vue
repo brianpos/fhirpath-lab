@@ -9,13 +9,30 @@
     </v-text-field>
     <div height="85px" width="100%" ref="aceEditorExpression"></div>
     <div class="ace_editor_footer"></div>
-    <v-textarea :rows="5" small label="Extract Parameters" :value="JSON.stringify(extractParameters, null, 2)" />
-    <v-textarea :rows="5" small label="Questionnaire" :value="JSON.stringify(questionnaire, null, 2)" />
-    <v-textarea :rows="5" small label="QuestionnaireResponse" :value="JSON.stringify(questionnaireResponse, null, 2)" />
+    <v-expansion-panels accordion expanded>
+      <v-expansion-panel :isActive="true">
+        <v-expansion-panel-header>
+          Debug Expand Details
+        </v-expansion-panel-header>
+        <v-expansion-panel-content>
+          <v-textarea auto-grow :rows="5" class="small-textarea" label="Extract Parameters" :value="JSON.stringify(extractParameters, null, 2)" />
+          <v-textarea :rows="5" class="small-textarea " label="Questionnaire" :value="JSON.stringify(questionnaire, null, 2)" />
+          <v-textarea :rows="5" class="small-textarea " label="QuestionnaireResponse" :value="JSON.stringify(questionnaireResponse, null, 2)" />
+        </v-expansion-panel-content>
+      </v-expansion-panel>
+    </v-expansion-panels>
   </div>
 </template>
 
+<style lang="scss">
+.small-textarea .v-text-field__slot textarea {
+  font-size: 0.75em;
+  line-height: revert;
+}
+</style>
+
 <style lang="scss" scoped>
+
 .bare-label {
   transform-origin: top left;
   transform: scale(0.75);
@@ -141,7 +158,7 @@ export default class QuestionnaireExtractTest extends Vue {
         console.log("creating the extract ace editor");
         this.expressionEditor = ace.edit(editorDiv, {
           wrap: "free",
-          minLines: 3,
+          minLines: 10,
           maxLines: 35,
           highlightActiveLine: false,
           showGutter: true,

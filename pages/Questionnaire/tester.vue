@@ -343,16 +343,35 @@ function getPriorityIssue(
   return undefined;
 }
 
+const resourceEditorSettings: Partial<ace.Ace.EditorOptions> = {
+  wrap: "free",
+  minLines: 15,
+  // maxLines: 30,
+  highlightActiveLine: true,
+  showGutter: true,
+  fontSize: 14,
+  cursorStyle: "slim",
+  showPrintMargin: false,
+  theme: "ace/theme/chrome",
+  // mode: "ace/mode/json",
+  wrapBehavioursEnabled: true,
+};
+
 export default Vue.extend({
   //   components: { fhirqItem },
   mounted() {
     window.document.title = "Questionnaire Tester";
-    const CDN = 'https://cdn.jsdelivr.net/npm/ace-builds@1.34.2/src-min-noconflict';
-    if (true) {
-        ace.config.set('basePath', CDN);
-        ace.config.set('modePath', CDN);
-        ace.config.set('themePath', CDN);
-        ace.config.set('workerPath', CDN);
+    // this.ensureEditorIsCreated();
+  },
+  destroyed() {
+    console.log("Destroying Q Json editor");
+    if (this.resourceJsonEditor) {
+      this.resourceJsonEditor.destroy();
+      this.resourceJsonEditor = undefined;
+    }
+    if (this.questionnaireResponseJsonEditor) {
+      this.questionnaireResponseJsonEditor.destroy();
+      this.questionnaireResponseJsonEditor = undefined;
     }
   },
   computed: {
@@ -475,27 +494,20 @@ export default Vue.extend({
     },
   },
   methods: {
-    async twinPaneMounted(): Promise<void> {
-      const resourceEditorSettings: Partial<ace.Ace.EditorOptions> = {
-        wrap: "free",
-        minLines: 15,
-        // maxLines: 30,
-        highlightActiveLine: true,
-        showGutter: true,
-        fontSize: 14,
-        cursorStyle: "slim",
-        showPrintMargin: false,
-        theme: "ace/theme/chrome",
-        mode: "ace/mode/json",
-        wrapBehavioursEnabled: true,
-      };
-      var editorResourceJsonDiv: any = this.$refs
-        .aceEditorResourceJsonTab as Element;
+    ensureEditorIsCreated(){
+      if (this.resourceJsonEditor === undefined){
+        console.log("Creating Q Json editor");
+        var editorResourceJsonDiv: any = this.$refs.aceEditorResourceJsonTab as Element;
       if (editorResourceJsonDiv) {
-        this.resourceJsonEditor = ace.edit(
-          editorResourceJsonDiv,
-          resourceEditorSettings
-        );
+          const CDN = 'https://cdn.jsdelivr.net/npm/ace-builds@1.6.0/src-min-noconflict';
+          if (true) {
+            ace.config.set('basePath', CDN);
+            ace.config.set('modePath', CDN);
+            ace.config.set('themePath', CDN);
+            ace.config.set('workerPath', CDN);
+          }
+
+          this.resourceJsonEditor = ace.edit(editorResourceJsonDiv, resourceEditorSettings);
         if (this.raw)
           this.resourceJsonEditor?.setValue(JSON.stringify(this.raw, null, 2));
         this.resourceJsonEditor?.clearSelection();
@@ -503,7 +515,7 @@ export default Vue.extend({
           "change",
           this.resourceJsonChangedEvent
         );
-      }
+          // this.resourceJsonEditor.session.setMode('ace/mode/json');
 
       // Also add in the QResponse editor too
       var editorQResponseJsonDiv: any = this.$refs
@@ -513,7 +525,18 @@ export default Vue.extend({
           editorQResponseJsonDiv,
           resourceEditorSettings
         );
+          // this.questionnaireResponseJsonEditor.session.setMode('ace/mode/json');
+        }
+          console.log("Created Q Json editor");
+        }
+        else {
+          console.log("Failed to create Q Json editor - no HTML element ... yet");
+        }
       }
+    },
+
+    async twinPaneMounted(): Promise<void> {
+      this.ensureEditorIsCreated();
 
       this.showAdvancedSettings = settings.showAdvancedSettings();
       this.openAIFeedbackEnabled = settings.getOpenAIFeedbackEnabled();
