@@ -27,7 +27,7 @@ import Vue, {PropType} from "vue";
 import {Questionnaire, QuestionnaireResponse} from "fhir/r4";
 import {compressToEncodedURIComponent} from "lz-string";
 
-const baseUrl = new URL("https://form-builder.aidbox.app/ui/sdc#/embed?mode=public-builder&q=");
+const baseUrl = new URL("https://form-builder.aidbox.app/ui/sdc#/embed?mode=public-builder&sticky-header=false&visible-footer=false&q=");
 
 export default Vue.extend({
   data() {
