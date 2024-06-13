@@ -27,16 +27,20 @@ import Vue, {PropType} from "vue";
 import {Questionnaire, QuestionnaireResponse} from "fhir/r4";
 import {compressToEncodedURIComponent} from "lz-string";
 
-const baseUrl = new URL("https://form-builder.aidbox.app/ui/sdc#/embed?mode=public-builder&sticky-header=false&visible-footer=false&q=");
+const baseUrl = new URL("https://form-builder.aidbox.app/ui/sdc#/embed?mode=public-builder&sticky-header=false&visible-footer=false");
 
 export default Vue.extend({
   data() {
     return {
       response: null as QuestionnaireResponse | null,
-
-      // Pass the questionnaire to the iframe as a query parameter
-      // Further changes to the questionnaire will be sent to the iframe via postMessage
-      src: baseUrl + compressToEncodedURIComponent(JSON.stringify(this.questionnaire))
+      src: baseUrl
+        // Pass the questionnaire to the iframe as a query parameter
+        // Further changes to the questionnaire will be sent to the iframe via postMessage
+        + '&q=' + compressToEncodedURIComponent(JSON.stringify(this.questionnaire))
+        /*
+         * Example of how to initialize the form with a questionnaire response
+         */
+        // + '&qr=' + compressToEncodedURIComponent(JSON.stringify(this.questionnaireResponse))
     }
   },
   mounted() {
@@ -79,6 +83,25 @@ export default Vue.extend({
         }
       },
     },
+    /*
+     * Example of how to watch for changes in the questionnaire response and apply them to the form
+     */
+    // questionnaireResponse: {
+    //   handler() {
+    //     const iframe = document.getElementById("aidbox-forms-renderer");
+    //
+    //     // Only send the questionnaire response to the iframe if it is ready
+    //     if (iframe) {
+    //       // Send the questionnaire response to the iframe without full iframe reload
+    //       const message = {
+    //         type: "aidbox-forms/questionnaire-response",
+    //         data: this.questionnaire,
+    //       };
+    //
+    //       iframe.contentWindow.postMessage(message, baseUrl.origin);
+    //     }
+    //   },
+    // },
   },
 });
 </script>
