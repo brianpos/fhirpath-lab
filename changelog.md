@@ -3,6 +3,10 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+## 18 June 2024
+* Update the LForms renderer to 36.1.3
+* Include the fhirpath expression in the Library search page row extension section
+
 ## 11 June 2024
 * Include a POC of the $extract Questionnaire tester
 

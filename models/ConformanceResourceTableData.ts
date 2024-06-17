@@ -22,6 +22,7 @@ export interface ConformanceResourceTableData {
   /** Description (markdown format) */
   description?: string;
   favourite?: boolean;
+  extendedDescription?: string;
 }
 
 export interface WithPublishingHistory<TData extends fhir4b.DomainResource> {

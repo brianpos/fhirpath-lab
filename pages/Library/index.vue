@@ -175,6 +175,16 @@ export default Vue.extend({
             this.searchUseContexts = mergeResult.contexts;
             updateRequired = true;
           }
+          let fhirpathExpression: string | undefined = undefined;
+          if (vs.content && vs.content.length > 0 && vs.content[0].contentType == 'text/fhirpath' && vs.content[0].data) {
+            // Append the fhirpath statement into the description
+            try{
+              fhirpathExpression = atob(vs.content[0].data);
+            }
+            catch{
+              console.log("can't parse ", vs.content[0].data);
+            }
+          }
           return {
             id: vs?.id ?? "",
             title: vs?.title ?? vs?.name ?? vs?.description ?? "(none)",
@@ -189,6 +199,7 @@ export default Vue.extend({
               post.resource?.resourceType,
               post.resource?.id
             ),
+            extendedDescription: fhirpathExpression,
           };
           if (updateRequired) saveCustomUseContexts("library", this.searchUseContexts, this.defaultUseContexts!);
         });
@@ -197,7 +208,7 @@ export default Vue.extend({
 
     // https://www.sitepoint.com/fetching-data-third-party-api-vue-axios/
     async searchFhirServer() {
-      let url = `${settings.getFhirServerUrl()}/Library?_count=${settings.getPageSize()}&_elements=id,name,title,description,url,version,date,status,publisher,useContext&content-type=text/fhirpath`;
+      let url = `${settings.getFhirServerUrl()}/Library?_count=${settings.getPageSize()}&_elements=id,name,title,description,url,version,date,status,publisher,useContext,content&content-type=text/fhirpath`;
       if (this.searchFor) {
         url += `&title=${encodeURIComponent(this.searchFor)}`;
       }

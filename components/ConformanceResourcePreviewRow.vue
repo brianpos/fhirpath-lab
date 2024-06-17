@@ -17,10 +17,22 @@
     </div>
     <!-- <span v-if="data.markDownDescription">Description: {{ data.markDownDescription }}</span> -->
     <!-- <code>{{ JSON.stringify(data, null, 2) }}</code> -->
+    <div v-if="data.extendedDescription">
+      <code class="fhirpath">{{ data.extendedDescription }}</code>
+    </div>
   </span>
 </template>
 
 <style scoped>
+code.fhirpath {
+  margin-top: 4px;
+  margin-left: 48px;
+  padding: 8px;
+  padding-left: 16px;
+  display: block;
+  font-size: 14px;
+}
+
 .label{
   color: lightslategray;
 }
