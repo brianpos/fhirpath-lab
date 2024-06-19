@@ -7,7 +7,7 @@
         </v-btn>
       </template>
     </v-text-field>
-    <div height="85px" width="100%" ref="aceEditorExpression"></div>
+    <div height="85px" width="100%" ref="aceEditorExpressionExtract"></div>
     <div class="ace_editor_footer"></div>
     <v-expansion-panels accordion expanded>
       <v-expansion-panel :isActive="true">
@@ -153,7 +153,7 @@ export default class QuestionnaireExtractTest extends Vue {
 
   ensureEditorIsCreated(): void {
     try {
-      var editorDiv: any = this.$refs.aceEditorExpression as HTMLDivElement;
+      var editorDiv: any = this.$refs.aceEditorExpressionExtract as HTMLDivElement;
       if (editorDiv && this.expressionEditor === undefined) {
         console.log("creating the extract ace editor");
         this.expressionEditor = ace.edit(editorDiv, {
@@ -172,7 +172,7 @@ export default class QuestionnaireExtractTest extends Vue {
         console.log("extract ace editor  initialized");
 
         if (this.expressionEditor) {
-          setCustomHighlightRules(this.expressionEditor, FhirPathHightlighter_Rules);
+          // setCustomHighlightRules(this.expressionEditor, FhirPathHightlighter_Rules);
           // this.expressionEditor.setValue(this.internalValue ?? "");
           // this.expressionEditor.clearSelection();
           // this.expressionEditor.on("change", this.fhirpathExpressionChangedEvent)

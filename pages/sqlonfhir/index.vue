@@ -564,7 +564,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
             wrapBehavioursEnabled: true
           });
 
-          setCustomHighlightRules(this.expressionEditor, FhirPathHightlighter_Rules);
+          // setCustomHighlightRules(this.expressionEditor, FhirPathHightlighter_Rules);
           this.expressionEditor.setValue(exampleSqlonfhirViewDefinition);
           this.expressionEditor.clearSelection();
           this.expressionEditor.on("change", this.fhirpathExpressionChangedEvent)

@@ -353,7 +353,7 @@ const resourceEditorSettings: Partial<ace.Ace.EditorOptions> = {
   cursorStyle: "slim",
   showPrintMargin: false,
   theme: "ace/theme/chrome",
-  // mode: "ace/mode/json",
+  mode: "ace/mode/json",
   wrapBehavioursEnabled: true,
 };
 

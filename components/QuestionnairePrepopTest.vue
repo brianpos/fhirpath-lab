@@ -91,7 +91,7 @@
     <br />
     <label>$populate parameters</label>
     <br />
-    <div height="85px" width="100%" ref="aceEditorExpression"></div>
+    <div height="85px" width="100%" ref="aceEditorExpressionPrePop"></div>
     <div class="ace_editor_footer"></div>
   </div>
 </template>
@@ -483,7 +483,7 @@ export default class QuestionnaireExtractTest extends Vue {
 
   ensureEditorIsCreated(): void {
     try {
-      var editorDiv: any = this.$refs.aceEditorExpression as HTMLDivElement;
+      var editorDiv: any = this.$refs.aceEditorExpressionPrePop as HTMLDivElement;
       if (editorDiv && this.expressionEditor === undefined) {
         console.log("need to create the editor");
         this.expressionEditor = ace.edit(editorDiv, {
@@ -502,7 +502,7 @@ export default class QuestionnaireExtractTest extends Vue {
         console.log("extract initialized");
 
         if (this.expressionEditor) {
-          setCustomHighlightRules(this.expressionEditor, FhirPathHightlighter_Rules);
+          // setCustomHighlightRules(this.expressionEditor, FhirPathHightlighter_Rules);
           this.expressionEditor.setValue(this.internalValue ?? "");
           this.expressionEditor.clearSelection();
           // this.expressionEditor.on("change", this.fhirpathExpressionChangedEvent)

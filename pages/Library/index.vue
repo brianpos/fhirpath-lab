@@ -31,7 +31,7 @@ tr.ve-table-body-tr {
       <v-form class="fl-toolbar">
         <v-row style="align-items: flex-end">
           <v-col>
-            <v-text-field label="Name" v-model="searchFor" @input="searchFhirServer" hide-details="auto" />
+            <v-text-field label="Name" v-model="searchFor" @input="searchFhirServer" hide-details="auto" title="Name or fhirpath function(s)" />
           </v-col>
           <v-col class="status-col">
             <v-select label="Status" :items="searchPublishingStatuses" v-model="searchForStatus"
