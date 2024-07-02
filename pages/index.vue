@@ -66,7 +66,7 @@
         (defaulting test resource ID "example")
       </p>
       <p>
-        <b>Note:</b> As the .net and java fhirpath engines don't run in the browser this data is sent to a cloud
+        <b>Note:</b> As the .net and java and clojure fhirpath engines don't run in the browser this data is sent to a cloud
         service to process these requests. None of this data is persisted outside the call itself.
         Using individually identifiable data with this test utility is prohibited.<br/>
         These are the versions of each of the fhirpath engines in use:
@@ -77,6 +77,8 @@
         <li>HAPI FHIRPath v7.0.2 <i>(server side)</i></li>
         <li>IBM FHIRPath v4.11.1 (LinuxForHealth) <i>(server side)</i></li>
         <li>Dotnet FHIRMappingLanguage Engine v5.1.0 <i>(server side)</i></li>
+        <li>HealthSamurai Aidbox FHIRPath Engine v1.0.0<i>(server side)</i></li>
+
       </ul>
       <br />
       <h5>Disclaimers:</h5>
