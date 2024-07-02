@@ -2719,8 +2719,8 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       results: [],
       selectedEngine: "fhirpath.js",
       executionEngines: [
-        "Clojure (Aidbox)"
-        "Clojure (Aidbox-R5)"
+        "Clojure (Aidbox)",
+        "Clojure (Aidbox-R5)",
         ".NET (firely)",
         "fhirpath.js",
         "java (HAPI)",
