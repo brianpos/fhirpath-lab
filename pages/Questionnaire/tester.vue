@@ -283,6 +283,8 @@ import ace from "ace-builds";
 import "ace-builds/src-noconflict/mode-text";
 import "ace-builds/src-noconflict/mode-json";
 import "ace-builds/src-noconflict/theme-chrome";
+import { setAcePaths, Rules as FhirPathHightlighter_Rules, setCustomHighlightRules } from "~/helpers/fhirpath_highlighter"
+
 import Chat from "~/components/Chat.vue";
 import QuestionnaireExtractTest from "~/components/QuestionnaireExtractTest.vue";
 import EditorNLMRendererSection from "~/components/Questionnaire/EditorNLMRendererSection.vue";
@@ -362,7 +364,9 @@ export default Vue.extend({
   mounted() {
     window.document.title = "Questionnaire Tester";
     // this.ensureEditorIsCreated();
+    setAcePaths(ace.config);
   },
+
   destroyed() {
     console.log("Destroying Q Json editor");
     if (this.resourceJsonEditor) {
@@ -498,14 +502,7 @@ export default Vue.extend({
       if (this.resourceJsonEditor === undefined){
         console.log("Creating Q Json editor");
         var editorResourceJsonDiv: any = this.$refs.aceEditorResourceJsonTab as Element;
-      if (editorResourceJsonDiv) {
-          const CDN = 'https://cdn.jsdelivr.net/npm/ace-builds@1.6.0/src-min-noconflict';
-          if (true) {
-            ace.config.set('basePath', CDN);
-            ace.config.set('modePath', CDN);
-            ace.config.set('themePath', CDN);
-            ace.config.set('workerPath', CDN);
-          }
+        if (editorResourceJsonDiv) {
 
           this.resourceJsonEditor = ace.edit(editorResourceJsonDiv, resourceEditorSettings);
         if (this.raw)

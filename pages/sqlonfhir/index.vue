@@ -206,7 +206,7 @@ import { AxiosError } from "axios";
 import { CancelTokenSource } from "axios";
 import fhirpath from "fhirpath";
 import fhirpath_r4_model from "fhirpath/fhir-context/r4";
-import { Rules as FhirPathHightlighter_Rules, setCustomHighlightRules } from "~/helpers/fhirpath_highlighter"
+import { setAcePaths, Rules as FhirPathHightlighter_Rules, setCustomHighlightRules } from "~/helpers/fhirpath_highlighter"
 import "~/assets/fhirpath_highlighter.scss"
 
 import "ace-builds";
@@ -495,14 +495,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
   async mounted() {
     this.showAdvancedSettings = settings.showAdvancedSettings();
     this.defaultProviderField = settings.getDefaultProviderField();
-    
-    const CDN = 'https://cdn.jsdelivr.net/npm/ace-builds@1.34.2/src-min-noconflict';
-        if (true) {
-          ace.config.set('basePath', CDN);
-          ace.config.set('modePath', CDN);
-          ace.config.set('themePath', CDN);
-          ace.config.set('workerPath', CDN);
-        }
+    setAcePaths(ace.config);
   },
   computed: {
     tabDetails(): TabData[] {

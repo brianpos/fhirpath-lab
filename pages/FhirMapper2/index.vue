@@ -390,7 +390,7 @@ import { getExtensionStringValue } from "fhir-extension-helpers";
 // import { getPreferredTerminologyServerFromSDC } from "fhir-sdc-helpers";
 import fhirpath from "fhirpath";
 import fhirpath_r4_model from "fhirpath/fhir-context/r4";
-import { Rules as FhirPathHightlighter_Rules, setCustomHighlightRules } from "~/helpers/fhirpath_highlighter"
+import { setAcePaths, Rules as FhirPathHightlighter_Rules, setCustomHighlightRules } from "~/helpers/fhirpath_highlighter"
 import "~/assets/fhirpath_highlighter.scss"
 import { IApplicationInsights } from '@microsoft/applicationinsights-web'
 
@@ -479,13 +479,7 @@ export default Vue.extend({
   //   title: "FhirPathTester",
   // },
   async mounted() {
-    const CDN = 'https://cdn.jsdelivr.net/npm/ace-builds@1.34.2/src-min-noconflict';
-    if (true) {
-      ace.config.set('basePath', CDN);
-      ace.config.set('modePath', CDN);
-      ace.config.set('themePath', CDN);
-      ace.config.set('workerPath', CDN);
-    }
+    setAcePaths(ace.config);
 
     // Update the editor's Mode
     var editorDiv: any = this.$refs.aceEditorExpression as Element;

@@ -60,6 +60,7 @@ import "ace-builds/src-noconflict/mode-text";
 import "ace-builds/src-noconflict/theme-chrome";
 import {
   Rules as FhirPathHightlighter_Rules,
+  setAcePaths,
   setCustomHighlightRules,
 } from "~/helpers/fhirpath_highlighter";
 import "~/assets/fhirpath_highlighter.scss";
@@ -78,14 +79,7 @@ export default Vue.extend({
     value: String as PropType<string | undefined>,
   },
   mounted() {
-    const CDN =
-      "https://cdn.jsdelivr.net/npm/ace-builds@1.6.0/src-min-noconflict";
-    if (true) {
-      ace.config.set("basePath", CDN);
-      ace.config.set("modePath", CDN);
-      ace.config.set("themePath", CDN);
-      ace.config.set("workerPath", CDN);
-    }
+    setAcePaths(ace.config);
 
     // Update the editor's Mode
     var editorCtxtDiv: any = this.$refs.aceEditorTrigger as Element;

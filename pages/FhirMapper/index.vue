@@ -234,7 +234,7 @@ import {
 import axios, { AxiosRequestHeaders, AxiosResponse } from "axios";
 import { AxiosError } from "axios";
 import { CancelTokenSource } from "axios";
-import { Rules as FhirPathHightlighter_Rules, setCustomHighlightRules } from "~/helpers/fhirpath_highlighter"
+import { setAcePaths, Rules as FhirPathHightlighter_Rules, setCustomHighlightRules } from "~/helpers/fhirpath_highlighter"
 import "~/assets/fhirpath_highlighter.scss"
 
 import "ace-builds";
@@ -273,13 +273,7 @@ export default Vue.extend<FhirMapConverterData, IFhirMapConverterMethods, IFhirM
   // },
   async mounted() {
     document.title = "FML Converter";
-    const CDN = 'https://cdn.jsdelivr.net/npm/ace-builds@1.34.2/src-min-noconflict';
-    if (true) {
-      ace.config.set('basePath', CDN);
-      ace.config.set('modePath', CDN);
-      ace.config.set('themePath', CDN);
-      ace.config.set('workerPath', CDN);
-    }
+    setAcePaths(ace.config);
 
     // Update the editor's Mode
     var editorDiv: any = this.$refs.aceEditorMap as Element;

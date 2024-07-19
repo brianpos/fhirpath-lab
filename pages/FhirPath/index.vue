@@ -382,7 +382,7 @@ import { fpjsNode, GetExternalVariablesUsed, InvertTree, JsonNode } from "~/comp
 import fhirpath from "fhirpath";
 import fhirpath_r4_model from "fhirpath/fhir-context/r4";
 import fhirpath_r5_model from "fhirpath/fhir-context/r5";
-import { Rules as FhirPathHightlighter_Rules, setCustomHighlightRules } from "~/helpers/fhirpath_highlighter"
+import { setAcePaths, Rules as FhirPathHightlighter_Rules, setCustomHighlightRules } from "~/helpers/fhirpath_highlighter"
 import "~/assets/fhirpath_highlighter.scss"
 import { IApplicationInsights } from '@microsoft/applicationinsights-web'
 
@@ -769,13 +769,8 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       this.chatEnabled = true;
     this.terminologyServer = settings.getFhirTerminologyServerUrl();
 
-    const CDN = 'https://cdn.jsdelivr.net/npm/ace-builds@1.34.2/src-min-noconflict';
-    if (true) {
-        ace.config.set('basePath', CDN);
-        ace.config.set('modePath', CDN);
-        ace.config.set('themePath', CDN);
-        ace.config.set('workerPath', CDN);
-    }
+    setAcePaths(ace.config);
+
     document.addEventListener('keypress', this.CtrlEnterHandler);
   },
 
