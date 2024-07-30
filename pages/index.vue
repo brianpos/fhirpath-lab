@@ -66,17 +66,22 @@
         (defaulting test resource ID "example")
       </p>
       <p>
-        <b>Note:</b> As the .net and java fhirpath engines don't run in the browser this data is sent to a cloud
+        <b>Note:</b> As the .net, java, python and closure fhirpath engines don't run in the browser this data is sent to a cloud
         service to process these requests. None of this data is persisted outside the call itself.
-        Using individually identifiable data with this test utility is prohibited.<br/>
+        <v-alert outlined border="left" type="error">
+          <b>Test Server:</b> This is an open testing server and should not be used with/for production data.<br/>
+          Using individually identifiable data with this test utility is prohibited.<br/>
+          Externally hosted services are indicated with a <v-icon small>mdi-web</v-icon> icon, do not select these if you do not want to use those services.
+        </v-alert>
         These are the versions of each of the fhirpath engines in use:
       </p>
       <ul style="padding-left: 40px">
-        <li>Firely SDK FHIRPath Engine v5.8.1 <i>(server side)</i></li>
+        <li>Firely SDK FHIRPath Engine v5.9.0 <i>(server side)</i></li>
         <li>FHIRPath.js v{{ fhirpathVersion }}</li>
         <li>HAPI FHIRPath v7.0.2 <i>(server side)</i></li>
-        <li>IBM FHIRPath v4.11.1 (LinuxForHealth) <i>(server side)</i></li>
-        <li>Dotnet FHIRMappingLanguage Engine v5.1.0 <i>(server side)</i></li>
+        <li>IBM FHIRPath v4.11.1 (LinuxForHealth)<i> (server side)</i></li>
+        <li>Dotnet FHIRMappingLanguage Engine v5.1.0<i> (server side)</i></li>
+        <li>HealthSamurai Aidbox FHIRPath Engine v1.0.0<i> (server side - externally hosted by HealthSamurai)</i></li>
       </ul>
       <br />
       <h5>Disclaimers:</h5>

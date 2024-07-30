@@ -10,7 +10,12 @@
           <v-toolbar-title>{{ tabTitle() }}</v-toolbar-title>
           <v-spacer />
           <v-select dark class="engineselector" :items="executionEngines" v-model="selectedEngine" hide-details="auto"
-            @change="evaluateFhirPathExpression" />
+            @change="evaluateFhirPathExpression">
+            <template v-slot:item="{ item }">
+              <span v-if="externalExecutionEngines.indexOf(item) == -1">{{ item }}</span>
+              <span class="externalExecutionEngine" title="Externally hosted FhirPath Engine" v-if="externalExecutionEngines.indexOf(item) >= 0"><v-icon small>mdi-web</v-icon> {{ item }} *</span>
+            </template>
+          </v-select>
           <v-btn icon dark accesskey="g" title="press alt+g to go" @focus="checkFocus" @click="evaluateFhirPathExpression">
             <v-icon>
               mdi-play
@@ -241,6 +246,9 @@
 </template>
 
 <style lang="scss">
+.externalExecutionEngine {
+  color: blueviolet;
+}
 .resource {
   height: calc(100vh - 280px);
 }
@@ -592,6 +600,7 @@ interface FhirPathData {
   results: ResultData[];
   selectedEngine: string;
   executionEngines: string[];
+  externalExecutionEngines: string[];
   shareToolTipMessage: string;
   shareZulipToolTipMessage: string;
   expressionEditor?: ace.Ace.Editor;
@@ -1435,14 +1444,13 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
           if (this.raw.parameter) {
             for (let entry of this.raw.parameter) {
               if (entry.name === 'parameters'){
-                // read the processing engine version
-                if (entry.part && entry.part.length > 0 && entry.part[0].name === 'evaluator'){
-                  this.processedByEngine = entry.part[0].valueString;
-                }
-
                 if (entry.part)
                 {
                   for (let part of entry.part) {
+                    // read the processing engine version
+                    if (part.name === 'evaluator'){
+                      this.processedByEngine = part.valueString;
+                    }
                     if (part.name === 'parseDebugTree' && part.valueString) {
                       let ast: JsonNode = JSON.parse(part.valueString);
                       const astTab = this.$refs.astTabComponent2 as ParseTreeTab;
@@ -2615,6 +2623,22 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
 
         (this as any).$appInsights?.trackEvent({ name: 'evaluate IBM' });
       }
+      else if (this.selectedEngine == "Clojure (Aidbox)") {
+        url = settings.clojure_server_r4();
+        if (!this.getResourceJson() && this.resourceId) {
+          await this.downloadTestResource();
+          resourceJson = this.getResourceJson();
+        }
+        (this as any).$appInsights?.trackEvent({ name: 'evaluate Aidbox' });
+      }
+      else if (this.selectedEngine == "Clojure (Aidbox-R5)") {
+        url = settings.clojure_server_r5();
+        if (!this.getResourceJson() && this.resourceId) {
+          await this.downloadTestResource();
+          resourceJson = this.getResourceJson();
+        }
+        (this as any).$appInsights?.trackEvent({ name: 'evaluate Aidbox' });
+      }
       else {
         (this as any).$appInsights?.trackEvent({ name: 'evaluate FirelySDK' });
       }
@@ -2751,9 +2775,15 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         "fhirpath.js",
         "java (HAPI)",
         "java (IBM)",
+        "Clojure (Aidbox)",
         ".NET (firely-R5)",
         "fhirpath.js (R5)",
         "java (HAPI-R5)",
+        "Clojure (Aidbox-R5)",
+        ],
+      externalExecutionEngines: [
+      "Clojure (Aidbox)",
+      "Clojure (Aidbox-R5)",
       ],
       shareToolTipMessage: shareTooltipText,
       shareZulipToolTipMessage: shareZulipTooltipText,

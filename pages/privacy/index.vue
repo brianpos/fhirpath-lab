@@ -35,6 +35,33 @@
         <b>Service location:</b> The service and all components used in its operation run on
         Microsoft Azure Cloud infrastructure in Australia.
       </p>
+
+      <h5>3rd Party Hosted Services:</h5>
+      <p>
+        Features that use these 3rd party services are indicated using the <v-icon small>mdi-web</v-icon> icon.
+        As these are not under the control of this service, only use them if you are comfortable with their privacy policies.<br/>
+        These services may not always be available.
+      </p>
+      <div class="home-grid">
+        <a class="link-item" target="_blank" href="https://www.health-samurai.io/aidbox">
+          <div style="font-weight: 600">HealthSamurai - Aidbox</div>
+        </a>
+        <div class="link-plain-text">
+          Provides a Closure based FhirPath Engine inside their fhir services.
+          Contact HealthSamurai for further information.<br/>
+        </div>
+
+        <a class="link-item" target="_blank" href="https://beda.software/products">
+          <div style="font-weight: 600">Beda Software</div>
+        </a>
+        <div class="link-plain-text">
+          Provides an open source Python implementation of a FHIRPath engine.
+          Contact Beda Software for further information.<br/>
+          https://github.com/beda-software/fhirpath-py
+        </div>
+      </div>
+      <br/>
+
       <h5>3rd Party Tools and Technologies:</h5>
       <div class="home-grid">
         <a class="link-item" target="_blank" href="https://github.com/FirelyTeam/firely-net-sdk">
@@ -65,14 +92,6 @@
         </a>
         <div class="link-plain-text">
           VueJS/Nuxt UI Framework. MIT License
-        </div>
-
-        <a class="link-item" target="_blank" href="https://github.com/Happy-Coding-Clans/vue-easytable/blob/master/README.md">
-          <div style="font-weight: 600">vue-easytable</div>
-        </a>
-        <div class="link-plain-text">
-          A powerful data/grid control used for displahying search results.
-          Licensed under the MIT license.
         </div>
 
         <a class="link-item" target="_blank" href="https://ace.c9.io/">
