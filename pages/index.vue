@@ -95,22 +95,24 @@
       <div class="extra-links">
         <div>
           <h5>Specifications</h5>
-          <a href="http://hl7.org/fhirpath/" target="_blank">FHIRPath</a><br />
-          <a href="http://hl7.org/fhir/fhirpath.html" target="_blank">FHIRPath FHIR extensions</a><br />
-          <a href="http://hl7.org/fhir" target="_blank">FHIR (R4)</a>
+          <a href="https://hl7.org/fhirpath/" target="_blank">FHIRPath</a><br />
+          <a href="https://hl7.org/fhir/fhirpath.html" target="_blank">FHIRPath FHIR extensions</a><br />
+          <a href="https://hl7.org/fhir" target="_blank">FHIR (R4)</a><br />
+          <a href="https://hl7.org/fhir/mapping-language.html" target="_blank">FHIR Mapping Language</a>
         </div>
         <div>
           <h5>Community</h5>
-          <a href="https://chat.fhir.org/#narrow/stream/179266-fhirpath" target="_blank">FHIRPath</a><br />
-          <a href="https://chat.fhir.org/#narrow/stream/179298-fhirpath.2Ejs" target="_blank">FHIRPath.js</a><br />
-          <a href="https://chat.fhir.org/#narrow/stream/179171-dotnet" target="_blank">FHIR with .net</a>
+          <a href="https://chat.fhir.org/#narrow/stream/179266-fhirpath" target="_blank">FHIRPath chat</a><br />
+          <a href="https://chat.fhir.org/#narrow/stream/179298-fhirpath.2Ejs" target="_blank">FHIRPath.js chat</a><br />
+          <a href="https://chat.fhir.org/#narrow/stream/179171-dotnet" target="_blank">FHIR with .net chat</a><br />
+          <a href="https://chat.fhir.org/#narrow/stream/379173-FHIR-Mapping-Language" target="_blank">FHIR Mapping Language chat</a>
         </div>
         <div>
           <h5>Source Code</h5>
           <a href="https://github.com/brianpos/fhirpath-lab" target="_blank">fhirpath-lab</a><br />
           <a href="https://github.com/HL7/fhirpath.js" target="_blank">fhirpath.js</a><br />
-          <a href="https://github.com/FirelyTeam/firely-net-common/tree/develop/src/Hl7.FhirPath"
-            target="_blank">FirelySDK fhirpath (.net)</a>
+          <a href="https://github.com/FirelyTeam/firely-net-common/tree/develop/src/Hl7.FhirPath" target="_blank">FirelySDK fhirpath (.net)</a><br />
+          <a href="https://github.com/beda-software/fhirpath-py" target="_blank">fhirpath-py</a>
         </div>
       </div>
       <br/>
