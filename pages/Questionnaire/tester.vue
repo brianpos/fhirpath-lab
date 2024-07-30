@@ -365,6 +365,8 @@ export default Vue.extend({
     window.document.title = "Questionnaire Tester";
     // this.ensureEditorIsCreated();
     setAcePaths(ace.config);
+    if (settings.getOpenAIKey() || settings.getOpenAIBasePath())
+      this.chatEnabled = true;
   },
 
   destroyed() {
@@ -609,6 +611,7 @@ export default Vue.extend({
     settingsClosed() {
       this.showAdvancedSettings = settings.showAdvancedSettings();
       this.openAIFeedbackEnabled = settings.getOpenAIFeedbackEnabled();
+      this.chatEnabled = settings.getOpenAIKey() !== undefined || settings.getOpenAIBasePath() !== undefined;
     },
     clearOutcome() {
       this.showOutcome = undefined;
@@ -1659,7 +1662,7 @@ export default Vue.extend({
       helpWithError: undefined,
       questionnaireResponse: undefined,
 
-      chatEnabled: true,
+      chatEnabled: false,
       flatModel: [],
       formContainerElement: undefined,
       selectedItem: undefined,

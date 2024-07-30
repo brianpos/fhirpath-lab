@@ -369,6 +369,7 @@ interface FhirMapData {
   debugEditor?: ace.Ace.Editor;
   resourceJsonEditor?: ace.Ace.Editor;
   processedByEngine?: string;
+  chatEnabled: boolean;
   openAILastContext: string;
   openAIexpressionExplanationLoading: boolean;
 }
@@ -440,6 +441,8 @@ export default Vue.extend({
     this.defaultProviderField = settings.getDefaultProviderField();
     this.showAdvancedSettings = settings.showAdvancedSettings();
 
+    if (settings.getOpenAIKey() || settings.getOpenAIBasePath())
+      this.chatEnabled = true;
   },
   computed: {
     tabDetails(): TabData[] {
@@ -483,7 +486,7 @@ export default Vue.extend({
           tabName: "AI Chat",
           tabHeaderName: "FHIRPath AI Chat",
           title: "FHIRPath AI Chat",
-          show: true,
+          show: this.chatEnabled,
           enabled: true,
         },
         {
@@ -875,6 +878,7 @@ group SetEntryData(source src: Patient, target entry)
     settingsClosed() {
       this.defaultProviderField = settings.getDefaultProviderField();
       this.showAdvancedSettings = settings.showAdvancedSettings();
+      this.chatEnabled = settings.getOpenAIKey() !== undefined || settings.getOpenAIBasePath() !== undefined;
     },
 
     traceTypeClass(category: string | undefined): string {
@@ -1261,6 +1265,7 @@ group SetEntryData(source src: Patient, target entry)
       showResourceSelector: false,
       showAdvancedSettings: false,
       results: undefined,
+      chatEnabled: false,
       openAILastContext: "",
       openAIexpressionExplanationLoading: false,
       trace: [],
