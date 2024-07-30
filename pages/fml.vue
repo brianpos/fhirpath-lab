@@ -321,6 +321,7 @@ import TwinPaneTab, { TabData } from "~/components/TwinPaneTab.vue";
 import {
   GetFmlSystemPrompt,
 } from "~/helpers/openai_form_tester";
+import Chat from "~/components/Chat.vue";
 
 import { parseFML } from "~/helpers/fml_parser";
 
