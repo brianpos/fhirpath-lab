@@ -285,6 +285,7 @@ export default class Chat extends Vue {
 .message pre:has(.language-log),
 .message pre:has(.language-jsonpatch),
 .message pre:has(.language-fsh),
+.message pre:has(.language-fml),
 .message pre:has(.language-json) {
   position: relative;
   padding: 8px 8px 8px 16px;
@@ -302,6 +303,7 @@ export default class Chat extends Vue {
 .language-fhir::after,
 .language-jsonpatch::after,
 .language-fsh::after,
+.language-fml::after,
 .language-json::after {
   content: 'assignment_return';
   font-family: 'Material Icons';
@@ -322,6 +324,7 @@ export default class Chat extends Vue {
 .language-item:hover::after,
 .language-fhir:hover::after,
 .language-jsonpatch:hover::after,
+.language-fml:hover::after,
 .language-json:hover::after {
   color: #1976d2;
 }
@@ -335,6 +338,7 @@ export default class Chat extends Vue {
 .language-log::before,
 .language-jsonpatch::before,
 .language-fsh::before,
+.language-fml::before,
 .language-json::before {
   font-size: small;
   font-style: italic;
@@ -349,6 +353,7 @@ export default class Chat extends Vue {
 .language-item::after,
 .language-fhir::after,
 .language-fsh::after,
+.language-fml::after,
 .language-json::after {
   content: 'content_copy';
 }
@@ -387,6 +392,10 @@ export default class Chat extends Vue {
 
 .language-fsh::before {
   content: '(fsh)';
+}
+
+.language-fml::before {
+  content: '(fml)';
 }
 
 .message pre:has(code) {
