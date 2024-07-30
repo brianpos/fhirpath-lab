@@ -377,7 +377,8 @@ import axios, { AxiosRequestHeaders, AxiosResponse } from "axios";
 import { AxiosError } from "axios";
 import { CancelTokenSource } from "axios";
 import { addExtension, addExtensionStringValue, clearExtension, getExtensionCodingValues, getExtensionReferenceValue, getExtensionStringValue, setExtension, setExtensionStringValue } from "fhir-extension-helpers";
-import { fpjsNode, GetExternalVariablesUsed, InvertTree, JsonNode } from "~/components/ParseTreeTab.vue";
+import { fpjsNode, getTraceValue, getValue, JsonNode, ResultData } from "~/models/FhirpathTesterData";
+import { GetExternalVariablesUsed, InvertTree, mapFunctionReferences } from "~/components/ParseTreeTab.vue";
 // import { getPreferredTerminologyServerFromSDC } from "fhir-sdc-helpers";
 import fhirpath from "fhirpath";
 import fhirpath_r4_model from "fhirpath/fhir-context/r4";
@@ -388,9 +389,8 @@ import { IApplicationInsights } from '@microsoft/applicationinsights-web'
 
 import "ace-builds";
 import ace from "ace-builds";
-import "ace-builds/src-noconflict/mode-text";
-import "ace-builds/src-noconflict/mode-json";
-import "ace-builds/src-noconflict/theme-chrome";
+import langTools from "ace-builds/src-noconflict/ext-language_tools";
+
 import Chat from "~/components/Chat.vue";
 import { Message } from "~/types/chat-types";
 
@@ -611,24 +611,6 @@ interface FhirPathData {
   enableSave: boolean;
 }
 
-interface ResultItem {
-  type: string;
-  value: any;
-}
-
-interface ResultData {
-  context?: string;
-  position?: IJsonNodePosition;
-  result: ResultItem[];
-  trace: TraceData[];
-}
-
-interface TraceData {
-  name: string;
-  type?: string;
-  value?: string;
-}
-
 function canonicalVariableName(name: string): string {
   if (name.startsWith("%")) name = name.substring(1);
   if (name.startsWith("`")) name = name.substring(1);
@@ -646,38 +628,7 @@ function isSystemVariableName(name: string): boolean {
   return false;
 }
 
-function getValue(entry: fhir4b.ParametersParameter): ResultItem[] {
-  let result: ResultItem[] = [];
-  var myMap = new Map(Object.entries(entry));
-  for (let [k, v] of myMap.entries()) {
-    if (k.startsWith('value'))
-      result.push({ type: k.replace('value', ''), value: v });
-    else if (k == 'resource')
-      result.push({ type: (v as fhir4b.Resource).resourceType, value: v });
-  }
-  const extVal = getExtensionStringValue(entry, "http://fhir.forms-lab.com/StructureDefinition/json-value");
-  if (extVal)
-    result.push({ type: entry.name, value: JSON.parse(extVal) });
-  if (entry.name == "empty-string")
-    result.push({ type: "empty-string", value: "" });
-  
-  return result;
-}
-function getTraceValue(entry: fhir4b.ParametersParameter): TraceData[] {
-  let result: TraceData[] = [];
-  if (entry.part) {
-    for (let part of entry.part) {
-      const val = getValue(part);
-      let valueData : TraceData = { name: entry.valueString ?? '', type: part.name };
-      if (val.length > 0)
-        valueData.value = JSON.stringify(val[0].value, null, 4);
-      result.push(valueData);
-    }
-  }
-  return result;
-}
-
-interface IFhirPathMethods
+export interface IFhirPathMethods
 {
   twinPaneMounted(): Promise<void>;
   CtrlEnterHandler(event: KeyboardEvent): void;
@@ -939,8 +890,8 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     var editorResourceJsonDiv: any = this.$refs.aceEditorResourceJsonTab as Element;
     if (editorResourceJsonDiv) {
       this.resourceJsonEditor = ace.edit(editorResourceJsonDiv, resourceEditorSettings);
-      this.resourceJsonEditor?.setValue(JSON.stringify(JSON.parse(examplePatient), null, 2));
-      this.resourceJsonEditor?.clearSelection();
+      this.resourceJsonEditor.setValue(JSON.stringify(JSON.parse(examplePatient), null, 2));
+      this.resourceJsonEditor.clearSelection();
       this.resourceJsonEditor.session.on("change", this.resourceJsonChangedEvent);
     }
 

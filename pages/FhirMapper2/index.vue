@@ -24,6 +24,7 @@
             <span>
               <v-btn small icon dark tile @click="showMapSelector=true"><v-icon title="Download an existing map" dark> mdi-download </v-icon></v-btn>
               <!-- <v-btn small icon dark tile><v-icon title="Save Map" dark> mdi-content-save </v-icon></v-btn> -->
+              <v-btn small icon dark tile @click="validateMap"><v-icon title="Validate FML" dark> mdi-note-check-outline </v-icon></v-btn>
             </span>
         </div>
         <div ref="aceEditorExpression"></div>
@@ -394,6 +395,8 @@ import { setAcePaths, Rules as FhirPathHightlighter_Rules, setCustomHighlightRul
 import "~/assets/fhirpath_highlighter.scss"
 import { IApplicationInsights } from '@microsoft/applicationinsights-web'
 
+import { parseFML } from "~/helpers/fml_parser";
+
 import "ace-builds";
 import ace from "ace-builds";
 import "ace-builds/src-noconflict/mode-text";
@@ -697,6 +700,18 @@ group SetEntryData(source src: Patient, target entry)
       this.showOutcome = undefined;
     },
 
+    validateMap(){
+      if (this.expressionEditor) {
+        const fmlText = this.expressionEditor.getValue();
+        let tree = parseFML(fmlText);
+        const errOutcome = tree as fhir4b.OperationOutcome;
+        if (errOutcome && errOutcome.resourceType === "OperationOutcome") {
+          this.saveOutcome = errOutcome;
+          this.showOutcome = true;
+          this.setResultJson(JSON.stringify(errOutcome, null, 4));
+        }
+      }
+    },
     reformatTestResource(){
       if (this.resourceJsonEditor){
         const jsonValue = this.resourceJsonEditor.getValue();
