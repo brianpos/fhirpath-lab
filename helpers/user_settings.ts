@@ -79,7 +79,13 @@ export namespace settings {
     export function mapper_server_java(): string {
         return serverConnections.mapper_server_java;
     }
-
+    export function clojure_server_r4(): string {
+        return serverConnections.clojure_server_r4;
+    }
+    export function clojure_server_r5(): string {
+        return serverConnections.clojure_server_r5;
+    }
+    
     export function getSearchData(type: string): ConformanceSearchData | undefined {
         const sdJson = localStorage.getItem(`search_${type}`);
         if (sdJson){
