@@ -648,6 +648,7 @@ export interface IFhirPathMethods
   updateNow():void;
   selectTab(selectTab: number): void;
   tabChanged(index: Number): void;
+  getCompletions(editor: ace.Ace.Editor, session: ace.Ace.EditSession, pos: any, prefix: any, callback: any): void;
 
   getContextExpression(): string | undefined;
   getFhirpathExpression(): string | undefined;
@@ -809,6 +810,20 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     },
 
     async twinPaneMounted(): Promise<void> {
+
+      let vars = this.variables;
+
+      // https://github.com/ajaxorg/ace/blob/26eda2573755abdf8902cf85e7afbf0501ad56e1/src/autocomplete.js#L543
+      var fhirpathCompleter : ace.Ace.Completer = {
+        id: 'fhirpath',
+        identifierRegexps: [
+          /[a-zA-Z_0-9%\$\-\u00A2-\u2000\u2070-\uFFFF]/,
+          // /[^a-zA-Z_0-9\$\-\u00C0-\u1FFF\u2C00-\uD7FF\w]+/
+        ],
+        getCompletions: this.getCompletions
+      }
+
+
     // Update the editor's Mode
     var editorCtxtDiv: any = this.$refs.aceEditorContextExpression as Element;
     if (editorCtxtDiv) {
@@ -823,7 +838,9 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         showPrintMargin: false,
         theme: "ace/theme/chrome",
         mode: "ace/mode/text",
-        wrapBehavioursEnabled: true
+        wrapBehavioursEnabled: true,
+        enableBasicAutocompletion: [fhirpathCompleter],
+        enableLiveAutocompletion: [fhirpathCompleter],
       });
 
       if (this.expressionContextEditor) {
@@ -847,13 +864,17 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         showPrintMargin: false,
         theme: "ace/theme/chrome",
         mode: "ace/mode/text",
-        wrapBehavioursEnabled: true
+        wrapBehavioursEnabled: true,
+        enableBasicAutocompletion: [fhirpathCompleter],
+        enableLiveAutocompletion: [fhirpathCompleter],
       });
 
-        setCustomHighlightRules(this.expressionEditor, FhirPathHightlighter_Rules);
-        this.expressionEditor.setValue("trace('trc').given.join(' ')\n.combine(family).join(', ')");
-        this.expressionEditor.clearSelection();
-        this.expressionEditor.on("change", this.fhirpathExpressionChangedEvent)
+      setCustomHighlightRules(this.expressionEditor, FhirPathHightlighter_Rules);
+      this.expressionEditor.setValue("trace('trc').given.join(' ')\n.combine(family).join(', ')");
+      this.expressionEditor.clearSelection();
+      this.expressionEditor.on("change", this.fhirpathExpressionChangedEvent)
+
+      langTools.addCompleter(fhirpathCompleter);
     }
 
     var editorDebugDiv: any = this.$refs.aceEditorDebug as Element;
@@ -885,7 +906,8 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       showPrintMargin: false,
       theme: "ace/theme/chrome",
       mode: "ace/mode/json",
-      wrapBehavioursEnabled: true
+      wrapBehavioursEnabled: true,
+      enableBasicAutocompletion: true,
     };
     var editorResourceJsonDiv: any = this.$refs.aceEditorResourceJsonTab as Element;
     if (editorResourceJsonDiv) {
@@ -893,6 +915,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       this.resourceJsonEditor.setValue(JSON.stringify(JSON.parse(examplePatient), null, 2));
       this.resourceJsonEditor.clearSelection();
       this.resourceJsonEditor.session.on("change", this.resourceJsonChangedEvent);
+      this.resourceJsonEditor.completers = [];
     }
 
     // read the values that were last used (stored in the local storage)
@@ -987,6 +1010,80 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       }
     },
 
+    getCompletions(editor: ace.Ace.Editor, session: ace.Ace.EditSession, pos: any, prefix: any, callback: any): void {
+      // console.log('object getCompletions:', prefix, pos);
+      let hints = [];
+
+      // check the previous character in the editor to see if it is a $ or a %
+      let line = session.getLine(pos.row);
+      // console.log('line:', line);
+      let index = pos.column - prefix.length;
+      // console.log('index:', index);
+      if (index >= 0){
+        let prevChar = line.charAt(index);
+        // console.log('prevChar:', prevChar);
+        if (prevChar == '$') {
+          // if the previous character is a $ or %, then we are looking for a variable
+          // so we don't need to provide any completions
+          // console.log('system variables');
+
+          // system variables $this, $index
+          hints.push({ value: '$this', score: hints.length });
+          hints.push({ value: '$index', score: hints.length });
+          callback(null, hints);
+          return;
+        }
+        if (prevChar == '%') {
+          // if the previous character is a $ or %, then we are looking for a variable
+          // so we don't need to provide any completions
+          // console.log('environment variables');
+
+          // environment variables
+          hints.push({ value: '%context', score: hints.length, meta: '%context - initial expression context' });
+          hints.push({ value: '%resource', score: hints.length, meta: '%resource - contains %context' });
+          hints.push({ value: '%rootResource', score: hints.length, meta: '%rootResource - container resource' });
+          hints.push({ value: '%ucum', score: hints.length, meta: '%ucum (http://unitsofmeasure.org)' });
+          hints.push({ value: '%sct', score: hints.length, meta: '%sct (http://snomed.info/sct)' });
+          hints.push({ value: '%loinc', score: hints.length, meta: '%loinc (http://loinc.org)' });
+          callback(null, hints);
+          return;
+        }
+      }
+
+      // variables already in the expression context
+      for (const key of this.variables.keys()) {
+        let hint: any = { value: key, score: hints.length };
+        if (this.variables.get(key)?.resourceId)
+            hint.meta = this.variables.get(key)?.resourceId;
+        hints.push(hint);
+      }
+
+      // functions
+      for (const key of mapFunctionReferences.keys()) {
+        if (key.startsWith(prefix)) {
+          let hint: any = { value: key, score: hints.length };
+          const title = mapFunctionReferences.get(key)?.title;
+          const description = mapFunctionReferences.get(key)?.description;
+          const specUrl = mapFunctionReferences.get(key)?.specUrl;
+          if (title){
+            hint.meta = title;
+            hint.docHTML = title;
+            if (title.indexOf('()') > 0)
+              hint.value += '()';
+            else
+              hint.value += '(';
+          }
+          if (description){
+            hint.docHTML += '<br/>' + description;
+          }
+          if (specUrl){
+            hint.docHTML += '<br/><a href='+specUrl+' target="_blank">' + specUrl + '</a>';
+          }
+          hints.push(hint);
+        }
+      }
+      callback(null, hints);
+    },
     readParametersFromQuery(): TestFhirpathData {
       let data: TestFhirpathData = {
         expression: this.$route.query.expression as string
