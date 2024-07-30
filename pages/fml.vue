@@ -2,24 +2,24 @@
   <div style="height:100%;padding: 80px 20px 20px 20px;">
     <HeaderNavbar @close-settings="settingsClosed">
       <template v-slot:extraNavButtons>
-          <v-btn icon dark accesskey="g" title="press alt+g to go" @focus="checkFocus"
-            @click="evaluateFhirPathExpression">
-            <v-icon>
-              mdi-play
-            </v-icon>
-          </v-btn>
-          <v-select dark class="engineselector" :items="executionEngines" v-model="selectedEngine" hide-details="auto"
-            @change="evaluateFhirPathExpression" />
+        <v-btn icon dark accesskey="g" title="press alt+g to go" @focus="checkFocus"
+          @click="evaluateFhirPathExpression">
+          <v-icon>
+            mdi-play
+          </v-icon>
+        </v-btn>
+        <v-select dark class="engineselector" :items="executionEngines" v-model="selectedEngine" hide-details="auto"
+          @change="evaluateFhirPathExpression" />
       </template>
     </HeaderNavbar>
     <table-loading v-if="loadingData" />
- 
+
     <div class="container-fluid bd-layout" style="padding-top: 16px">
       <v-card>
         <twin-pane-tab :tabs="tabDetails" ref="twinTabControl" @mounted="twinPaneMounted" @change="tabChanged">
           <template v-slot:Map>
-            <v-text-field label="StructureMap Id" v-model="structureMapId" hide-details="auto" autocomplete="off" @input="updateNow"
-                          autocorrect="off" autocapitalize="off" spellcheck="false">
+            <v-text-field label="StructureMap Id" v-model="structureMapId" hide-details="auto" autocomplete="off"
+              @input="updateNow" autocorrect="off" autocapitalize="off" spellcheck="false">
               <template v-slot:append>
                 <v-btn icon small tile @click="structureMapId = undefined">
                   <v-icon> mdi-close </v-icon>
@@ -28,17 +28,18 @@
                   <v-icon> mdi-download </v-icon>
                 </v-btn>
                 <!-- <v-btn small icon tile @click="reformatTestResource"><v-icon title="Format json" dark> mdi-format-indent-increase </v-icon></v-btn> -->
-                <v-btn small icon tile @click="validateMap"><v-icon title="Validate FML"> mdi-note-check-outline </v-icon></v-btn>
+                <v-btn small icon tile @click="validateMap"><v-icon title="Validate FML"> mdi-note-check-outline
+                  </v-icon></v-btn>
               </template>
             </v-text-field>
 
             <label class="v-label theme--light bare-label">FHIR Map</label>
             <div class="resource" ref="aceEditorExpression"></div>
-          </template> 
+          </template>
 
           <template v-slot:Resource>
-            <v-text-field label="Test Resource Id" v-model="resourceId" hide-details="auto" autocomplete="off" @input="updateNow"
-                          autocorrect="off" autocapitalize="off" spellcheck="false">
+            <v-text-field label="Test Resource Id" v-model="resourceId" hide-details="auto" autocomplete="off"
+              @input="updateNow" autocorrect="off" autocapitalize="off" spellcheck="false">
               <template v-slot:append>
                 <v-btn icon small tile @click="resourceId = undefined">
                   <v-icon> mdi-close </v-icon>
@@ -46,11 +47,13 @@
                 <v-btn icon small tile @click="downloadTestResource">
                   <v-icon> mdi-download </v-icon>
                 </v-btn>
-                <v-btn small icon tile @click="reformatTestResource"><v-icon title="Format json" dark> mdi-format-indent-increase </v-icon></v-btn>
+                <v-btn small icon tile @click="reformatTestResource"><v-icon title="Format json" dark>
+                    mdi-format-indent-increase </v-icon></v-btn>
               </template>
             </v-text-field>
 
-            <label class="v-label theme--light bare-label">Test Resource JSON <i>{{ resourceJsonChangedMessage() }}</i></label>
+            <label class="v-label theme--light bare-label">Test Resource JSON <i>{{ resourceJsonChangedMessage()
+                }}</i></label>
             <div class="resource" width="100%" ref="aceEditorResourceJsonTab"></div>
             <!-- <div class="ace_editor_footer"></div> -->
           </template>
@@ -58,7 +61,7 @@
           <template v-slot:Trace>
             <div class="ct-header">
               <v-icon left dark> mdi-format-list-bulleted </v-icon>
-                Trace / Debug
+              Trace / Debug
             </div>
             <v-simple-table>
               <template v-for="(v1, index) in trace">
@@ -78,35 +81,26 @@
             </div>
             <template v-if="results">
               <v-simple-table>
-                  <tr>
-                    <td class="result-value">
-                      <div class="code-json">{{ results.value }}</div>
-                    </td>
-                    <td class="result-type"><i v-if="results.type">({{ results.type }})</i></td>
-                  </tr>
+                <tr>
+                  <td class="result-value">
+                    <div class="code-json">{{ results.value }}</div>
+                  </td>
+                  <td class="result-type"><i v-if="results.type">({{ results.type }})</i></td>
+                </tr>
               </v-simple-table>
             </template>
           </template>
 
           <template v-slot:AI_Chat>
-            <Chat class="chat" ref="chatComponent" 
-              feature="FHIRPathTester"
-              :openAIFeedbackEnabled="false"
-              :suggestionsWhenEmpty="chatPromptOptionsWhenEmpty"
-              :suggestions="chatPromptOptions"
-              :publisher="defaultProviderField"
-              @remove-suggestion="removeSuggestion"
-              @send-message="handleSendMessage" 
-              @reset-conversation="resetConversation"
-              @apply-suggested-context="copySuggestionToClipboard"
+            <Chat class="chat" ref="chatComponent" feature="FHIRPathTester" :openAIFeedbackEnabled="false"
+              :suggestionsWhenEmpty="chatPromptOptionsWhenEmpty" :suggestions="chatPromptOptions"
+              :publisher="defaultProviderField" @remove-suggestion="removeSuggestion" @send-message="handleSendMessage"
+              @reset-conversation="resetConversation" @apply-suggested-context="copySuggestionToClipboard"
               @apply-suggested-expression="copySuggestionToClipboard"
               @apply-suggested-questionnaire="copySuggestionToClipboard"
-              @apply-suggested-item="copySuggestionToClipboard"
-              @apply-suggested-fhir="copySuggestionToClipboard"
-              @apply-suggested-json="copySuggestionToClipboard"
-              @apply-suggested-fsh="copySuggestionToClipboard"
-              @apply-suggested-jsonpatch="copySuggestionToClipboard"
-              />
+              @apply-suggested-item="copySuggestionToClipboard" @apply-suggested-fhir="copySuggestionToClipboard"
+              @apply-suggested-json="copySuggestionToClipboard" @apply-suggested-fsh="copySuggestionToClipboard"
+              @apply-suggested-jsonpatch="copySuggestionToClipboard" />
           </template>
 
           <template v-slot:Debug>
@@ -118,28 +112,27 @@
           </template>
 
           <template v-slot:Errors>
-            <OperationOutcomePanel :outcome="saveOutcome" @close="saveOutcome = undefined" 
-             @help-with-issue="helpWithIssue" />
+            <OperationOutcomePanel :outcome="saveOutcome" @close="saveOutcome = undefined"
+              @help-with-issue="helpWithIssue" />
           </template>
 
         </twin-pane-tab>
       </v-card>
 
       <br />
-      <OperationOutcomeOverlay style="z-index: 8" v-if="showOutcome" :saveOutcome="saveOutcome" :showOutcome="showOutcome" title="Error"
-        @close="clearOutcome" />
+      <OperationOutcomeOverlay style="z-index: 8" v-if="showOutcome" :saveOutcome="saveOutcome"
+        :showOutcome="showOutcome" title="Error" @close="clearOutcome" />
     </div>
 
 
-    <FileSelectorOverlay :visible="showMapSelector" iconName="mdi-clipboard-text-outline" title="Select Map" :initialFilename="structureMapId"
-        @download="downloadStructureMapResourceFromSelector"
-        @close="showMapSelector=false" />
-    <FileSelectorOverlay :visible="showResourceSelector" iconName="mdi-function-variant" title="Select Test Resource" :initialFilename="resourceId"
-        @download="downloadTestResourceFromSelector"
-        @close="showResourceSelector=false" />
-    
+    <FileSelectorOverlay :visible="showMapSelector" iconName="mdi-clipboard-text-outline" title="Select Map"
+      :initialFilename="structureMapId" @download="downloadStructureMapResourceFromSelector"
+      @close="showMapSelector = false" />
+    <FileSelectorOverlay :visible="showResourceSelector" iconName="mdi-function-variant" title="Select Test Resource"
+      :initialFilename="resourceId" @download="downloadTestResourceFromSelector" @close="showResourceSelector = false" />
+
     <OperationOutcomeOverlay v-if="showOutcome" :saveOutcome="saveOutcome" :showOutcome="showOutcome" title="Error"
-        @close="clearOutcome" />
+      @close="clearOutcome" />
   </div>
 </template>
 
@@ -157,10 +150,12 @@
 
 @media (max-width: 600px) {
 
-  .newlayout > div {
+  .newlayout>div {
     min-height: 20vh;
     max-height: 75vh
-  };
+  }
+
+  ;
 
   .ct-debug {
     display: none !important;
@@ -168,7 +163,7 @@
   }
 }
 
-.newlayout > div {
+.newlayout>div {
   // border: solid 1px red;
   background-color: white;
   display: flex;
@@ -189,10 +184,11 @@
   }
 }
 
-.ct-header + div {
+.ct-header+div {
   // background-color: aqua;
   overflow-y: auto;
 }
+
 .ct-header {
   padding: 6px 12px;
   color: white;
@@ -208,7 +204,7 @@
 
 .grid-toolbar {
   display: grid;
-  grid-gap: 4px; 
+  grid-gap: 4px;
   grid-template-columns: 25px auto max-content
 }
 
@@ -228,8 +224,7 @@
 }
 </style>
 
-<style lang="scss" scoped >
-
+<style lang="scss" scoped>
 td {
   vertical-align: top;
   height: unset !important;
@@ -238,12 +233,12 @@ td {
 
 
 .result-type {
-//  border-bottom: silver 1px solid;
+  //  border-bottom: silver 1px solid;
 }
 
 .result-value {
   width: 100%;
-//  border-bottom: silver 1px solid;
+  //  border-bottom: silver 1px solid;
   padding-top: 0px;
   padding-bottom: 0px;
 }
@@ -274,27 +269,32 @@ td {
   font-size: small;
   text-transform: none;
 }
+
 .resource {
   height: calc(100vh - 280px);
 }
+
 .chat {
   height: calc(100vh - 200px);
 }
+
 .debug {
   height: calc(100vh - 196px);
 }
+
 @media (max-width: 596px) {
   .resource {
     height: calc(100vh - 320px - 48px);
   }
+
   .chat {
     height: calc(100vh - 200px - 48px);
   }
+
   .debug {
     height: calc(100vh - 196px - 48px);
   }
 }
-
 </style>
 
 <script lang="ts">
@@ -402,10 +402,10 @@ function getTraceValue(entry: fhir4b.ParametersParameter): TraceData[] {
   if (entry.part) {
     for (let part of entry.part) {
       const val = getValue(part);
-      if (part.name === "debug"){
+      if (part.name === "debug") {
         result.push({ name: entry.valueString ?? '', type: part.name, value: val?.value });
       }
-      else{
+      else {
         result.push({ name: entry.valueString ?? '', type: part.name, value: JSON.stringify(val?.value, null, 4) });
       }
     }
@@ -440,101 +440,6 @@ export default Vue.extend({
     this.defaultProviderField = settings.getDefaultProviderField();
     this.showAdvancedSettings = settings.showAdvancedSettings();
 
-    // Update the editor's Mode
-    var editorDiv: any = this.$refs.aceEditorExpression as Element;
-    if (editorDiv) {
-      this.expressionEditor = ace.edit(editorDiv, {
-        wrap: "free",
-        // minLines: 16,
-        // maxLines: 16,
-        highlightActiveLine: false,
-        showGutter: true,
-        fontSize: 14,
-        cursorStyle: "slim",
-        showPrintMargin: false,
-        theme: "ace/theme/chrome",
-        mode: "ace/mode/text",
-        wrapBehavioursEnabled: true
-      });
-
-      setCustomHighlightRules(this.expressionEditor, FhirPathHightlighter_Rules);
-      this.expressionEditor.setValue(`/// name = "SDOHCC-PRAPARE-Map"
-/// status = draft
-/// version = 0.1
-
-map "http://fhirpath-lab.com/StructureMap/intro-patient-map" = "IntroPatientMap"
-
-uses "http://hl7.org/fhir/StructureDefinition/Patient" as source
-uses "http://hl7.org/fhir/StructureDefinition/Bundle" as target
-
-group patientMap(source src : Patient, target bundle : Bundle) {
-  src -> bundle.id = uuid() "bundle-id";
-  src -> bundle.type = 'transaction' "bundle-type";
-
-  // create a new entry and put the patient resource in it
-  src -> bundle.entry as entry, entry.resource = src then
-    SetEntryData(src, entry) "prep-entry";
-}
-
-group SetEntryData(source src: Patient, target entry)
-{
-  src.id as patientId log('patientId: ' & %src.id) -> entry.fullUrl = append('http://hl7.org/fhir/us/sdoh-clinicalcare/Patient/', patientId);
-  
-  src -> entry.request as request then {
-    src -> request.method = 'POST' "obsn-request-method";
-    src -> request.url = 'Observation' "obsn-request-url";
-  } "obsn-entry-request";
-}
-      `);
-      this.expressionEditor.clearSelection();
-      this.expressionEditor.on("change", this.fhirpathExpressionChangedEvent)
-    }
-
-    var editorDebugDiv: any = this.$refs.aceEditorDebug as Element;
-    if (editorDebugDiv) {
-      this.debugEditor = ace.edit(editorDebugDiv, {
-        wrap: "free",
-        readOnly: true,
-        // minLines: 16,
-        // maxLines: 36,
-        highlightActiveLine: true,
-        showGutter: true,
-        fontSize: 14,
-        cursorStyle: "slim",
-        showPrintMargin: false,
-        theme: "ace/theme/chrome",
-        mode: "ace/mode/json",
-        wrapBehavioursEnabled: true
-      });
-    }
-
-    const resourceEditorSettings: Partial<ace.Ace.EditorOptions> = {
-      wrap: "free",
-      // minLines: 15,
-      // maxLines: 16,
-      highlightActiveLine: true,
-      showGutter: true,
-      fontSize: 14,
-      cursorStyle: "slim",
-      showPrintMargin: false,
-      theme: "ace/theme/chrome",
-      mode: "ace/mode/json",
-      wrapBehavioursEnabled: true
-    };
-    var editorResourceJsonLeftDiv: any = this.$refs.aceEditorResourceJsonTab as Element;
-    if (editorResourceJsonLeftDiv) {
-      this.resourceJsonEditor = ace.edit(editorResourceJsonLeftDiv, resourceEditorSettings);
-    }
-
-    // Check for the encoded parameters first
-    const parameters = this.$route.query.parameters as string;
-    let data: TestFhirMapData;
-    // Read in any parameters from the URL
-    data = this.readParametersFromQuery();
-
-    await this.applyParameters(data);
-    await this.evaluateFhirPathExpression();
-    this.loadingData = false;
   },
   computed: {
     tabDetails(): TabData[] {
@@ -606,13 +511,107 @@ group SetEntryData(source src: Patient, target entry)
   },
   methods: {
     async twinPaneMounted(): Promise<void> {
+      // Update the editor's Mode
+      var editorDiv: any = this.$refs.aceEditorExpression as Element;
+      if (editorDiv) {
+        this.expressionEditor = ace.edit(editorDiv, {
+          wrap: "free",
+          // minLines: 16,
+          // maxLines: 16,
+          highlightActiveLine: false,
+          showGutter: true,
+          fontSize: 14,
+          cursorStyle: "slim",
+          showPrintMargin: false,
+          theme: "ace/theme/chrome",
+          mode: "ace/mode/text",
+          wrapBehavioursEnabled: true
+        });
+
+        setCustomHighlightRules(this.expressionEditor, FhirPathHightlighter_Rules);
+        this.expressionEditor.setValue(`/// name = "SDOHCC-PRAPARE-Map"
+/// status = draft
+/// version = 0.1
+
+map "http://fhirpath-lab.com/StructureMap/intro-patient-map" = "IntroPatientMap"
+
+uses "http://hl7.org/fhir/StructureDefinition/Patient" as source
+uses "http://hl7.org/fhir/StructureDefinition/Bundle" as target
+
+group patientMap(source src : Patient, target bundle : Bundle) {
+  src -> bundle.id = uuid() "bundle-id";
+  src -> bundle.type = 'transaction' "bundle-type";
+
+  // create a new entry and put the patient resource in it
+  src -> bundle.entry as entry, entry.resource = src then
+    SetEntryData(src, entry) "prep-entry";
+}
+
+group SetEntryData(source src: Patient, target entry)
+{
+  src.id as patientId log('patientId: ' & %src.id) -> entry.fullUrl = append('http://hl7.org/fhir/us/sdoh-clinicalcare/Patient/', patientId);
+  
+  src -> entry.request as request then {
+    src -> request.method = 'POST' "obsn-request-method";
+    src -> request.url = 'Observation' "obsn-request-url";
+  } "obsn-entry-request";
+}
+      `);
+        this.expressionEditor.clearSelection();
+        this.expressionEditor.on("change", this.fhirpathExpressionChangedEvent)
+      }
+
+      var editorDebugDiv: any = this.$refs.aceEditorDebug as Element;
+      if (editorDebugDiv) {
+        this.debugEditor = ace.edit(editorDebugDiv, {
+          wrap: "free",
+          readOnly: true,
+          // minLines: 16,
+          // maxLines: 36,
+          highlightActiveLine: true,
+          showGutter: true,
+          fontSize: 14,
+          cursorStyle: "slim",
+          showPrintMargin: false,
+          theme: "ace/theme/chrome",
+          mode: "ace/mode/json",
+          wrapBehavioursEnabled: true
+        });
+      }
+
+      const resourceEditorSettings: Partial<ace.Ace.EditorOptions> = {
+        wrap: "free",
+        // minLines: 15,
+        // maxLines: 16,
+        highlightActiveLine: true,
+        showGutter: true,
+        fontSize: 14,
+        cursorStyle: "slim",
+        showPrintMargin: false,
+        theme: "ace/theme/chrome",
+        mode: "ace/mode/json",
+        wrapBehavioursEnabled: true
+      };
+      var editorResourceJsonLeftDiv: any = this.$refs.aceEditorResourceJsonTab as Element;
+      if (editorResourceJsonLeftDiv) {
+        this.resourceJsonEditor = ace.edit(editorResourceJsonLeftDiv, resourceEditorSettings);
+      }
+
+      // Check for the encoded parameters first
+      const parameters = this.$route.query.parameters as string;
+      let data: TestFhirMapData;
+      // Read in any parameters from the URL
+      data = this.readParametersFromQuery();
+
+      await this.applyParameters(data);
+      await this.evaluateFhirPathExpression();
+      this.loadingData = false;
     },
 
     tabChanged(index: Number): void {
       // Workaround to refresh the display in the response editor when it is updated while the form is not visible
       // https://github.com/ajaxorg/ace/issues/2497#issuecomment-102633605
-      if (index === 0)
-      {
+      if (index === 0) {
         setTimeout(() => {
           // expressionEditor: undefined,
           // expressionContextEditor: undefined,
@@ -629,8 +628,7 @@ group SetEntryData(source src: Patient, target entry)
           }
         });
       }
-      if (index === 1)
-      {
+      if (index === 1) {
         setTimeout(() => {
           if (this.resourceJsonEditor) {
             this.resourceJsonEditor.resize();
@@ -638,8 +636,7 @@ group SetEntryData(source src: Patient, target entry)
           }
         });
       }
-      if (index === 6)
-      {
+      if (index === 6) {
         setTimeout(() => {
           if (this.debugEditor) {
             var editorHtmlElement: any = this.$refs
@@ -655,14 +652,14 @@ group SetEntryData(source src: Patient, target entry)
         });
       }
     },
-    
+
     updateNow() {
       this.$forceUpdate();
     },
 
     selectTab(tabIndex: number) {
       let tabControl: TwinPaneTab = this.$refs.twinTabControl as TwinPaneTab;
-      if (tabControl){
+      if (tabControl) {
         tabControl.selectTab(tabIndex);
       }
     },
@@ -719,7 +716,7 @@ group SetEntryData(source src: Patient, target entry)
           // if (dataRequired.Mode === "edit-item"
           //   || dataRequired.Mode === "edit-questionnaire"
           //   || dataRequired.QuestionnaireDefinition >= 8)
-            userQuestionContext += `Based on the FHIR StructureMap in FML format\r\n\`\`\` fml\r\n  ${fmlValue}\n\n\`\`\`\r\n`;
+          userQuestionContext += `Based on the FHIR StructureMap in FML format\r\n\`\`\` fml\r\n  ${fmlValue}\n\n\`\`\`\r\n`;
         }
       }
 
@@ -763,37 +760,37 @@ group SetEntryData(source src: Patient, target entry)
           var ast: IJsonNode | undefined = parseJson(jsonValue);
           console.log(ast);
           if (ast) {
-              var node = findNodeByPath(ast, elementPath);
-              if (node) {
-                // inject the position information onto the issue
-                // so that UI can use it
-                this.resourceJsonEditor.clearSelection();
-                if (node.position) {
-                  this.resourceJsonEditor.focus();
-                  this.resourceJsonEditor.gotoLine(
-                    node.position.line,
-                    node.position.column,
-                    true
-                  );
+            var node = findNodeByPath(ast, elementPath);
+            if (node) {
+              // inject the position information onto the issue
+              // so that UI can use it
+              this.resourceJsonEditor.clearSelection();
+              if (node.position) {
+                this.resourceJsonEditor.focus();
+                this.resourceJsonEditor.gotoLine(
+                  node.position.line,
+                  node.position.column,
+                  true
+                );
 
-                  if (node.position.value_stop_pos){
-                    let substr = jsonValue.substring(node.position.prop_start_pos, node.position.value_stop_pos+1);
-                    const endRowOffset = substr.split(/\r\n|\r|\n/).length;
-                    const endRow = node.position.line + endRowOffset - 1;
-                    const endCollOffset = substr.split(/\r\n|\r|\n/)[endRowOffset - 1].length;
-                    const endCol = node.position.column + (endCollOffset > 1 ? endCollOffset + 1 : endCollOffset);
-                    const range = new ace.Range(node.position.line-1, node.position.column, endRow-1, endCol);
+                if (node.position.value_stop_pos) {
+                  let substr = jsonValue.substring(node.position.prop_start_pos, node.position.value_stop_pos + 1);
+                  const endRowOffset = substr.split(/\r\n|\r|\n/).length;
+                  const endRow = node.position.line + endRowOffset - 1;
+                  const endCollOffset = substr.split(/\r\n|\r|\n/)[endRowOffset - 1].length;
+                  const endCol = node.position.column + (endCollOffset > 1 ? endCollOffset + 1 : endCollOffset);
+                  const range = new ace.Range(node.position.line - 1, node.position.column, endRow - 1, endCol);
 
-                    const selectionMarker = this.resourceJsonEditor.session.addMarker(range, "resultSelection", "fullLine", true);
-                    // after 1.5 seconds remove the highlight.
-                    setTimeout(() => {
-                      this.resourceJsonEditor?.session.removeMarker(selectionMarker);
-                    }, 1500);
-                  }
-                  this.updateNow();
+                  const selectionMarker = this.resourceJsonEditor.session.addMarker(range, "resultSelection", "fullLine", true);
+                  // after 1.5 seconds remove the highlight.
+                  setTimeout(() => {
+                    this.resourceJsonEditor?.session.removeMarker(selectionMarker);
+                  }, 1500);
                 }
+                this.updateNow();
               }
             }
+          }
         }
       });
 
@@ -880,7 +877,7 @@ group SetEntryData(source src: Patient, target entry)
       this.showAdvancedSettings = settings.showAdvancedSettings();
     },
 
-    traceTypeClass(category: string|undefined): string {
+    traceTypeClass(category: string | undefined): string {
       if (category === "debug") return "trace_debug";
       if (category === "info") return "trace_info";
       return "code-json";
@@ -919,7 +916,7 @@ group SetEntryData(source src: Patient, target entry)
       this.helpWithError = undefined;
     },
 
-    validateMap(){
+    validateMap() {
       if (this.expressionEditor) {
         const fmlText = this.expressionEditor.getValue();
         let tree = parseFML(fmlText);
@@ -938,15 +935,15 @@ group SetEntryData(source src: Patient, target entry)
         }
       }
     },
-    reformatTestResource(){
-      if (this.resourceJsonEditor){
+    reformatTestResource() {
+      if (this.resourceJsonEditor) {
         const jsonValue = this.resourceJsonEditor.getValue();
         try {
           this.resourceJsonEditor.setValue(JSON.stringify(JSON.parse(jsonValue), null, 4));
           this.resourceJsonEditor.clearSelection();
           this.resourceJsonEditor.renderer.updateFull(true);
         }
-        catch{}
+        catch { }
       }
     },
 
@@ -1002,13 +999,13 @@ group SetEntryData(source src: Patient, target entry)
                 continue; // skip over the configuration settings
               }
 
-              if (entry.name === 'trace'){
+              if (entry.name === 'trace') {
                 // Trace data
                 this.trace.push(...getTraceValue(entry));
                 continue;
               }
 
-              if (entry.name === 'result'){
+              if (entry.name === 'result') {
                 this.results = getValue(entry);
               }
             }
@@ -1175,7 +1172,7 @@ group SetEntryData(source src: Patient, target entry)
       }
     },
 
-    refreshEditorSizes(){
+    refreshEditorSizes() {
       this.$nextTick(() => {
         this.expressionEditor?.resize();
         this.expressionContextEditor?.resize();
