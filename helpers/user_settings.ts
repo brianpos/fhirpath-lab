@@ -79,6 +79,9 @@ export namespace settings {
     export function mapper_server_java(): string {
         return serverConnections.mapper_server_java;
     }
+    export function python_server_r4b(): string {
+        return serverConnections.python_server_r4b;
+    }
     export function clojure_server_r4(): string {
         return serverConnections.clojure_server_r4;
     }

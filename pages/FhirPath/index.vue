@@ -2615,7 +2615,6 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       else if (this.selectedEngine == "java (IBM)") {
         url = settings.ibm_server_r4b();
         astTab2?.clearDisplay("AST not supported");
-
         if (!this.getResourceJson() && this.resourceId) {
           await this.downloadTestResource();
           resourceJson = this.getResourceJson();        
@@ -2623,8 +2622,18 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
 
         (this as any).$appInsights?.trackEvent({ name: 'evaluate IBM' });
       }
+      else if (this.selectedEngine == "fhirpath-py (Beda Software)") {
+        url = settings.python_server_r4b();
+        astTab2?.clearDisplay("AST not supported");
+        if (!this.getResourceJson() && this.resourceId) {
+          await this.downloadTestResource();
+          resourceJson = this.getResourceJson();
+        }
+        (this as any).$appInsights?.trackEvent({ name: 'evaluate Python' });
+      }
       else if (this.selectedEngine == "Clojure (Aidbox)") {
         url = settings.clojure_server_r4();
+        astTab2?.clearDisplay("AST not supported");
         if (!this.getResourceJson() && this.resourceId) {
           await this.downloadTestResource();
           resourceJson = this.getResourceJson();
@@ -2633,6 +2642,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       }
       else if (this.selectedEngine == "Clojure (Aidbox-R5)") {
         url = settings.clojure_server_r5();
+        astTab2?.clearDisplay("AST not supported");
         if (!this.getResourceJson() && this.resourceId) {
           await this.downloadTestResource();
           resourceJson = this.getResourceJson();
@@ -2775,6 +2785,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         "fhirpath.js",
         "java (HAPI)",
         "java (IBM)",
+        "fhirpath-py (Beda Software)",
         "Clojure (Aidbox)",
         ".NET (firely-R5)",
         "fhirpath.js (R5)",
@@ -2782,6 +2793,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         "Clojure (Aidbox-R5)",
         ],
       externalExecutionEngines: [
+      "fhirpath-py (Beda Software)",
       "Clojure (Aidbox)",
       "Clojure (Aidbox-R5)",
       ],

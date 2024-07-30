@@ -5,6 +5,7 @@
 
 ## 30 July 2024
 * Include the HealthSamurai Aidbox closure fhirpath engine
+* Include the Beda Software Python fhirpath engine
 * Include a simple FML validation based on a verified ANTLR grammar (work in progress)
 
 ## 18 June 2024
