@@ -2544,7 +2544,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       if (this.selectedEngine == ".NET (firely-R5)") {
         url = settings.dotnet_server_r5();
       }
-      let p: fhir4b.Parameters = { resourceType: "Parameters", parameter: [{ name: "expression", valueString: this.getFhirpathExpression() ?? 'today()' }] };
+      let p: fhir4b.Parameters = { resourceType: "Parameters", parameter: [{ name: "expression", valueString: this.getFhirpathExpression() ?? '' }] };
 
       const contextExpression = this.getContextExpression();
       if (contextExpression) {

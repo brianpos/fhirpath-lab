@@ -502,11 +502,10 @@ export default Vue.extend({
       });
 
       setCustomHighlightRules(this.expressionEditor, FhirPathHightlighter_Rules);
-      this.expressionEditor.setValue(`/// name = "SDOHCC-PRAPARE-Map"
-/// status = draft
-/// version = 0.1
-
-map "http://fhirpath-lab.com/StructureMap/intro-patient-map" = "IntroPatientMap"
+      this.expressionEditor.setValue(`/// url = 'http://fhirpath-lab.com/StructureMap/intro-patient-map'
+/// name = 'IntroPatientMap'
+/// status = 'draft'
+/// version = '0.1'
 
 uses "http://hl7.org/fhir/StructureDefinition/Patient" as source
 uses "http://hl7.org/fhir/StructureDefinition/Bundle" as target

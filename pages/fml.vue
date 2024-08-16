@@ -37,7 +37,7 @@
             <div class="resource" ref="aceEditorExpression"></div>
           </template>
 
-          <template v-slot:Resource>
+          <template v-slot:Input>
             <v-text-field label="Test Resource Id" v-model="resourceId" hide-details="auto" autocomplete="off"
               @input="updateNow" autocorrect="off" autocapitalize="off" spellcheck="false">
               <template v-slot:append>
@@ -52,10 +52,18 @@
               </template>
             </v-text-field>
 
-            <label class="v-label theme--light bare-label">Test Resource JSON <i>{{ resourceJsonChangedMessage()
+            <label class="v-label theme--light bare-label">Test Resource {{ testResourceFormat }} <i>{{ resourceJsonChangedMessage()
                 }}</i></label>
             <div class="resource" width="100%" ref="aceEditorResourceJsonTab"></div>
             <!-- <div class="ace_editor_footer"></div> -->
+          </template>
+
+          <template v-slot:Models>
+            <div class="ct-header">
+              <v-icon left dark> mdi-tree-outline </v-icon>
+              Models
+            </div>
+            <div class="debug" ref="aceEditorModels"></div>
           </template>
 
           <template v-slot:Trace>
@@ -324,6 +332,7 @@ import {
 import Chat from "~/components/Chat.vue";
 
 import { parseFML } from "~/helpers/fml_parser";
+import xmlFormat from 'xml-formatter';
 
 import "ace-builds";
 import ace from "ace-builds";
@@ -366,8 +375,10 @@ interface FhirMapData {
   executionEngines: string[];
   expressionEditor?: ace.Ace.Editor;
   expressionContextEditor?: ace.Ace.Editor;
+  modelsEditor?: ace.Ace.Editor;
   debugEditor?: ace.Ace.Editor;
   resourceJsonEditor?: ace.Ace.Editor;
+  testResourceFormat: string;
   processedByEngine?: string;
   chatEnabled: boolean;
   openAILastContext: string;
@@ -455,8 +466,16 @@ export default Vue.extend({
         },
         {
           iconName: "mdi-clipboard-text-outline",
-          tabName: "Resource",
-          tabHeaderName: "Test Resource",
+          tabName: "Input",
+          tabHeaderName: "Test Input Resource",
+          show: true,
+          enabled: true,
+        },
+        {
+          iconName: "mdi-tree-outline",
+          tabName: "Models",
+          tabHeaderName: "Logical Models Required",
+          title: "Logical Models Required\n(Structure Definitions)",
           show: true,
           enabled: true,
         },
@@ -532,11 +551,10 @@ export default Vue.extend({
         });
 
         setCustomHighlightRules(this.expressionEditor, FhirPathHightlighter_Rules);
-        this.expressionEditor.setValue(`/// name = "SDOHCC-PRAPARE-Map"
-/// status = draft
-/// version = 0.1
-
-map "http://fhirpath-lab.com/StructureMap/intro-patient-map" = "IntroPatientMap"
+        this.expressionEditor.setValue(`/// url = 'http://fhirpath-lab.com/StructureMap/intro-patient-map'
+/// name = 'IntroPatientMap'
+/// status = 'draft'
+/// version = '0.1'
 
 uses "http://hl7.org/fhir/StructureDefinition/Patient" as source
 uses "http://hl7.org/fhir/StructureDefinition/Bundle" as target
@@ -562,6 +580,25 @@ group SetEntryData(source src: Patient, target entry)
       `);
         this.expressionEditor.clearSelection();
         this.expressionEditor.on("change", this.fhirpathExpressionChangedEvent)
+      }
+
+      
+      var editorModelsDiv: any = this.$refs.aceEditorModels as Element;
+      if (editorModelsDiv) {
+        this.modelsEditor = ace.edit(editorModelsDiv, {
+          wrap: "free",
+          readOnly: false,
+          // minLines: 16,
+          // maxLines: 36,
+          highlightActiveLine: true,
+          showGutter: true,
+          fontSize: 14,
+          cursorStyle: "slim",
+          showPrintMargin: false,
+          theme: "ace/theme/chrome",
+          mode: "ace/mode/json",
+          wrapBehavioursEnabled: true
+        });
       }
 
       var editorDebugDiv: any = this.$refs.aceEditorDebug as Element;
@@ -598,7 +635,11 @@ group SetEntryData(source src: Patient, target entry)
       var editorResourceJsonLeftDiv: any = this.$refs.aceEditorResourceJsonTab as Element;
       if (editorResourceJsonLeftDiv) {
         this.resourceJsonEditor = ace.edit(editorResourceJsonLeftDiv, resourceEditorSettings);
+        this.resourceJsonEditor.session.on("change", this.resourceJsonChangedEvent);
       }
+
+      // this.selectTabs(0, 4, 'left');
+      this.selectTab(1);
 
       // Check for the encoded parameters first
       const parameters = this.$route.query.parameters as string;
@@ -664,6 +705,13 @@ group SetEntryData(source src: Patient, target entry)
       let tabControl: TwinPaneTab = this.$refs.twinTabControl as TwinPaneTab;
       if (tabControl) {
         tabControl.selectTab(tabIndex);
+      }
+    },
+
+    selectTabs(leftIndex: number, rightIndex: number, paneLocked: 'left' | 'right') {
+      let tabControl: TwinPaneTab = this.$refs.twinTabControl as TwinPaneTab;
+      if (tabControl) {
+        tabControl.selectTabs(leftIndex, rightIndex, paneLocked);
       }
     },
 
@@ -863,6 +911,17 @@ group SetEntryData(source src: Patient, target entry)
     },
     resourceJsonChangedEvent() {
       this.resourceJsonChanged = true;
+      if (this.resourceJsonEditor) {
+        var fc = this.resourceJsonEditor.getValue().trim().substring(0, 1);
+        if (this.resourceJsonEditor.getOption("mode") !== "ace/mode/json" && fc === '{'){
+          this.resourceJsonEditor.setOption("mode", "ace/mode/json");
+          this.testResourceFormat = "json";
+        }
+        if (this.resourceJsonEditor.getOption("mode") !== "ace/mode/xml" && fc === '<'){
+          this.resourceJsonEditor.setOption("mode", "ace/mode/xml");
+          this.testResourceFormat = "xml";
+        }
+      }
     },
     fhirpathExpressionChangedEvent() {
     },
@@ -911,6 +970,14 @@ group SetEntryData(source src: Patient, target entry)
       return undefined;
     },
 
+    getModel(): string | undefined {
+      const content = this.modelsEditor?.getValue();
+      if (content && content.length > 0 && content.trim().length > 0) {
+        return content.trim();
+      }
+      return undefined;
+    },
+
     clearOutcome() {
       this.showOutcome = undefined;
     },
@@ -923,6 +990,7 @@ group SetEntryData(source src: Patient, target entry)
     validateMap() {
       if (this.expressionEditor) {
         const fmlText = this.expressionEditor.getValue();
+        this.saveOutcome = undefined;
         let tree = parseFML(fmlText);
         this.helpWithError = undefined;
         const errOutcome = tree as fhir4b.OperationOutcome;
@@ -941,9 +1009,19 @@ group SetEntryData(source src: Patient, target entry)
     },
     reformatTestResource() {
       if (this.resourceJsonEditor) {
-        const jsonValue = this.resourceJsonEditor.getValue();
+        const rawValue = this.resourceJsonEditor.getValue();
         try {
-          this.resourceJsonEditor.setValue(JSON.stringify(JSON.parse(jsonValue), null, 4));
+          if (rawValue.trim().startsWith('{')) {
+            this.resourceJsonEditor.setValue(JSON.stringify(JSON.parse(rawValue), null, 4));
+          }
+          if (rawValue.trim().startsWith('<')) {
+            let formattedXml = xmlFormat(rawValue, {
+              indentation: '\t', // Tab for indentation
+              collapseContent: true, // Keep content in the same line as the element
+              lineSeparator: '\n' // Use newline as line separator
+            });
+            this.resourceJsonEditor.setValue(formattedXml);
+          }
           this.resourceJsonEditor.clearSelection();
           this.resourceJsonEditor.renderer.updateFull(true);
         }
@@ -1190,8 +1268,10 @@ group SetEntryData(source src: Patient, target entry)
 
       // reset the processing engine
       this.processedByEngine = undefined;
+      this.saveOutcome = undefined;
 
       let resourceJson = this.getResourceJson();
+      let model = this.getModel();
 
       // brianpos hosted service
       // default the firely SDK/brianpos service
@@ -1203,6 +1283,9 @@ group SetEntryData(source src: Patient, target entry)
         parameter: [{ name: "map", valueString: this.getFhirpathExpression() ?? 'today()' }]
       };
 
+      if (model != undefined) {
+        p.parameter?.push({ name: "model", valueString: model });
+      }
       const contextExpression = this.getContextExpression();
       if (contextExpression) {
         p.parameter?.push({ name: "context", valueString: contextExpression });
@@ -1229,7 +1312,18 @@ group SetEntryData(source src: Patient, target entry)
       }
 
       if (resourceJson) {
-        p.parameter?.push({ name: "resource", resource: JSON.parse(resourceJson) });
+        try
+        {
+          var resource = JSON.parse(resourceJson);
+          if (resource.resourceType) {
+            p.parameter?.push({ name: "resource", resource: resource });
+          } else {
+            p.parameter?.push({ name: "resource", valueString: resourceJson });
+          }
+        }
+        catch(err){
+          p.parameter?.push({ name: "resource", valueString: resourceJson });
+        }
       }
       else {
         if (!this.resourceId?.startsWith('http')) {
@@ -1277,8 +1371,10 @@ group SetEntryData(source src: Patient, target entry)
       processedByEngine: undefined,
       expressionEditor: undefined,
       expressionContextEditor: undefined,
+      modelsEditor: undefined,
       debugEditor: undefined,
       resourceJsonEditor: undefined,
+      testResourceFormat: "json",
     };
   },
 });
