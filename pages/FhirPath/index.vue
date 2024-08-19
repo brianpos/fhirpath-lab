@@ -74,17 +74,17 @@
             </v-input> -->
             <v-tooltip bottom >
               <template v-slot:activator="{ on, attrs }">
-                <v-btn icon style="right: 20px; position: absolute; top: 20px; z-index:2;"
+                <v-btn class="resetButton" icon 
                   v-bind="attrs" v-on="on"
                   @click="resetExpression"><v-icon>mdi-broom</v-icon></v-btn>
               </template>
               <span>Reset Expression and context</span>
             </v-tooltip>
             <div height="85px" width="100%" ref="aceEditorContextExpression"></div>
-            <div class="ace_editor_footer"></div>
+            <div style="flex-shrink: 0;" class="ace_editor_footer"></div>
 
             <label class="v-label theme--light bare-label">Fhirpath Expression</label>
-            <div height="85px" width="100%" ref="aceEditorExpression"></div>
+            <div style="flex-shrink: 0;" height="85px" width="100%" ref="aceEditorExpression"></div>
             <div class="ace_editor_footer"></div>
             <!-- <parse-tree-tab v-show="false" ref="astTabComponent"></parse-tree-tab> -->
 
@@ -249,6 +249,12 @@
 .externalExecutionEngine {
   color: blueviolet;
 }
+.resetButton {
+  right: 20px;
+  position: absolute;
+  top: 20px;
+  z-index: 2;
+}
 .resource {
   height: calc(100vh - 280px);
 }
@@ -259,6 +265,10 @@
   height: calc(100vh - 196px);
 }
 @media (max-width: 596px) {
+  .resetButton {
+    top: 74px;
+  }
+
   .resource {
     height: calc(100vh - 320px - 48px);
   }

@@ -1,5 +1,5 @@
 <template>
-  <div style="height:100%;padding: 80px 20px 20px 20px;">
+  <div style="height:100%;padding: 60px 0 0 0;">
     <HeaderNavbar @close-settings="settingsClosed">
       <template v-slot:extraNavButtons>
         <v-btn icon dark accesskey="g" title="press alt+g to go" @focus="checkFocus"
@@ -19,7 +19,7 @@
         <twin-pane-tab :tabs="tabDetails" ref="twinTabControl" @mounted="twinPaneMounted" @change="tabChanged">
           <template v-slot:Map>
             <v-text-field label="StructureMap Id" v-model="structureMapId" hide-details="auto" autocomplete="off"
-              @input="updateNow" autocorrect="off" autocapitalize="off" spellcheck="false">
+              @input="updateNow" autocorrect="off" autocapitalize="off" spellcheck="false" style="flex-grow: 0;">
               <template v-slot:append>
                 <v-btn icon small tile @click="structureMapId = undefined">
                   <v-icon> mdi-close </v-icon>
@@ -27,7 +27,7 @@
                 <v-btn icon small tile @click="downloadStructureMapResource">
                   <v-icon> mdi-download </v-icon>
                 </v-btn>
-                <!-- <v-btn small icon tile @click="reformatTestResource"><v-icon title="Format json" dark> mdi-format-indent-increase </v-icon></v-btn> -->
+                <!-- <v-btn small icon tile @click="reformatMap"><v-icon title="Format json" dark> mdi-format-indent-increase </v-icon></v-btn> -->
                 <v-btn small icon tile @click="validateMap"><v-icon title="Validate FML"> mdi-note-check-outline
                   </v-icon></v-btn>
               </template>
@@ -38,32 +38,21 @@
           </template>
 
           <template v-slot:Input>
-            <v-text-field label="Test Resource Id" v-model="resourceId" hide-details="auto" autocomplete="off"
-              @input="updateNow" autocorrect="off" autocapitalize="off" spellcheck="false">
-              <template v-slot:append>
-                <v-btn icon small tile @click="resourceId = undefined">
-                  <v-icon> mdi-close </v-icon>
-                </v-btn>
-                <v-btn icon small tile @click="downloadTestResource">
-                  <v-icon> mdi-download </v-icon>
-                </v-btn>
-                <v-btn small icon tile @click="reformatTestResource"><v-icon title="Format json" dark>
-                    mdi-format-indent-increase </v-icon></v-btn>
-              </template>
-            </v-text-field>
-
-            <label class="v-label theme--light bare-label">Test Resource {{ testResourceFormat }} <i>{{ resourceJsonChangedMessage()
-                }}</i></label>
-            <div class="resource" width="100%" ref="aceEditorResourceJsonTab"></div>
-            <!-- <div class="ace_editor_footer"></div> -->
+            <resource-editor label="Test Resource Id" ref="resourceEditor" textLabel="Test Resource"
+              :resourceUrl="resourceId" @update:resourceUrl="resourceId = $event" :resourceText="resourceText"
+              @update:resourceText="resourceText = $event" />
           </template>
 
           <template v-slot:Models>
-            <div class="ct-header">
+            <!-- <div class="ct-header">
               <v-icon left dark> mdi-tree-outline </v-icon>
               Models
-            </div>
-            <div class="debug" ref="aceEditorModels"></div>
+            </div> -->
+            <resource-editor ref="editorModels" label="Model ID/Search Query"
+              textLabel="StructureDefinition / Bundle Text" :resourceUrl="modelsSearch"
+              @update:resourceUrl="modelsSearch = $event"
+              footerLabel="The Model can be either an individual StructureDefintion (e.g. logical model) or a search query for a bundle of models"
+              :resourceText="modelsText" @update:resourceText="modelsText = $event" />
           </template>
 
           <template v-slot:Trace>
@@ -87,16 +76,8 @@
               <v-icon left dark> mdi-file-document-outline </v-icon>
               <span>Results <span class="processedBy">{{ processedByEngine }}</span></span>
             </div>
-            <template v-if="results">
-              <v-simple-table>
-                <tr>
-                  <td class="result-value">
-                    <div class="code-json">{{ results.value }}</div>
-                  </td>
-                  <td class="result-type"><i v-if="results.type">({{ results.type }})</i></td>
-                </tr>
-              </v-simple-table>
-            </template>
+            <resource-editor textLabel="Transformed Output" :readOnly="true"
+              :resourceText="(results ? results.value : '')" />
           </template>
 
           <template v-slot:AI_Chat>
@@ -112,11 +93,7 @@
           </template>
 
           <template v-slot:Debug>
-            <div class="ct-header">
-              <v-icon left dark> mdi-bug-outline </v-icon>
-              DEBUG
-            </div>
-            <div class="debug" ref="aceEditorDebug"></div>
+            <resource-editor textLabel="Debug" :readOnly="true" :resourceText="debugText" />
           </template>
 
           <template v-slot:Errors>
@@ -131,13 +108,6 @@
       <OperationOutcomeOverlay style="z-index: 8" v-if="showOutcome" :saveOutcome="saveOutcome"
         :showOutcome="showOutcome" title="Error" @close="clearOutcome" />
     </div>
-
-
-    <FileSelectorOverlay :visible="showMapSelector" iconName="mdi-clipboard-text-outline" title="Select Map"
-      :initialFilename="structureMapId" @download="downloadStructureMapResourceFromSelector"
-      @close="showMapSelector = false" />
-    <FileSelectorOverlay :visible="showResourceSelector" iconName="mdi-function-variant" title="Select Test Resource"
-      :initialFilename="resourceId" @download="downloadTestResourceFromSelector" @close="showResourceSelector = false" />
 
     <OperationOutcomeOverlay v-if="showOutcome" :saveOutcome="saveOutcome" :showOutcome="showOutcome" title="Error"
       @close="clearOutcome" />
@@ -330,6 +300,7 @@ import {
   GetFmlSystemPrompt,
 } from "~/helpers/openai_form_tester";
 import Chat from "~/components/Chat.vue";
+import ResourceEditor from "~/components/ResourceEditor.vue";
 
 import { parseFML } from "~/helpers/fml_parser";
 import xmlFormat from 'xml-formatter';
@@ -359,7 +330,11 @@ interface FhirMapData {
   defaultProviderField?: string;
   structureMapId?: string;
   resourceId?: string;
+  resourceText?: string;
   resourceJsonChanged: boolean;
+  modelsSearch?: string;
+  modelsText?: string;
+  debugText: string;
   loadingData: boolean;
   saveOutcome?: fhir4b.OperationOutcome;
   showOutcome?: boolean;
@@ -374,10 +349,6 @@ interface FhirMapData {
   selectedEngine: string;
   executionEngines: string[];
   expressionEditor?: ace.Ace.Editor;
-  expressionContextEditor?: ace.Ace.Editor;
-  modelsEditor?: ace.Ace.Editor;
-  debugEditor?: ace.Ace.Editor;
-  resourceJsonEditor?: ace.Ace.Editor;
   testResourceFormat: string;
   processedByEngine?: string;
   chatEnabled: boolean;
@@ -442,6 +413,7 @@ function getPriorityIssue(
 }
 
 export default Vue.extend({
+  components: { ResourceEditor },
   // components: {
   // },
   // head: {
@@ -582,62 +554,6 @@ group SetEntryData(source src: Patient, target entry)
         this.expressionEditor.on("change", this.fhirpathExpressionChangedEvent)
       }
 
-      
-      var editorModelsDiv: any = this.$refs.aceEditorModels as Element;
-      if (editorModelsDiv) {
-        this.modelsEditor = ace.edit(editorModelsDiv, {
-          wrap: "free",
-          readOnly: false,
-          // minLines: 16,
-          // maxLines: 36,
-          highlightActiveLine: true,
-          showGutter: true,
-          fontSize: 14,
-          cursorStyle: "slim",
-          showPrintMargin: false,
-          theme: "ace/theme/chrome",
-          mode: "ace/mode/json",
-          wrapBehavioursEnabled: true
-        });
-      }
-
-      var editorDebugDiv: any = this.$refs.aceEditorDebug as Element;
-      if (editorDebugDiv) {
-        this.debugEditor = ace.edit(editorDebugDiv, {
-          wrap: "free",
-          readOnly: true,
-          // minLines: 16,
-          // maxLines: 36,
-          highlightActiveLine: true,
-          showGutter: true,
-          fontSize: 14,
-          cursorStyle: "slim",
-          showPrintMargin: false,
-          theme: "ace/theme/chrome",
-          mode: "ace/mode/json",
-          wrapBehavioursEnabled: true
-        });
-      }
-
-      const resourceEditorSettings: Partial<ace.Ace.EditorOptions> = {
-        wrap: "free",
-        // minLines: 15,
-        // maxLines: 16,
-        highlightActiveLine: true,
-        showGutter: true,
-        fontSize: 14,
-        cursorStyle: "slim",
-        showPrintMargin: false,
-        theme: "ace/theme/chrome",
-        mode: "ace/mode/json",
-        wrapBehavioursEnabled: true
-      };
-      var editorResourceJsonLeftDiv: any = this.$refs.aceEditorResourceJsonTab as Element;
-      if (editorResourceJsonLeftDiv) {
-        this.resourceJsonEditor = ace.edit(editorResourceJsonLeftDiv, resourceEditorSettings);
-        this.resourceJsonEditor.session.on("change", this.resourceJsonChangedEvent);
-      }
-
       // this.selectTabs(0, 4, 'left');
       this.selectTab(1);
 
@@ -658,40 +574,11 @@ group SetEntryData(source src: Patient, target entry)
       if (index === 0) {
         setTimeout(() => {
           // expressionEditor: undefined,
-          // expressionContextEditor: undefined,
-          // debugEditor: undefined,
           // resourceJsonEditor: undefined,
 
-          if (this.expressionContextEditor) {
-            this.expressionContextEditor.resize();
-            this.updateNow();
-          }
           if (this.expressionEditor) {
             this.expressionEditor.resize();
             this.updateNow();
-          }
-        });
-      }
-      if (index === 1) {
-        setTimeout(() => {
-          if (this.resourceJsonEditor) {
-            this.resourceJsonEditor.resize();
-            this.updateNow();
-          }
-        });
-      }
-      if (index === 6) {
-        setTimeout(() => {
-          if (this.debugEditor) {
-            var editorHtmlElement: any = this.$refs
-              .aceEditorDebug as Element;
-            if (editorHtmlElement) {
-              console.log("focusing editor");
-              editorHtmlElement.focus();
-            }
-            this.debugEditor.resize();
-            this.updateNow();
-            console.log("refreshing editor");
           }
         });
       }
@@ -802,51 +689,6 @@ group SetEntryData(source src: Patient, target entry)
       chat.setThinking(false);
     },
 
-    navigateToContext(elementPath: string) {
-      // Move the cursor in the test resource JSON editor to the element
-      this.selectTab(1);
-      setTimeout(() => {
-        const jsonValue = this.getResourceJson();
-        if (this.resourceJsonEditor && jsonValue) {
-          var ast: IJsonNode | undefined = parseJson(jsonValue);
-          console.log(ast);
-          if (ast) {
-            var node = findNodeByPath(ast, elementPath);
-            if (node) {
-              // inject the position information onto the issue
-              // so that UI can use it
-              this.resourceJsonEditor.clearSelection();
-              if (node.position) {
-                this.resourceJsonEditor.focus();
-                this.resourceJsonEditor.gotoLine(
-                  node.position.line,
-                  node.position.column,
-                  true
-                );
-
-                if (node.position.value_stop_pos) {
-                  let substr = jsonValue.substring(node.position.prop_start_pos, node.position.value_stop_pos + 1);
-                  const endRowOffset = substr.split(/\r\n|\r|\n/).length;
-                  const endRow = node.position.line + endRowOffset - 1;
-                  const endCollOffset = substr.split(/\r\n|\r|\n/)[endRowOffset - 1].length;
-                  const endCol = node.position.column + (endCollOffset > 1 ? endCollOffset + 1 : endCollOffset);
-                  const range = new ace.Range(node.position.line - 1, node.position.column, endRow - 1, endCol);
-
-                  const selectionMarker = this.resourceJsonEditor.session.addMarker(range, "resultSelection", "fullLine", true);
-                  // after 1.5 seconds remove the highlight.
-                  setTimeout(() => {
-                    this.resourceJsonEditor?.session.removeMarker(selectionMarker);
-                  }, 1500);
-                }
-                this.updateNow();
-              }
-            }
-          }
-        }
-      });
-
-    },
-
     readParametersFromQuery(): TestFhirMapData {
       // Umm, maybe use parameters that are more appropriate here, and consider a better way to handle this
       // Ilya was looking for it for his training usage - so likely others too.
@@ -854,10 +696,6 @@ group SetEntryData(source src: Patient, target entry)
         expression: this.$route.query.expression as string
       };
       {
-        if (this.$route.query.context) {
-          data.context = this.$route.query.context as string;
-        }
-
         if (this.$route.query.resource) {
           data.resource = this.$route.query.resource as string;
         }
@@ -865,6 +703,11 @@ group SetEntryData(source src: Patient, target entry)
         const resourceJson = this.$route.query.resourceJson + '';
         if (resourceJson) {
           data.resourceJson = decompressFromEncodedURIComponent(resourceJson) ?? '';
+        }
+
+        const modelSearch = this.$route.query.models + '';
+        if (modelSearch) {
+          data.modelsSearch = modelSearch ?? '';
         }
 
         if (this.$route.query.engine) {
@@ -875,31 +718,31 @@ group SetEntryData(source src: Patient, target entry)
     },
     async applyParameters(p: TestFhirMapData) {
       {
+        const modelSearch = p.modelsSearch;
+        if (modelSearch) {
+          this.modelsSearch = modelSearch;
+          console.log('set', this.modelsSearch, modelSearch);
+          // and execute the search
+          var editorModels = this.$refs.editorModels as ResourceEditor;
+          if (editorModels) {
+            console.log('downloading...', this.modelsSearch);
+            await editorModels.DownloadResource();
+          }
+        }
+
+        const resourceJson = p.resourceJson;
+        if (resourceJson) {
+          this.resourceText = resourceJson;
+          this.resourceId = undefined;
+        }
+
+        if (p.engine) {
+          this.selectedEngine = p.engine ?? '';
+        }
+
         if (p.expression) {
           if (p.resource) {
             this.resourceId = p.resource;
-          }
-
-          if (this.expressionContextEditor) {
-            if (p.context) {
-              this.expressionContextEditor.setValue(p.context ?? '');
-              this.expressionContextEditor.clearSelection();
-            }
-            else {
-              this.expressionContextEditor.setValue('');
-            }
-          }
-
-          const resourceJson = p.resourceJson;
-          if (resourceJson) {
-            this.resourceJsonEditor?.setValue(JSON.stringify(JSON.parse(resourceJson), null, 2));
-            this.resourceJsonChanged = true;
-            this.resourceId = undefined;
-            this.resourceJsonEditor?.clearSelection();
-          }
-
-          if (p.engine) {
-            this.selectedEngine = p.engine ?? '';
           }
 
           if (this.expressionEditor) {
@@ -909,26 +752,7 @@ group SetEntryData(source src: Patient, target entry)
         }
       }
     },
-    resourceJsonChangedEvent() {
-      this.resourceJsonChanged = true;
-      if (this.resourceJsonEditor) {
-        var fc = this.resourceJsonEditor.getValue().trim().substring(0, 1);
-        if (this.resourceJsonEditor.getOption("mode") !== "ace/mode/json" && fc === '{'){
-          this.resourceJsonEditor.setOption("mode", "ace/mode/json");
-          this.testResourceFormat = "json";
-        }
-        if (this.resourceJsonEditor.getOption("mode") !== "ace/mode/xml" && fc === '<'){
-          this.resourceJsonEditor.setOption("mode", "ace/mode/xml");
-          this.testResourceFormat = "xml";
-        }
-      }
-    },
     fhirpathExpressionChangedEvent() {
-    },
-    resourceJsonChangedMessage(): string | undefined {
-      if (this.resourceJsonChanged && this.resourceId) {
-        return '(modified)';
-      }
     },
     tabTitle() {
       if (this.getResourceJson() && this.resourceJsonChanged) return '(local resource JSON)';
@@ -946,14 +770,6 @@ group SetEntryData(source src: Patient, target entry)
       return "code-json";
     },
 
-    getContextExpression(): string | undefined {
-      const json = this.expressionContextEditor?.getValue();
-      if (json && json.length > 0) {
-        return json;
-      }
-      return undefined;
-    },
-
     getFhirpathExpression(): string | undefined {
       const json = this.expressionEditor?.getValue();
       if (json && json.length > 0) {
@@ -963,7 +779,7 @@ group SetEntryData(source src: Patient, target entry)
     },
 
     getResourceJson(): string | undefined {
-      const json = this.resourceJsonEditor?.getValue();
+      const json = this.resourceText;
       if (json && json.length > 0) {
         return json;
       }
@@ -971,7 +787,7 @@ group SetEntryData(source src: Patient, target entry)
     },
 
     getModel(): string | undefined {
-      const content = this.modelsEditor?.getValue();
+      const content = this.modelsText;
       if (content && content.length > 0 && content.trim().length > 0) {
         return content.trim();
       }
@@ -1007,34 +823,9 @@ group SetEntryData(source src: Patient, target entry)
         }
       }
     },
-    reformatTestResource() {
-      if (this.resourceJsonEditor) {
-        const rawValue = this.resourceJsonEditor.getValue();
-        try {
-          if (rawValue.trim().startsWith('{')) {
-            this.resourceJsonEditor.setValue(JSON.stringify(JSON.parse(rawValue), null, 4));
-          }
-          if (rawValue.trim().startsWith('<')) {
-            let formattedXml = xmlFormat(rawValue, {
-              indentation: '\t', // Tab for indentation
-              collapseContent: true, // Keep content in the same line as the element
-              lineSeparator: '\n' // Use newline as line separator
-            });
-            this.resourceJsonEditor.setValue(formattedXml);
-          }
-          this.resourceJsonEditor.clearSelection();
-          this.resourceJsonEditor.renderer.updateFull(true);
-        }
-        catch { }
-      }
-    },
 
     setResultJson(result: string) {
-      if (this.debugEditor) {
-        this.debugEditor.setValue(result);
-        this.debugEditor.clearSelection();
-        this.debugEditor.renderer.updateFull(true);
-      }
+      this.debugText = result;
     },
     async executeRequest<T>(url: string, p: fhir4b.Parameters) {
       try {
@@ -1107,78 +898,6 @@ group SetEntryData(source src: Patient, target entry)
           console.log("Client Error:", err);
         }
       }
-    },
-
-    async downloadTestResourceFromSelector(args: string) {
-      this.resourceId = args;
-      await this.downloadTestResource();
-      this.showResourceSelector = false;
-    },
-
-    async downloadTestResource() {
-      try {
-        if (!this.resourceId) return;
-        let url = this.resourceId;
-        if (this.resourceId && !this.resourceId.startsWith('http'))
-          url = settings.getFhirServerExamplesUrl() + '/' + this.resourceId;
-
-        if (this.cancelSource) this.cancelSource.cancel("new download started");
-        this.cancelSource = axios.CancelToken.source();
-        this.loadingData = true;
-        let token = this.cancelSource.token;
-        let headers = {
-          "Cache-Control": "no-cache",
-          "Accept": requestFhirAcceptHeaders
-        }
-        const response = await axios.get<fhir4b.Resource>(url, {
-          cancelToken: token,
-          headers: headers
-        });
-        if (token.reason) {
-          console.log(token.reason);
-          return;
-        }
-        this.cancelSource = undefined;
-        this.loadingData = false;
-
-        const results = response.data;
-        if (results) {
-          if (this.resourceJsonEditor) {
-            const resourceJson = JSON.stringify(results, null, 4);
-            if (resourceJson) {
-              this.resourceJsonEditor.setValue(resourceJson);
-              this.resourceJsonChanged = false;
-            }
-            this.resourceJsonEditor.clearSelection();
-          }
-        }
-      } catch (err) {
-        this.loadingData = false;
-        if (axios.isAxiosError(err)) {
-          const serverError = err as AxiosError<fhir4b.OperationOutcome>;
-          if (serverError && serverError.response) {
-            this.setResultJson(JSON.stringify(serverError.response, null, 4));
-            if (serverError.response.data?.resourceType == 'OperationOutcome') {
-              this.setResultJson(JSON.stringify(serverError.response, null, 4));
-              this.saveOutcome = serverError.response.data;
-            } else {
-              if (serverError.response.status == 404)
-                this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
-              this.saveOutcome?.issue.push({ code: 'not-found', severity: 'error', details: { text: 'Test resource not found' } });
-            }
-            this.showOutcome = true;
-            return serverError.response.data;
-          }
-        } else {
-          console.log("Client Error:", err);
-        }
-      }
-    },
-
-    async downloadStructureMapResourceFromSelector(args: string) {
-      this.structureMapId = args;
-      await this.downloadStructureMapResource();
-      this.showMapSelector = false;
     },
 
     async downloadStructureMapResource() {
@@ -1257,9 +976,7 @@ group SetEntryData(source src: Patient, target entry)
     refreshEditorSizes() {
       this.$nextTick(() => {
         this.expressionEditor?.resize();
-        this.expressionContextEditor?.resize();
-        this.debugEditor?.resize();
-        this.resourceJsonEditor?.resize();
+        // this.resourceJsonEditor?.resize();
       });
     },
 
@@ -1286,24 +1003,19 @@ group SetEntryData(source src: Patient, target entry)
       if (model != undefined) {
         p.parameter?.push({ name: "model", valueString: model });
       }
-      const contextExpression = this.getContextExpression();
-      if (contextExpression) {
-        p.parameter?.push({ name: "context", valueString: contextExpression });
-      }
 
       // for initial testing with .net
       if (!this.getResourceJson() && this.resourceId) {
-        await this.downloadTestResource();
+        var editorResourceJsonLeftDiv: any = this.$refs.resourceEditor as ResourceEditor;
+        if (editorResourceJsonLeftDiv) {
+          await editorResourceJsonLeftDiv.DownloadResource();
+        }
+
         resourceJson = this.getResourceJson();
       }
 
       if (this.selectedEngine == "java (HAPI)") {
         url = settings.mapper_server_java();
-
-        if (!this.getResourceJson() && this.resourceId) {
-          await this.downloadTestResource();
-          resourceJson = this.getResourceJson();
-        }
 
         (this as any).$appInsights?.trackEvent({ name: 'evaluate HAPI (map)' });
       }
@@ -1312,8 +1024,7 @@ group SetEntryData(source src: Patient, target entry)
       }
 
       if (resourceJson) {
-        try
-        {
+        try {
           var resource = JSON.parse(resourceJson);
           if (resource.resourceType) {
             p.parameter?.push({ name: "resource", resource: resource });
@@ -1321,7 +1032,7 @@ group SetEntryData(source src: Patient, target entry)
             p.parameter?.push({ name: "resource", valueString: resourceJson });
           }
         }
-        catch(err){
+        catch (err) {
           p.parameter?.push({ name: "resource", valueString: resourceJson });
         }
       }
@@ -1350,7 +1061,11 @@ group SetEntryData(source src: Patient, target entry)
       defaultProviderField: undefined,
       structureMapId: undefined,
       resourceId: 'Patient/example',
+      resourceText: undefined,
       resourceJsonChanged: false,
+      modelsSearch: '',
+      modelsText: '',
+      debugText: '',
       loadingData: true,
       saveOutcome: undefined,
       showOutcome: false,
@@ -1370,10 +1085,6 @@ group SetEntryData(source src: Patient, target entry)
       ],
       processedByEngine: undefined,
       expressionEditor: undefined,
-      expressionContextEditor: undefined,
-      modelsEditor: undefined,
-      debugEditor: undefined,
-      resourceJsonEditor: undefined,
       testResourceFormat: "json",
     };
   },

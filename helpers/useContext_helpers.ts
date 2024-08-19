@@ -16,7 +16,7 @@ export function mergeUseContexts(initial: FhirpathLabUseContexts[], includeConte
   if (!includeContexts) return { contexts: initial, changed: false };
 
   var result = false;
-  var newCodings = [ ... initial] ?? [];
+  var newCodings = [ ... initial];
   for (let val of includeContexts) {
     if (!val.valueCodeableConcept || !val.valueCodeableConcept.coding)
       continue;

@@ -378,6 +378,7 @@ export async function loadCanonicalResource<TData extends fhir4b.FhirResource, C
 
   var loadedResource = data.raw as ConformanceResourceInterface;
   if (loadedResource) {
+    data.loadedUrl = serverBaseUrl + '/' + loadedResource.resourceType + '/' + loadedResource.id;
     if (loadedResource.text?.status === "generated") delete loadedResource.text;
 
     if (routeId.endsWith(":new") && routeId !== ":new") {

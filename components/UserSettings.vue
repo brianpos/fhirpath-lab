@@ -179,7 +179,7 @@ export default Vue.extend({
   },
   computed:{
     showAiModelSettings: function(): boolean {
-      return (this.defaultProviderField == 'Say the magic word')
+      return true // (this.defaultProviderField == 'Say the magic word')
        || this.openAIKey != undefined && this.openAIKey != ''
        || this.openAIBasePath != undefined && this.openAIBasePath != '';
     },

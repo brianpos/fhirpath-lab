@@ -3,7 +3,16 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
-## 30 July 2024
+## 19 August 2024 (dev)
+* Update the fhirpath.js to v3.15.1
+* Update the CSIRO renderer to v0.37.2
+* Update new FML window prototype (at /fml)
+* Update the TwinPaneTab control to try and be more consistent with the tab height sizing using flexbox
+* Add the ResourceEditor control
+* StructureDefinition page to use the new ResourceEditor
+* No longer hide the AI Chat config controls behind "Say the magic word"
+
+## 30 July 2024 (dev)
 * Include the HealthSamurai Aidbox closure fhirpath engine
 * Include the Beda Software Python fhirpath engine
 * Include a simple FML validation based on a verified ANTLR grammar (work in progress)

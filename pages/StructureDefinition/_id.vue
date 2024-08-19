@@ -95,7 +95,7 @@
           </template>
 
           <template v-slot:json>
-            <code><pre v-text="JSON.stringify(raw, null, 2)" /></code>
+            <resource-editor label="StructureDefinition ID" :resourceUrl="loadedUrl" :resourceText="JSON.stringify(raw, null, 2)" :readOnly="true" />
           </template>
         </twin-pane-tab>
       </v-card>
@@ -144,8 +144,10 @@ import {
 } from "~/helpers/favourites";
 import { BaseResource_defaultValues } from "~/models/BaseResourceTableData";
 import TwinPaneTab from "~/components/TwinPaneTab.vue";
+import ResourceEditor from "~/components/ResourceEditor.vue";
 
 export default Vue.extend({
+  components: { ResourceEditor },
   mounted() {
     if (this.$route.query.fhirserver){
       this.fhirServerUrl = this.$route.query.fhirserver as string;

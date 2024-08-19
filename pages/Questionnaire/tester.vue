@@ -35,7 +35,7 @@
         <twin-pane-tab :tabs="tabDetails" @change="tabChanged" :eager="true" ref="twinTabControl"
           @mounted="twinPaneMounted">
           <template v-slot:Questionnaire>
-            <v-text-field label="Test Resource Id" v-model="resourceId" hide-details="auto" autocomplete="off"
+            <v-text-field style="flex-grow: 0;" label="Test Resource Id" v-model="resourceId" hide-details="auto" autocomplete="off"
               @input="updateNow" autocorrect="off" autocapitalize="off" spellcheck="false" :title="'Resource Id to download from the examples server\r\nAbsolute (requires CORS support) or relative to ' +
                 exampleServerUrl
                 ">
@@ -55,7 +55,8 @@
                 <v-btn small icon tile @click="validateQuestionnaire"><v-icon
                     title="Validate the below Questionnaire json using the fhirpath-lab server" dark>
                     mdi-note-check-outline
-                  </v-icon></v-btn>
+                  </v-icon>
+                </v-btn>
               </template>
             </v-text-field>
             <br />
@@ -67,7 +68,7 @@
               </template>
               <span>Reset Questionnaire definition</span>
             </v-tooltip>
-            <div class="resource" width="100%" ref="aceEditorResourceJsonTab"></div>
+            <div class="resource" style="flex-grow: 1;" width="100%" ref="aceEditorResourceJsonTab"></div>
             <!-- <div class="ace_editor_footer"></div> -->
           </template>
 
@@ -207,6 +208,7 @@
   right: 34px;
   position: absolute;
   z-index: 7;
+  top: 68px;
 }
 
 .resource {
@@ -222,6 +224,10 @@
 }
 
 @media (max-width: 596px) {
+  .resetButton {
+    top: 114px;
+  }
+
   .resource {
     height: calc(100vh - 320px - 48px);
   }
