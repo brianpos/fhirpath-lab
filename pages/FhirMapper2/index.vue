@@ -593,10 +593,6 @@ group SetEntryData(source src: Patient, target entry)
         expression: this.$route.query.expression as string
       };
       {
-        if (this.$route.query.context) {
-          data.context = this.$route.query.context as string;
-        }
-
         if (this.$route.query.resource) {
           data.resource = this.$route.query.resource as string;
         }
@@ -617,16 +613,6 @@ group SetEntryData(source src: Patient, target entry)
         if (p.expression) {
           if (p.resource) {
             this.resourceId = p.resource;
-          }
-
-          if (this.expressionContextEditor) {
-            if (p.context) {
-              this.expressionContextEditor.setValue(p.context ?? '');
-              this.expressionContextEditor.clearSelection();
-            }
-            else {
-              this.expressionContextEditor.setValue('');
-            }
           }
 
           const resourceJson = p.resourceJson;
