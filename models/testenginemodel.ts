@@ -32,7 +32,7 @@ export function DecodeTestFhirpathData(data: string): TestFhirpathData {
 
 export interface TestFhirMapData {
     expression: string;
-    context?: string;
+    modelsSearch?: string;
     resource?: string;
     resourceJson?: string;
     engine?: string;
