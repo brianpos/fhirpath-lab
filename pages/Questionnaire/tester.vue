@@ -188,6 +188,7 @@
             <EditorAidboxFormsSection
               v-if="raw"
               v-bind:questionnaire="raw"
+              v-bind:questionnaireResponse="questionnaireResponse"
               @response="processUpdatedQuestionnaireResponse"
             />
           </template>
