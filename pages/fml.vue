@@ -50,9 +50,10 @@
             </div> -->
             <resource-editor ref="editorModels" label="Model ID/Search Query"
               textLabel="StructureDefinition / Bundle Text" :resourceUrl="modelsSearch"
-              @update:resourceUrl="modelsSearch = $event"
+              @update:resourceUrl="modelsSearch = ($event ?? '')"
               footerLabel="The Model can be either an individual StructureDefintion (e.g. logical model) or a search query for a bundle of models"
-              :resourceText="modelsText" @update:resourceText="modelsText = $event" />
+              :resourceText="modelsText"
+              @update:resourceText="modelsText = $event" />
           </template>
 
           <template v-slot:Trace>
@@ -332,7 +333,7 @@ interface FhirMapData {
   resourceId?: string;
   resourceText?: string;
   resourceJsonChanged: boolean;
-  modelsSearch?: string;
+  modelsSearch: string;
   modelsText?: string;
   debugText: string;
   loadingData: boolean;
@@ -368,7 +369,7 @@ interface TraceData {
 }
 
 function getValue(entry: fhir4b.ParametersParameter): ResultData | undefined {
-  var myMap = new Map(Object.entries(entry));
+  let myMap = new Map(Object.entries(entry));
   for (let [k, v] of myMap.entries()) {
     if (k.startsWith('value'))
       return { type: k.replace('value', ''), value: v };
@@ -496,7 +497,7 @@ export default Vue.extend({
       ];
     },
     chatPromptOptions(): string[] {
-      var promptOptions = [];
+      let promptOptions = [];
       if (this.helpWithError) {
         promptOptions.push(this.helpWithError);
       }
@@ -506,7 +507,7 @@ export default Vue.extend({
   methods: {
     async twinPaneMounted(): Promise<void> {
       // Update the editor's Mode
-      var editorDiv: any = this.$refs.aceEditorExpression as Element;
+      let editorDiv: any = this.$refs.aceEditorExpression as Element;
       if (editorDiv) {
         this.expressionEditor = ace.edit(editorDiv, {
           wrap: "free",
@@ -604,7 +605,7 @@ group SetEntryData(source src: Patient, target entry)
 
     helpWithIssue(issue: fhir4b.OperationOutcomeIssue) {
       console.log("Help me with: ", issue);
-      var issueText =
+      let issueText =
         "How can I resolve this issue from validating this Map?";
       if (issue.details?.text) issueText += "\r\n\r\n" + issue.details.text;
       if (issue.expression)
@@ -649,7 +650,7 @@ group SetEntryData(source src: Patient, target entry)
 
       let userQuestionContext: string = "";
       if (this.expressionEditor) {
-        var fmlValue = this.expressionEditor.getValue();
+        let fmlValue = this.expressionEditor.getValue();
         if (fmlValue.length > 0) {
           // if (dataRequired.Mode === "edit-item"
           //   || dataRequired.Mode === "edit-questionnaire"
@@ -700,14 +701,13 @@ group SetEntryData(source src: Patient, target entry)
           data.resource = this.$route.query.resource as string;
         }
 
-        const resourceJson = this.$route.query.resourceJson + '';
+        const resourceJson = this.$route.query.resourceJson;
         if (resourceJson) {
-          data.resourceJson = decompressFromEncodedURIComponent(resourceJson) ?? '';
+          data.resourceJson = decompressFromEncodedURIComponent(resourceJson as string) ?? '';
         }
 
-        const modelSearch = this.$route.query.models + '';
-        if (modelSearch) {
-          data.modelsSearch = modelSearch ?? '';
+        if (this.$route.query.models) {
+          data.modelsSearch = this.$route.query.models as string ?? '';
         }
 
         if (this.$route.query.engine) {
@@ -723,10 +723,10 @@ group SetEntryData(source src: Patient, target entry)
           this.modelsSearch = modelSearch;
           console.log('set', this.modelsSearch, modelSearch);
           // and execute the search
-          var editorModels = this.$refs.editorModels as ResourceEditor;
+          let editorModels = this.$refs.editorModels as ResourceEditor;
           if (editorModels) {
             console.log('downloading...', this.modelsSearch);
-            await editorModels.DownloadResource();
+            await editorModels.DownloadResource(this.modelsSearch);
           }
         }
 
@@ -1006,7 +1006,7 @@ group SetEntryData(source src: Patient, target entry)
 
       // for initial testing with .net
       if (!this.getResourceJson() && this.resourceId) {
-        var editorResourceJsonLeftDiv: any = this.$refs.resourceEditor as ResourceEditor;
+        let editorResourceJsonLeftDiv: any = this.$refs.resourceEditor as ResourceEditor;
         if (editorResourceJsonLeftDiv) {
           await editorResourceJsonLeftDiv.DownloadResource();
         }
@@ -1025,7 +1025,7 @@ group SetEntryData(source src: Patient, target entry)
 
       if (resourceJson) {
         try {
-          var resource = JSON.parse(resourceJson);
+          let resource = JSON.parse(resourceJson);
           if (resource.resourceType) {
             p.parameter?.push({ name: "resource", resource: resource });
           } else {

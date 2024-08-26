@@ -53,7 +53,9 @@ export default class ResourceJsonEditor extends Vue {
   @Prop({ default: undefined }) readonly textLabel!: string | undefined;
   @Prop({ default: undefined }) readonly footerLabel!: string | undefined;
 
-  public async DownloadResource() {
+  public async DownloadResource(url? : string) {
+    if (url)
+      this.internalResourceUrl = url;
     await this.downloadResource();
   }
 
@@ -84,7 +86,7 @@ export default class ResourceJsonEditor extends Vue {
     // this.updateNow();
   }
 
-  internalResourceUrl: string = this.resourceUrl;
+  internalResourceUrl: string = this.resourceUrl ?? '';
   internalResourceText: string = this.resourceText;
   resourceTextFromFile: string | undefined = undefined;
 
