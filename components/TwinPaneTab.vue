@@ -72,6 +72,10 @@
   height: calc(100vh - 204px);
 }
 
+.tab-detail > * {
+  flex-shrink: 0;
+}
+
 .tab-scroll-parent {
   position: relative;
 }

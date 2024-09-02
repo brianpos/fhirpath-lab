@@ -61,7 +61,7 @@
               <v-icon left dark> mdi-format-list-bulleted </v-icon>
               Trace / Debug
             </div>
-            <v-simple-table>
+            <v-simple-table style="flex-shrink:1;">
               <template v-for="(v1, index) in trace">
                 <tr :key="index">
                   <td class="result-value">

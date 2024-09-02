@@ -70,8 +70,6 @@
         <twin-pane-tab :tabs="tabDetails" ref="twinTabControl" @mounted="twinPaneMounted" @change="tabChanged">
           <template v-slot:Expression>
             <label class="v-label theme--light bare-label">Context Expression (optional)</label>
-            <!-- <v-input label="Context Expression (optional)" hide-details="auto" :value="contextExpression">
-            </v-input> -->
             <v-tooltip bottom >
               <template v-slot:activator="{ on, attrs }">
                 <v-btn class="resetButton" icon 
@@ -81,17 +79,16 @@
               <span>Reset Expression and context</span>
             </v-tooltip>
             <div height="85px" width="100%" ref="aceEditorContextExpression"></div>
-            <div style="flex-shrink: 0;" class="ace_editor_footer"></div>
+            <div class="ace_editor_footer"></div>
 
             <label class="v-label theme--light bare-label">Fhirpath Expression</label>
-            <div style="flex-shrink: 0;" height="85px" width="100%" ref="aceEditorExpression"></div>
+            <div height="85px" width="100%" ref="aceEditorExpression"></div>
             <div class="ace_editor_footer"></div>
-            <!-- <parse-tree-tab v-show="false" ref="astTabComponent"></parse-tree-tab> -->
 
             <div class="results">RESULTS <span class="processedBy">{{ processedByEngine }}</span></div>
             <OperationOutcomePanel :outcome="expressionParseOutcome" @close="expressionParseOutcome = undefined" />
             <template v-for="(r2, i1) in results">
-              <v-simple-table :key="i1">
+              <v-simple-table style="flex-shrink: 1;" :key="i1">
                 <tr v-if="r2.context">
                   <td class="context" colspan="2">
                     <v-btn x-small v-if="r2.position" style="float:right;" icon title="Goto context" @click="navigateToContext(r2.context)">
