@@ -44,11 +44,11 @@
       </p>
       <div class="home-grid">
         <a class="link-item" target="_blank" href="https://www.health-samurai.io/aidbox">
-          <div style="font-weight: 600">HealthSamurai - Aidbox</div>
+          <div style="font-weight: 600">Health Samurai - Aidbox</div>
         </a>
         <div class="link-plain-text">
           Provides a Closure based FhirPath Engine inside their fhir services.
-          Contact HealthSamurai for further information.<br/>
+          Contact Health Samurai for further information.<br/>
         </div>
 
         <a class="link-item" target="_blank" href="https://beda.software/products">

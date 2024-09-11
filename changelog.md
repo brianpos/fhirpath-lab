@@ -3,6 +3,9 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+## 12 September 2024 (dev)
+* Update HealthSamurai Aidbox closure fhirpath engine description
+
 ## 19 August 2024 (dev)
 * Update the fhirpath.js to v3.15.1
 * Update the CSIRO renderer to v0.37.2

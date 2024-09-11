@@ -2638,7 +2638,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         }
         (this as any).$appInsights?.trackEvent({ name: 'evaluate Python' });
       }
-      else if (this.selectedEngine == "Clojure (Aidbox)") {
+      else if (this.selectedEngine == "Aidbox (Health Samurai)") {
         url = settings.clojure_server_r4();
         astTab2?.clearDisplay("AST not supported");
         if (!this.getResourceJson() && this.resourceId) {
@@ -2647,7 +2647,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         }
         (this as any).$appInsights?.trackEvent({ name: 'evaluate Aidbox' });
       }
-      else if (this.selectedEngine == "Clojure (Aidbox-R5)") {
+      else if (this.selectedEngine == "Aidbox (Health Samurai-R5)") {
         url = settings.clojure_server_r5();
         astTab2?.clearDisplay("AST not supported");
         if (!this.getResourceJson() && this.resourceId) {
@@ -2793,16 +2793,16 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         "java (HAPI)",
         "java (IBM)",
         "fhirpath-py (Beda Software)",
-        "Clojure (Aidbox)",
+        "Aidbox (Health Samurai)",
         ".NET (firely-R5)",
         "fhirpath.js (R5)",
         "java (HAPI-R5)",
-        "Clojure (Aidbox-R5)",
-        ],
+        "Aidbox (Health Samurai-R5)",
+      ],
       externalExecutionEngines: [
-      "fhirpath-py (Beda Software)",
-      "Clojure (Aidbox)",
-      "Clojure (Aidbox-R5)",
+        "fhirpath-py (Beda Software)",
+        "Aidbox (Health Samurai)",
+        "Aidbox (Health Samurai-R5)",
       ],
       shareToolTipMessage: shareTooltipText,
       shareZulipToolTipMessage: shareZulipTooltipText,
