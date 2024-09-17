@@ -31,11 +31,11 @@
             maintain the logic more easily
           </div>
         </a>
-        <v-btn dark color="#3F81AE" class="link-item text-decoration-none" href="FhirMapper2">
+        <v-btn dark color="#3F81AE" class="link-item text-decoration-none" href="fml">
           <v-icon left> mdi-chart-gantt </v-icon>
             Mapper
         </v-btn>
-        <a href="FhirMapper2" class="link-plain-text">
+        <a href="fml" class="link-plain-text">
           <div>
             Test page for mapping to/from FHIR resources using the <a href="https://www.hl7.org/fhir/mapping-language.html">FHIR Mapping Language</a>
           </div>
@@ -81,8 +81,8 @@
         <li>HAPI FHIRPath v7.4.0 <i>(server side)</i></li>
         <li>IBM FHIRPath v4.11.1 (LinuxForHealth)<i> (server side)</i></li>
         <li>Dotnet FHIRMappingLanguage Engine v5.10.0<i> (server side)</i></li>
-        <li>FHIRPath-py v1.1.0 <i>(server side - externally hosted by Beda Software)</i></li>
-        <li>Aidbox FHIRPath Engine v1.0.0 (Health Samurai)<i> (server side - externally hosted by Health Samurai)</i></li>
+        <li>FHIRPath-py <i>(server side - externally hosted by Beda Software)</i></li>
+        <li>Aidbox FHIRPath Engine (Health Samurai)<i> (server side - externally hosted by Health Samurai)</i></li>
       </ul>
       <br />
       <h5>Disclaimers:</h5>
