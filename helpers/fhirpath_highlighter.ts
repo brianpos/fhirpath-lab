@@ -106,6 +106,9 @@ export const Rules: Record<string, TextHighlightToken[]> = {
       token: ["fhir_function.utility", "text", "fhir_paren.lparen"], // section 5.9 (not is in section 6.5)
       regex: /\b(trace|now|timeOfDay|today|not)\b(\s*)(\()/
     }, {
+      token: "fhir_operator", // section 6.1
+      regex: /(\||=|\+|-|~|\*|!=|!~|\>|\<)/
+    }, {
       token: ["fhir_function.types", "text", "fhir_paren.lparen"], // section 6.3
       regex: /\b(as|is)\b(\s*)(\()/
     }, {
