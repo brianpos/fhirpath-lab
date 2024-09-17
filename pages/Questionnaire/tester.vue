@@ -1,9 +1,9 @@
 <template>
   <div :class="raw && raw.status === 'draft'
-        ? 'draft-page-background'
-        : raw && raw.status === 'active'
-        ? 'active-page-background'
-        : raw && raw.status === 'retired'
+    ? 'draft-page-background'
+    : raw && raw.status === 'active'
+      ? 'active-page-background'
+      : raw && raw.status === 'retired'
         ? 'retired-page-background'
         : ''
     ">
@@ -99,7 +99,7 @@
           </template>
 
           <template v-slot:Pre-Population>
-            <EditorPrePolulationSection v-if="raw" v-bind:items="flatModel" @highlight-path="highlightPath" />
+            <EditorPrePopulationSection v-if="raw" @highlight-path="highlightPath" />
           </template>
 
           <template v-slot:Variables>
@@ -155,12 +155,12 @@
           </template>
 
           <template v-slot:PrePop>
-              <QuestionnairePrepopTest ref="prepopTester" v-bind:questionnaire="raw"
+            <QuestionnairePrepopTest ref="prepopTester" v-bind:questionnaire="raw"
               @response="processUpdatedQuestionnaireResponseFromPrePopTester" @pre-pop-lforms="prePopLForms" />
           </template>
 
           <template v-slot:Extract>
-            <QuestionnaireExtractTest ref="extractTester" v-bind:questionnaire="raw"
+            <QuestionnaireExtractTest ref="extractTester" v-bind:questionnaire="raw" @outcome="displayExtractOutcome"
               v-bind:questionnaireResponse="questionnaireResponse" />
           </template>
 
@@ -513,23 +513,23 @@ export default Vue.extend({
         if (editorResourceJsonDiv) {
 
           this.resourceJsonEditor = ace.edit(editorResourceJsonDiv, resourceEditorSettings);
-        if (this.raw)
-          this.resourceJsonEditor?.setValue(JSON.stringify(this.raw, null, 2));
-        this.resourceJsonEditor?.clearSelection();
-        this.resourceJsonEditor.session.on(
-          "change",
-          this.resourceJsonChangedEvent
-        );
+          if (this.raw)
+            this.resourceJsonEditor?.setValue(JSON.stringify(this.raw, null, 2));
+          this.resourceJsonEditor?.clearSelection();
+          this.resourceJsonEditor.session.on(
+            "change",
+            this.resourceJsonChangedEvent
+          );
           // this.resourceJsonEditor.session.setMode('ace/mode/json');
 
-      // Also add in the QResponse editor too
-      var editorQResponseJsonDiv: any = this.$refs
-        .aceEditorResponseJsonTab as Element;
-      if (editorQResponseJsonDiv) {
-        this.questionnaireResponseJsonEditor = ace.edit(
-          editorQResponseJsonDiv,
-          resourceEditorSettings
-        );
+          // Also add in the QResponse editor too
+          var editorQResponseJsonDiv: any = this.$refs
+            .aceEditorResponseJsonTab as Element;
+          if (editorQResponseJsonDiv) {
+            this.questionnaireResponseJsonEditor = ace.edit(
+              editorQResponseJsonDiv,
+              resourceEditorSettings
+            );
           // this.questionnaireResponseJsonEditor.session.setMode('ace/mode/json');
         }
           console.log("Created Q Json editor");
@@ -1108,6 +1108,13 @@ export default Vue.extend({
       }
     },
 
+    displayExtractOutcome(outcome: fhir4b.OperationOutcome) {
+      this.saveOutcome = outcome;
+      if (outcome?.issue)
+        this.showOutcome = true;
+    },
+
+
     async validateQuestionnaireResponse() {
       if (this.resourceJsonEditor && this.questionnaireResponseJsonEditor) {
         this.loadingData = true;
@@ -1619,7 +1626,7 @@ export default Vue.extend({
       );
       if (!outcome) {
         if (this.raw?.id) {
-          if (this.$route.params.id.endsWith(":new")) {
+          if (this.$route.params.id?.endsWith(":new")) {
             let href = this.$route.fullPath.replaceAll(
               this.$route.params.id,
               this.raw?.id

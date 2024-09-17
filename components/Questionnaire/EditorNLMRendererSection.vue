@@ -87,8 +87,9 @@ interface LFormsRendererData {
   }
 })
 export default class EditorNLMRendererSection extends Vue {
+  
   @Prop(Object) readonly questionnaire!: Questionnaire;
-  lforms_error: string | undefined = undefined;
+  public lforms_error: string | undefined = undefined;
 
   async mounted() {
     try {
@@ -128,12 +129,18 @@ export default class EditorNLMRendererSection extends Vue {
     this.$emit("response", response);
   }
 
-  renderQuestionnaireResponse(response: QuestionnaireResponse, questionnaire: Questionnaire) {
+  async renderQuestionnaireResponse(response: QuestionnaireResponse, questionnaire: Questionnaire) : Promise<void> {
     if (!(response.meta?.tag && response.meta.tag.length > 0 && response.meta.tag[0].code?.startsWith('lformsVersion'))) {
       console.log("Rendering response in lforms Renderer", response);
+      try {
       const lhcQ = LForms.Util.convertFHIRQuestionnaireToLForms(questionnaire, "R4");
       const lhcQR = LForms.Util.mergeFHIRDataIntoLForms("QuestionnaireResponse", response, lhcQ, "R4");
-      LForms.Util.addFormToPage(lhcQR, 'myFormContainer', { prepopulate: false });
+      await LForms.Util.addFormToPage(lhcQR, 'myFormContainer', { prepopulate: false });
+      }
+      catch (e: any) {
+        console.error("lforms renderer failed to render:", e);
+        this.lforms_error = e.toString();
+      }
     }
   }
 
@@ -163,12 +170,12 @@ export default class EditorNLMRendererSection extends Vue {
     }
   }
 
-  @Watch('questionnaire', { immediate: true, deep: true })
-  onQuestionnaireChanged() {
+  @Watch('questionnaire', { immediate: false, deep: true })
+  async onQuestionnaireChanged() {
     if (window.LForms && this.questionnaire?.resourceType === "Questionnaire") {
       try {
         this.lforms_error = undefined;
-        LForms.Util.addFormToPage(this.questionnaire, "myFormContainer", {
+        await LForms.Util.addFormToPage(this.questionnaire, "myFormContainer", {
           prepopulate: false,
         });
       } catch (e: any) {

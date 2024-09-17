@@ -15,9 +15,12 @@
           Debug Expand Details
         </v-expansion-panel-header>
         <v-expansion-panel-content>
-          <v-textarea auto-grow :rows="5" class="small-textarea" label="Extract Parameters" :value="JSON.stringify(extractParameters, null, 2)" />
-          <v-textarea :rows="5" class="small-textarea " label="Questionnaire" :value="JSON.stringify(questionnaire, null, 2)" />
-          <v-textarea :rows="5" class="small-textarea " label="QuestionnaireResponse" :value="JSON.stringify(questionnaireResponse, null, 2)" />
+          <v-textarea auto-grow :rows="5" class="small-textarea" label="Extract Parameters"
+            :value="JSON.stringify(extractParameters, null, 2)" />
+          <v-textarea :rows="5" class="small-textarea " label="Questionnaire"
+            :value="JSON.stringify(questionnaire, null, 2)" />
+          <v-textarea :rows="5" class="small-textarea " label="QuestionnaireResponse"
+            :value="JSON.stringify(questionnaireResponse, null, 2)" />
         </v-expansion-panel-content>
       </v-expansion-panel>
     </v-expansion-panels>
@@ -32,7 +35,6 @@
 </style>
 
 <style lang="scss" scoped>
-
 .bare-label {
   transform-origin: top left;
   transform: scale(0.75);
@@ -99,6 +101,10 @@ export default class QuestionnaireExtractTest extends Vue {
         resource: this.questionnaireResponse
       }
     ];
+    this.extractParameters.parameter.push({
+        name: "questionnaire",
+        resource: this.questionnaire
+      });
     if (typeBasedExtract) {
       this.extractParameters.parameter.push({
         name: "type",
@@ -112,8 +118,8 @@ export default class QuestionnaireExtractTest extends Vue {
     this.extractingInProgress = true;
 
     // Send the extract request
-    try
-    {
+    try {
+      this.$emit('outcome', undefined); // reset the outcome to clear any previous issues
       const response = await fetch(this.extractServiceUrl, {
         method: "POST",
         headers: {
@@ -122,20 +128,33 @@ export default class QuestionnaireExtractTest extends Vue {
         },
         body: JSON.stringify(this.extractParameters)
       });
-      if (response.ok)
-      {
+      if (response.ok) {
         const extractResponse = await response.json();
-        this.expressionEditor?.setValue(JSON.stringify(extractResponse, null, 2));
-        this.expressionEditor?.clearSelection();
         console.log("Extracted response", extractResponse);
+
+        // if this is a Parameters object and has return and issues, then split them apart...
+        if (extractResponse.resourceType === "Parameters") {
+          const resultParameters = extractResponse as Parameters;
+          const returnParameter = resultParameters.parameter?.find(p => p.name === "return");
+          if (returnParameter) {
+            this.expressionEditor?.setValue(JSON.stringify(returnParameter.resource, null, 2));
+            this.expressionEditor?.clearSelection();
+          }
+          const issuesParameter = resultParameters.parameter?.find(p => p.name === "issues");
+          if (issuesParameter) {
+            this.$emit('outcome', issuesParameter.resource);
+          }
+        }
+        else {
+          this.expressionEditor?.setValue(JSON.stringify(extractResponse, null, 2));
+          this.expressionEditor?.clearSelection();
+        }
       }
-      else
-      {
+      else {
         console.error("Failed to extract the questionnaire", response);
       }
     }
-    catch (error)
-    {
+    catch (error) {
       console.error("Error extracting the questionnaire", error);
     }
     this.extractingInProgress = false;
