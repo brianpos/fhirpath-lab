@@ -1,7 +1,7 @@
 <template>
   <div class="resource-json-editor" style="display: flex; flex-direction: column; height: 100%;">
     <v-text-field v-if="label && label.length > 0" :label="label" :readonly="readOnly" v-model="internalResourceUrl" :loading="downloadingInProgress"
-      hide-details="auto" autocomplete="off">
+      hide-details="auto" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
       <template v-slot:prepend>
         <slot name="prepend"></slot>
       </template>
@@ -21,7 +21,7 @@
         <slot name="append"></slot>
       </template>
     </v-text-field>
-    <label v-show="textLabel">{{ textLabel + ' ' + resourceType }}<i>{{ (resourceTextModified ? '(modified)' : '') }}</i></label>
+    <label v-show="textLabel">{{ textLabel + ' ' + resourceType }}<i>{{ (resourceTextModified ? ' (modified)' : '') }}</i></label>
     <div ref="aceEditor" class="ace-editor" style="flex-grow: 1; width: 100%; height: 100%;"></div>
     <div class="ace_editor_footer"></div>
     <label v-show="footerLabel"><i>{{ footerLabel }}</i></label>
@@ -43,6 +43,8 @@ import { AxiosError } from "axios";
 import { CancelTokenSource } from "axios";
 import xmlFormat from 'xml-formatter';
 import { IJsonNodePosition } from "~/helpers/json_parser";
+import "ace-builds/src-noconflict/mode-json";
+import "ace-builds/src-noconflict/mode-xml";
 
 @Component
 export default class ResourceJsonEditor extends Vue {
