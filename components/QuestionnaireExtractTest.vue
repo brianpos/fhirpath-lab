@@ -17,10 +17,6 @@
         <v-expansion-panel-content>
           <v-textarea auto-grow :rows="5" class="small-textarea" label="Extract Parameters"
             :value="JSON.stringify(extractParameters, null, 2)" />
-          <v-textarea :rows="5" class="small-textarea " label="Questionnaire"
-            :value="JSON.stringify(questionnaire, null, 2)" />
-          <v-textarea :rows="5" class="small-textarea " label="QuestionnaireResponse"
-            :value="JSON.stringify(questionnaireResponse, null, 2)" />
         </v-expansion-panel-content>
       </v-expansion-panel>
     </v-expansion-panels>
