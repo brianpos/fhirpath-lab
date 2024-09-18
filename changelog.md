@@ -5,6 +5,8 @@
 
 ## 18 September 2024 (dev)
 * Update the CSIRO renderer to v0.40.0
+* Enhance the POC $extract Questionnaire tester based on initial testing
+* in the FML test page, show the output tab (if not already visible) after running the test
 
 ## 12 September 2024 (dev)
 * Update HealthSamurai Aidbox closure fhirpath engine description

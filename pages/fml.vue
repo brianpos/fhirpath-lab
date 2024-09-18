@@ -1047,6 +1047,13 @@ group SetEntryData(source src: Patient, target entry)
 
       await this.executeRequest(url, p);
 
+      // Show the output tab if it wasn't already visible
+      let tabControl: TwinPaneTab = this.$refs.twinTabControl as TwinPaneTab;
+      if (tabControl) {
+        if (!tabControl.tabIsVisible(4))
+          tabControl.selectTab(4);
+      }
+
       // Set focus to the control that previously had focus (if was known)
       if (this.prevFocus) {
         this.prevFocus.focus();
