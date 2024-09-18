@@ -1110,8 +1110,19 @@ export default Vue.extend({
 
     displayExtractOutcome(outcome: fhir4b.OperationOutcome) {
       this.saveOutcome = outcome;
-      if (outcome?.issue)
+      if (outcome?.issue) { 
+        if (this.saveOutcome){
+          const jsonValue = this.resourceJsonEditor!.getValue();
+          this.setSaveOutcomePositionInformation(jsonValue, this.saveOutcome.issue);
+
+          // and grab the first item to send to the chat AI
+          const priorityIssue = getPriorityIssue(this.saveOutcome.issue);
+          if (priorityIssue) {
+            this.helpWithIssue(priorityIssue);
+          }
+        }
         this.showOutcome = true;
+      }
     },
 
 
@@ -1641,6 +1652,16 @@ export default Vue.extend({
               this.publishedVersions?.splice(index, 1, this.raw);
             }
           }
+        }
+      }
+      if (this.saveOutcome){
+        const jsonValue = this.resourceJsonEditor!.getValue();
+        this.setSaveOutcomePositionInformation(jsonValue, this.saveOutcome.issue);
+
+        // and grab the first item to send to the chat AI
+        const priorityIssue = getPriorityIssue(this.saveOutcome.issue);
+        if (priorityIssue) {
+          this.helpWithIssue(priorityIssue);
         }
       }
     },
