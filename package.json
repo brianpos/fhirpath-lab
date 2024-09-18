@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@aehrc/sdc-populate": "^2.3.1",
-    "@aehrc/smart-forms-renderer": "^0.37.2",
+    "@aehrc/smart-forms-renderer": "^0.40.0",
     "@nuxtjs/applicationinsights": "^1.2.2",
     "@types/ace": "^0.0.52",
     "@types/fhir": "^0.0.41",
@@ -31,7 +31,7 @@
     "fhir-extension-helpers": "^0.3.0",
     "fhir-sdc-helpers": "^0.1.0",
     "fhirclient": "^2.5.3",
-    "fhirpath": "^3.13.3",
+    "fhirpath": "^3.15.1",
     "fhirpath-lab": "file:",
     "lforms-loader": "^3.0.2",
     "luxon": "^3.4.3",

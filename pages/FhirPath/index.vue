@@ -395,7 +395,7 @@ import { addExtension, addExtensionStringValue, clearExtension, getExtensionCodi
 import { fpjsNode, getTraceValue, getValue, JsonNode, ResultData } from "~/models/FhirpathTesterData";
 import { GetExternalVariablesUsed, InvertTree, mapFunctionReferences } from "~/components/ParseTreeTab.vue";
 // import { getPreferredTerminologyServerFromSDC } from "fhir-sdc-helpers";
-import fhirpath from "fhirpath";
+import fhirpath, { AsyncOptions } from "fhirpath";
 import fhirpath_r4_model from "fhirpath/fhir-context/r4";
 import fhirpath_r5_model from "fhirpath/fhir-context/r5";
 import { setAcePaths, Rules as FhirPathHightlighter_Rules, setCustomHighlightRules } from "~/helpers/fhirpath_highlighter"
@@ -1974,7 +1974,11 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         // scan over each of the expressions
         try {
           this.processedByEngine = `fhirpath.js-`+fhirpath.version+` (r4b)`;
-          contextNodes = fhirpath.evaluate(fhirData, contextExpression, environment, fhirpath_r4_model);
+          let data = fhirpath.evaluate(fhirData, contextExpression, environment, fhirpath_r4_model);
+          if (data instanceof Promise)
+            contextNodes = await data;
+          else 
+            contextNodes = data as any[];
         }
         catch (err: any) {
           console.log(err);
@@ -1987,7 +1991,11 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       else {
         try {
           this.processedByEngine = `fhirpath.js-`+fhirpath.version+` (r4b)`;
-          contextNodes = fhirpath.evaluate(fhirData, "%resource", environment, fhirpath_r4_model);
+          let data = fhirpath.evaluate(fhirData, "%resource", environment, fhirpath_r4_model);
+          if (data instanceof Promise)
+            contextNodes = await data;
+          else 
+            contextNodes = data as any[];
         }
         catch (err: any) {
           console.log(err);
@@ -2036,7 +2044,17 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
             base: resData.context??'', 
             expression: useExpression
           }
-          let res: any[] = fhirpath.evaluate(contextNode, path, environment, fhirpath_r4_model, { traceFn: tracefunction });
+          let options: AsyncOptions = {
+            traceFn: tracefunction,
+            async: true,
+            terminologyUrl: this.terminologyServer
+          };
+          let data = fhirpath.evaluate(contextNode, path, environment, fhirpath_r4_model, options);
+          let res: any[];
+          if (data instanceof Promise)
+            res = await data;
+          else
+            res = data as any[];
           this.results.push(resData);
 
           for (let item of res) {
@@ -2115,7 +2133,11 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         // scan over each of the expressions
         try {
           this.processedByEngine = `fhirpath.js-`+fhirpath.version+` (r5)`;
-          contextNodes = fhirpath.evaluate(fhirData, contextExpression, environment, fhirpath_r5_model);
+          let data = fhirpath.evaluate(fhirData, contextExpression, environment, fhirpath_r5_model);
+          if (data instanceof Promise)
+            contextNodes = await data;
+          else
+            contextNodes = data as any[];
         }
         catch (err: any) {
           console.log(err);
@@ -2132,7 +2154,11 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       else {
         try {
           this.processedByEngine = `fhirpath.js-`+fhirpath.version+` (r5)`;
-          contextNodes = fhirpath.evaluate(fhirData, "%resource", environment, fhirpath_r5_model);
+          let data = fhirpath.evaluate(fhirData, "%resource", environment, fhirpath_r5_model);
+          if (data instanceof Promise)
+            contextNodes = await data;
+          else
+            contextNodes = data;
         }
         catch (err: any) {
           console.log(err);
@@ -2185,7 +2211,17 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
             base: resData.context??'', 
             expression: useExpression
           }
-          let res: any[] = fhirpath.evaluate(contextNode, path, environment, fhirpath_r5_model, { traceFn: tracefunction });
+          let options: AsyncOptions = {
+            traceFn: tracefunction,
+            async: true,
+            terminologyUrl: this.terminologyServer
+          };
+          let data = fhirpath.evaluate(contextNode, path, environment, fhirpath_r5_model, options);
+          let res: any[];
+          if (data instanceof Promise)
+            res = await data;
+          else
+            res = data as any[];
           this.results.push(resData);
 
           for (let item of res) {
