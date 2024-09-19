@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@aehrc/sdc-populate": "^2.3.1",
-    "@aehrc/smart-forms-renderer": "^0.40.0",
+    "@aehrc/smart-forms-renderer": "^0.40.1",
     "@nuxtjs/applicationinsights": "^1.2.2",
     "@types/ace": "^0.0.52",
     "@types/fhir": "^0.0.41",

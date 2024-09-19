@@ -156,7 +156,7 @@ export default class QuestionnaireExtractTest extends Vue {
     this.extractingInProgress = false;
   }
 
-  @Watch('questionnaireResponse', { immediate: false, deep: true })
+  @Watch('questionnaireResponse', { immediate: true, deep: false })
   async onQuestionnaireResponseChanged() {
     console.log("QR changed");
   }

@@ -926,9 +926,11 @@ export default Vue.extend({
     },
     async processUpdatedQuestionnaireResponse(value: fhir4b.QuestionnaireResponse) {
       if (this.questionnaireResponseJsonEditor) {
-        this.questionnaireResponse = value;
+        const jsonValue = JSON.stringify(value, null, 2);
+        this.questionnaireResponse = JSON.parse(jsonValue);
+        // console.log("Updated QuestionnaireResponse: ", this.questionnaireResponse);
         this.questionnaireResponseJsonEditor.setValue(
-          JSON.stringify(this.questionnaireResponse, null, 2)
+          jsonValue
         );
         this.questionnaireResponseJsonEditor.clearSelection();
         this.selectTab(10);
