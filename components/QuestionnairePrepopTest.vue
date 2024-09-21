@@ -272,89 +272,7 @@ export default class QuestionnaireExtractTest extends Vue {
   async runFormsLabPrePopulation(): Promise<QuestionnaireResponse | undefined> {
     console.log('Running forms-lab');
 
-    try {
-      // prepare the parameters with the launch context values
-      let prepopParams: Parameters = {
-        resourceType: "Parameters",
-        "parameter": [
-          {
-            "name": "subject",
-            "valueReference": {
-              "display": "intake patient"
-            }
-          },
-          {
-            "name": "questionnaire",
-            "resource": this.questionnaire
-          },
-          {
-            "name": "context",
-            "part": []
-          }]
-      };
-      // Set the subject id
-      prepopParams.parameter![0].valueReference!.reference = this.subjectId;
-
-      // Set the launch context values
-      let lcs = this.launchContexts;
-      if (lcs) {
-        for (let lc of lcs) {
-          if (lc.name) {
-            let data = this.launchContextValues.get(lc.name);
-            if (data && data.data) {
-              let part = {
-                "name": lc.name,
-                "resource": JSON.parse(data.data)
-              };
-              prepopParams.parameter![2].part!.push(part);
-            }
-          }
-        }
-      }
-
-      const bodyContent = JSON.stringify(prepopParams, null, 4);
-      this.setValue(bodyContent);
-
-      // run the pre-population
-      // Use the FHIR $populate operation to pre-populate the form
-      // from Brian's forms-lab demo server
-      const response = await fetch("https://fhir.forms-lab.com/Questionnaire/$populate", {
-        method: "POST",
-        cache: "no-cache",
-        headers: {
-          accept: "application/json",
-          "Content-Type": "application/json"
-        },
-        body: bodyContent
-      });
-      const raw = await response.text();
-      console.log('Pre-population result', raw);
-
-      // editorQR.setValue(raw);
-      // editorQR.clearSelection();
-
-      try {
-        var jsonOutput = JSON.parse(raw);
-        if (jsonOutput.resourceType === "OperationOutcome") {
-          console.log("Unable to pre-populate form, refer to outcome");
-          return undefined;
-        }
-
-        if (jsonOutput.resourceType !== "QuestionnaireResponse") {
-          console.log("Unexpected response type: " + jsonOutput.resourceType);
-          return undefined;
-        }
-        return jsonOutput;
-      }
-      catch (err) {
-        console.log(err);
-        return undefined;
-      }
-    }
-    catch (err) {
-      console.log(err);
-      return undefined;
-    }
+    return await this.evaluatePrePopulation("https://fhir.forms-lab.com/Questionnaire/$populate");
   }
 
   // Note: No way to POST batch bundles yet, the populate library will individually process each batch entry
@@ -454,6 +372,10 @@ export default class QuestionnaireExtractTest extends Vue {
 
   async runOtherPrePopulation(): Promise<QuestionnaireResponse | undefined> {
     console.log('Running Other pre-pop: ' + this.populateServiceUrl);
+    return await this.evaluatePrePopulation(this.populateServiceUrl);
+  }
+
+  async evaluatePrePopulation(url: string): Promise<QuestionnaireResponse | undefined> {
 
     try {
       // prepare the parameters with the launch context values
@@ -475,6 +397,7 @@ export default class QuestionnaireExtractTest extends Vue {
             "part": []
           }]
       };
+
       // Set the subject id
       prepopParams.parameter![0].valueReference!.reference = this.subjectId;
 
@@ -491,6 +414,15 @@ export default class QuestionnaireExtractTest extends Vue {
               };
               prepopParams.parameter![2].part!.push(part);
             }
+            else if (data && data.id){
+              let part = {
+                "name": lc.name,
+                "valueReference": { 
+                  reference: data.id
+                }
+              };
+              prepopParams.parameter![2].part!.push(part);
+            }
           }
         }
       }
@@ -501,7 +433,7 @@ export default class QuestionnaireExtractTest extends Vue {
       // run the pre-population
       // Use the FHIR $populate operation to pre-populate the form
       // from whatever server is at the URL in populateServiceUrl 
-      const response = await fetch(this.populateServiceUrl, {
+      const response = await fetch(url, {
         method: "POST",
         cache: "no-cache",
         headers: {
