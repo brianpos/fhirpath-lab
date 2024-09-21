@@ -82,6 +82,9 @@
 
     <v-select label="Pre-Processing Engine" class="engineSelector" :items="executionEngines" v-model="selectedEngine"
       hide-details="auto" /><br />
+      <v-text-field label="Populate Service URL" v-model="populateServiceUrl" v-if="selectedEngine == 'Other pre-pop'">
+    </v-text-field>
+
     <v-btn accesskey="g" title="press alt+g to go" @click="runPrePopulation">
       <v-icon>
         mdi-play
@@ -173,9 +176,10 @@ export default class QuestionnaireExtractTest extends Vue {
     "forms-lab",
     "CSIRO pre-pop",
     "lforms pre-pop",
-    "HAPI pre-pop",
+    "Other pre-pop",
   ];
   public selectedEngine: string = "forms-lab";
+  public populateServiceUrl: string = "http://localhost:8000/Questionnaire/$populate";
   public launchContextValues: Map<string, LaunchContextData> = new Map<string, LaunchContextData>;
   public isComplete(val: string | undefined): boolean {
     console.log('Checking isComplete for ' + val);
@@ -254,8 +258,8 @@ export default class QuestionnaireExtractTest extends Vue {
       result = await this.runCSIROPrePopulation();
     } else if (this.selectedEngine === 'lforms pre-pop') {
       result = await this.runLFormsPrePopulation();
-    } else if (this.selectedEngine === 'HAPI pre-pop') {
-      result = await this.runHAPIPrePopulation();
+    } else if (this.selectedEngine === 'Other pre-pop') {
+      result = await this.runOtherPrePopulation();
     } else {
       console.error('Unknown engine selected');
     }
@@ -448,9 +452,92 @@ export default class QuestionnaireExtractTest extends Vue {
     return undefined;
   }
 
-  async runHAPIPrePopulation(): Promise<QuestionnaireResponse | undefined> {
-    console.log('Running HAPI pre-pop');
-    return undefined;
+  async runOtherPrePopulation(): Promise<QuestionnaireResponse | undefined> {
+    console.log('Running Other pre-pop: ' + this.populateServiceUrl);
+
+    try {
+      // prepare the parameters with the launch context values
+      let prepopParams: Parameters = {
+        resourceType: "Parameters",
+        "parameter": [
+          {
+            "name": "subject",
+            "valueReference": {
+              "display": "intake patient"
+            }
+          },
+          {
+            "name": "questionnaire",
+            "resource": this.questionnaire
+          },
+          {
+            "name": "context",
+            "part": []
+          }]
+      };
+      // Set the subject id
+      prepopParams.parameter![0].valueReference!.reference = this.subjectId;
+
+      // Set the launch context values
+      let lcs = this.launchContexts;
+      if (lcs) {
+        for (let lc of lcs) {
+          if (lc.name) {
+            let data = this.launchContextValues.get(lc.name);
+            if (data && data.data) {
+              let part = {
+                "name": lc.name,
+                "resource": JSON.parse(data.data)
+              };
+              prepopParams.parameter![2].part!.push(part);
+            }
+          }
+        }
+      }
+
+      const bodyContent = JSON.stringify(prepopParams, null, 4);
+      this.setValue(bodyContent);
+
+      // run the pre-population
+      // Use the FHIR $populate operation to pre-populate the form
+      // from whatever server is at the URL in populateServiceUrl 
+      const response = await fetch(this.populateServiceUrl, {
+        method: "POST",
+        cache: "no-cache",
+        headers: {
+          accept: "application/json",
+          "Content-Type": "application/json"
+        },
+        body: bodyContent
+      });
+      const raw = await response.text();
+      console.log('Pre-population result', raw);
+
+      // editorQR.setValue(raw);
+      // editorQR.clearSelection();
+
+      try {
+        var jsonOutput = JSON.parse(raw);
+        if (jsonOutput.resourceType === "OperationOutcome") {
+          console.log("Unable to pre-populate form, refer to outcome");
+          return undefined;
+        }
+
+        if (jsonOutput.resourceType !== "QuestionnaireResponse") {
+          console.log("Unexpected response type: " + jsonOutput.resourceType);
+          return undefined;
+        }
+        return jsonOutput;
+      }
+      catch (err) {
+        console.log(err);
+        return undefined;
+      }
+    }
+    catch (err) {
+      console.log(err);
+      return undefined;
+    }
   }
 
   public setLaunchContextData(context: string, content: string) {
