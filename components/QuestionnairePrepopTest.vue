@@ -376,6 +376,7 @@ export default class QuestionnaireExtractTest extends Vue {
   }
 
   async evaluatePrePopulation(url: string): Promise<QuestionnaireResponse | undefined> {
+    this.$emit('outcome', undefined);
 
     try {
       // prepare the parameters with the launch context values
