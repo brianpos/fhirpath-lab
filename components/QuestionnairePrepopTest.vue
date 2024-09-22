@@ -391,10 +391,6 @@ export default class QuestionnaireExtractTest extends Vue {
           {
             "name": "questionnaire",
             "resource": this.questionnaire
-          },
-          {
-            "name": "context",
-            "part": []
           }]
       };
 
@@ -408,20 +404,34 @@ export default class QuestionnaireExtractTest extends Vue {
           if (lc.name) {
             let data = this.launchContextValues.get(lc.name);
             if (data && data.data) {
-              let part = {
-                "name": lc.name,
-                "resource": JSON.parse(data.data)
+              let context = {
+                "name": "context",
+                "part": [{
+                  "name": "name",
+                  "valueString": lc.name
+                },
+                {
+                  "name": "content",
+                  "resource": JSON.parse(data.data)
+                }]
               };
-              prepopParams.parameter![2].part!.push(part);
+              prepopParams.parameter!.push(context);
             }
             else if (data && data.id){
-              let part = {
-                "name": lc.name,
-                "valueReference": { 
-                  reference: data.id
-                }
+              let context = {
+                "name": "context",
+                "part": [{
+                  "name": "name",
+                  "valueString": lc.name
+                },
+                {
+                  "name": "content",
+                  "valueReference": { 
+                    reference: data.id
+                  }
+                }]
               };
-              prepopParams.parameter![2].part!.push(part);
+              prepopParams.parameter!.push(context);
             }
           }
         }
