@@ -462,9 +462,22 @@ export default class QuestionnaireExtractTest extends Vue {
         var jsonOutput = JSON.parse(raw);
         if (jsonOutput.resourceType === "OperationOutcome") {
           console.log("Unable to pre-populate form, refer to outcome");
+          this.$emit('outcome', jsonOutput);
           return undefined;
         }
 
+        if (jsonOutput.resourceType === "Parameters") {
+          const result = jsonOutput as Parameters;
+          const issuesParameter = result.parameter?.find(p => p.name === "issues");
+          if (issuesParameter) {
+            this.$emit('outcome', issuesParameter.resource);
+          }
+          const returnParameter = result.parameter?.find(p => p.name === "return");
+          if (returnParameter) {
+            return returnParameter.resource as QuestionnaireResponse;
+          }
+          return undefined;
+        }
         if (jsonOutput.resourceType !== "QuestionnaireResponse") {
           console.log("Unexpected response type: " + jsonOutput.resourceType);
           return undefined;

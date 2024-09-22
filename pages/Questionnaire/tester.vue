@@ -99,7 +99,7 @@
           </template>
 
           <template v-slot:Pre-Population>
-            <EditorPrePopulationSection v-if="raw" @highlight-path="highlightPath" />
+            <EditorPrePopulationSection v-if="raw" @highlight-path="highlightPath"  @outcome="displayExtractOutcome"/>
           </template>
 
           <template v-slot:Variables>
@@ -155,7 +155,7 @@
           </template>
 
           <template v-slot:PrePop>
-            <QuestionnairePrepopTest ref="prepopTester" v-bind:questionnaire="raw"
+            <QuestionnairePrepopTest ref="prepopTester" v-bind:questionnaire="raw"  @outcome="displayExtractOutcome"
               @response="processUpdatedQuestionnaireResponseFromPrePopTester" @pre-pop-lforms="prePopLForms" />
           </template>
 

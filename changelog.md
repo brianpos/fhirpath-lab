@@ -5,6 +5,7 @@
 
 ## 22 September 2024 (dev)
 * Correct the context/content parameters to the $extract operation in the questionnaire tester
+* Capture and report pre-pop issues returned from $populate in the questionnaire tester
 
 ## 21 September 2024 (dev)
 * Update form pre-pop tester to include other URL to evaluate the pre-pop against
