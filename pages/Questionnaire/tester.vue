@@ -508,9 +508,9 @@ export default Vue.extend({
         {
           iconName: "mdi-tree-outline",
           tabName: "Models",
-          tabHeaderName: "Logical Models Required",
-          title: "Logical Models Required\n(Structure Definitions)",
-          show: true,
+          tabHeaderName: "StructureDefinitions Required",
+          title: "StructureDefinition's required by the extract operation",
+          show: sdc.hasDataExtract(this.raw),
           enabled: true,
         },
         {
