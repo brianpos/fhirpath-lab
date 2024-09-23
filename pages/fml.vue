@@ -51,7 +51,7 @@
             <resource-editor ref="editorModels" label="Model ID/Search Query"
               textLabel="StructureDefinition / Bundle Text" :resourceUrl="modelsSearch"
               @update:resourceUrl="modelsSearch = ($event ?? '')"
-              footerLabel="The Model can be either an individual StructureDefintion (e.g. logical model) or a search query for a bundle of models"
+              footerLabel="The Model can be either an individual StructureDefinition (e.g. logical model) or a search query for a bundle of models"
               :resourceText="modelsText"
               @update:resourceText="modelsText = $event" />
           </template>

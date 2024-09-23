@@ -3,6 +3,9 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+## 23 September 2024 (dev)
+* Include a models tab on the form tester to permit providing model(s) to the $extract operation
+
 ## 22 September 2024 (dev)
 * Correct the context/content parameters to the $extract operation in the questionnaire tester
 * Capture and report pre-pop issues returned from $populate in the questionnaire tester

@@ -161,7 +161,21 @@
 
           <template v-slot:Extract>
             <QuestionnaireExtractTest ref="extractTester" v-bind:questionnaire="raw" @outcome="displayExtractOutcome"
+              :models="modelsText"
               v-bind:questionnaireResponse="questionnaireResponse" />
+          </template>
+
+          <template v-slot:Models>
+            <!-- <div class="ct-header">
+              <v-icon left dark> mdi-tree-outline </v-icon>
+              Models
+            </div> -->
+            <resource-editor ref="editorModels" label="Model ID/Search Query"
+              textLabel="StructureDefinition / Bundle Text" :resourceUrl="modelsSearch"
+              @update:resourceUrl="modelsSearch = ($event ?? '')"
+              footerLabel="The Model can be either an individual StructureDefinition or a search query for a bundle of models which are made available to the $extract operation"
+              :resourceText="modelsText"
+              @update:resourceText="modelsText = $event" />
           </template>
 
           <template v-slot:AI_Chat>
@@ -332,6 +346,8 @@ interface IQuestionnaireTesterData extends QuestionnaireData {
   openAIFeedbackEnabled?: boolean;
   helpWithError?: string;
   questionnaireResponse?: fhir4b.QuestionnaireResponse;
+  modelsSearch: string;
+  modelsText?: string;
 }
 
 function getPriorityIssue(
@@ -490,6 +506,14 @@ export default Vue.extend({
           enabled: true,
         },
         {
+          iconName: "mdi-tree-outline",
+          tabName: "Models",
+          tabHeaderName: "Logical Models Required",
+          title: "Logical Models Required\n(Structure Definitions)",
+          show: true,
+          enabled: true,
+        },
+        {
           iconName: "mdi-brain",
           tabName: "AI Chat",
           title: "Questionnaire and Structured Data Capture AI Chat",
@@ -555,6 +579,10 @@ export default Vue.extend({
 
       if (this.$route.query.id) {
         this.resourceId = this.$route.query.id as string;
+      }
+
+      if (this.$route.query.models) {
+        this.modelsSearch = this.$route.query.models as string ?? '';
       }
 
       let tabControl: TwinPaneTab = this.$refs.twinTabControl as TwinPaneTab;
@@ -1697,6 +1725,8 @@ export default Vue.extend({
       openAIFeedbackEnabled: false,
       helpWithError: undefined,
       questionnaireResponse: undefined,
+      modelsSearch: '',
+      modelsText: undefined,
 
       chatEnabled: false,
       flatModel: [],

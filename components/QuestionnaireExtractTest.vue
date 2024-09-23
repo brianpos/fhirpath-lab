@@ -67,6 +67,7 @@ export default class QuestionnaireExtractTest extends Vue {
   // Properties provided by the parent component
   @Prop() readonly questionnaire: Questionnaire | undefined;
   @Prop() readonly questionnaireResponse: QuestionnaireResponse | undefined;
+  @Prop() readonly models: string | undefined;
 
   // Properties visible to the local template
   public selectedTabValue: number = 2;
@@ -106,6 +107,9 @@ export default class QuestionnaireExtractTest extends Vue {
         name: "type",
         valueString: "Questionnaire"
       });
+    }
+    if (this.models != undefined) {
+      this.extractParameters.parameter.push({ name: "model", valueString: this.models });
     }
     this.expressionEditor?.setValue('');
     this.expressionEditor?.clearSelection();
@@ -158,7 +162,7 @@ export default class QuestionnaireExtractTest extends Vue {
 
   @Watch('questionnaireResponse', { immediate: true, deep: false })
   async onQuestionnaireResponseChanged() {
-    console.log("QR changed");
+    console.log("QR changed", this.questionnaireResponse);
   }
 
   @Watch('questionnaire', { immediate: false, deep: true })
