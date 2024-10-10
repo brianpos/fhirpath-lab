@@ -167,13 +167,13 @@ export function getLink(
   return undefined;
 }
 
-const FhirpathLabCodeSystem = "http://fhirpath-lab.com/CodeSystem/error-codes";
+export const FhirpathLabCodeSystem = "http://fhirpath-lab.com/CodeSystem/error-codes";
 
-const errorCodingExpandValueSet: Coding = {system: FhirpathLabCodeSystem, code: "exp-01", display: "Expansion error" };
-const errorCodingLoadPubVersions: Coding = {system: FhirpathLabCodeSystem, code: "lpv-01", display: "Load published versions error" };
-const errorCodingLoadResource: Coding = {system: FhirpathLabCodeSystem, code: "lr-01", display: "Load fhir resource error" };
-const errorCodingSaveResource: Coding = {system: FhirpathLabCodeSystem, code: "sr-01", display: "Save fhir resource error" };
-const errorCodingSearch: Coding = {system: FhirpathLabCodeSystem, code: "sr-01", display: "Search fhir resource error" };
+export const errorCodingExpandValueSet: Coding = {system: FhirpathLabCodeSystem, code: "exp-01", display: "Expansion error" };
+export const errorCodingLoadPubVersions: Coding = {system: FhirpathLabCodeSystem, code: "lpv-01", display: "Load published versions error" };
+export const errorCodingLoadResource: Coding = {system: FhirpathLabCodeSystem, code: "lr-01", display: "Load fhir resource error" };
+export const errorCodingSaveResource: Coding = {system: FhirpathLabCodeSystem, code: "sr-01", display: "Save fhir resource error" };
+export const errorCodingSearch: Coding = {system: FhirpathLabCodeSystem, code: "sr-01", display: "Search fhir resource error" };
 
 
 export function CreateOperationOutcome(
@@ -414,14 +414,13 @@ export async function loadCanonicalResource<TData extends fhir4b.FhirResource, C
 
 export async function saveFhirResource<TData extends fhir4b.FhirResource>(serverBaseUrl: string, data: BaseResourceData<TData>): Promise<fhir4b.OperationOutcome | undefined> {
   data.saving = true;
-  var urlRequest;
+  let urlRequest;
   try {
-    const resource = data.raw as fhir4b.FhirResource;
     console.log("save " + data.raw?.id);
     data.showOutcome = undefined;
     data.saveOutcome = undefined;
 
-    var response: AxiosResponse<TData, any>;
+    let response: AxiosResponse<TData, any>;
     let headers = {
       'Cache-Control': 'no-cache',
       "Accept": requestFhirAcceptHeaders,
@@ -450,7 +449,7 @@ export async function saveFhirResource<TData extends fhir4b.FhirResource>(server
       return CreateOperationOutcome("fatal", "exception", "Server: " + err.message, errorCodingSaveResource, urlRequest);
     }
     return CreateOperationOutcome("fatal", "exception", "Client: " + err, errorCodingSaveResource, urlRequest);
-    }
+  }
 }
 
 export async function expandValueSet(serverBaseUrl: string, vsCanonical: string, filter?: string): Promise<fhir4b.ValueSetExpansion | fhir4b.OperationOutcome> {
