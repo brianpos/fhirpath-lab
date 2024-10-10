@@ -9,7 +9,7 @@
     </v-text-field>
     <div class="ace_editor" width="100%" ref="aceEditorExpressionExtract"></div>
     <div class="ace_editor_footer"></div>
-    <v-expansion-panels accordion expanded >
+    <v-expansion-panels accordion expanded>
       <v-expansion-panel :isActive="true">
         <v-expansion-panel-header>
           Debug Extract Parameters
@@ -18,7 +18,8 @@
           </template>
         </v-expansion-panel-header>
         <v-expansion-panel-content>
-          <resource-editor style="height: 35vh;" :readOnly="true" :resourceText="JSON.stringify(extractParameters, null, 2)" />
+          <resource-editor style="height: 35vh;" :readOnly="true"
+            :resourceText="JSON.stringify(extractParameters, null, 2)" />
         </v-expansion-panel-content>
       </v-expansion-panel>
     </v-expansion-panels>
@@ -72,7 +73,7 @@ export default class QuestionnaireExtractTest extends Vue {
 
   // Properties provided by the parent component
   @Prop() readonly questionnaire: Questionnaire | undefined;
-  @Prop() readonly questionnaireResponse: QuestionnaireResponse | undefined;
+  @Prop() readonly questionnaireResponseJson: string | undefined;
   @Prop() readonly models: string | undefined;
 
   // Properties visible to the local template
@@ -97,19 +98,9 @@ export default class QuestionnaireExtractTest extends Vue {
     console.log("Extracting the questionnaire");
 
     // update the parameters object for the extract
-    this.extractParameters.parameter = [
-      {
-        name: "questionnaire-response",
-        resource: this.questionnaireResponse
-      }
-    ];
-    this.extractParameters.parameter.push({
-      name: "questionnaire",
-      resource: this.questionnaire
-    });
-    if (this.models != undefined) {
-      this.extractParameters.parameter.push({ name: "model", valueString: this.models });
-    }
+    if (!this.questionnaireResponseJson)
+      return;
+
     this.expressionEditor?.setValue('');
     this.expressionEditor?.clearSelection();
 
@@ -118,6 +109,21 @@ export default class QuestionnaireExtractTest extends Vue {
 
     // Send the extract request
     try {
+      this.extractParameters.parameter = [
+        {
+          name: "questionnaire-response",
+          resource: JSON.parse(this.questionnaireResponseJson)
+        }
+      ];
+
+      this.extractParameters.parameter.push({
+        name: "questionnaire",
+        resource: this.questionnaire
+      });
+      if (this.models != undefined) {
+        this.extractParameters.parameter.push({ name: "model", valueString: this.models });
+      }
+
       this.$emit('outcome', undefined); // reset the outcome to clear any previous issues
       const response = await fetch(this.extractServiceUrl, {
         method: "POST",
@@ -161,7 +167,7 @@ export default class QuestionnaireExtractTest extends Vue {
 
   @Watch('questionnaireResponse', { immediate: true, deep: false })
   async onQuestionnaireResponseChanged() {
-    console.log("QR changed", this.questionnaireResponse);
+    console.log("QR changed", this.questionnaireResponseJson);
   }
 
   @Watch('questionnaire', { immediate: false, deep: true })
@@ -175,6 +181,7 @@ export default class QuestionnaireExtractTest extends Vue {
       if (editorDiv && this.expressionEditor === undefined) {
         this.expressionEditor = ace.edit(editorDiv, {
           wrap: "free",
+          readOnly: true,
           highlightActiveLine: false,
           showGutter: true,
           fontSize: 14,

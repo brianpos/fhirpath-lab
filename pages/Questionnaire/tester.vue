@@ -118,18 +118,16 @@
           </template>
 
           <template v-slot:Response>
-            <v-text-field label="Test QuestionnaireResponse Resource Id" v-model="qrResourceId" readonly
+            <v-text-field label="Test QuestionnaireResponse Resource Id" v-model="qrResourceId" 
               hide-details="auto" autocomplete="off" @input="updateNow" autocorrect="off" autocapitalize="off"
-              spellcheck="false" :title="'Resource Id to download from the examples server\r\nAbsolute (requires CORS support) or relative to ' +
-                exampleServerUrl
-                ">
+              spellcheck="false" :title="'Resource Id to download from the examples server\r\nAbsolute (requires CORS support) or relative to ' + exampleServerUrl ">
               <template v-slot:append>
                 <v-btn icon small tile v-show="qrResourceId" @click="qrResourceId = undefined"
                   title="Clear Test QuestionnaireResponse Resource ID">
                   <v-icon> mdi-close </v-icon>
                 </v-btn>
-                <v-btn icon small tile :disabled="qrResourceId === undefined" @click="downloadTestResource"
-                  :title="downloadTestResourceButtonTitle">
+                <v-btn icon small tile :disabled="qrResourceId === undefined" @click="downloadTestResponseResource"
+                  :title="downloadTestResponseResourceButtonTitle">
                   <v-icon> mdi-download </v-icon>
                 </v-btn>
                 <v-btn small icon tile @click="reformatTestQR_Resource"><v-icon
@@ -139,7 +137,20 @@
                 <v-btn small icon tile @click="validateQuestionnaireResponse"><v-icon
                     title="Validate the below QuestionnaireResponse json using the fhirpath-lab server" dark>
                     mdi-note-check-outline
-                  </v-icon></v-btn>
+                  </v-icon>
+                </v-btn>
+                <v-btn small icon tile @click="allocateNewQuestionnaireResponseId">
+                  <v-icon
+                    title="Allocate a new ID" dark>
+                    mdi-identifier
+                  </v-icon>
+                </v-btn>
+                <v-btn small icon tile @click="saveQuestionnaireResponse" v-if="qrResourceId"
+                  :title="saveTestResponseResourceButtonTitle">
+                  <v-icon dark>
+                    mdi-content-save
+                  </v-icon>
+                </v-btn>
               </template>
             </v-text-field>
             <br />
@@ -162,7 +173,7 @@
           <template v-slot:Extract>
             <QuestionnaireExtractTest ref="extractTester" v-bind:questionnaire="raw" @outcome="displayExtractOutcome"
               :models="modelsText"
-              v-bind:questionnaireResponse="questionnaireResponse" />
+              v-bind:questionnaireResponseJson="questionnaireResponseJson" />
           </template>
 
           <template v-slot:Models>
@@ -287,6 +298,8 @@ import {
   requestFhirAcceptHeaders,
   saveFhirResource,
   CreateOperationOutcome,
+  requestFhirContentTypeHeaders,
+  errorCodingSaveResource,
 } from "~/helpers/searchFhir";
 import { BaseResource_defaultValues } from "~/models/BaseResourceTableData";
 
@@ -346,7 +359,7 @@ interface IQuestionnaireTesterData extends QuestionnaireData {
   openAIexpressionExplanationLoading: boolean;
   openAIFeedbackEnabled?: boolean;
   helpWithError?: string;
-  questionnaireResponse?: fhir4b.QuestionnaireResponse;
+  questionnaireResponseJson?: string;
   modelsSearch: string;
   modelsText?: string;
 }
@@ -524,7 +537,24 @@ export default Vue.extend({
       ];
     },
     downloadTestResourceButtonTitle(): string {
+      if (this.resourceId?.startsWith("http")) {
+        return "Download test resource from " + this.resourceId;
+      }
       return "Download test resource from " + this.exampleServerUrl;
+    },
+    downloadTestResponseResourceButtonTitle(): string {
+      if (this.qrResourceId?.startsWith("http")) {
+          let formBaseUrl = this.qrResourceId.substring(0, this.qrResourceId.indexOf("/QuestionnaireResponse/"));
+        return "Download test resource from " + formBaseUrl;
+      }
+      return "Download test resource from " + this.exampleServerUrl;
+    },
+    saveTestResponseResourceButtonTitle(): string {
+      if (this.qrResourceId?.startsWith("http")) {
+          let formBaseUrl = this.qrResourceId.substring(0, this.qrResourceId.indexOf("/QuestionnaireResponse/"));
+        return "Save the test response resource to " + formBaseUrl;
+      }
+      return "Save the test response resource to " + this.exampleServerUrl;
     },
     exampleServerUrl(): string {
       return settings.getFhirServerExamplesUrl();
@@ -545,7 +575,6 @@ export default Vue.extend({
             "change",
             this.resourceJsonChangedEvent
           );
-          // this.resourceJsonEditor.session.setMode('ace/mode/json');
 
           // Also add in the QResponse editor too
           let editorQResponseJsonDiv: any = this.$refs
@@ -555,7 +584,10 @@ export default Vue.extend({
               editorQResponseJsonDiv,
               resourceEditorSettings
             );
-          // this.questionnaireResponseJsonEditor.session.setMode('ace/mode/json');
+            this.questionnaireResponseJsonEditor.session.on(
+            "change",
+            this.questionnaireResponseJsonChangedEvent
+          );
         }
           console.log("Created Q Json editor");
         }
@@ -962,7 +994,7 @@ export default Vue.extend({
     async processUpdatedQuestionnaireResponse(value: fhir4b.QuestionnaireResponse) {
       if (this.questionnaireResponseJsonEditor) {
         const jsonValue = JSON.stringify(value, null, 2);
-        this.questionnaireResponse = JSON.parse(jsonValue);
+        this.questionnaireResponseJson = jsonValue;
         // console.log("Updated QuestionnaireResponse: ", this.questionnaireResponse);
         this.questionnaireResponseJsonEditor.setValue(
           jsonValue
@@ -982,7 +1014,7 @@ export default Vue.extend({
 
         if (this.$refs.extractTester as QuestionnaireExtractTest) {
           (this.$refs.extractTester as QuestionnaireExtractTest).setValue(
-            JSON.stringify(this.questionnaireResponse, null, 2)
+            this.questionnaireResponseJson
           );
         }
       }
@@ -991,7 +1023,7 @@ export default Vue.extend({
     AddItem(parentItem: any) {
       console.log("add new item");
       if (this.raw && this.flatModel) {
-        var newItem: fhir4b.QuestionnaireItem = {
+        let newItem: fhir4b.QuestionnaireItem = {
           linkId: settings.createRandomID(),
           type: "string",
         };
@@ -1076,7 +1108,7 @@ export default Vue.extend({
       if (this.resourceJsonEditor) {
         const jsonValue = this.resourceJsonEditor.getValue();
         try {
-          var results = JSON.parse(jsonValue);
+          let results = JSON.parse(jsonValue);
           this.raw = results as fhir4b.Questionnaire;
           if (this.raw) {
             this.flatModel = FlattenedQuestionnaireItems(this.raw);
@@ -1095,6 +1127,21 @@ export default Vue.extend({
               });
             });
           }
+        } catch { }
+      }
+    },
+
+    questionnaireResponseJsonChangedEvent() {
+      this.resourceJsonChanged = true;
+      this.enableSave = true;
+      console.log("enable save questionnaireResponseJSON");
+
+      if (this.questionnaireResponseJsonEditor) {
+        const jsonValue = this.questionnaireResponseJsonEditor.getValue();
+        try {
+          // Parse the json text to see if it is valid before we blindly pass it along.
+          JSON.parse(jsonValue);
+          this.questionnaireResponseJson = jsonValue;
         } catch { }
       }
     },
@@ -1162,6 +1209,108 @@ export default Vue.extend({
       }
     },
 
+    async localSaveFhirResource<TData extends fhir4b.FhirResource>(serverBaseUrl: string, data: TData): Promise<fhir4b.OperationOutcome | TData | undefined> {
+      this.saving = true;
+      let urlRequest;
+      try {
+        console.log("save " + data.id);
+        this.showOutcome = undefined;
+        this.saveOutcome = undefined;
+
+        let response: AxiosResponse<TData, any>;
+        let headers = {
+          'Cache-Control': 'no-cache',
+          "Accept": requestFhirAcceptHeaders,
+          'Content-Type': requestFhirContentTypeHeaders
+        };
+        if (data.id) {
+          urlRequest = `${serverBaseUrl}/${data.resourceType}/${data.id}`;
+          response = await axios.put<TData>(urlRequest, data, { headers: headers });
+        } else {
+          // Create a new resource (via post)
+          urlRequest = `${serverBaseUrl}/${data.resourceType}`;
+          response = await axios.post<TData>(urlRequest, data, { headers: headers });
+        }
+        this.saving = false;
+        return response.data;
+      } catch (err) {
+        this.saving = false;
+        if (axios.isAxiosError(err)) {
+          const serverError = err as AxiosError<fhir4b.OperationOutcome>;
+          if (serverError && serverError.response) {
+            this.saveOutcome = serverError.response.data;
+            this.showOutcome = true;
+            return serverError.response.data;
+          }
+          return CreateOperationOutcome("fatal", "exception", "Server: " + err.message, errorCodingSaveResource, urlRequest);
+        }
+        return CreateOperationOutcome("fatal", "exception", "Client: " + err, errorCodingSaveResource, urlRequest);
+      }
+    },
+
+    async saveQuestionnaireResponse() {
+      if(!this.questionnaireResponseJson || !this.qrResourceId)
+        return;
+
+      let qr : fhir4b.QuestionnaireResponse = JSON.parse(this.questionnaireResponseJson);
+      let formBaseUrl = this.qrResourceId.substring(0, this.qrResourceId.indexOf("/QuestionnaireResponse/"));
+      if (formBaseUrl.length == 0)
+        formBaseUrl = settings.getFhirServerExamplesUrl();
+      const idFromUrl = this.qrResourceId.substring(this.qrResourceId.indexOf("/QuestionnaireResponse/") + 23);
+      if (qr.id != idFromUrl){
+        alert("The QuestionnaireResponse ID ("+qr.id+") does not match the URL ("+idFromUrl+"). Please allocate a new ID.");
+        return;
+      }
+      const outcome = await this.localSaveFhirResource(
+        formBaseUrl ?? this.fhirServerUrl ?? settings.getFhirServerUrl(),
+        qr
+      );
+      if (outcome?.resourceType == 'QuestionnaireResponse' && this.questionnaireResponseJsonEditor) {
+        this.questionnaireResponseJsonEditor.setValue(JSON.stringify(outcome, null, 2));
+        this.questionnaireResponseJsonEditor.clearSelection();
+        this.questionnaireResponseJsonEditor.renderer.updateFull(true);
+      }
+      if (this.saveOutcome){
+        const jsonValue = this.resourceJsonEditor!.getValue();
+        this.setSaveOutcomePositionInformation(jsonValue, this.saveOutcome.issue);
+
+        // and grab the first item to send to the chat AI
+        const priorityIssue = getPriorityIssue(this.saveOutcome.issue);
+        if (priorityIssue) {
+          this.helpWithIssue(priorityIssue);
+        }
+      }
+    },
+
+    async allocateNewQuestionnaireResponseId() {
+      if (this.resourceJsonEditor && this.questionnaireResponseJsonEditor) {
+        this.loadingData = true;
+        let jsonValueQR = this.questionnaireResponseJsonEditor.getValue();
+
+        // Get the base URL for the form
+        let formBaseUrl = settings.getFhirServerExamplesUrl();
+        if (this.qrResourceId){
+          formBaseUrl = this.qrResourceId.substring(0, this.qrResourceId.indexOf("/QuestionnaireResponse/"));
+          if (formBaseUrl.length == 0)
+            formBaseUrl = settings.getFhirServerExamplesUrl();
+        }
+
+        // Add a subject and authored date if not present
+        try {
+          let qr : QuestionnaireResponse = JSON.parse(jsonValueQR);
+          qr.id = settings.createRandomID();
+          this.qrResourceId = formBaseUrl + "/QuestionnaireResponse/" + qr.id;
+          if (!qr.subject) qr.subject = { reference: "Patient/example" };
+          if (!qr.authored) qr.authored = new Date().toISOString();
+          jsonValueQR = JSON.stringify(qr, null, 2);
+        } catch { }
+
+        this.questionnaireResponseJsonEditor.setValue(jsonValueQR);
+        this.questionnaireResponseJsonEditor.clearSelection();
+        this.questionnaireResponseJsonEditor.renderer.updateFull(true);
+        this.loadingData = false;
+      }
+    },
 
     async validateQuestionnaireResponse() {
       if (this.resourceJsonEditor && this.questionnaireResponseJsonEditor) {
@@ -1184,7 +1333,7 @@ export default Vue.extend({
         // Add a subject and authored date if not present
         try {
           let qr = JSON.parse(jsonValueQR);
-          if (!qr.subject) qr.subject = { reference: "Patient/123" };
+          if (!qr.subject) qr.subject = { reference: "Patient/example" };
           if (!qr.authored) qr.authored = new Date().toISOString();
           jsonValueQR = JSON.stringify(qr, null, 2);
         } catch { }
@@ -1387,6 +1536,96 @@ export default Vue.extend({
               }
             }
             this.resourceJsonEditor.clearSelection();
+          }
+        }
+      } catch (err) {
+        this.loadingData = false;
+        if (axios.isAxiosError(err)) {
+          const serverError = err as AxiosError<fhir4b.OperationOutcome>;
+          if (serverError && serverError.response) {
+            if (serverError.response.data?.resourceType == "OperationOutcome") {
+              this.saveOutcome = serverError.response.data;
+            } else {
+              if (serverError.response.status == 404)
+                this.saveOutcome = {
+                  resourceType: "OperationOutcome",
+                  issue: [],
+                };
+              this.saveOutcome?.issue.push({
+                code: "not-found",
+                severity: "error",
+                details: { text: "Test resource not found" },
+              });
+            }
+            this.showOutcome = true;
+            return serverError.response.data;
+          }
+          this.saveOutcome = CreateOperationOutcome(
+            "fatal",
+            "exception",
+            "Server: " + err.message,
+            undefined,
+            err.code
+          );
+          this.showOutcome = true;
+          return;
+        }
+        this.saveOutcome = CreateOperationOutcome(
+          "fatal",
+          "exception",
+          "Client: " + err
+        );
+        this.showOutcome = true;
+      }
+    },
+
+    async downloadTestResponseResource() {
+      try {
+        if (!this.qrResourceId) return;
+        let url = this.qrResourceId;
+        if (this.qrResourceId && !this.qrResourceId.startsWith("http"))
+          url = settings.getFhirServerExamplesUrl() + "/" + this.qrResourceId;
+
+        // if trying to use the hl7 example servers, that should be over https
+        if (
+          url.startsWith("http://build.fhir.org/") ||
+          url.startsWith("http://hl7.org/fhir/")
+        )
+          url = "https://" + url.substring(7);
+
+        // If this is trying to download a hl7 example, run it through the downloader proxy
+        // as the HL7 servers don't have CORS for us
+        if (
+          url.startsWith("https://build.fhir.org/") ||
+          url.startsWith("https://hl7.org/fhir/")
+        )
+          url = settings.dotnet_server_downloader() + "?url=" + url;
+
+        if (this.cancelSource) this.cancelSource.cancel("new download started");
+        this.cancelSource = axios.CancelToken.source();
+        this.loadingData = true;
+        let token = this.cancelSource.token;
+        let headers = {
+          "Cache-Control": "no-cache",
+          Accept: requestFhirAcceptHeaders,
+        };
+        const response = await axios.get<fhir4b.Resource>(url, {
+          cancelToken: token,
+          headers: headers,
+        });
+        if (token.reason) {
+          console.log(token.reason);
+          return;
+        }
+        this.cancelSource = undefined;
+        this.loadingData = false;
+
+        const results = response.data;
+        if (results) {
+          if (this.questionnaireResponseJsonEditor) {
+            if (results.meta?.tag)
+              delete results.meta.tag;
+            this.processUpdatedQuestionnaireResponse(results as fhir4b.QuestionnaireResponse);
           }
         }
       } catch (err) {
@@ -1731,7 +1970,7 @@ export default Vue.extend({
       openAIexpressionExplanationLoading: false,
       openAIFeedbackEnabled: false,
       helpWithError: undefined,
-      questionnaireResponse: undefined,
+      questionnaireResponseJson: undefined,
       modelsSearch: '',
       modelsText: undefined,
 
