@@ -1,5 +1,5 @@
 <template>
-  <div class="ace_editor">
+  <div style="display: flex; flex-direction: column; height: 100%;">
     <v-text-field label="Extract Service URL" v-model="extractServiceUrl" :loading="extractingInProgress">
       <template v-slot:append>
         <v-btn @click="performExtractOperation">
@@ -7,16 +7,18 @@
         </v-btn>
       </template>
     </v-text-field>
-    <div height="85px" width="100%" ref="aceEditorExpressionExtract"></div>
+    <div class="ace_editor" width="100%" ref="aceEditorExpressionExtract"></div>
     <div class="ace_editor_footer"></div>
-    <v-expansion-panels accordion expanded>
+    <v-expansion-panels accordion expanded >
       <v-expansion-panel :isActive="true">
         <v-expansion-panel-header>
-          Debug Expand Details
+          Debug Extract Parameters
+          <template v-slot:actions>
+            <v-icon>mdi-chevron-up</v-icon>
+          </template>
         </v-expansion-panel-header>
         <v-expansion-panel-content>
-          <v-textarea auto-grow :rows="5" class="small-textarea" label="Extract Parameters"
-            :value="JSON.stringify(extractParameters, null, 2)" />
+          <resource-editor style="height: 35vh;" :readOnly="true" :resourceText="JSON.stringify(extractParameters, null, 2)" />
         </v-expansion-panel-content>
       </v-expansion-panel>
     </v-expansion-panels>
@@ -24,6 +26,12 @@
 </template>
 
 <style lang="scss">
+.ace_editor {
+  flex-grow: 1;
+  width: 100%;
+  height: 100%;
+}
+
 .small-textarea .v-text-field__slot textarea {
   font-size: 0.75em;
   line-height: revert;
@@ -48,13 +56,11 @@
 import { Parameters, Questionnaire, QuestionnaireResponse } from "fhir/r4b";
 import { Component, Prop, Vue, Watch } from "vue-property-decorator";
 
-import "ace-builds";
 import ace from "ace-builds";
 import "ace-builds/src-noconflict/mode-text";
 import "ace-builds/src-noconflict/mode-json";
 import "ace-builds/src-noconflict/theme-chrome";
 
-import { Rules as FhirPathHightlighter_Rules, setCustomHighlightRules } from "~/helpers/fhirpath_highlighter"
 import "~/assets/fhirpath_highlighter.scss"
 
 @Component
@@ -91,7 +97,6 @@ export default class QuestionnaireExtractTest extends Vue {
     console.log("Extracting the questionnaire");
 
     // update the parameters object for the extract
-    let typeBasedExtract = this.extractServiceUrl.endsWith("/QuestionnaireResponse/$extract");
     this.extractParameters.parameter = [
       {
         name: "questionnaire-response",
@@ -99,15 +104,9 @@ export default class QuestionnaireExtractTest extends Vue {
       }
     ];
     this.extractParameters.parameter.push({
-        name: "questionnaire",
-        resource: this.questionnaire
-      });
-    if (typeBasedExtract) {
-      this.extractParameters.parameter.push({
-        name: "type",
-        valueString: "Questionnaire"
-      });
-    }
+      name: "questionnaire",
+      resource: this.questionnaire
+    });
     if (this.models != undefined) {
       this.extractParameters.parameter.push({ name: "model", valueString: this.models });
     }
@@ -172,13 +171,10 @@ export default class QuestionnaireExtractTest extends Vue {
 
   ensureEditorIsCreated(): void {
     try {
-      var editorDiv: any = this.$refs.aceEditorExpressionExtract as HTMLDivElement;
+      let editorDiv: any = this.$refs.aceEditorExpressionExtract as HTMLDivElement;
       if (editorDiv && this.expressionEditor === undefined) {
-        console.log("creating the extract ace editor");
         this.expressionEditor = ace.edit(editorDiv, {
           wrap: "free",
-          minLines: 10,
-          maxLines: 35,
           highlightActiveLine: false,
           showGutter: true,
           fontSize: 14,
@@ -188,18 +184,6 @@ export default class QuestionnaireExtractTest extends Vue {
           mode: "ace/mode/json",
           wrapBehavioursEnabled: true
         });
-        console.log("extract ace editor  initialized");
-
-        if (this.expressionEditor) {
-          // setCustomHighlightRules(this.expressionEditor, FhirPathHightlighter_Rules);
-          // this.expressionEditor.setValue(this.internalValue ?? "");
-          // this.expressionEditor.clearSelection();
-          // this.expressionEditor.on("change", this.fhirpathExpressionChangedEvent)
-          console.log("editor configured");
-        }
-        else {
-          console.error("Failed to create the editor");
-        }
       }
     } catch (error) {
       console.error("Error creating the editor", error);

@@ -3,6 +3,10 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+## 10 October 2024 (dev)
+* Models tab in the form tester will auto-load any model query passed in the URL
+* Extract tab layout cleaned up
+
 ## 23 September 2024 (dev)
 * Include a models tab on the form tester to permit providing model(s) to the $extract operation
 

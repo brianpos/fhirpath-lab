@@ -309,6 +309,7 @@ import Chat from "~/components/Chat.vue";
 import QuestionnaireExtractTest from "~/components/QuestionnaireExtractTest.vue";
 import EditorNLMRendererSection from "~/components/Questionnaire/EditorNLMRendererSection.vue";
 import EditorRendererSection from "~/components/Questionnaire/EditorRendererSection.vue";
+import ResourceEditor from "~/components/ResourceEditor.vue";
 import { structuredDataCaptureHelpers as sdc } from "~/helpers/structureddatacapture-helpers";
 import { ChatCompletionCreateParamsNonStreaming, ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import {
@@ -533,7 +534,7 @@ export default Vue.extend({
     ensureEditorIsCreated(){
       if (this.resourceJsonEditor === undefined){
         console.log("Creating Q Json editor");
-        var editorResourceJsonDiv: any = this.$refs.aceEditorResourceJsonTab as Element;
+        let editorResourceJsonDiv: any = this.$refs.aceEditorResourceJsonTab as Element;
         if (editorResourceJsonDiv) {
 
           this.resourceJsonEditor = ace.edit(editorResourceJsonDiv, resourceEditorSettings);
@@ -547,7 +548,7 @@ export default Vue.extend({
           // this.resourceJsonEditor.session.setMode('ace/mode/json');
 
           // Also add in the QResponse editor too
-          var editorQResponseJsonDiv: any = this.$refs
+          let editorQResponseJsonDiv: any = this.$refs
             .aceEditorResponseJsonTab as Element;
           if (editorQResponseJsonDiv) {
             this.questionnaireResponseJsonEditor = ace.edit(
@@ -614,8 +615,14 @@ export default Vue.extend({
 
       // this.searchFhirServer();
       await this.downloadTestResource();
+
+      // Load the models
+      if (this.modelsSearch?.length > 0) {
+        let modelEditor: ResourceEditor = this.$refs.editorModels as ResourceEditor;
+        await modelEditor.DownloadResource(this.modelsSearch);
+      }
     },
-    tabChanged(index: Number): void {
+    tabChanged(index: number): void {
       if (index == 0) {
         setTimeout(() => {
           if (this.resourceJsonEditor) {
@@ -629,7 +636,7 @@ export default Vue.extend({
         // https://github.com/ajaxorg/ace/issues/2497#issuecomment-102633605
         setTimeout(() => {
           if (this.questionnaireResponseJsonEditor) {
-            var editorQResponseJsonDiv: any = this.$refs
+            let editorQResponseJsonDiv: any = this.$refs
               .aceEditorResponseJsonTab as Element;
             if (editorQResponseJsonDiv) {
               // console.log("focusing editor");
@@ -899,7 +906,7 @@ export default Vue.extend({
     },
     helpWithIssue(issue: fhir4b.OperationOutcomeIssue) {
       console.log("Help me with: ", issue);
-      var issueText =
+      let issueText =
         "How can I resolve this issue from validating the Questionnaire?";
       if (issue.details?.text) issueText += "\r\n\r\n" + issue.details.text;
       if (issue.expression)
@@ -919,7 +926,7 @@ export default Vue.extend({
       if (item && this.raw && this.flatModel) {
         // delete this item from the parent
         let index: number = 0;
-        if (item) index = this.flatModel.indexOf(item);
+        index = this.flatModel.indexOf(item);
         this.flatModel.splice(index, 1);
         this.enableSave = true;
       }
