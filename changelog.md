@@ -7,6 +7,7 @@
 * Models tab in the form tester will auto-load any model query passed in the URL
 * Extract tab layout cleaned up
 * Support saving the QuestionnaireResponse in the form tester (after allocating an ID)
+* Update the CSIRO renderer to v0.44.0
 
 ## 23 September 2024 (dev)
 * Include a models tab on the form tester to permit providing model(s) to the $extract operation
