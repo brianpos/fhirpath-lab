@@ -46,6 +46,7 @@ import FHIR from "fhirclient";
 // (easier maintenance for this test harness)
 import { loadLForms } from "lforms-loader";
 import { loadFhirResource } from "~/helpers/searchFhir";
+import { ContextData } from '../QuestionnaireContext.vue';
 
 declare namespace LForms.Util {
   function addFormToPage(
@@ -89,6 +90,7 @@ interface LFormsRendererData {
 export default class EditorNLMRendererSection extends Vue {
   
   @Prop(Object) readonly questionnaire!: Questionnaire;
+  @Prop() readonly context: ContextData | undefined;
   public lforms_error: string | undefined = undefined;
 
   async mounted() {
@@ -145,7 +147,7 @@ export default class EditorNLMRendererSection extends Vue {
   }
 
   async prePopLForms(sourceFhirServer: string, subjectId: string) {
-    console.log("Prepopulating LForms with data from", sourceFhirServer, subjectId);
+    console.log("Pre-populating LForms with data from", sourceFhirServer, subjectId);
     if (window.LForms) {
       // Set the context vars
       const setupServer = {

@@ -36,6 +36,7 @@ import { getResponse, buildForm } from "@aehrc/smart-forms-renderer";
 import { Questionnaire, QuestionnaireResponse } from "fhir/r4b";
 import { Questionnaire as QuestionnaireR4, QuestionnaireResponse as QuestionnaireResponseR4 } from "fhir/r4";
 import SmartFormsRendererWithFocus from "./ReactRenderer";
+import { ContextData } from '../QuestionnaireContext.vue';
 
 @Component({
   components: {
@@ -44,6 +45,7 @@ import SmartFormsRendererWithFocus from "./ReactRenderer";
 })
 export default class EditorRendererSection extends Vue {
   @Prop(Object) readonly questionnaire!: Questionnaire;
+  @Prop() readonly context: ContextData | undefined;
 
   get onFocus() {
     return (linkId: string) => { this.highlightPath(linkId); }

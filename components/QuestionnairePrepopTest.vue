@@ -1,10 +1,6 @@
 <template>
   <div class="ace_editor">
-    <v-text-field label="Subject Type" v-if="questionnaire" readonly :value="questionnaire.subjectType" />
-    <v-text-field v-if="questionnaire && questionnaire.subjectType" :label="questionnaire.subjectType + ' Id (subject)'"
-      v-model="subjectId" />
     <v-text-field label="Populating from" v-model="sourceFhirServer" />
-    <v-text-field v-if="!questionnaire || !questionnaire.subjectType" label="Patient Id" v-model="subjectId" />
 
     <template v-if="launchContexts && launchContexts.length > 0">
     <label>Launch Contexts</label>
@@ -92,7 +88,7 @@
     </v-btn>
 
     <br />
-    <label>$populate parameters</label>
+    <label>$populate parameters (debug)</label>
     <br />
     <div height="85px" width="100%" ref="aceEditorExpressionPrePop"></div>
     <div class="ace_editor_footer"></div>
@@ -138,6 +134,7 @@ import { BaseResourceData } from "~/models/BaseResourceTableData";
 import { json } from "express";
 import { FetchResourceCallback, populateQuestionnaire } from "@aehrc/sdc-populate";
 import axios from "axios";
+import { ContextData } from "./QuestionnaireContext.vue";
 
 interface LaunchContextData {
   id: string | undefined;
@@ -150,6 +147,7 @@ export default class QuestionnaireExtractTest extends Vue {
 
   // Properties provided by the parent component
   @Prop() readonly questionnaire: Questionnaire | undefined;
+  @Prop() readonly context: ContextData | undefined;
 
   // https://github.com/LHNCBC/lforms-fhir-app/blob/157be10a006eb6886c5421c5dd2606e795d8d9d8/source/js/fhir.service.js#L135C55-L136C43
   /*
@@ -169,7 +167,6 @@ export default class QuestionnaireExtractTest extends Vue {
    */
 
   // Properties visible to the local template
-  public subjectId: string = 'Patient/example';
   public ipsBundleAddress: string = 'https://hapi.fhir.org/baseR4/Patient/1221256/$summary';
   public smartHealthLink: string = 'https://shlink.ips.health/ips#shlink:/eyJ1cmwiOiJodHRwczovL2FwaS52YXh4LmxpbmsvYXBpL3NobC8wMTNxS1YwZWRQWTdyVWNZYWpEa0V1ejZ0eGJ3WGs1Ums0N2tHanZrS1NBIiwiZmxhZyI6IiIsImtleSI6Ijh0bXpKQ0tvdDVKSHd2dmVNTzBsWmNJaXRGY3NpRmdzVWxFYTltVGN6TDgiLCJsYWJlbCI6IlNITCBmcm9tIDIwMjMtMDgtMjkifQ';
   public executionEngines: string[] = [
@@ -361,11 +358,12 @@ export default class QuestionnaireExtractTest extends Vue {
 
   async runLFormsPrePopulation(): Promise<QuestionnaireResponse | undefined> {
     console.log('Running lforms pre-pop');
-    if (this.subjectId.startsWith('Patient/'))
-      this.$emit('pre-pop-lforms', this.sourceFhirServer, this.subjectId.substring('Patient/'.length));
+    let subjectId = this.context?.subject?.reference;
+    if (subjectId?.startsWith('Patient/'))
+      this.$emit('pre-pop-lforms', this.sourceFhirServer, subjectId.substring('Patient/'.length));
     else{
       // The lforms engine only really supports a patient launch parameter, and doesn't expect the prefix in it
-      this.$emit('pre-pop-lforms', this.sourceFhirServer, this.subjectId);
+      this.$emit('pre-pop-lforms', this.sourceFhirServer, subjectId);
     }
     return undefined;
   }
@@ -396,7 +394,7 @@ export default class QuestionnaireExtractTest extends Vue {
       };
 
       // Set the subject id
-      prepopParams.parameter![0].valueReference!.reference = this.subjectId;
+      prepopParams.parameter![0].valueReference = this.context?.subject;
 
       // Set the launch context values
       let lcs = this.launchContexts;

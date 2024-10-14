@@ -60,7 +60,6 @@
               </template>
             </v-text-field>
             <br />
-            <!-- <label class="v-label theme--light bare-label">Test Resource JSON <i>{{ resourceJsonChangedMessage() }}</i></label> -->
             <v-tooltip bottom>
               <template v-slot:activator="{ on, attrs }">
                 <v-btn class="resetButton" icon v-bind="attrs" v-on="on"
@@ -69,7 +68,6 @@
               <span>Reset Questionnaire definition</span>
             </v-tooltip>
             <div class="resource" style="flex-grow: 1;" width="100%" ref="aceEditorResourceJsonTab"></div>
-            <!-- <div class="ace_editor_footer"></div> -->
           </template>
 
           <template v-slot:Debug>
@@ -98,8 +96,13 @@
               :showAdvancedSettings="showAdvancedSettings" @highlight-path="highlightPath" />
           </template>
 
+          <template v-slot:Context>
+            <!-- Context -->
+            <QuestionnaireContext v-if="raw" :questionnaire="raw" @context-changed="contextChanged" :context="contextData"/>
+          </template>
+
           <template v-slot:Pre-Population>
-            <EditorPrePopulationSection v-if="raw" @highlight-path="highlightPath"  @outcome="displayExtractOutcome"/>
+            <EditorPrePopulationSection v-if="raw" @highlight-path="highlightPath" v-bind:items="flatModel" @outcome="displayExtractOutcome"/>
           </template>
 
           <template v-slot:Variables>
@@ -108,12 +111,12 @@
           </template>
 
           <template v-slot:CSIRO_Renderer>
-            <EditorRendererSection ref="csiroFormsRenderer" v-if="raw" v-bind:questionnaire="raw"
+            <EditorRendererSection ref="csiroFormsRenderer" v-if="raw" v-bind:questionnaire="raw" :context="contextData"
               @response="processUpdatedQuestionnaireResponse" @highlight-path="highlightPath" />
           </template>
 
           <template v-slot:LHC-Forms>
-            <EditorNLMRendererSection ref="lhcFormsRenderer" v-if="raw" v-bind:questionnaire="raw"
+            <EditorNLMRendererSection ref="lhcFormsRenderer" v-if="raw" v-bind:questionnaire="raw" :context="contextData"
               @response="processUpdatedQuestionnaireResponse" @highlight-path="highlightPath" />
           </template>
 
@@ -154,7 +157,6 @@
               </template>
             </v-text-field>
             <br />
-            <!-- <label class="v-label theme--light bare-label">Test Resource JSON <i>{{ resourceJsonChangedMessage() }}</i></label> -->
             <v-tooltip bottom>
               <template v-slot:activator="{ on, attrs }">
                 <v-btn class="resetButton" icon v-bind="attrs" v-on="on"
@@ -177,10 +179,6 @@
           </template>
 
           <template v-slot:Models>
-            <!-- <div class="ct-header">
-              <v-icon left dark> mdi-tree-outline </v-icon>
-              Models
-            </div> -->
             <resource-editor ref="editorModels" label="Model ID/Search Query"
               textLabel="StructureDefinition / Bundle Text" :resourceUrl="modelsSearch"
               @update:resourceUrl="modelsSearch = ($event ?? '')"
@@ -336,6 +334,7 @@ import {
 } from "~/helpers/openai_form_tester";
 import TwinPaneTab, { TabData } from "~/components/TwinPaneTab.vue";
 import * as jsonpatch from "fast-json-patch";
+import { ContextData } from "~/components/QuestionnaireContext.vue";
 
 // import "fhirclient";
 // import { FHIR } from "fhirclient";
@@ -362,6 +361,9 @@ interface IQuestionnaireTesterData extends QuestionnaireData {
   questionnaireResponseJson?: string;
   modelsSearch: string;
   modelsText?: string;
+
+  // Populate/Extract properties
+  contextData: ContextData;
 }
 
 function getPriorityIssue(
@@ -433,7 +435,7 @@ export default Vue.extend({
       ];
     },
     chatPromptOptions(): string[] {
-      var promptOptions = [];
+      let promptOptions = [];
       if (this.helpWithError) {
         promptOptions.push(this.helpWithError);
       }
@@ -470,6 +472,13 @@ export default Vue.extend({
           iconName: "mdi-file-tree",
           tabName: "Fields",
           show: this.showDetails,
+          enabled: true,
+        },
+        {
+          iconName: "mdi-card-bulleted-settings-outline",
+          tabName: "Context",
+          title: "Context parameters used in pre-population and data extraction",
+          show: sdc.hasPrePopulation(this.raw) || sdc.hasDataExtract(this.raw),
           enabled: true,
         },
         {
@@ -618,6 +627,26 @@ export default Vue.extend({
         this.modelsSearch = this.$route.query.models as string ?? '';
       }
 
+      if (this.$route.query.subject) {
+        this.contextData.subject = { reference: this.$route.query.subject as string ?? '' };
+        // split the display value from the reference if there is a `,` char in it
+        if (this.contextData.subject.reference!.includes(",")) {
+          let parts = this.contextData.subject.reference!.split(",");
+          this.contextData.subject.reference = parts[0];
+          this.contextData.subject.display = parts[1];
+        }
+      }
+
+      if (this.$route.query.author) {
+        this.contextData.author = { reference: this.$route.query.author as string ?? '' };
+        // split the display value from the reference if there is a `,` char in it
+        if (this.contextData.author.reference!.includes(",")) {
+          let parts = this.contextData.author.reference!.split(",");
+          this.contextData.author.reference = parts[0];
+          this.contextData.author.display = parts[1];
+        }
+      }
+
       let tabControl: TwinPaneTab = this.$refs.twinTabControl as TwinPaneTab;
       if (tabControl) {
         if (this.$route.query.tab) {
@@ -637,11 +666,11 @@ export default Vue.extend({
               }
             } else {
               tabControl.setSinglePanelMode(true);
-              this.selectTab(tabControl.getTabIndex(tabString));
+              tabControl.selectTab(tabControl.getTabIndex(tabString));
             }
           });
         } else {
-          if (tabControl.singleTabMode()) this.selectTab(0);
+          if (tabControl.singleTabMode()) this.selectTab("Questionnaire");
         }
       }
 
@@ -692,7 +721,7 @@ export default Vue.extend({
     clearOutcome2() {
       this.showOutcome = undefined;
       this.saveOutcome = undefined;
-      if (this.tab == 1) this.selectTab(0);
+      if (this.tab == 1) this.selectTab("Questionnaire");
     },
     getItemPath(
       items: QuestionnaireItem[],
@@ -837,7 +866,7 @@ export default Vue.extend({
           issue.expression &&
           !issue.expression[0].startsWith("QuestionnaireResponse")
         ) {
-          this.selectTab(0);
+          this.selectTab("Questionnaire");
           this.resourceJsonEditor.clearSelection();
           if (issue.__position) {
             var position: IJsonNodePosition = issue.__position;
@@ -884,7 +913,7 @@ export default Vue.extend({
             this.updateNow();
           }
         } else if (this.questionnaireResponseJsonEditor) {
-          this.selectTab(10);
+          this.selectTab("Response");
           this.questionnaireResponseJsonEditor.clearSelection();
           if (issue.__position) {
             var position: IJsonNodePosition = issue.__position;
@@ -985,13 +1014,31 @@ export default Vue.extend({
       }
 
       if (renderer == "lforms pre-pop") {
-        this.selectTab(9);
+        this.selectTab("LHC-Forms");
       }
       if (renderer == "CSIRO pre-pop") {
-        this.selectTab(8);
+        this.selectTab("CSIRO Renderer");
       }
     },
     async processUpdatedQuestionnaireResponse(value: fhir4b.QuestionnaireResponse) {
+
+      // Update the response with the details from the context data
+      if (this.contextData?.subject) {
+        value.subject = this.contextData.subject;
+      }
+      if (this.contextData?.author) {
+        value.author = this.contextData.author;
+      }
+      if (this.contextData?.encounter) {
+        value.encounter = this.contextData.encounter;
+      }
+      if (this.contextData?.source) {
+        value.source = this.contextData.source;
+      }
+      if (value.authored === undefined) {
+        value.authored = new Date().toISOString();
+      }
+
       if (this.questionnaireResponseJsonEditor) {
         const jsonValue = JSON.stringify(value, null, 2);
         this.questionnaireResponseJson = jsonValue;
@@ -1000,7 +1047,7 @@ export default Vue.extend({
           jsonValue
         );
         this.questionnaireResponseJsonEditor.clearSelection();
-        this.selectTab(10);
+        this.selectTab("Response");
 
         if (this.$refs.csiroFormsRenderer && this.raw != null) {
           let csiroFormsRenderer = (this.$refs.csiroFormsRenderer as EditorRendererSection)
@@ -1207,6 +1254,11 @@ export default Vue.extend({
         }
         this.showOutcome = true;
       }
+    },
+
+    contextChanged(data: ContextData) {
+      console.log("Context changed: ", data);
+      this.contextData = data;
     },
 
     async localSaveFhirResource<TData extends fhir4b.FhirResource>(serverBaseUrl: string, data: TData): Promise<fhir4b.OperationOutcome | TData | undefined> {
@@ -1728,9 +1780,14 @@ export default Vue.extend({
       }
     },
 
-    selectTab(tabIndex: number) {
+    selectTab(tabString: "Questionnaire" | "Debug" | "Details" | "Publishing" | "Fields"
+                       | "Context" | "Pre-Population" | "Variables" | "PrePop" 
+                       | "CSIRO Renderer"
+                       | "LHC-Forms"
+                       | "Response" | "Extract" | "Models" | "AI Chat") {
       let tabControl: TwinPaneTab = this.$refs.twinTabControl as TwinPaneTab;
       if (tabControl) {
+        const tabIndex: number = tabControl.getTabIndex(tabString);
         tabControl.selectTab(tabIndex);
       }
     },
@@ -1973,6 +2030,11 @@ export default Vue.extend({
       questionnaireResponseJson: undefined,
       modelsSearch: '',
       modelsText: undefined,
+
+      contextData: {
+        subject: { reference: "Patient/example", display: "Peter James Chalmers" },
+        author: { reference: "Practitioner/example", display: "Dr Adam Careful" },
+      },
 
       chatEnabled: false,
       flatModel: [],
