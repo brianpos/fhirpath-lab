@@ -20,7 +20,7 @@
               v-if="raw.version">
               - {{ raw.version }}</span></v-toolbar-title>
           <v-spacer />
-          <v-btn v-if="false && enableSave && !readonly" icon title="save">
+          <v-btn v-if="canSave && !readonly" icon dark :title="saveTooltip">
             <v-icon @click="saveData" :disabled="saving">
               mdi-content-save
             </v-icon>
@@ -425,6 +425,33 @@ export default Vue.extend({
     hasDebugMessages(): boolean {
       if (this.saveOutcome == undefined) return false;
       return this.saveOutcome?.issue?.length > 0;
+    },
+    canSave() : boolean {
+      // requires a publisher to be in the resource
+      if (!this.raw?.publisher)
+        return false;
+
+      // The publisher MUST be the same as the default provider field
+      if (this.defaultProviderField != this.raw?.publisher)
+        return false;
+
+      // the resource ID must be set, and must be the same as the one in the test resource ID field
+      if (!this.resourceId)
+        return false;
+      if (!this.raw?.id)
+        return false;
+
+      if (!this.resourceId?.endsWith('Questionnaire/' + this.raw?.id))
+        return false;
+
+      // the save button has been enabled thanks to detecting changes to the definition
+      return this.enableSave;
+    },
+    saveTooltip(): string {
+      if (this.resourceId?.startsWith("http")) {
+        return "Save the Questionnaire definition to " + this.resourceId;
+      }
+      return "Save the Questionnaire definition to " + this.fhirServerUrl + "/Questionnaire/" + this.raw?.id;
     },
     chatPromptOptionsWhenEmpty(): string[] {
       return [
@@ -1964,28 +1991,16 @@ export default Vue.extend({
     },
 
     async saveData() {
+      // read the server URL from the test resource ID
+      let formBaseUrl = this.fhirServerUrl ?? settings.getFhirServerUrl();
+      if (this.resourceId?.startsWith("http")) {
+          formBaseUrl = this.resourceId.substring(0, this.resourceId.indexOf("/Questionnaire/"));
+      }
       const outcome = await saveFhirResource(
-        this.fhirServerUrl ?? settings.getFhirServerUrl(),
+        formBaseUrl,
         this
       );
       if (!outcome) {
-        if (this.raw?.id) {
-          if (this.$route.params.id?.endsWith(":new")) {
-            let href = this.$route.fullPath.replaceAll(
-              this.$route.params.id,
-              this.raw?.id
-            );
-            window.history.pushState({}, "", href);
-
-            // also update the publishing table
-            const index = this.publishedVersions?.findIndex((pv) => {
-              if (!pv.id) return true;
-            });
-            if (index) {
-              this.publishedVersions?.splice(index, 1, this.raw);
-            }
-          }
-        }
       }
       if (this.saveOutcome){
         const jsonValue = this.resourceJsonEditor!.getValue();

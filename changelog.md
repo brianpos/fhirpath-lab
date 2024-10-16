@@ -3,6 +3,9 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+# 16 Octover 2024 (dev)
+* Enable save support for Questionnaires under very specific conditions (explicit matching publisher and resourceIds)
+
 ## 14 October 2024 (dev)
 * Add the `context` tab to provide test data to the pre-populate and extract operations in the questionnaire tester.
   * Supports `subject` and `author` as parameters to the tester via the URL (If you want to include the display as well as the reference, put it after a comma in the URL parameter e.g. `subject=Patient/123,John Doe`) 
