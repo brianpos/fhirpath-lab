@@ -98,7 +98,9 @@
 
           <template v-slot:Context>
             <!-- Context -->
-            <QuestionnaireContext v-if="raw" :questionnaire="raw" @context-changed="contextChanged" :context="contextData"/>
+            <QuestionnaireContext v-if="raw" :questionnaire="raw" @context-changed="contextChanged" :context="contextData"
+              :sourceFhirServer="dataServerBaseUrl" @ChangeDataServer="updateDataServerBaseUrl" 
+            />
           </template>
 
           <template v-slot:Pre-Population>
@@ -168,7 +170,8 @@
           </template>
 
           <template v-slot:PrePop>
-            <QuestionnairePrepopTest ref="prepopTester" v-bind:questionnaire="raw"  @outcome="displayExtractOutcome"
+            <QuestionnairePrepopTest ref="prepopTester" v-bind:questionnaire="raw" :context="contextData"  @outcome="displayExtractOutcome"
+              :sourceFhirServer="dataServerBaseUrl" 
               @response="processUpdatedQuestionnaireResponseFromPrePopTester" @pre-pop-lforms="prePopLForms" />
           </template>
 
@@ -361,6 +364,7 @@ interface IQuestionnaireTesterData extends QuestionnaireData {
   questionnaireResponseJson?: string;
   modelsSearch: string;
   modelsText?: string;
+  dataServerBaseUrl: string;
 
   // Populate/Extract properties
   contextData: ContextData;
@@ -504,8 +508,11 @@ export default Vue.extend({
         {
           iconName: "mdi-card-bulleted-settings-outline",
           tabName: "Context",
-          title: "Context parameters used in pre-population and data extraction",
-          show: sdc.hasPrePopulation(this.raw) || sdc.hasDataExtract(this.raw),
+          title: "Test values to use in the QuestionnaireResponse (subject, author...)"
+                +(sdc.hasPrePopulation(this.raw) || sdc.hasDataExtract(this.raw)
+                ? "\nThese are also used in pre-population and extraction"
+                : ""),
+          show: true,
           enabled: true,
         },
         {
@@ -671,6 +678,26 @@ export default Vue.extend({
           let parts = this.contextData.author.reference!.split(",");
           this.contextData.author.reference = parts[0];
           this.contextData.author.display = parts[1];
+        }
+      }
+
+      if (this.$route.query.encounter) {
+        this.contextData.encounter = { reference: this.$route.query.encounter as string ?? '' };
+        // split the display value from the reference if there is a `,` char in it
+        if (this.contextData.encounter.reference!.includes(",")) {
+          let parts = this.contextData.encounter.reference!.split(",");
+          this.contextData.encounter.reference = parts[0];
+          this.contextData.encounter.display = parts[1];
+        }
+      }
+
+      if (this.$route.query.source) {
+        this.contextData.source = { reference: this.$route.query.source as string ?? '' };
+        // split the display value from the reference if there is a `,` char in it
+        if (this.contextData.source.reference!.includes(",")) {
+          let parts = this.contextData.source.reference!.split(",");
+          this.contextData.source.reference = parts[0];
+          this.contextData.source.display = parts[1];
         }
       }
 
@@ -1020,10 +1047,10 @@ export default Vue.extend({
       }
     },
 
-    async prePopLForms(sourceFhirServer: string, subjectId: string) {
+    async prePopLForms(sourceFhirServer: string, subjectId: string, authorId?: string) {
       if (this.$refs.lhcFormsRenderer) {
         let lhcFormsRenderer = (this.$refs.lhcFormsRenderer as EditorNLMRendererSection)
-        await lhcFormsRenderer.prePopLForms(sourceFhirServer, subjectId)
+        await lhcFormsRenderer.prePopLForms(sourceFhirServer, subjectId, authorId)
       }
     },
 
@@ -1220,6 +1247,9 @@ export default Vue.extend({
       }
     },
 
+    updateDataServerBaseUrl(value: string) {
+      this.dataServerBaseUrl = value;
+    },
     async validateQuestionnaire() {
       if (this.resourceJsonEditor) {
         this.loadingData = true;
@@ -2045,6 +2075,7 @@ export default Vue.extend({
       questionnaireResponseJson: undefined,
       modelsSearch: '',
       modelsText: undefined,
+      dataServerBaseUrl: settings.getFhirServerExamplesUrl(),
 
       contextData: {
         subject: { reference: "Patient/example", display: "Peter James Chalmers" },

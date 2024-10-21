@@ -146,8 +146,25 @@ export default class EditorNLMRendererSection extends Vue {
     }
   }
 
-  async prePopLForms(sourceFhirServer: string, subjectId: string) {
-    console.log("Pre-populating LForms with data from", sourceFhirServer, subjectId);
+  // https://github.com/LHNCBC/lforms-fhir-app/blob/157be10a006eb6886c5421c5dd2606e795d8d9d8/source/js/fhir.service.js#L135C55-L136C43
+  /*
+  From the NLM render component
+   *      var fhirContext = FHIR.client(settings.getFhirServerExamplesUrl());
+        var fhirContextVars = { LaunchPatient: "Patient/123" };
+        LForms.Util.setFHIRContext(fhirContext, fhirContextVars);
+
+        this.lforms_error = undefined;
+        await LForms.Util.addFormToPage(this.questionnaire, "myFormContainer", {
+          prepopulate: false,
+        }).catch((e: any) => {
+          console.error("Breaking news:", e);
+          this.lforms_error = e.toString();
+        });
+
+   */
+
+   async prePopLForms(sourceFhirServer: string, subjectId: string, authorId?: string) {
+    console.log("Pre-populating LForms with data from", sourceFhirServer, subjectId, authorId);
     if (window.LForms) {
       // Set the context vars
       const setupServer = {

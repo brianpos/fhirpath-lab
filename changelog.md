@@ -3,7 +3,10 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
-# 16 Octover 2024 (dev)
+# 21 October 2024 (dev)
+* Extensive work on the Context and pre-populate tabs in the questionnaire tester
+
+# 16 October 2024 (dev)
 * Enable save support for Questionnaires under very specific conditions (explicit matching publisher and resourceIds)
 
 ## 14 October 2024 (dev)

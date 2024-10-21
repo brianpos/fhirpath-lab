@@ -1,35 +1,73 @@
 <template>
-  <div>
-    <v-text-field label="Subject Type (read-only)" v-if="questionnaire" readonly :value="questionnaire.subjectType"
-    hide-details="auto" />
-    <label><i>The Subject Type is set in the Questionnaire and restricts down the subject to a specific set of resource types (often just Patient)</i></label>
-    <v-text-field :label="subjectId_label" v-model="subjectId" hide-details="auto" @change="notifyChange" />
-    <v-text-field :label="subjectDisplay_label" v-model="subjectDisplay" hide-details="auto" @change="notifyChange" />
-    <label><i>The subject of the questionnaire response</i></label>
+  <div class="context-control">
+    <v-text-field label="Data Server" v-model="sourceFhirServer" @change="ChangeDataServer($event)" />
+
+    <v-text-field :label="subjectId_label" v-model="subjectId" @change="notifyChange" hide-details="auto"
+      hint="(QuestionnaireResponse.subject.reference)" />
+    <v-text-field :label="subjectDisplay_label" v-model="subjectDisplay" @change="notifyChange"
+      hint="(QuestionnaireResponse.subject.display)">
+      <template v-slot:append v-if="subjectId.length > 0">
+        <v-btn icon small tile @click="refreshSubjectDisplay" title="Read the display from the referenced resource">
+          <v-icon> mdi-refresh </v-icon>
+        </v-btn>
+      </template>
+    </v-text-field>
+
+    <v-text-field :label="'Encounter Reference' + launchContextSuffix('encounter')" v-model="encounterId" @change="notifyChange" hide-details="auto"
+      hint="(QuestionnaireResponse.encounter.reference)" />
+    <v-text-field label="Encounter Display" v-model="encounterDisplay" @change="notifyChange"
+      hint="(QuestionnaireResponse.encounter.display)">
+      <template v-slot:append v-if="encounterId.length > 0">
+        <v-btn icon small tile @click="refreshEncounterDisplay" title="Read the display from the referenced resource">
+          <v-icon> mdi-refresh </v-icon>
+        </v-btn>
+      </template>
+    </v-text-field>
+    <p>
+      <br />
+    </p>
+
+    <v-text-field :label="'Author Reference' + launchContextSuffix('user')" v-model="authorId" @change="notifyChange" hide-details="auto"
+      hint="(QuestionnaireResponse.author.reference)" />
+    <v-text-field label="Author Display" v-model="authorDisplay" @change="notifyChange"
+      hint="(QuestionnaireResponse.author.display)">
+      <template v-slot:append v-if="authorId.length > 0">
+        <v-btn icon small tile @click="refreshAuthorDisplay" title="Read the display from the referenced resource">
+          <v-icon> mdi-refresh </v-icon>
+        </v-btn>
+      </template>
+    </v-text-field>
     <br />
 
-    <v-text-field label="Encounter Reference" v-model="encounterId" hide-details="auto" @change="notifyChange" />
-    <v-text-field label="Encounter Display" v-model="encounterDisplay" hide-details="auto" @change="notifyChange" />
-    <label><i>The Encounter during which this questionnaire response was created or to which the creation of this record is tightly associated (optional)</i></label>
-    <br />
-
-    <v-text-field label="Author Reference" v-model="authorId" hide-details="auto" @change="notifyChange" />
-    <v-text-field label="Author Display" v-model="authorDisplay" hide-details="auto" @change="notifyChange" />
-    <label><i>The person who entered the answers in this questionnaire response</i></label>
-    <br />
-
-    <v-text-field label="Source Reference" v-model="sourceId" hide-details="auto" @change="notifyChange" />
-    <v-text-field label="Source Display" v-model="sourceDisplay" hide-details="auto" @change="notifyChange" />
-    <label><i>The person who answered the questions about the subject (optional)</i></label>
+    <v-text-field label="Source Reference" v-model="sourceId" @change="notifyChange" hide-details="auto"
+      hint="(QuestionnaireResponse.source.reference)" />
+    <v-text-field label="Source Display" v-model="sourceDisplay" @change="notifyChange"
+      hint="(QuestionnaireResponse.source.display)">
+      <template v-slot:append v-if="sourceId.length > 0">
+        <v-btn icon small tile @click="refreshSourceDisplay" title="Read the display from the referenced resource">
+          <v-icon> mdi-refresh </v-icon>
+        </v-btn>
+      </template>
+    </v-text-field>
   </div>
 </template>
 
-<style lang="scss" scoped></style>
+<style lang="scss">
+.context-control .v-messages {
+  font-style: italic;
+}
+</style>
 
 <script lang="ts">
-import { Questionnaire, QuestionnaireResponse, Parameters, Reference } from "fhir/r4b";
+import axios, { AxiosError } from "axios";
+import { getExtension, getExtensionCodeValue, getExtensionCodingValue, getExtensions, getExtensionStringValue } from "fhir-extension-helpers";
+import { structuredDataCapture } from "fhir-sdc-helpers";
+import { Practitioner } from "fhir/r4";
+import { Questionnaire, QuestionnaireResponse, Parameters, Reference, FhirResource, Patient, HumanName, RelatedPerson } from "fhir/r4b";
 import { Context } from "fhirpath";
 import { Component, Prop, Vue, Watch } from "vue-property-decorator";
+import { CreateOperationOutcome, errorCodingSearch, requestFhirAcceptHeaders } from "~/helpers/searchFhir";
+import { settings } from "~/helpers/user_settings";
 
 export interface ContextData {
   subject?: Reference;
@@ -44,6 +82,9 @@ export default class QuestionnaireContext extends Vue {
   // Properties provided by the parent component
   @Prop() readonly questionnaire: Questionnaire | undefined;
   @Prop() readonly context: ContextData | undefined;
+  @Prop() readonly dataServer: string | undefined;
+
+  public sourceFhirServer: string = '';
 
   // Properties visible to the local template
   public subjectId: string = '';
@@ -60,14 +101,36 @@ export default class QuestionnaireContext extends Vue {
 
   public get subjectId_label() {
     if (!this.questionnaire?.subjectType)
-      return 'Subject Reference';
-    return this.questionnaire.subjectType + ' Reference (subject)';
+      return 'Subject Reference' + this.launchContextSuffix('patient');
+    return this.questionnaire.subjectType + ' Reference' + this.launchContextSuffix('patient');
   }
 
   public get subjectDisplay_label() {
     if (!this.questionnaire?.subjectType)
       return 'Subject Display';
-    return this.questionnaire.subjectType + ' Display (subject)';
+    return this.questionnaire.subjectType + ' Display';
+  }
+
+  public get launchContexts() {
+    return getExtensions(this.questionnaire, structuredDataCapture.exturl_LaunchContextExtension)?.map((lc) => {
+      return {
+        name: getExtensionCodingValue(lc, "name")?.code ?? getExtension(lc, "name")?.valueId ?? '',
+        type: getExtensionCodeValue(lc, "type"),
+        description: getExtensionStringValue(lc, "description"),
+      }
+    });
+  }
+
+  launchContextSuffix(context: 'patient' | 'user' | 'encounter'): string {
+    const index = this.launchContexts?.findIndex(lc => lc.name === context) ?? -1;
+    if (index != -1){
+      return ' (Launch Context: '+context+')';
+    }
+    return '';
+  }
+
+  private ChangeDataServer(data: any) {
+    this.$emit('ChangeDataServer', data);
   }
 
   private notifyChange() {
@@ -94,6 +157,119 @@ export default class QuestionnaireContext extends Vue {
     if (this.context?.source) {
       this.sourceId = this.context.source.reference ?? '';
       this.sourceDisplay = this.context.source.display ?? '';
+    }
+  }
+
+  async refreshSubjectDisplay() {
+    this.subjectDisplay = '';
+    let outcome = await this.readDataFromFhirServer(this.subjectId, (resultResource: FhirResource) => {
+      this.subjectDisplay = this.getResourceReferenceDisplay(resultResource);
+    });
+    if (outcome) {
+      console.error("Error reading display value", outcome);
+    }
+  }
+
+  async refreshEncounterDisplay() {
+    this.encounterDisplay = '';
+    let outcome = await this.readDataFromFhirServer(this.encounterId, (resultResource: FhirResource) => {
+      this.encounterDisplay = this.getResourceReferenceDisplay(resultResource);
+    });
+    if (outcome) {
+      console.error("Error reading display value", outcome);
+    }
+  }
+
+  async refreshAuthorDisplay() {
+    this.authorDisplay = '';
+    let outcome = await this.readDataFromFhirServer(this.authorId, (resultResource: FhirResource) => {
+      this.authorDisplay = this.getResourceReferenceDisplay(resultResource);
+    });
+    if (outcome) {
+      console.error("Error reading display value", outcome);
+    }
+  }
+
+  async refreshSourceDisplay() {
+    this.sourceDisplay = '';
+    let outcome = await this.readDataFromFhirServer(this.sourceId, (resultResource: FhirResource) => {
+      this.sourceDisplay = this.getResourceReferenceDisplay(resultResource);
+    });
+    if (outcome) {
+      console.error("Error reading display value", outcome);
+    }
+  }
+
+  /** Perform a FHIR Search operation */
+  async readDataFromFhirServer<T>(resourceId: string, dataCallback: (resultResource: T) => void) {
+    let url = resourceId;
+    if (!resourceId.startsWith('http')) {
+      url = this.sourceFhirServer + '/' + resourceId;
+    }
+    try {
+      let headers = { "Accept": requestFhirAcceptHeaders };
+      const response = await axios.get<T>(url, {
+        headers: headers
+      });
+      const results = response.data;
+      if (results) {
+        dataCallback(results);
+      }
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        const serverError = err as AxiosError<fhir4b.OperationOutcome>;
+        if (serverError && serverError.response) {
+          return serverError.response.data;
+        }
+        return CreateOperationOutcome("fatal", "exception", "Server: " + err.message, errorCodingSearch, url);
+      }
+      return CreateOperationOutcome("fatal", "exception", "Client: " + err as string, errorCodingSearch, url);
+    }
+  }
+
+  public getResourceReferenceDisplay(resource: FhirResource): string {
+    if (resource as Patient) {
+      let patient = resource as Patient;
+      if (patient.name) {
+        let display = this.getNameDisplay(patient.name);
+        if (display)
+          return display;
+      }
+    }
+    if (resource as Practitioner) {
+      let value = resource as Practitioner;
+      if (value.name) {
+        let display = this.getNameDisplay(value.name);
+        if (display)
+          return display;
+      }
+    }
+    if (resource as RelatedPerson) {
+      let value = resource as RelatedPerson;
+      if (value.name) {
+        let display = this.getNameDisplay(value.name);
+        if (display)
+          return display;
+      }
+    }
+    return resource.id ?? '';
+  }
+
+  public getNameDisplay(names: HumanName[]): string | undefined {
+    for (let name of names) {
+      if (name.text)
+        return name.text;
+      let parts = name.given ?? [];
+      if (name.family)
+        parts.push(name.family);
+      if (parts.length > 0) {
+        if (name.prefix) {
+          parts = name.prefix.concat(parts);
+        }
+        if (name.suffix)
+          parts.push(...name.suffix);
+        return parts.join(' ');
+      }
     }
   }
 
@@ -136,6 +312,9 @@ export default class QuestionnaireContext extends Vue {
       }
     }
     return context;
+  }
+  mounted(): void {
+    this.sourceFhirServer = settings.getFhirServerExamplesUrl();
   }
 }
 

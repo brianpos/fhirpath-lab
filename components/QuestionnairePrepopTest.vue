@@ -1,97 +1,54 @@
 <template>
-  <div class="ace_editor">
-    <v-text-field label="Populating from" v-model="sourceFhirServer" />
+  <div style="display: flex; flex-direction: column; height: 100%;">
+    <div style="flex-grow: 0; flex-shrink: 0;">
 
-    <template v-if="launchContexts && launchContexts.length > 0">
-    <label>Launch Contexts</label>
-    <v-expansion-panels accordion expanded>
-      <v-expansion-panel :isActive="true">
-        <v-expansion-panel-header>
-          <template v-for="(r2, i1) in launchContexts">
-            <div>
-              <v-icon v-if="isComplete(r2.name)" color="green" small> mdi-check </v-icon>
-              <v-icon v-if="!isComplete(r2.name)" color="red" small> mdi-close </v-icon>
-              {{ r2.name }}
-            </div>
+      <template v-if="isIPSPrepopulate">
+        <v-text-field label="IPS Address" v-model="ipsBundleAddress">
+          <template v-slot:append>
+            <v-btn icon small tile @click="ipsBundleAddress = ''">
+              <v-icon> mdi-close </v-icon>
+            </v-btn>
+            <v-btn icon small tile>
+              <v-icon> mdi-download </v-icon>
+            </v-btn>
+            <v-btn small icon tile><v-icon title="Re-format the json below" dark>
+                mdi-format-indent-increase
+              </v-icon></v-btn>
           </template>
-        </v-expansion-panel-header>
-        <v-expansion-panel-content>
-          <template v-for="(r2, i1) in launchContexts">
-            <v-text-field :label="r2.name + ' : ' + r2.type + ' URL'" v-model="getLaunchContext(r2.name).id"
-              :messages="r2.description" :loading="getLaunchContext(r2.name).loading">
-              <template v-slot:append>
-                <v-btn icon small tile @click="getLaunchContext(r2.name).id = ''; $forceUpdate();">
-                  <v-icon> mdi-close </v-icon>
-                </v-btn>
-                <v-btn icon small tile @click="downloadExampleFile(r2.name, r2.type)">
-                  <v-icon> mdi-download </v-icon>
-                </v-btn>
-              </template>
-            </v-text-field>
-            <v-textarea :label="r2.name + ' json'" :rows="3" v-model="getLaunchContext(r2.name).data"
-              @input="$forceUpdate()">
-              <template v-slot:append>
-                <v-btn icon small tile @click="getLaunchContext(r2.name).data = ''; $forceUpdate()">
-                  <v-icon> mdi-close </v-icon>
-                </v-btn>
-              </template>
-            </v-textarea>
+        </v-text-field>
+        <v-textarea label="Smart Health Link (IPS)" :rows="5" v-model="smartHealthLink">
+          <template v-slot:append>
+            <v-btn icon small tile @click="smartHealthLink = ''">
+              <v-icon> mdi-close </v-icon>
+            </v-btn>
+            <v-btn icon small tile>
+              <v-icon> mdi-download </v-icon>
+            </v-btn>
+            <v-btn small icon tile><v-icon title="Re-format the json below" dark>
+                mdi-format-indent-increase
+              </v-icon></v-btn>
           </template>
-        </v-expansion-panel-content>
-      </v-expansion-panel>
-    </v-expansion-panels>
-    </template>
+        </v-textarea>
+      </template>
 
-    <template v-if="isIPSPrepopulate">
-      <v-text-field label="IPS Address" v-model="ipsBundleAddress">
-        <template v-slot:append>
-          <v-btn icon small tile @click="ipsBundleAddress = ''">
-            <v-icon> mdi-close </v-icon>
+      <v-select label="Pre-Processing Engine" class="engineSelector" :items="executionEngines" v-model="selectedEngine"
+        hide-details="auto">
+        <template v-slot:append-outer>
+          <v-btn :loading="extractingInProgress" accesskey="g" style="margin-top: -8px;" title="press alt+g to go"
+            @click="runPrePopulation" color="primary">
+            <v-icon>
+              mdi-play
+            </v-icon> Populate
           </v-btn>
-          <v-btn icon small tile>
-            <v-icon> mdi-download </v-icon>
-          </v-btn>
-          <v-btn small icon tile><v-icon title="Re-format the json below" dark>
-              mdi-format-indent-increase
-            </v-icon></v-btn>
         </template>
-      </v-text-field>
-      <v-textarea label="Smart Health Link (IPS)" :rows="5" v-model="smartHealthLink">
-        <template v-slot:append>
-          <v-btn icon small tile @click="smartHealthLink = ''">
-            <v-icon> mdi-close </v-icon>
-          </v-btn>
-          <v-btn icon small tile>
-            <v-icon> mdi-download </v-icon>
-          </v-btn>
-          <v-btn small icon tile><v-icon title="Re-format the json below" dark>
-              mdi-format-indent-increase
-            </v-icon></v-btn>
-        </template>
-      </v-textarea>
-    </template>
+      </v-select>
 
-
-    * Bundle Query(s)<br />
-    * root level search fhirpath queries<br />
-    * Run local StructureMap style processing
-
-    <v-select label="Pre-Processing Engine" class="engineSelector" :items="executionEngines" v-model="selectedEngine"
-      hide-details="auto" /><br />
       <v-text-field label="Populate Service URL" v-model="populateServiceUrl" v-if="selectedEngine == 'Other pre-pop'">
-    </v-text-field>
+      </v-text-field>
 
-    <v-btn accesskey="g" title="press alt+g to go" @click="runPrePopulation">
-      <v-icon>
-        mdi-play
-      </v-icon> Populate
-    </v-btn>
-
-    <br />
-    <label>$populate parameters (debug)</label>
-    <br />
-    <div height="85px" width="100%" ref="aceEditorExpressionPrePop"></div>
-    <div class="ace_editor_footer"></div>
+    </div>
+    <resource-editor style="flex-grow: 1;" :readOnly="true" textLabel="$populate parameters (debug)"
+      :resourceText="JSON.stringify(prepopParameters, null, 2)" />
   </div>
 </template>
 
@@ -103,10 +60,6 @@
   height: 20px;
 }
 
-.engineSelector {
-  max-width: 18ch;
-}
-
 .ace_editor:focus-within+.ace_editor_footer {
   color: #1976d2;
   transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);
@@ -114,31 +67,23 @@
 </style>
 
 <script lang="ts">
-import { Questionnaire, QuestionnaireResponse, Parameters } from "fhir/r4b";
+import { Questionnaire, QuestionnaireResponse, Parameters, Resource, ParametersParameter, FhirResource, BundleEntry, Bundle, Encounter, OperationOutcome } from "fhir/r4b";
 import { Questionnaire as QuestionnaireR4, Patient as PatientR4, Practitioner as PractitionerR4, Encounter as EncounterR4 } from "fhir/r4";
 import { Component, Prop, Vue } from "vue-property-decorator";
 
-import "ace-builds";
-import ace from "ace-builds";
-import "ace-builds/src-noconflict/mode-text";
-import "ace-builds/src-noconflict/mode-json";
-import "ace-builds/src-noconflict/theme-chrome";
-
-import { Rules as FhirPathHightlighter_Rules, setCustomHighlightRules } from "~/helpers/fhirpath_highlighter"
-import "~/assets/fhirpath_highlighter.scss"
 import { structuredDataCapture } from "fhir-sdc-helpers"
-import { getExtension, getExtensionCodeValue, getExtensionCodingValue, getExtensions, getExtensionStringValue } from "fhir-extension-helpers"
-import { settings } from "~/helpers/user_settings";
-import { loadFhirResource } from "~/helpers/searchFhir";
-import { BaseResourceData } from "~/models/BaseResourceTableData";
-import { json } from "express";
+import { getExtension, getExtensionCodeValue, getExtensionCodingValue, getExtensionExpressionValues, getExtensions, getExtensionStringValue } from "fhir-extension-helpers"
+import { CreateOperationOutcome, errorCodingSearch, requestFhirAcceptHeaders } from "~/helpers/searchFhir";
 import { FetchResourceCallback, populateQuestionnaire } from "@aehrc/sdc-populate";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { ContextData } from "./QuestionnaireContext.vue";
+import fhirpath from "fhirpath";
+import fhirpath_r4_model from "fhirpath/fhir-context/r4";
 
 interface LaunchContextData {
   id: string | undefined;
   data: string | undefined;
+  resourceType: string | undefined;
   loading?: boolean;
 }
 
@@ -148,23 +93,7 @@ export default class QuestionnaireExtractTest extends Vue {
   // Properties provided by the parent component
   @Prop() readonly questionnaire: Questionnaire | undefined;
   @Prop() readonly context: ContextData | undefined;
-
-  // https://github.com/LHNCBC/lforms-fhir-app/blob/157be10a006eb6886c5421c5dd2606e795d8d9d8/source/js/fhir.service.js#L135C55-L136C43
-  /*
-  From the NLM render component
-   *      var fhirContext = FHIR.client(settings.getFhirServerExamplesUrl());
-        var fhirContextVars = { LaunchPatient: "Patient/123" };
-        LForms.Util.setFHIRContext(fhirContext, fhirContextVars);
-
-        this.lforms_error = undefined;
-        await LForms.Util.addFormToPage(this.questionnaire, "myFormContainer", {
-          prepopulate: false,
-        }).catch((e: any) => {
-          console.error("Breaking news:", e);
-          this.lforms_error = e.toString();
-        });
-
-   */
+  @Prop() readonly sourceFhirServer: string = '';
 
   // Properties visible to the local template
   public ipsBundleAddress: string = 'https://hapi.fhir.org/baseR4/Patient/1221256/$summary';
@@ -177,77 +106,57 @@ export default class QuestionnaireExtractTest extends Vue {
   ];
   public selectedEngine: string = "forms-lab";
   public populateServiceUrl: string = "http://localhost:8000/Questionnaire/$populate";
-  public launchContextValues: Map<string, LaunchContextData> = new Map<string, LaunchContextData>;
-  public isComplete(val: string | undefined): boolean {
-    console.log('Checking isComplete for ' + val);
-    if (this.getLaunchContext(val)?.data?.length! > 0)
-      return true;
-    return false;
-  }
+  public prepopParameters: Parameters = { resourceType: "Parameters", parameter: [] };
+  public extractingInProgress: boolean = false;
+  public downloadingFile: boolean = false;
 
-  public sourceFhirServer: string = "";
-  
   public get isIPSPrepopulate(): boolean {
     let isIPS = this.launchContexts?.find((lc) => lc.name === 'ips') !== undefined;
     return isIPS;
   }
+
   public get launchContexts() {
     return getExtensions(this.questionnaire, structuredDataCapture.exturl_LaunchContextExtension)?.map((lc) => {
       return {
-        name: getExtensionCodingValue(lc, "name")?.code ?? getExtension(lc, "name")?.valueId,
+        name: getExtensionCodingValue(lc, "name")?.code ?? getExtension(lc, "name")?.valueId ?? '',
         type: getExtensionCodeValue(lc, "type"),
         description: getExtensionStringValue(lc, "description"),
       }
     });
   }
 
-  public getLaunchContext(context: string | undefined): LaunchContextData {
-    if (context) {
-      let data = this.launchContextValues.get(context);
-      if (data)
-        return data;
-    }
-    return { id: undefined, data: undefined };
-  }
+  /** Perform a FHIR Search operation */
+  async performXFhirQuery(url: string, mapData: (resultResource: FhirResource) => void) {
+    try {
+      // host.loadingData = true;
+      let headers = { "Accept": requestFhirAcceptHeaders };
+      const response = await axios.get<FhirResource>(url, {
+        headers: headers
+      });
 
-  public setLaunchContextId(context: string, id: string) {
-    let data = this.launchContextValues.get(context);
-    if (!data) {
-      let data: LaunchContextData = { id, data: undefined };
-      this.launchContextValues.set(context, data);
-    } else {
-      data.id = id;
-    }
-  }
-
-  public async downloadExampleFile(context: string, resourceType: string) {
-    let data = this.launchContextValues.get(context);
-    if (data) {
-      data.loading = true;
-      this.$forceUpdate();
-      let feedbackData: BaseResourceData<fhir4b.FhirResource> = {
-        raw: null,
-        saving: false,
-        enableSave: false,
-        readonly: true,
-        tab: 0,
-        fhirServerUrl: this.sourceFhirServer,
-      };
-      let resourceId = data.id ?? '';
-      if (resourceId.includes('/')) {
-        let parts = resourceId.split('/');
-        resourceId = parts[parts.length - 1];
+      const results = response.data;
+      if (results) {
+        mapData(results);
       }
-      let result = await loadFhirResource(this.sourceFhirServer, feedbackData, resourceType, resourceId, () => { return { resourceType: 'Questionnaire' } as Questionnaire });
-      data.loading = false;
-      data.data = feedbackData.raw ? JSON.stringify(feedbackData.raw, null, 2) : 'Failed to load the resource';
-      this.$forceUpdate();
+    } catch (err) {
+      // host.loadingData = false;
+      if (axios.isAxiosError(err)) {
+        const serverError = err as AxiosError<fhir4b.OperationOutcome>;
+        if (serverError && serverError.response) {
+          // host.outcome = serverError.response.data;
+          return serverError.response.data;
+        }
+        return CreateOperationOutcome("fatal", "exception", "Server: " + err.message, errorCodingSearch, url);
+      }
+      return CreateOperationOutcome("fatal", "exception", "Client: " + err as string, errorCodingSearch, url);
     }
   }
+
 
   public async runPrePopulation() {
     // Run the pre-population based on the selected engine
     console.log('Running pre-population');
+    this.extractingInProgress = true;
     let result: QuestionnaireResponse | undefined = undefined;
     if (this.selectedEngine === 'forms-lab') {
       result = await this.runFormsLabPrePopulation();
@@ -264,6 +173,7 @@ export default class QuestionnaireExtractTest extends Vue {
       console.log('Pre-population result', result);
       this.$emit('response', result);
     }
+    this.extractingInProgress = false;
   }
 
   async runFormsLabPrePopulation(): Promise<QuestionnaireResponse | undefined> {
@@ -302,24 +212,27 @@ export default class QuestionnaireExtractTest extends Vue {
     let patientResource: PatientR4 | undefined = undefined;
     let userResource: PractitionerR4 | undefined = undefined;
     let encounterResource: EncounterR4 | undefined = undefined;
-    for (let [, value] of this.launchContextValues) {
-      if (value && value.data) {
-        try {
-          const resource = JSON.parse(value.data);
 
-          switch (resource.resourceType) {
-            case "Patient":
+    await this.preloadData();
+
+    // read the variables from the parameters
+    let context = this.prepopParameters.parameter?.filter(p => p.name === 'context');
+    if (context) {
+      for (let part of context) {
+        let name = part.part?.find(p => p.name === 'name')?.valueString;
+        let resource = part.part?.find(p => p.name === 'content')?.resource;
+        if (name && resource) {
+          switch (name) {
+            case 'patient':
               patientResource = resource as PatientR4;
               break;
-            case "Practitioner":
+            case 'user':
               userResource = resource as PractitionerR4;
               break;
-            case "Encounter":
+            case 'encounter':
               encounterResource = resource as EncounterR4;
               break;
           }
-        } catch (err) {
-          console.log(err);
         }
       }
     }
@@ -337,7 +250,7 @@ export default class QuestionnaireExtractTest extends Vue {
     const { populateSuccess, populateResult } = await populateQuestionnaire({
       questionnaire: this.questionnaire as QuestionnaireR4,
       fetchResourceCallback:
-      QuestionnaireExtractTest.fetchResourceCallbackCSIROPrePopulation,
+        QuestionnaireExtractTest.fetchResourceCallbackCSIROPrePopulation,
       requestConfig: {
         sourceFhirServer: this.sourceFhirServer,
       },
@@ -351,6 +264,7 @@ export default class QuestionnaireExtractTest extends Vue {
       return;
     }
 
+    console.log("Populated response from CSIRO", populateResult.populatedResponse);
     this.$emit("response", populateResult.populatedResponse);
 
     return undefined;
@@ -360,12 +274,141 @@ export default class QuestionnaireExtractTest extends Vue {
     console.log('Running lforms pre-pop');
     let subjectId = this.context?.subject?.reference;
     if (subjectId?.startsWith('Patient/'))
-      this.$emit('pre-pop-lforms', this.sourceFhirServer, subjectId.substring('Patient/'.length));
-    else{
-      // The lforms engine only really supports a patient launch parameter, and doesn't expect the prefix in it
-      this.$emit('pre-pop-lforms', this.sourceFhirServer, subjectId);
-    }
+      subjectId = subjectId.substring('Patient/'.length);
+
+    let authorId = this.context?.author?.reference;
+    if (authorId?.startsWith('Practitioner/'))
+      authorId = authorId.substring('Practitioner/'.length);
+
+    this.$emit('pre-pop-lforms', this.sourceFhirServer, subjectId, authorId);
     return undefined;
+  }
+
+  async preloadData() {
+    // load in the context data, and load any that have not already been loaded
+    var environment: Record<string, any> = { resource: this.questionnaire, rootResource: this.questionnaire };
+    let lcs = this.launchContexts;
+    if (lcs) {
+      // iterate each launch context defined in the questionnaire
+      for (let lc of lcs) {
+        let data: LaunchContextData = { id: undefined, data: undefined, resourceType: lc.type };
+        if (lc.type && lc.type !== 'Bundle')
+          data.id = lc.type + '/example';
+        if (this.context?.subject && lc.name === 'patient' && data.id != this.context.subject.reference) {
+          data.id = this.context.subject.reference;
+        }
+        if (this.context?.author && lc.name === 'user' && data.id != this.context.author.reference) {
+          data.id = this.context.author.reference;
+        }
+        if (this.context?.encounter && lc.name === 'encounter' && data.id != this.context.encounter.reference) {
+          data.id = this.context.encounter.reference;
+        }
+
+        let context: ParametersParameter = {
+          "name": "context",
+          "part": [{
+            "name": "name",
+            "valueString": lc.name
+          }]
+        };
+        this.prepopParameters.parameter!.push(context);
+        if (data.id) {
+          console.log("Loading context data for " + lc.name, data.id, "(" + lc.type + ")");
+          let resourceUrl = data.id;
+          environment[lc.name] = undefined;
+          if (!resourceUrl.startsWith('http')) {
+            resourceUrl = this.sourceFhirServer + '/' + resourceUrl;
+          }
+          await this.performXFhirQuery(resourceUrl, (result) => {
+            let contentResult = {
+              name: "content",
+              resource: result
+            }
+            environment[lc.name] = result;
+            context.part!.push(contentResult);
+
+            // if the reference display is different to the context display value, update it
+            if (result && result.resourceType) {
+              let display = result.id;
+              if (result.resourceType === 'Patient') {
+                display = (result as PatientR4).name?.[0]?.text ?? result.id;
+              }
+              if (result.resourceType === 'Practitioner') {
+                display = (result as PractitionerR4).name?.[0]?.text ?? result.id;
+              }
+              if (result.resourceType === 'Encounter') {
+                display = (result as Encounter).id;
+              }
+              if (this.context?.subject && lc.name === 'patient' && display != this.context.subject.display) {
+                this.context.subject.display = display;
+              }
+              if (this.context?.author && lc.name === 'user' && display != this.context.author.display) {
+                this.context.author.display = display;
+              }
+              if (this.context?.encounter && lc.name === 'encounter' && display != this.context.encounter.display) {
+                this.context.encounter.display = display;
+              }
+            }
+          });
+        }
+      }
+    }
+
+    // load in any root level x-fhir-query expressions (which go into variables)
+    const varExpressions = getExtensionExpressionValues(this.questionnaire, structuredDataCapture.exturl_Variable);
+    if (varExpressions) {
+      console.log("Variables", environment);
+      for (let expr of varExpressions) {
+        if (expr.expression && expr.language == 'application/x-fhir-query') {
+          let query = this.replaceSearchTokens(expr.expression, environment);
+          console.log("Evaluating expression: " + expr.name, query);
+
+          // Add the variable to the pre-population parameters
+          let context: ParametersParameter = {
+            name: "context",
+            part: [{
+              name: "name",
+              valueString: expr.name ?? ''
+            }
+            ]
+          };
+
+          // evaluate the expression
+          if (!query.startsWith("http"))
+            query = this.sourceFhirServer + "/" + query;
+          await this.performXFhirQuery(query, (result) => {
+            let contentResult = {
+              name: "content",
+              resource: result
+            }
+            context.part!.push(contentResult);
+          });
+
+          this.prepopParameters.parameter!.push(context);
+        }
+      }
+    }
+
+    // load in any structuremap query bundles
+    // exturl_SourceQueriesExtension
+    // exturl_SourceStructureMapExtension
+
+    // Future: Perform any CQL preparations?
+  }
+
+  replaceSearchTokens(queryText: string, envVars: Record<string, any>): string {
+    var startTagIndex = queryText.indexOf("{{");
+    if (startTagIndex > -1) {
+      var endTagIndex = queryText.indexOf("}}", startTagIndex);
+      if (endTagIndex > -1) {
+        var expr = queryText.substr(startTagIndex + 2, endTagIndex - startTagIndex - 2);
+        var result = fhirpath.evaluate({}, expr, envVars, fhirpath_r4_model);
+        var tailSource = queryText.substr(endTagIndex + 2);
+        var tailResult = this.replaceSearchTokens(tailSource, envVars);
+        return queryText.substr(0, startTagIndex) + result + tailResult;
+      }
+    }
+    return queryText;
   }
 
   async runOtherPrePopulation(): Promise<QuestionnaireResponse | undefined> {
@@ -377,8 +420,8 @@ export default class QuestionnaireExtractTest extends Vue {
     this.$emit('outcome', undefined);
 
     try {
-      // prepare the parameters with the launch context values
-      let prepopParams: Parameters = {
+      // Reset the launch context parameters
+      this.prepopParameters = {
         resourceType: "Parameters",
         "parameter": [
           {
@@ -393,51 +436,12 @@ export default class QuestionnaireExtractTest extends Vue {
           }]
       };
 
-      // Set the subject id
-      prepopParams.parameter![0].valueReference = this.context?.subject;
+      // Set the subject from the context
+      this.prepopParameters.parameter![0].valueReference = this.context?.subject;
 
-      // Set the launch context values
-      let lcs = this.launchContexts;
-      if (lcs) {
-        for (let lc of lcs) {
-          if (lc.name) {
-            let data = this.launchContextValues.get(lc.name);
-            if (data && data.data) {
-              let context = {
-                "name": "context",
-                "part": [{
-                  "name": "name",
-                  "valueString": lc.name
-                },
-                {
-                  "name": "content",
-                  "resource": JSON.parse(data.data)
-                }]
-              };
-              prepopParams.parameter!.push(context);
-            }
-            else if (data && data.id){
-              let context = {
-                "name": "context",
-                "part": [{
-                  "name": "name",
-                  "valueString": lc.name
-                },
-                {
-                  "name": "content",
-                  "valueReference": { 
-                    reference: data.id
-                  }
-                }]
-              };
-              prepopParams.parameter!.push(context);
-            }
-          }
-        }
-      }
+      await this.preloadData();
 
-      const bodyContent = JSON.stringify(prepopParams, null, 4);
-      this.setValue(bodyContent);
+      const bodyContent = JSON.stringify(this.prepopParameters, null, 4);
 
       // run the pre-population
       // Use the FHIR $populate operation to pre-populate the form
@@ -453,9 +457,6 @@ export default class QuestionnaireExtractTest extends Vue {
       });
       const raw = await response.text();
       console.log('Pre-population result', raw);
-
-      // editorQR.setValue(raw);
-      // editorQR.clearSelection();
 
       try {
         var jsonOutput = JSON.parse(raw);
@@ -491,97 +492,6 @@ export default class QuestionnaireExtractTest extends Vue {
     catch (err) {
       console.log(err);
       return undefined;
-    }
-  }
-
-  public setLaunchContextData(context: string, content: string) {
-    let data = this.launchContextValues.get(context);
-    if (!data) {
-      let data: LaunchContextData = { id: undefined, data: content };
-      this.launchContextValues.set(context, data);
-    } else {
-      data.data = content;
-    }
-  }
-
-  // Internal variables
-  expressionEditor?: ace.Ace.Editor | undefined = undefined;
-  public internalValue: string | undefined = undefined;
-
-  public setValue(value: string | undefined): void {
-    this.internalValue = value;
-    this.ensureEditorIsCreated();
-    this.expressionEditor?.setValue(value ?? "");
-    // this.expressionEditor?.clearSelection();
-  }
-
-  public getValue(): string | undefined {
-    // if (!this.expressionEditor)
-    return this.internalValue;
-
-    // return this.expressionEditor?.getValue();
-  }
-
-  ensureEditorIsCreated(): void {
-    try {
-      var editorDiv: any = this.$refs.aceEditorExpressionPrePop as HTMLDivElement;
-      if (editorDiv && this.expressionEditor === undefined) {
-        console.log("need to create the editor");
-        this.expressionEditor = ace.edit(editorDiv, {
-          wrap: "free",
-          minLines: 3,
-          maxLines: 39,
-          highlightActiveLine: false,
-          showGutter: true,
-          fontSize: 12,
-          cursorStyle: "slim",
-          showPrintMargin: false,
-          theme: "ace/theme/chrome",
-          mode: "ace/mode/json",
-          wrapBehavioursEnabled: true
-        });
-        console.log("extract initialized");
-
-        if (this.expressionEditor) {
-          // setCustomHighlightRules(this.expressionEditor, FhirPathHightlighter_Rules);
-          this.expressionEditor.setValue(this.internalValue ?? "");
-          this.expressionEditor.clearSelection();
-          // this.expressionEditor.on("change", this.fhirpathExpressionChangedEvent)
-          console.log("editor configured");
-        }
-        else {
-          console.error("Failed to create the editor");
-        }
-      }
-    } catch (error) {
-      console.error("Error creating the editor", error);
-    }
-  }
-
-  mounted(): void {
-    this.internalValue = JSON.stringify(this.questionnaire, null, 2);
-    this.ensureEditorIsCreated();
-    this.sourceFhirServer = settings.getFhirServerExamplesUrl();
-  }
-
-  updated(): void {
-    this.ensureEditorIsCreated();
-    this.internalValue = JSON.stringify(this.questionnaire, null, 2);
-    console.log('updated');
-    let lcs = this.launchContexts;
-    if (lcs) {
-      let updateRequired = false;
-      for (let lc of lcs) {
-        let data: LaunchContextData = { id: undefined, data: undefined };
-        if (lc.type && lc.type !== 'Bundle')
-          data.id = lc.type + '/example';
-        if (lc.name && !this.launchContextValues.has(lc.name)) {
-          this.launchContextValues.set(lc.name, data)
-          updateRequired = true;
-        }
-      }
-      if (updateRequired)
-        this.$forceUpdate();
     }
   }
 }

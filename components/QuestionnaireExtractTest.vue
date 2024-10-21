@@ -7,8 +7,8 @@
         </v-btn>
       </template>
     </v-text-field>
-    <div class="ace_editor" width="100%" ref="aceEditorExpressionExtract"></div>
-    <div class="ace_editor_footer"></div>
+    <resource-editor style="flex-grow: 1; width: 100%; height: 100%;" :readOnly="true"
+            :resourceText="extractResult" />
     <v-expansion-panels accordion expanded>
       <v-expansion-panel :isActive="true">
         <v-expansion-panel-header>
@@ -26,50 +26,12 @@
   </div>
 </template>
 
-<style lang="scss">
-.ace_editor {
-  flex-grow: 1;
-  width: 100%;
-  height: 100%;
-}
-
-.small-textarea .v-text-field__slot textarea {
-  font-size: 0.75em;
-  line-height: revert;
-}
-</style>
-
-<style lang="scss" scoped>
-.bare-label {
-  transform-origin: top left;
-  transform: scale(0.75);
-  margin-top: 8px;
-  height: 20px;
-}
-
-.ace_editor:focus-within+.ace_editor_footer {
-  color: #1976d2;
-  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);
-}
-</style>
-
 <script lang="ts">
 import { Parameters, Questionnaire, QuestionnaireResponse } from "fhir/r4b";
 import { Component, Prop, Vue, Watch } from "vue-property-decorator";
 
-import ace from "ace-builds";
-import "ace-builds/src-noconflict/mode-text";
-import "ace-builds/src-noconflict/mode-json";
-import "ace-builds/src-noconflict/theme-chrome";
-
-import "~/assets/fhirpath_highlighter.scss"
-
 @Component
 export default class QuestionnaireExtractTest extends Vue {
-
-  // QuestionnaireExtractTest(){
-  //   this.extractParameters = "Extracting the questionnaire";
-  // }
 
   // Properties provided by the parent component
   @Prop() readonly questionnaire: Questionnaire | undefined;
@@ -83,15 +45,12 @@ export default class QuestionnaireExtractTest extends Vue {
   public extractingInProgress: boolean = false;
 
   // Internal variables
-  expressionEditor?: ace.Ace.Editor | undefined = undefined;
+  public extractResult: string = '';
   public internalValue: string | undefined = undefined;
 
   public setValue(value: string | undefined): void {
     console.log("setValue called");
     this.internalValue = value;
-    this.ensureEditorIsCreated();
-    // this.expressionEditor?.setValue(value ?? "");
-    // this.expressionEditor?.clearSelection();
   }
 
   async performExtractOperation(): Promise<void> {
@@ -101,8 +60,7 @@ export default class QuestionnaireExtractTest extends Vue {
     if (!this.questionnaireResponseJson)
       return;
 
-    this.expressionEditor?.setValue('');
-    this.expressionEditor?.clearSelection();
+    this.extractResult = '';
 
     // Now pass this to the extract service
     this.extractingInProgress = true;
@@ -142,8 +100,7 @@ export default class QuestionnaireExtractTest extends Vue {
           const resultParameters = extractResponse as Parameters;
           const returnParameter = resultParameters.parameter?.find(p => p.name === "return");
           if (returnParameter) {
-            this.expressionEditor?.setValue(JSON.stringify(returnParameter.resource, null, 2));
-            this.expressionEditor?.clearSelection();
+            this.extractResult = JSON.stringify(returnParameter.resource, null, 2);
           }
           const issuesParameter = resultParameters.parameter?.find(p => p.name === "issues");
           if (issuesParameter) {
@@ -151,8 +108,7 @@ export default class QuestionnaireExtractTest extends Vue {
           }
         }
         else {
-          this.expressionEditor?.setValue(JSON.stringify(extractResponse, null, 2));
-          this.expressionEditor?.clearSelection();
+          this.extractResult = JSON.stringify(extractResponse, null, 2);
         }
       }
       else {
@@ -175,42 +131,8 @@ export default class QuestionnaireExtractTest extends Vue {
     console.log("Q changed");
   }
 
-  ensureEditorIsCreated(): void {
-    try {
-      let editorDiv: any = this.$refs.aceEditorExpressionExtract as HTMLDivElement;
-      if (editorDiv && this.expressionEditor === undefined) {
-        this.expressionEditor = ace.edit(editorDiv, {
-          wrap: "free",
-          readOnly: true,
-          highlightActiveLine: false,
-          showGutter: true,
-          fontSize: 14,
-          cursorStyle: "slim",
-          showPrintMargin: false,
-          theme: "ace/theme/chrome",
-          mode: "ace/mode/json",
-          wrapBehavioursEnabled: true
-        });
-      }
-    } catch (error) {
-      console.error("Error creating the editor", error);
-    }
-  }
-
   mounted(): void {
     this.internalValue = JSON.stringify(this.questionnaire, null, 2);
-    this.ensureEditorIsCreated();
-  }
-
-  updated(): void {
-    this.ensureEditorIsCreated();
-    console.log('updated');
-    this.$nextTick(() => {
-      if (this.expressionEditor) {
-        this.expressionEditor.renderer.updateFull(true)
-        this.expressionEditor.resize();
-      }
-    });
   }
 }
 
