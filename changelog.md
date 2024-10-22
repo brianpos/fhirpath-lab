@@ -3,6 +3,9 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+# 22 October 2024 (dev)
+* Extensive error handling improvements in the questionnaire tester pre-pop/context tabs
+
 # 21 October 2024 (dev)
 * Extensive work on the Context and pre-populate tabs in the questionnaire tester
 

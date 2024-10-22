@@ -109,6 +109,7 @@ export default class QuestionnairePrepopulateTest extends Vue {
   public prepopParameters: Parameters = { resourceType: "Parameters", parameter: [] };
   public extractingInProgress: boolean = false;
   public downloadingFile: boolean = false;
+  private outcome: OperationOutcome = { resourceType: "OperationOutcome", issue: [] };
 
   public get isIPSPrepopulate(): boolean {
     let isIPS = this.launchContexts?.find((lc) => lc.name === 'ips') !== undefined;
@@ -142,6 +143,15 @@ export default class QuestionnairePrepopulateTest extends Vue {
       if (axios.isAxiosError(err)) {
         const serverError = err as AxiosError<fhir4b.OperationOutcome>;
         if (serverError && serverError.response) {
+          if (serverError.response.status === 404) {
+            return CreateOperationOutcome("error", "not-found", "Resource " + url + " not found", errorCodingSearch, url);
+          }
+          if (serverError.response.status === 401) {
+            return CreateOperationOutcome("fatal", "forbidden", "Resource " + url + " not authorized", errorCodingSearch, url);
+          }
+          if (serverError.response.status === 410) {
+            return CreateOperationOutcome("error", "not-found", "Resource " + url + " was deleted", errorCodingSearch, url);
+          }
           return serverError.response.data;
         }
         return CreateOperationOutcome("fatal", "exception", "Server: " + err.message, errorCodingSearch, url);
@@ -285,6 +295,7 @@ export default class QuestionnairePrepopulateTest extends Vue {
   async preloadData() {
     // load in the context data, and load any that have not already been loaded
     var environment: Record<string, any> = { resource: this.questionnaire, rootResource: this.questionnaire };
+    this.outcome = { resourceType: "OperationOutcome", issue: [] };
     let lcs = this.launchContexts;
     if (lcs) {
       // iterate each launch context defined in the questionnaire
@@ -348,6 +359,10 @@ export default class QuestionnairePrepopulateTest extends Vue {
               }
             }
           });
+          if (opOutcome?.issue) {
+            console.log("outcome ", opOutcome)
+            this.outcome.issue!.push(...opOutcome.issue!);
+          }
         }
       }
     }
@@ -381,6 +396,10 @@ export default class QuestionnairePrepopulateTest extends Vue {
             }
             context.part!.push(contentResult);
           });
+          if (opOutcome?.issue) {
+            console.log("outcome ", opOutcome)
+            this.outcome.issue!.push(...opOutcome.issue!);
+          }
 
           this.prepopParameters.parameter!.push(context);
         }
@@ -438,6 +457,10 @@ export default class QuestionnairePrepopulateTest extends Vue {
       this.prepopParameters.parameter![0].valueReference = this.context?.subject;
 
       await this.preloadData();
+      // if (this.outcome.issue && this.outcome.issue.length > 0) {
+      //   this.$emit('outcome', this.outcome);
+      //   return;
+      // }
 
       const bodyContent = JSON.stringify(this.prepopParameters, null, 4);
 
@@ -456,40 +479,74 @@ export default class QuestionnairePrepopulateTest extends Vue {
       const raw = await response.text();
       console.log('Pre-population result', raw);
 
-      try {
-        var jsonOutput = JSON.parse(raw);
-        if (jsonOutput.resourceType === "OperationOutcome") {
-          console.log("Unable to pre-populate form, refer to outcome");
-          this.$emit('outcome', jsonOutput);
-          return undefined;
-        }
-
-        if (jsonOutput.resourceType === "Parameters") {
-          const result = jsonOutput as Parameters;
-          const issuesParameter = result.parameter?.find(p => p.name === "issues");
-          if (issuesParameter) {
-            this.$emit('outcome', issuesParameter.resource);
-          }
-          const returnParameter = result.parameter?.find(p => p.name === "return" || p.name === "response");
-          if (returnParameter) {
-            return returnParameter.resource as QuestionnaireResponse;
-          }
-          return undefined;
-        }
-        if (jsonOutput.resourceType !== "QuestionnaireResponse") {
-          console.log("Unexpected response type: " + jsonOutput.resourceType);
-          return undefined;
-        }
-        return jsonOutput;
-      }
-      catch (err) {
-        console.log(err);
+      var jsonOutput = JSON.parse(raw);
+      if (jsonOutput.resourceType === "OperationOutcome") {
+        console.log("Unable to pre-populate form, refer to outcome");
+        this.outcome.issue!.push(...jsonOutput.issue!);
+        this.$emit('outcome', this.outcome);
         return undefined;
       }
+
+      if (jsonOutput.resourceType === "Parameters") {
+        const result = jsonOutput as Parameters;
+        const issuesParameter = result.parameter?.find(p => p.name === "issues");
+        if (issuesParameter) {
+          let issues = issuesParameter.resource as OperationOutcome;
+          if (issues.issue)
+            this.outcome.issue!.push(...issues.issue);
+          this.$emit('outcome', this.outcome);
+        }
+        const returnParameter = result.parameter?.find(p => p.name === "return" || p.name === "response");
+        if (returnParameter) {
+          return returnParameter.resource as QuestionnaireResponse;
+        }
+        return undefined;
+      }
+      if (this.outcome.issue && this.outcome.issue.length > 0) {
+        this.$emit('outcome', this.outcome);
+      }
+      if (jsonOutput.resourceType !== "QuestionnaireResponse") {
+        console.log("Unexpected response type: " + jsonOutput.resourceType);
+        return undefined;
+      }
+
+      return jsonOutput;
     }
     catch (err) {
       console.log(err);
-      return undefined;
+      if (axios.isAxiosError(err)) {
+        const serverError = err as AxiosError<fhir4b.OperationOutcome>;
+        if (serverError && serverError.response) {
+          let outcome: OperationOutcome;
+          if (serverError.response.status === 404) {
+            outcome = CreateOperationOutcome("error", "not-found", "Resource " + url + " not found", errorCodingSearch, url);
+          }
+          else if (serverError.response.status === 401) {
+            outcome = CreateOperationOutcome("fatal", "forbidden", "Resource " + url + " not authorized", errorCodingSearch, url);
+          }
+          else if (serverError.response.status === 410) {
+            outcome = CreateOperationOutcome("error", "not-found", "Resource " + url + " was deleted", errorCodingSearch, url);
+          }
+          else {
+            outcome = serverError.response.data;
+          }
+          if (outcome?.issue)
+            this.outcome.issue!.push(...outcome.issue!);
+        }
+        else {
+          const outcome: OperationOutcome = CreateOperationOutcome("fatal", "exception", "Server: " + err.message, errorCodingSearch, url);
+          this.outcome.issue!.push(...outcome.issue!);
+        }
+      }
+      else {
+        const outcome: OperationOutcome = CreateOperationOutcome("fatal", "exception", "Client: " + err as string, errorCodingSearch, url);
+        this.outcome.issue!.push(...outcome.issue!);
+      }
+    }
+
+    if (this.outcome.issue && this.outcome.issue.length > 0) {
+      this.$emit('outcome', this.outcome);
+      return;
     }
   }
 }
