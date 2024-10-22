@@ -89,9 +89,10 @@ interface LFormsRendererData {
 })
 export default class EditorNLMRendererSection extends Vue {
   
+  @Prop({ default: ''}) readonly dataServer!: string;
   @Prop(Object) readonly questionnaire!: Questionnaire;
   @Prop() readonly context: ContextData | undefined;
-  public lforms_error: string | undefined = undefined;
+  public lforms_error: string | undefined = '';
 
   async mounted() {
     try {
@@ -106,7 +107,13 @@ export default class EditorNLMRendererSection extends Vue {
     if (window.LForms) {
       // Set the context vars
       const fhirContext = FHIR.client(settings.getFhirServerExamplesUrl());
-      const fhirContextVars = { LaunchPatient: "Patient/123" };
+      let fhirContextVars: any = { };
+      if (this.context?.subject?.reference) {
+        // fhirContextVars.patient = this.context.subject.reference;
+      }
+      if (this.context?.author?.reference) {
+        // fhirContextVars.user = this.context.author.reference;
+      }
       LForms.Util.setFHIRContext(fhirContext, fhirContextVars);
 
       this.lforms_error = undefined;
@@ -132,6 +139,7 @@ export default class EditorNLMRendererSection extends Vue {
   }
 
   async renderQuestionnaireResponse(response: QuestionnaireResponse, questionnaire: Questionnaire) : Promise<void> {
+    this.lforms_error = undefined;
     if (!(response.meta?.tag && response.meta.tag.length > 0 && response.meta.tag[0].code?.startsWith('lformsVersion'))) {
       console.log("Rendering response in lforms Renderer", response);
       try {

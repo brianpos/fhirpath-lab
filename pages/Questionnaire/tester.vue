@@ -99,7 +99,7 @@
           <template v-slot:Context>
             <!-- Context -->
             <QuestionnaireContext v-if="raw" :questionnaire="raw" @context-changed="contextChanged" :context="contextData"
-              :sourceFhirServer="dataServerBaseUrl" @ChangeDataServer="updateDataServerBaseUrl" 
+              :dataServer="dataServerBaseUrl" @ChangeDataServer="updateDataServerBaseUrl" 
             />
           </template>
 
@@ -114,11 +114,13 @@
 
           <template v-slot:CSIRO_Renderer>
             <EditorRendererSection ref="csiroFormsRenderer" v-if="raw" v-bind:questionnaire="raw" :context="contextData"
+              :dataServer="dataServerBaseUrl"
               @response="processUpdatedQuestionnaireResponse" @highlight-path="highlightPath" />
           </template>
 
           <template v-slot:LHC-Forms>
             <EditorNLMRendererSection ref="lhcFormsRenderer" v-if="raw" v-bind:questionnaire="raw" :context="contextData"
+              :dataServer="dataServerBaseUrl"
               @response="processUpdatedQuestionnaireResponse" @highlight-path="highlightPath" />
           </template>
 
@@ -171,7 +173,7 @@
 
           <template v-slot:PrePop>
             <QuestionnairePrepopTest ref="prepopTester" v-bind:questionnaire="raw" :context="contextData"  @outcome="displayExtractOutcome"
-              :sourceFhirServer="dataServerBaseUrl" 
+              :dataServer="dataServerBaseUrl" 
               @response="processUpdatedQuestionnaireResponseFromPrePopTester" @pre-pop-lforms="prePopLForms" />
           </template>
 

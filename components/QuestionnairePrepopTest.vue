@@ -76,7 +76,7 @@ import { getExtension, getExtensionCodeValue, getExtensionCodingValue, getExtens
 import { CreateOperationOutcome, errorCodingSearch, requestFhirAcceptHeaders } from "~/helpers/searchFhir";
 import { FetchResourceCallback, populateQuestionnaire } from "@aehrc/sdc-populate";
 import axios, { AxiosError } from "axios";
-import { ContextData } from "./QuestionnaireContext.vue";
+import QuestionnaireContext, { ContextData } from "./QuestionnaireContext.vue";
 import fhirpath from "fhirpath";
 import fhirpath_r4_model from "fhirpath/fhir-context/r4";
 
@@ -88,12 +88,12 @@ interface LaunchContextData {
 }
 
 @Component
-export default class QuestionnaireExtractTest extends Vue {
+export default class QuestionnairePrepopulateTest extends Vue {
 
   // Properties provided by the parent component
   @Prop() readonly questionnaire: Questionnaire | undefined;
   @Prop() readonly context: ContextData | undefined;
-  @Prop() readonly sourceFhirServer: string = '';
+  @Prop({ default: '' }) readonly dataServer!: string;
 
   // Properties visible to the local template
   public ipsBundleAddress: string = 'https://hapi.fhir.org/baseR4/Patient/1221256/$summary';
@@ -248,9 +248,9 @@ export default class QuestionnaireExtractTest extends Vue {
     const { populateSuccess, populateResult } = await populateQuestionnaire({
       questionnaire: this.questionnaire as QuestionnaireR4,
       fetchResourceCallback:
-        QuestionnaireExtractTest.fetchResourceCallbackCSIROPrePopulation,
+        QuestionnairePrepopulateTest.fetchResourceCallbackCSIROPrePopulation,
       requestConfig: {
-        sourceFhirServer: this.sourceFhirServer,
+        sourceFhirServer: this.dataServer,
       },
       patient: patientResource as PatientR4,
       user: userResource ? (userResource as PractitionerR4) : undefined,
@@ -278,7 +278,7 @@ export default class QuestionnaireExtractTest extends Vue {
     if (authorId?.startsWith('Practitioner/'))
       authorId = authorId.substring('Practitioner/'.length);
 
-    this.$emit('pre-pop-lforms', this.sourceFhirServer, subjectId, authorId);
+    this.$emit('pre-pop-lforms', this.dataServer, subjectId, authorId);
     return undefined;
   }
 
@@ -315,9 +315,9 @@ export default class QuestionnaireExtractTest extends Vue {
           let resourceUrl = data.id;
           environment[lc.name] = undefined;
           if (!resourceUrl.startsWith('http')) {
-            resourceUrl = this.sourceFhirServer + '/' + resourceUrl;
+            resourceUrl = this.dataServer + '/' + resourceUrl;
           }
-          await this.performXFhirQuery(resourceUrl, (result) => {
+          const opOutcome = await this.performXFhirQuery(resourceUrl, (result) => {
             let contentResult = {
               name: "content",
               resource: result
@@ -329,13 +329,13 @@ export default class QuestionnaireExtractTest extends Vue {
             if (result && result.resourceType) {
               let display = result.id;
               if (result.resourceType === 'Patient') {
-                display = (result as PatientR4).name?.[0]?.text ?? result.id;
+                display = QuestionnaireContext.getResourceReferenceDisplay(result);
               }
               if (result.resourceType === 'Practitioner') {
-                display = (result as PractitionerR4).name?.[0]?.text ?? result.id;
+                display = QuestionnaireContext.getResourceReferenceDisplay(result);
               }
               if (result.resourceType === 'Encounter') {
-                display = (result as Encounter).id;
+                display = QuestionnaireContext.getResourceReferenceDisplay(result);
               }
               if (this.context?.subject && lc.name === 'patient' && display != this.context.subject.display) {
                 this.context.subject.display = display;
@@ -373,8 +373,8 @@ export default class QuestionnaireExtractTest extends Vue {
 
           // evaluate the expression
           if (!query.startsWith("http"))
-            query = this.sourceFhirServer + "/" + query;
-          await this.performXFhirQuery(query, (result) => {
+            query = this.dataServer + "/" + query;
+          const opOutcome = await this.performXFhirQuery(query, (result) => {
             let contentResult = {
               name: "content",
               resource: result

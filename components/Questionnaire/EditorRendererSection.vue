@@ -46,6 +46,7 @@ import { ContextData } from '../QuestionnaireContext.vue';
 export default class EditorRendererSection extends Vue {
   @Prop(Object) readonly questionnaire!: Questionnaire;
   @Prop() readonly context: ContextData | undefined;
+  @Prop({ default: ''}) readonly dataServer!: string;
 
   get onFocus() {
     return (linkId: string) => { this.highlightPath(linkId); }
