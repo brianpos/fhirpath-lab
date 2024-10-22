@@ -106,7 +106,7 @@ export default class EditorNLMRendererSection extends Vue {
     // Now render the form to the display
     if (window.LForms) {
       // Set the context vars
-      const fhirContext = FHIR.client(settings.getFhirServerExamplesUrl());
+      const fhirContext = FHIR.client(this.dataServer ?? settings.getFhirServerExamplesUrl());
       let fhirContextVars: any = { };
       if (this.context?.subject?.reference) {
         // fhirContextVars.patient = this.context.subject.reference;
