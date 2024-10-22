@@ -73,7 +73,7 @@ import { Component, Prop, Vue } from "vue-property-decorator";
 
 import { structuredDataCapture } from "fhir-sdc-helpers"
 import { getExtension, getExtensionCodeValue, getExtensionCodingValue, getExtensionExpressionValues, getExtensions, getExtensionStringValue } from "fhir-extension-helpers"
-import { CreateOperationOutcome, errorCodingSearch, requestFhirAcceptHeaders } from "~/helpers/searchFhir";
+import { CreateOperationOutcome, errorCodingSearch, requestFhirAcceptHeaders, requestFhirContentTypeHeaders } from "~/helpers/searchFhir";
 import { FetchResourceCallback, populateQuestionnaire } from "@aehrc/sdc-populate";
 import axios, { AxiosError } from "axios";
 import QuestionnaireContext, { ContextData } from "./QuestionnaireContext.vue";
@@ -127,16 +127,28 @@ export default class QuestionnairePrepopulateTest extends Vue {
   }
 
   /** Perform a FHIR Search operation */
-  async performXFhirQuery(url: string, mapData: (resultResource: FhirResource) => void) {
+  async performXFhirQuery(url: string, mapData: (resultResource: FhirResource) => void, bundleBody?: Bundle) {
     try {
-      let headers = { "Accept": requestFhirAcceptHeaders };
-      const response = await axios.get<FhirResource>(url, {
-        headers: headers
-      });
+      if (!bundleBody) {
+        let headers = { "Accept": requestFhirAcceptHeaders };
+        const response = await axios.get<FhirResource>(url, {
+          headers: headers
+        });
 
-      const results = response.data;
-      if (results) {
-        mapData(results);
+        const results = response.data;
+        if (results) {
+          mapData(results);
+        }
+      } else {
+        let headers = { "Accept": requestFhirAcceptHeaders, "Content-Type": requestFhirContentTypeHeaders };
+        const response = await axios.post<FhirResource>(url, bundleBody, {
+          headers: headers
+        });
+
+        const results = response.data;
+        if (results) {
+          mapData(results);
+        }
       }
     } catch (err) {
       console.log(err);
@@ -406,11 +418,75 @@ export default class QuestionnairePrepopulateTest extends Vue {
       }
     }
 
-    // load in any structuremap query bundles
-    // exturl_SourceQueriesExtension
-    // exturl_SourceStructureMapExtension
+    // load in any StructureMap query bundles
+    const sourceQueriesReference = structuredDataCapture.getSourceQueriesExtension(this.questionnaire);
+    if (sourceQueriesReference?.reference) {
+      var searchBundleQueries = await this.extractSearchQueryBundle(sourceQueriesReference.reference);
+      if (searchBundleQueries?.id) {
+        // Scan all the requests and replace any tokens
+        console.log("Raw Search Bundle ", JSON.stringify(searchBundleQueries, null, 2));
+        if (searchBundleQueries.entry) {
+          // Add the variable to the pre-population parameters
+          let context: ParametersParameter = {
+            name: "context",
+            part: [{
+              name: "name",
+              valueString: searchBundleQueries.id
+            }
+            ]
+          };
+
+          // Patch all the requests
+          for (let entry of searchBundleQueries.entry) {
+            if (entry.request?.url) {
+              console.log(searchBundleQueries.id + ": ", entry.request.method, entry.request.url);
+
+              var patchedUrl = this.replaceSearchTokens(entry.request.url, environment);
+              console.log("  patched to: " + patchedUrl);
+              entry.request.url = patchedUrl;
+            }
+          }
+
+          // Evaluate the search bundle
+          console.log("Search Bundle to post", JSON.stringify(searchBundleQueries, null, 2));
+          const opOutcome = await this.performXFhirQuery(this.dataServer, (result) => {
+            if (searchBundleQueries?.id) {
+              environment[searchBundleQueries.id] = result;
+              this.prepopParameters.parameter!.push({ name: searchBundleQueries.id, resource: result });
+              // Also scan the search bundle for any embedded OperationOutcomes
+              if (result.resourceType === 'Bundle') {
+                for (let entry of result.entry!) {
+                  if (entry.resource?.resourceType === 'OperationOutcome') {
+                    this.outcome.issue!.push(...entry.resource.issue!);
+                  }
+                }
+              }
+            }
+          }, searchBundleQueries);
+          if (opOutcome?.issue) {
+            console.log("outcome ", opOutcome)
+            this.outcome.issue!.push(...opOutcome.issue!);
+          }
+        }
+      }
+    }
+    // exturl_SourceStructureMapExtension -- Nothing to do for this yet
 
     // Future: Perform any CQL preparations?
+  }
+
+  async extractSearchQueryBundle(searchBundleReference: string | undefined): Promise<Bundle | undefined> {
+    if (!searchBundleReference || searchBundleReference.length == 0) return undefined;
+
+    if (searchBundleReference.startsWith("#")) {
+      // read the query from the contained resources
+      let bundle = this.questionnaire?.contained?.find(c => c.id === searchBundleReference.substring(1));
+      return bundle as Bundle;
+    } else {
+      // read the query from a server (assume the questionnaire server if relative)
+      const outcome: OperationOutcome = CreateOperationOutcome("warning", "not-supported", "Client: Unable to retrieve search bundle " + searchBundleReference, errorCodingSearch);
+        this.outcome.issue!.push(...outcome.issue!);
+    }
   }
 
   replaceSearchTokens(queryText: string, envVars: Record<string, any>): string {

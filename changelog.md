@@ -5,6 +5,7 @@
 
 # 22 October 2024 (dev)
 * Extensive error handling improvements in the questionnaire tester pre-pop/context tabs
+* Support search bundles in the questionnaire tester pre-pop tab
 
 # 21 October 2024 (dev)
 * Extensive work on the Context and pre-populate tabs in the questionnaire tester
