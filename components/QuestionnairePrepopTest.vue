@@ -128,7 +128,6 @@ export default class QuestionnaireExtractTest extends Vue {
   /** Perform a FHIR Search operation */
   async performXFhirQuery(url: string, mapData: (resultResource: FhirResource) => void) {
     try {
-      // host.loadingData = true;
       let headers = { "Accept": requestFhirAcceptHeaders };
       const response = await axios.get<FhirResource>(url, {
         headers: headers
@@ -139,11 +138,10 @@ export default class QuestionnaireExtractTest extends Vue {
         mapData(results);
       }
     } catch (err) {
-      // host.loadingData = false;
+      console.log(err);
       if (axios.isAxiosError(err)) {
         const serverError = err as AxiosError<fhir4b.OperationOutcome>;
         if (serverError && serverError.response) {
-          // host.outcome = serverError.response.data;
           return serverError.response.data;
         }
         return CreateOperationOutcome("fatal", "exception", "Server: " + err.message, errorCodingSearch, url);
@@ -472,7 +470,7 @@ export default class QuestionnaireExtractTest extends Vue {
           if (issuesParameter) {
             this.$emit('outcome', issuesParameter.resource);
           }
-          const returnParameter = result.parameter?.find(p => p.name === "return");
+          const returnParameter = result.parameter?.find(p => p.name === "return" || p.name === "response");
           if (returnParameter) {
             return returnParameter.resource as QuestionnaireResponse;
           }
