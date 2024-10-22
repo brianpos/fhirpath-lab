@@ -217,7 +217,7 @@
         </twin-pane-tab>
       </v-card>
       <OperationOutcomeOverlay v-if="showOutcome" :saveOutcome="saveOutcome" :showOutcome="showOutcome"
-        title="Error Saving" @close="clearOutcome" />
+        title="Error Processing" @close="clearOutcome" />
     </div>
     <table-loading v-if="saving || loadingData" />
   </div>
