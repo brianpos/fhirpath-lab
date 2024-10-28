@@ -1,3 +1,4 @@
+import { TabData } from '~/components/TwinPaneTab.vue';
 import { ConformanceResourceTableDefinition, ConformanceResourceTableData, ConformanceResourceData } from './ConformanceResourceTableData'
 
 export interface StructureDefinitionTableDefinition extends ConformanceResourceTableDefinition<StructureDefinitionTableData> {
@@ -7,4 +8,5 @@ export interface StructureDefinitionTableData extends ConformanceResourceTableDa
 }
 
 export interface StructureDefinitionData extends ConformanceResourceData<fhir4b.StructureDefinition> {
+    tabDetails: TabData[];
 }

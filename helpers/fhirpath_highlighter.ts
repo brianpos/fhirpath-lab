@@ -1,6 +1,14 @@
 
 import ace from "ace-builds";
 
+export function setAcePaths(config: ace.Ace.Config): void {
+  const CDN = 'https://cdn.jsdelivr.net/npm/ace-builds@1.35.0/src-min-noconflict';
+  config.set('basePath', CDN);
+  config.set('modePath', CDN);
+  config.set('themePath', CDN);
+  config.set('workerPath', CDN);
+}
+
 export function setCustomHighlightRules(editor: ace.Ace.Editor, rules: Record<string, any[]>): void {
   var modeFhir: ace.Ace.SyntaxMode = editor.session.getMode();
   (modeFhir as any).$highlightRules.addRules(rules);
@@ -97,6 +105,9 @@ export const Rules: Record<string, TextHighlightToken[]> = {
     }, {
       token: ["fhir_function.utility", "text", "fhir_paren.lparen"], // section 5.9 (not is in section 6.5)
       regex: /\b(trace|now|timeOfDay|today|not)\b(\s*)(\()/
+    }, {
+      token: "fhir_operator", // section 6.1
+      regex: /(\||=|\+|-|~|\*|!=|!~|\>|\<)/
     }, {
       token: ["fhir_function.types", "text", "fhir_paren.lparen"], // section 6.3
       regex: /\b(as|is)\b(\s*)(\()/

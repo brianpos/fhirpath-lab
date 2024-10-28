@@ -80,6 +80,7 @@ a:hover {
 </style>
 <script lang="ts">
 import { Component, Prop, Vue } from "vue-property-decorator";
+import { fpjsNode, JsonNode } from "../models/FhirpathTesterData";
 import fhirpath from "fhirpath";
 import fhirpath_r4_model from "fhirpath/fhir-context/r4";
 import fhirpath_r5_model from "fhirpath/fhir-context/r5";
@@ -91,7 +92,7 @@ interface ISpecFunctionDetails {
   description?: string;
 }
 
-const mapFunctionReferences = new Map<string, ISpecFunctionDetails>([
+export const mapFunctionReferences = new Map<string, ISpecFunctionDetails>([
   // Section 5 Functions
   // Section 5.1: Existence
   ['empty', { outlineNo: '5.1.1', title: 'empty() : Boolean', specUrl: 'http://hl7.org/fhirpath/N1/#empty-boolean', description: 'Returns true if the input collection is empty ({ }) and false otherwise.' }],
@@ -219,9 +220,9 @@ const mapFunctionReferences = new Map<string, ISpecFunctionDetails>([
   ["memberOf", { title: 'memberOf(valueset : string) : Boolean', specUrl: "https://hl7.org/fhir/fhirpath.html#functions"}],
   ["subsumes", { title: 'subsumes(code : Coding | CodeableConcept) : Boolean', specUrl: "https://hl7.org/fhir/fhirpath.html#functions"}],
   ["subsumedBy", { title: 'subsumedBy(code: Coding | CodeableConcept) : Boolean', specUrl: "https://hl7.org/fhir/fhirpath.html#functions"}],
-  ["htmlChecks ", { title: 'htmlChecks : Boolean', specUrl: "https://hl7.org/fhir/fhirpath.html#functions"}],
-  ["lowBoundary ", { title: 'lowBoundary : T', specUrl: "https://hl7.org/fhir/fhirpath.html#functions"}],
-  ["highBoundary ", { title: 'highBoundary : T', specUrl: "https://hl7.org/fhir/fhirpath.html#functions"}],
+  ["htmlChecks", { title: 'htmlChecks : Boolean', specUrl: "https://hl7.org/fhir/fhirpath.html#functions"}],
+  ["lowBoundary", { title: 'lowBoundary : T', specUrl: "https://hl7.org/fhir/fhirpath.html#functions"}],
+  ["highBoundary", { title: 'highBoundary : T', specUrl: "https://hl7.org/fhir/fhirpath.html#functions"}],
   ["comparable", { title: 'comparable(quantity) : boolean', specUrl: "https://hl7.org/fhir/fhirpath.html#functions"}],
 
   // SDC Extensions to fhirpath (linked from the SDC specification)
@@ -251,28 +252,6 @@ const mapOperatorReferences = new Map<string, ISpecFunctionDetails>([
   ["implies", { outlineNo: '6.5.5', title: 'implies', specUrl: "http://hl7.org/fhirpath/N1/#implies"}],
 ]);
 
-export interface JsonNode {
-  id?: string;
-  ExpressionType: string;
-  Name: string;
-  Arguments?: JsonNode[];
-  ReturnType?: string;
-  Position?: number;
-  Length?: number;
-  Line?: number;
-  Column?: number;
-
-  /** URL to the Specification for this node - Augmented by the Lab */
-  SpecUrl?: string;
-}
-
-/** Fhirpath.js AST Node interface */
-export interface fpjsNode {
-  children?: fpjsNode[];
-  terminalNodeText?: string[];
-  text: string;
-  type: string;
-}
 
 export function GetExternalVariablesUsed(node: fpjsNode, ignoreVar: string[] = []) : string[] {
   let result: string[] = [];

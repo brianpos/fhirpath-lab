@@ -87,7 +87,7 @@ import { hasExtension, hasExtensionAny } from "fhir-extension-helpers";
 import { FlattenedQuestionnaireItem } from "~/models/QuestionnaireTableData";
 import { structuredDataCapture } from "~/helpers/structureddatacapture";
 
-export default {
+export default Vue.extend({
   props: {
     items: Array as PropType<FlattenedQuestionnaireItem[]>,
   },
@@ -121,5 +121,5 @@ export default {
       return false;
     },
   },
-};
+});
 </script>

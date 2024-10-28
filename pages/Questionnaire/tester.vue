@@ -1,282 +1,195 @@
 <template>
-  <div
-    :class="
-      raw && raw.status === 'draft'
-        ? 'draft-page-background'
-        : raw && raw.status === 'active'
-        ? 'active-page-background'
-        : raw && raw.status === 'retired'
+  <div :class="raw && raw.status === 'draft'
+    ? 'draft-page-background'
+    : raw && raw.status === 'active'
+      ? 'active-page-background'
+      : raw && raw.status === 'retired'
         ? 'retired-page-background'
         : ''
-    "
-  >
-    <HeaderNavbar @close-settings="settingsClosed" />
+    ">
+    <HeaderNavbar
+      :favourites="isFavourite"
+      :toggleFavourite="toggleFavourite"
+      @close-settings="settingsClosed"
+    />
 
     <div class="container-fluid bd-layout" style="padding-top: 80px">
       <v-card>
         <v-toolbar flat color="primary">
-          <v-toolbar-title v-if="raw"
-            ><span v-text="raw.title" /> (<span v-text="raw.status" />)<span
-              v-if="raw.version"
-            >
-              - {{ raw.version }}</span
-            ></v-toolbar-title
-          >
+          <v-toolbar-title v-if="raw"><span v-text="raw.title" /> (<span v-text="raw.status" />)<span
+              v-if="raw.version">
+              - {{ raw.version }}</span></v-toolbar-title>
           <v-spacer />
-          <v-btn v-if="false && enableSave && !readonly" icon title="save">
+          <v-btn v-if="canSave && !readonly" icon dark :title="saveTooltip">
             <v-icon @click="saveData" :disabled="saving">
               mdi-content-save
             </v-icon>
           </v-btn>
-          <v-btn
-            icon
-            dark
-            title="Show Details, Publishing and other informational tabs"
-            @click="showDetails = !showDetails"
-          >
+          <v-btn icon dark title="Show Details, Publishing and other informational tabs"
+            @click="showDetails = !showDetails">
             <v-icon v-if="!showDetails"> mdi-eye-off-outline </v-icon>
             <v-icon v-if="showDetails"> mdi-eye-outline </v-icon>
           </v-btn>
         </v-toolbar>
 
-        <twin-pane-tab
-          :tabs="tabDetails"
-          @change="tabChanged"
-          :eager="true"
-          ref="twinTabControl"
-          @mounted="twinPaneMounted"
-        >
+        <twin-pane-tab :tabs="tabDetails" @change="tabChanged" :eager="true" ref="twinTabControl"
+          @mounted="twinPaneMounted">
           <template v-slot:Questionnaire>
-            <v-text-field
-              label="Test Resource Id"
-              v-model="resourceId"
-              hide-details="auto"
-              autocomplete="off"
-              @input="updateNow"
-              autocorrect="off"
-              autocapitalize="off"
-              spellcheck="false"
-              :title="
-                'Resource Id to download from the examples server\r\nAbsolute (requires CORS support) or relative to ' +
+            <v-text-field style="flex-grow: 0;" label="Test Resource Id" v-model="resourceId" hide-details="auto" autocomplete="off"
+              @input="updateNow" autocorrect="off" autocapitalize="off" spellcheck="false" :title="'Resource Id to download from the examples server\r\nAbsolute (requires CORS support) or relative to ' +
                 exampleServerUrl
-              "
-            >
+                ">
               <template v-slot:append>
-                <v-btn
-                  icon
-                  small
-                  tile
-                  v-show="resourceId"
-                  @click="resourceId = undefined"
-                  title="Clear Test Resource ID"
-                >
+                <v-btn icon small tile v-show="resourceId" @click="resourceId = undefined"
+                  title="Clear Test Resource ID">
                   <v-icon> mdi-close </v-icon>
                 </v-btn>
-                <v-btn
-                  icon
-                  small
-                  tile
-                  :disabled="resourceId === undefined"
-                  @click="downloadTestResource"
-                  :title="downloadTestResourceButtonTitle"
-                >
+                <v-btn icon small tile :disabled="resourceId === undefined" @click="downloadTestResource"
+                  :title="downloadTestResourceButtonTitle">
                   <v-icon> mdi-download </v-icon>
                 </v-btn>
-                <v-btn small icon tile @click="reformatTestResource"
-                  ><v-icon title="Re-format the Questionnaire json below" dark>
+                <v-btn small icon tile @click="reformatTestResource"><v-icon
+                    title="Re-format the Questionnaire json below" dark>
                     mdi-format-indent-increase
-                  </v-icon></v-btn
-                >
-                <v-btn small icon tile @click="validateQuestionnaire"
-                  ><v-icon
-                    title="Validate the below Questionnaire json using the fhirpath-lab server"
-                    dark
-                  >
+                  </v-icon></v-btn>
+                <v-btn small icon tile @click="validateQuestionnaire"><v-icon
+                    title="Validate the below Questionnaire json using the fhirpath-lab server" dark>
                     mdi-note-check-outline
-                  </v-icon></v-btn
-                >
+                  </v-icon>
+                </v-btn>
               </template>
             </v-text-field>
             <br />
-            <!-- <label class="v-label theme--light bare-label">Test Resource JSON <i>{{ resourceJsonChangedMessage() }}</i></label> -->
             <v-tooltip bottom>
               <template v-slot:activator="{ on, attrs }">
-                <v-btn
-                  class="resetButton"
-                  icon
-                  v-bind="attrs"
-                  v-on="on"
-                  @click="resetQuestionnaire"
-                  ><v-icon>mdi-broom</v-icon></v-btn
-                >
+                <v-btn class="resetButton" icon v-bind="attrs" v-on="on"
+                  @click="resetQuestionnaire"><v-icon>mdi-broom</v-icon></v-btn>
               </template>
               <span>Reset Questionnaire definition</span>
             </v-tooltip>
-            <div
-              class="resource"
-              width="100%"
-              ref="aceEditorResourceJsonTab"
-            ></div>
-            <!-- <div class="ace_editor_footer"></div> -->
+            <div class="resource" style="flex-grow: 1;" width="100%" ref="aceEditorResourceJsonTab"></div>
           </template>
 
           <template v-slot:Debug>
             <label>Validation Results:</label>
-            <OperationOutcomePanel
-              :outcome="saveOutcome"
-              title="Error Saving"
-              issueLinkTitle="Goto issue in Questionnaire"
-              @close="clearOutcome2"
-              @help-with-issue="helpWithIssue"
-              @navigate-to-issue="navigateToIssue"
-            />
+            <OperationOutcomePanel :outcome="saveOutcome" title="Error Saving"
+              issueLinkTitle="Goto issue in Questionnaire" @close="clearOutcome2" @help-with-issue="helpWithIssue"
+              @navigate-to-issue="navigateToIssue" />
           </template>
 
           <template v-slot:Details>
             <!-- Details -->
-            <conformance-resource-details-tab
-              v-if="raw"
-              :raw="raw"
-              :hideHeader="true"
-              :readonly="readonly"
-              :showAdvancedSettings="showAdvancedSettings"
-              @update="updateNow"
-            />
+            <conformance-resource-details-tab v-if="raw" :raw="raw" :hideHeader="true" :readonly="readonly"
+              :showAdvancedSettings="showAdvancedSettings" @update="updateNow" />
           </template>
 
           <template v-slot:Publishing>
             <!-- Publishing -->
-            <conformance-resource-publishing-tab
-              v-if="raw"
-              :raw="raw"
-              :hideHeader="true"
-              :publishedVersions="publishedVersions"
-              :lockPublisher="false"
-              :readonly="readonly"
+            <conformance-resource-publishing-tab v-if="raw" :raw="raw" :hideHeader="true"
+              :publishedVersions="publishedVersions" :lockPublisher="false" :readonly="readonly"
               :showAdvancedSettings="showAdvancedSettings"
-              :navigationLinkPrefix="'tester?id='+fhirServerUrl+'/Questionnaire/'"
-              @update="updateNow"
-            />
+              :navigationLinkPrefix="'tester?id=' + fhirServerUrl + '/Questionnaire/'" @update="updateNow" />
           </template>
 
           <template v-slot:Fields>
-            <EditorFieldsSection
-              v-if="raw"
-              v-bind:items="flatModel"
-              :readonly="readonly"
-              :showAdvancedSettings="showAdvancedSettings"
-              @highlight-path="highlightPath"
-          />
+            <EditorFieldsSection v-if="raw" v-bind:items="flatModel" :readonly="readonly"
+              :showAdvancedSettings="showAdvancedSettings" @highlight-path="highlightPath" />
+          </template>
+
+          <template v-slot:Context>
+            <!-- Context -->
+            <QuestionnaireContext v-if="raw" :questionnaire="raw" @context-changed="contextChanged" :context="contextData"
+              :dataServer="dataServerBaseUrl" @ChangeDataServer="updateDataServerBaseUrl" 
+            />
           </template>
 
           <template v-slot:Pre-Population>
-            <EditorPrePolulationSection v-if="raw" v-bind:items="flatModel" 
-              @highlight-path="highlightPath"
-            />
+            <EditorPrePopulationSection v-if="raw" @highlight-path="highlightPath" v-bind:items="flatModel" @outcome="displayExtractOutcome"/>
           </template>
 
           <template v-slot:Variables>
-            <EditorVariablesSection
-              v-if="raw"
-              v-bind:questionnaire="raw"
-              v-bind:items="flatModel"
-              @highlight-path="highlightPath"
-            />
+            <EditorVariablesSection v-if="raw" v-bind:questionnaire="raw" v-bind:items="flatModel"
+              @highlight-path="highlightPath" />
           </template>
 
           <template v-slot:CSIRO_Renderer>
-            <EditorRendererSection
-              v-if="raw"
-              v-bind:questionnaire="raw"
-              @response="processUpdatedQuestionnaireResponse"
-              @highlight-path="highlightPath"
-            />
+            <EditorRendererSection ref="csiroFormsRenderer" v-if="raw" v-bind:questionnaire="raw" :context="contextData"
+              :dataServer="dataServerBaseUrl"
+              @response="processUpdatedQuestionnaireResponse" @highlight-path="highlightPath" />
           </template>
 
           <template v-slot:LHC-Forms>
-            <EditorNLMRendererSection
-              v-if="raw"
-              v-bind:questionnaire="raw"
-              @response="processUpdatedQuestionnaireResponse"
-              @highlight-path="highlightPath"
-            />
+            <EditorNLMRendererSection ref="lhcFormsRenderer" v-if="raw" v-bind:questionnaire="raw" :context="contextData"
+              :dataServer="dataServerBaseUrl"
+              @response="processUpdatedQuestionnaireResponse" @highlight-path="highlightPath" />
           </template>
 
           <template v-slot:Response>
-            <v-text-field
-              label="Test QuestionnaireResponse Resource Id"
-              v-model="qrResourceId"
-              readonly
-              hide-details="auto"
-              autocomplete="off"
-              @input="updateNow"
-              autocorrect="off"
-              autocapitalize="off"
-              spellcheck="false"
-              :title="
-                'Resource Id to download from the examples server\r\nAbsolute (requires CORS support) or relative to ' +
-                exampleServerUrl
-              "
-            >
+            <v-text-field label="Test QuestionnaireResponse Resource Id" v-model="qrResourceId" 
+              hide-details="auto" autocomplete="off" @input="updateNow" autocorrect="off" autocapitalize="off"
+              spellcheck="false" :title="'Resource Id to download from the examples server\r\nAbsolute (requires CORS support) or relative to ' + exampleServerUrl ">
               <template v-slot:append>
-                <v-btn
-                  icon
-                  small
-                  tile
-                  v-show="qrResourceId"
-                  @click="qrResourceId = undefined"
-                  title="Clear Test QuestionnaireResponse Resource ID"
-                >
+                <v-btn icon small tile v-show="qrResourceId" @click="qrResourceId = undefined"
+                  title="Clear Test QuestionnaireResponse Resource ID">
                   <v-icon> mdi-close </v-icon>
                 </v-btn>
-                <v-btn
-                  icon
-                  small
-                  tile
-                  :disabled="qrResourceId === undefined"
-                  @click="downloadTestResource"
-                  :title="downloadTestResourceButtonTitle"
-                >
+                <v-btn icon small tile :disabled="qrResourceId === undefined" @click="downloadTestResponseResource"
+                  :title="downloadTestResponseResourceButtonTitle">
                   <v-icon> mdi-download </v-icon>
                 </v-btn>
-                <v-btn small icon tile @click="reformatTestQR_Resource"
-                  ><v-icon
-                    title="Re-format the QuestionnaireResponse json below"
-                    dark
-                  >
+                <v-btn small icon tile @click="reformatTestQR_Resource"><v-icon
+                    title="Re-format the QuestionnaireResponse json below" dark>
                     mdi-format-indent-increase
-                  </v-icon></v-btn
-                >
-                <v-btn small icon tile @click="validateQuestionnaireResponse"
-                  ><v-icon
-                    title="Validate the below QuestionnaireResponse json using the fhirpath-lab server"
-                    dark
-                  >
+                  </v-icon></v-btn>
+                <v-btn small icon tile @click="validateQuestionnaireResponse"><v-icon
+                    title="Validate the below QuestionnaireResponse json using the fhirpath-lab server" dark>
                     mdi-note-check-outline
-                  </v-icon></v-btn
-                >
+                  </v-icon>
+                </v-btn>
+                <v-btn small icon tile @click="allocateNewQuestionnaireResponseId">
+                  <v-icon
+                    title="Allocate a new ID" dark>
+                    mdi-identifier
+                  </v-icon>
+                </v-btn>
+                <v-btn small icon tile @click="saveQuestionnaireResponse" v-if="qrResourceId"
+                  :title="saveTestResponseResourceButtonTitle">
+                  <v-icon dark>
+                    mdi-content-save
+                  </v-icon>
+                </v-btn>
               </template>
             </v-text-field>
             <br />
-            <!-- <label class="v-label theme--light bare-label">Test Resource JSON <i>{{ resourceJsonChangedMessage() }}</i></label> -->
             <v-tooltip bottom>
               <template v-slot:activator="{ on, attrs }">
-                <v-btn
-                  class="resetButton"
-                  icon
-                  v-bind="attrs"
-                  v-on="on"
-                  @click="resetQuestionnaireResponse"
-                  ><v-icon>mdi-broom</v-icon></v-btn
-                >
+                <v-btn class="resetButton" icon v-bind="attrs" v-on="on"
+                  @click="resetQuestionnaireResponse"><v-icon>mdi-broom</v-icon></v-btn>
               </template>
               <span>Reset test QuestionnaireResponse</span>
             </v-tooltip>
-            <div
-              class="resource"
-              width="100%"
-              ref="aceEditorResponseJsonTab"
-            ></div>
+            <div class="resource" width="100%" ref="aceEditorResponseJsonTab"></div>
+          </template>
+
+          <template v-slot:PrePop>
+            <QuestionnairePrepopTest ref="prepopTester" v-bind:questionnaire="raw" :context="contextData"  @outcome="displayExtractOutcome"
+              :dataServer="dataServerBaseUrl" 
+              @response="processUpdatedQuestionnaireResponseFromPrePopTester" @pre-pop-lforms="prePopLForms" />
+          </template>
+
+          <template v-slot:Extract>
+            <QuestionnaireExtractTest ref="extractTester" v-bind:questionnaire="raw" @outcome="displayExtractOutcome"
+              :models="modelsText"
+              v-bind:questionnaireResponseJson="questionnaireResponseJson" />
+          </template>
+
+          <template v-slot:Models>
+            <resource-editor ref="editorModels" label="Model ID/Search Query"
+              textLabel="StructureDefinition / Bundle Text" :resourceUrl="modelsSearch"
+              @update:resourceUrl="modelsSearch = ($event ?? '')"
+              footerLabel="The Model can be either an individual StructureDefinition or a search query for a bundle of models which are made available to the $extract operation"
+              :resourceText="modelsText"
+              @update:resourceText="modelsText = $event" />
           </template>
 
           <template v-slot:AI_Chat>
@@ -303,13 +216,8 @@
           </template>
         </twin-pane-tab>
       </v-card>
-      <OperationOutcomeOverlay
-        v-if="showOutcome"
-        :saveOutcome="saveOutcome"
-        :showOutcome="showOutcome"
-        title="Error Saving"
-        @close="clearOutcome"
-      />
+      <OperationOutcomeOverlay v-if="showOutcome" :saveOutcome="saveOutcome" :showOutcome="showOutcome"
+        title="Error Processing" @close="clearOutcome" />
     </div>
     <table-loading v-if="saving || loadingData" />
   </div>
@@ -328,6 +236,7 @@
   right: 34px;
   position: absolute;
   z-index: 7;
+  top: 68px;
 }
 
 .resource {
@@ -343,6 +252,10 @@
 }
 
 @media (max-width: 596px) {
+  .resetButton {
+    top: 114px;
+  }
+
   .resource {
     height: calc(100vh - 320px - 48px);
   }
@@ -388,6 +301,8 @@ import {
   requestFhirAcceptHeaders,
   saveFhirResource,
   CreateOperationOutcome,
+  requestFhirContentTypeHeaders,
+  errorCodingSaveResource,
 } from "~/helpers/searchFhir";
 import { BaseResource_defaultValues } from "~/models/BaseResourceTableData";
 
@@ -404,8 +319,15 @@ import ace from "ace-builds";
 import "ace-builds/src-noconflict/mode-text";
 import "ace-builds/src-noconflict/mode-json";
 import "ace-builds/src-noconflict/theme-chrome";
+import { setAcePaths, Rules as FhirPathHightlighter_Rules, setCustomHighlightRules } from "~/helpers/fhirpath_highlighter"
+
 import Chat from "~/components/Chat.vue";
-import { ChatMessage } from "@azure/openai";
+import QuestionnaireExtractTest from "~/components/QuestionnaireExtractTest.vue";
+import EditorNLMRendererSection from "~/components/Questionnaire/EditorNLMRendererSection.vue";
+import EditorRendererSection from "~/components/Questionnaire/EditorRendererSection.vue";
+import ResourceEditor from "~/components/ResourceEditor.vue";
+import { structuredDataCaptureHelpers as sdc } from "~/helpers/structureddatacapture-helpers";
+import { ChatCompletionCreateParamsNonStreaming, ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import {
   EvaluateChatPrompt,
   GetSystemPrompt,
@@ -417,6 +339,7 @@ import {
 } from "~/helpers/openai_form_tester";
 import TwinPaneTab, { TabData } from "~/components/TwinPaneTab.vue";
 import * as jsonpatch from "fast-json-patch";
+import { ContextData } from "~/components/QuestionnaireContext.vue";
 
 // import "fhirclient";
 // import { FHIR } from "fhirclient";
@@ -440,7 +363,13 @@ interface IQuestionnaireTesterData extends QuestionnaireData {
   openAIexpressionExplanationLoading: boolean;
   openAIFeedbackEnabled?: boolean;
   helpWithError?: string;
-  questionnaireResponse?: fhir4b.QuestionnaireResponse;
+  questionnaireResponseJson?: string;
+  modelsSearch: string;
+  modelsText?: string;
+  dataServerBaseUrl: string;
+
+  // Populate/Extract properties
+  contextData: ContextData;
 }
 
 function getPriorityIssue(
@@ -460,10 +389,40 @@ function getPriorityIssue(
   return undefined;
 }
 
+const resourceEditorSettings: Partial<ace.Ace.EditorOptions> = {
+  wrap: "free",
+  minLines: 15,
+  // maxLines: 30,
+  highlightActiveLine: true,
+  showGutter: true,
+  fontSize: 14,
+  cursorStyle: "slim",
+  showPrintMargin: false,
+  theme: "ace/theme/chrome",
+  mode: "ace/mode/json",
+  wrapBehavioursEnabled: true,
+};
+
 export default Vue.extend({
   //   components: { fhirqItem },
   mounted() {
     window.document.title = "Questionnaire Tester";
+    // this.ensureEditorIsCreated();
+    setAcePaths(ace.config);
+    if (settings.getOpenAIKey() || settings.getOpenAIBasePath())
+      this.chatEnabled = true;
+  },
+
+  destroyed() {
+    console.log("Destroying Q Json editor");
+    if (this.resourceJsonEditor) {
+      this.resourceJsonEditor.destroy();
+      this.resourceJsonEditor = undefined;
+    }
+    if (this.questionnaireResponseJsonEditor) {
+      this.questionnaireResponseJsonEditor.destroy();
+      this.questionnaireResponseJsonEditor = undefined;
+    }
   },
   computed: {
     defaultProviderField(): string | undefined {
@@ -472,6 +431,33 @@ export default Vue.extend({
     hasDebugMessages(): boolean {
       if (this.saveOutcome == undefined) return false;
       return this.saveOutcome?.issue?.length > 0;
+    },
+    canSave() : boolean {
+      // requires a publisher to be in the resource
+      if (!this.raw?.publisher)
+        return false;
+
+      // The publisher MUST be the same as the default provider field
+      if (this.defaultProviderField != this.raw?.publisher)
+        return false;
+
+      // the resource ID must be set, and must be the same as the one in the test resource ID field
+      if (!this.resourceId)
+        return false;
+      if (!this.raw?.id)
+        return false;
+
+      if (!this.resourceId?.endsWith('Questionnaire/' + this.raw?.id))
+        return false;
+
+      // the save button has been enabled thanks to detecting changes to the definition
+      return this.enableSave;
+    },
+    saveTooltip(): string {
+      if (this.resourceId?.startsWith("http")) {
+        return "Save the Questionnaire definition to " + this.resourceId;
+      }
+      return "Save the Questionnaire definition to " + this.fhirServerUrl + "/Questionnaire/" + this.raw?.id;
     },
     chatPromptOptionsWhenEmpty(): string[] {
       return [
@@ -482,7 +468,7 @@ export default Vue.extend({
       ];
     },
     chatPromptOptions(): string[] {
-      var promptOptions = [];
+      let promptOptions = [];
       if (this.helpWithError) {
         promptOptions.push(this.helpWithError);
       }
@@ -522,16 +508,33 @@ export default Vue.extend({
           enabled: true,
         },
         {
+          iconName: "mdi-card-bulleted-settings-outline",
+          tabName: "Context",
+          title: "Test values to use in the QuestionnaireResponse (subject, author...)"
+                +(sdc.hasPrePopulation(this.raw) || sdc.hasDataExtract(this.raw)
+                ? "\nThese are also used in pre-population and extraction"
+                : ""),
+          show: true,
+          enabled: true,
+        },
+        {
           iconName: "mdi-tray-arrow-down",
           tabName: "Pre-Population",
           title: "Pre-Population Configuration",
-          show: this.showDetails && this.showAdvancedSettings!,
+          show: this.showDetails && this.showAdvancedSettings! && sdc.hasPrePopulation(this.raw),
           enabled: true,
         },
         {
           iconName: "mdi-application-variable-outline",
           tabName: "Variables",
           show: this.showDetails && this.showAdvancedSettings!,
+          enabled: true,
+        },
+        {
+          iconName: "mdi-tray-arrow-down",
+          tabName: "PrePop",
+          title: "Pre-Population Tester",
+          show: sdc.hasPrePopulation(this.raw),
           enabled: true,
         },
         {
@@ -555,6 +558,21 @@ export default Vue.extend({
           enabled: true,
         },
         {
+          iconName: "mdi-tray-arrow-up",
+          tabName: "Extract",
+          title: "Data Extraction",
+          show: sdc.hasDataExtract(this.raw),
+          enabled: true,
+        },
+        {
+          iconName: "mdi-tree-outline",
+          tabName: "Models",
+          tabHeaderName: "StructureDefinitions Required",
+          title: "StructureDefinition's required by the extract operation",
+          show: sdc.hasDataExtract(this.raw),
+          enabled: true,
+        },
+        {
           iconName: "mdi-brain",
           tabName: "AI Chat",
           title: "Questionnaire and Structured Data Capture AI Chat",
@@ -564,52 +582,68 @@ export default Vue.extend({
       ];
     },
     downloadTestResourceButtonTitle(): string {
+      if (this.resourceId?.startsWith("http")) {
+        return "Download test resource from " + this.resourceId;
+      }
       return "Download test resource from " + this.exampleServerUrl;
+    },
+    downloadTestResponseResourceButtonTitle(): string {
+      if (this.qrResourceId?.startsWith("http")) {
+          let formBaseUrl = this.qrResourceId.substring(0, this.qrResourceId.indexOf("/QuestionnaireResponse/"));
+        return "Download test resource from " + formBaseUrl;
+      }
+      return "Download test resource from " + this.exampleServerUrl;
+    },
+    saveTestResponseResourceButtonTitle(): string {
+      if (this.qrResourceId?.startsWith("http")) {
+          let formBaseUrl = this.qrResourceId.substring(0, this.qrResourceId.indexOf("/QuestionnaireResponse/"));
+        return "Save the test response resource to " + formBaseUrl;
+      }
+      return "Save the test response resource to " + this.exampleServerUrl;
     },
     exampleServerUrl(): string {
       return settings.getFhirServerExamplesUrl();
     },
   },
   methods: {
-    async twinPaneMounted(): Promise<void> {
-      const resourceEditorSettings: Partial<ace.Ace.EditorOptions> = {
-        wrap: "free",
-        minLines: 15,
-        // maxLines: 30,
-        highlightActiveLine: true,
-        showGutter: true,
-        fontSize: 14,
-        cursorStyle: "slim",
-        showPrintMargin: false,
-        theme: "ace/theme/chrome",
-        mode: "ace/mode/json",
-        wrapBehavioursEnabled: true,
-      };
-      var editorResourceJsonDiv: any = this.$refs
-        .aceEditorResourceJsonTab as Element;
-      if (editorResourceJsonDiv) {
-        this.resourceJsonEditor = ace.edit(
-          editorResourceJsonDiv,
-          resourceEditorSettings
-        );
-        if (this.raw)
-          this.resourceJsonEditor?.setValue(JSON.stringify(this.raw, null, 2));
-        this.resourceJsonEditor?.clearSelection();
-        this.resourceJsonEditor.session.on(
-          "change",
-          this.resourceJsonChangedEvent
-        );
-      }
+    ensureEditorIsCreated(){
+      if (this.resourceJsonEditor === undefined){
+        console.log("Creating Q Json editor");
+        let editorResourceJsonDiv: any = this.$refs.aceEditorResourceJsonTab as Element;
+        if (editorResourceJsonDiv) {
 
-      // Also add in the QResponse editor too
-      var editorQResponseJsonDiv: any = this.$refs
-        .aceEditorResponseJsonTab as Element;
-      if (editorQResponseJsonDiv) {
-        this.questionnaireResponseJsonEditor = ace.edit(
-          editorQResponseJsonDiv,
-          resourceEditorSettings
-        );
+          this.resourceJsonEditor = ace.edit(editorResourceJsonDiv, resourceEditorSettings);
+          if (this.raw)
+            this.resourceJsonEditor?.setValue(JSON.stringify(this.raw, null, 2));
+          this.resourceJsonEditor?.clearSelection();
+          this.resourceJsonEditor.session.on(
+            "change",
+            this.resourceJsonChangedEvent
+          );
+
+          // Also add in the QResponse editor too
+          let editorQResponseJsonDiv: any = this.$refs
+            .aceEditorResponseJsonTab as Element;
+          if (editorQResponseJsonDiv) {
+            this.questionnaireResponseJsonEditor = ace.edit(
+              editorQResponseJsonDiv,
+              resourceEditorSettings
+            );
+            this.questionnaireResponseJsonEditor.session.on(
+            "change",
+            this.questionnaireResponseJsonChangedEvent
+          );
+        }
+          console.log("Created Q Json editor");
+        }
+        else {
+          console.log("Failed to create Q Json editor - no HTML element ... yet");
+        }
       }
+    },
+
+    async twinPaneMounted(): Promise<void> {
+      this.ensureEditorIsCreated();
 
       this.showAdvancedSettings = settings.showAdvancedSettings();
       this.openAIFeedbackEnabled = settings.getOpenAIFeedbackEnabled();
@@ -623,6 +657,50 @@ export default Vue.extend({
 
       if (this.$route.query.id) {
         this.resourceId = this.$route.query.id as string;
+      }
+
+      if (this.$route.query.models) {
+        this.modelsSearch = this.$route.query.models as string ?? '';
+      }
+
+      if (this.$route.query.subject) {
+        this.contextData.subject = { reference: this.$route.query.subject as string ?? '' };
+        // split the display value from the reference if there is a `,` char in it
+        if (this.contextData.subject.reference!.includes(",")) {
+          let parts = this.contextData.subject.reference!.split(",");
+          this.contextData.subject.reference = parts[0];
+          this.contextData.subject.display = parts[1];
+        }
+      }
+
+      if (this.$route.query.author) {
+        this.contextData.author = { reference: this.$route.query.author as string ?? '' };
+        // split the display value from the reference if there is a `,` char in it
+        if (this.contextData.author.reference!.includes(",")) {
+          let parts = this.contextData.author.reference!.split(",");
+          this.contextData.author.reference = parts[0];
+          this.contextData.author.display = parts[1];
+        }
+      }
+
+      if (this.$route.query.encounter) {
+        this.contextData.encounter = { reference: this.$route.query.encounter as string ?? '' };
+        // split the display value from the reference if there is a `,` char in it
+        if (this.contextData.encounter.reference!.includes(",")) {
+          let parts = this.contextData.encounter.reference!.split(",");
+          this.contextData.encounter.reference = parts[0];
+          this.contextData.encounter.display = parts[1];
+        }
+      }
+
+      if (this.$route.query.source) {
+        this.contextData.source = { reference: this.$route.query.source as string ?? '' };
+        // split the display value from the reference if there is a `,` char in it
+        if (this.contextData.source.reference!.includes(",")) {
+          let parts = this.contextData.source.reference!.split(",");
+          this.contextData.source.reference = parts[0];
+          this.contextData.source.display = parts[1];
+        }
       }
 
       let tabControl: TwinPaneTab = this.$refs.twinTabControl as TwinPaneTab;
@@ -644,21 +722,27 @@ export default Vue.extend({
               }
             } else {
               tabControl.setSinglePanelMode(true);
-              this.selectTab(tabControl.getTabIndex(tabString));
+              tabControl.selectTab(tabControl.getTabIndex(tabString));
             }
           });
         } else {
-          if (tabControl.singleTabMode()) this.selectTab(0);
+          if (tabControl.singleTabMode()) this.selectTab("Questionnaire");
         }
       }
 
       // this.searchFhirServer();
       await this.downloadTestResource();
+
+      // Load the models
+      if (this.modelsSearch?.length > 0) {
+        let modelEditor: ResourceEditor = this.$refs.editorModels as ResourceEditor;
+        await modelEditor.DownloadResource(this.modelsSearch);
+      }
     },
-    tabChanged(index: Number): void {
-      if (index == 0){
+    tabChanged(index: number): void {
+      if (index == 0) {
         setTimeout(() => {
-        if (this.resourceJsonEditor){
+          if (this.resourceJsonEditor) {
             this.resourceJsonEditor.resize();
           }
         });
@@ -669,15 +753,15 @@ export default Vue.extend({
         // https://github.com/ajaxorg/ace/issues/2497#issuecomment-102633605
         setTimeout(() => {
           if (this.questionnaireResponseJsonEditor) {
-            var editorQResponseJsonDiv: any = this.$refs
+            let editorQResponseJsonDiv: any = this.$refs
               .aceEditorResponseJsonTab as Element;
             if (editorQResponseJsonDiv) {
-              console.log("focusing editor");
+              // console.log("focusing editor");
               editorQResponseJsonDiv.focus();
             }
             this.questionnaireResponseJsonEditor.resize();
             this.updateNow();
-            console.log("refreshing editor");
+            // console.log("refreshing editor");
           }
         });
       }
@@ -685,6 +769,7 @@ export default Vue.extend({
     settingsClosed() {
       this.showAdvancedSettings = settings.showAdvancedSettings();
       this.openAIFeedbackEnabled = settings.getOpenAIFeedbackEnabled();
+      this.chatEnabled = settings.getOpenAIKey() !== undefined || settings.getOpenAIBasePath() !== undefined;
     },
     clearOutcome() {
       this.showOutcome = undefined;
@@ -692,7 +777,7 @@ export default Vue.extend({
     clearOutcome2() {
       this.showOutcome = undefined;
       this.saveOutcome = undefined;
-      if (this.tab == 1) this.selectTab(0);
+      if (this.tab == 1) this.selectTab("Questionnaire");
     },
     getItemPath(
       items: QuestionnaireItem[],
@@ -760,7 +845,7 @@ export default Vue.extend({
                       this.resourceJsonEditor.session.addMarker(
                         range,
                         "resultSelection",
-                        "fillLine",
+                        "fullLine",
                         true
                       );
                     // after 1.5 seconds remove the highlight.
@@ -815,7 +900,7 @@ export default Vue.extend({
         //         const selectionMarker = this.questionnaireResponseJsonEditor.session.addMarker(
         //           range,
         //           "resultSelection",
-        //           "fillLine",
+        //           "fullLine",
         //           true
         //         );
         //         // after 1.5 seconds remove the highlight.
@@ -837,7 +922,7 @@ export default Vue.extend({
           issue.expression &&
           !issue.expression[0].startsWith("QuestionnaireResponse")
         ) {
-          this.selectTab(0);
+          this.selectTab("Questionnaire");
           this.resourceJsonEditor.clearSelection();
           if (issue.__position) {
             var position: IJsonNodePosition = issue.__position;
@@ -872,7 +957,7 @@ export default Vue.extend({
               const selectionMarker = this.resourceJsonEditor.session.addMarker(
                 range,
                 "resultSelection",
-                "fillLine",
+                "fullLine",
                 true
               );
               // after 1.5 seconds remove the highlight.
@@ -884,7 +969,7 @@ export default Vue.extend({
             this.updateNow();
           }
         } else if (this.questionnaireResponseJsonEditor) {
-          this.selectTab(9);
+          this.selectTab("Response");
           this.questionnaireResponseJsonEditor.clearSelection();
           if (issue.__position) {
             var position: IJsonNodePosition = issue.__position;
@@ -920,7 +1005,7 @@ export default Vue.extend({
                 this.questionnaireResponseJsonEditor.session.addMarker(
                   range,
                   "resultSelection",
-                  "fillLine",
+                  "fullLine",
                   true
                 );
               // after 1.5 seconds remove the highlight.
@@ -938,7 +1023,7 @@ export default Vue.extend({
     },
     helpWithIssue(issue: fhir4b.OperationOutcomeIssue) {
       console.log("Help me with: ", issue);
-      var issueText =
+      let issueText =
         "How can I resolve this issue from validating the Questionnaire?";
       if (issue.details?.text) issueText += "\r\n\r\n" + issue.details.text;
       if (issue.expression)
@@ -958,27 +1043,90 @@ export default Vue.extend({
       if (item && this.raw && this.flatModel) {
         // delete this item from the parent
         let index: number = 0;
-        if (item) index = this.flatModel.indexOf(item);
+        index = this.flatModel.indexOf(item);
         this.flatModel.splice(index, 1);
         this.enableSave = true;
       }
     },
 
-    processUpdatedQuestionnaireResponse(value: fhir4b.QuestionnaireResponse) {
+    async prePopLForms(sourceFhirServer: string, subjectId: string, authorId?: string) {
+      if (this.$refs.lhcFormsRenderer) {
+        let lhcFormsRenderer = (this.$refs.lhcFormsRenderer as EditorNLMRendererSection)
+        await lhcFormsRenderer.prePopLForms(sourceFhirServer, subjectId, authorId)
+      }
+    },
+
+    async processUpdatedQuestionnaireResponseFromPrePopTester(value: fhir4b.QuestionnaireResponse, renderer?: string) {
+      this.processUpdatedQuestionnaireResponse(value);
+
+      if (this.$refs.csiroFormsRenderer && this.raw != null) {
+        let csiroFormsRenderer = (this.$refs.csiroFormsRenderer as EditorRendererSection)
+        await csiroFormsRenderer.renderQuestionnaireResponse(value, this.raw);
+      }
+
+      if (this.$refs.lhcFormsRenderer && this.raw != null) {
+        let lhcFormsRenderer = (this.$refs.lhcFormsRenderer as EditorNLMRendererSection)
+        await lhcFormsRenderer.renderQuestionnaireResponse(value, this.raw);
+      }
+
+      if (renderer == "lforms pre-pop") {
+        this.selectTab("LHC-Forms");
+      }
+      if (renderer == "CSIRO pre-pop") {
+        this.selectTab("CSIRO Renderer");
+      }
+    },
+    async processUpdatedQuestionnaireResponse(value: fhir4b.QuestionnaireResponse) {
+
+      // Update the response with the details from the context data
+      if (this.contextData?.subject) {
+        value.subject = this.contextData.subject;
+      }
+      if (this.contextData?.author) {
+        value.author = this.contextData.author;
+      }
+      if (this.contextData?.encounter) {
+        value.encounter = this.contextData.encounter;
+      }
+      if (this.contextData?.source) {
+        value.source = this.contextData.source;
+      }
+      if (value.authored === undefined) {
+        value.authored = new Date().toISOString();
+      }
+
       if (this.questionnaireResponseJsonEditor) {
-        this.questionnaireResponse = value;
+        const jsonValue = JSON.stringify(value, null, 2);
+        this.questionnaireResponseJson = jsonValue;
+        // console.log("Updated QuestionnaireResponse: ", this.questionnaireResponse);
         this.questionnaireResponseJsonEditor.setValue(
-          JSON.stringify(this.questionnaireResponse, null, 2)
+          jsonValue
         );
         this.questionnaireResponseJsonEditor.clearSelection();
-        this.selectTab(9);
+        this.selectTab("Response");
+
+        if (this.$refs.csiroFormsRenderer && this.raw != null) {
+          let csiroFormsRenderer = (this.$refs.csiroFormsRenderer as EditorRendererSection)
+          await csiroFormsRenderer.renderQuestionnaireResponse(value, this.raw);
+        }
+
+        if (this.$refs.lhcFormsRenderer && this.raw != null) {
+          let lhcFormsRenderer = (this.$refs.lhcFormsRenderer as EditorNLMRendererSection)
+          await lhcFormsRenderer.renderQuestionnaireResponse(value, this.raw);
+        }
+
+        if (this.$refs.extractTester as QuestionnaireExtractTest) {
+          (this.$refs.extractTester as QuestionnaireExtractTest).setValue(
+            this.questionnaireResponseJson
+          );
+        }
       }
     },
 
     AddItem(parentItem: any) {
       console.log("add new item");
       if (this.raw && this.flatModel) {
-        var newItem: fhir4b.QuestionnaireItem = {
+        let newItem: fhir4b.QuestionnaireItem = {
           linkId: settings.createRandomID(),
           type: "string",
         };
@@ -1022,7 +1170,7 @@ export default Vue.extend({
           this.resourceJsonEditor.setValue(JSON.stringify(jsonValue, null, 4));
           this.resourceJsonEditor.clearSelection();
           this.resourceJsonEditor.renderer.updateFull(true);
-        } catch {}
+        } catch { }
       }
     },
 
@@ -1043,7 +1191,7 @@ export default Vue.extend({
           if (qDef?.url) {
             jsonValue.questionnaire = qDef.url;
           }
-        } catch {}
+        } catch { }
 
         try {
           this.questionnaireResponseJsonEditor.setValue(
@@ -1051,7 +1199,7 @@ export default Vue.extend({
           );
           this.questionnaireResponseJsonEditor.clearSelection();
           this.questionnaireResponseJsonEditor.renderer.updateFull(true);
-        } catch {}
+        } catch { }
       }
     },
 
@@ -1063,7 +1211,7 @@ export default Vue.extend({
       if (this.resourceJsonEditor) {
         const jsonValue = this.resourceJsonEditor.getValue();
         try {
-          var results = JSON.parse(jsonValue);
+          let results = JSON.parse(jsonValue);
           this.raw = results as fhir4b.Questionnaire;
           if (this.raw) {
             this.flatModel = FlattenedQuestionnaireItems(this.raw);
@@ -1082,10 +1230,28 @@ export default Vue.extend({
               });
             });
           }
-        } catch {}
+        } catch { }
       }
     },
 
+    questionnaireResponseJsonChangedEvent() {
+      this.resourceJsonChanged = true;
+      this.enableSave = true;
+      console.log("enable save questionnaireResponseJSON");
+
+      if (this.questionnaireResponseJsonEditor) {
+        const jsonValue = this.questionnaireResponseJsonEditor.getValue();
+        try {
+          // Parse the json text to see if it is valid before we blindly pass it along.
+          JSON.parse(jsonValue);
+          this.questionnaireResponseJson = jsonValue;
+        } catch { }
+      }
+    },
+
+    updateDataServerBaseUrl(value: string) {
+      this.dataServerBaseUrl = value;
+    },
     async validateQuestionnaire() {
       if (this.resourceJsonEditor) {
         this.loadingData = true;
@@ -1132,6 +1298,131 @@ export default Vue.extend({
       }
     },
 
+    displayExtractOutcome(outcome: fhir4b.OperationOutcome) {
+      this.saveOutcome = outcome;
+      if (outcome?.issue) { 
+        if (this.saveOutcome){
+          const jsonValue = this.resourceJsonEditor!.getValue();
+          this.setSaveOutcomePositionInformation(jsonValue, this.saveOutcome.issue);
+
+          // and grab the first item to send to the chat AI
+          const priorityIssue = getPriorityIssue(this.saveOutcome.issue);
+          if (priorityIssue) {
+            this.helpWithIssue(priorityIssue);
+          }
+        }
+        this.showOutcome = true;
+      }
+    },
+
+    contextChanged(data: ContextData) {
+      console.log("Context changed: ", data);
+      this.contextData = data;
+    },
+
+    async localSaveFhirResource<TData extends fhir4b.FhirResource>(serverBaseUrl: string, data: TData): Promise<fhir4b.OperationOutcome | TData | undefined> {
+      this.saving = true;
+      let urlRequest;
+      try {
+        console.log("save " + data.id);
+        this.showOutcome = undefined;
+        this.saveOutcome = undefined;
+
+        let response: AxiosResponse<TData, any>;
+        let headers = {
+          'Cache-Control': 'no-cache',
+          "Accept": requestFhirAcceptHeaders,
+          'Content-Type': requestFhirContentTypeHeaders
+        };
+        if (data.id) {
+          urlRequest = `${serverBaseUrl}/${data.resourceType}/${data.id}`;
+          response = await axios.put<TData>(urlRequest, data, { headers: headers });
+        } else {
+          // Create a new resource (via post)
+          urlRequest = `${serverBaseUrl}/${data.resourceType}`;
+          response = await axios.post<TData>(urlRequest, data, { headers: headers });
+        }
+        this.saving = false;
+        return response.data;
+      } catch (err) {
+        this.saving = false;
+        if (axios.isAxiosError(err)) {
+          const serverError = err as AxiosError<fhir4b.OperationOutcome>;
+          if (serverError && serverError.response) {
+            this.saveOutcome = serverError.response.data;
+            this.showOutcome = true;
+            return serverError.response.data;
+          }
+          return CreateOperationOutcome("fatal", "exception", "Server: " + err.message, errorCodingSaveResource, urlRequest);
+        }
+        return CreateOperationOutcome("fatal", "exception", "Client: " + err, errorCodingSaveResource, urlRequest);
+      }
+    },
+
+    async saveQuestionnaireResponse() {
+      if(!this.questionnaireResponseJson || !this.qrResourceId)
+        return;
+
+      let qr : fhir4b.QuestionnaireResponse = JSON.parse(this.questionnaireResponseJson);
+      let formBaseUrl = this.qrResourceId.substring(0, this.qrResourceId.indexOf("/QuestionnaireResponse/"));
+      if (formBaseUrl.length == 0)
+        formBaseUrl = settings.getFhirServerExamplesUrl();
+      const idFromUrl = this.qrResourceId.substring(this.qrResourceId.indexOf("/QuestionnaireResponse/") + 23);
+      if (qr.id != idFromUrl){
+        alert("The QuestionnaireResponse ID ("+qr.id+") does not match the URL ("+idFromUrl+"). Please allocate a new ID.");
+        return;
+      }
+      const outcome = await this.localSaveFhirResource(
+        formBaseUrl ?? this.fhirServerUrl ?? settings.getFhirServerUrl(),
+        qr
+      );
+      if (outcome?.resourceType == 'QuestionnaireResponse' && this.questionnaireResponseJsonEditor) {
+        this.questionnaireResponseJsonEditor.setValue(JSON.stringify(outcome, null, 2));
+        this.questionnaireResponseJsonEditor.clearSelection();
+        this.questionnaireResponseJsonEditor.renderer.updateFull(true);
+      }
+      if (this.saveOutcome){
+        const jsonValue = this.resourceJsonEditor!.getValue();
+        this.setSaveOutcomePositionInformation(jsonValue, this.saveOutcome.issue);
+
+        // and grab the first item to send to the chat AI
+        const priorityIssue = getPriorityIssue(this.saveOutcome.issue);
+        if (priorityIssue) {
+          this.helpWithIssue(priorityIssue);
+        }
+      }
+    },
+
+    async allocateNewQuestionnaireResponseId() {
+      if (this.resourceJsonEditor && this.questionnaireResponseJsonEditor) {
+        this.loadingData = true;
+        let jsonValueQR = this.questionnaireResponseJsonEditor.getValue();
+
+        // Get the base URL for the form
+        let formBaseUrl = settings.getFhirServerExamplesUrl();
+        if (this.qrResourceId){
+          formBaseUrl = this.qrResourceId.substring(0, this.qrResourceId.indexOf("/QuestionnaireResponse/"));
+          if (formBaseUrl.length == 0)
+            formBaseUrl = settings.getFhirServerExamplesUrl();
+        }
+
+        // Add a subject and authored date if not present
+        try {
+          let qr : QuestionnaireResponse = JSON.parse(jsonValueQR);
+          qr.id = settings.createRandomID();
+          this.qrResourceId = formBaseUrl + "/QuestionnaireResponse/" + qr.id;
+          if (!qr.subject) qr.subject = { reference: "Patient/example" };
+          if (!qr.authored) qr.authored = new Date().toISOString();
+          jsonValueQR = JSON.stringify(qr, null, 2);
+        } catch { }
+
+        this.questionnaireResponseJsonEditor.setValue(jsonValueQR);
+        this.questionnaireResponseJsonEditor.clearSelection();
+        this.questionnaireResponseJsonEditor.renderer.updateFull(true);
+        this.loadingData = false;
+      }
+    },
+
     async validateQuestionnaireResponse() {
       if (this.resourceJsonEditor && this.questionnaireResponseJsonEditor) {
         this.loadingData = true;
@@ -1148,15 +1439,15 @@ export default Vue.extend({
           qrWithContainedQ.questionnaire = "#" + qDef.id;
           qrWithContainedQ.contained = [qDef];
           jsonValueQR = JSON.stringify(qrWithContainedQ, null, 2);
-        } catch {}
+        } catch { }
 
         // Add a subject and authored date if not present
         try {
           let qr = JSON.parse(jsonValueQR);
-          if (!qr.subject) qr.subject = { reference: "Patient/123" };
+          if (!qr.subject) qr.subject = { reference: "Patient/example" };
           if (!qr.authored) qr.authored = new Date().toISOString();
           jsonValueQR = JSON.stringify(qr, null, 2);
-        } catch {}
+        } catch { }
 
         // send this to the forms-lab server for validation
         try {
@@ -1266,7 +1557,7 @@ export default Vue.extend({
               this.saveOutcome.issue
             );
           }
-        } catch {}
+        } catch { }
       }
     },
 
@@ -1285,7 +1576,7 @@ export default Vue.extend({
               this.saveOutcome.issue
             );
           }
-        } catch {}
+        } catch { }
       }
     },
 
@@ -1315,7 +1606,7 @@ export default Vue.extend({
         this.cancelSource = axios.CancelToken.source();
         this.loadingData = true;
         let token = this.cancelSource.token;
-        let headers: AxiosRequestHeaders = {
+        let headers = {
           "Cache-Control": "no-cache",
           Accept: requestFhirAcceptHeaders,
         };
@@ -1344,6 +1635,7 @@ export default Vue.extend({
                   0,
                   url.indexOf("/Questionnaire/" + this.raw.id)
                 );
+                this.isFavourite = isFavourite(this.raw.resourceType, this.raw.id);
                 if (this.raw.url) {
                   await loadPublishedVersions<fhir4b.Questionnaire>(
                     formBaseUrl,
@@ -1355,6 +1647,96 @@ export default Vue.extend({
               }
             }
             this.resourceJsonEditor.clearSelection();
+          }
+        }
+      } catch (err) {
+        this.loadingData = false;
+        if (axios.isAxiosError(err)) {
+          const serverError = err as AxiosError<fhir4b.OperationOutcome>;
+          if (serverError && serverError.response) {
+            if (serverError.response.data?.resourceType == "OperationOutcome") {
+              this.saveOutcome = serverError.response.data;
+            } else {
+              if (serverError.response.status == 404)
+                this.saveOutcome = {
+                  resourceType: "OperationOutcome",
+                  issue: [],
+                };
+              this.saveOutcome?.issue.push({
+                code: "not-found",
+                severity: "error",
+                details: { text: "Test resource not found" },
+              });
+            }
+            this.showOutcome = true;
+            return serverError.response.data;
+          }
+          this.saveOutcome = CreateOperationOutcome(
+            "fatal",
+            "exception",
+            "Server: " + err.message,
+            undefined,
+            err.code
+          );
+          this.showOutcome = true;
+          return;
+        }
+        this.saveOutcome = CreateOperationOutcome(
+          "fatal",
+          "exception",
+          "Client: " + err
+        );
+        this.showOutcome = true;
+      }
+    },
+
+    async downloadTestResponseResource() {
+      try {
+        if (!this.qrResourceId) return;
+        let url = this.qrResourceId;
+        if (this.qrResourceId && !this.qrResourceId.startsWith("http"))
+          url = settings.getFhirServerExamplesUrl() + "/" + this.qrResourceId;
+
+        // if trying to use the hl7 example servers, that should be over https
+        if (
+          url.startsWith("http://build.fhir.org/") ||
+          url.startsWith("http://hl7.org/fhir/")
+        )
+          url = "https://" + url.substring(7);
+
+        // If this is trying to download a hl7 example, run it through the downloader proxy
+        // as the HL7 servers don't have CORS for us
+        if (
+          url.startsWith("https://build.fhir.org/") ||
+          url.startsWith("https://hl7.org/fhir/")
+        )
+          url = settings.dotnet_server_downloader() + "?url=" + url;
+
+        if (this.cancelSource) this.cancelSource.cancel("new download started");
+        this.cancelSource = axios.CancelToken.source();
+        this.loadingData = true;
+        let token = this.cancelSource.token;
+        let headers = {
+          "Cache-Control": "no-cache",
+          Accept: requestFhirAcceptHeaders,
+        };
+        const response = await axios.get<fhir4b.Resource>(url, {
+          cancelToken: token,
+          headers: headers,
+        });
+        if (token.reason) {
+          console.log(token.reason);
+          return;
+        }
+        this.cancelSource = undefined;
+        this.loadingData = false;
+
+        const results = response.data;
+        if (results) {
+          if (this.questionnaireResponseJsonEditor) {
+            if (results.meta?.tag)
+              delete results.meta.tag;
+            this.processUpdatedQuestionnaireResponse(results as fhir4b.QuestionnaireResponse);
           }
         }
       } catch (err) {
@@ -1457,9 +1839,14 @@ export default Vue.extend({
       }
     },
 
-    selectTab(tabIndex: number) {
+    selectTab(tabString: "Questionnaire" | "Debug" | "Details" | "Publishing" | "Fields"
+                       | "Context" | "Pre-Population" | "Variables" | "PrePop" 
+                       | "CSIRO Renderer"
+                       | "LHC-Forms"
+                       | "Response" | "Extract" | "Models" | "AI Chat") {
       let tabControl: TwinPaneTab = this.$refs.twinTabControl as TwinPaneTab;
       if (tabControl) {
+        const tabIndex: number = tabControl.getTabIndex(tabString);
         tabControl.selectTab(tabIndex);
       }
     },
@@ -1508,7 +1895,7 @@ export default Vue.extend({
       // userQuestion += message;
       // chat.addMessage("Author", userQuestion, true);
 
-      let prompt: Array<ChatMessage> = [];
+      let prompt: Array<ChatCompletionMessageParam> = [];
       prompt.push({ role: "system", content: systemPrompt });
       prompt = prompt.concat(chat.getConversationChat());
 
@@ -1636,27 +2023,25 @@ export default Vue.extend({
     },
 
     async saveData() {
+      // read the server URL from the test resource ID
+      let formBaseUrl = this.fhirServerUrl ?? settings.getFhirServerUrl();
+      if (this.resourceId?.startsWith("http")) {
+          formBaseUrl = this.resourceId.substring(0, this.resourceId.indexOf("/Questionnaire/"));
+      }
       const outcome = await saveFhirResource(
-        this.fhirServerUrl ?? settings.getFhirServerUrl(),
+        formBaseUrl,
         this
       );
       if (!outcome) {
-        if (this.raw?.id) {
-          if (this.$route.params.id.endsWith(":new")) {
-            let href = this.$route.fullPath.replaceAll(
-              this.$route.params.id,
-              this.raw?.id
-            );
-            window.history.pushState({}, "", href);
+      }
+      if (this.saveOutcome){
+        const jsonValue = this.resourceJsonEditor!.getValue();
+        this.setSaveOutcomePositionInformation(jsonValue, this.saveOutcome.issue);
 
-            // also update the publishing table
-            const index = this.publishedVersions?.findIndex((pv) => {
-              if (!pv.id) return true;
-            });
-            if (index) {
-              this.publishedVersions?.splice(index, 1, this.raw);
-            }
-          }
+        // and grab the first item to send to the chat AI
+        const priorityIssue = getPriorityIssue(this.saveOutcome.issue);
+        if (priorityIssue) {
+          this.helpWithIssue(priorityIssue);
         }
       }
     },
@@ -1689,9 +2074,17 @@ export default Vue.extend({
       openAIexpressionExplanationLoading: false,
       openAIFeedbackEnabled: false,
       helpWithError: undefined,
-      questionnaireResponse: undefined,
+      questionnaireResponseJson: undefined,
+      modelsSearch: '',
+      modelsText: undefined,
+      dataServerBaseUrl: settings.getFhirServerExamplesUrl(),
 
-      chatEnabled: true,
+      contextData: {
+        subject: { reference: "Patient/example", display: "Peter James Chalmers" },
+        author: { reference: "Practitioner/example", display: "Dr Adam Careful" },
+      },
+
+      chatEnabled: false,
       flatModel: [],
       formContainerElement: undefined,
       selectedItem: undefined,

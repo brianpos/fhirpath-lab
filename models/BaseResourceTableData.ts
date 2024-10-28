@@ -7,6 +7,7 @@ export interface BaseResourceTableDefinition<TData> extends EasyTableDefinition<
 
 export interface BaseResourceData<TData extends fhir4b.DomainResource> extends BaseResourceNoData {
   raw: TData | null;
+  loadedUrl?: string;
 }
 
 export const BaseResource_defaultValues: BaseResourceNoData = {

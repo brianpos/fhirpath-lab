@@ -67,16 +67,35 @@
       </v-form>
       <OperationOutcomeOverlay v-if="outcome" :saveOutcome="outcome" :showOutcome="(outcome != undefined)"
         title="Search Errors/Warnings" :popupWhenErrors="false" @close="outcome = undefined" />
-      <ve-table
-        :columns="columns"
-        :table-data="tableData"
+      <v-data-table
+        :headers="columns"
+        :items="tableData"
         :event-custom-option="eventCustomOption"
-        :expand-option="expandOption"
         row-key-field-name="id"
-      />
-      <div v-show="showEmpty && !loadingData" class="empty-data">
-        (No results)
-      </div>
+        :fixed-header="true"
+        :items-per-page="-1"
+        :disable-pagination="true"
+        show-expand
+        @row:click="navigateSelection"
+        :expanded.sync="expanded"
+      >
+        <template v-slot:item.title="{ index, item }">
+          <a @click="navigateSelection(item)">{{ item.title }}</a>
+        </template>
+        <template v-slot:expanded-item="{ headers, item }">
+          <td :colspan="headers.length">
+            <conformance-resource-preview-row :row="item" />
+          </td>
+        </template>
+        <template v-slot:item.favourite="{ index, item}">
+          <FavIcon v-if="item.favourite"/>
+        </template>
+        <template slot="no-data">
+          <div v-show="showEmpty && !loadingData" class="empty-data">
+            (No results)
+          </div>
+        </template>
+      </v-data-table> 
     </div>
     <table-loading v-if="loadingData" />
   </div>
@@ -115,18 +134,6 @@
 .fl-toolbar {
   margin-bottom: 6px;
 }
-
-.empty-data {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: min(200px, 80vh);
-  width: 100%;
-  color: #666;
-  font-size: 16px;
-  border: 1px solid #eee;
-  border-top: 0;
-}
 </style>
 
 <script lang="ts">
@@ -151,12 +158,14 @@ import { settings } from "~/helpers/user_settings";
 import { EasyTableDefinition_defaultValues } from "~/models/EasyTableDefinition";
 import { ConformanceSearchData } from "models/ConformanceSearchData";
 import { loadCustomUseContexts, mergeUseContexts, saveCustomUseContexts } from "~/helpers/useContext_helpers";
+import ConformanceResourcePreviewRow from "~/components/ConformanceResourcePreviewRow.vue";
 
 export default Vue.extend({
-  head: {
-    title: "Questionnaire",
-  },
+  // head: {
+  //   title: "Questionnaire",
+  // },
   mounted() {
+    document.title = "Questionnaire";
     this.showAdvancedSettings = settings.showAdvancedSettings();
     const searchData = settings.getSearchData("Questionnaire");
     if (searchData) {
@@ -166,7 +175,7 @@ export default Vue.extend({
       this.searchForUseContext = searchData.useContext;
     }
     this.searchFhirServer();
-    this.searchUseContexts = loadCustomUseContexts("questionnaire", this.defaultUseContexts);
+    this.searchUseContexts = loadCustomUseContexts("questionnaire", this.defaultUseContexts!);
   },
   methods: {
     settingsClosed() {
@@ -228,7 +237,7 @@ export default Vue.extend({
             ),
           };
         });
-        if (updateRequired) saveCustomUseContexts("questionnaire", this.searchUseContexts, this.defaultUseContexts);
+        if (updateRequired) saveCustomUseContexts("questionnaire", this.searchUseContexts, this.defaultUseContexts!);
       });
     },
 
@@ -265,6 +274,16 @@ export default Vue.extend({
       };
       settings.saveSearchData("Questionnaire", searchData);
     },
+
+    navigateSelection(data: QuestionnaireTableData, event: PointerEvent) {
+      const selectedResourceId = settings.getFhirServerUrl() + '/Questionnaire/' + data.id;
+      if (event?.ctrlKey){
+        window.open("/Questionnaire/tester?id=" + selectedResourceId, '_blank'); 
+      }
+      else{
+        this.$router.push("/Questionnaire/tester?id=" + selectedResourceId);
+      }
+    }
   },
   data(): QuestionnaireTableDefinition {
     return {
@@ -290,48 +309,15 @@ export default Vue.extend({
           };
         },
       },
-      expandOption: {
-        trigger: "icon",
-        render: (
-          {
-            row,
-            column,
-            rowIndex,
-          }: {
-            row: ConformanceResourceTableData;
-            column: any;
-            rowIndex: number;
-          },
-          h: any
-        ): any => {
-          return h("ConformanceResourcePreviewRow", { row: row }) as VNode;
-        },
-      },
       columns: [
-        {
-          field: "title",
-          key: "a",
-          title: "Name",
-          align: "left",
-          type: "expand",
-        },
-        { field: "version", key: "v", title: "Version", align: "left" },
-        { field: "status", key: "c", title: "Status", align: "left" },
-        { field: "useContext", key: "uc", title: "Use Context", align: "left" },
-        { field: "date", key: "b", title: "Publish Date", align: "left" },
-        { field: "publisher", key: "d", title: "Publisher", align: "left" },
-        { field: "id", key: "id", title: "ID", align: "left" },
-        {
-          field: "favourite",
-          key: "e",
-          title: "",
-          align: "center",
-          renderBodyCell: (cellData: any, h: any) => {
-            if ((cellData.row as ConformanceResourceTableData).favourite)
-              return h("FavIcon") as VNode;
-            return { text: "" } as VNode;
-          },
-        },
+        { value: "title", key: "a", text: "Name", align: "start", type: "expand", sortable: false },
+        { value: "version", key: "v", text: "Version", align: "start", sortable: false },
+        { value: "status", key: "c", text: "Status", align: "start", sortable: false },
+        { value: "useContext", key: "uc", text: "Use Context", align: "start", sortable: false },
+        { value: "date", key: "b", text: "Publish Date", align: "start", sortable: false },
+        { value: "publisher", key: "d", text: "Publisher", align: "start", sortable: false },
+        { value: "id", key: "id", text: "ID", align: "start", sortable: false },
+        { value: "favourite", key: "e", text: "", align: "center", sortable: false },
       ],
       tableData: [],
       outcome: undefined,

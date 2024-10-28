@@ -10,7 +10,12 @@
           <v-toolbar-title>{{ tabTitle() }}</v-toolbar-title>
           <v-spacer />
           <v-select dark class="engineselector" :items="executionEngines" v-model="selectedEngine" hide-details="auto"
-            @change="evaluateFhirPathExpression" />
+            @change="evaluateFhirPathExpression">
+            <template v-slot:item="{ item }">
+              <span v-if="externalExecutionEngines.indexOf(item) == -1">{{ item }}</span>
+              <span class="externalExecutionEngine" title="Externally hosted FhirPath Engine" v-if="externalExecutionEngines.indexOf(item) >= 0"><v-icon small>mdi-web</v-icon> {{ item }} *</span>
+            </template>
+          </v-select>
           <v-btn icon dark accesskey="g" title="press alt+g to go" @focus="checkFocus" @click="evaluateFhirPathExpression">
             <v-icon>
               mdi-play
@@ -65,11 +70,9 @@
         <twin-pane-tab :tabs="tabDetails" ref="twinTabControl" @mounted="twinPaneMounted" @change="tabChanged">
           <template v-slot:Expression>
             <label class="v-label theme--light bare-label">Context Expression (optional)</label>
-            <!-- <v-input label="Context Expression (optional)" hide-details="auto" :value="contextExpression">
-            </v-input> -->
             <v-tooltip bottom >
               <template v-slot:activator="{ on, attrs }">
-                <v-btn icon style="right: 20px; position: absolute; top: 20px; z-index:2;"
+                <v-btn class="resetButton" icon 
                   v-bind="attrs" v-on="on"
                   @click="resetExpression"><v-icon>mdi-broom</v-icon></v-btn>
               </template>
@@ -81,12 +84,11 @@
             <label class="v-label theme--light bare-label">Fhirpath Expression</label>
             <div height="85px" width="100%" ref="aceEditorExpression"></div>
             <div class="ace_editor_footer"></div>
-            <!-- <parse-tree-tab v-show="false" ref="astTabComponent"></parse-tree-tab> -->
 
             <div class="results">RESULTS <span class="processedBy">{{ processedByEngine }}</span></div>
             <OperationOutcomePanel :outcome="expressionParseOutcome" @close="expressionParseOutcome = undefined" />
             <template v-for="(r2, i1) in results">
-              <v-simple-table :key="i1">
+              <v-simple-table style="flex-shrink: 1;" :key="i1">
                 <tr v-if="r2.context">
                   <td class="context" colspan="2">
                     <v-btn x-small v-if="r2.position" style="float:right;" icon title="Goto context" @click="navigateToContext(r2.context)">
@@ -241,6 +243,15 @@
 </template>
 
 <style lang="scss">
+.externalExecutionEngine {
+  color: blueviolet;
+}
+.resetButton {
+  right: 20px;
+  position: absolute;
+  top: 20px;
+  z-index: 2;
+}
 .resource {
   height: calc(100vh - 280px);
 }
@@ -251,6 +262,10 @@
   height: calc(100vh - 196px);
 }
 @media (max-width: 596px) {
+  .resetButton {
+    top: 74px;
+  }
+
   .resource {
     height: calc(100vh - 320px - 48px);
   }
@@ -377,20 +392,20 @@ import axios, { AxiosRequestHeaders, AxiosResponse } from "axios";
 import { AxiosError } from "axios";
 import { CancelTokenSource } from "axios";
 import { addExtension, addExtensionStringValue, clearExtension, getExtensionCodingValues, getExtensionReferenceValue, getExtensionStringValue, setExtension, setExtensionStringValue } from "fhir-extension-helpers";
-import { fpjsNode, GetExternalVariablesUsed, InvertTree, JsonNode } from "~/components/ParseTreeTab.vue";
+import { fpjsNode, getTraceValue, getValue, JsonNode, ResultData } from "~/models/FhirpathTesterData";
+import { GetExternalVariablesUsed, InvertTree, mapFunctionReferences } from "~/components/ParseTreeTab.vue";
 // import { getPreferredTerminologyServerFromSDC } from "fhir-sdc-helpers";
-import fhirpath from "fhirpath";
+import fhirpath, { AsyncOptions } from "fhirpath";
 import fhirpath_r4_model from "fhirpath/fhir-context/r4";
 import fhirpath_r5_model from "fhirpath/fhir-context/r5";
-import { Rules as FhirPathHightlighter_Rules, setCustomHighlightRules } from "~/helpers/fhirpath_highlighter"
+import { setAcePaths, Rules as FhirPathHightlighter_Rules, setCustomHighlightRules } from "~/helpers/fhirpath_highlighter"
 import "~/assets/fhirpath_highlighter.scss"
 import { IApplicationInsights } from '@microsoft/applicationinsights-web'
 
 import "ace-builds";
 import ace from "ace-builds";
-import "ace-builds/src-noconflict/mode-text";
-import "ace-builds/src-noconflict/mode-json";
-import "ace-builds/src-noconflict/theme-chrome";
+import langTools from "ace-builds/src-noconflict/ext-language_tools";
+
 import Chat from "~/components/Chat.vue";
 import { Message } from "~/types/chat-types";
 
@@ -399,7 +414,7 @@ import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from
 import { VariableData, EncodeTestFhirpathData, DecodeTestFhirpathData, TestFhirpathData } from "~/models/testenginemodel";
 
 import { EvaluateChatPrompt, GetSystemPrompt, IOpenAISettings } from "~/helpers/openai_utils";
-import { ChatMessage } from "@azure/openai";
+import { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import ParseTreeTab from "~/components/ParseTreeTab.vue";
 import ConformanceResourceDetailsTab from "~/components/ConformanceResourceDetailsTab.vue";
 import { VueElement, nextTick } from "@vue/runtime-dom";
@@ -592,6 +607,7 @@ interface FhirPathData {
   results: ResultData[];
   selectedEngine: string;
   executionEngines: string[];
+  externalExecutionEngines: string[];
   shareToolTipMessage: string;
   shareZulipToolTipMessage: string;
   expressionEditor?: ace.Ace.Editor;
@@ -611,24 +627,6 @@ interface FhirPathData {
   enableSave: boolean;
 }
 
-interface ResultItem {
-  type: string;
-  value: any;
-}
-
-interface ResultData {
-  context?: string;
-  position?: IJsonNodePosition;
-  result: ResultItem[];
-  trace: TraceData[];
-}
-
-interface TraceData {
-  name: string;
-  type?: string;
-  value?: string;
-}
-
 function canonicalVariableName(name: string): string {
   if (name.startsWith("%")) name = name.substring(1);
   if (name.startsWith("`")) name = name.substring(1);
@@ -646,38 +644,7 @@ function isSystemVariableName(name: string): boolean {
   return false;
 }
 
-function getValue(entry: fhir4b.ParametersParameter): ResultItem[] {
-  let result: ResultItem[] = [];
-  var myMap = new Map(Object.entries(entry));
-  for (let [k, v] of myMap.entries()) {
-    if (k.startsWith('value'))
-      result.push({ type: k.replace('value', ''), value: v });
-    else if (k == 'resource')
-      result.push({ type: (v as fhir4b.Resource).resourceType, value: v });
-  }
-  const extVal = getExtensionStringValue(entry, "http://fhir.forms-lab.com/StructureDefinition/json-value");
-  if (extVal)
-    result.push({ type: entry.name, value: JSON.parse(extVal) });
-  if (entry.name == "empty-string")
-    result.push({ type: "empty-string", value: "" });
-  
-  return result;
-}
-function getTraceValue(entry: fhir4b.ParametersParameter): TraceData[] {
-  let result: TraceData[] = [];
-  if (entry.part) {
-    for (let part of entry.part) {
-      const val = getValue(part);
-      let valueData : TraceData = { name: entry.valueString ?? '', type: part.name };
-      if (val.length > 0)
-        valueData.value = JSON.stringify(val[0].value, null, 4);
-      result.push(valueData);
-    }
-  }
-  return result;
-}
-
-interface IFhirPathMethods
+export interface IFhirPathMethods
 {
   twinPaneMounted(): Promise<void>;
   CtrlEnterHandler(event: KeyboardEvent): void;
@@ -697,6 +664,7 @@ interface IFhirPathMethods
   updateNow():void;
   selectTab(selectTab: number): void;
   tabChanged(index: Number): void;
+  getCompletions(editor: ace.Ace.Editor, session: ace.Ace.EditSession, pos: any, prefix: any, callback: any): void;
 
   getContextExpression(): string | undefined;
   getFhirpathExpression(): string | undefined;
@@ -769,13 +737,8 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       this.chatEnabled = true;
     this.terminologyServer = settings.getFhirTerminologyServerUrl();
 
-    const CDN = 'https://cdn.jsdelivr.net/npm/ace-builds@1.6.0/src-min-noconflict';
-    if (true) {
-        ace.config.set('basePath', CDN);
-        ace.config.set('modePath', CDN);
-        ace.config.set('themePath', CDN);
-        ace.config.set('workerPath', CDN);
-    }
+    setAcePaths(ace.config);
+
     document.addEventListener('keypress', this.CtrlEnterHandler);
   },
 
@@ -863,6 +826,20 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     },
 
     async twinPaneMounted(): Promise<void> {
+
+      let vars = this.variables;
+
+      // https://github.com/ajaxorg/ace/blob/26eda2573755abdf8902cf85e7afbf0501ad56e1/src/autocomplete.js#L543
+      var fhirpathCompleter : ace.Ace.Completer = {
+        id: 'fhirpath',
+        identifierRegexps: [
+          /[a-zA-Z_0-9%\$\-\u00A2-\u2000\u2070-\uFFFF]/,
+          // /[^a-zA-Z_0-9\$\-\u00C0-\u1FFF\u2C00-\uD7FF\w]+/
+        ],
+        getCompletions: this.getCompletions
+      }
+
+
     // Update the editor's Mode
     var editorCtxtDiv: any = this.$refs.aceEditorContextExpression as Element;
     if (editorCtxtDiv) {
@@ -877,7 +854,9 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         showPrintMargin: false,
         theme: "ace/theme/chrome",
         mode: "ace/mode/text",
-        wrapBehavioursEnabled: true
+        wrapBehavioursEnabled: true,
+        enableBasicAutocompletion: [fhirpathCompleter],
+        enableLiveAutocompletion: [fhirpathCompleter],
       });
 
       if (this.expressionContextEditor) {
@@ -901,13 +880,17 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         showPrintMargin: false,
         theme: "ace/theme/chrome",
         mode: "ace/mode/text",
-        wrapBehavioursEnabled: true
+        wrapBehavioursEnabled: true,
+        enableBasicAutocompletion: [fhirpathCompleter],
+        enableLiveAutocompletion: [fhirpathCompleter],
       });
 
-        setCustomHighlightRules(this.expressionEditor, FhirPathHightlighter_Rules);
-        this.expressionEditor.setValue("trace('trc').given.join(' ')\n.combine(family).join(', ')");
-        this.expressionEditor.clearSelection();
-        this.expressionEditor.on("change", this.fhirpathExpressionChangedEvent)
+      setCustomHighlightRules(this.expressionEditor, FhirPathHightlighter_Rules);
+      this.expressionEditor.setValue("trace('trc').given.join(' ')\n.combine(family).join(', ')");
+      this.expressionEditor.clearSelection();
+      this.expressionEditor.on("change", this.fhirpathExpressionChangedEvent)
+
+      langTools.addCompleter(fhirpathCompleter);
     }
 
     var editorDebugDiv: any = this.$refs.aceEditorDebug as Element;
@@ -939,14 +922,16 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       showPrintMargin: false,
       theme: "ace/theme/chrome",
       mode: "ace/mode/json",
-      wrapBehavioursEnabled: true
+      wrapBehavioursEnabled: true,
+      enableBasicAutocompletion: true,
     };
     var editorResourceJsonDiv: any = this.$refs.aceEditorResourceJsonTab as Element;
     if (editorResourceJsonDiv) {
       this.resourceJsonEditor = ace.edit(editorResourceJsonDiv, resourceEditorSettings);
-      this.resourceJsonEditor?.setValue(JSON.stringify(JSON.parse(examplePatient), null, 2));
-      this.resourceJsonEditor?.clearSelection();
+      this.resourceJsonEditor.setValue(JSON.stringify(JSON.parse(examplePatient), null, 2));
+      this.resourceJsonEditor.clearSelection();
       this.resourceJsonEditor.session.on("change", this.resourceJsonChangedEvent);
+      this.resourceJsonEditor.completers = [];
     }
 
     // read the values that were last used (stored in the local storage)
@@ -1041,6 +1026,80 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       }
     },
 
+    getCompletions(editor: ace.Ace.Editor, session: ace.Ace.EditSession, pos: any, prefix: any, callback: any): void {
+      // console.log('object getCompletions:', prefix, pos);
+      let hints = [];
+
+      // check the previous character in the editor to see if it is a $ or a %
+      let line = session.getLine(pos.row);
+      // console.log('line:', line);
+      let index = pos.column - prefix.length;
+      // console.log('index:', index);
+      if (index >= 0){
+        let prevChar = line.charAt(index);
+        // console.log('prevChar:', prevChar);
+        if (prevChar == '$') {
+          // if the previous character is a $ or %, then we are looking for a variable
+          // so we don't need to provide any completions
+          // console.log('system variables');
+
+          // system variables $this, $index
+          hints.push({ value: '$this', score: hints.length });
+          hints.push({ value: '$index', score: hints.length });
+          callback(null, hints);
+          return;
+        }
+        if (prevChar == '%') {
+          // if the previous character is a $ or %, then we are looking for a variable
+          // so we don't need to provide any completions
+          // console.log('environment variables');
+
+          // environment variables
+          hints.push({ value: '%context', score: hints.length, meta: '%context - initial expression context' });
+          hints.push({ value: '%resource', score: hints.length, meta: '%resource - contains %context' });
+          hints.push({ value: '%rootResource', score: hints.length, meta: '%rootResource - container resource' });
+          hints.push({ value: '%ucum', score: hints.length, meta: '%ucum (http://unitsofmeasure.org)' });
+          hints.push({ value: '%sct', score: hints.length, meta: '%sct (http://snomed.info/sct)' });
+          hints.push({ value: '%loinc', score: hints.length, meta: '%loinc (http://loinc.org)' });
+          callback(null, hints);
+          return;
+        }
+      }
+
+      // variables already in the expression context
+      for (const key of this.variables.keys()) {
+        let hint: any = { value: key, score: hints.length };
+        if (this.variables.get(key)?.resourceId)
+            hint.meta = this.variables.get(key)?.resourceId;
+        hints.push(hint);
+      }
+
+      // functions
+      for (const key of mapFunctionReferences.keys()) {
+        if (key.startsWith(prefix)) {
+          let hint: any = { value: key, score: hints.length };
+          const title = mapFunctionReferences.get(key)?.title;
+          const description = mapFunctionReferences.get(key)?.description;
+          const specUrl = mapFunctionReferences.get(key)?.specUrl;
+          if (title){
+            hint.meta = title;
+            hint.docHTML = title;
+            if (title.indexOf('()') > 0)
+              hint.value += '()';
+            else
+              hint.value += '(';
+          }
+          if (description){
+            hint.docHTML += '<br/>' + description;
+          }
+          if (specUrl){
+            hint.docHTML += '<br/><a href='+specUrl+' target="_blank">' + specUrl + '</a>';
+          }
+          hints.push(hint);
+        }
+      }
+      callback(null, hints);
+    },
     readParametersFromQuery(): TestFhirpathData {
       let data: TestFhirpathData = {
         expression: this.$route.query.expression as string
@@ -1392,14 +1451,13 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
           if (this.raw.parameter) {
             for (let entry of this.raw.parameter) {
               if (entry.name === 'parameters'){
-                // read the processing engine version
-                if (entry.part && entry.part.length > 0 && entry.part[0].name === 'evaluator'){
-                  this.processedByEngine = entry.part[0].valueString;
-                }
-
                 if (entry.part)
                 {
                   for (let part of entry.part) {
+                    // read the processing engine version
+                    if (part.name === 'evaluator'){
+                      this.processedByEngine = part.valueString;
+                    }
                     if (part.name === 'parseDebugTree' && part.valueString) {
                       let ast: JsonNode = JSON.parse(part.valueString);
                       const astTab = this.$refs.astTabComponent2 as ParseTreeTab;
@@ -1461,7 +1519,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         this.cancelSource = axios.CancelToken.source();
         this.loadingData = true;
         let token = this.cancelSource.token;
-        let headers: AxiosRequestHeaders = {
+        let headers = {
             "Cache-Control": "no-cache",
             "Accept": requestFhirAcceptHeaders
           }
@@ -1608,7 +1666,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         this.cancelSource = axios.CancelToken.source();
         this.loadingData = true;
         let token = this.cancelSource.token;
-        let headers: AxiosRequestHeaders = {
+        let headers = {
             "Cache-Control": "no-cache",
             "Accept": requestFhirAcceptHeaders
           }
@@ -1681,7 +1739,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         this.cancelSource = axios.CancelToken.source();
         this.loadingData = true;
         let token = this.cancelSource.token;
-        let headers: AxiosRequestHeaders = {
+        let headers = {
             "Cache-Control": "no-cache",
             "Accept": requestFhirAcceptHeaders
           }
@@ -1843,7 +1901,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       // userQuestion += message;
       // chat.addMessage("Author", userQuestion, true);
 
-      let prompt: Array<ChatMessage> = [];
+      let prompt: Array<ChatCompletionMessageParam> = [];
       prompt.push({ role: "system", content: systemPrompt});
       prompt = prompt.concat(chat.getConversationChat());
 
@@ -1916,7 +1974,11 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         // scan over each of the expressions
         try {
           this.processedByEngine = `fhirpath.js-`+fhirpath.version+` (r4b)`;
-          contextNodes = fhirpath.evaluate(fhirData, contextExpression, environment, fhirpath_r4_model);
+          let data = fhirpath.evaluate(fhirData, contextExpression, environment, fhirpath_r4_model);
+          if (data instanceof Promise)
+            contextNodes = await data;
+          else 
+            contextNodes = data as any[];
         }
         catch (err: any) {
           console.log(err);
@@ -1929,7 +1991,11 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       else {
         try {
           this.processedByEngine = `fhirpath.js-`+fhirpath.version+` (r4b)`;
-          contextNodes = fhirpath.evaluate(fhirData, "%resource", environment, fhirpath_r4_model);
+          let data = fhirpath.evaluate(fhirData, "%resource", environment, fhirpath_r4_model);
+          if (data instanceof Promise)
+            contextNodes = await data;
+          else 
+            contextNodes = data as any[];
         }
         catch (err: any) {
           console.log(err);
@@ -1978,7 +2044,17 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
             base: resData.context??'', 
             expression: useExpression
           }
-          let res: any[] = fhirpath.evaluate(contextNode, path, environment, fhirpath_r4_model, { traceFn: tracefunction });
+          let options: AsyncOptions = {
+            traceFn: tracefunction,
+            async: true,
+            terminologyUrl: this.terminologyServer
+          };
+          let data = fhirpath.evaluate(contextNode, path, environment, fhirpath_r4_model, options);
+          let res: any[];
+          if (data instanceof Promise)
+            res = await data;
+          else
+            res = data as any[];
           this.results.push(resData);
 
           for (let item of res) {
@@ -2057,7 +2133,11 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         // scan over each of the expressions
         try {
           this.processedByEngine = `fhirpath.js-`+fhirpath.version+` (r5)`;
-          contextNodes = fhirpath.evaluate(fhirData, contextExpression, environment, fhirpath_r5_model);
+          let data = fhirpath.evaluate(fhirData, contextExpression, environment, fhirpath_r5_model);
+          if (data instanceof Promise)
+            contextNodes = await data;
+          else
+            contextNodes = data as any[];
         }
         catch (err: any) {
           console.log(err);
@@ -2074,7 +2154,11 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       else {
         try {
           this.processedByEngine = `fhirpath.js-`+fhirpath.version+` (r5)`;
-          contextNodes = fhirpath.evaluate(fhirData, "%resource", environment, fhirpath_r5_model);
+          let data = fhirpath.evaluate(fhirData, "%resource", environment, fhirpath_r5_model);
+          if (data instanceof Promise)
+            contextNodes = await data;
+          else
+            contextNodes = data;
         }
         catch (err: any) {
           console.log(err);
@@ -2127,7 +2211,17 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
             base: resData.context??'', 
             expression: useExpression
           }
-          let res: any[] = fhirpath.evaluate(contextNode, path, environment, fhirpath_r5_model, { traceFn: tracefunction });
+          let options: AsyncOptions = {
+            traceFn: tracefunction,
+            async: true,
+            terminologyUrl: this.terminologyServer
+          };
+          let data = fhirpath.evaluate(contextNode, path, environment, fhirpath_r5_model, options);
+          let res: any[];
+          if (data instanceof Promise)
+            res = await data;
+          else
+            res = data as any[];
           this.results.push(resData);
 
           for (let item of res) {
@@ -2493,7 +2587,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       if (this.selectedEngine == ".NET (firely-R5)") {
         url = settings.dotnet_server_r5();
       }
-      let p: fhir4b.Parameters = { resourceType: "Parameters", parameter: [{ name: "expression", valueString: this.getFhirpathExpression() ?? 'today()' }] };
+      let p: fhir4b.Parameters = { resourceType: "Parameters", parameter: [{ name: "expression", valueString: this.getFhirpathExpression() ?? '' }] };
 
       const contextExpression = this.getContextExpression();
       if (contextExpression) {
@@ -2564,13 +2658,39 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       else if (this.selectedEngine == "java (IBM)") {
         url = settings.ibm_server_r4b();
         astTab2?.clearDisplay("AST not supported");
-
         if (!this.getResourceJson() && this.resourceId) {
           await this.downloadTestResource();
           resourceJson = this.getResourceJson();        
         }
 
         (this as any).$appInsights?.trackEvent({ name: 'evaluate IBM' });
+      }
+      else if (this.selectedEngine == "fhirpath-py (Beda Software)") {
+        url = settings.python_server_r4b();
+        astTab2?.clearDisplay("AST not supported");
+        if (!this.getResourceJson() && this.resourceId) {
+          await this.downloadTestResource();
+          resourceJson = this.getResourceJson();
+        }
+        (this as any).$appInsights?.trackEvent({ name: 'evaluate Python' });
+      }
+      else if (this.selectedEngine == "Aidbox (Health Samurai)") {
+        url = settings.clojure_server_r4();
+        astTab2?.clearDisplay("AST not supported");
+        if (!this.getResourceJson() && this.resourceId) {
+          await this.downloadTestResource();
+          resourceJson = this.getResourceJson();
+        }
+        (this as any).$appInsights?.trackEvent({ name: 'evaluate Aidbox' });
+      }
+      else if (this.selectedEngine == "Aidbox (Health Samurai-R5)") {
+        url = settings.clojure_server_r5();
+        astTab2?.clearDisplay("AST not supported");
+        if (!this.getResourceJson() && this.resourceId) {
+          await this.downloadTestResource();
+          resourceJson = this.getResourceJson();
+        }
+        (this as any).$appInsights?.trackEvent({ name: 'evaluate Aidbox' });
       }
       else {
         (this as any).$appInsights?.trackEvent({ name: 'evaluate FirelySDK' });
@@ -2624,7 +2744,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       editor.gotoLine(startLine, startColumn, true);
       // editor.selection.setRange(range);
 
-      const selectionMarker = editor.session.addMarker(range, "resultSelection", "fillLine", true);
+      const selectionMarker = editor.session.addMarker(range, "resultSelection", "fullLine", true);
       // after 1.5 seconds remove the highlight.
       setTimeout(() => {
         // console.log("Removing marker", selectionMarker);
@@ -2672,7 +2792,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
                     const endCol = node.position.column + (endCollOffset > 1 ? endCollOffset + 1 : endCollOffset);
                     const range = new ace.Range(node.position.line-1, node.position.column, endRow-1, endCol);
 
-                    const selectionMarker = this.resourceJsonEditor.session.addMarker(range, "resultSelection", "fillLine", true);
+                    const selectionMarker = this.resourceJsonEditor.session.addMarker(range, "resultSelection", "fullLine", true);
                     // after 1.5 seconds remove the highlight.
                     setTimeout(() => {
                       this.resourceJsonEditor?.session.removeMarker(selectionMarker);
@@ -2708,9 +2828,17 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         "fhirpath.js",
         "java (HAPI)",
         "java (IBM)",
+        "fhirpath-py (Beda Software)",
+        "Aidbox (Health Samurai)",
         ".NET (firely-R5)",
         "fhirpath.js (R5)",
         "java (HAPI-R5)",
+        "Aidbox (Health Samurai-R5)",
+      ],
+      externalExecutionEngines: [
+        "fhirpath-py (Beda Software)",
+        "Aidbox (Health Samurai)",
+        "Aidbox (Health Samurai-R5)",
       ],
       shareToolTipMessage: shareTooltipText,
       shareZulipToolTipMessage: shareZulipTooltipText,

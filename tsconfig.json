@@ -36,6 +36,7 @@
   },
   "exclude": [
     "node_modules",
+    "fhirpath-ai",
     ".nuxt",
     "dist"
   ]

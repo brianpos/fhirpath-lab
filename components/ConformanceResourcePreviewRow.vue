@@ -17,10 +17,22 @@
     </div>
     <!-- <span v-if="data.markDownDescription">Description: {{ data.markDownDescription }}</span> -->
     <!-- <code>{{ JSON.stringify(data, null, 2) }}</code> -->
+    <div v-if="data.extendedDescription">
+      <code class="fhirpath">{{ data.extendedDescription }}</code>
+    </div>
   </span>
 </template>
 
 <style scoped>
+code.fhirpath {
+  margin-top: 4px;
+  margin-left: 48px;
+  padding: 8px;
+  padding-left: 16px;
+  display: block;
+  font-size: 14px;
+}
+
 .label{
   color: lightslategray;
 }
@@ -44,9 +56,10 @@ import { marked } from "marked";
 import { formatDate } from "~/helpers/datetime";
 
 export default Vue.extend({
-  props: ["data2", "simple", "modelValue"],
+  props: ["data2", "simple", "modelValue", "row"],
   created() {
-    if (this.$vnode.data) this.data = (this.$vnode.data as any).row;
+    this.data = this.row;
+    // if (this.$vnode.data) this.data = (this.$vnode.data as any).row;
     // console.log(this.data);
   },
   methods: {

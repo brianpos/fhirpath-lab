@@ -179,7 +179,7 @@ export default Vue.extend({
   },
   computed:{
     showAiModelSettings: function(): boolean {
-      return (this.defaultProviderField == 'Say the magic word')
+      return true // (this.defaultProviderField == 'Say the magic word')
        || this.openAIKey != undefined && this.openAIKey != ''
        || this.openAIBasePath != undefined && this.openAIBasePath != '';
     },
@@ -267,7 +267,8 @@ export default Vue.extend({
                   }
                 } else {
                   console.log(err);
-                  this.FhirServerErrorMessage = err.message;
+                  if (err instanceof Error)
+                    this.FhirServerErrorMessage = err.message;
                 }
               }
             }
@@ -284,7 +285,8 @@ export default Vue.extend({
           }
         } else {
           console.log(err);
-          this.FhirServerErrorMessage = err.message;
+          if (err instanceof Error)
+            this.FhirServerErrorMessage = err.message;
         }
       }
 

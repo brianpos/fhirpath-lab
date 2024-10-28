@@ -167,13 +167,13 @@ export function getLink(
   return undefined;
 }
 
-const FhirpathLabCodeSystem = "http://fhirpath-lab.com/CodeSystem/error-codes";
+export const FhirpathLabCodeSystem = "http://fhirpath-lab.com/CodeSystem/error-codes";
 
-const errorCodingExpandValueSet: Coding = {system: FhirpathLabCodeSystem, code: "exp-01", display: "Expansion error" };
-const errorCodingLoadPubVersions: Coding = {system: FhirpathLabCodeSystem, code: "lpv-01", display: "Load published versions error" };
-const errorCodingLoadResource: Coding = {system: FhirpathLabCodeSystem, code: "lr-01", display: "Load fhir resource error" };
-const errorCodingSaveResource: Coding = {system: FhirpathLabCodeSystem, code: "sr-01", display: "Save fhir resource error" };
-const errorCodingSearch: Coding = {system: FhirpathLabCodeSystem, code: "sr-01", display: "Search fhir resource error" };
+export const errorCodingExpandValueSet: Coding = {system: FhirpathLabCodeSystem, code: "exp-01", display: "Expansion error" };
+export const errorCodingLoadPubVersions: Coding = {system: FhirpathLabCodeSystem, code: "lpv-01", display: "Load published versions error" };
+export const errorCodingLoadResource: Coding = {system: FhirpathLabCodeSystem, code: "lr-01", display: "Load fhir resource error" };
+export const errorCodingSaveResource: Coding = {system: FhirpathLabCodeSystem, code: "sr-01", display: "Save fhir resource error" };
+export const errorCodingSearch: Coding = {system: FhirpathLabCodeSystem, code: "sr-01", display: "Search fhir resource error" };
 
 
 export function CreateOperationOutcome(
@@ -214,7 +214,7 @@ export async function searchPage<T>(host: EasyTableDefinition<T>, url: string, m
     host.cancelSource = axios.CancelToken.source();
     host.loadingData = true;
     let token = host.cancelSource.token;
-    let headers: AxiosRequestHeaders = { "Accept": requestFhirAcceptHeaders };
+    let headers = { "Accept": requestFhirAcceptHeaders };
     const response = await axios.get<Bundle>(url, {
       cancelToken: token,
       headers: headers
@@ -288,7 +288,7 @@ export function calculateNextVersion(versions: (string | undefined)[]): string {
 export async function loadPublishedVersions<TData extends ConformanceResourceInterface>(serverBaseUrl: string, resourceType: string, canonicalUrl: string, data: WithPublishingHistory<TData>) {
   const urlRequest = `${serverBaseUrl}/${resourceType}?url=${canonicalUrl}&_summary=true`;
   try {
-    let headers: AxiosRequestHeaders = {
+    let headers = {
       'Cache-Control': 'no-cache',
       "Accept": requestFhirAcceptHeaders
     };
@@ -342,7 +342,7 @@ export async function loadFhirResource<TData extends fhir4b.FhirResource>(server
     }
 
     urlRequest = `${serverBaseUrl}/${resourceType}/${loadResourceId}`;
-    let headers: AxiosRequestHeaders = {
+    let headers = {
       'Cache-Control': 'no-cache',
       "Accept": requestFhirAcceptHeaders
     };
@@ -378,6 +378,7 @@ export async function loadCanonicalResource<TData extends fhir4b.FhirResource, C
 
   var loadedResource = data.raw as ConformanceResourceInterface;
   if (loadedResource) {
+    data.loadedUrl = serverBaseUrl + '/' + loadedResource.resourceType + '/' + loadedResource.id;
     if (loadedResource.text?.status === "generated") delete loadedResource.text;
 
     if (routeId.endsWith(":new") && routeId !== ":new") {
@@ -413,15 +414,14 @@ export async function loadCanonicalResource<TData extends fhir4b.FhirResource, C
 
 export async function saveFhirResource<TData extends fhir4b.FhirResource>(serverBaseUrl: string, data: BaseResourceData<TData>): Promise<fhir4b.OperationOutcome | undefined> {
   data.saving = true;
-  var urlRequest;
+  let urlRequest;
   try {
-    const resource = data.raw as fhir4b.FhirResource;
     console.log("save " + data.raw?.id);
     data.showOutcome = undefined;
     data.saveOutcome = undefined;
 
-    var response: AxiosResponse<TData, any>;
-    let headers: AxiosRequestHeaders = {
+    let response: AxiosResponse<TData, any>;
+    let headers = {
       'Cache-Control': 'no-cache',
       "Accept": requestFhirAcceptHeaders,
       'Content-Type': requestFhirContentTypeHeaders
@@ -449,7 +449,7 @@ export async function saveFhirResource<TData extends fhir4b.FhirResource>(server
       return CreateOperationOutcome("fatal", "exception", "Server: " + err.message, errorCodingSaveResource, urlRequest);
     }
     return CreateOperationOutcome("fatal", "exception", "Client: " + err, errorCodingSaveResource, urlRequest);
-    }
+  }
 }
 
 export async function expandValueSet(serverBaseUrl: string, vsCanonical: string, filter?: string): Promise<fhir4b.ValueSetExpansion | fhir4b.OperationOutcome> {

@@ -31,11 +31,11 @@
             maintain the logic more easily
           </div>
         </a>
-        <v-btn dark color="#3F81AE" class="link-item text-decoration-none" href="FhirMapper2">
+        <v-btn dark color="#3F81AE" class="link-item text-decoration-none" href="fml">
           <v-icon left> mdi-chart-gantt </v-icon>
             Mapper
         </v-btn>
-        <a href="FhirMapper2" class="link-plain-text">
+        <a href="fml" class="link-plain-text">
           <div>
             Test page for mapping to/from FHIR resources using the <a href="https://www.hl7.org/fhir/mapping-language.html">FHIR Mapping Language</a>
           </div>
@@ -55,7 +55,7 @@
         </v-btn>
         <a href="Questionnaire/tester" class="link-plain-text">
           <div>
-            <i>(Not so)</i> Secret test page for testing FHIR Questionnaires using the <a href="https://build.fhir.org/ig/HL7/sdc">SDC</a> specification
+            Test page for testing FHIR Questionnaires using the <a href="https://build.fhir.org/ig/HL7/sdc">SDC</a> specification
           </div>
         </a>
       </div>
@@ -66,17 +66,23 @@
         (defaulting test resource ID "example")
       </p>
       <p>
-        <b>Note:</b> As the .net and java fhirpath engines don't run in the browser this data is sent to a cloud
+        <b>Note:</b> As the .net, java, python and closure fhirpath engines don't run in the browser this data is sent to a cloud
         service to process these requests. None of this data is persisted outside the call itself.
-        Using individually identifiable data with this test utility is prohibited.<br/>
+        <v-alert outlined border="left" type="error">
+          <b>Test Server:</b> This is an open testing server and should not be used with/for production data.<br/>
+          Using individually identifiable data with this test utility is prohibited.<br/>
+          Externally hosted services are indicated with a <v-icon small>mdi-web</v-icon> icon, do not select these if you do not want to use those services.
+        </v-alert>
         These are the versions of each of the fhirpath engines in use:
       </p>
       <ul style="padding-left: 40px">
-        <li>Firely SDK FHIRPath Engine v5.8.1 <i>(server side)</i></li>
+        <li>Firely SDK FHIRPath Engine v5.10.0 <i>(server side)</i></li>
         <li>FHIRPath.js v{{ fhirpathVersion }}</li>
-        <li>HAPI FHIRPath v7.0.2 <i>(server side)</i></li>
-        <li>IBM FHIRPath v4.11.1 (LinuxForHealth) <i>(server side)</i></li>
-        <li>Dotnet FHIRMappingLanguage Engine v5.1.0 <i>(server side)</i></li>
+        <li>HAPI FHIRPath v7.4.0 <i>(server side)</i></li>
+        <li>IBM FHIRPath v4.11.1 (LinuxForHealth)<i> (server side)</i></li>
+        <li>Dotnet FHIRMappingLanguage Engine v5.10.0<i> (server side)</i></li>
+        <li>FHIRPath-py <i>(server side - externally hosted by Beda Software)</i></li>
+        <li>Aidbox FHIRPath Engine (Health Samurai)<i> (server side - externally hosted by Health Samurai)</i></li>
       </ul>
       <br />
       <h5>Disclaimers:</h5>
@@ -89,22 +95,24 @@
       <div class="extra-links">
         <div>
           <h5>Specifications</h5>
-          <a href="http://hl7.org/fhirpath/" target="_blank">FHIRPath</a><br />
-          <a href="http://hl7.org/fhir/fhirpath.html" target="_blank">FHIRPath FHIR extensions</a><br />
-          <a href="http://hl7.org/fhir" target="_blank">FHIR (R4)</a>
+          <a href="https://hl7.org/fhirpath/" target="_blank">FHIRPath</a><br />
+          <a href="https://hl7.org/fhir/fhirpath.html" target="_blank">FHIRPath FHIR extensions</a><br />
+          <a href="https://hl7.org/fhir" target="_blank">FHIR (R4)</a><br />
+          <a href="https://hl7.org/fhir/mapping-language.html" target="_blank">FHIR Mapping Language</a>
         </div>
         <div>
           <h5>Community</h5>
-          <a href="https://chat.fhir.org/#narrow/stream/179266-fhirpath" target="_blank">FHIRPath</a><br />
-          <a href="https://chat.fhir.org/#narrow/stream/179298-fhirpath.2Ejs" target="_blank">FHIRPath.js</a><br />
-          <a href="https://chat.fhir.org/#narrow/stream/179171-dotnet" target="_blank">FHIR with .net</a>
+          <a href="https://chat.fhir.org/#narrow/stream/179266-fhirpath" target="_blank">FHIRPath chat</a><br />
+          <a href="https://chat.fhir.org/#narrow/stream/179298-fhirpath.2Ejs" target="_blank">FHIRPath.js chat</a><br />
+          <a href="https://chat.fhir.org/#narrow/stream/179171-dotnet" target="_blank">FHIR with .net chat</a><br />
+          <a href="https://chat.fhir.org/#narrow/stream/379173-FHIR-Mapping-Language" target="_blank">FHIR Mapping Language chat</a>
         </div>
         <div>
           <h5>Source Code</h5>
           <a href="https://github.com/brianpos/fhirpath-lab" target="_blank">fhirpath-lab</a><br />
           <a href="https://github.com/HL7/fhirpath.js" target="_blank">fhirpath.js</a><br />
-          <a href="https://github.com/FirelyTeam/firely-net-common/tree/develop/src/Hl7.FhirPath"
-            target="_blank">FirelySDK fhirpath (.net)</a>
+          <a href="https://github.com/FirelyTeam/firely-net-common/tree/develop/src/Hl7.FhirPath" target="_blank">FirelySDK fhirpath (.net)</a><br />
+          <a href="https://github.com/beda-software/fhirpath-py" target="_blank">fhirpath-py</a>
         </div>
       </div>
       <br/>

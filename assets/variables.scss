@@ -128,7 +128,53 @@ span.markdown {
   display: block;
 }
 
-/* EasyTable (search tables)*/
-.ve-table-body-tr {
-  cursor: pointer;
+/* Easy Table (search tables)*/
+.v-data-table table {
+  border: thin solid #eee;
+}
+
+.theme--light.v-data-table.v-data-table--fixed-header thead th,
+.v-data-table table th {
+  background-color: #fafafa;
+  font-weight: 500 !important;
+}
+// .v-data-table__expanded__content {
+//   // cursor: pointer;
+// }
+
+tr.v-data-table__expanded__content {
+  box-shadow: none !important;
+}
+
+.v-data-table > .v-data-table__wrapper .v-data-table__mobile-row {
+  min-height: 38px;
+}
+
+.empty-data {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: min(200px, 80vh);
+  width: 100%;
+  color: #666;
+  font-size: 16px;
+  border-top: 0;
+}
+
+tr.v-data-table__expanded__row > td {
+  // border-bottom: none !important;
+  // background-color: rgba(173, 216, 230, 0.199);
+}
+
+tr.v-data-table__expanded__content > td {
+  // border-left: thin solid #eee;
+  // border-right: thin solid #eee;
+  border-bottom: thin solid #eee;
+  padding: 10px !important;
+  // background-color: rgba(173, 216, 230, 0.199);
+}
+
+/* We don't use the data footer in any of the lab's tables, so hide them (nav panes)*/
+.v-data-footer {
+  display: none;
 }

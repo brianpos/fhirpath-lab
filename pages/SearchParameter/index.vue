@@ -6,23 +6,13 @@ tr.ve-table-body-tr {
 .tool-button {
   max-width: 10ch;
 }
+
 .progress-button {
   max-width: 25px;
 }
+
 .fl-toolbar {
   margin-bottom: 6px;
-}
-
-.empty-data {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: min(200px, 80vh);
-  width: 100%;
-  color: #666;
-  font-size: 16px;
-  border: 1px solid #eee;
-  border-top: 0;
 }
 </style>
 
@@ -30,20 +20,10 @@ tr.ve-table-body-tr {
   <div>
     <HeaderNavbar @close-settings="settingsClosed" :extended="true">
       <template v-slot:extension>
-        <search-navigator
-          label="Search Paremeters"
-          :count="totalCount"
-          :enableFirst="!!firstPageLink"
-          :enablePrevious="!!previousPageLink"
-          :enableNext="!!nextPageLink"
-          :enableLast="!!lastPageLink"
-          :first="firstPage"
-          :previous="previousPage"
-          :next="nextPage"
-          :last="lastPage"
-          :add="addNew"
-          :showAdd="false"
-        />
+        <search-navigator label="Search Paremeters" :count="totalCount" :enableFirst="!!firstPageLink"
+          :enablePrevious="!!previousPageLink" :enableNext="!!nextPageLink" :enableLast="!!lastPageLink"
+          :first="firstPage" :previous="previousPage" :next="nextPage" :last="lastPage" :add="addNew"
+          :showAdd="false" />
       </template>
     </HeaderNavbar>
 
@@ -51,30 +31,15 @@ tr.ve-table-body-tr {
       <v-form class="fl-toolbar">
         <v-row style="align-items: flex-end">
           <v-col>
-            <v-text-field
-              label="Name"
-              v-model="searchFor"
-              @input="searchFhirServer"
-              hide-details="auto"
-            />
+            <v-text-field label="Name" v-model="searchFor" @input="searchFhirServer" hide-details="auto" />
           </v-col>
           <v-col class="status-col">
-            <v-select
-              label="Status"
-              :items="searchPublishingStatuses"
-              v-model="searchForStatus"
-              @input="searchFhirServer"
-              hide-details="auto"
-              clearable
-            />
+            <v-select label="Status" :items="searchPublishingStatuses" v-model="searchForStatus"
+              @input="searchFhirServer" hide-details="auto" clearable />
           </v-col>
           <v-col>
-            <v-text-field
-              label="Publisher"
-              v-model="searchForPublisher"
-              @input="searchFhirServer"
-              hide-details="auto"
-            />
+            <v-text-field label="Publisher" v-model="searchForPublisher" @input="searchFhirServer"
+              hide-details="auto" />
           </v-col>
           <v-col class="tool-button">
             <v-btn small @click="clearSearchFields">Clear</v-btn>
@@ -83,17 +48,27 @@ tr.ve-table-body-tr {
       </v-form>
       <OperationOutcomeOverlay v-if="outcome" :saveOutcome="outcome" :showOutcome="(outcome != undefined)"
         title="Search Errors/Warnings" :popupWhenErrors="false" @close="outcome = undefined" />
-        
-      <ve-table
-        :columns="columns"
-        :table-data="tableData"
-        :event-custom-option="eventCustomOption"
-        :expand-option="expandOption"
-        row-key-field-name="id"
-      />
-      <div v-show="showEmpty && !loadingData" class="empty-data">
-        (No results)
-      </div>
+
+      <v-data-table :headers="columns" :items="tableData" :event-custom-option="eventCustomOption"
+        row-key-field-name="id" :fixed-header="true" :items-per-page="-1"
+        :disable-pagination="true" show-expand @row:click="navigateSelection" :expanded.sync="expanded">
+        <template v-slot:item.title="{ index, item }">
+          <a @click="navigateSelection(item)">{{ item.title }}</a>
+        </template>
+        <template v-slot:expanded-item="{ headers, item }">
+          <td :colspan="headers.length">
+            <conformance-resource-preview-row :row="item" />
+          </td>
+        </template>
+        <template v-slot:item.favourite="{ index, item }">
+          <FavIcon v-if="item.favourite" />
+        </template>
+        <template slot="no-data">
+          <div v-show="showEmpty && !loadingData" class="empty-data">
+            (No results)
+          </div>
+        </template>
+      </v-data-table>
     </div>
     <table-loading v-if="loadingData" />
   </div>
@@ -123,10 +98,11 @@ import { EasyTableDefinition_defaultValues } from "~/models/EasyTableDefinition"
 import { ConformanceSearchData } from "models/ConformanceSearchData";
 
 export default Vue.extend({
-  head: {
-    title: "Search Parameter",
-  },
+  // head: {
+  //   title: "Search Parameter",
+  // },
   mounted() {
+    document.title = "Search Parameter";
     this.showAdvancedSettings = settings.showAdvancedSettings();
     const searchData = settings.getSearchData("SearchParameter");
     if (searchData) {
@@ -221,6 +197,16 @@ export default Vue.extend({
       };
       settings.saveSearchData("SearchParameter", searchData);
     },
+
+    navigateSelection(data: SearchParameterTableData, event: PointerEvent) {
+      const selectedResourceId = data.id;
+      if (event?.ctrlKey) {
+        window.open("/SearchParameter/" + selectedResourceId, '_blank');
+      }
+      else {
+        this.$router.push("/SearchParameter/" + selectedResourceId);
+      }
+    },
   },
   data(): SearchParameterTableDefinition {
     return {
@@ -231,10 +217,10 @@ export default Vue.extend({
               console.log("click::", row, rowIndex, event);
               var data: SearchParameterTableData = row;
               console.log("row data::", data);
-              if (event.ctrlKey){
-                window.open("/SearchParameter/" + data.id, '_blank'); 
+              if (event.ctrlKey) {
+                window.open("/SearchParameter/" + data.id, '_blank');
               }
-              else{
+              else {
                 this.$router.push("/SearchParameter/" + data.id);
               }
             },
@@ -245,39 +231,16 @@ export default Vue.extend({
           };
         },
       },
-      expandOption: {
-        trigger: "icon",
-        render: (
-          {
-            row,
-            column,
-            rowIndex,
-          }: { row: ConformanceResourceTableData; column: any; rowIndex: number },
-          h: any
-        ): any => {
-          return h("ConformanceResourcePreviewRow", { row: row }) as VNode;
-        },
-      },
       columns: [
-        { field: "title", key: "title", title: "Name", align: "left", type: "expand" },
-        { field: "version", key: "ver", title: "Version", align: "left" },
-        { field: "status", key: "stat", title: "Status", align: "left" },
-//        { field: "useContext", key: "uc", title: "Use Context", align: "left" },
-        { field: "date", key: "date", title: "Publish Date", align: "left" },
-        { field: "publisher", key: "pub", title: "Publisher", align: "left" },
-        { field: "base", key: "base", title: "Resource(s)", align: "left" },
-        { field: "id", key: "id", title: "ID", align: "left" },
-        {
-          field: "favourite",
-          key: "fav",
-          title: "",
-          align: "center",
-          renderBodyCell: (cellData: any, h: any) => {
-            if ((cellData.row as ConformanceResourceTableData).favourite)
-              return h("FavIcon") as VNode;
-            return { text: "" } as VNode;
-          },
-        },
+        { value: "title", key: "title", text: "Name", align: "start", type: "expand", sortable: false },
+        { value: "version", key: "ver", text: "Version", align: "start", sortable: false },
+        { value: "status", key: "stat", text: "Status", align: "start", sortable: false },
+        //        { value: "useContext", key: "uc", text: "Use Context", align: "start" },
+        { value: "date", key: "date", text: "Publish Date", align: "start", sortable: false },
+        { value: "publisher", key: "pub", text: "Publisher", align: "start", sortable: false },
+        { value: "base", key: "base", text: "Resource(s)", align: "start", sortable: false },
+        { value: "id", key: "id", text: "ID", align: "start", sortable: false },
+        { value: "favourite", key: "fav", text: "", align: "center", sortable: false },
       ],
       tableData: [],
       outcome: undefined,
@@ -285,7 +248,8 @@ export default Vue.extend({
       searchForStatus: undefined,
       searchForPublisher: undefined,
       searchPublishingStatuses: searchPublishingStatuses,
-      ... EasyTableDefinition_defaultValues
+      searchUseContexts: [],
+      ...EasyTableDefinition_defaultValues
     };
   },
 });

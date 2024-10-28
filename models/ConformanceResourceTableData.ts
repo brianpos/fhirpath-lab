@@ -5,7 +5,7 @@ export interface ConformanceResourceTableDefinition<TData> extends BaseResourceT
   searchForStatus?: string;
   searchForUseContext?: { system?: string, code: string; display: string; }[];
 
-  searchUseContexts?: FhirpathLabUseContexts[];
+  searchUseContexts: FhirpathLabUseContexts[];
   defaultUseContexts?: FhirpathLabUseContexts[];
   searchPublishingStatuses: string[];
 }
@@ -22,6 +22,7 @@ export interface ConformanceResourceTableData {
   /** Description (markdown format) */
   description?: string;
   favourite?: boolean;
+  extendedDescription?: string;
 }
 
 export interface WithPublishingHistory<TData extends fhir4b.DomainResource> {

@@ -67,7 +67,13 @@
 }
 
 .tab-detail {
+  display: flex;
+  flex-direction: column;
   height: calc(100vh - 204px);
+}
+
+.tab-detail > * {
+  flex-shrink: 0;
 }
 
 .tab-scroll-parent {

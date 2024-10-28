@@ -234,7 +234,7 @@ import {
 import axios, { AxiosRequestHeaders, AxiosResponse } from "axios";
 import { AxiosError } from "axios";
 import { CancelTokenSource } from "axios";
-import { Rules as FhirPathHightlighter_Rules, setCustomHighlightRules } from "~/helpers/fhirpath_highlighter"
+import { setAcePaths, Rules as FhirPathHightlighter_Rules, setCustomHighlightRules } from "~/helpers/fhirpath_highlighter"
 import "~/assets/fhirpath_highlighter.scss"
 
 import "ace-builds";
@@ -268,17 +268,12 @@ interface IFhirMapConverterComputed {
 }
 
 export default Vue.extend<FhirMapConverterData, IFhirMapConverterMethods, IFhirMapConverterComputed>({
-  head: {
-    title: "FML Converter",
-  },
+  // head: {
+  //   title: "FML Converter",
+  // },
   async mounted() {
-    const CDN = 'https://cdn.jsdelivr.net/npm/ace-builds@1.6.0/src-min-noconflict';
-    if (true) {
-      ace.config.set('basePath', CDN);
-      ace.config.set('modePath', CDN);
-      ace.config.set('themePath', CDN);
-      ace.config.set('workerPath', CDN);
-    }
+    document.title = "FML Converter";
+    setAcePaths(ace.config);
 
     // Update the editor's Mode
     var editorDiv: any = this.$refs.aceEditorMap as Element;
@@ -401,7 +396,7 @@ group SetEntryData(source src: Patient, target entry)
         this.cancelSource = axios.CancelToken.source();
         this.loadingData = true;
         let token = this.cancelSource.token;
-        let headers: AxiosRequestHeaders = {
+        let headers = {
           "Cache-Control": "no-cache",
           "Content-Type": requestFhirMapAcceptHeaders,
           "Accept": contentType

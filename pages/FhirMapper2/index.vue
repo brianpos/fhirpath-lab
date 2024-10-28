@@ -24,6 +24,7 @@
             <span>
               <v-btn small icon dark tile @click="showMapSelector=true"><v-icon title="Download an existing map" dark> mdi-download </v-icon></v-btn>
               <!-- <v-btn small icon dark tile><v-icon title="Save Map" dark> mdi-content-save </v-icon></v-btn> -->
+              <v-btn small icon dark tile @click="validateMap"><v-icon title="Validate FML" dark> mdi-note-check-outline </v-icon></v-btn>
             </span>
         </div>
         <div ref="aceEditorExpression"></div>
@@ -390,9 +391,11 @@ import { getExtensionStringValue } from "fhir-extension-helpers";
 // import { getPreferredTerminologyServerFromSDC } from "fhir-sdc-helpers";
 import fhirpath from "fhirpath";
 import fhirpath_r4_model from "fhirpath/fhir-context/r4";
-import { Rules as FhirPathHightlighter_Rules, setCustomHighlightRules } from "~/helpers/fhirpath_highlighter"
+import { setAcePaths, Rules as FhirPathHightlighter_Rules, setCustomHighlightRules } from "~/helpers/fhirpath_highlighter"
 import "~/assets/fhirpath_highlighter.scss"
 import { IApplicationInsights } from '@microsoft/applicationinsights-web'
+
+import { parseFML } from "~/helpers/fml_parser";
 
 import "ace-builds";
 import ace from "ace-builds";
@@ -473,19 +476,13 @@ function getTraceValue(entry: fhir4b.ParametersParameter): TraceData[] {
 }
 
 export default Vue.extend({
-  components: {
-  },
-  head: {
-    title: "FhirPathTester",
-  },
+  // components: {
+  // },
+  // head: {
+  //   title: "FhirPathTester",
+  // },
   async mounted() {
-    const CDN = 'https://cdn.jsdelivr.net/npm/ace-builds@1.6.0/src-min-noconflict';
-    if (true) {
-      ace.config.set('basePath', CDN);
-      ace.config.set('modePath', CDN);
-      ace.config.set('themePath', CDN);
-      ace.config.set('workerPath', CDN);
-    }
+    setAcePaths(ace.config);
 
     // Update the editor's Mode
     var editorDiv: any = this.$refs.aceEditorExpression as Element;
@@ -505,11 +502,10 @@ export default Vue.extend({
       });
 
       setCustomHighlightRules(this.expressionEditor, FhirPathHightlighter_Rules);
-      this.expressionEditor.setValue(`/// name = "SDOHCC-PRAPARE-Map"
-/// status = draft
-/// version = 0.1
-
-map "http://fhirpath-lab.com/StructureMap/intro-patient-map" = "IntroPatientMap"
+      this.expressionEditor.setValue(`/// url = 'http://fhirpath-lab.com/StructureMap/intro-patient-map'
+/// name = 'IntroPatientMap'
+/// status = 'draft'
+/// version = '0.1'
 
 uses "http://hl7.org/fhir/StructureDefinition/Patient" as source
 uses "http://hl7.org/fhir/StructureDefinition/Bundle" as target
@@ -597,10 +593,6 @@ group SetEntryData(source src: Patient, target entry)
         expression: this.$route.query.expression as string
       };
       {
-        if (this.$route.query.context) {
-          data.context = this.$route.query.context as string;
-        }
-
         if (this.$route.query.resource) {
           data.resource = this.$route.query.resource as string;
         }
@@ -621,16 +613,6 @@ group SetEntryData(source src: Patient, target entry)
         if (p.expression) {
           if (p.resource) {
             this.resourceId = p.resource;
-          }
-
-          if (this.expressionContextEditor) {
-            if (p.context) {
-              this.expressionContextEditor.setValue(p.context ?? '');
-              this.expressionContextEditor.clearSelection();
-            }
-            else {
-              this.expressionContextEditor.setValue('');
-            }
           }
 
           const resourceJson = p.resourceJson;
@@ -703,6 +685,18 @@ group SetEntryData(source src: Patient, target entry)
       this.showOutcome = undefined;
     },
 
+    validateMap(){
+      if (this.expressionEditor) {
+        const fmlText = this.expressionEditor.getValue();
+        let tree = parseFML(fmlText);
+        const errOutcome = tree as fhir4b.OperationOutcome;
+        if (errOutcome && errOutcome.resourceType === "OperationOutcome") {
+          this.saveOutcome = errOutcome;
+          this.showOutcome = true;
+          this.setResultJson(JSON.stringify(errOutcome, null, 4));
+        }
+      }
+    },
     reformatTestResource(){
       if (this.resourceJsonEditor){
         const jsonValue = this.resourceJsonEditor.getValue();
@@ -812,7 +806,7 @@ group SetEntryData(source src: Patient, target entry)
         this.cancelSource = axios.CancelToken.source();
         this.loadingData = true;
         let token = this.cancelSource.token;
-        let headers: AxiosRequestHeaders = {
+        let headers = {
           "Cache-Control": "no-cache",
           "Accept": requestFhirAcceptHeaders
         }
@@ -878,7 +872,7 @@ group SetEntryData(source src: Patient, target entry)
         this.cancelSource = axios.CancelToken.source();
         this.loadingData = true;
         let token = this.cancelSource.token;
-        let headers: AxiosRequestHeaders = {
+        let headers = {
           "Cache-Control": "no-cache",
           "Accept": requestFhirMapAcceptHeaders
         }

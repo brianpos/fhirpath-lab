@@ -201,12 +201,12 @@ import {
   requestFhirAcceptHeaders,
   CreateOperationOutcome,
 } from "~/helpers/searchFhir";
-import axios, { AxiosRequestHeaders, AxiosResponse } from "axios";
+import axios from "axios";
 import { AxiosError } from "axios";
 import { CancelTokenSource } from "axios";
 import fhirpath from "fhirpath";
 import fhirpath_r4_model from "fhirpath/fhir-context/r4";
-import { Rules as FhirPathHightlighter_Rules, setCustomHighlightRules } from "~/helpers/fhirpath_highlighter"
+import { setAcePaths, Rules as FhirPathHightlighter_Rules, setCustomHighlightRules } from "~/helpers/fhirpath_highlighter"
 import "~/assets/fhirpath_highlighter.scss"
 
 import "ace-builds";
@@ -489,12 +489,13 @@ interface IFhirPathProps {
 }
 
 export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFhirPathProps>({
-  head: {
-    title: "FhirPathTester",
-  },
+  // head: {
+  //   title: "FhirPathTester",
+  // },
   async mounted() {
     this.showAdvancedSettings = settings.showAdvancedSettings();
     this.defaultProviderField = settings.getDefaultProviderField();
+    setAcePaths(ace.config);
   },
   computed: {
     tabDetails(): TabData[] {
@@ -539,14 +540,6 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
   methods: {
     async twinPaneMounted(): Promise<void> {
       this.$nextTick(async () => {
-        const CDN = 'https://cdn.jsdelivr.net/npm/ace-builds@1.6.0/src-min-noconflict';
-        if (true) {
-          ace.config.set('basePath', CDN);
-          ace.config.set('modePath', CDN);
-          ace.config.set('themePath', CDN);
-          ace.config.set('workerPath', CDN);
-        }
-
         // Update the editor's Mode
         var editorDiv: any = this.$refs.aceEditorExpression as Element;
         if (editorDiv) {
@@ -564,7 +557,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
             wrapBehavioursEnabled: true
           });
 
-          setCustomHighlightRules(this.expressionEditor, FhirPathHightlighter_Rules);
+          // setCustomHighlightRules(this.expressionEditor, FhirPathHightlighter_Rules);
           this.expressionEditor.setValue(exampleSqlonfhirViewDefinition);
           this.expressionEditor.clearSelection();
           this.expressionEditor.on("change", this.fhirpathExpressionChangedEvent)
@@ -808,7 +801,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         this.cancelSource = axios.CancelToken.source();
         this.loadingData = true;
         let token = this.cancelSource.token;
-        let headers: AxiosRequestHeaders = {
+        let headers = {
           "Cache-Control": "no-cache",
           "Accept": requestFhirAcceptHeaders
         }

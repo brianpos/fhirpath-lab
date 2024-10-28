@@ -4,13 +4,7 @@ import {
   IOpenAISettings,
 } from "~/helpers/openai_utils";
 import Chat from "~/components/Chat.vue";
-import {
-  ChatMessage,
-  OpenAIClient,
-  AzureKeyCredential,
-  OpenAIKeyCredential,
-  OpenAIClientOptions,
-} from "@azure/openai";
+import { ChatCompletionCreateParamsNonStreaming, ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import { types } from "fhirpath";
 
 // 1. Determine data required for Query
@@ -48,7 +42,7 @@ export async function DetectDataRequiredForQuery(
   settings: IOpenAISettings,
   query: string
 ): Promise<IDataRequired> {
-  let prompt: Array<ChatMessage> = [];
+  let prompt: Array<ChatCompletionMessageParam> = [];
 
   let systemPrompt = `
 You are a background system assisting with verifying what data would be required to answer a provided question.
@@ -75,6 +69,7 @@ What data would be required to answer the following question:
   }
 
   return {
+    Mode: "unknown", 
     QuestionnaireDefinition: 1,
     QuestionnaireResponse: 1,
     FocusedQuestionnaireItem: 1,
@@ -91,7 +86,7 @@ export function GetQuestionnaireSystemPrompt(): string {
   * You are a casual, helpful assistant with a detailed understanding of both FHIR structures, the FHIRPath language, and the FHIR Structured Data Capture (SDC) Implementation Guide.
   * You provide concise responses with suggested follow-up questions as needed.
   * all replies will be interpreted as markdown content, so you can use that for emphasis.
-  * When providing code blocks in markdown you can use the following languages: \`json\`, \`jsonpatch\`, \`log\`, \`fhirpath\`, \`fhircontext\`, \`questionnaire\`, \`item\`, and \`fhir\` where needed - the application will be able to leverage these tagged markdown blocks.
+  * When providing code blocks in markdown you can use the following languages: \`json\`, \`jsonpatch\`, \`log\`, \`fhirpath\`, \`fhircontext\`, \`questionnaire\`, \`item\`, \`fhir\`, and \`fsh\` where needed - the application will be able to leverage these tagged markdown blocks.
   * If you don't know the answer, just say 'I don't know'.
   * If reviewing content there is no need to highlight things that don't need to be changed.
   * Questionnaire validations should use the SDC constraint extension.
@@ -99,6 +94,23 @@ export function GetQuestionnaireSystemPrompt(): string {
   * Any general fhir resource snippits should be provided in a markdown block with the language \`fhir\` or \`json\` if unsure.
   * Reflect on your answer to check for accuracy and clarity, and report any possible issues with the answer.
   * Do not answer questions that are not about FHIR, SDC, Questionnaires or FHIRPath.
+`;
+  return systemPrompt;
+}
+
+export function GetFmlSystemPrompt(): string {
+  // ---
+  // `+ fhirpathGrammar +`
+  // ---
+  const systemPrompt = `
+  * You are a casual, helpful assistant with a detailed understanding of FHIR structures, the FHIRPath language, and the FHIR Mapping Language (FML).
+  * You provide concise responses with suggested follow-up questions as needed.
+  * all replies will be interpreted as markdown content, so you can use that for emphasis.
+  * When providing code blocks in markdown you can use the following languages: \`fml\`, \`fhir\`, and \`fsh\` where needed - the application will be able to leverage these tagged markdown blocks.
+  * If you don't know the answer, just say 'I don't know'.
+  * If reviewing content there is no need to highlight things that don't need to be changed.
+  * Reflect on your answer to check for accuracy and clarity, and report any possible issues with the answer.
+  * Do not answer questions that are not about FHIR, FML or FHIRPath.
 `;
   return systemPrompt;
 }

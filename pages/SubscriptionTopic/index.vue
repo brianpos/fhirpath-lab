@@ -12,18 +12,6 @@ tr.ve-table-body-tr {
 .fl-toolbar {
   margin-bottom: 6px;
 }
-
-.empty-data {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: min(200px, 80vh);
-  width: 100%;
-  color: #666;
-  font-size: 16px;
-  border: 1px solid #eee;
-  border-top: 0;
-}
 </style>
 
 <template>
@@ -83,16 +71,36 @@ tr.ve-table-body-tr {
       </v-form>
       <OperationOutcomeOverlay v-if="outcome" :saveOutcome="outcome" :showOutcome="(outcome != undefined)"
         title="Search Errors/Warnings" :popupWhenErrors="false" @close="outcome = undefined" />
-      <ve-table
-        :columns="columns"
-        :table-data="tableData"
+
+      <v-data-table
+        :headers="columns"
+        :items="tableData"
         :event-custom-option="eventCustomOption"
-        :expand-option="expandOption"
         row-key-field-name="id"
-      />
-      <div v-show="showEmpty && !loadingData" class="empty-data">
-        (No results)
-      </div>
+        :fixed-header="true"
+        :items-per-page="-1"
+        :disable-pagination="true"
+        show-expand
+        @row:click="navigateSelection"
+        :expanded.sync="expanded"
+      >
+        <template v-slot:item.title="{ index, item }">
+          <a @click="navigateSelection(item)">{{ item.title }}</a>
+        </template>
+        <template v-slot:expanded-item="{ headers, item }">
+          <td :colspan="headers.length">
+            <conformance-resource-preview-row :row="item" />
+          </td>
+        </template>
+        <template v-slot:item.favourite="{ index, item}">
+          <FavIcon v-if="item.favourite"/>
+        </template>
+        <template slot="no-data">
+          <div v-show="showEmpty && !loadingData" class="empty-data">
+            (No results)
+          </div>
+        </template>
+      </v-data-table> 
     </div>
     <table-loading v-if="loadingData" />
   </div>
@@ -122,9 +130,9 @@ import { EasyTableDefinition_defaultValues } from "~/models/EasyTableDefinition"
 import { ConformanceSearchData } from "models/ConformanceSearchData";
 
 export default Vue.extend({
-  head: {
-    title: "Subscription Topic",
-  },
+  // head: {
+  //   title: "Subscription Topic",
+  // },
   mounted() {
     this.showAdvancedSettings = settings.showAdvancedSettings();
     const searchData = settings.getSearchData("SubscriptionTopic");
@@ -218,6 +226,15 @@ export default Vue.extend({
       };
       settings.saveSearchData("SubscriptionTopic", searchData);
     },
+    navigateSelection(data: SubscriptionTopicTableData, event: PointerEvent) {
+      const selectedResourceId = data.id;
+      if (event?.ctrlKey) {
+        window.open("/SubscriptionTopic/" + selectedResourceId, '_blank');
+      }
+      else {
+        this.$router.push("/SubscriptionTopic/" + selectedResourceId);
+      }
+    },
   },
   data(): SubscriptionTopicTableDefinition {
     return {
@@ -242,39 +259,16 @@ export default Vue.extend({
           };
         },
       },
-      expandOption: {
-        trigger: "icon",
-        render: (
-          {
-            row,
-            column,
-            rowIndex,
-          }: { row: ConformanceResourceTableData; column: any; rowIndex: number },
-          h: any
-        ): any => {
-          return h("ConformanceResourcePreviewRow", { row: row }) as VNode;
-        },
-      },
       columns: [
-        { field: "title", key: "t", title: "Name", align: "left", type: "expand" },
-        { field: "version", key: "ver", title: "Version", align: "left" },
-        { field: "status", key: "status", title: "Status", align: "left" },
-//        { field: "useContext", key: "uc", title: "Use Context", align: "left" },
-        { field: "date", key: "d", title: "Publish Date", align: "left" },
-        { field: "publisher", key: "pub", title: "Publisher", align: "left" },
-        { field: "base", key: "base", title: "Resource(s)", align: "left" },
-        { field: "id", key: "id", title: "ID", align: "left" },
-        {
-          field: "favourite",
-          key: "e",
-          title: "",
-          align: "center",
-          renderBodyCell: (cellData: any, h: any) => {
-            if ((cellData.row as ConformanceResourceTableData).favourite)
-              return h("FavIcon") as VNode;
-            return { text: "" } as VNode;
-          },
-        },
+        { value: "title", key: "t", text: "Name", align: "start", type: "expand", sortable: false },
+        { value: "version", key: "ver", text: "Version", align: "start", sortable: false },
+        { value: "status", key: "status", text: "Status", align: "start", sortable: false },
+//        { value: "useContext", key: "uc", text: "Use Context", align: "start" },
+        { value: "date", key: "d", text: "Publish Date", align: "start", sortable: false },
+        { value: "publisher", key: "pub", text: "Publisher", align: "start", sortable: false },
+        { value: "base", key: "base", text: "Resource(s)", align: "start", sortable: false },
+        { value: "id", key: "id", text: "ID", align: "start", sortable: false },
+        { value: "favourite", key: "e", text: "", align: "center", sortable: false },
       ],
       tableData: [],
       outcome: undefined,
@@ -282,6 +276,7 @@ export default Vue.extend({
       searchForStatus: undefined,
       searchForPublisher: undefined,
       searchPublishingStatuses: searchPublishingStatuses,
+      searchUseContexts: [],
       ... EasyTableDefinition_defaultValues
     };
   },

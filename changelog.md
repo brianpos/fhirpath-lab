@@ -3,7 +3,81 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
-13 May 2024
+# 22 October 2024 (dev)
+* Extensive error handling improvements in the questionnaire tester pre-pop/context tabs
+* Support search bundles in the questionnaire tester pre-pop tab
+
+# 21 October 2024 (dev)
+* Extensive work on the Context and pre-populate tabs in the questionnaire tester
+
+# 16 October 2024 (dev)
+* Enable save support for Questionnaires under very specific conditions (explicit matching publisher and resourceIds)
+
+## 14 October 2024 (dev)
+* Add the `context` tab to provide test data to the pre-populate and extract operations in the questionnaire tester.
+  * Supports `subject` and `author` as parameters to the tester via the URL (If you want to include the display as well as the reference, put it after a comma in the URL parameter e.g. `subject=Patient/123,John Doe`) 
+* Tidy up the tab numbering in the questionnaire tester so that it is selected by name rather than number (to easy maintenance)
+* Update the old "pre-populate" tab to show the items (missed passing through the collection)
+
+## 10 October 2024 (dev)
+* Models tab in the form tester will auto-load any model query passed in the URL
+* Extract tab layout cleaned up
+* Support saving the QuestionnaireResponse in the form tester (after allocating an ID)
+* Update the CSIRO renderer to v0.44.0
+
+## 23 September 2024 (dev)
+* Include a models tab on the form tester to permit providing model(s) to the $extract operation
+
+## 22 September 2024 (dev)
+* Correct the context/content parameters to the $extract operation in the questionnaire tester
+* Capture and report pre-pop issues returned from $populate in the questionnaire tester
+
+## 21 September 2024 (dev)
+* Update form pre-pop tester to include other URL to evaluate the pre-pop against
+
+## 19 September 2024 (dev)
+* Update the CSIRO renderer to v0.40.1
+
+## 18 September 2024 (dev)
+* Update the CSIRO renderer to v0.40.0
+* Enhance the POC $extract Questionnaire tester based on initial testing
+* in the FML test page, show the output tab (if not already visible) after running the test
+* questionnaire test page improved outcome issue handling for save/extract
+
+## 12 September 2024 (dev)
+* Update HealthSamurai Aidbox closure fhirpath engine description
+
+## 19 August 2024 (dev)
+* Update the fhirpath.js to v3.15.1
+* Update the CSIRO renderer to v0.37.2
+* Update new FML window prototype (at /fml)
+* Update the TwinPaneTab control to try and be more consistent with the tab height sizing using flexbox
+* Add the ResourceEditor control
+* StructureDefinition page to use the new ResourceEditor
+* No longer hide the AI Chat config controls behind "Say the magic word"
+
+## 30 July 2024 (dev)
+* Include the HealthSamurai Aidbox closure fhirpath engine
+* Include the Beda Software Python fhirpath engine
+* Include a simple FML validation based on a verified ANTLR grammar (work in progress)
+
+## 18 June 2024
+* Update the LForms renderer to 36.1.3
+* Include the fhirpath expression in the Library search page row extension section
+
+## 11 June 2024
+* Include a POC of the $extract Questionnaire tester
+
+## 8 June 2024
+* Update the Ace editor to the 1.34.2/0.0.48
+* Update the CSIRO pre-pop to 2.2.0
+* Update the CSIRO renderer to 0.35.0
+* Update axios to 1.7.2 (rectifying some security vulnerabilities)
+* remove bootstrap-vue
+* Update marked to 11.0.0
+* Remove use of the EasyTable component (converted to Vuetify datatable) 
+
+## 13 May 2024
 * Include nav shortcuts from the fields, variables, behaviors and pre-pop sections in the questionnaire tester page
 
 ## 11 May 2024
