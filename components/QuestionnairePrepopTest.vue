@@ -116,6 +116,16 @@ export default class QuestionnairePrepopulateTest extends Vue {
     return isIPS;
   }
 
+  async public RunPrePopulation(engine: string): Promise<void> {
+    if (this.executionEngines.includes(engine)) {
+      this.selectedEngine = engine;
+      await this.runPrePopulation();
+    }
+    else {
+      this.outcome = CreateOperationOutcome("fatal", "exception", "Unknown pre-population engine selected: " + engine, errorCodingSearch);
+      this.$emit('outcome', this.outcome);
+    }
+  }
   public get launchContexts() {
     return getExtensions(this.questionnaire, structuredDataCapture.exturl_LaunchContextExtension)?.map((lc) => {
       return {
@@ -485,7 +495,7 @@ export default class QuestionnairePrepopulateTest extends Vue {
     } else {
       // read the query from a server (assume the questionnaire server if relative)
       const outcome: OperationOutcome = CreateOperationOutcome("warning", "not-supported", "Client: Unable to retrieve search bundle " + searchBundleReference, errorCodingSearch);
-        this.outcome.issue!.push(...outcome.issue!);
+      this.outcome.issue!.push(...outcome.issue!);
     }
   }
 

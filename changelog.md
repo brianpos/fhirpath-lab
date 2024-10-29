@@ -3,6 +3,11 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+# 28 October 2024 (dev)
+* Released to main
+* Updated csiro renderer to 0.44.2
+* Resolved bug with variable display in the fhirpath tester not refreshing when the variable was changed
+
 # 22 October 2024 (dev)
 * Extensive error handling improvements in the questionnaire tester pre-pop/context tabs
 * Support search bundles in the questionnaire tester pre-pop tab

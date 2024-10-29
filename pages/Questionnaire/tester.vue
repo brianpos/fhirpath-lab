@@ -217,7 +217,7 @@
         </twin-pane-tab>
       </v-card>
       <OperationOutcomeOverlay v-if="showOutcome" :saveOutcome="saveOutcome" :showOutcome="showOutcome"
-        title="Error Processing" @close="clearOutcome" />
+        title="Processing Results" @close="clearOutcome" />
     </div>
     <table-loading v-if="saving || loadingData" />
   </div>
@@ -340,6 +340,7 @@ import {
 import TwinPaneTab, { TabData } from "~/components/TwinPaneTab.vue";
 import * as jsonpatch from "fast-json-patch";
 import { ContextData } from "~/components/QuestionnaireContext.vue";
+import QuestionnairePrepopulateTest from "~/components/QuestionnairePrepopTest.vue";
 
 // import "fhirclient";
 // import { FHIR } from "fhirclient";
@@ -655,6 +656,10 @@ export default Vue.extend({
         this.fhirServerUrl = settings.getFhirServerUrl();
       }
 
+      if (this.$route.query.dataserver) {
+        this.dataServerBaseUrl = this.$route.query.dataserver as string;
+      }
+
       if (this.$route.query.id) {
         this.resourceId = this.$route.query.id as string;
       }
@@ -737,6 +742,16 @@ export default Vue.extend({
       if (this.modelsSearch?.length > 0) {
         let modelEditor: ResourceEditor = this.$refs.editorModels as ResourceEditor;
         await modelEditor.DownloadResource(this.modelsSearch);
+      }
+
+      // If there is a prepop engine specified, run that
+      let prepopTester: QuestionnairePrepopulateTest = this.$refs.prepopTester as QuestionnairePrepopulateTest;
+      if (prepopTester){
+        if (this.$route.query.prepop) {
+          this.$nextTick(async () => {
+            await prepopTester.RunPrePopulation(this.$route.query.prepop as string);
+          });
+        }
       }
     },
     tabChanged(index: number): void {

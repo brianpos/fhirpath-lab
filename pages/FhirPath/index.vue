@@ -137,7 +137,7 @@
                 @input="updateVariableValue(v1[0])" :key="index" 
                 :messages="variableMessages(v1[1])" :error-messages="variableErrorMessages(v1[1])" :error="(!!v1[1].errorMessage)">
                 <template v-slot:append>
-                <v-btn icon small tile @click="variables.set(v1[0], { name: v1[0], data: v1[1].resourceId }); $forceUpdate()">
+                <v-btn icon small tile @click="variables.set(v1[0], { name: v1[0], data: v1[1].resourceId }); updateNextTick()">
                     <v-icon> mdi-close </v-icon>
                   </v-btn>
                   <v-btn icon small tile @click="downloadVariableResource(v1[0])" :hidden="!isValidFhirUrl(v1[1])"> 
@@ -662,6 +662,7 @@ export interface IFhirPathMethods
   tabTitle(): void;
   settingsClosed(): void;
   updateNow():void;
+  updateNextTick():void;
   selectTab(selectTab: number): void;
   tabChanged(index: Number): void;
   getCompletions(editor: ace.Ace.Editor, session: ace.Ace.EditSession, pos: any, prefix: any, callback: any): void;
@@ -975,6 +976,14 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       this.$forceUpdate();
       this.enableSave = true;
     },
+    updateNextTick() {
+      this.$nextTick(() => {
+        let tabControl: TwinPaneTab = this.$refs.twinTabControl as TwinPaneTab;
+        if (tabControl)
+          tabControl.$forceUpdate();
+        this.$forceUpdate();
+      });
+    },
 
     tabChanged(index: Number): void {
       // Workaround to refresh the display in the response editor when it is updated while the form is not visible
@@ -1269,7 +1278,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       const varValue = this.variables.get(name)
       if (varValue && varValue.data !== value){
         varValue.data = value;
-        this.$forceUpdate();
+        this.updateNextTick();
       }
       else{
         this.variables.set(name, { name:name, data: value });
@@ -1757,7 +1766,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         const results = response.data;
         if (results) {
           this.variables.set(name, { name:name, resourceId: url, data: JSON.stringify(results, null, 4)});
-          this.$forceUpdate();
+          this.updateNextTick();
         }
       } catch (err) {
         this.loadingData = false;
