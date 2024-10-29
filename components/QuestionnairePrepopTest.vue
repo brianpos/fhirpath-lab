@@ -116,7 +116,7 @@ export default class QuestionnairePrepopulateTest extends Vue {
     return isIPS;
   }
 
-  async public RunPrePopulation(engine: string): Promise<void> {
+  public async RunPrePopulation(engine: string): Promise<void> {
     if (this.executionEngines.includes(engine)) {
       this.selectedEngine = engine;
       await this.runPrePopulation();
