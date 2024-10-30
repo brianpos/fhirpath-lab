@@ -902,6 +902,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         minLines: 15,
         // maxLines: 35,
         highlightActiveLine: true,
+        tabSize: 4,
         showGutter: true,
         fontSize: 14,
         cursorStyle: "slim",
@@ -919,7 +920,8 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       highlightActiveLine: true,
       showGutter: true,
       fontSize: 14,
-        cursorStyle: "slim",
+      tabSize: 4,
+      cursorStyle: "slim",
       showPrintMargin: false,
       theme: "ace/theme/chrome",
       mode: "ace/mode/json",
@@ -929,7 +931,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     var editorResourceJsonDiv: any = this.$refs.aceEditorResourceJsonTab as Element;
     if (editorResourceJsonDiv) {
       this.resourceJsonEditor = ace.edit(editorResourceJsonDiv, resourceEditorSettings);
-      this.resourceJsonEditor.setValue(JSON.stringify(JSON.parse(examplePatient), null, 2));
+      this.resourceJsonEditor.setValue(JSON.stringify(JSON.parse(examplePatient), null, 4));
       this.resourceJsonEditor.clearSelection();
       this.resourceJsonEditor.session.on("change", this.resourceJsonChangedEvent);
       this.resourceJsonEditor.completers = [];
@@ -1192,7 +1194,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
 
           const resourceJson = p.resourceJson;
           if (resourceJson) {
-            this.resourceJsonEditor?.setValue(JSON.stringify(JSON.parse(resourceJson), null, 2));
+            this.resourceJsonEditor?.setValue(JSON.stringify(JSON.parse(resourceJson), null, 4));
             this.resourceJsonChanged = true;
             this.resourceId = undefined;
             this.resourceJsonEditor?.clearSelection();
