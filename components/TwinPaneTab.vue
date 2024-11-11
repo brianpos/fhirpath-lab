@@ -172,6 +172,17 @@ export default class TwinPaneTab extends Vue {
   windowWidth: number = 0;
   lastTabClicked: KeyboardEvent | MouseEvent | undefined = undefined;
 
+  public getActiveTabs(): TabData[] {
+    let result: TabData[] = [];
+    if (this.singleTabMode()) {
+      result.push(this.tabs[this.selectableTab]);
+    } else {
+      result.push(this.tabs[this.lockedTab]);
+      result.push(this.tabs[this.selectableTab]);
+    }
+    return result;
+  }
+
   public singleTabMode(): boolean {
     return this.windowWidth <= 999 || this.forceSinglePanel;
   }

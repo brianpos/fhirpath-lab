@@ -9,6 +9,7 @@
 * Update the LForms renderer to 36.6.0
 * Pre-pop toolbar button added (that doesn't switch tabs)
 * resource editor tab consistency improvements
+* Extract toolbar button added (that reads the renderer before switching tabs and extracting the data)
 
 # 30 October 2024
 * Resolved issue with inconsistent tabs in fhirpath code editors (to 4 space tabs) - thanks for reporting it Elliot.

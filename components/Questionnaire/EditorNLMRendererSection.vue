@@ -128,7 +128,7 @@ export default class EditorNLMRendererSection extends Vue {
     }
   }
 
-  logResponse() {
+  public logResponse() {
     const response = LForms.Util.getFormFHIRData(
       "QuestionnaireResponse",
       "R4",

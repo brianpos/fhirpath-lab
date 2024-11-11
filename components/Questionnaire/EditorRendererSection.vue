@@ -67,7 +67,7 @@ export default class EditorRendererSection extends Vue {
     await buildForm(questionnaire as QuestionnaireR4, response as QuestionnaireResponseR4);
   }
 
-  logResponse() {
+  public logResponse() {
     const response = getResponse();
     // ensure there is a tag for the csiro renderer in place
     if (!response.meta?.tag?.find(t => t.code?.startsWith('csiro'))) {

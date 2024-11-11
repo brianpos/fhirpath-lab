@@ -28,6 +28,9 @@
           <v-btn v-if="hasPrePop" icon dark title="Prepopulate the QuestionnaireResponse with the test data" @click="prePopulateForm">
             <v-icon> mdi-tray-arrow-down </v-icon>
           </v-btn>
+          <v-btn v-if="hasExtract" icon dark title="Extract form data to FHIR Resources" @click="extractFormData">
+            <v-icon> mdi-tray-arrow-up </v-icon>
+          </v-btn>
           <v-btn icon dark title="Show Details, Publishing and other informational tabs"
             @click="showDetails = !showDetails">
             <v-icon v-if="!showDetails"> mdi-eye-off-outline </v-icon>
@@ -361,6 +364,7 @@ interface IQuestionnaireTesterData extends QuestionnaireData {
   chatEnabled: boolean;
   loadingData: boolean;
   runningPrePop: boolean;
+  runningExtract: boolean;
   resourceJsonChanged: boolean;
   resourceJsonEditor?: ace.Ace.Editor;
   questionnaireResponseJsonEditor?: ace.Ace.Editor;
@@ -483,6 +487,20 @@ export default Vue.extend({
       return sdc.hasPrePopulation(this.raw);
     },
     hasExtract(): boolean {
+      let tabControl: TwinPaneTab = this.$refs.twinTabControl as TwinPaneTab;
+      if (tabControl) {
+        let activeTabs: TabData[] = tabControl.getActiveTabs();
+        const extractFromTabs = ["CSIRO Renderer", "LHC-Forms", "Aidbox Forms", "Response", "Extract"];
+        console.log("Active tabs: ", activeTabs);
+        if (activeTabs.length == 1 && !extractFromTabs.includes(activeTabs[0].tabName)) {
+          return false;
+        }
+        if (activeTabs.length == 2) {
+          if (!extractFromTabs.includes(activeTabs[0].tabName) && !extractFromTabs.includes(activeTabs[1].tabName)) {
+            return false;
+          } 
+        }
+      }
       return sdc.hasDataExtract(this.raw);
     },
 
@@ -625,7 +643,7 @@ export default Vue.extend({
 
           this.resourceJsonEditor = ace.edit(editorResourceJsonDiv, resourceEditorSettings);
           if (this.raw)
-            this.resourceJsonEditor?.setValue(JSON.stringify(this.raw, null, 2));
+            this.resourceJsonEditor?.setValue(JSON.stringify(this.raw, null, settings.getTabSpaces()));
           this.resourceJsonEditor?.clearSelection();
           this.resourceJsonEditor.session.on(
             "change",
@@ -830,6 +848,58 @@ export default Vue.extend({
         this.runningPrePop = false;
       }
     },
+
+    async extractFormData() {
+      let extractTester: QuestionnaireExtractTest = this.$refs.extractTester as QuestionnaireExtractTest;
+      if (extractTester) {
+        // before we can extract, we better read the current renderer's json content
+        let tabControl: TwinPaneTab = this.$refs.twinTabControl as TwinPaneTab;
+        let csiroRenderer = this.$refs.csiroFormsRenderer as EditorRendererSection;
+        let lhcFormsRenderer = this.$refs.lhcFormsRenderer as EditorNLMRendererSection;
+        if (tabControl && csiroRenderer && lhcFormsRenderer) {
+          let activeTabs: TabData[] = tabControl.getActiveTabs();
+          console.log("Active tabs: ", activeTabs);
+          if (activeTabs.length > 0) {
+            if (activeTabs[0].tabName == "CSIRO Renderer") {
+              this.runningExtract = true;
+              csiroRenderer.logResponse();
+            } 
+            else if (activeTabs[0].tabName == "LHC-Forms") {
+              this.runningExtract = true;
+              lhcFormsRenderer.logResponse();
+            }
+            else if (activeTabs[0].tabName == "Response") {
+              this.runningExtract = true;
+            }
+            else if (activeTabs.length == 2) {
+              if (activeTabs[1].tabName == "CSIRO Renderer") {
+                this.runningExtract = true;
+                csiroRenderer.logResponse();
+              } 
+              else if (activeTabs[1].tabName == "LHC-Forms") {
+                this.runningExtract = true;
+                lhcFormsRenderer.logResponse();
+              }
+              else if (activeTabs[1].tabName == "Response") {
+                this.runningExtract = true;
+              }
+            }
+          }
+        }
+
+        if (this.runningExtract) {
+          // Switch to the Extract tab
+          this.selectTab("Extract");
+
+          // Now extract the data from the Response JSON
+          this.$nextTick(async () => {
+            await extractTester.performExtractOperation();
+            this.runningExtract = false;
+          });
+        }
+      }
+    },
+
     highlightPath(linkId: string) {
       console.log("Highlight path: ", linkId);
       setTimeout(() => {
@@ -896,56 +966,6 @@ export default Vue.extend({
             }
           }
         }
-
-        //     }
-        //   }
-        //   else if (this.questionnaireResponseJsonEditor && path.startsWith("QuestionnaireResponse")) {
-        //     this.questionnaireResponseJsonEditor.clearSelection();
-        //     if (issue.__position) {
-        //       var position: IJsonNodePosition = issue.__position;
-        //       this.questionnaireResponseJsonEditor.focus();
-        //       this.questionnaireResponseJsonEditor.gotoLine(
-        //         position.line,
-        //         position.column,
-        //         true
-        //       );
-
-        //       const jsonValue = this.questionnaireResponseJsonEditor.getValue();
-        //       if (position.value_stop_pos) {
-        //         let substr = jsonValue.substring(
-        //           position.prop_start_pos,
-        //           position.value_stop_pos + 1
-        //         );
-        //         const endRowOffset = substr.split(/\r\n|\r|\n/).length;
-        //         const endRow = position.line + endRowOffset - 1;
-        //         const endCollOffset =
-        //           substr.split(/\r\n|\r|\n/)[endRowOffset - 1].length;
-        //         const endCol =
-        //           position.column +
-        //           (endCollOffset > 1 ? endCollOffset + 1 : endCollOffset);
-        //         const range = new ace.Range(
-        //           position.line - 1,
-        //           position.column,
-        //           endRow - 1,
-        //           endCol
-        //         );
-        //         // this.resourceJsonEditor.session.selection.setRange(range);
-
-        //         const selectionMarker = this.questionnaireResponseJsonEditor.session.addMarker(
-        //           range,
-        //           "resultSelection",
-        //           "fullLine",
-        //           true
-        //         );
-        //         // after 1.5 seconds remove the highlight.
-        //         setTimeout(() => {
-        //           this.questionnaireResponseJsonEditor?.session.removeMarker(selectionMarker);
-        //         }, 1500);
-        //       }
-
-        //       this.updateNow();
-        //     }
-        //   }
       });
     },
     navigateToIssue(issue: fhir4b.OperationOutcomeIssue & IWithPosition) {
@@ -1132,14 +1152,14 @@ export default Vue.extend({
       }
 
       if (this.questionnaireResponseJsonEditor) {
-        const jsonValue = JSON.stringify(value, null, 2);
+        const jsonValue = JSON.stringify(value, null, settings.getTabSpaces());
         this.questionnaireResponseJson = jsonValue;
         // console.log("Updated QuestionnaireResponse: ", this.questionnaireResponse);
         this.questionnaireResponseJsonEditor.setValue(
           jsonValue
         );
         this.questionnaireResponseJsonEditor.clearSelection();
-        if (!this.runningPrePop) {
+        if (!this.runningPrePop && !this.runningExtract) {
           this.selectTab("Response");
         }
 
@@ -1233,7 +1253,7 @@ export default Vue.extend({
 
         try {
           this.questionnaireResponseJsonEditor.setValue(
-            JSON.stringify(jsonValue, null, 2)
+            JSON.stringify(jsonValue, null, settings.getTabSpaces())
           );
           this.questionnaireResponseJsonEditor.clearSelection();
           this.questionnaireResponseJsonEditor.renderer.updateFull(true);
@@ -1415,7 +1435,7 @@ export default Vue.extend({
         qr
       );
       if (outcome?.resourceType == 'QuestionnaireResponse' && this.questionnaireResponseJsonEditor) {
-        this.questionnaireResponseJsonEditor.setValue(JSON.stringify(outcome, null, 2));
+        this.questionnaireResponseJsonEditor.setValue(JSON.stringify(outcome, null, settings.getTabSpaces()));
         this.questionnaireResponseJsonEditor.clearSelection();
         this.questionnaireResponseJsonEditor.renderer.updateFull(true);
       }
@@ -1451,7 +1471,7 @@ export default Vue.extend({
           this.qrResourceId = formBaseUrl + "/QuestionnaireResponse/" + qr.id;
           if (!qr.subject) qr.subject = { reference: "Patient/example" };
           if (!qr.authored) qr.authored = new Date().toISOString();
-          jsonValueQR = JSON.stringify(qr, null, 2);
+          jsonValueQR = JSON.stringify(qr, null, settings.getTabSpaces());
         } catch { }
 
         this.questionnaireResponseJsonEditor.setValue(jsonValueQR);
@@ -1476,7 +1496,7 @@ export default Vue.extend({
           let qrWithContainedQ = JSON.parse(jsonValueQR);
           qrWithContainedQ.questionnaire = "#" + qDef.id;
           qrWithContainedQ.contained = [qDef];
-          jsonValueQR = JSON.stringify(qrWithContainedQ, null, 2);
+          jsonValueQR = JSON.stringify(qrWithContainedQ, null, settings.getTabSpaces());
         } catch { }
 
         // Add a subject and authored date if not present
@@ -1484,7 +1504,7 @@ export default Vue.extend({
           let qr = JSON.parse(jsonValueQR);
           if (!qr.subject) qr.subject = { reference: "Patient/example" };
           if (!qr.authored) qr.authored = new Date().toISOString();
-          jsonValueQR = JSON.stringify(qr, null, 2);
+          jsonValueQR = JSON.stringify(qr, null, settings.getTabSpaces());
         } catch { }
 
         // send this to the forms-lab server for validation
@@ -1604,7 +1624,7 @@ export default Vue.extend({
         const jsonValue = this.questionnaireResponseJsonEditor.getValue();
         try {
           this.questionnaireResponseJsonEditor.setValue(
-            JSON.stringify(JSON.parse(jsonValue), null, 2)
+            JSON.stringify(JSON.parse(jsonValue), null, settings.getTabSpaces())
           );
           this.questionnaireResponseJsonEditor.clearSelection();
           this.questionnaireResponseJsonEditor.renderer.updateFull(true);
@@ -2104,6 +2124,7 @@ export default Vue.extend({
       showDetails: false,
       loadingData: false,
       runningPrePop: false,
+      runningExtract: false,
       cancelSource: undefined,
       resourceJsonChanged: false,
       resourceId:
