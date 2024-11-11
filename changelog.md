@@ -3,6 +3,13 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+# 11 November 2024
+* Include detecting the POC template extension `http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-extractToTemplate` as an indicator to display the extract tab in the questionnaire tester 
+* Update the CSIRO renderer to 0.44.3
+* Update the LForms renderer to 36.6.0
+* Pre-pop toolbar button added (that doesn't switch tabs)
+* resource editor tab consistency improvements
+
 # 30 October 2024
 * Resolved issue with inconsistent tabs in fhirpath code editors (to 4 space tabs) - thanks for reporting it Elliot.
 

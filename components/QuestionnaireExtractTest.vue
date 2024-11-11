@@ -53,7 +53,7 @@ export default class QuestionnaireExtractTest extends Vue {
     this.internalValue = value;
   }
 
-  async performExtractOperation(): Promise<void> {
+  public async performExtractOperation(): Promise<void> {
     console.log("Extracting the questionnaire");
 
     // update the parameters object for the extract

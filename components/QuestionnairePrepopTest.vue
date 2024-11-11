@@ -116,16 +116,17 @@ export default class QuestionnairePrepopulateTest extends Vue {
     return isIPS;
   }
 
-  public async RunPrePopulation(engine: string): Promise<void> {
-    if (this.executionEngines.includes(engine)) {
+  public async RunPrePopulation(engine?: string): Promise<void> {
+    if (engine) {
+      if (!this.executionEngines.includes(engine)) {
+        this.outcome = CreateOperationOutcome("fatal", "exception", "Unknown pre-population engine selected: " + engine, errorCodingSearch);
+        this.$emit('outcome', this.outcome);
+      }
       this.selectedEngine = engine;
-      await this.runPrePopulation();
     }
-    else {
-      this.outcome = CreateOperationOutcome("fatal", "exception", "Unknown pre-population engine selected: " + engine, errorCodingSearch);
-      this.$emit('outcome', this.outcome);
-    }
+    await this.runPrePopulation();
   }
+
   public get launchContexts() {
     return getExtensions(this.questionnaire, structuredDataCapture.exturl_LaunchContextExtension)?.map((lc) => {
       return {
@@ -183,7 +184,7 @@ export default class QuestionnairePrepopulateTest extends Vue {
   }
 
 
-  public async runPrePopulation() {
+  async runPrePopulation() {
     // Run the pre-population based on the selected engine
     console.log('Running pre-population');
     this.extractingInProgress = true;

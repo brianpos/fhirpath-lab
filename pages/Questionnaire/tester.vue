@@ -25,6 +25,9 @@
               mdi-content-save
             </v-icon>
           </v-btn>
+          <v-btn v-if="hasPrePop" icon dark title="Prepopulate the QuestionnaireResponse with the test data" @click="prePopulateForm">
+            <v-icon> mdi-tray-arrow-down </v-icon>
+          </v-btn>
           <v-btn icon dark title="Show Details, Publishing and other informational tabs"
             @click="showDetails = !showDetails">
             <v-icon v-if="!showDetails"> mdi-eye-off-outline </v-icon>
@@ -357,6 +360,7 @@ interface IQuestionnaireTesterData extends QuestionnaireData {
   qrResourceId: string | undefined;
   chatEnabled: boolean;
   loadingData: boolean;
+  runningPrePop: boolean;
   resourceJsonChanged: boolean;
   resourceJsonEditor?: ace.Ace.Editor;
   questionnaireResponseJsonEditor?: ace.Ace.Editor;
@@ -474,6 +478,12 @@ export default Vue.extend({
         promptOptions.push(this.helpWithError);
       }
       return promptOptions;
+    },
+    hasPrePop(): boolean {
+      return sdc.hasPrePopulation(this.raw);
+    },
+    hasExtract(): boolean {
+      return sdc.hasDataExtract(this.raw);
     },
 
     tabDetails(): TabData[] {
@@ -811,6 +821,15 @@ export default Vue.extend({
         }
       }
     },
+
+    async prePopulateForm() {
+      let prepopTester: QuestionnairePrepopulateTest = this.$refs.prepopTester as QuestionnairePrepopulateTest;
+      if (prepopTester){
+        this.runningPrePop = true;
+        await prepopTester.RunPrePopulation();
+        this.runningPrePop = false;
+      }
+    },
     highlightPath(linkId: string) {
       console.log("Highlight path: ", linkId);
       setTimeout(() => {
@@ -1084,11 +1103,13 @@ export default Vue.extend({
         await lhcFormsRenderer.renderQuestionnaireResponse(value, this.raw);
       }
 
-      if (renderer == "lforms pre-pop") {
-        this.selectTab("LHC-Forms");
-      }
-      if (renderer == "CSIRO pre-pop") {
-        this.selectTab("CSIRO Renderer");
+      if (!this.runningPrePop) {
+        if (renderer == "lforms pre-pop") {
+          this.selectTab("LHC-Forms");
+        }
+        if (renderer == "CSIRO pre-pop") {
+          this.selectTab("CSIRO Renderer");
+        }
       }
     },
     async processUpdatedQuestionnaireResponse(value: fhir4b.QuestionnaireResponse) {
@@ -1118,7 +1139,9 @@ export default Vue.extend({
           jsonValue
         );
         this.questionnaireResponseJsonEditor.clearSelection();
-        this.selectTab("Response");
+        if (!this.runningPrePop) {
+          this.selectTab("Response");
+        }
 
         if (this.$refs.csiroFormsRenderer && this.raw != null) {
           let csiroFormsRenderer = (this.$refs.csiroFormsRenderer as EditorRendererSection)
@@ -2080,6 +2103,7 @@ export default Vue.extend({
     return {
       showDetails: false,
       loadingData: false,
+      runningPrePop: false,
       cancelSource: undefined,
       resourceJsonChanged: false,
       resourceId:

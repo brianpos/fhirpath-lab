@@ -132,6 +132,7 @@ export default class ResourceJsonEditor extends Vue {
         wrap: "free",
         highlightActiveLine: false,
         showGutter: true,
+        tabSize: settings.getTabSpaces(),
         showPrintMargin: false,
         theme: "ace/theme/chrome",
         wrapBehavioursEnabled: true
@@ -222,7 +223,7 @@ export default class ResourceJsonEditor extends Vue {
       const results = response.data;
       if (results) {
         if (this.aceEditor) {
-          const resourceJson = JSON.stringify(results, null, 4);
+          const resourceJson = JSON.stringify(results, null, settings.getTabSpaces());
           this.resourceTextFromFile = resourceJson;
           if (resourceJson) {
             this.aceEditor.setValue(resourceJson);
@@ -278,7 +279,7 @@ export default class ResourceJsonEditor extends Vue {
     if (this.resourceType === 'json') {
       try {
         const parsedJson = JSON.parse(this.aceEditor.getValue());
-        this.aceEditor.setValue(JSON.stringify(parsedJson, null, 2), -1);
+        this.aceEditor.setValue(JSON.stringify(parsedJson, null, settings.getTabSpaces()), -1);
         this.aceEditor.clearSelection();
         this.aceEditor.renderer.updateFull(true);
       } catch (e) {

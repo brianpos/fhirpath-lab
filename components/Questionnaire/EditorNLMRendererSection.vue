@@ -97,7 +97,7 @@ export default class EditorNLMRendererSection extends Vue {
   async mounted() {
     try {
       console.log("Importing NLM scripts");
-      await loadLForms("36.1.3");
+      await loadLForms("36.6.0");
       console.log("Importing NLM scripts done");
     } catch (e) {
       console.error("Error loading LForms", e);
