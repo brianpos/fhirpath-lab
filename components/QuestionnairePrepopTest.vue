@@ -48,7 +48,7 @@
 
     </div>
     <resource-editor style="flex-grow: 1;" :readOnly="true" textLabel="$populate parameters (debug)"
-      :resourceText="JSON.stringify(prepopParameters, null, 2)" />
+      :resourceText="JSON.stringify(prepopParameters, null, tabSpaces)" />
   </div>
 </template>
 
@@ -79,6 +79,7 @@ import axios, { AxiosError } from "axios";
 import QuestionnaireContext, { ContextData } from "./QuestionnaireContext.vue";
 import fhirpath from "fhirpath";
 import fhirpath_r4_model from "fhirpath/fhir-context/r4";
+import { settings } from "~/helpers/user_settings";
 
 interface LaunchContextData {
   id: string | undefined;
@@ -106,6 +107,7 @@ export default class QuestionnairePrepopulateTest extends Vue {
   ];
   public selectedEngine: string = "forms-lab";
   public populateServiceUrl: string = "http://localhost:8000/Questionnaire/$populate";
+  public tabSpaces: number = settings.getTabSpaces();
   public prepopParameters: Parameters = { resourceType: "Parameters", parameter: [] };
   public extractingInProgress: boolean = false;
   public downloadingFile: boolean = false;
@@ -435,7 +437,7 @@ export default class QuestionnairePrepopulateTest extends Vue {
       var searchBundleQueries = await this.extractSearchQueryBundle(sourceQueriesReference.reference);
       if (searchBundleQueries?.id) {
         // Scan all the requests and replace any tokens
-        console.log("Raw Search Bundle ", JSON.stringify(searchBundleQueries, null, 2));
+        console.log("Raw Search Bundle ", JSON.stringify(searchBundleQueries, null, tabSpaces));
         if (searchBundleQueries.entry) {
           // Add the variable to the pre-population parameters
           let context: ParametersParameter = {
@@ -459,7 +461,7 @@ export default class QuestionnairePrepopulateTest extends Vue {
           }
 
           // Evaluate the search bundle
-          console.log("Search Bundle to post", JSON.stringify(searchBundleQueries, null, 2));
+          console.log("Search Bundle to post", JSON.stringify(searchBundleQueries, null, tabSpaces));
           const opOutcome = await this.performXFhirQuery(this.dataServer, (result) => {
             if (searchBundleQueries?.id) {
               environment[searchBundleQueries.id] = result;

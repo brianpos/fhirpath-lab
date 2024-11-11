@@ -617,7 +617,7 @@ group SetEntryData(source src: Patient, target entry)
 
           const resourceJson = p.resourceJson;
           if (resourceJson) {
-            this.resourceJsonEditor?.setValue(JSON.stringify(JSON.parse(resourceJson), null, 2));
+            this.resourceJsonEditor?.setValue(JSON.stringify(JSON.parse(resourceJson), null, settings.getTabSpaces()));
             this.resourceJsonChanged = true;
             this.resourceId = undefined;
             this.resourceJsonEditor?.clearSelection();

@@ -84,6 +84,7 @@ import { fpjsNode, JsonNode } from "../models/FhirpathTesterData";
 import fhirpath from "fhirpath";
 import fhirpath_r4_model from "fhirpath/fhir-context/r4";
 import fhirpath_r5_model from "fhirpath/fhir-context/r5";
+import { settings } from "~/helpers/user_settings";
 
 interface ISpecFunctionDetails {
   outlineNo?: string;
@@ -551,7 +552,7 @@ export default class ParseTreeTab extends Vue {
     this.parseErrorMessage = undefined;
 
     this.astTree = [node];
-    console.log("AST:", JSON.stringify(this.astTree, null, 2));
+    console.log("AST:", JSON.stringify(this.astTree, null, settings.getTabSpaces()));
     var lastId = AllocateNodeCollectionIds(this.astTree);
     for (let i = 0; i < lastId; i++) {
       this.astOpen.push(i.toString());
@@ -589,9 +590,9 @@ export default class ParseTreeTab extends Vue {
         for (let i = 0; i < lastId; i++) {
           this.astOpenInverted.push(i.toString());
         }
-        // console.log("raw:", JSON.stringify(ast, null, 2));
-        console.log("AST:", JSON.stringify(this.astTree, null, 2));
-        // console.log("Inv AST:", JSON.stringify(this.astInvertedTree, null, 2));
+        // console.log("raw:", JSON.stringify(ast, null, settings.getTabSpaces()));
+        console.log("AST:", JSON.stringify(this.astTree, null, settings.getTabSpaces()));
+        // console.log("Inv AST:", JSON.stringify(this.astInvertedTree, null, settings.getTabSpaces()));
 
         for (let i = 0; i < lastId; i++) {
           this.astOpen.push(i.toString());

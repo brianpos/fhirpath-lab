@@ -145,7 +145,7 @@
                   </v-btn>
                 </template>
               </v-textarea>
-              <!-- <div class="code-json">{{ JSON.stringify(v1[1], null, 2) }}</div> -->
+              <!-- <div class="code-json">{{ JSON.stringify(v1[1], null, settings.getTabSpaces()) }}</div> -->
             </template>
             <br/>
             <label><i>Note: This variables tab is only visible when there are variables in the expression.
@@ -877,6 +877,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         highlightActiveLine: false,
         showGutter: false,
         fontSize: 16,
+        tabSize: settings.getTabSpaces(),
         cursorStyle: "slim",
         showPrintMargin: false,
         theme: "ace/theme/chrome",
@@ -902,7 +903,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         minLines: 15,
         // maxLines: 35,
         highlightActiveLine: true,
-        tabSize: 4,
+        tabSize: settings.getTabSpaces(),
         showGutter: true,
         fontSize: 14,
         cursorStyle: "slim",
@@ -920,7 +921,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       highlightActiveLine: true,
       showGutter: true,
       fontSize: 14,
-      tabSize: 4,
+      tabSize: settings.getTabSpaces(),
       cursorStyle: "slim",
       showPrintMargin: false,
       theme: "ace/theme/chrome",
@@ -931,7 +932,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     var editorResourceJsonDiv: any = this.$refs.aceEditorResourceJsonTab as Element;
     if (editorResourceJsonDiv) {
       this.resourceJsonEditor = ace.edit(editorResourceJsonDiv, resourceEditorSettings);
-      this.resourceJsonEditor.setValue(JSON.stringify(JSON.parse(examplePatient), null, 4));
+      this.resourceJsonEditor.setValue(JSON.stringify(JSON.parse(examplePatient), null, settings.getTabSpaces()));
       this.resourceJsonEditor.clearSelection();
       this.resourceJsonEditor.session.on("change", this.resourceJsonChangedEvent);
       this.resourceJsonEditor.completers = [];
@@ -1194,7 +1195,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
 
           const resourceJson = p.resourceJson;
           if (resourceJson) {
-            this.resourceJsonEditor?.setValue(JSON.stringify(JSON.parse(resourceJson), null, 4));
+            this.resourceJsonEditor?.setValue(JSON.stringify(JSON.parse(resourceJson), null, settings.getTabSpaces()));
             this.resourceJsonChanged = true;
             this.resourceId = undefined;
             this.resourceJsonEditor?.clearSelection();
@@ -1449,7 +1450,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
 
         const results = response.data;
         if (results) {
-          this.setResultJson(JSON.stringify(results, null, 4));
+          this.setResultJson(JSON.stringify(results, null, settings.getTabSpaces()));
           if (results.resourceType === 'OperationOutcome')
           {
             this.saveOutcome = results;
@@ -1509,7 +1510,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         if (axios.isAxiosError(err)) {
           const serverError = err as AxiosError<fhir4b.OperationOutcome>;
           if (serverError && serverError.response) {
-            this.setResultJson(JSON.stringify(serverError.response.data, null, 4));
+            this.setResultJson(JSON.stringify(serverError.response.data, null, settings.getTabSpaces()));
             this.saveOutcome = serverError.response.data;
             this.showOutcome = true;
             return serverError.response.data;
@@ -1591,7 +1592,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
                 if (this.library.contained.length > 1 && resource as DomainResource){
                   (resource as DomainResource).contained = newContained;
                 }
-                  const resourceJson = JSON.stringify(resource, null, 4); // really should lookup by ID
+                  const resourceJson = JSON.stringify(resource, null, settings.getTabSpaces()); // really should lookup by ID
                   if (resourceJson) {
                     this.resourceJsonEditor.setValue(resourceJson);
                     this.resourceJsonChanged = false;
@@ -1622,9 +1623,9 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         if (axios.isAxiosError(err)) {
           const serverError = err as AxiosError<fhir4b.OperationOutcome>;
           if (serverError && serverError.response) {
-            this.setResultJson(JSON.stringify(serverError.response, null, 4));
+            this.setResultJson(JSON.stringify(serverError.response, null, settings.getTabSpaces()));
             if (serverError.response.data?.resourceType == 'OperationOutcome') {
-              this.setResultJson(JSON.stringify(serverError.response, null, 4));
+              this.setResultJson(JSON.stringify(serverError.response, null, settings.getTabSpaces()));
               this.saveOutcome = serverError.response.data;
             } else {
               if (serverError.response.status == 404)
@@ -1647,7 +1648,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       if (this.resourceJsonEditor){
         const jsonValue = this.resourceJsonEditor.getValue();
         try {
-          this.resourceJsonEditor.setValue(JSON.stringify(JSON.parse(jsonValue), null, 4));
+          this.resourceJsonEditor.setValue(JSON.stringify(JSON.parse(jsonValue), null, settings.getTabSpaces()));
           this.resourceJsonEditor.clearSelection();
           this.resourceJsonEditor.renderer.updateFull(true);
         }
@@ -1696,7 +1697,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         if (results) {
           this.resourceType = results.resourceType;
           if (this.resourceJsonEditor) {
-            const resourceJson = JSON.stringify(results, null, 4);
+            const resourceJson = JSON.stringify(results, null, settings.getTabSpaces());
             if (resourceJson) {
               this.resourceJsonEditor.setValue(resourceJson);
               this.resourceJsonChanged = false;
@@ -1709,9 +1710,9 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         if (axios.isAxiosError(err)) {
           const serverError = err as AxiosError<fhir4b.OperationOutcome>;
           if (serverError && serverError.response) {
-            this.setResultJson(JSON.stringify(serverError.response, null, 4));
+            this.setResultJson(JSON.stringify(serverError.response, null, settings.getTabSpaces()));
             if (serverError.response.data?.resourceType == 'OperationOutcome') {
-              this.setResultJson(JSON.stringify(serverError.response, null, 4));
+              this.setResultJson(JSON.stringify(serverError.response, null, settings.getTabSpaces()));
               this.saveOutcome = serverError.response.data;
             } else {
               if (serverError.response.status == 404)
@@ -1767,7 +1768,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
 
         const results = response.data;
         if (results) {
-          this.variables.set(name, { name:name, resourceId: url, data: JSON.stringify(results, null, 4)});
+          this.variables.set(name, { name:name, resourceId: url, data: JSON.stringify(results, null, settings.getTabSpaces())});
           this.updateNextTick();
         }
       } catch (err) {
@@ -1775,9 +1776,9 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         if (axios.isAxiosError(err)) {
           const serverError = err as AxiosError<fhir4b.OperationOutcome>;
           if (serverError && serverError.response) {
-            this.setResultJson(JSON.stringify(serverError.response, null, 4));
+            this.setResultJson(JSON.stringify(serverError.response, null, settings.getTabSpaces()));
             if (serverError.response.data?.resourceType == 'OperationOutcome') {
-              this.setResultJson(JSON.stringify(serverError.response, null, 4));
+              this.setResultJson(JSON.stringify(serverError.response, null, settings.getTabSpaces()));
               this.saveOutcome = serverError.response.data;
             } else {
               if (serverError.response.status == 404)
@@ -2035,15 +2036,15 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
               if (typeof item.getTypeInfo === "function") {
                 let ti = item.getTypeInfo();
                 // console.log(ti);
-                resData.trace.push({ name: label ?? "", type: ti.name, value: JSON.stringify(item.data, null, 4) });
+                resData.trace.push({ name: label ?? "", type: ti.name, value: JSON.stringify(item.data, null, settings.getTabSpaces()) });
               }
               else {
-                resData.trace.push({ name: label ?? "", value: JSON.stringify(item, null, 4) });
+                resData.trace.push({ name: label ?? "", value: JSON.stringify(item, null, settings.getTabSpaces()) });
               }
             }
           }
           else {
-            resData.trace.push({ name: label ?? "", value: JSON.stringify(x, null, 4) });
+            resData.trace.push({ name: label ?? "", value: JSON.stringify(x, null, settings.getTabSpaces()) });
           }
           console.log("TRACE3:[" + (label || "") + "]", x);
           return x;
@@ -2202,15 +2203,15 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
               if (typeof item.getTypeInfo === "function") {
                 let ti = item.getTypeInfo();
                 // console.log(ti);
-                resData.trace.push({ name: label ?? "", type: ti.name, value: JSON.stringify(item.data, null, 4) });
+                resData.trace.push({ name: label ?? "", type: ti.name, value: JSON.stringify(item.data, null, settings.getTabSpaces()) });
               }
               else {
-                resData.trace.push({ name: label ?? "", value: JSON.stringify(item, null, 4) });
+                resData.trace.push({ name: label ?? "", value: JSON.stringify(item, null, settings.getTabSpaces()) });
               }
             }
           }
           else {
-            resData.trace.push({ name: label ?? "", value: JSON.stringify(x, null, 4) });
+            resData.trace.push({ name: label ?? "", value: JSON.stringify(x, null, settings.getTabSpaces()) });
           }
           console.log("TRACE3:[" + (label || "") + "]", x);
           return x;

@@ -55,6 +55,9 @@ export namespace settings {
         return undefined;
     }
 
+    export function getTabSpaces(): number {
+        return 2;
+    }
     export function dotnet_server_downloader(): string {
         return serverConnections.dotnet_server_downloader;
     }

@@ -37,6 +37,7 @@ import { Questionnaire, QuestionnaireResponse } from "fhir/r4b";
 import { Questionnaire as QuestionnaireR4, QuestionnaireResponse as QuestionnaireResponseR4 } from "fhir/r4";
 import SmartFormsRendererWithFocus from "./ReactRenderer";
 import { ContextData } from '../QuestionnaireContext.vue';
+import { settings } from '~/helpers/user_settings';
 
 @Component({
   components: {
