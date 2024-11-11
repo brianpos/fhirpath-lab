@@ -102,7 +102,7 @@ export default class QuestionnaireExtractTest extends Vue {
           const resultParameters = extractResponse as Parameters;
           const returnParameter = resultParameters.parameter?.find(p => p.name === "return");
           if (returnParameter) {
-            this.extractResult = JSON.stringify(returnParameter.resource, null, tabSpaces);
+            this.extractResult = JSON.stringify(returnParameter.resource, null, this.tabSpaces);
           }
           const issuesParameter = resultParameters.parameter?.find(p => p.name === "issues");
           if (issuesParameter) {
@@ -110,7 +110,7 @@ export default class QuestionnaireExtractTest extends Vue {
           }
         }
         else {
-          this.extractResult = JSON.stringify(extractResponse, null, tabSpaces);
+          this.extractResult = JSON.stringify(extractResponse, null, this.tabSpaces);
         }
       }
       else {
@@ -134,7 +134,7 @@ export default class QuestionnaireExtractTest extends Vue {
   }
 
   mounted(): void {
-    this.internalValue = JSON.stringify(this.questionnaire, null, tabSpaces);
+    this.internalValue = JSON.stringify(this.questionnaire, null, this.tabSpaces);
   }
 }
 

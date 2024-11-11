@@ -437,7 +437,7 @@ export default class QuestionnairePrepopulateTest extends Vue {
       var searchBundleQueries = await this.extractSearchQueryBundle(sourceQueriesReference.reference);
       if (searchBundleQueries?.id) {
         // Scan all the requests and replace any tokens
-        console.log("Raw Search Bundle ", JSON.stringify(searchBundleQueries, null, tabSpaces));
+        console.log("Raw Search Bundle ", JSON.stringify(searchBundleQueries, null, this.tabSpaces));
         if (searchBundleQueries.entry) {
           // Add the variable to the pre-population parameters
           let context: ParametersParameter = {
@@ -461,7 +461,7 @@ export default class QuestionnairePrepopulateTest extends Vue {
           }
 
           // Evaluate the search bundle
-          console.log("Search Bundle to post", JSON.stringify(searchBundleQueries, null, tabSpaces));
+          console.log("Search Bundle to post", JSON.stringify(searchBundleQueries, null, this.tabSpaces));
           const opOutcome = await this.performXFhirQuery(this.dataServer, (result) => {
             if (searchBundleQueries?.id) {
               environment[searchBundleQueries.id] = result;
