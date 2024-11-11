@@ -3,7 +3,8 @@
     <v-text-field label="Extract Service URL" v-model="extractServiceUrl" :loading="extractingInProgress">
       <template v-slot:append>
         <v-btn @click="performExtractOperation">
-          Extract!
+          <v-icon> mdi-tray-arrow-up </v-icon> 
+          &nbsp;Extract
         </v-btn>
       </template>
     </v-text-field>

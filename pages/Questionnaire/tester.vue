@@ -490,7 +490,7 @@ export default Vue.extend({
       let tabControl: TwinPaneTab = this.$refs.twinTabControl as TwinPaneTab;
       if (tabControl) {
         let activeTabs: TabData[] = tabControl.getActiveTabs();
-        const extractFromTabs = ["CSIRO Renderer", "LHC-Forms", "Aidbox Forms", "Response", "Extract"];
+        const extractFromTabs = ["CSIRO Renderer", "LHC-Forms", "Aidbox Forms", "Response"];
         console.log("Active tabs: ", activeTabs);
         if (activeTabs.length == 1 && !extractFromTabs.includes(activeTabs[0].tabName)) {
           return false;
