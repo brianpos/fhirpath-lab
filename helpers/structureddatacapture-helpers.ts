@@ -38,8 +38,13 @@ export namespace structuredDataCaptureHelpers {
         sdc.exturl_TargetStructureMapExtension,
         sdc.exturl_ObservationExtractExtension,
         "http://hl7.org/fhir/StructureDefinition/extension-Questionnaire.item.definition",
-        "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-extractToTemplate",
+        "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-extractAllocateId",
+        "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-definitionExtract",
+        "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-definitionExtractValue",
         sdc.exturl_ItemExtractionContextExtension,
+        "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-extractToTemplate",
+        "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-templateExtract",
+        "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-templateExtractBundle",
       ])
     )
       return true;
@@ -62,7 +67,11 @@ export namespace structuredDataCaptureHelpers {
       extensionHelpers.hasExtensionAny(item, [
         sdc.exturl_ObservationExtractExtension,
         sdc.exturl_ObservationExtractCategory,
+        "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-extractAllocateId",
+        "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-definitionExtract",
+        "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-definitionExtractValue",
         sdc.exturl_ItemExtractionContextExtension,
+        "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-templateExtract",
         "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-extractToTemplate",
       ])
     )

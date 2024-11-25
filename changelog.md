@@ -3,6 +3,9 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+# 25 November 2024
+* Update the extensions that indicate $extract support in the questionnaire tester
+
 # 11 November 2024
 * Include detecting the POC template extension `http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-extractToTemplate` as an indicator to display the extract tab in the questionnaire tester 
 * Update the CSIRO renderer to 0.44.3
