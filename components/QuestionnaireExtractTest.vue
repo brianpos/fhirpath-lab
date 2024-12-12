@@ -3,13 +3,17 @@
     <v-text-field label="Extract Service URL" v-model="extractServiceUrl" :loading="extractingInProgress">
       <template v-slot:append>
         <v-btn @click="performExtractOperation">
-          <v-icon> mdi-tray-arrow-up </v-icon> 
+          <v-icon> mdi-tray-arrow-up </v-icon>
           &nbsp;Extract
         </v-btn>
       </template>
+      <template v-slot:append-outer>
+        <v-btn icon v-if="showShareLink()" @click="shareToClipboard()"
+          title="Copy Bundle to clipboard"><v-icon>mdi-content-copy</v-icon></v-btn>
+      </template>
     </v-text-field>
-    <resource-editor style="flex-grow: 1; width: 100%; height: 100%;" :readOnly="true"
-            :resourceText="extractResult" />
+    <resource-editor style="flex-grow: 1; width: 100%; height: 100%;" :readOnly="true" :resourceText="extractResult" />
+
     <v-expansion-panels accordion expanded>
       <v-expansion-panel :isActive="true">
         <v-expansion-panel-header>
@@ -132,6 +136,21 @@ export default class QuestionnaireExtractTest extends Vue {
   @Watch('questionnaire', { immediate: false, deep: true })
   async onQuestionnaireChanged() {
     console.log("Q changed");
+  }
+
+  showShareLink(): boolean {
+    if (navigator?.clipboard && this.extractResult) {
+      return true;
+    }
+    return false;
+  }
+
+  shareToClipboard(): void {
+    // copy the resource JSON to the clipboard
+    const resourceJson = this.extractResult;
+    if (navigator.clipboard && resourceJson) {
+      navigator.clipboard.writeText(resourceJson);
+    }
   }
 
   mounted(): void {

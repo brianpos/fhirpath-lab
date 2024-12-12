@@ -3,6 +3,9 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+# 12 December 2024
+* Add a `copy bundle to clipboard` button on the Extract test page (for David)
+
 # 25 November 2024
 * Update the extensions that indicate $extract support in the questionnaire tester
 
