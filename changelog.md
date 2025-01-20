@@ -3,6 +3,11 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+# 20 January 2025
+* Happy new year! - I'm back from holidays and have a few minor tweaks
+* Debug output tab now doesn't popup in the questionnaire tester if there is only information messages
+* Refinements to the styling of the debug output issues display (used in the questionnaire tester and elsewhere)
+
 # 12 December 2024
 * Add a `copy bundle to clipboard` button on the Extract test page (for David)
 

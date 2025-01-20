@@ -14,13 +14,13 @@
                 v-text="issue.severity"
               />
               </nobr>
-              <template v-if="issue.code">
+              <template v-if="issue.code && issue.severity !== 'information'">
                 <br/>
               <nobr class="issue-code">(<span v-text="issue.code" />)</nobr>
               </template>
             </span>
             <span class="details">
-            <span style="max-height:100px; display: block; overflow-y: auto" v-text="issueDescription(issue)" />
+            <span class="issue-description" style="max-height:100px; overflow-y: auto" v-text="issueDescription(issue)" />
             <template v-if="issue.expression">
               <br />
               <v-btn x-small icon v-if="issue.__position" :title="issueLinkTitle" @click="navigateToIssue(issue)">
@@ -28,7 +28,7 @@
                   mdi-target
                 </v-icon>
               </v-btn>
-              <span v-if="issue.expression" v-text="issue.expression" />
+              <span class="issue-location" v-if="issue.expression" v-text="issue.expression" />
             </template>
             <template v-if="issue.location && !issue.__position">
               <br />
@@ -51,6 +51,16 @@
   padding-top: 8px;
 }
 
+.issue-description {
+  color: #333; 
+}
+
+.issue-location {
+  font-size: small;
+  color: grey;
+  font-style: italic;
+}
+
 .issue-item:hover {
   background-color: $tab-backcolor;
 }
@@ -71,7 +81,7 @@
 
 .issue-item > span {
   display: table-cell;
-  padding-bottom: 8px;
+  padding-bottom: 12px;
   padding-right: 8px;
 }
 

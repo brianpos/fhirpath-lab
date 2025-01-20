@@ -1369,7 +1369,12 @@ export default Vue.extend({
             this.helpWithIssue(priorityIssue);
           }
         }
-        this.showOutcome = true;
+        // if there are only information messages, no need to show them
+        if (outcome.issue.every(i => i.severity === "information")) {
+          this.showOutcome = false;
+        } else {
+          this.showOutcome = true;
+        }
       }
     },
 
