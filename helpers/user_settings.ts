@@ -40,7 +40,11 @@ export namespace settings {
 
     export function saveLastUsedParameters(data: ILastUsedParameters | undefined):void {
         if (data){
-            localStorage.setItem(`lastUsed`, JSON.stringify(data));
+            try {
+                localStorage.setItem(`lastUsed`, JSON.stringify(data));
+            } catch (e) {
+                console.error(e);
+            }
         }
         else {
             localStorage.removeItem(`lastUsed`);

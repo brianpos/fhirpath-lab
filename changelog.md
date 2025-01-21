@@ -3,6 +3,9 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+# 21 January 2025
+* Add exception checking when trying to write to the localstorage (discovered while parsing a HUGE json bundle)
+
 # 20 January 2025
 * Happy new year! - I'm back from holidays and have a few minor tweaks
 * Debug output tab now doesn't popup in the questionnaire tester if there is only information messages
