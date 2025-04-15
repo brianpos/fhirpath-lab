@@ -740,11 +740,11 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
 
     setAcePaths(ace.config);
 
-    document.addEventListener('keypress', this.CtrlEnterHandler);
+    document.addEventListener('keydown', this.CtrlEnterHandler);
   },
 
   beforeDestroy() {
-    document.removeEventListener('keypress', this.CtrlEnterHandler);
+    document.removeEventListener('keydown', this.CtrlEnterHandler);
   },
 
   computed: {
@@ -821,7 +821,9 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
   },
   methods: {
     CtrlEnterHandler(event: KeyboardEvent): void {
-      if (event.ctrlKey && event.key === "\n") {
+      // Ctrl + Enter to evaluate the expression
+      // Command + Enter to evaluate the expression on MacOS     
+      if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
         this.evaluateFhirPathExpression();
       }
     },
@@ -1474,6 +1476,11 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
                       let ast: JsonNode = JSON.parse(part.valueString);
                       const astTab = this.$refs.astTabComponent2 as ParseTreeTab;
                       astTab?.displayTree(ast);
+                    }
+                    if (part.name === 'parseDebugTreeJava' && part.valueString) {
+                      // If this was from the JAVA engine, also dump out the data from 
+                      // that debug parse tree
+                      console.log("JAVA AST", part.valueString);
                     }
                     if (part.name === 'debugOutcome' && part.resource) {
                       this.expressionParseOutcome = part.resource as fhir4b.OperationOutcome;
