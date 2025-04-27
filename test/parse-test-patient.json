@@ -1,0 +1,40 @@
+{
+    "resourceType": "Patient",
+    "id": "example",
+    "contained": [
+        {
+            "resourceType": "RelatedPerson",
+            "id": "rp1"
+        }
+    ],
+    "active": true,
+    "birthDate": "2016-042-02",
+    "_deceased":{
+        "id" : "d1",
+        "extension": [
+            {
+                "url": "http://hl7.org/fhir/StructureDefinition/patient-deceased",
+                "valueBoolean": false
+            }
+        ]
+    },
+    "name": [
+        {
+            "use": "official",
+            "family": "Chalmers",
+            "given": [
+                "Peter",
+                "James"
+            ]
+        },
+        {
+            "family": "Chalmers",
+            "given": [
+                "James"
+            ]
+        }
+    ],
+    "managingOrganization": {
+        "reference": "Organization/1"
+    }
+}

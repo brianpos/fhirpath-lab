@@ -321,6 +321,10 @@
 </style>
 
 <style lang="scss" scoped >
+.result-type:has(.result-path) {
+  padding-bottom: 12px;
+}
+
 .result-path {
   font-size: 0.6rem;
   color: #666;
@@ -452,7 +456,6 @@ import { EvaluateChatPrompt, GetSystemPrompt, IOpenAISettings } from "~/helpers/
 import { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import ParseTreeTab from "~/components/ParseTreeTab.vue";
 import ConformanceResourceDetailsTab from "~/components/ConformanceResourceDetailsTab.vue";
-import { VueElement, nextTick } from "@vue/runtime-dom";
 import { LibraryData } from "~/models/LibraryTableData";
 import { BaseResource_defaultValues } from "~/models/BaseResourceTableData";
 import { DomainResource, FhirResource, Resource } from "fhir/r4b";
@@ -2882,7 +2885,13 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       setTimeout(() => {
         const jsonValue = this.getResourceJson();
         if (this.resourceJsonEditor && jsonValue) {
-          var ast: IJsonNode | undefined = parseJson(jsonValue);
+          // Select the model to use, r5 or r4b
+          let modelInfo = fhirpath_r4_model;
+          if (this.selectedEngine.indexOf("R5") > -1) {
+            modelInfo = fhirpath_r5_model;
+          }
+          // console.log("Using "+modelInfo.version+" model for navigation");
+          var ast: IJsonNode | undefined = parseJson(jsonValue, modelInfo);
           console.log(ast);
           if (ast) {
               var node = findNodeByPath(ast, elementPath);
