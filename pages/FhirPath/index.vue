@@ -104,7 +104,16 @@
                     <td class="result-value">
                       <div class="code-json">{{ v1.value }}</div>
                     </td>
-                    <td class="result-type"><i v-if="v1.type">({{ v1.type }})</i></td>
+                    <td class="result-type">
+                      <i v-if="v1.type">({{ v1.type }})</i>
+                      <span v-if="v1.path" class="result-path">{{ v1.path }}
+                        <v-btn v-if="v1.path" x-small class="result-path-target" icon title="Goto context" @click="navigateToContext(v1.path)">
+                        <v-icon>
+                          mdi-target
+                        </v-icon>
+                      </v-btn>
+                      </span>
+                    </td>
                   </tr>
                 </template>
               </v-simple-table>
@@ -173,7 +182,16 @@
                       <div class="code-json" v-if="v1.value != null">{{ v1.value }}</div>
                       <div class="code-json" v-if="v1.value == null && v1.type == 'empty-string'"><i>""</i></div>
                     </td>
-                    <td class="result-type"><i v-if="v1.type">({{ v1.type }})</i></td>
+                    <td class="result-type">
+                      <i v-if="v1.type">({{ v1.type }})</i>
+                      <span v-if="v1.path" class="result-path">{{ v1.path }}
+                        <v-btn v-if="v1.path" x-small class="result-path-target" icon title="Goto context" @click="navigateToContext(v1.path)">
+                        <v-icon>
+                          mdi-target
+                        </v-icon>
+                      </v-btn>
+                      </span>
+                    </td>
                   </tr>
                 </template>
               </v-simple-table>
@@ -303,6 +321,21 @@
 </style>
 
 <style lang="scss" scoped >
+.result-path {
+  font-size: 0.6rem;
+  color: #666;
+  font-style: italic;
+  position: absolute;
+  bottom: -4px;
+  right: 4px;
+  text-wrap-mode: nowrap;
+}
+
+.result-path-target {
+  right: 0px;
+  bottom: 2px;
+}
+
 tr.ve-table-body-tr {
   cursor: pointer;
 }
@@ -326,10 +359,12 @@ td {
 }
 
 .result-type {
+  position: relative;
   border-bottom: silver 1px solid;
 }
 
 .result-value {
+  position: relative;
   width: 100%;
   border-bottom: silver 1px solid;
 }
@@ -696,6 +731,7 @@ export interface IFhirPathMethods
   navigateToContext(elementPath: string): void;
   navigateToExpressionNode(node: JsonNode): void;
   highlightText(editor?: ace.Ace.Editor, startPosition?: number, length?: number): void;
+  highlightTextByLine(editor?: ace.Ace.Editor, startLine?: number, startColumn?: number, length?: number): void;
 
   GetAISettings(): IOpenAISettings;
   handleSendMessage(message: string): void;
@@ -1493,7 +1529,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
               // Anything else is a result
               // scan over the parts (values)
               let resultItem: ResultData = { context: entry.valueString, result: [], trace: [] };
-              if (!this.selectedEngine.includes('R5') && astJson && entry.valueString){
+              if (astJson && entry.valueString){
                 const node = findNodeByPath(astJson, entry.valueString);
                 if (node) resultItem.position = node.position;
               }
@@ -2763,7 +2799,60 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       editor.gotoLine(startLine, startColumn, true);
       // editor.selection.setRange(range);
 
-      const selectionMarker = editor.session.addMarker(range, "resultSelection", "fullLine", true);
+      const selectionMarker = editor.session.addMarker(range, "resultSelection", "text", true);
+      // after 1.5 seconds remove the highlight.
+      setTimeout(() => {
+        // console.log("Removing marker", selectionMarker);
+        editor.session.removeMarker(selectionMarker);
+      }, 1500);
+      this.updateNow();
+    },
+
+    highlightTextByLine(editor?: ace.Ace.Editor, startLine?: number, startColumn? : number, length?: number): void {
+      if (!editor || startColumn == undefined || startLine == undefined || length == undefined) return;
+
+      // determining the ending line/column from the length of the selected text
+      // console.log(startLine, startColumn, length);
+      let lines = editor.getValue().split(/\r\n|\r|\n/);
+      // console.log('allLines', lines);
+      let selectedText = lines[startLine-1].substring(startColumn-1);
+      if (selectedText.length > length) {
+        selectedText = selectedText.substring(0, length);
+      }
+      // console.log('first part', selectedText);
+      let endLine = startLine;
+      let endColumn = startColumn + selectedText.length;
+      if (selectedText.length < length) {
+        // there is text on other following lines
+        for (let i = startLine; i < lines.length; i++){
+          endLine++;
+          if (lines[i].length + selectedText.length == length) {
+            selectedText += lines[i];
+            endColumn = lines[i].length;
+            break;
+          }
+          if (lines[i].length + selectedText.length > length) {
+            // only need the substring of the line
+            endColumn = length - selectedText.length + lines[i].length;
+            selectedText += lines[i].substring(0, endColumn);
+            break;
+          }
+          selectedText += lines[i];
+        }
+      }
+
+      // determine the starting line/column from the raw position in the string
+      // console.log("Highlighting: ", selectedText);
+      
+      const range = new ace.Range(startLine-1, startColumn-1, endLine-1, endColumn-1);
+      // console.log("Range: ", range);
+      
+      editor.clearSelection();
+      editor.focus();
+      editor.gotoLine(startLine, startColumn-1, true);
+      // editor.selection.setRange(range);
+
+      const selectionMarker = editor.session.addMarker(range, "resultSelection", "text", true);
       // after 1.5 seconds remove the highlight.
       setTimeout(() => {
         // console.log("Removing marker", selectionMarker);
@@ -2777,6 +2866,12 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       this.selectTab(0);
       setTimeout(() => {
         console.log("Highlighting node: ", node);
+        if (node.Position == undefined && node.Line != undefined) {
+          // Calculate the start Position based on the line in the text 
+          node.Length = node.Name.length;
+          this.highlightTextByLine(this.expressionEditor, node.Line, node.Column, node.Length);
+          return;
+        }
         this.highlightText(this.expressionEditor, node.Position, node.Length);
       });
     },
