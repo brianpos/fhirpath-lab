@@ -9,18 +9,23 @@
     ],
     "active": true,
     "birthDate": "2016-042-02",
-    "_deceased":{
+    "_deceasedDateTime":{
         "id" : "d1",
         "extension": [
             {
                 "url": "http://hl7.org/fhir/StructureDefinition/patient-deceased",
                 "valueBoolean": false
+            },
+            {
+                "url": "http://hl7.org/fhir/StructureDefinition/patient-year",
+                "valueString": "1917"
             }
         ]
     },
     "name": [
         {
             "use": "official",
+            "_family": { "id": "f1" },
             "family": "Chalmers",
             "given": [
                 "Peter",

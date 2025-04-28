@@ -173,6 +173,51 @@ export function parseJson(path: string, modelInfo?: Model) {
   return printer.result();
 };
 
+function getPropertyDataType(modelInfo: Model, dataType: string, path: string): string[] {
+  // lookup the definition path in the path2Type map
+  let definitionPath = dataType + "." + path;
+  const elsewherePath = modelInfo.pathsDefinedElsewhere[definitionPath];
+  if (elsewherePath)
+    definitionPath = elsewherePath;
+
+  const definitionPath2Type = modelInfo.path2Type[definitionPath];
+  let type: string[] = [];
+  if (definitionPath2Type) {
+    if (definitionPath2Type === "BackboneElement")
+      type.push(definitionPath); // backbone elements are their own type
+  else
+      type.push(definitionPath2Type);
+  }
+  if (type.length == 0) {
+    // If not found, check if the definition path is a choice type
+    let choiceTypes = modelInfo.choiceTypePaths[definitionPath];
+    // there is a bug in the choice types where some types are not cased correctly
+    // so we need to check for both the original and lower case versions
+    // and check that the type is in the typeToParent map
+    if (choiceTypes) {
+      for (const choiceType of choiceTypes) {
+        if (modelInfo.type2Parent[choiceType] !== undefined) {
+          type.push(choiceType);
+        }
+        else {
+          const alternateCaseChoiceType = choiceType.substring(0, 1).toLowerCase() + choiceType.substring(1);
+          if (modelInfo.type2Parent[alternateCaseChoiceType] !== undefined) {
+            type.push(alternateCaseChoiceType);
+          }
+        }
+      }
+    }
+  }
+  if (type.length == 0) {
+    // Check in the base type
+    const baseType = modelInfo.type2Parent[dataType];
+    if (baseType) {
+      type = getPropertyDataType(modelInfo, baseType, path);
+    }
+  }
+  return type;
+}
+
 class PathListener extends Listener {
   constructor(modelInfo: Model) {
     super();
@@ -304,35 +349,27 @@ class PathListener extends Listener {
       }
 
       if (nodeParent.DataType) {
-        // Check if the type is a known choice type
-        // choiceTypePaths[]
-        let typePath = nodeParent.DataType + '.' + propName;
+        const types = getPropertyDataType(this.modelInfo, nodeParent.DataType, propName);
 
-        // Then check if the definition is actually somewhere else...
-        if (pathsDefinedElsewhere[typePath] !== undefined)
-          typePath = pathsDefinedElsewhere[typePath];
-
-        if (path2Type[typePath] !== undefined)
-          node.DataType = path2Type[typePath];
-        else {
+        if (types.length > 1) {
+          // TODO: umm, this is a bit of a hack, but we need to pick one of the types
+          // Choice types should have the type in the path, so we shouldn't get here anyway
+          node.DataType = types[0];
+        } else if (types.length > 0) {
+          node.DataType = types[0];
+        } else {
           // if the path isn't known, then this is likely to be
           // a backbone element, in which case the type in fhirpath.js
           // is the dotted path to the element, so we can use that
-          node.DataType = typePath;
-
-          // Double check if there is a base type defined for the parent, and the type is on that.
-          let parentType = this.modelInfo.type2Parent[nodeParent.DataType];
-          if (parentType === "Element" || parentType == "uri" || parentType == "string") {
-            if (this.modelInfo.path2Type["Element." + propName] !== undefined)
-              node.DataType = this.modelInfo.path2Type["Element." + propName];
-          }
+          // or a contained resource's resourceType property
+          node.DataType = node.Path;
         }
 
         // check if this type is a choice type
-        // which will then change the name to remove the choice type
-        const lp = node.Path.toLowerCase();
+        // which will then change the name to remove the choice type (and filter the type correctly)
+        const lp = propName.toLowerCase();
         const ldt = node.DataType?.toLowerCase();
-        if (ldt && lp.endsWith(ldt) && !lp.endsWith('.' + ldt)) {
+        if (ldt && lp.endsWith(ldt) && lp != ldt) {
           const choiceType = propName.substring(0, propName.length - ldt.length);
           if (this.modelInfo.choiceTypePaths[nodeParent.DataType + "." + choiceType] !== undefined) {
             node.text = node.text.substring(0, node.text.length - ldt.length);

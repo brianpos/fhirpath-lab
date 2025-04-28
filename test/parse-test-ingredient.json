@@ -17,6 +17,12 @@
     "status": "active",
     "comment": "markdown content",
     "substance": {
+      "extension": [
+        {
+          "url": "http://example.org/blah",
+          "valueString": "string test"
+        }
+      ],
       "strength": [
         {
           "presentationRatio": {
