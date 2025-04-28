@@ -427,6 +427,23 @@ class PathListener extends Listener {
         node.DefinitionPath = nodeParent.DataType + ".resourceType";
       }
     }
+    if (node.isArray && ctx.children && ctx.children.length === 1 && !ctx.children[0].getText().trimStart().startsWith("{")) {
+      // Add in a new node for this value item?
+      let arrayItemNode: IJsonNodeInternal = {
+        Path: node.Path + "[" + node.children?.length + "]",
+        DefinitionPath: node.DefinitionPath,
+        DataType: node.DataType,
+        text: node.text,
+        position: {
+          line: ctx.start.line,
+          column: ctx.start.column,
+          prop_start_pos: ctx.start.start,
+          prop_stop_pos: ctx.start.stop,
+        },
+        Index: node.children?.length
+      };
+      node.children?.push(arrayItemNode);
+    }
   }
   // exitValue = (ctx: ValueContext) => {};
 
@@ -435,17 +452,8 @@ class PathListener extends Listener {
     if (parentNode.children === undefined)
       parentNode.children = [];
     parentNode.isArray = true;
-
-    // When an array is initialized, set the index of all current children to maintain consistency
-    if (parentNode.children && parentNode.children.length > 0) {
-      for (let i = 0; i < parentNode.children.length; i++) {
-        parentNode.children[i].Index = i;
-      }
-    }
   }
   exitArr = (ctx: ArrContext) => {
+    // update all the indexes?
   }
-
-  // enterNumber = (ctx: NumberContext) => {};
-  // exitNumber = (ctx: NumberContext) => {};
 }

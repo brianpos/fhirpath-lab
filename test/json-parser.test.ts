@@ -84,3 +84,31 @@ test("findNodeByPathToExtensionValue", () => {
   expect(result?.DataType).toBe('string');
   expect(result?.isArray).toBeUndefined;
 });
+
+test("findNodeByPath_PrimitiveArray", () => {
+  const jsonData = fs.readFileSync('test/parse-test-patient.json','utf8');
+  let jsonTree = parseJson(jsonData);
+  let result = findNodeByPath(jsonTree!, 'name[0].given');
+  expect(result).toBeDefined();
+  expect(result?.Path).toBe('Patient.name[0].given');
+  expect(result?.DefinitionPath).toBe('Patient.name.given');
+  expect(result?.DataType).toBe('string');
+});
+
+test("findNodeByPath_PrimitiveArrayItem", () => {
+  // const jsonData = fs.readFileSync('test/parse-test-patient.json','utf8');
+  const jsonData: fhir4.Patient = {
+     resourceType: 'Patient',
+      id: '123',
+       name: [{
+         family: 'Doe', 
+         given: ['John', 'Smith'] 
+        }] 
+      };
+  let jsonTree = parseJson(JSON.stringify(jsonData, null, 2));
+  let result = findNodeByPath(jsonTree!, 'Patient.name[0].given[1]');
+  expect(result).toBeDefined();
+  expect(result?.Path).toBe('Patient.name[0].given[1]');
+  expect(result?.DefinitionPath).toBe('Patient.name.given');
+  expect(result?.DataType).toBe('string');
+});
