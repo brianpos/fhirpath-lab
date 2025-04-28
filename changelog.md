@@ -5,6 +5,7 @@
 
 # 27 April 2025
 * Include support for results and trace to include the navigation path to the raw resource content
+* Update the fhirpath.js library to 4.0.0 (and several other packages)
 
 # 21 January 2025
 * Add exception checking when trying to write to the localstorage (discovered while parsing a HUGE json bundle)
