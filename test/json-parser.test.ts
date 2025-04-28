@@ -14,7 +14,7 @@ test("parseJson", () => {
 test("findNodeByPath", () => {
   const jsonData = fs.readFileSync('test/parse-test-patient.json','utf8');
   let jsonTree = parseJson(jsonData);
-  let result = findNodeByPath(jsonTree!, 'Patient.active');
+  let result = findNodeByPath(jsonTree!, 'active');
   expect(result).toBeDefined();
   expect(result?.Path).toBe('Patient.active');
   expect(result?.DefinitionPath).toBe('Patient.active');
@@ -61,6 +61,17 @@ test("findNodeByPathToExtension", () => {
   expect(result?.DefinitionPath).toBe('Ingredient.identifier.extension');
   expect(result?.DataType).toBe('Extension');
   expect(result?.isArray).toBe(true);
+});
+
+test("findNodeByPath_strength", () => {
+  const jsonData = fs.readFileSync('test/parse-test-ingredient.json','utf8');
+  let jsonTree = parseJson(jsonData, r5Model);
+  let result = findNodeByPath(jsonTree!, 'Ingredient.substance.strength[1]');
+  expect(result).toBeDefined();
+  expect(result?.Path).toBe('Ingredient.substance.strength[1]');
+  expect(result?.DefinitionPath).toBe('Ingredient.substance.strength');
+  expect(result?.DataType).toBe('Ingredient.substance.strength');
+  expect(result?.isArray).toBeUndefined();
 });
 
 test("findNodeByPathToExtensionValue", () => {

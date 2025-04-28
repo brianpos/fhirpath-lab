@@ -122,28 +122,53 @@ interface IJsonNodeInternal extends IJsonNode {
 }
 
 export function findNodeByPath(node: IJsonNode, path: string): IJsonNode | undefined {
-  if (node.DataType && !path.startsWith(node.DataType))
-    return findChildNodeByPath(node, node.DataType + '.' + path);
-  return findChildNodeByPath(node, path);
+  // If node has a DataType and path doesn't start with it, prepend the DataType
+  if (node.DataType && !path.startsWith(node.DataType)) {
+    return findChildNodeByPathSegments(node, (node.DataType + "." + path).split("."));
+  }
+  return findChildNodeByPathSegments(node, path.split("."));
 }
 
-function findChildNodeByPath(node: IJsonNode, path: string): IJsonNode | undefined {
-  if (node.Path == path)
-    return node;
-
-  // Scan any children for the path
-  if (node.children) {
-    for (let child of node.children) {
-      let found = findChildNodeByPath(child, path);
-      if (found)
-        return found;
-    }
+function findChildNodeByPathSegments(node: IJsonNode, pathSegments: string[]): IJsonNode | undefined {
+  if (pathSegments.length === 0) {
+    // Not expected to get here as implied not searching for a path
+    return undefined;
   }
 
-  // wasn't found in children, so check if had the array indexer appended
-  // (and we weren't actually an array - which is valid fhirpath syntax)
-  if (node.Path + '[0]' == path)
-    return node;
+  const processingSegment = pathSegments[0];
+  const processingSegmentWithoutArray = processingSegment.split("[")[0];
+
+  if (node.text !== processingSegmentWithoutArray) {
+    // this is not the node we are looking for ...
+    return undefined;
+  }
+
+  if (pathSegments.length === 1) {
+    // this IS the node we are looking for :)
+    if (!node.isArray || processingSegment === processingSegmentWithoutArray)
+      return node;
+  }
+
+  if (node.children) {
+    // this is one of our children!
+    const remainingSegments = node.isArray ? pathSegments : pathSegments.slice(1);
+    for (const child of node.children) {
+      let found: IJsonNode | undefined = findChildNodeByPathSegments(
+        child,
+        remainingSegments
+      );
+      if (found) {
+        if (node.isArray) {
+          if (node.children.length == 1 || child.text+'['+child.Index+']' === processingSegment) {
+            return found;
+          }
+        }
+        else {
+            return found;
+        }
+      }
+    }
+  }
 
   return undefined;
 }
@@ -271,7 +296,7 @@ class PathListener extends Listener {
           return child.Path === extChild.Path && !child.text?.startsWith('_');
         });
         if (primitiveProperties && primitiveProperties.length > 0){
-          // this is a primitive extension with a value, so we just need to move the 
+          // this is a primitive extension with a value, so we just need to move the
           // children over to it.
           let primitiveProperty = primitiveProperties[0];
           if (primitiveProperty.children === undefined)
@@ -397,6 +422,7 @@ class PathListener extends Listener {
           nodeParent.DefinitionPath = nodeParent.Path;
         }
         nodeParent.DataType = ctx.getText().replace(/^"/, '').replace(/"$/, '');
+        nodeParent.text = nodeParent.DataType;
         node.Path = nodeParent.DataType + ".resourceType";
         node.DefinitionPath = nodeParent.DataType + ".resourceType";
       }
