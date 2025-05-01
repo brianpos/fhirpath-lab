@@ -6,7 +6,7 @@
     <v-treeview :items="astInverted ? astInvertedTree : astTree" :open="astInverted ? astOpenInverted : astOpen"
       activatable :dense="true" item-key="id" item-text="Name" item-children="Arguments" open-on-click>
       <template v-slot:prepend="{ item }">
-        <v-btn v-if="item.Position != undefined" @click.stop x-small style="float:left;" icon title="Goto node in expression" @click="navigateToExpressionNode(item)">
+        <v-btn v-if="item.Position != undefined || item.Line != undefined" @click.stop x-small style="float:left;" icon title="Goto node in expression" @click="navigateToExpressionNode(item)">
           <v-icon>
             mdi-target
           </v-icon>
@@ -62,6 +62,9 @@
       <template v-if="showAdvancedSettings && showPositionInformation" v-slot:append="{ item }">
         <v-btn v-if="item.Position != undefined" @click.stop x-small style="float:right;" icon title="Goto node in expression" @click="navigateToExpressionNode(item)">
           ({{ item.Position }} {{ item.Length }})
+        </v-btn>
+        <v-btn v-if="item.Line != undefined" @click.stop x-small style="float:right;" icon title="Goto node in expression" @click="navigateToExpressionNode(item)">
+          (l{{ item.Line }}, c{{ item.Column }})
         </v-btn>
       </template>
     </v-treeview>
@@ -510,10 +513,10 @@ export default class ParseTreeTab extends Vue {
   public parseErrorMessage: string | undefined = "";
 
   get showPositionInformation(): boolean {
-    var tree = this.astInverted ? this.astInvertedTree : this.astTree;
+    const tree = this.astInverted ? this.astInvertedTree : this.astTree;
     if (!tree || tree.length <= 0) 
       return false;
-    if (tree[0].Position == undefined) 
+    if (tree[0].Position == undefined && tree[0].Line == undefined)
       return false;
     return true;
   }

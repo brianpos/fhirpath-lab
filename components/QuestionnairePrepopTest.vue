@@ -74,7 +74,7 @@ import { Component, Prop, Vue } from "vue-property-decorator";
 import { structuredDataCapture } from "fhir-sdc-helpers"
 import { getExtension, getExtensionCodeValue, getExtensionCodingValue, getExtensionExpressionValues, getExtensions, getExtensionStringValue } from "fhir-extension-helpers"
 import { CreateOperationOutcome, errorCodingSearch, requestFhirAcceptHeaders, requestFhirContentTypeHeaders } from "~/helpers/searchFhir";
-import { FetchResourceCallback, populateQuestionnaire } from "@aehrc/sdc-populate";
+import { FetchResourceCallback, FetchResourceRequestConfig, populateQuestionnaire } from "@aehrc/sdc-populate";
 import axios, { AxiosError } from "axios";
 import QuestionnaireContext, { ContextData } from "./QuestionnaireContext.vue";
 import fhirpath from "fhirpath";
@@ -217,15 +217,15 @@ export default class QuestionnairePrepopulateTest extends Vue {
 
   // Note: No way to POST batch bundles yet, the populate library will individually process each batch entry
   static fetchResourceCallbackCSIROPrePopulation: FetchResourceCallback =
-    async (query: string, requestConfig: { sourceFhirServer: string }) => {
-      let { sourceFhirServer } = requestConfig;
+    async (query: string, requestConfig: FetchResourceRequestConfig) => {
+      let { sourceServerUrl } = requestConfig;
 
       const headers = {
         Accept: "application/json;charset=utf-8",
       };
 
-      if (!sourceFhirServer.endsWith("/")) {
-        sourceFhirServer += "/";
+      if (!sourceServerUrl.endsWith("/")) {
+        sourceServerUrl += "/";
       }
 
       // When query is an absolute URL, use it as is
@@ -236,7 +236,7 @@ export default class QuestionnairePrepopulateTest extends Vue {
       }
 
       // When query is a relative URL, append it to the client endpoint
-      return axios.get(sourceFhirServer + query, {
+      return axios.get(sourceServerUrl + query, {
         headers: headers,
       });
     };
@@ -284,8 +284,8 @@ export default class QuestionnairePrepopulateTest extends Vue {
       questionnaire: this.questionnaire as QuestionnaireR4,
       fetchResourceCallback:
         QuestionnairePrepopulateTest.fetchResourceCallbackCSIROPrePopulation,
-      requestConfig: {
-        sourceFhirServer: this.dataServer,
+      fetchResourceRequestConfig: {
+        sourceServerUrl: this.dataServer,
       },
       patient: patientResource as PatientR4,
       user: userResource ? (userResource as PractitionerR4) : undefined,
@@ -555,7 +555,7 @@ export default class QuestionnairePrepopulateTest extends Vue {
 
       // run the pre-population
       // Use the FHIR $populate operation to pre-populate the form
-      // from whatever server is at the URL in populateServiceUrl 
+      // from whatever server is at the URL in populateServiceUrl
       const response = await fetch(url, {
         method: "POST",
         cache: "no-cache",

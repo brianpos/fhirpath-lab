@@ -4,9 +4,62 @@ import Lexer from "../json-parser/JSON5Lexer";
 import Parser, { ArrContext, Json5Context, KeyContext, NumberContext, ObjContext, PairContext, ValueContext } from "../json-parser/JSON5Parser";
 import Listener from "../json-parser/JSON5Listener";
 
-import { choiceTypePaths, path2Type } from "fhirpath/fhir-context/r4";
-import { pathsDefinedElsewhere } from "fhirpath/fhir-context/r4";
-import { type2Parent } from "fhirpath/fhir-context/r4";
+import r4Model from "fhirpath/fhir-context/r4";
+
+// This model interface is internal to the fhirpath library, so cloning it here too
+export interface Model {
+  // Model version, e.g. 'r5', 'r4', 'stu3', or 'dstu2'.
+  version: 'r5' | 'r4' | 'stu3' | 'dstu2',
+
+  // This section contains setting for the `weight()` function.
+  score?: {
+    // Formal identifier for the weight property (the item weight property URI).
+    // It is used for getting scores from CodeSystem/ValueSet in R5.
+    // Use this URI to get property code from "CodeSystem.property.code"
+    // or "ValueSet.expansion.property.code" and then use this code to get a
+    // concept property by "CodeSystem.concept.property.code" or
+    // "ValueSet.expansion.contains.property.code".
+    // P.S.:
+    // We can use the property for already expanded contained ValueSets.
+    // Expanding ValueSet to get the property for the CodeSystem concept is not
+    // practical. It is better to look up for the concept in CodeSystem and get
+    // the property there.
+    propertyURI?: string,
+
+    // The item weight extension URI used in R5/R4
+    extensionURI: string[],
+  },
+
+  /**
+   *  A hash of resource element paths (e.g. Observation.value) that are known
+   *  to point to files that are choice types.
+   */
+  choiceTypePaths: {
+    [path: string]: string[];
+  };
+
+  /**
+   *  A hash from paths to the path for which their content is defined, e.g.
+   *  Questionnaire.item.item -> Questionnaire.item.
+   */
+  pathsDefinedElsewhere: {
+    [path: string]: string;
+  };
+
+  /**
+   * Mapping data types to parent data types.
+   */
+  type2Parent: {
+    [path: string]: string;
+  };
+
+  /**
+   * Mapping paths to data types.
+   */
+  path2Type: {
+    [path: string]: string;
+  };
+}
 
 export interface IWithPosition {
   /** Positional information attached to the interface */
@@ -44,6 +97,9 @@ export interface IJsonNode {
   /** The full path to the node */
   Path?: string;
 
+  /** Definitional Path */
+  DefinitionPath?: string;
+
   /** FHIR Datatype of the node */
   DataType?: string;
 
@@ -55,6 +111,9 @@ export interface IJsonNode {
 
   // Internal processing properties used during processing
   isArray?: boolean;
+
+  /** Zero-based index when the node is part of an array */
+  Index?: number;
 }
 
 interface IJsonNodeInternal extends IJsonNode {
@@ -62,35 +121,62 @@ interface IJsonNodeInternal extends IJsonNode {
   deleteMe?: boolean;
 }
 
-
 export function findNodeByPath(node: IJsonNode, path: string): IJsonNode | undefined {
-  if (node.DataType && !path.startsWith(node.DataType))
-    return findChildNodeByPath(node, node.DataType + '.' + path);
-  return findChildNodeByPath(node, path);
+  // If node has a DataType and path doesn't start with it, prepend the DataType
+  if (node.DataType && !path.startsWith(node.DataType)) {
+    return findChildNodeByPathSegments(node, (node.DataType + "." + path).split("."));
+  }
+  return findChildNodeByPathSegments(node, path.split("."));
 }
 
-function findChildNodeByPath(node: IJsonNode, path: string): IJsonNode | undefined {
-  if (node.Path == path)
-    return node;
-
-  // Scan any children for the path
-  if (node.children) {
-    for (let child of node.children) {
-      let found = findChildNodeByPath(child, path);
-      if (found)
-        return found;
-    }
+function findChildNodeByPathSegments(node: IJsonNode, pathSegments: string[]): IJsonNode | undefined {
+  if (pathSegments.length === 0) {
+    // Not expected to get here as implied not searching for a path
+    return undefined;
   }
 
-  // wasn't found in children, so check if had the array indexer appended
-  // (and we weren't actually an array - which is valid fhirpath syntax)
-  if (node.Path + '[0]' == path)
-    return node;
+  const processingSegment = pathSegments[0];
+  const processingSegmentWithoutArray = processingSegment.split("[")[0];
+
+  if (node.text !== processingSegmentWithoutArray) {
+    // this is not the node we are looking for ...
+    return undefined;
+  }
+
+  if (pathSegments.length === 1) {
+    // this IS the node we are looking for :)
+    if (!node.isArray || processingSegment === processingSegmentWithoutArray)
+      return node;
+  }
+
+  if (node.children) {
+    // this is one of our children!
+    const remainingSegments = node.isArray ? pathSegments : pathSegments.slice(1);
+    for (const child of node.children) {
+      let found: IJsonNode | undefined = findChildNodeByPathSegments(
+        child,
+        remainingSegments
+      );
+      if (found) {
+        if (node.isArray) {
+          if (node.children.length == 1 || child.text+'['+child.Index+']' === processingSegment) {
+            return found;
+          }
+        }
+        else {
+            return found;
+        }
+      }
+    }
+  }
 
   return undefined;
 }
 
-export function parseJson(path: string) {
+export function parseJson(path: string, modelInfo?: Model) {
+
+  modelInfo ??= r4Model;
+ 
   let chars = new antlr4.CharStream(path);
   let lexer = new Lexer(chars);
   let tokens = new antlr4.CommonTokenStream(lexer);
@@ -106,17 +192,63 @@ export function parseJson(path: string) {
   let tree = parser.json5();
 
   // Now walk the tree to populate fhir object's path tree
-  let printer = new PathListener();
+  let printer = new PathListener(modelInfo);
   ParseTreeWalker.DEFAULT.walk(printer, tree);
 
   return printer.result();
 };
 
+function getPropertyDataType(modelInfo: Model, dataType: string, path: string): string[] {
+  // lookup the definition path in the path2Type map
+  let definitionPath = dataType + "." + path;
+  const elsewherePath = modelInfo.pathsDefinedElsewhere[definitionPath];
+  if (elsewherePath)
+    definitionPath = elsewherePath;
+
+  const definitionPath2Type = modelInfo.path2Type[definitionPath];
+  let type: string[] = [];
+  if (definitionPath2Type) {
+    if (definitionPath2Type === "BackboneElement")
+      type.push(definitionPath); // backbone elements are their own type
+  else
+      type.push(definitionPath2Type);
+  }
+  if (type.length == 0) {
+    // If not found, check if the definition path is a choice type
+    let choiceTypes = modelInfo.choiceTypePaths[definitionPath];
+    // there is a bug in the choice types where some types are not cased correctly
+    // so we need to check for both the original and lower case versions
+    // and check that the type is in the typeToParent map
+    if (choiceTypes) {
+      for (const choiceType of choiceTypes) {
+        if (modelInfo.type2Parent[choiceType] !== undefined) {
+          type.push(choiceType);
+        }
+        else {
+          const alternateCaseChoiceType = choiceType.substring(0, 1).toLowerCase() + choiceType.substring(1);
+          if (modelInfo.type2Parent[alternateCaseChoiceType] !== undefined) {
+            type.push(alternateCaseChoiceType);
+          }
+        }
+      }
+    }
+  }
+  if (type.length == 0) {
+    // Check in the base type
+    const baseType = modelInfo.type2Parent[dataType];
+    if (baseType) {
+      type = getPropertyDataType(modelInfo, baseType, path);
+    }
+  }
+  return type;
+}
+
 class PathListener extends Listener {
-  constructor() {
+  constructor(modelInfo: Model) {
     super();
     this.ast2 = { children: [] };
     this.parentStack2.push(this.ast2);
+    this.modelInfo = modelInfo;
   }
 
   public result() {
@@ -125,20 +257,31 @@ class PathListener extends Listener {
 
   public ast2?: IJsonNodeInternal;
   private parentStack2: IJsonNodeInternal[] = [];
+  private modelInfo: Model;
 
   enterObj = (ctx: ObjContext) => {
     let parentNode = this.parentStack2[this.parentStack2.length - 1];
     if (parentNode.isArray) {
+      const index = parentNode.children?.length || 0;
       let node: IJsonNodeInternal = {
-        Path: parentNode.Path + '[' + parentNode.children?.length + ']',
+        Path: parentNode.Path + "[" + index + "]",
+        DefinitionPath: parentNode.DefinitionPath,
         DataType: parentNode.DataType,
-        position: { line: ctx.start.line, column: ctx.start.column, prop_start_pos: ctx.start.start, prop_stop_pos: ctx.start.stop },
-        children: []
+        text: parentNode.text,
+        position: {
+          line: ctx.start.line,
+          column: ctx.start.column,
+          prop_start_pos: ctx.start.start,
+          prop_stop_pos: ctx.start.stop,
+        },
+        children: [],
+        Index: index,
       };
       parentNode.children?.push(node);
       this.parentStack2.push(node);
     }
   }
+
   exitObj = (ctx: ObjContext) => {
     let currentNode = this.parentStack2[this.parentStack2.length - 1];
     if (currentNode.hasPrimitiveExtensions) {
@@ -153,7 +296,7 @@ class PathListener extends Listener {
           return child.Path === extChild.Path && !child.text?.startsWith('_');
         });
         if (primitiveProperties && primitiveProperties.length > 0){
-          // this is a primitive extension with a value, so we just need to move the 
+          // this is a primitive extension with a value, so we just need to move the
           // children over to it.
           let primitiveProperty = primitiveProperties[0];
           if (primitiveProperty.children === undefined)
@@ -222,51 +365,48 @@ class PathListener extends Listener {
         propName = propName.substring(1);
         nodeParent.hasPrimitiveExtensions = true;
       }
-      if (nodeParent.Path)
+      if (nodeParent.Path) {
         node.Path = nodeParent.Path + "." + propName;
-      else
+        node.DefinitionPath = nodeParent.DefinitionPath + "." + propName;
+      } else {
         node.Path = propName;
+        node.DefinitionPath = propName;
+      }
 
       if (nodeParent.DataType) {
-        // Check if the type is a known choice type
-        // choiceTypePaths[]
-        let typePath = nodeParent.DataType + '.' + propName;
+        const types = getPropertyDataType(this.modelInfo, nodeParent.DataType, propName);
 
-        // Then check if the definition is actually somewhere else...
-        if (pathsDefinedElsewhere[typePath] !== undefined)
-          typePath = pathsDefinedElsewhere[typePath];
-
-        if (path2Type[typePath] !== undefined)
-          node.DataType = path2Type[typePath];
-        else {
+        if (types.length > 1) {
+          // TODO: umm, this is a bit of a hack, but we need to pick one of the types
+          // Choice types should have the type in the path, so we shouldn't get here anyway
+          node.DataType = types[0];
+        } else if (types.length > 0) {
+          node.DataType = types[0];
+        } else {
           // if the path isn't known, then this is likely to be
           // a backbone element, in which case the type in fhirpath.js
           // is the dotted path to the element, so we can use that
-          node.DataType = typePath;
-
-          // Double check if there is a base type defined for the parent, and the type is on that.
-          let parentType = type2Parent[nodeParent.DataType];
-          if (parentType === "Element" || parentType == "uri" || parentType == "string"){
-            if (path2Type["Element."+propName] !== undefined)
-              node.DataType = path2Type["Element."+propName];
-          }
+          // or a contained resource's resourceType property
+          node.DataType = node.Path;
         }
 
         // check if this type is a choice type
-        // which will then change the name to remove the choice type
-        const lp = node.Path.toLowerCase();
+        // which will then change the name to remove the choice type (and filter the type correctly)
+        const lp = propName.toLowerCase();
         const ldt = node.DataType?.toLowerCase();
-        if (ldt && lp.endsWith(ldt) && !lp.endsWith('.' + ldt)) {
+        if (ldt && lp.endsWith(ldt) && lp != ldt) {
           const choiceType = propName.substring(0, propName.length - ldt.length);
-          if (choiceTypePaths[nodeParent.DataType + "." + choiceType] !== undefined) {
+          if (this.modelInfo.choiceTypePaths[nodeParent.DataType + "." + choiceType] !== undefined) {
             node.text = node.text.substring(0, node.text.length - ldt.length);
             node.Path = nodeParent.Path + "." + choiceType;
+            node.DefinitionPath = nodeParent.DefinitionPath + "." + choiceType;
           }
         }
       }
     }
     else {
       node.Path = node.text;
+      node.DefinitionPath = node.text;
     }
   }
   // exitKey = (ctx: KeyContext) => {}
@@ -277,10 +417,32 @@ class PathListener extends Listener {
       // This is the root node which defines the actual resource type.
       if (this.parentStack2.length > 1) {
         let nodeParent = this.parentStack2[this.parentStack2.length - 2];
-        if (!nodeParent.Path || nodeParent.Path.length == 0)
+        if (!nodeParent.Path || nodeParent.Path.length == 0) {
           nodeParent.Path = ctx.getText().replace(/^"/, '').replace(/"$/, '');
+          nodeParent.DefinitionPath = nodeParent.Path;
+        }
         nodeParent.DataType = ctx.getText().replace(/^"/, '').replace(/"$/, '');
+        nodeParent.text = nodeParent.DataType;
+        node.Path = nodeParent.DataType + ".resourceType";
+        node.DefinitionPath = nodeParent.DataType + ".resourceType";
       }
+    }
+    if (node.isArray && ctx.children && ctx.children.length === 1 && !ctx.children[0].getText().trimStart().startsWith("{")) {
+      // Add in a new node for this value item?
+      let arrayItemNode: IJsonNodeInternal = {
+        Path: node.Path + "[" + node.children?.length + "]",
+        DefinitionPath: node.DefinitionPath,
+        DataType: node.DataType,
+        text: node.text,
+        position: {
+          line: ctx.start.line,
+          column: ctx.start.column,
+          prop_start_pos: ctx.start.start,
+          prop_stop_pos: ctx.start.stop,
+        },
+        Index: node.children?.length
+      };
+      node.children?.push(arrayItemNode);
     }
   }
   // exitValue = (ctx: ValueContext) => {};
@@ -292,8 +454,6 @@ class PathListener extends Listener {
     parentNode.isArray = true;
   }
   exitArr = (ctx: ArrContext) => {
+    // update all the indexes?
   }
-
-  // enterNumber = (ctx: NumberContext) => {};
-  // exitNumber = (ctx: NumberContext) => {};
 }

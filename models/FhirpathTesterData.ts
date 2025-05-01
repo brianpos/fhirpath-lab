@@ -4,6 +4,7 @@ import { IJsonNodePosition } from "~/helpers/json_parser";
 export interface ResultItem {
   type: string;
   value: any;
+  path?: string;
 }
 
 export interface ResultData {
@@ -17,6 +18,7 @@ export interface TraceData {
   name: string;
   type?: string;
   value?: string;
+  path?: string;
 }
 
 export interface JsonNode {
@@ -43,19 +45,29 @@ export interface fpjsNode {
 }
 
 export function getValue(entry: fhir4b.ParametersParameter): ResultItem[] {
+  const extPath = getExtensionStringValue(
+    entry,
+    "http://fhir.forms-lab.com/StructureDefinition/resource-path"
+  );
   let result: ResultItem[] = [];
-  var myMap = new Map(Object.entries(entry));
+  let myMap = new Map(Object.entries(entry));
   for (let [k, v] of myMap.entries()) {
     if (k.startsWith("value"))
-      result.push({ type: k.replace("value", ""), value: v });
+      result.push({ type: k.replace("value", ""), value: v, path: extPath });
     else if (k == "resource")
-      result.push({ type: (v as fhir4b.Resource).resourceType, value: v });
+      result.push({
+        type: (v as fhir4b.Resource).resourceType,
+        value: v,
+        path: extPath,
+      });
   }
   const extVal = getExtensionStringValue(
     entry,
     "http://fhir.forms-lab.com/StructureDefinition/json-value"
   );
-  if (extVal) result.push({ type: entry.name, value: JSON.parse(extVal) });
+
+  if (extVal)
+    result.push({ type: entry.name, value: JSON.parse(extVal), path: extPath });
   if (entry.name == "empty-string")
     result.push({ type: "empty-string", value: "" });
 
@@ -66,10 +78,15 @@ export function getTraceValue(entry: fhir4b.ParametersParameter): TraceData[] {
   let result: TraceData[] = [];
   if (entry.part) {
     for (let part of entry.part) {
+      const extPath = getExtensionStringValue(
+        part,
+        "http://fhir.forms-lab.com/StructureDefinition/resource-path"
+      );
       const val = getValue(part);
       let valueData: TraceData = {
         name: entry.valueString ?? "",
         type: part.name,
+        path: extPath,
       };
       if (val.length > 0)
         valueData.value = JSON.stringify(val[0].value, null, 4);
