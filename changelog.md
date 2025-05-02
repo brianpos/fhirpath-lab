@@ -3,6 +3,10 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+# 2 May 2025 (dev)
+* Update the CSIRO renderer to 1.0.0-alpha.53
+* Update axios to 1.9.0
+
 # 27 April 2025
 * Include support for results and trace to include the navigation path to the raw resource content
 * Update the fhirpath.js library to 4.0.0 (and several other packages)
