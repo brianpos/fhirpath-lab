@@ -21,18 +21,17 @@ $tab-color: rgba(0, 0, 0, 0.87);
   margin-bottom: 0;
 }
 
-.retired-page-background {
+.v-application--wrap:has(div.retired-page-background) {
   background-color: thistle;
-  padding-bottom: 0;
 }
 
-.draft-page-background {
+.v-application--wrap:has(div.draft-page-background) {
   background-color: lightgray;
-  padding-bottom: 0;
 }
 
-.active-page-background {
-  // background-color: #d8f3dc;
+.active-page-background,
+.draft-page-background,
+.retired-page-background {
   padding-bottom: 0;
 }
 
