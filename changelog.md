@@ -3,6 +3,9 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+# 6 May 2025 (dev)
+* Fix [#35](https://github.com/brianpos/fhirpath-lab/issues/35) ofType(Quantity).system.empty() with a non-empty system still returns true
+
 # 2 May 2025 (dev)
 * Update the CSIRO renderer to 1.0.0-alpha.53
 * Update axios to 1.9.0
