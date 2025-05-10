@@ -1041,12 +1041,10 @@ group SetEntryData(source src: Patient, target entry)
 
       if (resourceJson) {
         try {
-          let resource = JSON.parse(resourceJson);
-          if (resource.resourceType) {
-            p.parameter?.push({ name: "resource", resource: resource });
-          } else {
-            p.parameter?.push({ name: "resource", valueString: resourceJson });
-          }
+          // force the use of the valueString for all
+          // This is so that the parameters object doesn't matter if it is R4 or R5
+          // and we can use the same code for both 
+          p.parameter?.push({ name: "resource", valueString: resourceJson });
         }
         catch (err) {
           p.parameter?.push({ name: "resource", valueString: resourceJson });
