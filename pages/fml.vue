@@ -2,14 +2,14 @@
   <div style="height:100%;padding: 60px 0 0 0;">
     <HeaderNavbar @close-settings="settingsClosed">
       <template v-slot:extraNavButtons>
+        <v-select dark class="engineselector" :items="executionEngines" v-model="selectedEngine" hide-details="auto"
+          @change="evaluateFhirPathExpression" />
         <v-btn icon dark accesskey="g" title="press alt+g to go" @focus="checkFocus"
           @click="evaluateFhirPathExpression">
           <v-icon>
             mdi-play
           </v-icon>
         </v-btn>
-        <v-select dark class="engineselector" :items="executionEngines" v-model="selectedEngine" hide-details="auto"
-          @change="evaluateFhirPathExpression" />
       </template>
     </HeaderNavbar>
     <table-loading v-if="loadingData" />
@@ -348,7 +348,6 @@ interface FhirMapData {
   results?: ResultData;
   trace: TraceData[];
   selectedEngine: string;
-  executionEngines: string[];
   expressionEditor?: ace.Ace.Editor;
   testResourceFormat: string;
   processedByEngine?: string;
@@ -429,6 +428,20 @@ export default Vue.extend({
       this.chatEnabled = true;
   },
   computed: {
+    executionEngines(): string[] { 
+      if (this.showAdvancedSettings){
+        return [
+          ".NET (brianpos)",
+          "java (HAPI)",
+          "matchbox"
+        ];
+      }
+      return [
+        ".NET (brianpos)",
+        "java (HAPI)"
+      ]
+    },
+
     tabDetails(): TabData[] {
       return [
         {
@@ -1016,8 +1029,11 @@ group SetEntryData(source src: Patient, target entry)
 
       if (this.selectedEngine == "java (HAPI)") {
         url = settings.mapper_server_java();
-
         (this as any).$appInsights?.trackEvent({ name: 'evaluate HAPI (map)' });
+      }
+      else if (this.selectedEngine == "matchbox") {
+        url = settings.mapper_server_matchbox();
+        (this as any).$appInsights?.trackEvent({ name: 'evaluate matchbox (map)' });
       }
       else {
         (this as any).$appInsights?.trackEvent({ name: 'evaluate .NET (map)' });
@@ -1086,10 +1102,6 @@ group SetEntryData(source src: Patient, target entry)
       openAIexpressionExplanationLoading: false,
       trace: [],
       selectedEngine: ".NET (brianpos)",
-      executionEngines: [
-        ".NET (brianpos)",
-        "java (HAPI)"
-      ],
       processedByEngine: undefined,
       expressionEditor: undefined,
       testResourceFormat: "json",

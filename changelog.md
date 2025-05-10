@@ -3,6 +3,9 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+# 10 May 2025 (dev)
+* Include partial support for matchbox server for FML testing (still needs some work)
+
 # 6 May 2025 (dev)
 * Fix [#35](https://github.com/brianpos/fhirpath-lab/issues/35) ofType(Quantity).system.empty() with a non-empty system still returns true
 
