@@ -139,10 +139,11 @@ export default class ResourceJsonEditor extends Vue {
         theme: "ace/theme/chrome",
         wrapBehavioursEnabled: true
       });
-      // this.aceEditor.getSession().setMode(`ace/mode/${this.resourceType}`);
+      this.aceEditor.getSession().setMode(`ace/mode/${this.resourceType}`);
       this.aceEditor.setValue(this.internalResourceText || '', -1);
       this.aceEditor.setReadOnly(this.readOnly);
       // console.log('Initializing ace editor for Resource editing');
+      this.detectResourceType();
     }
 
     // Watch for changes in the editor and update the internalResourceText
