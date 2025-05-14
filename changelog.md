@@ -5,6 +5,10 @@
 
 # 14 May 2025 (dev)
 * Support for Matchbox server for FML testing!
+* Update CSIRO renderer to 1.0.0-alpha.54
+* Update to final version of Nuxt 2 - 2.18.1
+* Update to Vuetify 1.12.3
+
 
 # 10 May 2025 (dev)
 * Include partial support for matchbox server for FML testing (still needs some work)
