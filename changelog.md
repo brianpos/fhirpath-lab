@@ -3,6 +3,9 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+# 14 May 2025 (dev)
+* Support for Matchbox server for FML testing!
+
 # 10 May 2025 (dev)
 * Include partial support for matchbox server for FML testing (still needs some work)
 
