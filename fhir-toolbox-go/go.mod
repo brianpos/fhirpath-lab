@@ -2,7 +2,7 @@ module fhirpath-lab-toolbox-go
 
 go 1.23.0
 
-require github.com/DAMEDIC/fhir-toolbox-go v0.0.0-20250520144800-5b5106bfdc5f
+require github.com/DAMEDIC/fhir-toolbox-go v0.0.0-20250520193409-326a987d5bfd
 
 require (
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
