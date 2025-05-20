@@ -663,6 +663,7 @@ interface FhirPathData {
   expressionParseOutcome?: fhir4b.OperationOutcome;
   astInverted: boolean;
   enableSave: boolean;
+  wasmInitialized: boolean;
 }
 
 function canonicalVariableName(name: string): string {
@@ -720,13 +721,13 @@ export interface IFhirPathMethods
   downloadVariableResource(name: string): void;
   evaluateExpressionUsingFhirpathJs(): void;
   evaluateExpressionUsingFhirpathJsR5(): void;
+  evaluateFhirPathExpression(): void;
   prepareSharePackageData(): TestFhirpathData;
   showShareLink(): boolean;
   updateShareText(): void;
   updateZulipShareText(): void;
   copyShareLinkToClipboard(): void;
   copyZulipShareLinkToClipboard(): void;
-  evaluateFhirPathExpression(): void;
   checkFocus(event: any): void;
   saveLastUsedParameters(loadCompleted: boolean): void;
   createNewLibrary(): void;
@@ -742,6 +743,8 @@ export interface IFhirPathMethods
   copySuggestionToClipboard(suggestion: string): void;
   applySuggestedExpression(updatedExpression: string): void;
   applySuggestedContext(updatedExpression: string): void;
+  evaluateExpressionUsingFhirToolboxGoWasm(fhirRelease: string): Promise<void>;
+  initializeWasm(): Promise<void>;
 }
 
 interface IFhirPathComputed
@@ -767,6 +770,11 @@ interface IFhirPathProps
   },
 }
 
+// Module-level cache for WASM
+let wasmInitialized = false;
+let goWasm: any = null;
+let evaluateFhirPathWasmFunc: any = null;
+
 export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFhirPathProps>({
   async mounted() {
     window.document.title = "FhirPath Tester";
@@ -780,6 +788,9 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     setAcePaths(ace.config);
 
     document.addEventListener('keydown', this.CtrlEnterHandler);
+
+    // Initialize WASM
+    await this.initializeWasm();
   },
 
   beforeDestroy() {
@@ -2301,6 +2312,162 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       // console.log(this.results);
     },
 
+    async initializeWasm(): Promise<void> {
+      if (this.wasmInitialized) {
+        return;
+      }
+
+      try {
+        if (!(window as any).Go) {
+          throw new Error('Go WASM runtime (wasm_exec.js) not loaded');
+        }
+        const go = new (window as any).Go();
+        const result = await WebAssembly.instantiateStreaming(
+          fetch('/fhir-toolbox-go.wasm'),
+          go.importObject
+        );
+        go.run(result.instance);
+        
+        // Store the evaluateFhirPath function reference
+        if (!(window as any).evaluateFhirPath) {
+          throw new Error('Go WASM module not properly initialized: evaluateFhirPath not found');
+        }
+        evaluateFhirPathWasmFunc = (window as any).evaluateFhirPath;
+        
+        this.wasmInitialized = true;
+      } catch (error: any) {
+        console.error('Failed to initialize WASM:', error);
+        this.wasmInitialized = false;
+      }
+    },
+
+    async evaluateExpressionUsingFhirToolboxGoWasm(fhirRelease: string) {
+      try {
+        if (!this.getResourceJson() && this.resourceId) {
+          await this.downloadTestResource();
+        }
+
+        this.results = [];
+        this.setResultJson('');
+
+        // Get and validate the resource JSON
+        const resourceJson = this.getResourceJson();
+        if (!resourceJson) {
+          this.saveOutcome = { 
+            resourceType: 'OperationOutcome', 
+            issue: [{ 
+              code: 'invalid', 
+              severity: 'error', 
+              details: { text: 'No resource JSON provided' } 
+            }] 
+          };
+          this.showOutcome = true;
+          return;
+        }
+
+        // Parse and validate the resource JSON
+        let parsedResource;
+        try {
+          parsedResource = JSON.parse(resourceJson);
+          if (!parsedResource.resourceType) {
+            throw new Error('Resource JSON must contain a resourceType field');
+          }
+        } catch (error: any) {
+          this.saveOutcome = { 
+            resourceType: 'OperationOutcome', 
+            issue: [{ 
+              code: 'invalid', 
+              severity: 'error', 
+              details: { text: `Invalid resource JSON: ${error.message}` } 
+            }] 
+          };
+          this.showOutcome = true;
+          return;
+        }
+
+        // Prepare environment variables
+        const environment: Record<string, any> = { 
+          resource: parsedResource, 
+          rootResource: parsedResource 
+        };
+        for (const [key, value] of this.variables) {
+          let envValue = value.data;
+          if (envValue && (envValue.startsWith('[') || envValue.startsWith('{'))) {
+            try {
+              envValue = JSON.parse(envValue);
+            } catch (e) {
+              console.log('Failed to parse variable JSON:', e);
+            }
+          }
+          environment[key] = envValue;
+        }
+
+        // Get the expressions
+        const expression = this.getFhirpathExpression();
+        const contextExpression = this.getContextExpression();
+        if (!expression) {
+          this.saveOutcome = { 
+            resourceType: 'OperationOutcome', 
+            issue: [{ 
+              code: 'invalid', 
+              severity: 'error', 
+              details: { text: 'No FHIRPath expression provided' } 
+            }] 
+          };
+          this.showOutcome = true;
+          return;
+        }
+
+        if (!this.wasmInitialized) {
+          await this.initializeWasm();
+        }
+
+        if (!evaluateFhirPathWasmFunc) {
+          throw new Error('WASM evaluateFhirPath function not initialized');
+        }
+
+        // Call WASM with both expressions
+        const wasmResult = evaluateFhirPathWasmFunc(
+          resourceJson,
+          contextExpression || '',
+          expression,
+          JSON.stringify(environment),
+          fhirRelease,
+        );
+
+        if (wasmResult.error) {
+          this.saveOutcome = { 
+            resourceType: 'OperationOutcome', 
+            issue: [{ 
+              code: 'invalid', 
+              severity: 'error', 
+              details: { text: wasmResult.error } 
+            }] 
+          };
+          this.showOutcome = true;
+          return;
+        }
+
+        // Process the results
+        this.results = JSON.parse(wasmResult.result);
+        this.processedByEngine = 'fhir-toolbox-go (WASM)';
+        console.log(this.results);
+        this.saveLastUsedParameters(true);
+
+      } catch (err: any) {
+        console.error('WASM evaluation error:', err);
+        this.saveOutcome = { 
+          resourceType: 'OperationOutcome', 
+          issue: [{ 
+            code: 'exception', 
+            severity: 'error', 
+            details: { text: `WASM evaluation error: ${err.message || err}` } 
+          }] 
+        };
+        this.showOutcome = true;
+      }
+    },
+
     showShareLink(): boolean {
       if (navigator?.clipboard) {
         return true;
@@ -2750,6 +2917,15 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         }
         (this as any).$appInsights?.trackEvent({ name: 'evaluate Aidbox' });
       }
+      else if (this.selectedEngine.startsWith("fhir-toolbox-go (WASM")) {
+        let fhirRelease = this.selectedEngine.includes("R5") ? "R5" : "R4";
+        await this.evaluateExpressionUsingFhirToolboxGoWasm(fhirRelease);
+        this.saveLastUsedParameters(true);
+        if (this.prevFocus){
+          this.prevFocus.focus();
+        }
+        return;
+      }
       else {
         (this as any).$appInsights?.trackEvent({ name: 'evaluate FirelySDK' });
       }
@@ -2927,7 +3103,6 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
             }
         }
       });
-
     },
   },
   data(): FhirPathData {
@@ -2953,10 +3128,12 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         "java (IBM)",
         "fhirpath-py (Beda Software)",
         "Aidbox (Health Samurai)",
+        "fhir-toolbox-go (WASM)",
         ".NET (firely-R5)",
         "fhirpath.js (R5)",
         "java (HAPI-R5)",
         "Aidbox (Health Samurai-R5)",
+        "fhir-toolbox-go (WASM-R5)",
       ],
       externalExecutionEngines: [
         "fhirpath-py (Beda Software)",
@@ -2979,7 +3156,8 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       openAILastContext: "",
       expressionParseOutcome: undefined,
       astInverted: true,
-      enableSave: false
+      enableSave: false,
+      wasmInitialized: false,
     };
   },
 });
