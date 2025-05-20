@@ -91,14 +91,7 @@ func Expression(this js.Value, args []js.Value) any {
 
 		contextNodes = contextResult
 	} else {
-		// If no context expression, use the resource as the context
-		resourceElement, err := jsonToElement(resource)
-		if err != nil {
-			return js.ValueOf(map[string]any{
-				"error": "Failed to convert resource to FHIRPath element: " + err.Error(),
-			})
-		}
-		contextNodes = []fhirpath.Element{resourceElement}
+		contextNodes = []fhirpath.Element{resource}
 	}
 
 	// Parse the main FHIRPath expression
@@ -130,9 +123,12 @@ func Expression(this js.Value, args []js.Value) any {
 
 		// Create result entry with context and trace information
 		resultEntry := map[string]any{
-			"context": fmt.Sprintf("%s[%d]", contextExpressionStr, len(allResults)),
-			"result":  make([]map[string]any, 0),
-			"trace":   traceResults,
+			"result": make([]map[string]any, 0),
+			"trace":  traceResults,
+		}
+
+		if contextExpressionStr != "" {
+			resultEntry["context"] = fmt.Sprintf("%s[%d]", contextExpressionStr, len(allResults))
 		}
 
 		// Convert FHIRPath collection to []any
