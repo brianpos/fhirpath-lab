@@ -2,7 +2,7 @@
 
 ## Overview
 The fhirpath-lab is a dedicated tool for testing out fhirpath expressions against the various
-fhirpath execution engines available - dotnet (Firely), java (HAPI) and javascript (nlm)
+fhirpath execution engines available - dotnet (Firely), java (HAPI), javascript (nlm), and Go (fhir-toolbox-go)
 
 It also has support for browsing StructureDefinitions, SearchParameters and Questionnaires to be able to test out the various expressions in those contexts.
 
@@ -98,6 +98,28 @@ $ npm run start
 
 # generate static project
 $ npm run generate
+```
+
+### Go WebAssembly Build
+The project includes a Go WebAssembly (WASM) module that provides an additional FHIRPath evaluation engine.
+The build process automatically compiles the Go code to WebAssembly during the build step if the Go compiler is available.
+
+Requirements:
+- Go compiler (version 1.23 required)
+
+The WASM build process:
+1. During the build, the system checks if the Go compiler is available
+2. If available, it compiles the Go code in the `fhir-toolbox-go` directory to WebAssembly
+3. The output is saved to `static/fhir-toolbox-go.wasm`
+4. If the Go compiler is not available, the build continues without the Go WASM support
+
+To manually build the WASM module:
+```bash
+# Navigate to the fhir-toolbox-go directory
+$ cd fhir-toolbox-go
+
+# Build the WASM module
+$ GOOS=js GOARCH=wasm go build -o ../static/fhir-toolbox-go.wasm .
 ```
 
 For detailed explanation on how things work, check out the [documentation](https://nuxtjs.org).
