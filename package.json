@@ -5,10 +5,8 @@
   "license": "BSD-3-Clause",
   "type": "module",
   "scripts": {
-    "postinstall": "./build-wasm.sh",
     "dev": "nuxt",
     "build": "nuxt build",
-    "build:wasm": "./build-wasm.sh",
     "test": "jest test",
     "start": "nuxt start",
     "generate": "nuxt generate",

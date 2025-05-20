@@ -1,3 +1,5 @@
+import buildWasmHook from './hooks/build-wasm.js';
+
 export default {
   // Target: https://go.nuxtjs.dev/config-target
   target: 'static',
@@ -34,6 +36,11 @@ export default {
   plugins: [
     '~/plugins/go-wasm-exec.js',
   ],
+
+  // Hooks
+  hooks: {
+    'build:before': buildWasmHook
+  },
 
   // Auto import components: https://go.nuxtjs.dev/config-components
   components: [
