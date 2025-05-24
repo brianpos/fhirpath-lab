@@ -9,16 +9,15 @@
         <v-toolbar flat color="primary">
           <v-toolbar-title>{{ tabTitle() }}</v-toolbar-title>
           <v-spacer />
-          <v-btn icon dark accesskey="g" title="press alt+g to go" @focus="checkFocus"
-            @click="evaluateViewDefinition">
+          <v-btn icon dark accesskey="g" title="press alt+g to go" @focus="checkFocus" @click="evaluateViewDefinition">
             <v-icon>
               mdi-play
             </v-icon>
           </v-btn>
           <v-tooltip bottom color="primary">
             <template v-slot:activator="{ on, attrs }">
-              <v-btn icon dark @click="copyZulipShareLinkToClipboard" :hidden="!showShareLink()" v-bind="attrs" v-on="on"
-                @mouseenter="updateZulipShareText">
+              <v-btn icon dark @click="copyZulipShareLinkToClipboard" :hidden="!showShareLink()" v-bind="attrs"
+                v-on="on" @mouseenter="updateZulipShareText">
                 <svg class="brand-logo" role="img" aria-label="Zulip" xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 600 600" height="25">
                   <path fill="hsl(0, 0%, 100%)"
@@ -29,42 +28,35 @@
             </template>
             <span v-text="shareZulipToolTipMessage"></span>
           </v-tooltip>
-          <v-btn icon dark title="Copy results to clipboard" @focus="checkFocus"
-            @click="copyResultsToClipboard">
+          <v-btn icon dark title="Copy results to clipboard" @focus="checkFocus" @click="copyResultsToClipboard">
             <v-icon>
               mdi-content-copy
             </v-icon>
           </v-btn>
         </v-toolbar>
-        <twin-pane-tab
-          :tabs="tabDetails"
-          @change="tabChanged"
-          :eager="true"
-          ref="twinTabControl"
-          @mounted="twinPaneMounted"
-        >
-        <template v-slot:View_Def>
-          <v-tooltip bottom>
-                          <template v-slot:activator="{ on, attrs }">
-                            <v-btn icon style="right: 20px; position: absolute; padding-top: 20px;" v-bind="attrs"
-                              v-on="on" @click="resetExpression"><v-icon>mdi-broom</v-icon></v-btn>
-                          </template>
-                          <span>Reset View Definition</span>
-                        </v-tooltip>
+        <twin-pane-tab :tabs="tabDetails" @change="tabChanged" :eager="true" ref="twinTabControl"
+          @mounted="twinPaneMounted">
+          <template v-slot:View_Def>
+            <v-tooltip bottom>
+              <template v-slot:activator="{ on, attrs }">
+                <v-btn icon style="right: 20px; position: absolute; padding-top: 20px; z-index: 1000;" v-bind="attrs"
+                  v-on="on" @click="resetExpression"><v-icon>mdi-broom</v-icon></v-btn>
+              </template>
+              <span>Reset View Definition</span>
+            </v-tooltip>
 
-                        <label class="v-label theme--light bare-label" style="transform: translateY(-4px) scale(0.75); transform-origin: left;">SQL on FHIR v2 View Definition</label>
-                        <div height="85px" width="100%" ref="aceEditorExpression"></div>
-                        <div class="ace_editor_footer"></div>
+            <label class="v-label theme--light bare-label"
+              style="transform: translateY(-4px) scale(0.75); transform-origin: left;">SQL on FHIR v2 View
+              Definition</label>
+            <div height="85px" width="100%" style="flex-grow: 1;" ref="aceEditorExpression"></div>
+            <div class="ace_editor_footer"></div>
 
-                        <OperationOutcomePanel :outcome="expressionParseOutcome"
-                          @close="expressionParseOutcome = undefined" />
+            <OperationOutcomePanel :outcome="expressionParseOutcome" @close="expressionParseOutcome = undefined" />
           </template>
           <template v-slot:Resource>
             <resource-editor style="margin-top: -8px;" ref="jsonEditor" label="Test Resource Id"
-              textLabel="Test resource" :resourceUrl="resourceId"
-              @update:resourceUrl="resourceId = ($event ?? '')"
-              :resourceText="resourceJson"
-              @update:resourceText="resourceJson = $event" />
+              textLabel="Test resource" :resourceUrl="resourceId" @update:resourceUrl="resourceId = ($event ?? '')"
+              :resourceText="resourceJson" @update:resourceText="resourceJson = $event" />
           </template>
           <template v-slot:Results>
             <div v-if="outputResult.length == 0" class="v-label theme--light bare-label"
@@ -72,26 +64,26 @@
               No results.
             </div>
             <v-simple-table>
-                          <tr>
-                            <template v-for="(r2, i1) in outputColumns">
-                              <th class="context" colspan="2" :key="i1">
-                                {{ r2 }}
-                              </th>
-                            </template>
-                          </tr>
-                          <template v-for="(row, index) in outputResult">
-                            <tr :key="index">
-                              <template v-for="(r2, i1) in outputColumns">
-                                <td colspan="2" class="result-type" :key="i1">
-                                  {{ row[r2] }}
-                                </td>
-                              </template>
-                            </tr>
-                          </template>
-                        </v-simple-table>
+              <tr>
+                <template v-for="(r2, i1) in outputColumns">
+                  <th class="context" colspan="2" :key="i1">
+                    {{ r2 }}
+                  </th>
+                </template>
+              </tr>
+              <template v-for="(row, index) in outputResult">
+                <tr :key="index">
+                  <template v-for="(r2, i1) in outputColumns">
+                    <td colspan="2" class="result-type" :key="i1">
+                      {{ row[r2] }}
+                    </td>
+                  </template>
+                </tr>
+              </template>
+            </v-simple-table>
           </template>
           <template v-slot:Trace>
-                        <!-- <template v-for="(r2, i1) in results">
+            <!-- <template v-for="(r2, i1) in results">
                           <v-simple-table :key="i1">
                             <tr v-if="r2.context">
                               <td class="context" colspan="3">
@@ -108,61 +100,18 @@
                                 <td class="result-type"><i v-if="v1.type">({{ v1.type }})</i></td>
                               </tr>
                             </template>
-                          </v-simple-table>
-                        </template> -->
-                      </template>
+  </v-simple-table>
+  </template> -->
+          </template>
         </twin-pane-tab>
       </v-card>
 
       <br />
-      <OperationOutcomeOverlay style="z-index: 8" v-if="showOutcome" :saveOutcome="saveOutcome" :showOutcome="showOutcome"
-        title="Error" @close="clearOutcome" />
+      <OperationOutcomeOverlay style="z-index: 8" v-if="showOutcome" :saveOutcome="saveOutcome"
+        :showOutcome="showOutcome" title="Error" @close="clearOutcome" />
     </div>
   </div>
 </template>
-
-<style lang="scss">
-
-.resource {
-  height: calc(100vh - 280px);
-}
-
-.chat {
-  height: calc(100vh - 200px);
-}
-
-.debug {
-  height: calc(100vh - 196px);
-}
-
-@media (max-width: 596px) {
-  .custom-tab>div>div {
-    height: calc(100vh - 168px);
-  }
-
-  .resource {
-    height: calc(100vh - 320px - 48px);
-  }
-
-  .chat {
-    height: calc(100vh - 200px - 48px);
-  }
-
-  .debug {
-    height: calc(100vh - 196px - 48px);
-  }
-}
-</style>
-
-<style>
-.v-treeview--dense .v-treeview-node__root {
-  min-height: 28px;
-}
-
-.v-treeview-node {
-  border-top: thin solid silver;
-}
-</style>
 
 <style lang="scss" scoped>
 .ace_editor:focus-within+.ace_editor_footer {
@@ -171,7 +120,7 @@
 }
 </style>
 
-<style lang="scss" scoped >
+<style lang="scss" scoped>
 tr.ve-table-body-tr {
   cursor: pointer;
 }
@@ -391,39 +340,39 @@ const examplePatient = `
 }`;
 
 const exampleSqlonfhirViewDefinition = JSON.stringify({
-        resource: 'Patient',
-        select: [
-            {
-                column: [
-                    {
-                        name: 'id',
-                        path: 'id',
-                        type: 'id'
-                    },
-                    {
-                        name: 'birthDate',
-                        path: 'birthDate',
-                        type: 'date'
-                    }
-                ]
-            },
-            {
-                forEach: 'name',
-                column: [
-                    {
-                        name: 'last_name',
-                        path: 'family',
-                        type: 'string'
-                    },
-                    {
-                        name: 'first_name',
-                        path: "given.join(' ')",
-                        type: 'string'
-                    }
-                ]
-            }
-        ]
-    }, null, 2);;
+  resource: 'Patient',
+  select: [
+    {
+      column: [
+        {
+          name: 'id',
+          path: 'id',
+          type: 'id'
+        },
+        {
+          name: 'birthDate',
+          path: 'birthDate',
+          type: 'date'
+        }
+      ]
+    },
+    {
+      forEach: 'name',
+      column: [
+        {
+          name: 'last_name',
+          path: 'family',
+          type: 'string'
+        },
+        {
+          name: 'first_name',
+          path: "given.join(' ')",
+          type: 'string'
+        }
+      ]
+    }
+  ]
+}, null, 2);;
 
 interface FhirPathData {
   prevFocus?: any;
@@ -544,12 +493,12 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         if (editorDiv) {
           this.expressionEditor = ace.edit(editorDiv, {
             wrap: "free",
-            minLines: 3,
-            maxLines: Infinity,
+            // minLines: 3,
+            // maxLines: Infinity,
             highlightActiveLine: false,
             showGutter: true,
             tabSize: settings.getTabSpaces(),
-            fontSize: 16,
+            // fontSize: 16,
             cursorStyle: "slim",
             showPrintMargin: false,
             theme: "ace/theme/chrome",
@@ -590,9 +539,9 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       this.$forceUpdate();
     },
     tabChanged(index: Number): void {
-      if (index == 0){
+      if (index == 0) {
         setTimeout(() => {
-        if (this.expressionEditor){
+          if (this.expressionEditor) {
             this.expressionEditor.resize();
           }
         });
@@ -662,7 +611,8 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     },
     resetExpression(): void {
       if (this.expressionEditor) {
-        this.expressionEditor.setValue('');
+        const newView = { resource: 'Patient', select: [{ column: [{ name: "id", path: "id", type: "id" }] }] };
+        this.expressionEditor.setValue(JSON.stringify(newView, null, settings.getTabSpaces()), 1);
         this.expressionEditor.clearSelection();
         this.expressionEditor.focus();
       }
