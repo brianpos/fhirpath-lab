@@ -10,7 +10,7 @@
           <v-toolbar-title>{{ tabTitle() }}</v-toolbar-title>
           <v-spacer />
           <v-btn icon dark accesskey="g" title="press alt+g to go" @focus="checkFocus"
-            @click="evaluateFhirPathExpression">
+            @click="evaluateViewDefinition">
             <v-icon>
               mdi-play
             </v-icon>
@@ -29,6 +29,12 @@
             </template>
             <span v-text="shareZulipToolTipMessage"></span>
           </v-tooltip>
+          <v-btn icon dark title="Copy results to clipboard" @focus="checkFocus"
+            @click="copyResultsToClipboard">
+            <v-icon>
+              mdi-content-copy
+            </v-icon>
+          </v-btn>
         </v-toolbar>
         <twin-pane-tab
           :tabs="tabDetails"
@@ -54,25 +60,17 @@
                           @close="expressionParseOutcome = undefined" />
           </template>
           <template v-slot:Resource>
-            <v-text-field label="Test Resource Id" v-model="resourceId" hide-details="auto" autocomplete="off"
-                          @input="updateNow" autocorrect="off" autocapitalize="off" spellcheck="false">
-                          <template v-slot:append>
-                            <v-btn icon small tile @click="resourceId = undefined">
-                              <v-icon> mdi-close </v-icon>
-                            </v-btn>
-                            <v-btn icon small tile @click="downloadTestResource">
-                              <v-icon> mdi-download </v-icon>
-                            </v-btn>
-                            <v-btn small icon tile @click="reformatTestResource"><v-icon title="Format json" dark>
-                                mdi-format-indent-increase </v-icon></v-btn>
-                          </template>
-                        </v-text-field>
-                        <label class="v-label theme--light bare-label"style="transform: scale(0.75); transform-origin: left;">Test Resource JSON <i>{{
-                          resourceJsonChangedMessage() }}</i></label>
-                        <div class="resource" width="100%" ref="aceEditorResourceJsonTab"></div>
-                        <!-- <div class="ace_editor_footer"></div> -->
+            <resource-editor style="margin-top: -8px;" ref="jsonEditor" label="Test Resource Id"
+              textLabel="Test resource" :resourceUrl="resourceId"
+              @update:resourceUrl="resourceId = ($event ?? '')"
+              :resourceText="resourceJson"
+              @update:resourceText="resourceJson = $event" />
           </template>
           <template v-slot:Results>
+            <div v-if="outputResult.length == 0" class="v-label theme--light bare-label"
+              style="transform: translateY(-4px) scale(0.75); transform-origin: left; padding: 8px;">
+              No results.
+            </div>
             <v-simple-table>
                           <tr>
                             <template v-for="(r2, i1) in outputColumns">
@@ -181,7 +179,8 @@ tr.ve-table-body-tr {
 td {
   vertical-align: top;
   height: unset !important;
-  padding: 8px;
+  padding: 4px 8px;
+  border-top: 1px solid #e0e0e0;
 }
 
 th {
@@ -215,8 +214,7 @@ import "ace-builds/src-noconflict/mode-text";
 import "ace-builds/src-noconflict/mode-json";
 import "ace-builds/src-noconflict/theme-chrome";
 
-import { processResources } from "~/helpers/sqlonfhir_extractor"
-import { fromArray } from "~/helpers/sqlonfhir_loaders"
+import { evaluate } from "sql-on-fhir-v2/sof-js";
 
 // import { fhir } from '@fhir-typescript/r4b-core';
 import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from "lz-string";
@@ -224,6 +222,7 @@ import { EncodeTestFhirpathData, DecodeTestFhirpathData, TestFhirpathData } from
 
 import { DomainResource, FhirResource, Resource } from "fhir/r4b";
 import { TabData } from "~/components/TwinPaneTab.vue";
+import ResourceEditor from "~/components/ResourceEditor.vue";
 
 const shareTooltipText = 'Copy a sharable link to this test expression';
 const shareZulipTooltipText = 'Copy a sharable link for Zulip to this test expression';
@@ -391,42 +390,47 @@ const examplePatient = `
   }
 }`;
 
-const exampleSqlonfhirViewDefinition = `{
-  "resource": "Patient",
-  "select": [
-    {
-      "column": [
-        {
-          "path": "id",
-          "name": "Id"
-        },
-        {
-          "path": "identifier.where(type.coding.exists(code = 'MR' and system = 'http://terminology.hl7.org/CodeSystem/v2-0203')).value",
-          "name": "MRN"
-        },
-        {
-          "path": "name.first().family",
-          "name": "Surname"
-        },
-        {
-          "path": "name.first().given.join(', ')",
-          "name": "Given name(s)"
-        },
-        {
-          "path": "birthDate",
-          "name": "DOB"
-        }
-      ]
-    }
-  ]
-}
-`;
+const exampleSqlonfhirViewDefinition = JSON.stringify({
+        resource: 'Patient',
+        select: [
+            {
+                column: [
+                    {
+                        name: 'id',
+                        path: 'id',
+                        type: 'id'
+                    },
+                    {
+                        name: 'birthDate',
+                        path: 'birthDate',
+                        type: 'date'
+                    }
+                ]
+            },
+            {
+                forEach: 'name',
+                column: [
+                    {
+                        name: 'last_name',
+                        path: 'family',
+                        type: 'string'
+                    },
+                    {
+                        name: 'first_name',
+                        path: "given.join(' ')",
+                        type: 'string'
+                    }
+                ]
+            }
+        ]
+    }, null, 2);;
 
 interface FhirPathData {
   prevFocus?: any;
   outputResult: any[];
   resourceId?: string;
   resourceType?: string;
+  resourceJson?: string;
   resourceJsonChanged: boolean;
   loadingData: boolean;
   saveOutcome?: fhir4b.OperationOutcome;
@@ -438,7 +442,6 @@ interface FhirPathData {
   shareToolTipMessage: string;
   shareZulipToolTipMessage: string;
   expressionEditor?: ace.Ace.Editor;
-  resourceJsonEditor?: ace.Ace.Editor;
   expressionParseOutcome?: fhir4b.OperationOutcome;
 }
 
@@ -446,7 +449,6 @@ interface IFhirPathMethods {
   readParametersFromQuery(): TestFhirpathData;
   applyParameters(p: TestFhirpathData): void;
   resetExpression(): void;
-  resourceJsonChangedEvent(): void;
   fhirpathExpressionChangedEvent(): void;
   resourceJsonChangedMessage(): string | undefined;
   tabTitle(): void;
@@ -461,19 +463,16 @@ interface IFhirPathMethods {
   clearOutcome(): void;
   setResultJson(result: string): void;
 
-  reformatTestResource(): void;
-  downloadTestResource(): void;
   evaluateExpressionUsingFhirpathJs(): void;
   prepareSharePackageData(): TestFhirpathData;
   showShareLink(): boolean;
+  copyResultsToClipboard(): void;
   updateShareText(): void;
   updateZulipShareText(): void;
   copyShareLinkToClipboard(): void;
   copyZulipShareLinkToClipboard(): void;
-  evaluateFhirPathExpression(): void;
+  evaluateViewDefinition(): void;
   checkFocus(event: any): void;
-  saveLastUsedParameters(loadCompleted: boolean): void;
-
 }
 
 interface IFhirPathComputed {
@@ -483,14 +482,14 @@ interface IFhirPathComputed {
 
 interface IFhirPathProps {
   $refs: {
+    jsonEditor: ResourceEditor,
     aceEditorExpression: HTMLDivElement,
-    aceEditorResourceJson: HTMLDivElement,
   },
 }
 
 export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFhirPathProps>({
   // head: {
-  //   title: "FhirPathTester",
+  //   title: "SqlOnFhir Tester",
   // },
   async mounted() {
     this.showAdvancedSettings = settings.showAdvancedSettings();
@@ -541,7 +540,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     async twinPaneMounted(): Promise<void> {
       this.$nextTick(async () => {
         // Update the editor's Mode
-        var editorDiv: any = this.$refs.aceEditorExpression as Element;
+        let editorDiv: any = this.$refs.aceEditorExpression as Element;
         if (editorDiv) {
           this.expressionEditor = ace.edit(editorDiv, {
             wrap: "free",
@@ -549,6 +548,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
             maxLines: Infinity,
             highlightActiveLine: false,
             showGutter: true,
+            tabSize: settings.getTabSpaces(),
             fontSize: 16,
             cursorStyle: "slim",
             showPrintMargin: false,
@@ -557,46 +557,11 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
             wrapBehavioursEnabled: true
           });
 
-          // setCustomHighlightRules(this.expressionEditor, FhirPathHightlighter_Rules);
-          this.expressionEditor.setValue(exampleSqlonfhirViewDefinition);
+          this.expressionEditor.setValue(JSON.stringify(JSON.parse(exampleSqlonfhirViewDefinition), null, settings.getTabSpaces()));
           this.expressionEditor.clearSelection();
           this.expressionEditor.on("change", this.fhirpathExpressionChangedEvent)
         }
 
-        const resourceEditorSettings: Partial<ace.Ace.EditorOptions> = {
-          wrap: "free",
-          minLines: 15,
-          // maxLines: 30,
-          highlightActiveLine: true,
-          showGutter: true,
-          fontSize: 14,
-          cursorStyle: "slim",
-          showPrintMargin: false,
-          theme: "ace/theme/chrome",
-          mode: "ace/mode/json",
-          wrapBehavioursEnabled: true
-        };
-        var editorResourceJsonDiv: any = this.$refs.aceEditorResourceJsonTab as Element;
-        if (editorResourceJsonDiv) {
-          this.resourceJsonEditor = ace.edit(editorResourceJsonDiv, resourceEditorSettings);
-          this.resourceJsonEditor?.setValue(JSON.stringify(JSON.parse(examplePatient), null, 2));
-          this.resourceJsonEditor?.clearSelection();
-          this.resourceJsonEditor.session.on("change", this.resourceJsonChangedEvent);
-        }
-
-        // read the values that were last used (stored in the local storage)
-        const lastUsed = settings.loadLastUsedParameters();
-        console.log(lastUsed);
-        if (lastUsed && lastUsed.loadCompleted) {
-          const p: TestFhirpathData = {
-            expression: lastUsed.expression ?? '',
-            context: lastUsed.context,
-            resource: lastUsed.resourceId,
-            resourceJson: lastUsed.resourceJson,
-            engine: lastUsed.engine,
-          };
-          // await this.applyParameters(p);
-        }
         // Check for the encoded parameters first
         const parameters = this.$route.query.parameters as string;
         let data: TestFhirpathData;
@@ -610,8 +575,15 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
           data = this.readParametersFromQuery();
         }
         await this.applyParameters(data);
-        await this.evaluateFhirPathExpression();
+
+        if (!this.resourceJson || this.resourceJson.length == 0) {
+          this.resourceJson = JSON.stringify(JSON.parse(examplePatient), null, settings.getTabSpaces());
+          if (this.resourceId) {
+            await this.$refs.jsonEditor?.downloadResource();
+          }
+        }
         this.loadingData = false;
+        await this.evaluateViewDefinition();
       });
     },
     updateNow() {
@@ -625,27 +597,12 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
           }
         });
       }
-
-      if (index == 1){
-        setTimeout(() => {
-        if (this.resourceJsonEditor){
-            this.resourceJsonEditor.resize();
-          }
-        });
-      }
-
-      if (index == 3) {
-        // Workaround to refresh the display in the response editor when it is updated while the form is not visible
-        // https://github.com/ajaxorg/ace/issues/2497#issuecomment-102633605
-        setTimeout(() => {
-        });
-      }
     },
     readParametersFromQuery(): TestFhirpathData {
       let data: TestFhirpathData = {
         expression: this.$route.query.expression as string
       };
-      if (this.$route.query.libaryId as string) {
+      if (this.$route.query.libraryId as string) {
       }
       else {
         if (this.$route.query.context) {
@@ -680,21 +637,20 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       }
       else {
         if (p.expression) {
-          if (p.exampletype) {
-            this.resourceId = `${settings.getFhirServerExamplesUrl()}/${p.exampletype}/example`;
+          if (p.resource) {
+            this.resourceId = p.resource;
           }
           else {
-            if (p.resource) {
-              this.resourceId = p.resource;
+            if (p.exampletype) {
+              this.resourceId = `${settings.getFhirServerExamplesUrl()}/${p.exampletype}/example`;
             }
           }
 
           const resourceJson = p.resourceJson;
           if (resourceJson) {
-            this.resourceJsonEditor?.setValue(JSON.stringify(JSON.parse(resourceJson), null, 2));
+            this.resourceJson = JSON.stringify(JSON.parse(resourceJson), null, settings.getTabSpaces());
             this.resourceJsonChanged = true;
             this.resourceId = undefined;
-            this.resourceJsonEditor?.clearSelection();
           }
 
           if (this.expressionEditor) {
@@ -710,10 +666,6 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         this.expressionEditor.clearSelection();
         this.expressionEditor.focus();
       }
-    },
-    resourceJsonChangedEvent() {
-      this.resourceJsonChanged = true;
-      console.log('enable save resourceJSON');
     },
     fhirpathExpressionChangedEvent() {
       // Check the expression to see if there are any variables in there
@@ -747,11 +699,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     },
 
     getResourceJson(): string | undefined {
-      const json = this.resourceJsonEditor?.getValue();
-      if (json && json.length > 0) {
-        return json;
-      }
-      return undefined;
+      return this.resourceJson;
     },
 
     clearOutcome() {
@@ -760,103 +708,11 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
 
     setResultJson(result: string) {
       console.log(result);
-      // if (this.debugEditor) {
-      //   this.debugEditor.setValue(result);
-      //   this.debugEditor.clearSelection();
-      //   this.debugEditor.renderer.updateFull(true);
-      // }
-    },
-
-    reformatTestResource() {
-      if (this.resourceJsonEditor) {
-        const jsonValue = this.resourceJsonEditor.getValue();
-        try {
-          this.resourceJsonEditor.setValue(JSON.stringify(JSON.parse(jsonValue), null, 4));
-          this.resourceJsonEditor.clearSelection();
-          this.resourceJsonEditor.renderer.updateFull(true);
-        }
-        catch { }
-      }
-    },
-
-    async downloadTestResource() {
-      try {
-        if (!this.resourceId) return;
-        let url = this.resourceId;
-        if (this.resourceId && !this.resourceId.startsWith('http'))
-          url = settings.getFhirServerExamplesUrl() + '/' + this.resourceId;
-
-        // if trying to use the hl7 example servers, that should be over https
-        if (url.startsWith("http://build.fhir.org/")
-          || url.startsWith("http://hl7.org/fhir/"))
-          url = "https://" + url.substring(7);
-
-        // If this is trying to download a hl7 example, run it through the downloader proxy
-        // as the HL7 servers don't have CORS for us
-        if (url.startsWith("https://build.fhir.org/")
-          || url.startsWith("https://hl7.org/fhir/"))
-          url = settings.dotnet_server_downloader() + "?url=" + url;
-
-        if (this.cancelSource) this.cancelSource.cancel("new download started");
-        this.cancelSource = axios.CancelToken.source();
-        this.loadingData = true;
-        let token = this.cancelSource.token;
-        let headers = {
-          "Cache-Control": "no-cache",
-          "Accept": requestFhirAcceptHeaders
-        }
-        const response = await axios.get<fhir4b.Resource>(url, {
-          cancelToken: token,
-          headers: headers
-        });
-        if (token.reason) {
-          console.log(token.reason);
-          return;
-        }
-        this.cancelSource = undefined;
-        this.loadingData = false;
-
-        const results = response.data;
-        if (results) {
-          this.resourceType = results.resourceType;
-          if (this.resourceJsonEditor) {
-            const resourceJson = JSON.stringify(results, null, 4);
-            if (resourceJson) {
-              this.resourceJsonEditor.setValue(resourceJson);
-              this.resourceJsonChanged = false;
-            }
-            this.resourceJsonEditor.clearSelection();
-          }
-        }
-      } catch (err) {
-        this.loadingData = false;
-        if (axios.isAxiosError(err)) {
-          const serverError = err as AxiosError<fhir4b.OperationOutcome>;
-          if (serverError && serverError.response) {
-            this.setResultJson(JSON.stringify(serverError.response, null, 4));
-            if (serverError.response.data?.resourceType == 'OperationOutcome') {
-              this.setResultJson(JSON.stringify(serverError.response, null, 4));
-              this.saveOutcome = serverError.response.data;
-            } else {
-              if (serverError.response.status == 404)
-                this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
-              this.saveOutcome?.issue.push({ code: 'not-found', severity: 'error', details: { text: 'Test resource not found' } });
-            }
-            this.showOutcome = true;
-            return serverError.response.data;
-          }
-          this.saveOutcome = CreateOperationOutcome("fatal", "exception", "Server: " + err.message, undefined, err.code);
-          this.showOutcome = true;
-          return;
-        }
-        this.saveOutcome = CreateOperationOutcome("fatal", "exception", "Client: " + err);
-        this.showOutcome = true;
-      }
     },
 
     async evaluateExpressionUsingFhirpathJs() {
       if (!this.getResourceJson() && this.resourceId) {
-        await this.downloadTestResource();
+        await this.$refs.jsonEditor?.downloadResource();
       }
       // removing this constraint as there are expression tests 
       // that you can do that don't require a resource.  
@@ -884,12 +740,12 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       }
 
       let useExpression = this.getFhirpathExpression() ?? '';
-      // (this as any).$appInsights?.trackEvent({ name: 'evaluate sqlonfhir-v2' });
+      (this as any).$appInsights?.trackEvent({ name: 'evaluate sqlonfhir-v2' });
 
       try {
         // Run the sqlonfhir view definition
-        var r = processResources(fromArray([fhirData]), JSON.parse(useExpression));
-        for await (const val of r) {
+        let nr = evaluate(JSON.parse(useExpression), fhirData, false);
+        for await (const val of nr) {
           console.log(val);
           this.outputResult.push(val);
         }
@@ -900,6 +756,31 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
           this.expressionParseOutcome = CreateOperationOutcome('fatal', 'exception', err.message);
           // this.showOutcome = true;
         }
+      }
+    },
+
+    copyResultsToClipboard() {
+      if (this.outputResult.length > 0) {
+        // Copy the results to the clipboard as TAB separated values
+        let outputResult: string = '';
+        const columns = this.outputColumns;
+        if (columns.length > 0) {
+          outputResult += columns.join('\t') + '\n';
+          for (const row of this.outputResult) {
+            const rowValues = columns.map(col => {
+              const value = row[col];
+              if (value === undefined || value === null) {
+                return '';
+              }
+              return `"${value.toString().replace(/"/g, '""')}"`; // Escape quotes
+            });
+            outputResult += rowValues.join('\t') + '\n';
+          }
+        }
+
+        navigator.clipboard.writeText(outputResult);
+        this.saveOutcome = CreateOperationOutcome('information', 'informational', 'Results copied to clipboard');
+        this.showOutcome = true;
       }
     },
 
@@ -982,27 +863,12 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       }
     },
 
-    saveLastUsedParameters(loadCompleted: boolean): void {
-      // Write the parameters into the local storage so that can be re-loaded next time
-      const data: ILastUsedParameters = {
-        context: undefined,
-        expression: this.getFhirpathExpression() ?? '',
-        resourceId: this.resourceId,
-        engine: '',
-        resourceJson: this.getResourceJson(),
-        loadCompleted: loadCompleted,
-      };
-      settings.saveLastUsedParameters(data);
-    },
-
     // https://www.sitepoint.com/fetching-data-third-party-api-vue-axios/
-    async evaluateFhirPathExpression() {
+    async evaluateViewDefinition() {
 
       // reset the processing engine
       this.expressionParseOutcome = undefined;
-      this.saveLastUsedParameters(false);
       await this.evaluateExpressionUsingFhirpathJs();
-      this.saveLastUsedParameters(true);
       if (this.prevFocus) {
         this.prevFocus.focus();
       }
@@ -1015,6 +881,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       tab: null,
       resourceId: undefined,
       resourceType: 'Patient',
+      resourceJson: '',
       resourceJsonChanged: false,
       loadingData: true,
       saveOutcome: undefined,
@@ -1024,7 +891,6 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       shareToolTipMessage: shareTooltipText,
       shareZulipToolTipMessage: shareZulipTooltipText,
       expressionEditor: undefined,
-      resourceJsonEditor: undefined,
       expressionParseOutcome: undefined,
     };
   },

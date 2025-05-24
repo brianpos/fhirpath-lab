@@ -3,12 +3,17 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+# 24 May 2025 (dev)
+* Updated to fhirpath.js 4.3.0 (providing path information in the results and trace)
+* Update to the latest sqlonfhir-v2 engine (v0.1.0-alpha.3)
+* Update CSIRO renderer to 1.0.0-alpha.55
+* Update NLM LForms renderer to 36.16.1
+
 # 14 May 2025 (dev)
 * Support for Matchbox server for FML testing!
 * Update CSIRO renderer to 1.0.0-alpha.54
 * Update to final version of Nuxt 2 - 2.18.1
 * Update to Vuetify 1.12.3
-
 
 # 10 May 2025 (dev)
 * Include partial support for matchbox server for FML testing (still needs some work)

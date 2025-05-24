@@ -76,9 +76,9 @@
         These are the versions of each of the fhirpath engines in use:
       </p>
       <ul style="padding-left: 40px">
-        <li>Firely SDK FHIRPath Engine v5.10.0 <i>(server side)</i></li>
+        <li>Firely SDK FHIRPath Engine v5.11.4 <i>(server side)</i></li>
         <li>FHIRPath.js v{{ fhirpathVersion }}</li>
-        <li>HAPI FHIRPath v7.4.0 <i>(server side)</i></li>
+        <li>HAPI FHIRPath v6.5.20 <i>(server side)</i></li>
         <li>IBM FHIRPath v4.11.1 (LinuxForHealth)<i> (server side)</i></li>
         <li>Dotnet FHIRMappingLanguage Engine v5.10.0<i> (server side)</i></li>
         <li>FHIRPath-py <i>(server side - externally hosted by Beda Software)</i></li>
@@ -97,7 +97,7 @@
           <h5>Specifications</h5>
           <a href="https://hl7.org/fhirpath/" target="_blank">FHIRPath</a><br />
           <a href="https://hl7.org/fhir/fhirpath.html" target="_blank">FHIRPath FHIR extensions</a><br />
-          <a href="https://hl7.org/fhir" target="_blank">FHIR (R4)</a><br />
+          <a href="https://hl7.org/fhir/R4" target="_blank">FHIR (R4)</a> <a href="https://hl7.org/fhir/R5" target="_blank">(R5)</a><br />
           <a href="https://hl7.org/fhir/mapping-language.html" target="_blank">FHIR Mapping Language</a>
         </div>
         <div>

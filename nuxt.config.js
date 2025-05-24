@@ -81,6 +81,7 @@ export default {
       "@mui",
       "@emotion",
       "@tanstack",
+      "sql-on-fhir-v2",
     ],
   }
 }

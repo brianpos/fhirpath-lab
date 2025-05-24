@@ -670,7 +670,7 @@ function fullPropertyName(node: ResourceNode) : string | undefined {
     return undefined;
   }
   let result = node.parentResNode ? fullPropertyName(node.parentResNode) + '.' + node.propName : node.path ?? undefined;
-    if (node.index !== undefined) {
+    if (node.index !== undefined && node.index !== null) {
       result += '[' + node.index + ']';
     }
     return result;
@@ -724,6 +724,11 @@ interface ResourceNode {
    * Converts the node to its JSON representation
    */
   toJSON(): string;
+
+  /**
+   * Returns the full property name of the node where available
+   */
+  fullPropertyName(): string | undefined;
 }
 
 function canonicalVariableName(name: string): string {
@@ -2111,13 +2116,18 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
             terminologyUrl: this.terminologyServer
           };
           let data = fhirpath.evaluate(fhirData, "select(" + contextExpression + ").trace('fhirpath-lab-context')", environment, fhirpath_r4_model, optionsContext);
-          if (data instanceof Promise)
+          if (data instanceof Promise){
             await data;
+          }
         }
         catch (err: any) {
           console.log(err);
           if (err.message) {
             this.saveOutcome = CreateOperationOutcome('fatal', 'exception', err.message);
+            this.showOutcome = true;
+          }
+          else {
+            this.saveOutcome = CreateOperationOutcome('fatal', 'exception', err);
             this.showOutcome = true;
           }
         }
@@ -2137,13 +2147,17 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
             this.saveOutcome = CreateOperationOutcome('fatal', 'exception', err.message);
             this.showOutcome = true;
           }
+          else {
+            this.saveOutcome = CreateOperationOutcome('fatal', 'exception', err);
+            this.showOutcome = true;
+          }
         }
       }
       for (let contextNode of contextNodes) {
         let resData: ResultData;
         const index = contextNodes.indexOf(contextNode);
         if (contextExpression){
-          resData = { context: `${contextExpression}[${index}]`, result: [], trace: [] };
+          resData = { context: `${contextNode.fullPropertyName()}`, result: [], trace: [] };
           if (astJson){
             const node = findNodeByPath(astJson, resData.context+'');
             if (node?.position) resData.position = node.position;
@@ -2152,7 +2166,18 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         else
           resData = { result: [], trace: [] };
 
+        let outputNodes: ResourceNode[] = [];
         let tracefunction = function (x: ResourceNode | ResourceNode[], label: string): ResourceNode | ResourceNode[] {
+          if (label === 'fhirpath-lab-result') {
+            if (Array.isArray(x)) {
+              for (let item of x) {
+                outputNodes.push(item);
+              }
+            } else {
+              outputNodes.push(x);
+            }
+            return x;
+          }
           if (Array.isArray(x)) {
             for (let item of x) {
               let itemPath: string|undefined = fullPropertyName(item);
@@ -2177,7 +2202,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
           let useExpression = this.getFhirpathExpression() ?? '';
           let path = {
             base: resData.context??'', 
-            expression: useExpression
+            expression: "select(" + useExpression + ").trace('fhirpath-lab-result')"
           }
           let options: AsyncOptions = {
             traceFn: tracefunction,
@@ -2192,8 +2217,11 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
             res = data as any[];
           this.results.push(resData);
 
-          for (let item of res) {
-            resData.result.push({ type: Object.prototype.toString.call(item ?? '').substring(8).replace(']', ''), value: item });
+          for (let item of outputNodes) {
+            let typeName = Object.prototype.toString.call(item ?? '').substring(8).replace(']', '')
+              if (typeof item.getTypeInfo === "function")
+                typeName = item.getTypeInfo().name;
+            resData.result.push({ type: typeName, path: fullPropertyName(item), value: item.data ? JSON.stringify(item.data, null, settings.getTabSpaces()) : item });
           }
         }
         catch (err: any) {
@@ -2327,7 +2355,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         let resData: ResultData;
         const index = contextNodes.indexOf(contextNode);
         if (contextExpression){
-          resData = { context: `${contextExpression}[${index}]`, result: [], trace: [] };
+          resData = { context: `${contextNode.fullPropertyName()}`, result: [], trace: [] };
           // if (astJson){
           //   const node = findNodeByPath(astJson, resData.context+'');
           //   if (node?.position) resData.position = node.position;
@@ -2336,7 +2364,18 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         else
           resData = { result: [], trace: [] };
 
+        let outputNodes: ResourceNode[] = [];
         let tracefunction = function (x: ResourceNode | ResourceNode[], label: string): ResourceNode | ResourceNode[] {
+          if (label === 'fhirpath-lab-result') {
+            if (Array.isArray(x)) {
+              for (let item of x) {
+                outputNodes.push(item);
+              }
+            } else {
+              outputNodes.push(x);
+            }
+            return x;
+          }
           if (Array.isArray(x)) {
             for (let item of x) {
               let itemPath: string|undefined = fullPropertyName(item);
@@ -2347,13 +2386,11 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
               else {
                 resData.trace.push({ name: label ?? "", path: itemPath, value: JSON.stringify(item, null, settings.getTabSpaces()) });
               }
-              console.log("TRACE3:[" + (label || "") + " path]", itemPath);
             }
           }
           else {
             let itemPath: string|undefined = fullPropertyName(x);
             resData.trace.push({ name: label ?? "", path: itemPath, value: JSON.stringify(x, null, settings.getTabSpaces()) });
-            console.log("TRACE3:[" + (label || "") + " path]", itemPath);
           }
           console.log("TRACE3:[" + (label || "") + "]", x);
           return x;
@@ -2363,7 +2400,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
           let useExpression = this.getFhirpathExpression() ?? '';
           let path = {
             base: resData.context??'', 
-            expression: useExpression
+            expression: "select(" + useExpression + ").trace('fhirpath-lab-result')"
           }
           let options: AsyncOptions = {
             traceFn: tracefunction,
@@ -2378,8 +2415,11 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
             res = data as any[];
           this.results.push(resData);
 
-          for (let item of res) {
-            resData.result.push({ type: Object.prototype.toString.call(item ?? '').substring(8).replace(']', ''), value: item });
+          for (let item of outputNodes) {
+            let typeName = Object.prototype.toString.call(item ?? '').substring(8).replace(']', '')
+              if (typeof item.getTypeInfo === "function")
+                typeName = item.getTypeInfo().name;
+            resData.result.push({ type: typeName, path: fullPropertyName(item), value: item.data ? JSON.stringify(item.data, null, settings.getTabSpaces()) : item });
           }
         }
         catch (err: any) {

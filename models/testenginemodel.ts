@@ -3,6 +3,8 @@ import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from
 export interface VariableData {
     name: string;
     data: any;
+    path?: string;
+    mode?: string; // input/output/shared
     resourceId?: string;
     datatype?: string;
     errorMessage?: string;
