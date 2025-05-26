@@ -91,3 +91,7 @@ sw.*
 
 # Visual Studio User Workspace
 .vs
+
+# Go
+fhir-toolbox-go/vendor
+static/fhir-toolbox-go.wasm
