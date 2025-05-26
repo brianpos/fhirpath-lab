@@ -86,6 +86,9 @@ export namespace settings {
     export function mapper_server_java(): string {
         return serverConnections.mapper_server_java;
     }
+    export function mapper_server_matchbox(): string {
+        return serverConnections.mapper_server_matchbox;
+    }
     export function python_server_r4b(): string {
         return serverConnections.python_server_r4b;
     }

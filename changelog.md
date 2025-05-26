@@ -3,6 +3,28 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+# 24 May 2025 (dev)
+* Updated to fhirpath.js 4.3.0 (providing path information in the results and trace)
+* Update to the latest sqlonfhir-v2 engine (v0.1.0-alpha.3)
+* Update CSIRO renderer to 1.0.0-alpha.55
+* Update NLM LForms renderer to 36.16.1
+
+# 14 May 2025 (dev)
+* Support for Matchbox server for FML testing!
+* Update CSIRO renderer to 1.0.0-alpha.54
+* Update to final version of Nuxt 2 - 2.18.1
+* Update to Vuetify 1.12.3
+
+# 10 May 2025 (dev)
+* Include partial support for matchbox server for FML testing (still needs some work)
+
+# 6 May 2025 (dev)
+* Fix [#35](https://github.com/brianpos/fhirpath-lab/issues/35) ofType(Quantity).system.empty() with a non-empty system still returns true
+
+# 2 May 2025 (dev)
+* Update the CSIRO renderer to 1.0.0-alpha.53
+* Update axios to 1.9.0
+
 # 27 April 2025
 * Include support for results and trace to include the navigation path to the raw resource content
 * Update the fhirpath.js library to 4.0.0 (and several other packages)

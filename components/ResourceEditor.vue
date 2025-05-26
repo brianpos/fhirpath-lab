@@ -45,6 +45,8 @@ import xmlFormat from 'xml-formatter';
 import { IJsonNodePosition } from "~/helpers/json_parser";
 import "ace-builds/src-noconflict/mode-json";
 import "ace-builds/src-noconflict/mode-xml";
+import { setAcePaths, Rules as FhirPathHightlighter_Rules, setCustomHighlightRules } from "~/helpers/fhirpath_highlighter"
+import "~/assets/fhirpath_highlighter.scss"
 
 @Component
 export default class ResourceJsonEditor extends Vue {
@@ -141,6 +143,7 @@ export default class ResourceJsonEditor extends Vue {
       this.aceEditor.setValue(this.internalResourceText || '', -1);
       this.aceEditor.setReadOnly(this.readOnly);
       // console.log('Initializing ace editor for Resource editing');
+      this.detectResourceType();
     }
 
     // Watch for changes in the editor and update the internalResourceText
@@ -159,11 +162,19 @@ export default class ResourceJsonEditor extends Vue {
   }
 
   detectResourceType() {
-    if (this.internalResourceText.trim().startsWith('<')) {
+    const content = this.internalResourceText.trim();
+    if (content.startsWith('<')) {
       if (this.resourceType != 'xml') {
         this.resourceType = 'xml';
         this.aceEditor.getSession().setMode('ace/mode/xml');
         // console.log('Changing to XML mode');
+      }
+    } else if (content.startsWith('///') || content.startsWith('map ')) {
+      if (this.resourceType != 'fml') {
+        this.resourceType = 'fml';
+        this.aceEditor.getSession().setMode('ace/mode/text');
+        setCustomHighlightRules(this.aceEditor, FhirPathHightlighter_Rules);
+        // console.log('Changing to FML mode');
       }
     } else {
       if (this.resourceType != 'json') {
