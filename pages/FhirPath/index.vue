@@ -1597,23 +1597,25 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
 
               // Anything else is a result
               // scan over the parts (values)
-              let resultItem: ResultData = { context: entry.valueString, result: [], trace: [] };
-              if (astJson && entry.valueString){
-                const node = findNodeByPath(astJson, entry.valueString);
-                if (node) resultItem.position = node.position;
-              }
-              if (entry.part) {
-                for (let part of entry.part) {
-                  if (part.name === 'trace') {
-                    resultItem.trace.push(...getTraceValue(part));
-                  }
-                  else {
-                    resultItem.result.push(...getValue(part));
+              if (entry.name == 'result') {
+                let resultItem: ResultData = { context: entry.valueString, result: [], trace: [] };
+                if (astJson && entry.valueString){
+                  const node = findNodeByPath(astJson, entry.valueString);
+                  if (node) resultItem.position = node.position;
+                }
+                if (entry.part) {
+                  for (let part of entry.part) {
+                    if (part.name === 'trace') {
+                      resultItem.trace.push(...getTraceValue(part));
+                    }
+                    else {
+                      resultItem.result.push(...getValue(part));
+                    }
                   }
                 }
+                this.results.push(resultItem);
+                this.saveLastUsedParameters(true);
               }
-              this.results.push(resultItem);
-              this.saveLastUsedParameters(true);
             }
           }
         }
