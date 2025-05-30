@@ -175,7 +175,7 @@ export default Vue.extend({
     },
     testExpressionPath(value: string):string {
       const expr = atob(value);
-      return `../FhirPath?libaryId=${this.raw?.id}`;
+      return `../FhirPath?libraryId=${this.raw?.id}`;
     },
     convertExpression(value: string):string {
       return atob(value);

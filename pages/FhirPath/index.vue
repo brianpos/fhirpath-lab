@@ -1223,8 +1223,8 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       let data: TestFhirpathData = {
         expression: this.$route.query.expression as string
       };
-      if (this.$route.query.libaryId as string) {
-          data.libraryId = this.$route.query.libaryId as string;
+      if (this.$route.query.libraryId as string) {
+          data.libraryId = this.$route.query.libraryId as string;
       }
       else {
         if (this.$route.query.context) {
