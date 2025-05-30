@@ -95,7 +95,7 @@
           </template>
 
           <template v-slot:json>
-            <resource-editor label="StructureDefinition ID" :resourceUrl="loadedUrl" :resourceText="JSON.stringify(raw, null, 2)" :readOnly="true" />
+            <resource-editor label="StructureDefinition ID" :resourceUrl="loadedUrl" :resourceText="JSON.stringify(raw, null, tabSpaces())" :readOnly="true" />
           </template>
         </twin-pane-tab>
       </v-card>
@@ -155,6 +155,9 @@ export default Vue.extend({
     this.searchFhirServer();
   },
   methods: {
+    tabSpaces: function() {
+      return settings.getTabSpaces();
+    },
     async twinPaneMounted(): Promise<void> {
       // set the tab pane into single pane mode
       let tabControl: TwinPaneTab = this.$refs.twinTabControl as TwinPaneTab;
