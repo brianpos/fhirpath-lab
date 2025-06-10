@@ -66,6 +66,23 @@
             </template>
             <span>Save the Library</span>
           </v-tooltip>
+          <div v-if="debugTracePosition != undefined" style="border-radius: 8px; border: solid 1px white; padding: 4px;">
+            <v-btn v-if="debugTracePosition != undefined" x-small dark icon @click="debugTracePosition = 1; debuggerStepBack()" title="Reset to first trace">
+              <v-icon>
+                mdi-bug-play-outline
+              </v-icon>
+            </v-btn>
+            <v-btn v-if="debugTracePosition != undefined" x-small dark icon @click="debuggerStepForward()" :disabled="debugTracePosition >= debugTraceData.length - 1" title="Step forward in trace">
+              <v-icon>
+                mdi-debug-step-into
+              </v-icon>
+            </v-btn>
+            <v-btn v-if="debugTracePosition != undefined" x-small dark icon @click="debuggerStepBack()" :disabled="debugTracePosition <= 0" title="Step back in trace">
+              <v-icon>
+                mdi-debug-step-out
+              </v-icon>
+            </v-btn>
+          </div>
         </v-toolbar>
         <twin-pane-tab :tabs="tabDetails" ref="twinTabControl" @mounted="twinPaneMounted" @change="tabChanged">
           <template v-slot:Expression>
@@ -84,6 +101,65 @@
             <label class="v-label theme--light bare-label">Fhirpath Expression</label>
             <div height="85px" width="100%" ref="aceEditorExpression"></div>
             <div class="ace_editor_footer"></div>
+
+            <template v-if="debugTracePosition != undefined && debugTraceData.length > 0">
+              <div class="results">Debug variables</div>
+              <v-simple-table>
+                <template v-for="(resultValue, i1) in debugTraceData[debugTracePosition].values">
+                <tr :key="i1">
+                  <td class="result-type">
+                    <span style="white-space:nowrap;" v-if="debugTraceData[debugTracePosition].exprName != undefined"> {{ debugTraceData[debugTracePosition].exprName }} <v-icon x-small>mdi-keyboard-return</v-icon></span>&nbsp;
+                  </td>
+                  <td class="result-value">
+                    <div class="code-json" v-if="resultValue.value != null">{{ resultValue.value }}</div>
+                    <div class="code-json" v-if="resultValue.value == null && resultValue.valueType == 'empty-string'"><i>""</i></div>
+                  </td>
+                  <td class="result-type">
+                    <i v-if="resultValue.valueType">({{ resultValue.valueType }})</i>
+                    <span v-if="resultValue.resourcePath" class="result-path">{{ resultValue.resourcePath }}
+                      <v-btn v-if="resultValue.resourcePath" x-small class="result-path-target" icon title="Goto context" @click="navigateToContext(resultValue.resourcePath)">
+                      <v-icon>
+                        mdi-target
+                      </v-icon>
+                    </v-btn>
+                    </span>
+                  </td>
+                </tr>
+                </template>
+                <tr v-if="debugTraceData[debugTracePosition].index != undefined">
+                  <td class="result-type">
+                    <span style="white-space:nowrap;">index</span>
+                  </td>
+                  <td class="result-value">
+                    <div class="code-json">{{ debugTraceData[debugTracePosition].index }}</div>
+                  </td>
+                  <td class="result-type">
+                    &nbsp;
+                  </td>
+                </tr>
+                <template v-for="(thisValue, i1) in debugTraceData[debugTracePosition].thisVar">
+                <tr :key="i1">
+                  <td class="result-type">
+                    $this
+                  </td>
+                  <td class="result-value">
+                    <div class="code-json" v-if="thisValue.value != undefined">{{ thisValue.value }}</div>
+                    <div class="code-json" v-if="thisValue.value == undefined && thisValue.valueType == 'empty-string'"><i>""</i></div>
+                  </td>
+                  <td class="result-type">
+                    <i v-if="thisValue.valueType">({{ thisValue.valueType }})</i>
+                    <span v-if="thisValue.resourcePath" class="result-path">{{ thisValue.resourcePath }}
+                      <v-btn v-if="thisValue.resourcePath" x-small class="result-path-target" icon title="Goto context" @click="navigateToContext(thisValue.resourcePath)">
+                      <v-icon>
+                        mdi-target
+                      </v-icon>
+                    </v-btn>
+                    </span>
+                  </td>
+                </tr>
+                </template>
+              </v-simple-table>
+            </template>
 
             <div class="results">RESULTS <span class="processedBy">{{ processedByEngine }}</span></div>
             <OperationOutcomePanel :outcome="expressionParseOutcome" @close="expressionParseOutcome = undefined" />
@@ -185,7 +261,7 @@
                     <td class="result-type">
                       <i v-if="v1.type">({{ v1.type }})</i>
                       <span v-if="v1.path" class="result-path">{{ v1.path }}
-                        <v-btn v-if="v1.path" x-small class="result-path-target" icon title="Goto context" @click="navigateToContext(v1.path)">
+                        <v-btn v-if="v1.path" x-small class="result-path-target" icon title="Goto context" @click="navigateToContext(v1.path, v1.name)">
                         <v-icon>
                           mdi-target
                         </v-icon>
@@ -311,6 +387,11 @@
   background-color: #9acd3220;
 }
 
+.debugSelection {
+  position: absolute;
+  z-index: 20;
+  background-color: #fbff82b1;
+}
 </style>
 
 <style lang="scss" scoped>
@@ -628,6 +709,22 @@ const examplePatient = `
   }
 }`;
 
+interface DebugTraceData {
+  context: string;
+  exprPosition?: number;
+  exprLength?: number;
+  exprName?: string;
+  values?: DebugTraceValue[];
+  index?: number;
+  thisVar?: DebugTraceValue[];
+}
+
+interface DebugTraceValue {
+  resourcePath?: string;
+  value?: any;
+  valueType?: string;
+}
+
 interface FhirPathData {
   prevFocus?: any;
   raw?: fhir4b.Parameters;
@@ -663,6 +760,11 @@ interface FhirPathData {
   expressionParseOutcome?: fhir4b.OperationOutcome;
   astInverted: boolean;
   enableSave: boolean;
+  debugTracePosition?: number;
+  debugTraceData: DebugTraceData[];
+  debugExpressionSelectionMarker?: number[];
+  debugTestResourceSelectionMarker?: number[];
+  debugThisSelectionMarker?: number[];
 }
 
 function fullPropertyName(node: ResourceNode) : string | undefined {
@@ -768,8 +870,13 @@ export interface IFhirPathMethods
   updateNow():void;
   updateNextTick():void;
   selectTab(selectTab: number): void;
-  tabChanged(index: Number): void;
+  tabChanged(index: number): void;
   getCompletions(editor: ace.Ace.Editor, session: ace.Ace.EditSession, pos: any, prefix: any, callback: any): void;
+  DebugFunctionKeyHandler(event: KeyboardEvent): void;
+  debuggerStepForward(): void;
+  debuggerStepBack(): void;
+  removeMarker(editor: ace.Ace.Editor | undefined, markerId: number): void;
+  removeMarkers(editor: ace.Ace.Editor | undefined, markerIds: number[] | undefined): void;
 
   getContextExpression(): string | undefined;
   getFhirpathExpression(): string | undefined;
@@ -797,9 +904,9 @@ export interface IFhirPathMethods
   saveLastUsedParameters(loadCompleted: boolean): void;
   createNewLibrary(): void;
   saveLibrary(): void;
-  navigateToContext(elementPath: string): void;
+  navigateToContext(elementPath: string, variableName?: string, debugMode?: boolean): void;
   navigateToExpressionNode(node: JsonNode): void;
-  highlightText(editor?: ace.Ace.Editor, startPosition?: number, length?: number): void;
+  highlightText(editor?: ace.Ace.Editor, startPosition?: number, length?: number, debugMode?: boolean): void;
   highlightTextByLine(editor?: ace.Ace.Editor, startLine?: number, startColumn?: number, length?: number): void;
 
   GetAISettings(): IOpenAISettings;
@@ -846,10 +953,12 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     setAcePaths(ace.config);
 
     document.addEventListener('keydown', this.CtrlEnterHandler);
+    document.addEventListener('keydown', this.DebugFunctionKeyHandler);
   },
 
   beforeDestroy() {
     document.removeEventListener('keydown', this.CtrlEnterHandler);
+    document.removeEventListener('keydown', this.DebugFunctionKeyHandler);
   },
 
   computed: {
@@ -925,6 +1034,71 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     },
   },
   methods: {
+    DebugFunctionKeyHandler(event: KeyboardEvent): void {
+      if (!this.debugTracePosition)
+        return;
+      // Ctrl + Enter to evaluate the expression
+      // Command + Enter to evaluate the expression on MacOS
+      if (!event.shiftKey && event.key === "F10") {
+        this.debuggerStepForward();
+        event.preventDefault();
+      }
+      if (event.shiftKey && event.key === "F10") {
+        this.debuggerStepBack();
+        event.preventDefault();
+      }
+    },
+
+    debuggerStepBack() {
+      if (!this.debugTracePosition)
+        return;
+      if (this.debugTracePosition > 0)
+        this.debugTracePosition--;
+
+      const traceData = this.debugTraceData[this.debugTracePosition];
+      console.log("debug trace", traceData);
+      if (traceData) {
+        setTimeout(() => {
+            this.highlightText(this.expressionEditor, traceData.exprPosition, traceData.exprLength, true);
+          this.removeMarkers(this.resourceJsonEditor, this.debugTestResourceSelectionMarker);
+          this.debugTestResourceSelectionMarker = [];
+          this.removeMarkers(this.resourceJsonEditor, this.debugThisSelectionMarker);
+          this.debugThisSelectionMarker = [];
+          for (const v of traceData.values ?? []) {
+            if (v.resourcePath) {
+              this.navigateToContext(v.resourcePath, undefined, true);
+            }
+            }
+        });
+      }
+    },
+
+    debuggerStepForward() {
+      if (this.debugTracePosition === undefined)
+        return;
+
+        // step forward to the next trace result
+      if (this.debugTracePosition < this.debugTraceData.length - 1)
+        this.debugTracePosition++;
+
+      const traceData = this.debugTraceData[this.debugTracePosition];
+      console.log("debug trace", traceData);
+      if (traceData) {
+        setTimeout(() => {
+            this.highlightText(this.expressionEditor, traceData.exprPosition, traceData.exprLength, true);
+          this.removeMarkers(this.resourceJsonEditor, this.debugTestResourceSelectionMarker);
+          this.debugTestResourceSelectionMarker = [];
+          this.removeMarkers(this.resourceJsonEditor, this.debugThisSelectionMarker);
+          this.debugThisSelectionMarker = [];
+          for (const v of traceData.values ?? []) {
+            if (v.resourcePath) {
+              this.navigateToContext(v.resourcePath, undefined, true);
+            }
+            }
+        });
+      }
+    },
+
     CtrlEnterHandler(event: KeyboardEvent): void {
       // Ctrl + Enter to evaluate the expression
       // Command + Enter to evaluate the expression on MacOS     
@@ -1095,7 +1269,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       });
     },
 
-    tabChanged(index: Number): void {
+    tabChanged(index: number): void {
       // Workaround to refresh the display in the response editor when it is updated while the form is not visible
       // https://github.com/ajaxorg/ace/issues/2497#issuecomment-102633605
       if (index === 0)
@@ -1327,6 +1501,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     }
         }
       }
+      this.fhirpathExpressionChangedEvent();
   },
   resetExpression():void {
     if (this.expressionEditor) {
@@ -1396,10 +1571,33 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       this.enableSave = true;
       console.log('enable save update var');
     },
-    fhirpathExpressionChangedEvent(){
+
+    removeMarker(editor: ace.Ace.Editor | undefined, markerId: number): void {
+      if (editor && markerId) {
+        editor.session.removeMarker(markerId);
+      }
+    },
+
+    removeMarkers(editor: ace.Ace.Editor | undefined, markerIds: number[]): void {
+      if (editor && markerIds && markerIds.length > 0) {
+        for (let markerId of markerIds) {
+          editor.session.removeMarker(markerId);
+        }
+      }
+    },
+
+    fhirpathExpressionChangedEvent() {
       // Check the expression to see if there are any variables in there
       const session = this.expressionEditor?.session;
       if (session){
+        this.removeMarkers(this.expressionEditor, this.debugExpressionSelectionMarker);
+        this.debugExpressionSelectionMarker = [];
+        this.debugTracePosition = undefined;
+        this.debugTraceData = [];
+        this.removeMarkers(this.resourceJsonEditor, this.debugTestResourceSelectionMarker);
+        this.debugTestResourceSelectionMarker = [];
+        this.removeMarkers(this.resourceJsonEditor, this.debugThisSelectionMarker);
+        this.debugThisSelectionMarker = [];
 
         let ast: fpjsNode | undefined = undefined;
         if (this.selectedEngine.indexOf("fhirpath.js") != -1){
@@ -1593,6 +1791,66 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
                   }
                 }
                 continue; // skip over the configuration settings
+              }
+
+              if (entry.name == 'debug-trace') {
+                // Put the trace data into the array
+                // context first - so the context switch is visible
+                this.debugTraceData.push({ 
+                  context: entry.valueString ?? ''
+                });
+
+                // values for this context
+                for (let part of entry.part ?? []) {
+                  let posParts = part.name?.split(',');
+                  let exprPosition = posParts && posParts.length > 0 ? parseInt(posParts[0]) : undefined;
+                  let exprLength = posParts && posParts.length > 1 ? parseInt(posParts[1]) : undefined;
+                  let exprName = posParts && posParts.length > 2 ? posParts[2] : undefined;
+
+                    let debugTraceVal: DebugTraceData = {
+                      context: entry.valueString ?? '',
+                      exprName: exprName,
+                      exprPosition: exprPosition,
+                      exprLength: exprLength,
+                    values: [],
+                    thisVar: []
+                    };
+                  this.debugTraceData.push(debugTraceVal);
+
+                  // grab all the values from this expression node evaluation ($this, $index and result)
+                  for (let partValue of part.part ?? []) {
+                    if (partValue.name == 'index') {
+                      debugTraceVal.index = partValue.valueInteger;
+                      continue;
+                    }
+
+                    if (partValue.name == 'this-resource-path') {
+                      debugTraceVal.thisVar?.push({ resourcePath: partValue.valueString });
+                      continue;
+                    }
+
+                    if (partValue.name.startsWith('this-')) {
+                      const traceValue = getValue(partValue);
+                      if (traceValue.length > 0)
+                        debugTraceVal.thisVar?.push({ value: JSON.stringify(traceValue[0].value, null, 4) });
+                      continue;
+                    }
+
+                    if (partValue.name == 'resource-path') {
+                      debugTraceVal.values?.push({ resourcePath: partValue.valueString });
+                      continue;
+                    
+                    }
+                      // get the trace value
+                      const traceValue = getValue(partValue);
+                      if (traceValue) {
+                        if (traceValue.length > 0)
+                      debugTraceVal.values?.push({ value: JSON.stringify(traceValue[0].value, null, 4) });
+                      }
+                  
+                  }
+                }
+                continue; // skip over the debug trace
               }
 
               // Anything else is a result
@@ -2710,9 +2968,9 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       };
       if (this.variables){
         data.variables = [];
-        this.variables.forEach((v) => {
-          data.variables?.push(v);
-        });
+        for (const v of this.variables) {
+          data.variables?.push(v[1]);
+        }
       }
       settings.saveLastUsedParameters(data);
     },
@@ -2725,9 +2983,14 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       const astTab2 = this.$refs.astTabComponent2 as ParseTreeTab;
       astTab2?.clearDisplay();
       this.expressionParseOutcome = undefined;
-      
-      // const astTab = this.$refs.astTabComponent as ParseTreeTab;
-      // astTab.displayTreeForExpression(this.getContextExpression() ?? '', this.getFhirpathExpression() ?? '');
+      this.removeMarkers(this.resourceJsonEditor, this.debugTestResourceSelectionMarker);
+      this.debugTestResourceSelectionMarker = [];
+      this.removeMarkers(this.resourceJsonEditor, this.debugThisSelectionMarker);
+      this.debugThisSelectionMarker = [];
+      this.removeMarkers(this.expressionEditor, this.debugExpressionSelectionMarker);
+      this.debugExpressionSelectionMarker = [];
+      this.debugTracePosition = undefined;
+      this.debugTraceData = [];
 
       // Validate the test fhir resource object
       let resourceJson = this.getResourceJson();
@@ -2907,7 +3170,21 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       if (this.terminologyServer) {
         p.parameter?.push({ name: "terminologyserver", valueString: this.terminologyServer });
       }
+      if (this.showAdvancedSettings) {
+        // add the debug parameter to check the expression
+        // works well enough to always ask now.
+        p.parameter?.push({ name: "debug_trace", valueBoolean: true });
+      }
+      else {
+        // if not showing advanced settings, then don't ask for debug info
+        p.parameter = p.parameter?.filter(p => p.name !== 'debug');
+      }
       await this.executeRequest(url, p);
+
+      // if there are any results with a trace, then set the trace position at the start
+      if (this.debugTraceData.length > 0) {
+        this.debugTracePosition = 0;
+      }
 
       // Set focus to the control that previously had focus (if was known)
       if (this.prevFocus){
@@ -2915,7 +3192,12 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         }
     },
 
-    highlightText(editor?: ace.Ace.Editor, startPosition?: number, length?: number): void {
+    highlightText(editor?: ace.Ace.Editor, startPosition?: number, length?: number, debugMode?: boolean): void {
+      if (debugMode){
+        this.removeMarkers(editor, this.debugExpressionSelectionMarker);
+        this.debugExpressionSelectionMarker = [];
+      }
+
       if (!editor || startPosition == undefined || length == undefined) return;
       let value = editor.getValue();
 
@@ -2940,12 +3222,18 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       editor.gotoLine(startLine, startColumn, true);
       // editor.selection.setRange(range);
 
+      if (debugMode){
+        const selectionMarker = editor.session.addMarker(range, "debugSelection", "text", false);
+        this.debugExpressionSelectionMarker?.push(selectionMarker);
+      }
+      else {
       const selectionMarker = editor.session.addMarker(range, "resultSelection", "text", true);
       // after 1.5 seconds remove the highlight.
       setTimeout(() => {
         // console.log("Removing marker", selectionMarker);
         editor.session.removeMarker(selectionMarker);
       }, 1500);
+      }
       this.updateNow();
     },
 
@@ -3017,7 +3305,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       });
     },
 
-    navigateToContext(elementPath: string) {
+    navigateToContext(elementPath: string, variableName?: string, debugMode?: boolean) {
       // Move the cursor in the test resource JSON editor to the element
       this.selectTab(1);
       setTimeout(() => {
@@ -3045,23 +3333,64 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
                     true
                   );
 
-                  if (node.position.value_stop_pos){
+                  if (node.position.value_stop_pos) {
                     let substr = jsonValue.substring(node.position.prop_start_pos, node.position.value_stop_pos+1);
                     const endRowOffset = substr.split(/\r\n|\r|\n/).length;
                     const endRow = node.position.line + endRowOffset - 1;
                     const endCollOffset = substr.split(/\r\n|\r|\n/)[endRowOffset - 1].length;
                     const endCol = node.position.column + (endCollOffset > 1 ? endCollOffset + 1 : endCollOffset);
                     const range = new ace.Range(node.position.line-1, node.position.column, endRow-1, endCol);
+                    console.log("context", range);
 
+                    if (debugMode) {
+                      const selectionMarker = this.resourceJsonEditor.session.addMarker(range, "debugSelection", "text", false);
+                      this.debugTestResourceSelectionMarker?.push(selectionMarker);
+                    }
+                    else {
                     const selectionMarker = this.resourceJsonEditor.session.addMarker(range, "resultSelection", "fullLine", true);
                     // after 1.5 seconds remove the highlight.
                     setTimeout(() => {
                       this.resourceJsonEditor?.session.removeMarker(selectionMarker);
                     }, 1500);
+                    }                   
+                  } else if (node.position.prop_stop_pos) {
+                    // prop based stuff
+                    let substr = jsonValue.substring(node.position.prop_start_pos, node.position.prop_stop_pos+1);
+                    const endRowOffset = substr.split(/\r\n|\r|\n/).length;
+                    const endRow = node.position.line + endRowOffset - 1;
+                    const endCollOffset = substr.split(/\r\n|\r|\n/)[endRowOffset - 1].length;
+                    const endCol = node.position.column + (endCollOffset > 1 ? endCollOffset + 1 : endCollOffset);
+                    const range = new ace.Range(node.position.line-1, node.position.column, endRow-1, endCol);
+                    console.log("context prop", range);
+
+                    if (debugMode) {
+                      const selectionMarker = this.resourceJsonEditor.session.addMarker(range, "debugSelection", "text", false);
+                      this.debugTestResourceSelectionMarker?.push(selectionMarker);
+                    }
+                    else {
+                      const selectionMarker = this.resourceJsonEditor.session.addMarker(range, "resultSelection", "fullLine", true);
+                      // after 1.5 seconds remove the highlight.
+                      setTimeout(() => {
+                        this.resourceJsonEditor?.session.removeMarker(selectionMarker);
+                      }, 1500);
+                    }                   
                   }
                   this.updateNow();
                 }
               }
+            }
+        }
+
+        // If this is a variable name, then also see if it is a debug based one that has
+        // the trailing expression position information (pos length)
+        if (variableName && variableName.startsWith("internal_debug_value:")) {
+          // this is a debug variable, so highlight the position "name: (pos length)" using a regex
+          variableName = variableName.replace('internal_debug_value: (', '').replace(')', '');
+          const parts = variableName.split(' ');
+          if (parts.length == 2) {
+            const position = parseInt(parts[0]);
+            const length = parseInt(parts[1]);
+            this.highlightText(this.expressionEditor, position, length);
             }
         }
       });
@@ -3117,7 +3446,12 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       openAILastContext: "",
       expressionParseOutcome: undefined,
       astInverted: true,
-      enableSave: false
+      enableSave: false,
+      debugTracePosition: undefined,
+      debugTraceData: [],
+      debugExpressionSelectionMarker: [],
+      debugTestResourceSelectionMarker: [],
+      debugThisSelectionMarker: [],
     };
   },
 });
