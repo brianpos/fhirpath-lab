@@ -118,11 +118,11 @@ export namespace settings {
 
     export function getFhirServerUrl(): string {
         try {
-            return localStorage.getItem("settings_fhirServerURL") ?? "https://sqlonfhir-r4.azurewebsites.net/fhir";
+            return localStorage.getItem("settings_fhirServerURL") ?? "https://fhir.forms-lab.com";
         }
         catch {
             console.log("error reading the FHIR Server URL configuration value");
-            return "https://sqlonfhir-r4.azurewebsites.net/fhir";
+            return "https://fhir.forms-lab.com";
         }
     }
 
@@ -248,7 +248,7 @@ export namespace settings {
 
     export function load(): UserSettingsData {
         return {
-            fhirServerUrl: localStorage.getItem("settings_fhirServerURL") ?? "https://sqlonfhir-r4.azurewebsites.net/fhir",
+            fhirServerUrl: localStorage.getItem("settings_fhirServerURL") ?? "https://fhir.forms-lab.com",
             fhirServerExamplesUrl: localStorage.getItem("settings_fhirServerExamplesURL") ?? "https://hapi.fhir.org/baseR4",
             OAuthClientId: localStorage.getItem("settings_OAuthClientId") ?? undefined,
             fhirTerminologyServerUrl: localStorage.getItem("settings_fhirTerminologyServerURL") ?? "https://sqlonfhir-r4.azurewebsites.net/fhir",
