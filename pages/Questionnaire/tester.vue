@@ -118,6 +118,15 @@
               @highlight-path="highlightPath" />
           </template>
 
+          <template v-slot:Aidbox_Forms>
+            <EditorAidboxFormsSection
+              v-if="raw"
+              v-bind:questionnaire="raw"
+              v-bind:questionnaireResponse="questionnaireResponse"
+              @response="processUpdatedQuestionnaireResponse"
+            />
+          </template>
+
           <template v-slot:CSIRO_Renderer>
             <EditorRendererSection ref="csiroFormsRenderer" v-if="raw" v-bind:questionnaire="raw" :context="contextData"
               :dataServer="dataServerBaseUrl"
@@ -577,6 +586,13 @@ export default Vue.extend({
           iconName: "mdi-bug-play-outline",
           tabName: "LHC-Forms",
           title: "NLM LHC-Forms Renderer",
+          show: true,
+          enabled: true,
+        },
+        {
+          iconName: "mdi-bug-play-outline",
+          tabName: "Aidbox Forms",
+          title: "Aidbox Forms",
           show: true,
           enabled: true,
         },
