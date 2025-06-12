@@ -1,19 +1,21 @@
 <template>
   <div style="display: flex; flex-direction: column; height: 100%;">
-    <div style="margin-bottom: 8px;">
-      <v-select label="Extraction Engine" class="engineSelector" :items="executionEngines" v-model="selectedEngine"
-                hide-details="auto">
-        <template v-slot:append-outer>
-          <div style="display: flex; margin-top: -8px;">
-          <v-btn @click="performExtractOperation">
-            <v-icon> mdi-tray-arrow-up </v-icon>
-            &nbsp;Extract
-          </v-btn>
-          <v-btn icon v-if="showShareLink()" @click="shareToClipboard()"
-                 title="Copy Bundle to clipboard"><v-icon>mdi-content-copy</v-icon></v-btn></div>
-        </template>
-      </v-select>
-    </div>
+    <v-select label="Extraction Engine" class="engineSelector" :items="executionEngines" v-model="selectedEngine"
+              hide-details="auto" :loading="extractingInProgress">
+      <template v-slot:append-outer>
+        <div style="display: flex; margin-top: -8px;">
+        <v-btn @click="performExtractOperation">
+          <v-icon> mdi-tray-arrow-up </v-icon>
+          &nbsp;Extract
+        </v-btn>
+        <v-btn icon v-if="showShareLink()" @click="shareToClipboard()"
+               title="Copy Bundle to clipboard"><v-icon>mdi-content-copy</v-icon></v-btn></div>
+      </template>
+    </v-select>
+
+    <div style="margin-bottom: 8px;" v-if="selectedEngine !== 'Other $extract'"/>
+
+    <v-text-field label="Extract Service URL" v-model="extractServiceUrl" v-if="selectedEngine == 'Other $extract'"/>
 
     <resource-editor style="flex-grow: 1; width: 100%; height: 100%;" :readOnly="true" :resourceText="extractResult" />
 
@@ -56,6 +58,7 @@ export default class QuestionnaireExtractTest extends Vue {
   public executionEngines: string[] = [
     "forms-lab",
     "CSIRO template-based extract",
+    "Other $extract"
   ];
   public selectedEngine: string = "forms-lab";
   public extractServiceUrl: string = "https://fhir.forms-lab.com/QuestionnaireResponse/$extract";
@@ -83,67 +86,24 @@ export default class QuestionnaireExtractTest extends Vue {
     this.extractingInProgress = true;
 
     if (this.selectedEngine === 'forms-lab') {
-      // Send the extract request
-      try {
-        this.extractParameters.parameter = [
-          {
-            name: "questionnaire-response",
-            resource: JSON.parse(this.questionnaireResponseJson!)
-          }
-        ];
-
-        this.extractParameters.parameter.push({
-          name: "questionnaire",
-          resource: this.questionnaire
-        });
-        if (this.models != undefined) {
-          this.extractParameters.parameter.push({ name: "model", valueString: this.models });
-        }
-
-        this.$emit('outcome', undefined); // reset the outcome to clear any previous issues
-        const response = await fetch(this.extractServiceUrl, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Accept": "application/json"
-          },
-          body: JSON.stringify(this.extractParameters)
-        });
-        if (response.ok) {
-          const extractResponse = await response.json();
-          console.log("Extracted response", extractResponse);
-
-          // if this is a Parameters object and has return and issues, then split them apart...
-          if (extractResponse.resourceType === "Parameters") {
-            const resultParameters = extractResponse as Parameters;
-            const returnParameter = resultParameters.parameter?.find(p => p.name === "return");
-            if (returnParameter) {
-              this.extractResult = JSON.stringify(returnParameter.resource, null, this.tabSpaces);
-            }
-            const issuesParameter = resultParameters.parameter?.find(p => p.name === "issues");
-            if (issuesParameter) {
-              this.$emit('outcome', issuesParameter.resource);
-            }
-          }
-          else {
-            this.extractResult = JSON.stringify(extractResponse, null, this.tabSpaces);
-          }
-        }
-        else {
-          console.error("Failed to extract the questionnaire", response);
-        }
-      }
-      catch (error) {
-        console.error("Error extracting the questionnaire", error);
-      }
-    }
-    else if (this.selectedEngine === 'CSIRO template-based extract') {
-      await this.runCSIROTemplateBasedExtraction();
+      await this.runFormsLabExtractOperation();
+    } else if (this.selectedEngine === 'CSIRO template-based extract') {
+      await this.runCSIROTemplateBasedInAppExtraction();
+    } else if (this.selectedEngine === 'Other $extract') {
+      await this.runOtherExtractOperation();
+    } else {
+      console.error('Unknown engine selected');
     }
     this.extractingInProgress = false;
   }
 
-  async runCSIROTemplateBasedExtraction(): Promise<void> {
+  async runFormsLabExtractOperation(): Promise<void> {
+    console.log('Running Forms Lab $extract');
+    await this.evaluateExtractOperation("https://fhir.forms-lab.com/QuestionnaireResponse/$extract");
+  }
+
+  async runCSIROTemplateBasedInAppExtraction(): Promise<void> {
+    console.log('Running CSIRO template-based in-app extract');
     if (!this.questionnaireResponseJson) {
       return;
     }
@@ -181,6 +141,66 @@ export default class QuestionnaireExtractTest extends Vue {
     }
   }
 
+  async runOtherExtractOperation(): Promise<void> {
+    console.log('Running Other pre-pop: ' + this.extractServiceUrl);
+     await this.evaluateExtractOperation(this.extractServiceUrl);
+  }
+
+  async evaluateExtractOperation(extractServiceUrl: string): Promise<void> {
+    // Send the extract request
+    try {
+      this.extractParameters.parameter = [
+        {
+          name: "questionnaire-response",
+          resource: JSON.parse(this.questionnaireResponseJson!)
+        }
+      ];
+
+      this.extractParameters.parameter.push({
+        name: "questionnaire",
+        resource: this.questionnaire
+      });
+      if (this.models != undefined) {
+        this.extractParameters.parameter.push({ name: "model", valueString: this.models });
+      }
+
+      this.$emit('outcome', undefined); // reset the outcome to clear any previous issues
+      const response = await fetch(extractServiceUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        body: JSON.stringify(this.extractParameters)
+      });
+      if (response.ok) {
+        const extractResponse = await response.json();
+        console.log("Extracted response", extractResponse);
+
+        // if this is a Parameters object and has return and issues, then split them apart...
+        if (extractResponse.resourceType === "Parameters") {
+          const resultParameters = extractResponse as Parameters;
+          const returnParameter = resultParameters.parameter?.find(p => p.name === "return");
+          if (returnParameter) {
+            this.extractResult = JSON.stringify(returnParameter.resource, null, this.tabSpaces);
+          }
+          const issuesParameter = resultParameters.parameter?.find(p => p.name === "issues");
+          if (issuesParameter) {
+            this.$emit('outcome', issuesParameter.resource);
+          }
+        }
+        else {
+          this.extractResult = JSON.stringify(extractResponse, null, this.tabSpaces);
+        }
+      }
+      else {
+        console.error("Failed to extract the questionnaire", response);
+      }
+    }
+    catch (error) {
+      console.error("Error extracting the questionnaire", error);
+    }
+  }
 
   @Watch('questionnaireResponse', { immediate: true, deep: false })
   async onQuestionnaireResponseChanged() {
