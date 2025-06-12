@@ -295,12 +295,11 @@ class PathListener extends Listener {
         let primitiveProperties = currentChildren?.filter((child) => {
           return child.Path === extChild.Path && !child.text?.startsWith('_');
         });
-        if (primitiveProperties && primitiveProperties.length > 0){
+        if (primitiveProperties && primitiveProperties.length > 0) {
           // this is a primitive extension with a value, so we just need to move the
           // children over to it.
           let primitiveProperty = primitiveProperties[0];
-          if (primitiveProperty.children === undefined)
-            primitiveProperty.children = [];
+          primitiveProperty.children ??= [];
           primitiveProperty.children = extChild.children?.concat(primitiveProperty.children);
           extChild.deleteMe = true;
         }
@@ -314,6 +313,14 @@ class PathListener extends Listener {
       currentNode.children = currentChildren?.filter((child) => {
         return !child.deleteMe;
       });
+
+      // for root node set position information if not already set
+      currentNode.position ??= {
+          line: ctx.start.line,
+          column: ctx.start.column,
+          prop_start_pos: ctx.start.start,
+          prop_stop_pos: ctx.stop?.stop ?? ctx.start.stop,
+      };
 
       // remove the hasPrimitiveExtensions flag
       delete currentNode.hasPrimitiveExtensions;
@@ -338,8 +345,7 @@ class PathListener extends Listener {
       Path: '',
       position: { line: ctx.start.line, column: ctx.start.column, prop_start_pos: ctx.start.start, prop_stop_pos: ctx.start.stop },
     };
-    if (parentNode.children === undefined)
-      parentNode.children = [];
+    parentNode.children ??= [];
     parentNode.children.push(node);
     this.parentStack2.push(node);
   }

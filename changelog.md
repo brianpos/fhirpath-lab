@@ -3,6 +3,10 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+# 12 June 2025 (dev)
+* Update fhirpath.js fullPropertyName to resolve a couple of issues
+* Update json parser to permit selection of root resource item
+
 # 24 May 2025 (dev)
 * Updated to fhirpath.js 4.3.0 (providing path information in the results and trace)
 * Update to the latest sqlonfhir-v2 engine (v0.1.0-alpha.3)

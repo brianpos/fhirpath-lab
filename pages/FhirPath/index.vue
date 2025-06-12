@@ -771,7 +771,17 @@ function fullPropertyName(node: ResourceNode) : string | undefined {
   if (node.propName === undefined) {
     return undefined;
   }
-  let result = node.parentResNode ? fullPropertyName(node.parentResNode) + '.' + node.propName : node.path ?? undefined;
+  // check if the property name is for a primitive extension in FHIR
+  let propName = (node.propName?.startsWith('_') && node.model) ? node.propName.substring(1) : node.propName;
+
+  // Now Check if this is a choice type
+  if (node.parentResNode && node.model && node.fhirNodeDataType && propName.endsWith(node.fhirNodeDataType.charAt(0).toUpperCase() + node.fhirNodeDataType.substring(1))) {
+    if (node.model && node.model.choiceTypePaths[node.parentResNode?.path + '.' + propName.substring(0, propName.length - node.fhirNodeDataType.length)]) {
+      propName = propName.substring(0, propName.length - node.fhirNodeDataType.length);
+    }
+  }
+
+  let result = node.parentResNode ? fullPropertyName(node.parentResNode) + '.' + propName : node.path ?? undefined;
     if (node.index !== undefined && node.index !== null) {
       result += '[' + node.index + ']';
     }
@@ -816,6 +826,11 @@ interface ResourceNode {
    * Cached converted data
    */
   convertData(): any;
+ 
+  /**
+   * The FHIR model used for this node
+   */
+  model : fhirpath.Model;
  
   /**
    * Retrieve any type information if available
@@ -2417,7 +2432,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         let resData: ResultData;
         const index = contextNodes.indexOf(contextNode);
         if (contextExpression){
-          resData = { context: `${contextNode.fullPropertyName()}`, result: [], trace: [] };
+          resData = { context: `${fullPropertyName(contextNode)}`, result: [], trace: [] };
           if (astJson){
             const node = findNodeByPath(astJson, resData.context+'');
             if (node?.position) resData.position = node.position;
@@ -2615,7 +2630,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         let resData: ResultData;
         const index = contextNodes.indexOf(contextNode);
         if (contextExpression){
-          resData = { context: `${contextNode.fullPropertyName()}`, result: [], trace: [] };
+          resData = { context: `${fullPropertyName(contextNode)}`, result: [], trace: [] };
           // if (astJson){
           //   const node = findNodeByPath(astJson, resData.context+'');
           //   if (node?.position) resData.position = node.position;
