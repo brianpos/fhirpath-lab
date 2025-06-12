@@ -13,8 +13,9 @@
     "dockerize": "docker build -t fhirpath-lab ."
   },
   "dependencies": {
-    "@aehrc/sdc-populate": "^4.0.1",
-    "@aehrc/smart-forms-renderer": "^1.0.0-alpha.55",
+    "@aehrc/sdc-populate": "^4.3.0",
+    "@aehrc/sdc-template-extract": "^1.0.1",
+    "@aehrc/smart-forms-renderer": "^1.0.0-alpha.66",
     "@nuxtjs/applicationinsights": "^1.2.2",
     "@types/ace": "^0.0.52",
     "@types/fhir": "^0.0.41",
