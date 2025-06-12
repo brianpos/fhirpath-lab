@@ -147,12 +147,15 @@ export default class QuestionnaireExtractTest extends Vue {
   }
 
   async evaluateExtractOperation(extractServiceUrl: string): Promise<void> {
+    if (!this.questionnaireResponseJson)
+      return;
+
     // Send the extract request
     try {
       this.extractParameters.parameter = [
         {
           name: "questionnaire-response",
-          resource: JSON.parse(this.questionnaireResponseJson!)
+          resource: JSON.parse(this.questionnaireResponseJson)
         }
       ];
 
