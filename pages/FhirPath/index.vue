@@ -137,6 +137,27 @@
                     &nbsp;
                   </td>
                 </tr>
+                <template v-for="(focusValue, i1) in debugTraceData[debugTracePosition].focusVar">
+                <tr :key="i1">
+                  <td class="result-type">
+                    $focus
+                  </td>
+                  <td class="result-value">
+                    <div class="code-json" v-if="focusValue.value != undefined">{{ focusValue.value }}</div>
+                    <div class="code-json" v-if="focusValue.value == undefined && focusValue.valueType == 'empty-string'"><i>""</i></div>
+                  </td>
+                  <td class="result-type">
+                    <i v-if="focusValue.valueType">({{ focusValue.valueType }})</i>
+                    <span v-if="focusValue.resourcePath" class="result-path">{{ focusValue.resourcePath }}
+                      <v-btn v-if="focusValue.resourcePath" x-small class="result-path-target" icon title="Goto context" @click="navigateToContext(focusValue.resourcePath)">
+                      <v-icon>
+                        mdi-target
+                      </v-icon>
+                    </v-btn>
+                    </span>
+                  </td>
+                </tr>
+                </template>
                 <template v-for="(thisValue, i1) in debugTraceData[debugTracePosition].thisVar">
                 <tr :key="i1">
                   <td class="result-type">
@@ -716,6 +737,7 @@ interface DebugTraceData {
   exprName?: string;
   values?: DebugTraceValue[];
   index?: number;
+  focusVar?: DebugTraceValue[];
   thisVar?: DebugTraceValue[];
 }
 
@@ -1828,7 +1850,8 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
                       exprPosition: exprPosition,
                       exprLength: exprLength,
                     values: [],
-                    thisVar: []
+                    thisVar: [],
+                    focusVar: [],
                     };
                   this.debugTraceData.push(debugTraceVal);
 
@@ -1848,6 +1871,18 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
                       const traceValue = getValue(partValue);
                       if (traceValue.length > 0)
                         debugTraceVal.thisVar?.push({ value: JSON.stringify(traceValue[0].value, null, 4) });
+                      continue;
+                    }
+
+                    if (partValue.name == 'focus-resource-path') {
+                      debugTraceVal.focusVar?.push({ resourcePath: partValue.valueString });
+                      continue;
+                    }
+
+                    if (partValue.name.startsWith('focus-')) {
+                      const traceValue = getValue(partValue);
+                      if (traceValue.length > 0)
+                        debugTraceVal.focusVar?.push({ value: JSON.stringify(traceValue[0].value, null, 4) });
                       continue;
                     }
 
