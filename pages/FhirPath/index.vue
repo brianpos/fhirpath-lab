@@ -405,7 +405,7 @@
 .resultSelection {
   position: absolute;
   z-index: 20;
-  background-color: #9acd3220;
+  background-color: #5240ef65;
 }
 
 .debugSelection {
