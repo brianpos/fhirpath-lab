@@ -42,6 +42,8 @@ export interface fpjsNode {
   terminalNodeText?: string[];
   text: string;
   type: string;
+  start?: { line: number; column: number };
+  length?: number;
 }
 
 export function getValue(entry: fhir4b.ParametersParameter): ResultItem[] {
