@@ -347,6 +347,15 @@ function ConvertFhirPathJsToAst(ast: fpjsNode): JsonNode {
     ReturnType: "",
   };
 
+  if (ast.length) {
+    result.Length = ast.length;
+  }
+
+  if (ast.start) {
+    result.Line = ast.start.line;
+    result.Column = ast.start.column;
+  }
+
   // convert all the child nodes
   if (ast.children) {
     ast.children.forEach((element: fpjsNode) => {

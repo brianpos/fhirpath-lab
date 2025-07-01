@@ -102,7 +102,7 @@
             <div height="85px" width="100%" ref="aceEditorExpression"></div>
             <div class="ace_editor_footer"></div>
 
-            <template v-if="debugTracePosition != undefined && debugTraceData.length > 0">
+            <template v-if="debugTracePosition != undefined && debugTraceData.length > 0 && debugTraceData[debugTracePosition].thisVar != undefined && debugTraceData[debugTracePosition].thisVar.length > 0">
               <div class="results">Debug variables</div>
               <v-simple-table>
                 <template v-for="(resultValue, i1) in debugTraceData[debugTracePosition].values">
@@ -126,27 +126,16 @@
                   </td>
                 </tr>
                 </template>
-                <tr v-if="debugTraceData[debugTracePosition].index != undefined">
-                  <td class="result-type">
-                    <span style="white-space:nowrap;">index</span>
-                  </td>
-                  <td class="result-value">
-                    <div class="code-json">{{ debugTraceData[debugTracePosition].index }}</div>
-                  </td>
-                  <td class="result-type">
-                    &nbsp;
-                  </td>
-                </tr>
                 <template v-for="(focusValue, i1) in debugTraceData[debugTracePosition].focusVar">
                 <tr :key="i1">
-                  <td class="result-type">
+                  <td class="result-type debug-row">
                     $focus
                   </td>
-                  <td class="result-value">
+                  <td class="result-value debug-row">
                     <div class="code-json" v-if="focusValue.value != undefined">{{ focusValue.value }}</div>
                     <div class="code-json" v-if="focusValue.value == undefined && focusValue.valueType == 'empty-string'"><i>""</i></div>
                   </td>
-                  <td class="result-type">
+                  <td class="result-type debug-row">
                     <i v-if="focusValue.valueType">({{ focusValue.valueType }})</i>
                     <span v-if="focusValue.resourcePath" class="result-path">{{ focusValue.resourcePath }}
                       <v-btn v-if="focusValue.resourcePath" x-small class="result-path-target" icon title="Goto context" @click="navigateToContext(focusValue.resourcePath)">
@@ -158,16 +147,27 @@
                   </td>
                 </tr>
                 </template>
+                <tr v-if="debugTraceData[debugTracePosition].index != undefined">
+                  <td class="result-type debug-row">
+                    <span style="white-space:nowrap;">index</span>
+                  </td>
+                  <td class="result-value debug-row">
+                    <div class="code-json">{{ debugTraceData[debugTracePosition].index }}</div>
+                  </td>
+                  <td class="result-type debug-row">
+                    &nbsp;
+                  </td>
+                </tr>
                 <template v-for="(thisValue, i1) in debugTraceData[debugTracePosition].thisVar">
                 <tr :key="i1">
-                  <td class="result-type">
+                  <td class="result-type debug-row">
                     $this
                   </td>
-                  <td class="result-value">
+                  <td class="result-value debug-row">
                     <div class="code-json" v-if="thisValue.value != undefined">{{ thisValue.value }}</div>
                     <div class="code-json" v-if="thisValue.value == undefined && thisValue.valueType == 'empty-string'"><i>""</i></div>
                   </td>
-                  <td class="result-type">
+                  <td class="result-type debug-row">
                     <i v-if="thisValue.valueType">({{ thisValue.valueType }})</i>
                     <span v-if="thisValue.resourcePath" class="result-path">{{ thisValue.resourcePath }}
                       <v-btn v-if="thisValue.resourcePath" x-small class="result-path-target" icon title="Goto context" @click="navigateToContext(thisValue.resourcePath)">
@@ -423,6 +423,10 @@
 </style>
 
 <style lang="scss" scoped >
+.debug-row {
+  background-color: #ebebeb;
+}
+
 .result-type:has(.result-path) {
   padding-bottom: 12px;
 }
@@ -3280,7 +3284,6 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       const selectionMarker = editor.session.addMarker(range, "resultSelection", "text", true);
       // after 1.5 seconds remove the highlight.
       setTimeout(() => {
-        // console.log("Removing marker", selectionMarker);
         editor.session.removeMarker(selectionMarker);
       }, 1500);
       }
