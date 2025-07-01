@@ -148,7 +148,6 @@ h5 {
 <script lang="ts">
 import Vue, { PropType } from "vue";
 var firelyData = require('~/static/results/Firely-5.11.4 R5.json');
-var unknownData = require('~/static/results/Unknown.json');
 var hapiData = require('~/static/results/Java 6.5.27 R5.json');
 var fhirPathJSData = require('~/static/results/fhirpath.js-4.4.0 R5.json');
 
