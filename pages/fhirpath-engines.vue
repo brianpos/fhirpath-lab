@@ -9,30 +9,52 @@
       </p>
       <template>
         <v-data-table :headers="headers" :items="testData" item-key="name" sort-by="name" group-by="groupName"
-          class="elevation-1" :items-per-page="-1" :search="search" show-group-by><template v-slot:top>
+          class="elevation-1" :items-per-page="-1" :search="search" show-group-by>
+          <template v-slot:top>
             <v-text-field v-model="search" label="Search" class="mx-4"></v-text-field>
           </template>
+          <template v-slot:item.expression="{ item }">
+            <span v-html="item.expression?.replaceAll('\n', '<br/>')" />
+          </template>
+          <template v-slot:item.name="{ item }">
+            <span v-html="item.name" />
+            <template v-if="item.description">
+              <br/>
+              <span style="color: grey; font-style: italic;" v-html="item.description" />
+            </template>
+          </template>
           <template v-slot:item.Firely="{ item }">
-            <icon v-if="item.Firely === true">
+            <icon v-if="item.Firely?.result === true">
               <v-icon color="rgb(16, 185, 129)">mdi-check</v-icon>
             </icon>
-            <icon v-if="item.Firely === false">
+            <icon v-if="item.Firely?.result === false">
               <v-icon color="rgb(239, 68, 68)">mdi-alert-outline</v-icon>
             </icon>
           </template>
           <template v-slot:item.FhirPathJS="{ item }">
-            <icon v-if="item.FhirPathJS === true">
+            <icon v-if="item.FhirPathJS?.result === true">
               <v-icon color="rgb(16, 185, 129)">mdi-check</v-icon>
             </icon>
-            <icon v-if="item.FhirPathJS === false">
+            <icon v-if="item.FhirPathJS?.result === false" :title="computeMessage(item.FhirPathJS)">
               <v-icon color="rgb(239, 68, 68)">mdi-alert-outline</v-icon>
+            </icon>
+            <icon v-if="item.FhirPathJS?.notImplemented === true" :title="computeMessage(item.FhirPathJS)">
+              <v-icon color="grey">mdi-hammer-wrench</v-icon>
             </icon>
           </template>
           <template v-slot:item.Hapi="{ item }">
-            <icon v-if="item.Hapi === true">
+            <icon v-if="item.Hapi?.result === true">
               <v-icon color="rgb(16, 185, 129)">mdi-check</v-icon>
             </icon>
-            <icon v-if="item.Hapi === false">
+            <icon v-if="item.Hapi?.result === false">
+              <v-icon color="rgb(239, 68, 68)">mdi-alert-outline</v-icon>
+            </icon>
+          </template>
+          <template v-slot:item.Unknown="{ item }">
+            <icon v-if="item.Unknown?.result === true">
+              <v-icon color="rgb(16, 185, 129)">mdi-check</v-icon>
+            </icon>
+            <icon v-if="item.Unknown?.result === false">
               <v-icon color="rgb(239, 68, 68)">mdi-alert-outline</v-icon>
             </icon>
           </template>
@@ -146,8 +168,10 @@ h5 {
 }
 </style>
 <script lang="ts">
+import { Expression } from "cql-execution";
 import Vue, { PropType } from "vue";
 var firelyData = require('~/static/results/Firely-5.11.4 R5.json');
+var unknownData = require('~/static/results/Unknown.json');
 var hapiData = require('~/static/results/Java 6.5.27 R5.json');
 var fhirPathJSData = require('~/static/results/fhirpath.js-4.4.0 R5.json');
 
@@ -156,10 +180,14 @@ export default Vue.extend({
     this.injectData('Firely', firelyData);
     this.injectData('FhirPathJS', fhirPathJSData);
     this.injectData('Hapi', hapiData);
+    this.injectData('Unknown', unknownData);
   },
   computed: {
   },
   methods: {
+    computeMessage(item: any): string {
+      return item?.errMessage;
+    },
     injectData(engineName: string, data: any) {
       this.headers.push({
         text: data.EngineName,
@@ -171,7 +199,7 @@ export default Vue.extend({
       for (let group of data.Groups) {
         console.log(group.Name);
         for (let test of group.TestCases) {
-          let item: { name: any; groupName: any;[key: string]: any };
+          let item: { name: any; description?: string, groupName: any; expression?: string;[key: string]: any };
 
           // Check if the item already exists in testData
           let existingItem = this.testData.find(i => i.name === test.Name && i.groupName === group.Name);
@@ -180,11 +208,17 @@ export default Vue.extend({
           } else {
             item = {
               name: test.Name,
-              groupName: group.Name
+              groupName: group.Name,
             };
             this.testData.push(item);
           }
-          item[engineName] = test.Result;
+          if (test.Expression) {
+            item.expression = test.Expression;
+          }
+          if (test.Description) {
+            item.description = test.Description;
+          }
+          item[engineName] = { result: test.Result, notImplemented: test.NotImplemented, errMessage: test.FailureMessage };
         }
       }
     },
@@ -193,13 +227,19 @@ export default Vue.extend({
     return {
       search: '',
       headers: [
+        { text: 'Category', value: 'groupName', align: 'start' },
         {
           text: 'Test name',
           align: 'start',
           value: 'name',
           groupable: false,
         },
-        { text: 'Category', value: 'groupName', align: 'start' },
+        {
+          text: 'Expression',
+          align: 'start',
+          value: 'expression',
+          groupable: false,
+        },
       ],
       testData: [
         {
