@@ -395,7 +395,7 @@
           "Description": "Note: Some systems may return an error due to failing to resolve System.Patient",
           "Expression": "Patient.is(System.Patient).not()",
           "Result": false,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: \"System.Patient\" cannot be resolved to a valid type identifier\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: \"System.Patient\" cannot be resolved to a valid type identifier"
         },
         {
           "Name": "testType20",
@@ -550,7 +550,7 @@
           "Name": "testPolymorphicsB",
           "Expression": "Observation.valueQuantity.exists()",
           "Result": false,
-          "FailureMessage": "Some results didnt match expected values (1 values)"
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testPolymorphicsA",
@@ -903,7 +903,7 @@
           "Name": "testEquivalent21",
           "Expression": "name.take(2).given ~ name.take(2).last().given | name.take(2).first().given",
           "Result": false,
-          "FailureMessage": "Some results didnt match expected values (1 values)"
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testEquivalent23",
@@ -914,7 +914,7 @@
           "Name": "testEquivalent24",
           "Expression": "(1 | 2 | 3) ~ (3 | 2 | 1)",
           "Result": false,
-          "FailureMessage": "Some results didnt match expected values (1 values)"
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testEquivalent3",
@@ -2146,7 +2146,7 @@
           "Name": "testPrecedence3",
           "Expression": "1 > 2 is Boolean",
           "Result": false,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Unknown error\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Unknown error"
         }
       ]
     },
@@ -2237,7 +2237,7 @@
           "Name": "testPeriodInvariantNew",
           "Expression": "Patient.identifier.period.all(start.empty() or end.empty() or (start.lowBoundary() < end.highBoundary()))",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: lowBoundary\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         }
       ]
     },
@@ -2843,7 +2843,7 @@
           "Name": "testExtension2",
           "Expression": "Patient.birthDate.extension(%`ext-patient-birthTime`).exists()",
           "Result": false,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Attempting to access an undefined environment variable: ext-patient-birthTime\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Attempting to access an undefined environment variable: ext-patient-birthTime"
         }
       ]
     },
@@ -3171,31 +3171,31 @@
           "Name": "testMatchesFullWithinUrl1",
           "Expression": "'http://fhir.org/guides/cqf/common/Library/FHIR-ModelInfo|4.0.1'.matchesFull('library')",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: matchesFull\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: matchesFull"
         },
         {
           "Name": "testMatchesFullWithinUrl1a",
           "Expression": "'http://fhir.org/guides/cqf/common/Library/FHIR-ModelInfo|4.0.1'.matchesFull('.*Library.*')",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: matchesFull\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: matchesFull"
         },
         {
           "Name": "testMatchesFullWithinUrl2",
           "Expression": "'http://fhir.org/guides/cqf/common/Library/FHIR-ModelInfo|4.0.1'.matchesFull('Measure')",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: matchesFull\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: matchesFull"
         },
         {
           "Name": "testMatchesFullWithinUrl3",
           "Expression": "'http://fhir.org/guides/cqf/common/Library/FHIR-ModelInfo|4.0.1'.matchesFull('Library')",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: matchesFull\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: matchesFull"
         },
         {
           "Name": "testMatchesFullWithinUrl4",
           "Expression": "'http://fhir.org/guides/cqf/common/Library/FHIR-ModelInfo|4.0.1'.matchesFull('^Library$')",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: matchesFull\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: matchesFull"
         }
       ]
     },
@@ -3226,7 +3226,7 @@
           "Name": "testMinus5",
           "Expression": "@1974-12-25 - 1 'month'",
           "Result": false,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: For date/time arithmetic, the unit of the quantity must be one of the following time-based units: years,months,weeks,days,hours,minutes,seconds,milliseconds,year,month,week,day,hour,minute,second,millisecond,'s','ms'\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: For date/time arithmetic, the unit of the quantity must be one of the following time-based units: years,months,weeks,days,hours,minutes,seconds,milliseconds,year,month,week,day,hour,minute,second,millisecond,'s','ms'"
         },
         {
           "Name": "testMinus6",
@@ -3237,13 +3237,13 @@
           "Name": "testMinus7",
           "Expression": "@T00:30:00 - 1 hour",
           "Result": false,
-          "FailureMessage": "Some results didnt match expected values (1 values)"
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testMinus8",
           "Expression": "@T01:00:00 - 2 hours",
           "Result": false,
-          "FailureMessage": "Some results didnt match expected values (1 values)"
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         }
       ]
     },
@@ -3495,7 +3495,7 @@
           "Name": "testNotEquivalent21",
           "Expression": "name.take(2).given !~ name.take(2).last().given | name.take(2).first().given",
           "Result": false,
-          "FailureMessage": "Some results didnt match expected values (1 values)"
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testNotEquivalent22",
@@ -3506,7 +3506,7 @@
           "Name": "testNotEquivalent3",
           "Expression": "{} !~ 1",
           "Result": false,
-          "FailureMessage": "Some results didnt match expected values (1 values)"
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testNotEquivalent4",
@@ -3587,7 +3587,7 @@
           "Name": "testPlusDate13",
           "Expression": "@1973-12-25 + 1 'd'",
           "Result": false,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: For date/time arithmetic, the unit of the quantity must be one of the following time-based units: years,months,weeks,days,hours,minutes,seconds,milliseconds,year,month,week,day,hour,minute,second,millisecond,'s','ms'\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: For date/time arithmetic, the unit of the quantity must be one of the following time-based units: years,months,weeks,days,hours,minutes,seconds,milliseconds,year,month,week,day,hour,minute,second,millisecond,'s','ms'"
         },
         {
           "Name": "testPlusDate14",
@@ -3598,7 +3598,7 @@
           "Name": "testPlusDate15",
           "Expression": "@1973-12-25 + 1 'wk'",
           "Result": false,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: For date/time arithmetic, the unit of the quantity must be one of the following time-based units: years,months,weeks,days,hours,minutes,seconds,milliseconds,year,month,week,day,hour,minute,second,millisecond,'s','ms'\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: For date/time arithmetic, the unit of the quantity must be one of the following time-based units: years,months,weeks,days,hours,minutes,seconds,milliseconds,year,month,week,day,hour,minute,second,millisecond,'s','ms'"
         },
         {
           "Name": "testPlusDate16",
@@ -3614,13 +3614,13 @@
           "Name": "testPlusDate21",
           "Expression": "@1973-12-25T00:00:00.000+10:00 + 1 'min'",
           "Result": false,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: For date/time arithmetic, the unit of the quantity must be one of the following time-based units: years,months,weeks,days,hours,minutes,seconds,milliseconds,year,month,week,day,hour,minute,second,millisecond,'s','ms'\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: For date/time arithmetic, the unit of the quantity must be one of the following time-based units: years,months,weeks,days,hours,minutes,seconds,milliseconds,year,month,week,day,hour,minute,second,millisecond,'s','ms'"
         },
         {
           "Name": "testPlusDate22",
           "Expression": "@1973-12-25T00:00:00.000+10:00 + 1 'h'",
           "Result": false,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: For date/time arithmetic, the unit of the quantity must be one of the following time-based units: years,months,weeks,days,hours,minutes,seconds,milliseconds,year,month,week,day,hour,minute,second,millisecond,'s','ms'\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: For date/time arithmetic, the unit of the quantity must be one of the following time-based units: years,months,weeks,days,hours,minutes,seconds,milliseconds,year,month,week,day,hour,minute,second,millisecond,'s','ms'"
         },
         {
           "Name": "testPlusDate1",
@@ -3681,13 +3681,13 @@
           "Name": "testPlusTime1",
           "Expression": "@T01:00:00 + 2 hours",
           "Result": false,
-          "FailureMessage": "Some results didnt match expected values (1 values)"
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testPlusTime2",
           "Expression": "@T23:00:00 + 2 hours",
           "Result": false,
-          "FailureMessage": "Some results didnt match expected values (1 values)"
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testPlusDate11",
@@ -3793,7 +3793,7 @@
           "Name": "testReplaceMatches2",
           "Expression": "'abc'.replaceMatches('', 'x')",
           "Result": false,
-          "FailureMessage": "Some results didnt match expected values (1 values)"
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testReplaceMatches3",
@@ -4189,7 +4189,7 @@
           "Name": "testToString4",
           "Expression": "0.0.toString() = '0.0'",
           "Result": false,
-          "FailureMessage": "Some results didnt match expected values (1 values)"
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testToString5",
@@ -4330,7 +4330,7 @@
           "Name": "testDecimalLiteralIsDecimal",
           "Expression": "1.0.is(Decimal)",
           "Result": false,
-          "FailureMessage": "Some results didnt match expected values (1 values)"
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testDecimalLiteralIsNotQuantity",
@@ -4723,7 +4723,7 @@
           "Name": "testDecimalLiteralToString",
           "Expression": "1.0.toString()",
           "Result": false,
-          "FailureMessage": "Some results didnt match expected values (1 values)"
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testIntegerLiteralToString",
@@ -4829,19 +4829,19 @@
           "Name": "testVariables1",
           "Expression": "%sct = 'http://snomed.info/sct'",
           "Result": false,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Attempting to access an undefined environment variable: sct\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Attempting to access an undefined environment variable: sct"
         },
         {
           "Name": "testVariables2",
           "Expression": "%loinc = 'http://loinc.org'",
           "Result": false,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Attempting to access an undefined environment variable: loinc\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Attempting to access an undefined environment variable: loinc"
         },
         {
           "Name": "testVariables4",
           "Expression": "%`vs-administrative-gender` = 'http://hl7.org/fhir/ValueSet/administrative-gender'",
           "Result": false,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Attempting to access an undefined environment variable: vs-administrative-gender\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Attempting to access an undefined environment variable: vs-administrative-gender"
         }
       ]
     },
@@ -4877,19 +4877,19 @@
           "Name": "Comparable1",
           "Expression": "1 'cm'.comparable(1 '[in_i]')",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: comparable\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: comparable"
         },
         {
           "Name": "Comparable2",
           "Expression": "1 'cm'.comparable(1 '[s]')",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: comparable\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: comparable"
         },
         {
           "Name": "Comparable3",
           "Expression": "1 'cm'.comparable(1 's')",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: comparable\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: comparable"
         }
       ]
     },
@@ -4900,145 +4900,145 @@
           "Name": "HighBoundaryDateMonth",
           "Expression": "@2014.highBoundary(6)",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: highBoundary\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: highBoundary"
         },
         {
           "Name": "HighBoundaryDateTimeMillisecond1",
           "Expression": "@2014-01-01T08.highBoundary(17)",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: highBoundary\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: highBoundary"
         },
         {
           "Name": "HighBoundaryDateTimeMillisecond2",
           "Expression": "@2014-01-01T08:05-05:00.highBoundary(17)",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: highBoundary\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: highBoundary"
         },
         {
           "Name": "HighBoundaryDateTimeMillisecond3",
           "Expression": "@2014-01-01T08.highBoundary(17)",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: highBoundary\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: highBoundary"
         },
         {
           "Name": "HighBoundaryDecimal",
           "Expression": "1.587.highBoundary(8)",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: highBoundary\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: highBoundary"
         },
         {
           "Name": "HighBoundaryDecimal1",
           "Expression": "1.587.highBoundary(2)",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: highBoundary\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: highBoundary"
         },
         {
           "Name": "HighBoundaryDecimal10",
           "Expression": "1.highBoundary(5)",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: highBoundary\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: highBoundary"
         },
         {
           "Name": "HighBoundaryDecimal11",
           "Expression": "12.587.highBoundary(2)",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: highBoundary\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: highBoundary"
         },
         {
           "Name": "HighBoundaryDecimal12",
           "Expression": "12.500.highBoundary(4)",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: highBoundary\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: highBoundary"
         },
         {
           "Name": "HighBoundaryDecimal13",
           "Expression": "120.highBoundary(2)",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: highBoundary\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: highBoundary"
         },
         {
           "Name": "HighBoundaryDecimal14",
           "Expression": "-120.highBoundary(2)",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: highBoundary\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: highBoundary"
         },
         {
           "Name": "HighBoundaryDecimal15",
           "Expression": "0.0034.highBoundary(1)",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: highBoundary\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: highBoundary"
         },
         {
           "Name": "HighBoundaryDecimal16",
           "Expression": "-0.0034.highBoundary(1)",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: highBoundary\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: highBoundary"
         },
         {
           "Name": "HighBoundaryDecimal2",
           "Expression": "1.587.highBoundary(6)",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: highBoundary\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: highBoundary"
         },
         {
           "Name": "HighBoundaryDecimal3",
           "Expression": "1.587.highBoundary(-1)",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: highBoundary\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: highBoundary"
         },
         {
           "Name": "HighBoundaryDecimal4",
           "Expression": "(-1.587).highBoundary()",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: highBoundary\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: highBoundary"
         },
         {
           "Name": "HighBoundaryDecimal5",
           "Expression": "(-1.587).highBoundary(2)",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: highBoundary\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: highBoundary"
         },
         {
           "Name": "HighBoundaryDecimal6",
           "Expression": "(-1.587).highBoundary(6)",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: highBoundary\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: highBoundary"
         },
         {
           "Name": "HighBoundaryDecimal7",
           "Expression": "1.587.highBoundary(39)",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: highBoundary\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: highBoundary"
         },
         {
           "Name": "HighBoundaryDecimal8",
           "Expression": "1.highBoundary()",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: highBoundary\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: highBoundary"
         },
         {
           "Name": "HighBoundaryDecimal9",
           "Expression": "1.highBoundary(0)",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: highBoundary\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: highBoundary"
         },
         {
           "Name": "HighBoundaryDecimalDefault",
           "Expression": "1.587.highBoundary()",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: highBoundary\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: highBoundary"
         },
         {
           "Name": "HighBoundaryQuantity",
           "Expression": "1.587 'm'.highBoundary(8)",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: highBoundary\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: highBoundary"
         },
         {
           "Name": "HighBoundaryTimeMillisecond",
           "Expression": "@T10:30.highBoundary(9)",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: highBoundary\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: highBoundary"
         }
       ]
     },
@@ -5049,169 +5049,169 @@
           "Name": "LowBoundaryDateMonth",
           "Expression": "@2014.lowBoundary(6)",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: lowBoundary\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         },
         {
           "Name": "LowBoundaryDateTimeMillisecond1",
           "Expression": "@2014-01-01T08.lowBoundary(17)",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: lowBoundary\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         },
         {
           "Name": "LowBoundaryDateTimeMillisecond2",
           "Expression": "@2014-01-01T08:05+08:00.lowBoundary(17)",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: lowBoundary\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         },
         {
           "Name": "LowBoundaryDateTimeMillisecond3",
           "Expression": "@2014-01-01T08.lowBoundary(8)",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: lowBoundary\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         },
         {
           "Name": "LowBoundaryDecimal1",
           "Expression": "1.587.lowBoundary(6)",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: lowBoundary\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         },
         {
           "Name": "LowBoundaryDecimal10",
           "Expression": "12.587.lowBoundary(2)",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: lowBoundary\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         },
         {
           "Name": "LowBoundaryDecimal11",
           "Expression": "12.500.lowBoundary(4)",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: lowBoundary\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         },
         {
           "Name": "LowBoundaryDecimal12",
           "Expression": "120.lowBoundary(2)",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: lowBoundary\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         },
         {
           "Name": "LowBoundaryDecimal13",
           "Expression": "(-120).lowBoundary(2)",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: lowBoundary\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         },
         {
           "Name": "LowBoundaryDecimal14",
           "Expression": "0.0034.lowBoundary(1)",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: lowBoundary\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         },
         {
           "Name": "LowBoundaryDecimal15",
           "Expression": "(-0.0034).lowBoundary(1)",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: lowBoundary\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         },
         {
           "Name": "LowBoundaryDecimal2",
           "Expression": "1.587.lowBoundary(2)",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: lowBoundary\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         },
         {
           "Name": "LowBoundaryDecimal3",
           "Expression": "1.587.lowBoundary(-1)",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: lowBoundary\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         },
         {
           "Name": "LowBoundaryDecimal4",
           "Expression": "1.587.lowBoundary(0)",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: lowBoundary\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         },
         {
           "Name": "LowBoundaryDecimal5",
           "Expression": "1.587.lowBoundary(32)",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: lowBoundary\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         },
         {
           "Name": "LowBoundaryDecimal6",
           "Expression": "1.587.lowBoundary(39)",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: lowBoundary\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         },
         {
           "Name": "LowBoundaryDecimal7",
           "Expression": "1.toDecimal().lowBoundary()",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: lowBoundary\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         },
         {
           "Name": "LowBoundaryDecimal8",
           "Expression": "1.lowBoundary(0)",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: lowBoundary\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         },
         {
           "Name": "LowBoundaryDecimal9",
           "Expression": "1.lowBoundary(5)",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: lowBoundary\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         },
         {
           "Name": "LowBoundaryDecimalDefault",
           "Expression": "1.587.lowBoundary()",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: lowBoundary\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         },
         {
           "Name": "LowBoundaryNegDecimal1",
           "Expression": "(-1.587).lowBoundary(6)",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: lowBoundary\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         },
         {
           "Name": "LowBoundaryNegDecimal2",
           "Expression": "(-1.587).lowBoundary(2)",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: lowBoundary\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         },
         {
           "Name": "LowBoundaryNegDecimal3",
           "Expression": "(-1.587).lowBoundary(-1)",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: lowBoundary\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         },
         {
           "Name": "LowBoundaryNegDecimal4",
           "Expression": "(-1.587).lowBoundary(0)",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: lowBoundary\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         },
         {
           "Name": "LowBoundaryNegDecimal5",
           "Expression": "(-1.587).lowBoundary(32)",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: lowBoundary\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         },
         {
           "Name": "LowBoundaryNegDecimalDefault",
           "Expression": "(-1.587).lowBoundary()",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: lowBoundary\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         },
         {
           "Name": "LowBoundaryQuantity",
           "Expression": "1.587 'cm'.lowBoundary(8)",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: lowBoundary\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         },
         {
           "Name": "LowBoundaryTimeMillisecond",
           "Expression": "@T10:30.lowBoundary(9)",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: lowBoundary\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         }
       ]
     },
@@ -5222,13 +5222,13 @@
           "Name": "testMultipleResolve",
           "Expression": "composition.exists() implies (composition.resolve().section.entry.reference.where(resolve() is Observation) in (result.reference | result.reference.resolve().hasMember.reference))",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: resolve\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: resolve"
         },
         {
           "Name": "testContainedId",
           "Expression": "contained.id",
           "Result": false,
-          "FailureMessage": "Some results didnt match expected values (1 values)"
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         }
       ]
     },
@@ -5239,31 +5239,31 @@
           "Name": "PrecisionDateTimeMilliseconds",
           "Expression": "@2014-01-05T10:30:00.000.precision()",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: precision\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: precision"
         },
         {
           "Name": "PrecisionDecimal",
           "Expression": "1.58700.precision()",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: precision\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: precision"
         },
         {
           "Name": "PrecisionTimeMilliseconds",
           "Expression": "@T10:30:00.000.precision()",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: precision\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: precision"
         },
         {
           "Name": "PrecisionTimeMinutes",
           "Expression": "@T10:30.precision()",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: precision\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: precision"
         },
         {
           "Name": "PrecisionYear",
           "Expression": "@2014.precision()",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: precision\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: precision"
         }
       ]
     },
@@ -5274,13 +5274,13 @@
           "Name": "testConformsTo1",
           "Expression": "conformsTo('http://hl7.org/fhir/StructureDefinition/Patient')",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: conformsTo\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: conformsTo"
         },
         {
           "Name": "testConformsTo2",
           "Expression": "conformsTo('http://hl7.org/fhir/StructureDefinition/Person')",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: conformsTo\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: conformsTo"
         },
         {
           "Name": "testConformsTo3",
@@ -5296,25 +5296,25 @@
           "Name": "testEscapeHtml",
           "Expression": "'\"1<2\"'.escape('html')",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: escape\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: escape"
         },
         {
           "Name": "testEscapeJson",
           "Expression": "'\"1<2\"'.escape('json')",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: escape\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: escape"
         },
         {
           "Name": "testUnescapeHtml",
           "Expression": "'&quot;1&lt;2&quot;'.unescape('html')",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: unescape\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: unescape"
         },
         {
           "Name": "testUnescapeJson",
           "Expression": "'\\\"1<2\\\"'.unescape('json')",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: unescape\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: unescape"
         }
       ]
     },
@@ -5325,61 +5325,61 @@
           "Name": "testSort1",
           "Expression": "(1 | 2 | 3).sort() = (1 | 2 | 3)",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: sort\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: sort"
         },
         {
           "Name": "testSort10",
           "Expression": "Patient.name.sort(-family, -given.first()).first().use = 'usual'",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: sort\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: sort"
         },
         {
           "Name": "testSort2",
           "Expression": "(3 | 2 | 1).sort() = (1 | 2 | 3)",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: sort\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: sort"
         },
         {
           "Name": "testSort3",
           "Expression": "(1 | 2 | 3).sort($this) = (1 | 2 | 3)",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: sort\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: sort"
         },
         {
           "Name": "testSort4",
           "Expression": "(3 | 2 | 1).sort($this) = (1 | 2 | 3)",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: sort\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: sort"
         },
         {
           "Name": "testSort5",
           "Expression": "(1 | 2 | 3).sort(-$this) = (3 | 2 | 1)",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: sort\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: sort"
         },
         {
           "Name": "testSort6",
           "Expression": "('a' | 'b' | 'c').sort($this) = ('a' | 'b' | 'c')",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: sort\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: sort"
         },
         {
           "Name": "testSort7",
           "Expression": "('c' | 'b' | 'a').sort($this) = ('a' | 'b' | 'c')",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: sort\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: sort"
         },
         {
           "Name": "testSort8",
           "Expression": "('a' | 'b' | 'c').sort(-$this) = ('c' | 'b' | 'a')",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: sort\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: sort"
         },
         {
           "Name": "testSort9",
           "Expression": "Patient.name[0].given.sort() = ('James' | 'Peter')",
           "NotImplemented": true,
-          "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: Not implemented: sort\r\n."
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: sort"
         }
       ]
     },
@@ -5452,7 +5452,7 @@
           "Description": "patient has a birthDate",
           "Expression": "birthDate",
           "Result": false,
-          "FailureMessage": "Some results didnt match expected values (1 values)"
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testPatientTelecomTypes",

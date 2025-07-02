@@ -28,8 +28,11 @@
             <icon v-if="item.Firely?.result === true">
               <v-icon color="rgb(16, 185, 129)">mdi-check</v-icon>
             </icon>
-            <icon v-if="item.Firely?.result === false">
+            <icon v-if="item.Firely?.result === false" :title="computeMessage(item.Firely)">
               <v-icon color="rgb(239, 68, 68)">mdi-alert-outline</v-icon>
+            </icon>
+            <icon v-if="item.Firely?.notImplemented === true" :title="computeMessage(item.Firely)">
+              <v-icon color="grey">mdi-hammer-wrench</v-icon>
             </icon>
           </template>
           <template v-slot:item.FhirPathJS="{ item }">
@@ -47,8 +50,11 @@
             <icon v-if="item.Hapi?.result === true">
               <v-icon color="rgb(16, 185, 129)">mdi-check</v-icon>
             </icon>
-            <icon v-if="item.Hapi?.result === false">
+            <icon v-if="item.Hapi?.result === false" :title="computeMessage(item.Hapi)">
               <v-icon color="rgb(239, 68, 68)">mdi-alert-outline</v-icon>
+            </icon>
+            <icon v-if="item.Hapi?.notImplemented === true" :title="computeMessage(item.Hapi)">
+              <v-icon color="grey">mdi-hammer-wrench</v-icon>
             </icon>
           </template>
           <template v-slot:item.Unknown="{ item }">
