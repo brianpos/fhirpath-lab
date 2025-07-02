@@ -14,7 +14,8 @@
             <v-text-field v-model="search" label="Search" class="mx-4"></v-text-field>
           </template>
           <template v-slot:item.expression="{ item }">
-            <span v-html="item.expression?.replaceAll('\n', '<br/>')" />
+            <a class="link-plain-text" :href="'FhirPath?expression=' + encodeURIComponent(item.expression)" target="_blank" v-html="item.expression?.replaceAll('\n', '<br/>')">
+            </a>
           </template>
           <template v-slot:item.name="{ item }">
             <span v-html="item.name" />
@@ -168,8 +169,7 @@ h5 {
 }
 </style>
 <script lang="ts">
-import { Expression } from "cql-execution";
-import Vue, { PropType } from "vue";
+import Vue from "vue";
 var firelyData = require('~/static/results/Firely-5.11.4 R5.json');
 var unknownData = require('~/static/results/Unknown.json');
 var hapiData = require('~/static/results/Java 6.5.27 R5.json');

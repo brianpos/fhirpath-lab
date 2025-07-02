@@ -392,6 +392,7 @@
         },
         {
           "Name": "testType22",
+          "Description": "Note: Some systems may return an error due to failing to resolve System.Patient",
           "Expression": "Patient.is(System.Patient).not()",
           "Result": false,
           "FailureMessage": "Operation was unsuccessful because of a client error (BadRequest). OperationOutcome: Overall result: FAILURE (1 errors and 0 warnings)\r\n[ERROR] Error processing request: \"System.Patient\" cannot be resolved to a valid type identifier\r\n."
