@@ -180,7 +180,7 @@ export default Vue.extend({
     this.injectData('Firely', firelyData);
     this.injectData('FhirPathJS', fhirPathJSData);
     this.injectData('Hapi', hapiData);
-    this.injectData('Unknown', unknownData);
+    // this.injectData('Unknown', unknownData);
   },
   computed: {
   },
