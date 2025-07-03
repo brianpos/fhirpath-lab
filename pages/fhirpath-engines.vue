@@ -2,7 +2,7 @@
   <div class="main">
     <HeaderNavbar />
 
-    <div class="container bd-layout" style="padding-top: 100px">
+    <div class="container bd-layout" style="padding-top: 100px; max-width: unset;">
       <br />
       <p class="leader">
         FhirPath Engine Compatibility Test

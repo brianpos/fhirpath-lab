@@ -691,15 +691,13 @@
           "Name": "defineVariable8",
           "Description": "CompositeVariableUse",
           "Expression": "defineVariable('v1', 'value1').select(%v1).trace('data').defineVariable('v2', 'value2').select($this & ':' & %v1 & '-' & %v2) | defineVariable('v3', 'value3').select(%v3)",
-          "Result": false,
-          "FailureMessage": "Expected 2 results, got 3"
+          "Result": true
         },
         {
           "Name": "dvConceptMapExample",
           "Description": "realistic example with conceptmap",
           "Expression": "\n\t\t\tgroup.select(\n\t\t\t\tdefineVariable('grp')\n\t\t\t\t.element\n\t\t\t\t.select(\n\t\t\t\t\tdefineVariable('ele')\n\t\t\t\t\t.target\n\t\t\t\t\t.select(%grp.source & '|' & %ele.code & ' ' & relationship & ' ' & %grp.target & '|' & code)\n\t\t\t\t)\n\t\t\t)\n\t\t\t.trace('all')\n\t\t\t.isDistinct()\n\t\t",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 2"
+          "Result": true
         },
         {
           "Name": "dvParametersDontColide",
@@ -4400,8 +4398,7 @@
         {
           "Name": "testPrecedence6",
           "Expression": "category.exists(coding.exists(system = 'http://terminology.hl7.org/CodeSystem/observation-category' and code.trace('c') in ('vital-signs' | 'vital-signs2').trace('codes')))",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 3"
+          "Result": true
         },
         {
           "Name": "testPrecedence1",
@@ -4649,8 +4646,7 @@
         {
           "Name": "testSkip3",
           "Expression": "Patient.name.skip(1).given.trace('test') = 'Jim' | 'Peter' | 'James'",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 2"
+          "Result": true
         },
         {
           "Name": "testSkip4",
@@ -4675,8 +4671,7 @@
         {
           "Name": "testSplit3",
           "Expression": "'[stop]ONE[stop][stop]TWO[stop][stop][stop]THREE[stop][stop]'.split('[stop]').trace('n').count() = 9",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 2"
+          "Result": true
         },
         {
           "Name": "testSplit4",
@@ -5033,14 +5028,12 @@
         {
           "Name": "testTrace1",
           "Expression": "name.given.trace('test').count() = 5",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 2"
+          "Result": true
         },
         {
           "Name": "testTrace2",
           "Expression": "name.trace('test', given).count() = 3",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 2"
+          "Result": true
         }
       ]
     },
