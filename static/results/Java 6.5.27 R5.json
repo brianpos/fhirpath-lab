@@ -908,7 +908,7 @@
           "Description": "patient has a birthDate",
           "Expression": "birthDate",
           "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "FailureMessage": "Expected a single boolean result for predicate evaluation."
         },
         {
           "Name": "testExtractBirthDate",
@@ -1181,7 +1181,7 @@
           "Name": "testSort10",
           "Expression": "Patient.name.sort(-family, -given.first()).first().use = 'usual'",
           "Result": false,
-          "FailureMessage": "Error (Exception) Unknown error evaluating fhirpath expression\n   - Cannot invoke \"org.hl7.fhir.r5.fhirpath.ExpressionNode.getKind()\" because \"exp\" is null"
+          "FailureMessage": "Error (Exception) Unknown error evaluating fhirpath expression"
         }
       ]
     },
@@ -2122,6 +2122,12 @@
           "Name": "testAbs3",
           "Expression": "(-5.5 'mg').abs() = 5.5 'mg'",
           "Result": true
+        },
+        {
+          "Name": "testAbsEmpty",
+          "Expression": "{}.abs().empty()",
+          "Result": false,
+          "FailureMessage": "Error (Exception) Error evaluating FHIRPath expression: focus for 0 can only have one value, but has 0 values (@char 4)"
         }
       ]
     },
@@ -2457,6 +2463,12 @@
           "Name": "testCeiling3",
           "Expression": "1.1.ceiling() = 2",
           "Result": true
+        },
+        {
+          "Name": "testCeilingEmpty",
+          "Expression": "{}.ceiling().empty()",
+          "Result": false,
+          "FailureMessage": "Error (Exception) Error evaluating FHIRPath expression: focus for 0 can only have one value, but has 0 values (@char 4)"
         }
       ]
     },
@@ -2562,6 +2574,36 @@
           "Name": "testContainsCollection4",
           "Expression": "('a' | 'c' | 'd') contains 'b'",
           "Result": true
+        },
+        {
+          "Name": "testContainsCollectionEmpty1",
+          "Expression": "{} contains 1",
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
+        },
+        {
+          "Name": "testContainsCollectionEmpty2",
+          "Expression": "{} contains 'value'",
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
+        },
+        {
+          "Name": "testContainsCollectionEmpty3",
+          "Expression": "{} contains true",
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
+        },
+        {
+          "Name": "testContainsCollectionEmpty4",
+          "Expression": "{} contains {}",
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
+        },
+        {
+          "Name": "testContainsCollectionEmptyDateTime",
+          "Expression": "{} contains @2023-01-01",
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
         }
       ]
     },
@@ -2656,6 +2698,21 @@
           "Name": "testDiv5",
           "Expression": "5 div 0",
           "Result": true
+        },
+        {
+          "Name": "testDivEmpty1",
+          "Expression": "1 div {}",
+          "Result": true
+        },
+        {
+          "Name": "testDivEmpty2",
+          "Expression": "{} div 1",
+          "Result": true
+        },
+        {
+          "Name": "testDivEmpty3",
+          "Expression": "{} div {}",
+          "Result": true
         }
       ]
     },
@@ -2690,6 +2747,21 @@
         {
           "Name": "testDivide6",
           "Expression": "1 / 0",
+          "Result": true
+        },
+        {
+          "Name": "testDivideEmpty1",
+          "Expression": "1 / {}",
+          "Result": true
+        },
+        {
+          "Name": "testDivideEmpty2",
+          "Expression": "{} / 1",
+          "Result": true
+        },
+        {
+          "Name": "testDivideEmpty3",
+          "Expression": "{} / {}",
           "Result": true
         }
       ]
@@ -3188,6 +3260,12 @@
           "Name": "testFloor3",
           "Expression": "(-2.1).floor() = -3",
           "Result": true
+        },
+        {
+          "Name": "testFloorEmpty",
+          "Expression": "{}.floor().empty()",
+          "Result": false,
+          "FailureMessage": "Error (Exception) Error evaluating FHIRPath expression: focus for 0 can only have one value, but has 0 values (@char 4)"
         }
       ]
     },
@@ -3330,6 +3408,21 @@
           "Expression": "@2018-03-01T10:30 > @2018-03-01T10:30:00",
           "Result": false,
           "FailureMessage": "Error (Exception) Unknown error evaluating fhirpath expression\n   - Invalid date/time format: \"2018-03-01T10:30\""
+        },
+        {
+          "Name": "testGreaterThanEmpty1",
+          "Expression": "1 > {}",
+          "Result": true
+        },
+        {
+          "Name": "testGreaterThanEmpty2",
+          "Expression": "{} > 1",
+          "Result": true
+        },
+        {
+          "Name": "testGreaterThanEmpty3",
+          "Expression": "{} > {}",
+          "Result": true
         }
       ]
     },
@@ -3472,6 +3565,21 @@
           "Expression": "@2018-03-01T10:30 >= @2018-03-01T10:30:00",
           "Result": false,
           "FailureMessage": "Error (Exception) Unknown error evaluating fhirpath expression\n   - Invalid date/time format: \"2018-03-01T10:30\""
+        },
+        {
+          "Name": "testGreatorOrEqualEmpty1",
+          "Expression": "1 >= {}",
+          "Result": true
+        },
+        {
+          "Name": "testGreatorOrEqualEmpty2",
+          "Expression": "{} >= 1",
+          "Result": true
+        },
+        {
+          "Name": "testGreatorOrEqualEmpty3",
+          "Expression": "{} >= {}",
+          "Result": true
         }
       ]
     },
@@ -3497,6 +3605,23 @@
           "Name": "testIn4",
           "Expression": "'b' in ('a' | 'c' | 'd')",
           "Result": true
+        },
+        {
+          "Name": "testInEmptyBoth",
+          "Expression": "{} in {}",
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
+        },
+        {
+          "Name": "testInEmptyCollection",
+          "Expression": "1 in {}",
+          "Result": true
+        },
+        {
+          "Name": "testInEmptyValue",
+          "Expression": "{} in (1 | 2 | 3)",
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
         }
       ]
     },
@@ -3759,6 +3884,21 @@
           "Expression": "@2018-03-01T10:30 <= @2018-03-01T10:30:00",
           "Result": false,
           "FailureMessage": "Error (Exception) Unknown error evaluating fhirpath expression\n   - Invalid date/time format: \"2018-03-01T10:30\""
+        },
+        {
+          "Name": "testLessOrEqualEmpty1",
+          "Expression": "1 <= {}",
+          "Result": true
+        },
+        {
+          "Name": "testLessOrEqualEmpty2",
+          "Expression": "{} <= 1",
+          "Result": true
+        },
+        {
+          "Name": "testLessOrEqualEmpty3",
+          "Expression": "{} <= {}",
+          "Result": true
         }
       ]
     },
@@ -3900,6 +4040,21 @@
           "Expression": "@2018-03-01T10:30 < @2018-03-01T10:30:00",
           "Result": false,
           "FailureMessage": "Error (Exception) Unknown error evaluating fhirpath expression\n   - Invalid date/time format: \"2018-03-01T10:30\""
+        },
+        {
+          "Name": "testLessThanEmpty1",
+          "Expression": "1 < {}",
+          "Result": true
+        },
+        {
+          "Name": "testLessThanEmpty2",
+          "Expression": "{} < 1",
+          "Result": true
+        },
+        {
+          "Name": "testLessThanEmpty3",
+          "Expression": "{} < {}",
+          "Result": true
         }
       ]
     },
@@ -4292,7 +4447,7 @@
           "Name": "testPolarityPrecedence",
           "Expression": "-Patient.name.given.count() = -5",
           "Result": false,
-          "FailureMessage": "Error (Exception) Unknown error evaluating fhirpath expression\n   - Cannot invoke \"org.hl7.fhir.r5.fhirpath.ExpressionNode.getKind()\" because \"exp\" is null"
+          "FailureMessage": "Error (Exception) Unknown error evaluating fhirpath expression"
         },
         {
           "Name": "testLiteralDecimalLessThanInvalid",
@@ -4400,6 +4555,21 @@
           "Expression": "@T01:00:00 - 2 hours",
           "Result": false,
           "FailureMessage": "Error (Exception) Error evaluating FHIRPath expression: right operand to - has the wrong type Quantity (@char 1)"
+        },
+        {
+          "Name": "testMinusEmpty1",
+          "Expression": "1 - {}",
+          "Result": true
+        },
+        {
+          "Name": "testMinusEmpty2",
+          "Expression": "{} - 1",
+          "Result": true
+        },
+        {
+          "Name": "testMinusEmpty3",
+          "Expression": "{} - {}",
+          "Result": true
         }
       ]
     },
@@ -4430,6 +4600,21 @@
           "Name": "testMod5",
           "Expression": "5 mod 0",
           "Result": true
+        },
+        {
+          "Name": "testModEmpty1",
+          "Expression": "1 mod {}",
+          "Result": true
+        },
+        {
+          "Name": "testModEmpty2",
+          "Expression": "{} mod 1",
+          "Result": true
+        },
+        {
+          "Name": "testModEmpty3",
+          "Expression": "{} mod {}",
+          "Result": true
         }
       ]
     },
@@ -4449,6 +4634,21 @@
         {
           "Name": "testMultiply3",
           "Expression": "1.2 * 1.8 = 2.16",
+          "Result": true
+        },
+        {
+          "Name": "testMultiplyEmpty1",
+          "Expression": "1 * {}",
+          "Result": true
+        },
+        {
+          "Name": "testMultiplyEmpty2",
+          "Expression": "{} * 1",
+          "Result": true
+        },
+        {
+          "Name": "testMultiplyEmpty3",
+          "Expression": "{} * {}",
           "Result": true
         }
       ]
@@ -4914,6 +5114,21 @@
           "Expression": "@T23:00:00 + 2 hours",
           "Result": false,
           "FailureMessage": "Error (Exception) Error evaluating FHIRPath expression: right operand to + has the wrong type Quantity (@char 1)"
+        },
+        {
+          "Name": "testPlusEmpty1",
+          "Expression": "1 + {}",
+          "Result": true
+        },
+        {
+          "Name": "testPlusEmpty2",
+          "Expression": "{} + 1",
+          "Result": true
+        },
+        {
+          "Name": "testPlusEmpty3",
+          "Expression": "{} + {}",
+          "Result": true
         }
       ]
     },
@@ -4984,6 +5199,12 @@
           "Name": "testRound2",
           "Expression": "3.14159.round(3) = 3.142",
           "Result": true
+        },
+        {
+          "Name": "testRoundEmpty",
+          "Expression": "{}.round().empty()",
+          "Result": false,
+          "FailureMessage": "Error (Exception) Error evaluating FHIRPath expression: focus for 0 can only have one value, but has 0 values (@char 4)"
         }
       ]
     },
@@ -5034,6 +5255,12 @@
           "Name": "testSqrt2",
           "Expression": "(-1).sqrt()",
           "Result": true
+        },
+        {
+          "Name": "testSqrtEmpty",
+          "Expression": "{}.sqrt().empty()",
+          "Result": false,
+          "FailureMessage": "Error (Exception) Error evaluating FHIRPath expression: focus for 0 can only have one value, but has 0 values (@char 4)"
         }
       ]
     },
@@ -5274,6 +5501,12 @@
           "Name": "testTruncate3",
           "Expression": "(-1.56).truncate() = -1",
           "Result": true
+        },
+        {
+          "Name": "testTruncateEmpty",
+          "Expression": "{}.truncate().empty()",
+          "Result": false,
+          "FailureMessage": "Error (Exception) Error evaluating FHIRPath expression: focus for 0 can only have one value, but has 0 values (@char 4)"
         }
       ]
     },
@@ -5405,6 +5638,106 @@
         {
           "Name": "testConformsTo3",
           "Expression": "conformsTo('http://trash')",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testMixedPrecision",
+      "TestCases": [
+        {
+          "Name": "testMixedPrecisionArithmetic1",
+          "Expression": "1 + 1.5 = 2.5",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionArithmetic2",
+          "Expression": "2.0 * 3 = 6.0",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionArithmetic3",
+          "Expression": "5 / 2.0 = 2.5",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionArithmetic4",
+          "Expression": "7.0 - 3 = 4.0",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionArithmetic5",
+          "Expression": "10 div 3.0 = 3",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionArithmetic6",
+          "Expression": "10.0 mod 3 = 1.0",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionEquals1",
+          "Expression": "1 = 1.0",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionEquals2",
+          "Expression": "1.0 = 1",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionEquals3",
+          "Expression": "2 = 2.000",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionGreaterOrEqual1",
+          "Expression": "1.0 >= 1",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionGreaterOrEqual2",
+          "Expression": "2 >= 1.5",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionGreaterThan1",
+          "Expression": "2 > 1.5",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionGreaterThan2",
+          "Expression": "2.0 > 1",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionLessOrEqual1",
+          "Expression": "1 <= 1.0",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionLessOrEqual2",
+          "Expression": "1.5 <= 2",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionLessThan1",
+          "Expression": "1 < 1.1",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionLessThan2",
+          "Expression": "1.0 < 2",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionNotEquals1",
+          "Expression": "1 != 1.0",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionNotEquals2",
+          "Expression": "1.0 != 1",
           "Result": true
         }
       ]

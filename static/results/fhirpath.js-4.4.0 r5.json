@@ -1091,6 +1091,21 @@
           "Name": "testGreaterThan9",
           "Expression": "1.0 > 1.0",
           "Result": true
+        },
+        {
+          "Name": "testGreaterThanEmpty1",
+          "Expression": "1 > {}",
+          "Result": true
+        },
+        {
+          "Name": "testGreaterThanEmpty2",
+          "Expression": "{} > 1",
+          "Result": true
+        },
+        {
+          "Name": "testGreaterThanEmpty3",
+          "Expression": "{} > {}",
+          "Result": true
         }
       ]
     },
@@ -1230,6 +1245,21 @@
         {
           "Name": "testGreatorOrEqual9",
           "Expression": "1.0 >= 1.0",
+          "Result": true
+        },
+        {
+          "Name": "testGreatorOrEqualEmpty1",
+          "Expression": "1 >= {}",
+          "Result": true
+        },
+        {
+          "Name": "testGreatorOrEqualEmpty2",
+          "Expression": "{} >= 1",
+          "Result": true
+        },
+        {
+          "Name": "testGreatorOrEqualEmpty3",
+          "Expression": "{} >= {}",
           "Result": true
         }
       ]
@@ -1498,6 +1528,21 @@
           "Name": "testLessOrEqual9",
           "Expression": "1.0 <= 1.0",
           "Result": true
+        },
+        {
+          "Name": "testLessOrEqualEmpty1",
+          "Expression": "1 <= {}",
+          "Result": true
+        },
+        {
+          "Name": "testLessOrEqualEmpty2",
+          "Expression": "{} <= 1",
+          "Result": true
+        },
+        {
+          "Name": "testLessOrEqualEmpty3",
+          "Expression": "{} <= {}",
+          "Result": true
         }
       ]
     },
@@ -1637,6 +1682,21 @@
         {
           "Name": "testLessThan9",
           "Expression": "1.0 < 1.0",
+          "Result": true
+        },
+        {
+          "Name": "testLessThanEmpty1",
+          "Expression": "1 < {}",
+          "Result": true
+        },
+        {
+          "Name": "testLessThanEmpty2",
+          "Expression": "{} < 1",
+          "Result": true
+        },
+        {
+          "Name": "testLessThanEmpty3",
+          "Expression": "{} < {}",
           "Result": true
         }
       ]
@@ -2258,6 +2318,11 @@
           "Name": "testAbs3",
           "Expression": "(-5.5 'mg').abs() = 5.5 'mg'",
           "Result": true
+        },
+        {
+          "Name": "testAbsEmpty",
+          "Expression": "{}.abs().empty()",
+          "Result": true
         }
       ]
     },
@@ -2443,6 +2508,11 @@
           "Name": "testCeiling3",
           "Expression": "1.1.ceiling() = 2",
           "Result": true
+        },
+        {
+          "Name": "testCeilingEmpty",
+          "Expression": "{}.ceiling().empty()",
+          "Result": true
         }
       ]
     },
@@ -2512,6 +2582,32 @@
         {
           "Name": "testContainsCollection4",
           "Expression": "('a' | 'c' | 'd') contains 'b'",
+          "Result": true
+        },
+        {
+          "Name": "testContainsCollectionEmpty1",
+          "Expression": "{} contains 1",
+          "Result": true
+        },
+        {
+          "Name": "testContainsCollectionEmpty2",
+          "Expression": "{} contains 'value'",
+          "Result": true
+        },
+        {
+          "Name": "testContainsCollectionEmpty3",
+          "Expression": "{} contains true",
+          "Result": true
+        },
+        {
+          "Name": "testContainsCollectionEmpty4",
+          "Expression": "{} contains {}",
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
+        },
+        {
+          "Name": "testContainsCollectionEmptyDateTime",
+          "Expression": "{} contains @2023-01-01",
           "Result": true
         }
       ]
@@ -2628,6 +2724,21 @@
           "Name": "testDiv5",
           "Expression": "5 div 0",
           "Result": true
+        },
+        {
+          "Name": "testDivEmpty1",
+          "Expression": "1 div {}",
+          "Result": true
+        },
+        {
+          "Name": "testDivEmpty2",
+          "Expression": "{} div 1",
+          "Result": true
+        },
+        {
+          "Name": "testDivEmpty3",
+          "Expression": "{} div {}",
+          "Result": true
         }
       ]
     },
@@ -2662,6 +2773,21 @@
         {
           "Name": "testDivide6",
           "Expression": "1 / 0",
+          "Result": true
+        },
+        {
+          "Name": "testDivideEmpty1",
+          "Expression": "1 / {}",
+          "Result": true
+        },
+        {
+          "Name": "testDivideEmpty2",
+          "Expression": "{} / 1",
+          "Result": true
+        },
+        {
+          "Name": "testDivideEmpty3",
+          "Expression": "{} / {}",
           "Result": true
         }
       ]
@@ -2879,6 +3005,11 @@
           "Name": "testFloor3",
           "Expression": "(-2.1).floor() = -3",
           "Result": true
+        },
+        {
+          "Name": "testFloorEmpty",
+          "Expression": "{}.floor().empty()",
+          "Result": true
         }
       ]
     },
@@ -2966,6 +3097,23 @@
           "Name": "testIn4",
           "Expression": "'b' in ('a' | 'c' | 'd')",
           "Result": true
+        },
+        {
+          "Name": "testInEmptyBoth",
+          "Expression": "{} in {}",
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
+        },
+        {
+          "Name": "testInEmptyCollection",
+          "Expression": "1 in {}",
+          "Result": true
+        },
+        {
+          "Name": "testInEmptyValue",
+          "Expression": "{} in (1 | 2 | 3)",
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
         }
       ]
     },
@@ -3244,6 +3392,21 @@
           "Expression": "@T01:00:00 - 2 hours",
           "Result": false,
           "FailureMessage": "Some results didn't match expected values (1 values)"
+        },
+        {
+          "Name": "testMinusEmpty1",
+          "Expression": "1 - {}",
+          "Result": true
+        },
+        {
+          "Name": "testMinusEmpty2",
+          "Expression": "{} - 1",
+          "Result": true
+        },
+        {
+          "Name": "testMinusEmpty3",
+          "Expression": "{} - {}",
+          "Result": true
         }
       ]
     },
@@ -3274,6 +3437,21 @@
           "Name": "testMod5",
           "Expression": "5 mod 0",
           "Result": true
+        },
+        {
+          "Name": "testModEmpty1",
+          "Expression": "1 mod {}",
+          "Result": true
+        },
+        {
+          "Name": "testModEmpty2",
+          "Expression": "{} mod 1",
+          "Result": true
+        },
+        {
+          "Name": "testModEmpty3",
+          "Expression": "{} mod {}",
+          "Result": true
         }
       ]
     },
@@ -3293,6 +3471,21 @@
         {
           "Name": "testMultiply3",
           "Expression": "1.2 * 1.8 = 2.16",
+          "Result": true
+        },
+        {
+          "Name": "testMultiplyEmpty1",
+          "Expression": "1 * {}",
+          "Result": true
+        },
+        {
+          "Name": "testMultiplyEmpty2",
+          "Expression": "{} * 1",
+          "Result": true
+        },
+        {
+          "Name": "testMultiplyEmpty3",
+          "Expression": "{} * {}",
           "Result": true
         }
       ]
@@ -3708,6 +3901,21 @@
           "Name": "testPlusDate9",
           "Expression": "@1973-12-25 + 1 day",
           "Result": true
+        },
+        {
+          "Name": "testPlusEmpty1",
+          "Expression": "1 + {}",
+          "Result": true
+        },
+        {
+          "Name": "testPlusEmpty2",
+          "Expression": "{} + 1",
+          "Result": true
+        },
+        {
+          "Name": "testPlusEmpty3",
+          "Expression": "{} + {}",
+          "Result": true
         }
       ]
     },
@@ -3819,6 +4027,11 @@
           "Name": "testRound2",
           "Expression": "3.14159.round(3) = 3.142",
           "Result": true
+        },
+        {
+          "Name": "testRoundEmpty",
+          "Expression": "{}.round().empty()",
+          "Result": true
         }
       ]
     },
@@ -3868,6 +4081,11 @@
         {
           "Name": "testSqrt2",
           "Expression": "(-1).sqrt()",
+          "Result": true
+        },
+        {
+          "Name": "testSqrtEmpty",
+          "Expression": "{}.sqrt().empty()",
           "Result": true
         }
       ]
@@ -4249,6 +4467,11 @@
         {
           "Name": "testTruncate3",
           "Expression": "(-1.56).truncate() = -1",
+          "Result": true
+        },
+        {
+          "Name": "testTruncateEmpty",
+          "Expression": "{}.truncate().empty()",
           "Result": true
         }
       ]
@@ -5458,6 +5681,106 @@
           "Name": "testPatientTelecomTypes",
           "Description": "patient telecom types",
           "Expression": "telecom.use",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testMixedPrecision",
+      "TestCases": [
+        {
+          "Name": "testMixedPrecisionArithmetic1",
+          "Expression": "1 + 1.5 = 2.5",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionArithmetic2",
+          "Expression": "2.0 * 3 = 6.0",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionArithmetic3",
+          "Expression": "5 / 2.0 = 2.5",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionArithmetic4",
+          "Expression": "7.0 - 3 = 4.0",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionArithmetic5",
+          "Expression": "10 div 3.0 = 3",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionArithmetic6",
+          "Expression": "10.0 mod 3 = 1.0",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionEquals1",
+          "Expression": "1 = 1.0",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionEquals2",
+          "Expression": "1.0 = 1",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionEquals3",
+          "Expression": "2 = 2.000",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionGreaterOrEqual1",
+          "Expression": "1.0 >= 1",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionGreaterOrEqual2",
+          "Expression": "2 >= 1.5",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionGreaterThan1",
+          "Expression": "2 > 1.5",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionGreaterThan2",
+          "Expression": "2.0 > 1",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionLessOrEqual1",
+          "Expression": "1 <= 1.0",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionLessOrEqual2",
+          "Expression": "1.5 <= 2",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionLessThan1",
+          "Expression": "1 < 1.1",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionLessThan2",
+          "Expression": "1.0 < 2",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionNotEquals1",
+          "Expression": "1 != 1.0",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionNotEquals2",
+          "Expression": "1.0 != 1",
           "Result": true
         }
       ]
