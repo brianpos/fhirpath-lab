@@ -9,13 +9,50 @@
       </p>
       <template>
         <v-data-table :headers="headers" :items="testData" item-key="name" sort-by="name" group-by="groupName"
-          class="elevation-1" :items-per-page="-1" :search="search" show-group-by>
+          class="elevation-1" :items-per-page="-1" :search="search" show-group-by dense>
           <template v-slot:top>
             <v-text-field v-model="search" label="Search" class="mx-4"></v-text-field>
           </template>
           <template v-slot:item.expression="{ item }">
             <a class="link-plain-text" :href="'FhirPath?expression=' + encodeURIComponent(item.expression)" target="_blank" v-html="item.expression?.replaceAll('\n', '<br/>')">
             </a>
+          </template>
+
+          <template v-slot:header.Firely="{ header }">
+            <v-tooltip bottom color="primary">
+            <template v-slot:activator="{ on, attrs }">
+              <span v-bind="attrs" v-on="on">{{ header.text.toUpperCase() }}</span>
+            </template>
+            <table>
+              <tr><td>Passed</td><td align="right">{{ aggregateData.Firely?.passed }}</td></tr>
+              <tr><td>Failed</td><td align="right">{{ aggregateData.Firely?.failed }}</td></tr>
+              <tr><td>Not implemented</td><td align="right">{{ aggregateData.Firely?.notImplemented }}</td></tr>
+            </table>
+          </v-tooltip>
+          </template>
+          <template v-slot:header.FhirPathJS="{ header }">
+            <v-tooltip bottom color="primary">
+            <template v-slot:activator="{ on, attrs }">
+              <span v-bind="attrs" v-on="on">{{ header.text.toUpperCase() }}</span>
+            </template>
+            <table>
+              <tr><td>Passed</td><td align="right">{{ aggregateData.FhirPathJS?.passed }}</td></tr>
+              <tr><td>Failed</td><td align="right">{{ aggregateData.FhirPathJS?.failed }}</td></tr>
+              <tr><td>Not implemented</td><td align="right">{{ aggregateData.FhirPathJS?.notImplemented }}</td></tr>
+            </table>
+          </v-tooltip>
+          </template>
+          <template v-slot:header.Hapi="{ header }">
+            <v-tooltip bottom color="primary">
+            <template v-slot:activator="{ on, attrs }">
+              <span v-bind="attrs" v-on="on">{{ header.text.toUpperCase() }}</span>
+            </template>
+            <table>
+              <tr><td>Passed</td><td align="right">{{ aggregateData.Hapi?.passed }}</td></tr>
+              <tr><td>Failed</td><td align="right">{{ aggregateData.Hapi?.failed }}</td></tr>
+              <tr><td>Not implemented</td><td align="right">{{ aggregateData.Hapi?.notImplemented }}</td></tr>
+            </table>
+          </v-tooltip>
           </template>
           <template v-slot:item.name="{ item }">
             <span v-html="item.name" />
@@ -25,37 +62,19 @@
             </template>
           </template>
           <template v-slot:item.Firely="{ item }">
-            <icon v-if="item.Firely?.result === true">
-              <v-icon color="rgb(16, 185, 129)">mdi-check</v-icon>
-            </icon>
-            <icon v-if="item.Firely?.result === false" :title="computeMessage(item.Firely)">
-              <v-icon color="rgb(239, 68, 68)">mdi-alert-outline</v-icon>
-            </icon>
-            <icon v-if="item.Firely?.notImplemented === true" :title="computeMessage(item.Firely)">
-              <v-icon color="grey">mdi-hammer-wrench</v-icon>
-            </icon>
+            <v-icon v-if="item.Firely?.result === true" color="rgb(16, 185, 129)">mdi-check</v-icon>
+            <v-icon v-if="item.Firely?.result === false" :title="computeMessage(item.Firely)" color="rgb(239, 68, 68)">mdi-alert-outline</v-icon>
+            <v-icon v-if="item.Firely?.notImplemented === true" :title="computeMessage(item.Firely)" color="grey">mdi-hammer-wrench</v-icon>
           </template>
           <template v-slot:item.FhirPathJS="{ item }">
-            <icon v-if="item.FhirPathJS?.result === true">
-              <v-icon color="rgb(16, 185, 129)">mdi-check</v-icon>
-            </icon>
-            <icon v-if="item.FhirPathJS?.result === false" :title="computeMessage(item.FhirPathJS)">
-              <v-icon color="rgb(239, 68, 68)">mdi-alert-outline</v-icon>
-            </icon>
-            <icon v-if="item.FhirPathJS?.notImplemented === true" :title="computeMessage(item.FhirPathJS)">
-              <v-icon color="grey">mdi-hammer-wrench</v-icon>
-            </icon>
+            <v-icon v-if="item.FhirPathJS?.result === true" color="rgb(16, 185, 129)">mdi-check</v-icon>
+            <v-icon v-if="item.FhirPathJS?.result === false" :title="computeMessage(item.FhirPathJS)" color="rgb(239, 68, 68)">mdi-alert-outline</v-icon>
+            <v-icon v-if="item.FhirPathJS?.notImplemented === true" :title="computeMessage(item.FhirPathJS)" color="grey">mdi-hammer-wrench</v-icon>
           </template>
           <template v-slot:item.Hapi="{ item }">
-            <icon v-if="item.Hapi?.result === true">
-              <v-icon color="rgb(16, 185, 129)">mdi-check</v-icon>
-            </icon>
-            <icon v-if="item.Hapi?.result === false" :title="computeMessage(item.Hapi)">
-              <v-icon color="rgb(239, 68, 68)">mdi-alert-outline</v-icon>
-            </icon>
-            <icon v-if="item.Hapi?.notImplemented === true" :title="computeMessage(item.Hapi)">
-              <v-icon color="grey">mdi-hammer-wrench</v-icon>
-            </icon>
+            <v-icon v-if="item.Hapi?.result === true" color="rgb(16, 185, 129)">mdi-check</v-icon>
+            <v-icon v-if="item.Hapi?.result === false" :title="computeMessage(item.Hapi)" color="rgb(239, 68, 68)">mdi-alert-outline</v-icon>
+            <v-icon v-if="item.Hapi?.notImplemented === true" :title="computeMessage(item.Hapi)" color="grey">mdi-hammer-wrench</v-icon>
           </template>
           <template v-slot:item.Unknown="{ item }">
             <icon v-if="item.Unknown?.result === true">
@@ -181,12 +200,19 @@ var fhirPathJSData = require('~/static/results/fhirpath.js-4.4.0 R5.json');
 var hapiData = require('~/static/results/Java 6.5.27 R5.json');
 // var unknownData = require('~/static/results/Unknown.json');
 
+interface ItemTestData {
+  notImplemented?: boolean;
+  result?: boolean;
+  errMessage?: string;
+}
+
 export default Vue.extend({
   mounted() {
     this.injectData('Firely', firelyData);
     this.injectData('FhirPathJS', fhirPathJSData);
     this.injectData('Hapi', hapiData);
     // this.injectData('Unknown', unknownData);
+    console.log('Summary results', this.aggregateData);
   },
   computed: {
   },
@@ -194,16 +220,31 @@ export default Vue.extend({
     computeMessage(item: any): string {
       return item?.errMessage;
     },
+    customItemSort(a: ItemTestData, b: ItemTestData): number {
+      // console.log('customItemSort called for', a, b);
+      if (!a && !b) return 0;
+      if (!a) return 1; // a is undefined, b is defined
+      if (!b) return -1; // a is undefined, b is defined
+      if (a?.valueOf() < b?.valueOf()) return -1;
+      if (a?.valueOf() > b?.valueOf()) return 1;
+      return 0;
+    },
     injectData(engineName: string, data: any) {
       this.headers.push({
         text: data.EngineName,
         value: engineName,
         align: 'center',
         groupable: false,
+        sort: this.customItemSort,
       });
 
+      
+      let  passed = 0;
+      let failed = 0;
+      let notImplemented = 0;
+
       for (let group of data.Groups) {
-        console.log(group.Name);
+        // console.log(group.Name);
         for (let test of group.TestCases) {
           let item: { name: any; description?: string, groupName: any; expression?: string;[key: string]: any };
 
@@ -224,8 +265,27 @@ export default Vue.extend({
           if (test.Description) {
             item.description = test.Description;
           }
-          item[engineName] = { result: test.Result, notImplemented: test.NotImplemented, errMessage: test.FailureMessage };
+          item[engineName] = { 
+            result: test.Result, 
+            notImplemented: test.NotImplemented, 
+            errMessage: test.FailureMessage, 
+            valueOf: function() {
+              if (this.result)
+                return 0;
+              if (this.notImplemented)
+                return 2;
+              return 1;
+            }
+          };
+          if (test.Result === true) passed++;
+          else if (test.Result === false) failed++;
+          else if (test.NotImplemented === true) notImplemented++;
         }
+        this.aggregateData[engineName] = {
+          passed: passed,
+          failed: failed,
+          notImplemented: notImplemented,
+        };
       }
     },
   },
@@ -253,6 +313,8 @@ export default Vue.extend({
           groupName: 'testWhere',
         }
       ],
+      aggregateData: {
+      } as Record<string, { notImplemented: number; failed: number; passed: number }>,
     }
   }
 });
