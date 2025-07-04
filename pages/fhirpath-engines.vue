@@ -306,7 +306,7 @@ export default Vue.extend({
           value: 'expression',
           groupable: false,
         },
-      ],
+      ] as Array<{ text: string; value: string; align?: string; groupable?: boolean; sort?: (a: any, b: any) => number }>,
       testData: [
         {
           name: 'testWhere1',
