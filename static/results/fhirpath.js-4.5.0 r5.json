@@ -1,5 +1,5 @@
 {
-  "EngineName": "Firely-5.11.4 (R5)",
+  "EngineName": "fhirpath.js-4.5.0 (r5)",
   "Groups": [
     {
       "Name": "comments",
@@ -57,17 +57,20 @@
         {
           "Name": "Comparable1",
           "Expression": "1 'cm'.comparable(1 '[in_i]')",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: comparable"
         },
         {
           "Name": "Comparable2",
           "Expression": "1 'cm'.comparable(1 '[s]')",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: comparable"
         },
         {
           "Name": "Comparable3",
           "Expression": "1 'cm'.comparable(1 's')",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: comparable"
         }
       ]
     },
@@ -221,135 +224,146 @@
         {
           "Name": "HighBoundaryDateMonth",
           "Expression": "@2014.highBoundary(6)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: highBoundary"
         },
         {
           "Name": "HighBoundaryDateTimeMillisecond1",
           "Expression": "@2014-01-01T08.highBoundary(17)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: highBoundary"
         },
         {
           "Name": "HighBoundaryDateTimeMillisecond2",
           "Expression": "@2014-01-01T08:05-05:00.highBoundary(17)",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: highBoundary"
         },
         {
           "Name": "HighBoundaryDateTimeMillisecond3",
           "Expression": "@2014-01-01T08.highBoundary(17)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: highBoundary"
         },
         {
           "Name": "HighBoundaryDecimal",
           "Expression": "1.587.highBoundary(8)",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: highBoundary"
         },
         {
           "Name": "HighBoundaryDecimal1",
           "Expression": "1.587.highBoundary(2)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: highBoundary"
         },
         {
           "Name": "HighBoundaryDecimal10",
           "Expression": "1.highBoundary(5)",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: highBoundary"
         },
         {
           "Name": "HighBoundaryDecimal11",
           "Expression": "12.587.highBoundary(2)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: highBoundary"
         },
         {
           "Name": "HighBoundaryDecimal12",
           "Expression": "12.500.highBoundary(4)",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: highBoundary"
         },
         {
           "Name": "HighBoundaryDecimal13",
           "Expression": "120.highBoundary(2)",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: highBoundary"
         },
         {
           "Name": "HighBoundaryDecimal14",
           "Expression": "-120.highBoundary(2)",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: highBoundary"
         },
         {
           "Name": "HighBoundaryDecimal15",
           "Expression": "0.0034.highBoundary(1)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: highBoundary"
         },
         {
           "Name": "HighBoundaryDecimal16",
           "Expression": "-0.0034.highBoundary(1)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: highBoundary"
         },
         {
           "Name": "HighBoundaryDecimal2",
           "Expression": "1.587.highBoundary(6)",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: highBoundary"
         },
         {
           "Name": "HighBoundaryDecimal3",
           "Expression": "1.587.highBoundary(-1)",
-          "Result": false,
-          "FailureMessage": "Error (Exception) Invalid expression: Invocation of function 'highBoundary' failed: repeatCount ('-1') must be a non-negative value. (Parameter 'repeatCount')\r\nActual value was -1."
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: highBoundary"
         },
         {
           "Name": "HighBoundaryDecimal4",
           "Expression": "(-1.587).highBoundary()",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: highBoundary"
         },
         {
           "Name": "HighBoundaryDecimal5",
           "Expression": "(-1.587).highBoundary(2)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: highBoundary"
         },
         {
           "Name": "HighBoundaryDecimal6",
           "Expression": "(-1.587).highBoundary(6)",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: highBoundary"
         },
         {
           "Name": "HighBoundaryDecimal7",
           "Expression": "1.587.highBoundary(39)",
-          "Result": false,
-          "FailureMessage": "Expected no results, but got some."
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: highBoundary"
         },
         {
           "Name": "HighBoundaryDecimal8",
           "Expression": "1.highBoundary()",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: highBoundary"
         },
         {
           "Name": "HighBoundaryDecimal9",
           "Expression": "1.highBoundary(0)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: highBoundary"
         },
         {
           "Name": "HighBoundaryDecimalDefault",
           "Expression": "1.587.highBoundary()",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: highBoundary"
         },
         {
           "Name": "HighBoundaryQuantity",
           "Expression": "1.587 'm'.highBoundary(8)",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: highBoundary"
         },
         {
           "Name": "HighBoundaryTimeMillisecond",
           "Expression": "@T10:30.highBoundary(9)",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: highBoundary"
         }
       ]
     },
@@ -369,159 +383,170 @@
         {
           "Name": "LowBoundaryDateMonth",
           "Expression": "@2014.lowBoundary(6)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         },
         {
           "Name": "LowBoundaryDateTimeMillisecond1",
           "Expression": "@2014-01-01T08.lowBoundary(17)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         },
         {
           "Name": "LowBoundaryDateTimeMillisecond2",
           "Expression": "@2014-01-01T08:05+08:00.lowBoundary(17)",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         },
         {
           "Name": "LowBoundaryDateTimeMillisecond3",
           "Expression": "@2014-01-01T08.lowBoundary(8)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         },
         {
           "Name": "LowBoundaryDecimal1",
           "Expression": "1.587.lowBoundary(6)",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         },
         {
           "Name": "LowBoundaryDecimal10",
           "Expression": "12.587.lowBoundary(2)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         },
         {
           "Name": "LowBoundaryDecimal11",
           "Expression": "12.500.lowBoundary(4)",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         },
         {
           "Name": "LowBoundaryDecimal12",
           "Expression": "120.lowBoundary(2)",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         },
         {
           "Name": "LowBoundaryDecimal13",
           "Expression": "(-120).lowBoundary(2)",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         },
         {
           "Name": "LowBoundaryDecimal14",
           "Expression": "0.0034.lowBoundary(1)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         },
         {
           "Name": "LowBoundaryDecimal15",
           "Expression": "(-0.0034).lowBoundary(1)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         },
         {
           "Name": "LowBoundaryDecimal2",
           "Expression": "1.587.lowBoundary(2)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         },
         {
           "Name": "LowBoundaryDecimal3",
           "Expression": "1.587.lowBoundary(-1)",
-          "Result": false,
-          "FailureMessage": "Error (Exception) Invalid expression: Invocation of function 'lowBoundary' failed: repeatCount ('-1') must be a non-negative value. (Parameter 'repeatCount')\r\nActual value was -1."
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         },
         {
           "Name": "LowBoundaryDecimal4",
           "Expression": "1.587.lowBoundary(0)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         },
         {
           "Name": "LowBoundaryDecimal5",
           "Expression": "1.587.lowBoundary(32)",
-          "Result": false,
-          "FailureMessage": "Expected no results, but got some."
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         },
         {
           "Name": "LowBoundaryDecimal6",
           "Expression": "1.587.lowBoundary(39)",
-          "Result": false,
-          "FailureMessage": "Expected no results, but got some."
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         },
         {
           "Name": "LowBoundaryDecimal7",
           "Expression": "1.toDecimal().lowBoundary()",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         },
         {
           "Name": "LowBoundaryDecimal8",
           "Expression": "1.lowBoundary(0)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         },
         {
           "Name": "LowBoundaryDecimal9",
           "Expression": "1.lowBoundary(5)",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         },
         {
           "Name": "LowBoundaryDecimalDefault",
           "Expression": "1.587.lowBoundary()",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         },
         {
           "Name": "LowBoundaryNegDecimal1",
           "Expression": "(-1.587).lowBoundary(6)",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         },
         {
           "Name": "LowBoundaryNegDecimal2",
           "Expression": "(-1.587).lowBoundary(2)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         },
         {
           "Name": "LowBoundaryNegDecimal3",
           "Expression": "(-1.587).lowBoundary(-1)",
-          "Result": false,
-          "FailureMessage": "Error (Exception) Invalid expression: Invocation of function 'lowBoundary' failed: repeatCount ('-1') must be a non-negative value. (Parameter 'repeatCount')\r\nActual value was -1."
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         },
         {
           "Name": "LowBoundaryNegDecimal4",
           "Expression": "(-1.587).lowBoundary(0)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         },
         {
           "Name": "LowBoundaryNegDecimal5",
           "Expression": "(-1.587).lowBoundary(32)",
-          "Result": false,
-          "FailureMessage": "Expected no results, but got some."
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         },
         {
           "Name": "LowBoundaryNegDecimalDefault",
           "Expression": "(-1.587).lowBoundary()",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         },
         {
           "Name": "LowBoundaryQuantity",
           "Expression": "1.587 'cm'.lowBoundary(8)",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         },
         {
           "Name": "LowBoundaryTimeMillisecond",
           "Expression": "@T10:30.lowBoundary(9)",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         }
       ]
     },
@@ -531,12 +556,14 @@
         {
           "Name": "testContainedId",
           "Expression": "contained.id",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testMultipleResolve",
           "Expression": "\n\t\t\tcomposition.exists() \n\t\t\timplies \n\t\t\t(\n\t\t\t\tcomposition.resolve().section.entry.reference.where(resolve() is Observation)\n\t\t\t\t.where($this in (%resource.result.reference | %resource.result.reference.resolve().hasMember.reference)).exists()\n\t\t\t)\n\t\t\t",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         }
       ]
     },
@@ -546,14 +573,13 @@
         {
           "Name": "testPeriodInvariantNew",
           "Expression": "Patient.identifier.period.all(start.empty() or end.empty() or (start.lowBoundary() < end.highBoundary()))",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: lowBoundary"
         },
         {
           "Name": "testPeriodInvariantOld",
           "Expression": "Patient.identifier.period.all(start.hasValue().not() or end.hasValue().not() or (start <= end))",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
+          "Result": true
         }
       ]
     },
@@ -568,7 +594,8 @@
         {
           "Name": "testPolymorphicsB",
           "Expression": "Observation.valueQuantity.exists()",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         }
       ]
     },
@@ -579,37 +606,37 @@
           "Name": "PrecisionDateTimeMilliseconds",
           "Expression": "@2014-01-05T10:30:00.000.precision()",
           "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'precision'\nError (Exception) Invalid expression: Unknown symbol 'precision'"
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: precision"
         },
         {
           "Name": "PrecisionDecimal",
           "Expression": "1.58700.precision()",
           "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'precision'\nError (Exception) Invalid expression: Unknown symbol 'precision'"
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: precision"
         },
         {
           "Name": "PrecisionEmpty",
           "Expression": "{}.precision().empty()",
           "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'precision'\nError (Exception) Invalid expression: Unknown symbol 'precision'"
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: precision"
         },
         {
           "Name": "PrecisionTimeMilliseconds",
           "Expression": "@T10:30:00.000.precision()",
           "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'precision'\nError (Exception) Invalid expression: Unknown symbol 'precision'"
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: precision"
         },
         {
           "Name": "PrecisionTimeMinutes",
           "Expression": "@T10:30.precision()",
           "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'precision'\nError (Exception) Invalid expression: Unknown symbol 'precision'"
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: precision"
         },
         {
           "Name": "PrecisionYear",
           "Expression": "@2014.precision()",
           "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'precision'\nError (Exception) Invalid expression: Unknown symbol 'precision'"
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: precision"
         }
       ]
     },
@@ -984,7 +1011,8 @@
         {
           "Name": "testCollectionBoolean1",
           "Expression": "iif(1 | 2 | 3, true, false)",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Expected no results, but got some."
         },
         {
           "Name": "testCollectionBoolean2",
@@ -1065,14 +1093,14 @@
         {
           "Name": "testConformsTo1",
           "Expression": "conformsTo('http://hl7.org/fhir/StructureDefinition/Patient')",
-          "Result": false,
-          "FailureMessage": "Error (Exception) Invalid expression: Unknown symbol 'conformsTo'"
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: conformsTo"
         },
         {
           "Name": "testConformsTo2",
           "Expression": "conformsTo('http://hl7.org/fhir/StructureDefinition/Person')",
-          "Result": false,
-          "FailureMessage": "Error (Exception) Invalid expression: Unknown symbol 'conformsTo'"
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: conformsTo"
         },
         {
           "Name": "testConformsTo3",
@@ -1122,8 +1150,7 @@
         {
           "Name": "testContainsCollectionEmpty4",
           "Expression": "{} contains {}",
-          "Result": false,
-          "FailureMessage": "Expected no results, but got some."
+          "Result": true
         },
         {
           "Name": "testContainsCollectionEmptyDateTime",
@@ -1148,8 +1175,7 @@
         {
           "Name": "testContainsString10",
           "Expression": "Patient.name.family.first().contains(toChars().skip(3).take(3).join())",
-          "Result": false,
-          "FailureMessage": "Error (NotSupported) String function 'toChars' is not supported on Patient\nError (Exception) Invalid expression: Invocation of function 'contains' failed: Invocation of function 'join' failed: Invocation of function 'take' failed: Invocation of function 'skip' failed: Invocation of function 'toChars' failed: Cannot cast from 'Patient' to '.NET type String'"
+          "Result": true
         },
         {
           "Name": "testContainsString2",
@@ -1435,8 +1461,7 @@
         {
           "Name": "testEndsWith10",
           "Expression": "Patient.name.family.first().endsWith(toChars().skip(3).join())",
-          "Result": false,
-          "FailureMessage": "Error (NotSupported) String function 'toChars' is not supported on Patient\nError (Exception) Invalid expression: Invocation of function 'endsWith' failed: Invocation of function 'join' failed: Invocation of function 'skip' failed: Invocation of function 'toChars' failed: Cannot cast from 'Patient' to '.NET type String'"
+          "Result": true
         },
         {
           "Name": "testEndsWith2",
@@ -1566,7 +1591,8 @@
         {
           "Name": "testEquality23",
           "Expression": "@2012-04-15T15:00:00Z = @2012-04-15T10:00:00",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Expected no results, but got some."
         },
         {
           "Name": "testEquality24",
@@ -1701,7 +1727,8 @@
         {
           "Name": "testEquivalent21",
           "Expression": "name.take(2).given ~ name.take(2).last().given | name.take(2).first().given",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testEquivalent22",
@@ -1716,12 +1743,14 @@
         {
           "Name": "testEquivalent24",
           "Expression": "(1 | 2 | 3) ~ (3 | 2 | 1)",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testEquivalent3",
           "Expression": "1 ~ {}",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
         },
         {
           "Name": "testEquivalent4",
@@ -1761,22 +1790,26 @@
         {
           "Name": "testEscapeHtml",
           "Expression": "'\"1<2\"'.escape('html')",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: escape"
         },
         {
           "Name": "testEscapeJson",
           "Expression": "'\"1<2\"'.escape('json')",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: escape"
         },
         {
           "Name": "testUnescapeHtml",
           "Expression": "'&quot;1&lt;2&quot;'.unescape('html')",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: unescape"
         },
         {
           "Name": "testUnescapeJson",
           "Expression": "'\\\"1<2\\\"'.unescape('json')",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: unescape"
         }
       ]
     },
@@ -1867,7 +1900,7 @@
           "Name": "testExtension2",
           "Expression": "Patient.birthDate.extension(%`ext-patient-birthTime`).exists()",
           "Result": false,
-          "FailureMessage": "Error (Exception) Invalid expression: Object reference not set to an instance of an object."
+          "FailureMessage": "Error (Invalid) Error processing request: Attempting to access an undefined environment variable: ext-patient-birthTime"
         },
         {
           "Name": "testExtension3",
@@ -2319,8 +2352,7 @@
         {
           "Name": "testInEmptyBoth",
           "Expression": "{} in {}",
-          "Result": false,
-          "FailureMessage": "Expected no results, but got some."
+          "Result": true
         },
         {
           "Name": "testInEmptyCollection",
@@ -2330,8 +2362,7 @@
         {
           "Name": "testInEmptyValue",
           "Expression": "{} in (1 | 2 | 3)",
-          "Result": false,
-          "FailureMessage": "Expected no results, but got some."
+          "Result": true
         }
       ]
     },
@@ -2391,7 +2422,8 @@
         {
           "Name": "testFHIRPathAsFunction11",
           "Expression": "Patient.gender.as(string)",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Expected no results, but got some."
         },
         {
           "Name": "testFHIRPathAsFunction12",
@@ -2416,7 +2448,8 @@
         {
           "Name": "testFHIRPathAsFunction16",
           "Expression": "Patient.gender.ofType(string)",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Expected no results, but got some."
         },
         {
           "Name": "testFHIRPathAsFunction17",
@@ -2441,8 +2474,7 @@
         {
           "Name": "testFHIRPathAsFunction21",
           "Expression": "Patient.name.as(HumanName).use",
-          "Result": false,
-          "FailureMessage": "Expected no results, but got some."
+          "Result": true
         },
         {
           "Name": "testFHIRPathAsFunction22",
@@ -2472,8 +2504,7 @@
         {
           "Name": "testFHIRPathIsFunction2",
           "Expression": "Patient.gender.is(string)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "Result": true
         },
         {
           "Name": "testFHIRPathIsFunction3",
@@ -2508,8 +2539,7 @@
         {
           "Name": "testFHIRPathIsFunction9",
           "Expression": "Observation.extension('http://example.com/fhir/StructureDefinition/patient-age').value is Quantity",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "Result": true
         }
       ]
     },
@@ -3390,37 +3420,36 @@
           "Name": "testMatchesFullWithinUrl1",
           "Expression": "'http://fhir.org/guides/cqf/common/Library/FHIR-ModelInfo|4.0.1'.matchesFull('library')",
           "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'matchesFull'\nError (Exception) Invalid expression: Unknown symbol 'matchesFull'"
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: matchesFull"
         },
         {
           "Name": "testMatchesFullWithinUrl1a",
           "Expression": "'http://fhir.org/guides/cqf/common/Library/FHIR-ModelInfo|4.0.1'.matchesFull('.*Library.*')",
           "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'matchesFull'\nError (Exception) Invalid expression: Unknown symbol 'matchesFull'"
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: matchesFull"
         },
         {
           "Name": "testMatchesFullWithinUrl2",
           "Expression": "'http://fhir.org/guides/cqf/common/Library/FHIR-ModelInfo|4.0.1'.matchesFull('Measure')",
           "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'matchesFull'\nError (Exception) Invalid expression: Unknown symbol 'matchesFull'"
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: matchesFull"
         },
         {
           "Name": "testMatchesFullWithinUrl3",
           "Expression": "'http://fhir.org/guides/cqf/common/Library/FHIR-ModelInfo|4.0.1'.matchesFull('Library')",
           "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'matchesFull'\nError (Exception) Invalid expression: Unknown symbol 'matchesFull'"
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: matchesFull"
         },
         {
           "Name": "testMatchesFullWithinUrl4",
           "Expression": "'http://fhir.org/guides/cqf/common/Library/FHIR-ModelInfo|4.0.1'.matchesFull('^Library$')",
           "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'matchesFull'\nError (Exception) Invalid expression: Unknown symbol 'matchesFull'"
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: matchesFull"
         },
         {
           "Name": "testMatchesSingleLineMode1",
           "Expression": "'A\n\t\t\tB'.matches('A.*B')",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "Result": true
         },
         {
           "Name": "testMatchesWithinUrl1",
@@ -3475,7 +3504,8 @@
         {
           "Name": "testMinus5",
           "Expression": "@1974-12-25 - 1 'month'",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Error (Invalid) Error processing request: For date/time arithmetic, the unit of the quantity must be one of the following time-based units: years,months,weeks,days,hours,minutes,seconds,milliseconds,year,month,week,day,hour,minute,second,millisecond,'s','ms'"
         },
         {
           "Name": "testMinus6",
@@ -3485,14 +3515,12 @@
         {
           "Name": "testMinus7",
           "Expression": "@T00:30:00 - 1 hour",
-          "Result": false,
-          "FailureMessage": "Error (Exception) Invalid expression: Invocation of operator '-' failed: Unable to cast object of type 'Hl7.Fhir.ElementModel.Types.Time' to type 'Hl7.Fhir.ElementModel.Types.DateTime'."
+          "Result": true
         },
         {
           "Name": "testMinus8",
           "Expression": "@T01:00:00 - 2 hours",
-          "Result": false,
-          "FailureMessage": "Error (Exception) Invalid expression: Invocation of operator '-' failed: Unable to cast object of type 'Hl7.Fhir.ElementModel.Types.Time' to type 'Hl7.Fhir.ElementModel.Types.DateTime'."
+          "Result": true
         },
         {
           "Name": "testMinusEmpty1",
@@ -3761,7 +3789,8 @@
         {
           "Name": "testNEquality17",
           "Expression": "@2012-04-15T15:00:00Z != @2012-04-15T10:00:00",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Expected no results, but got some."
         },
         {
           "Name": "testNEquality18",
@@ -3911,7 +3940,8 @@
         {
           "Name": "testNotEquivalent21",
           "Expression": "name.take(2).given !~ name.take(2).last().given | name.take(2).first().given",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testNotEquivalent22",
@@ -3921,7 +3951,8 @@
         {
           "Name": "testNotEquivalent3",
           "Expression": "{} !~ 1",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testNotEquivalent4",
@@ -4001,8 +4032,7 @@
         {
           "Name": "testPolymorphismB",
           "Expression": "Observation.valueQuantity.unit",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
+          "Result": true
         },
         {
           "Name": "testPolymorphismIsA1",
@@ -4082,7 +4112,8 @@
         {
           "Name": "testPlusDate13",
           "Expression": "@1973-12-25 + 1 'd'",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Error (Invalid) Error processing request: For date/time arithmetic, the unit of the quantity must be one of the following time-based units: years,months,weeks,days,hours,minutes,seconds,milliseconds,year,month,week,day,hour,minute,second,millisecond,'s','ms'"
         },
         {
           "Name": "testPlusDate14",
@@ -4092,7 +4123,8 @@
         {
           "Name": "testPlusDate15",
           "Expression": "@1973-12-25 + 1 'wk'",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Error (Invalid) Error processing request: For date/time arithmetic, the unit of the quantity must be one of the following time-based units: years,months,weeks,days,hours,minutes,seconds,milliseconds,year,month,week,day,hour,minute,second,millisecond,'s','ms'"
         },
         {
           "Name": "testPlusDate16",
@@ -4127,12 +4159,14 @@
         {
           "Name": "testPlusDate21",
           "Expression": "@1973-12-25T00:00:00.000+10:00 + 1 'min'",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Error (Invalid) Error processing request: For date/time arithmetic, the unit of the quantity must be one of the following time-based units: years,months,weeks,days,hours,minutes,seconds,milliseconds,year,month,week,day,hour,minute,second,millisecond,'s','ms'"
         },
         {
           "Name": "testPlusDate22",
           "Expression": "@1973-12-25T00:00:00.000+10:00 + 1 'h'",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Error (Invalid) Error processing request: For date/time arithmetic, the unit of the quantity must be one of the following time-based units: years,months,weeks,days,hours,minutes,seconds,milliseconds,year,month,week,day,hour,minute,second,millisecond,'s','ms'"
         },
         {
           "Name": "testPlusDate3",
@@ -4187,20 +4221,17 @@
         {
           "Name": "testPlusTime1",
           "Expression": "@T01:00:00 + 2 hours",
-          "Result": false,
-          "FailureMessage": "Error (Exception) Invalid expression: Invocation of operator '+' failed: Unable to cast object of type 'Hl7.Fhir.ElementModel.Types.Time' to type 'Hl7.Fhir.ElementModel.Types.DateTime'."
+          "Result": true
         },
         {
           "Name": "testPlusTime2",
           "Expression": "@T23:00:00 + 2 hours",
-          "Result": false,
-          "FailureMessage": "Error (Exception) Invalid expression: Invocation of operator '+' failed: Unable to cast object of type 'Hl7.Fhir.ElementModel.Types.Time' to type 'Hl7.Fhir.ElementModel.Types.DateTime'."
+          "Result": true
         },
         {
           "Name": "testPlusTime3",
           "Expression": "@T23:00:00 + 50 hours",
-          "Result": false,
-          "FailureMessage": "Error (Exception) Invalid expression: Invocation of operator '+' failed: Unable to cast object of type 'Hl7.Fhir.ElementModel.Types.Time' to type 'Hl7.Fhir.ElementModel.Types.DateTime'."
+          "Result": true
         }
       ]
     },
@@ -4256,12 +4287,14 @@
         {
           "Name": "testPrecedence3",
           "Expression": "1 > 2 is Boolean",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Error (Invalid) Error processing request: Unknown error"
         },
         {
           "Name": "testPrecedence4",
           "Expression": "1 | 1 is Integer",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 2"
         },
         {
           "Name": "testPrecedence5",
@@ -4306,14 +4339,12 @@
         {
           "Name": "testQuantity4",
           "Expression": "4 'g' ~ 4040 'mg'",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "Result": true
         },
         {
           "Name": "testQuantity5",
           "Expression": "7 days = 1 week",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
+          "Result": true
         },
         {
           "Name": "testQuantity6",
@@ -4324,14 +4355,12 @@
         {
           "Name": "testQuantity7",
           "Expression": "6 days < 1 week",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
+          "Result": true
         },
         {
           "Name": "testQuantity8",
           "Expression": "8 days > 1 week",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
+          "Result": true
         },
         {
           "Name": "testQuantity9",
@@ -4366,8 +4395,7 @@
         {
           "Name": "testRepeat5",
           "Expression": "Patient.name.repeat('test')",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 3"
+          "Result": true
         }
       ]
     },
@@ -4535,70 +4563,70 @@
           "Description": "Prototype definition - not part of spec yet",
           "Expression": "(1 | 2 | 3).sort() = (1 | 2 | 3)",
           "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'sort'\nWarning (MultipleMatches) Operator '=' can experience unexpected runtime errors when used with a collection\nError (Exception) Invalid expression: Unknown symbol 'sort'"
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: sort"
         },
         {
           "Name": "testSort10",
           "Description": "Prototype definition - not part of spec yet",
           "Expression": "Patient.name.sort(-family, -given.first()).first().use = 'usual'",
           "NotImplemented": true,
-          "FailureMessage": "Error (NotFound) prop 'family' not found on Patient\nError (NotFound) prop 'given' not found on Patient\nWarning (NotSupported) Unhandled function 'sort'\nError (NotFound) prop 'use' not found on ???\nError (Exception) Invalid expression: Unknown symbol 'sort'"
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: sort"
         },
         {
           "Name": "testSort2",
           "Description": "Prototype definition - not part of spec yet",
           "Expression": "(3 | 2 | 1).sort() = (1 | 2 | 3)",
           "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'sort'\nWarning (MultipleMatches) Operator '=' can experience unexpected runtime errors when used with a collection\nError (Exception) Invalid expression: Unknown symbol 'sort'"
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: sort"
         },
         {
           "Name": "testSort3",
           "Description": "Prototype definition - not part of spec yet",
           "Expression": "(1 | 2 | 3).sort($this) = (1 | 2 | 3)",
           "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'sort'\nWarning (MultipleMatches) Operator '=' can experience unexpected runtime errors when used with a collection\nError (Exception) Invalid expression: Unknown symbol 'sort'"
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: sort"
         },
         {
           "Name": "testSort4",
           "Description": "Prototype definition - not part of spec yet",
           "Expression": "(3 | 2 | 1).sort($this) = (1 | 2 | 3)",
           "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'sort'\nWarning (MultipleMatches) Operator '=' can experience unexpected runtime errors when used with a collection\nError (Exception) Invalid expression: Unknown symbol 'sort'"
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: sort"
         },
         {
           "Name": "testSort5",
           "Description": "Prototype definition - not part of spec yet",
           "Expression": "(1 | 2 | 3).sort(-$this) = (3 | 2 | 1)",
           "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'sort'\nWarning (MultipleMatches) Operator '=' can experience unexpected runtime errors when used with a collection\nError (Exception) Invalid expression: Unknown symbol 'sort'"
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: sort"
         },
         {
           "Name": "testSort6",
           "Description": "Prototype definition - not part of spec yet",
           "Expression": "('a' | 'b' | 'c').sort($this) = ('a' | 'b' | 'c')",
           "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'sort'\nWarning (MultipleMatches) Operator '=' can experience unexpected runtime errors when used with a collection\nError (Exception) Invalid expression: Unknown symbol 'sort'"
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: sort"
         },
         {
           "Name": "testSort7",
           "Description": "Prototype definition - not part of spec yet",
           "Expression": "('c' | 'b' | 'a').sort($this) = ('a' | 'b' | 'c')",
           "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'sort'\nWarning (MultipleMatches) Operator '=' can experience unexpected runtime errors when used with a collection\nError (Exception) Invalid expression: Unknown symbol 'sort'"
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: sort"
         },
         {
           "Name": "testSort8",
           "Description": "Prototype definition - not part of spec yet",
           "Expression": "('a' | 'b' | 'c').sort(-$this) = ('c' | 'b' | 'a')",
           "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'sort'\nWarning (MultipleMatches) Operator '=' can experience unexpected runtime errors when used with a collection\nError (Exception) Invalid expression: Unknown symbol 'sort'"
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: sort"
         },
         {
           "Name": "testSort9",
           "Description": "Prototype definition - not part of spec yet",
           "Expression": "Patient.name[0].given.sort() = ('James' | 'Peter')",
           "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'sort'\nWarning (MultipleMatches) Operator '=' can experience unexpected runtime errors when used with a collection\nError (Exception) Invalid expression: Unknown symbol 'sort'"
+          "FailureMessage": "Error (Invalid) Error processing request: Not implemented: sort"
         }
       ]
     },
@@ -4668,8 +4696,7 @@
         {
           "Name": "testStartsWith12",
           "Expression": "Patient.name.family.first().startsWith(toChars().take(3).join())",
-          "Result": false,
-          "FailureMessage": "Error (NotSupported) String function 'toChars' is not supported on Patient\nError (Exception) Invalid expression: Invocation of function 'startsWith' failed: Invocation of function 'join' failed: Invocation of function 'take' failed: Invocation of function 'toChars' failed: Cannot cast from 'Patient' to '.NET type String'"
+          "Result": true
         },
         {
           "Name": "testStartsWith2",
@@ -4749,8 +4776,7 @@
         {
           "Name": "testSubstring10",
           "Expression": "Patient.name.family.first().substring(2, length()-5)",
-          "Result": false,
-          "FailureMessage": "Error (NotSupported) Function 'length' is not supported on context type 'Patient'\nError (Exception) Invalid expression: Invocation of function 'substring' failed: Invocation of operator '-' failed: Invocation of function 'length' failed: Cannot cast from 'Patient' to '.NET type String'"
+          "Result": true
         },
         {
           "Name": "testSubstring11",
@@ -4975,7 +5001,8 @@
         {
           "Name": "testToString4",
           "Expression": "0.0.toString() = '0.0'",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testToString5",
@@ -5065,14 +5092,12 @@
         {
           "Name": "testType1",
           "Expression": "1.type().namespace = 'System'",
-          "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'type'\nError (NotFound) prop 'namespace' not found on ???\nError (Exception) Invalid expression: Unknown symbol 'type'"
+          "Result": true
         },
         {
           "Name": "testType10",
           "Expression": "Patient.active.type().name = 'boolean'",
-          "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'type'\nError (NotFound) prop 'name' not found on ???\nError (Exception) Invalid expression: Unknown symbol 'type'"
+          "Result": true
         },
         {
           "Name": "testType11",
@@ -5097,14 +5122,12 @@
         {
           "Name": "testType15",
           "Expression": "Patient.type().namespace = 'FHIR'",
-          "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'type'\nError (NotFound) prop 'namespace' not found on ???\nError (Exception) Invalid expression: Unknown symbol 'type'"
+          "Result": true
         },
         {
           "Name": "testType16",
           "Expression": "Patient.type().name = 'Patient'",
-          "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'type'\nError (NotFound) prop 'name' not found on ???\nError (Exception) Invalid expression: Unknown symbol 'type'"
+          "Result": true
         },
         {
           "Name": "testType17",
@@ -5124,56 +5147,49 @@
         {
           "Name": "testType1a",
           "Expression": "1.type().name = 'Integer'",
-          "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'type'\nError (NotFound) prop 'name' not found on ???\nError (Exception) Invalid expression: Unknown symbol 'type'"
+          "Result": true
         },
         {
           "Name": "testType2",
           "Expression": "'1'.type().namespace = 'System'",
-          "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'type'\nError (NotFound) prop 'namespace' not found on ???\nError (Exception) Invalid expression: Unknown symbol 'type'"
+          "Result": true
         },
         {
           "Name": "testType20",
           "Expression": "Patient.ofType(Patient).type().name",
-          "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'type'\nError (NotFound) prop 'name' not found on ???\nError (Exception) Invalid expression: Unknown symbol 'type'"
+          "Result": true
         },
         {
           "Name": "testType21",
           "Expression": "Patient.ofType(FHIR.Patient).type().name",
-          "NotImplemented": true,
-          "FailureMessage": "Error (NotSupported) Expression included an 'ofType' test for FHIR.Patient where possible types are Patient\nWarning (NotSupported) Unhandled function 'type'\nError (NotFound) prop 'name' not found on ???\nError (Exception) Invalid expression: Unknown symbol 'type'"
+          "Result": true
         },
         {
           "Name": "testType22",
           "Description": "Note: Some systems may return an error due to failing to resolve System.Patient",
           "Expression": "Patient.is(System.Patient).not()",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Error (Invalid) Error processing request: \"System.Patient\" cannot be resolved to a valid type identifier"
         },
         {
           "Name": "testType23",
           "Expression": "Patient.ofType(FHIR.`Patient`).type().name",
-          "NotImplemented": true,
-          "FailureMessage": "Error (NotSupported) Expression included an 'ofType' test for FHIR.Patient where possible types are Patient\nWarning (NotSupported) Unhandled function 'type'\nError (NotFound) prop 'name' not found on ???\nError (Exception) Invalid expression: Unknown symbol 'type'"
+          "Result": true
         },
         {
           "Name": "testType2a",
           "Expression": "'1'.type().name = 'String'",
-          "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'type'\nError (NotFound) prop 'name' not found on ???\nError (Exception) Invalid expression: Unknown symbol 'type'"
+          "Result": true
         },
         {
           "Name": "testType3",
           "Expression": "true.type().namespace = 'System'",
-          "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'type'\nError (NotFound) prop 'namespace' not found on ???\nError (Exception) Invalid expression: Unknown symbol 'type'"
+          "Result": true
         },
         {
           "Name": "testType4",
           "Expression": "true.type().name = 'Boolean'",
-          "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'type'\nError (NotFound) prop 'name' not found on ???\nError (Exception) Invalid expression: Unknown symbol 'type'"
+          "Result": true
         },
         {
           "Name": "testType5",
@@ -5198,8 +5214,7 @@
         {
           "Name": "testType9",
           "Expression": "Patient.active.type().namespace = 'FHIR'",
-          "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'type'\nError (NotFound) prop 'namespace' not found on ???\nError (Exception) Invalid expression: Unknown symbol 'type'"
+          "Result": true
         },
         {
           "Name": "testTypeA",
@@ -5224,8 +5239,7 @@
         {
           "Name": "testTypeA4",
           "Expression": "Parameters.parameter[2].value.is(FHIR.uri)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "Result": true
         }
       ]
     },
@@ -5310,7 +5324,8 @@
         {
           "Name": "testDecimalLiteralIsDecimal",
           "Expression": "1.0.is(Decimal)",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testDecimalLiteralIsNotQuantity",
@@ -5345,7 +5360,8 @@
         {
           "Name": "testDecimalLiteralToString",
           "Expression": "1.0.toString()",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testFalseLiteralConvertsToBoolean",
@@ -5475,8 +5491,7 @@
         {
           "Name": "testQuantityLiteralWeekToString",
           "Expression": "1 week.toString()",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "Result": true
         },
         {
           "Name": "testQuantityLiteralWkToString",
@@ -5581,8 +5596,7 @@
         {
           "Name": "testStringIntegerLiteralToQuantity",
           "Expression": "'1'.toQuantity()",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
+          "Result": true
         },
         {
           "Name": "testStringLiteralConvertsToDecimalFalse",
@@ -5647,7 +5661,8 @@
         {
           "Name": "testStringQuantityDayLiteralToQuantity",
           "Expression": "'1 day'.toQuantity() = 1 'd'",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
         },
         {
           "Name": "testStringQuantityLiteralConvertsToQuantity",
@@ -5677,7 +5692,8 @@
         {
           "Name": "testStringQuantityWeekLiteralToQuantity",
           "Expression": "'1 \\'wk\\''.toQuantity() = 1 week",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
         },
         {
           "Name": "testStringQuantityYearLiteralToQuantity",
@@ -5803,12 +5819,14 @@
         {
           "Name": "testVariables1",
           "Expression": "%sct = 'http://snomed.info/sct'",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Error (Invalid) Error processing request: Attempting to access an undefined environment variable: sct"
         },
         {
           "Name": "testVariables2",
           "Expression": "%loinc = 'http://loinc.org'",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Error (Invalid) Error processing request: Attempting to access an undefined environment variable: loinc"
         },
         {
           "Name": "testVariables3",
@@ -5819,7 +5837,7 @@
           "Name": "testVariables4",
           "Expression": "%`vs-administrative-gender` = 'http://hl7.org/fhir/ValueSet/administrative-gender'",
           "Result": false,
-          "FailureMessage": "Error (Exception) Invalid expression: Object reference not set to an instance of an object."
+          "FailureMessage": "Error (Invalid) Error processing request: Attempting to access an undefined environment variable: vs-administrative-gender"
         }
       ]
     },

@@ -35,11 +35,6 @@
           "Result": true
         },
         {
-          "Name": "testComment9",
-          "Expression": "2 + /* inline $@%^+ * */ 2 = 4",
-          "Result": true
-        },
-        {
           "Name": "testComment7",
           "Expression": "2 + 2 /",
           "Result": true
@@ -48,287 +43,31 @@
           "Name": "testComment8",
           "Expression": "2 + 2 /* not finished",
           "Result": true
+        },
+        {
+          "Name": "testComment9",
+          "Expression": "2 + /* inline $@%^+ * */ 2 = 4",
+          "Result": true
         }
       ]
     },
     {
-      "Name": "HighBoundary",
+      "Name": "Comparable",
       "TestCases": [
         {
-          "Name": "HighBoundaryDecimal1",
-          "Expression": "1.587.highBoundary(2)",
+          "Name": "Comparable1",
+          "Expression": "1 'cm'.comparable(1 '[in_i]')",
           "Result": true
         },
         {
-          "Name": "HighBoundaryDecimal11",
-          "Expression": "12.587.highBoundary(2)",
+          "Name": "Comparable2",
+          "Expression": "1 'cm'.comparable(1 '[s]')",
           "Result": true
         },
         {
-          "Name": "HighBoundaryDecimal15",
-          "Expression": "0.0034.highBoundary(1)",
+          "Name": "Comparable3",
+          "Expression": "1 'cm'.comparable(1 's')",
           "Result": true
-        },
-        {
-          "Name": "HighBoundaryDecimal16",
-          "Expression": "-0.0034.highBoundary(1)",
-          "Result": true
-        },
-        {
-          "Name": "HighBoundaryDecimal4",
-          "Expression": "(-1.587).highBoundary()",
-          "Result": true
-        },
-        {
-          "Name": "HighBoundaryDecimal5",
-          "Expression": "(-1.587).highBoundary(2)",
-          "Result": true
-        },
-        {
-          "Name": "HighBoundaryDecimal7",
-          "Expression": "1.587.highBoundary(39)",
-          "Result": true
-        },
-        {
-          "Name": "HighBoundaryDecimal8",
-          "Expression": "1.highBoundary()",
-          "Result": true
-        },
-        {
-          "Name": "HighBoundaryDecimal9",
-          "Expression": "1.highBoundary(0)",
-          "Result": true
-        },
-        {
-          "Name": "HighBoundaryDecimal",
-          "Expression": "1.587.highBoundary(8)",
-          "Result": true
-        },
-        {
-          "Name": "HighBoundaryDecimal10",
-          "Expression": "1.highBoundary(5)",
-          "Result": true
-        },
-        {
-          "Name": "HighBoundaryDecimal13",
-          "Expression": "120.highBoundary(2)",
-          "Result": true
-        },
-        {
-          "Name": "HighBoundaryDecimal12",
-          "Expression": "12.500.highBoundary(4)",
-          "Result": true
-        },
-        {
-          "Name": "HighBoundaryDecimal14",
-          "Expression": "-120.highBoundary(2)",
-          "Result": true
-        },
-        {
-          "Name": "HighBoundaryDateMonth",
-          "Expression": "@2014.highBoundary(6)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
-        },
-        {
-          "Name": "HighBoundaryDateTimeMillisecond2",
-          "Expression": "@2014-01-01T08:05-05:00.highBoundary(17)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
-        },
-        {
-          "Name": "HighBoundaryDecimalDefault",
-          "Expression": "1.587.highBoundary()",
-          "Result": true
-        },
-        {
-          "Name": "HighBoundaryQuantity",
-          "Expression": "1.587 'm'.highBoundary(8)",
-          "Result": true
-        },
-        {
-          "Name": "HighBoundaryTimeMillisecond",
-          "Expression": "@T10:30.highBoundary(9)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
-        },
-        {
-          "Name": "HighBoundaryDecimal2",
-          "Expression": "1.587.highBoundary(6)",
-          "Result": true
-        },
-        {
-          "Name": "HighBoundaryDecimal3",
-          "Expression": "1.587.highBoundary(-1)",
-          "Result": true
-        },
-        {
-          "Name": "HighBoundaryDecimal6",
-          "Expression": "(-1.587).highBoundary(6)",
-          "Result": true
-        },
-        {
-          "Name": "HighBoundaryDateTimeMillisecond1",
-          "Expression": "@2014-01-01T08.highBoundary(17)",
-          "Result": false,
-          "FailureMessage": "Error (Exception) Unknown error evaluating fhirpath expression\n   - Invalid date/time format: \"2014-01-01T08:00\""
-        },
-        {
-          "Name": "HighBoundaryDateTimeMillisecond3",
-          "Expression": "@2014-01-01T08.highBoundary(17)",
-          "Result": false,
-          "FailureMessage": "Error (Exception) Unknown error evaluating fhirpath expression\n   - Invalid date/time format: \"2014-01-01T08:00\""
-        }
-      ]
-    },
-    {
-      "Name": "LowBoundary",
-      "TestCases": [
-        {
-          "Name": "LowBoundaryDateMonth",
-          "Expression": "@2014.lowBoundary(6)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
-        },
-        {
-          "Name": "LowBoundaryDateTimeMillisecond2",
-          "Expression": "@2014-01-01T08:05+08:00.lowBoundary(17)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
-        },
-        {
-          "Name": "LowBoundaryDecimal10",
-          "Expression": "12.587.lowBoundary(2)",
-          "Result": true
-        },
-        {
-          "Name": "LowBoundaryDecimal14",
-          "Expression": "0.0034.lowBoundary(1)",
-          "Result": true
-        },
-        {
-          "Name": "LowBoundaryDecimal15",
-          "Expression": "(-0.0034).lowBoundary(1)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
-        },
-        {
-          "Name": "LowBoundaryDecimal2",
-          "Expression": "1.587.lowBoundary(2)",
-          "Result": true
-        },
-        {
-          "Name": "LowBoundaryDecimal4",
-          "Expression": "1.587.lowBoundary(0)",
-          "Result": true
-        },
-        {
-          "Name": "LowBoundaryDecimal5",
-          "Expression": "1.587.lowBoundary(32)",
-          "Result": true
-        },
-        {
-          "Name": "LowBoundaryDecimal6",
-          "Expression": "1.587.lowBoundary(39)",
-          "Result": true
-        },
-        {
-          "Name": "LowBoundaryDecimal7",
-          "Expression": "1.toDecimal().lowBoundary()",
-          "Result": true
-        },
-        {
-          "Name": "LowBoundaryDecimal8",
-          "Expression": "1.lowBoundary(0)",
-          "Result": true
-        },
-        {
-          "Name": "LowBoundaryDecimalDefault",
-          "Expression": "1.587.lowBoundary()",
-          "Result": true
-        },
-        {
-          "Name": "LowBoundaryNegDecimal2",
-          "Expression": "(-1.587).lowBoundary(2)",
-          "Result": true
-        },
-        {
-          "Name": "LowBoundaryNegDecimal4",
-          "Expression": "(-1.587).lowBoundary(0)",
-          "Result": true
-        },
-        {
-          "Name": "LowBoundaryNegDecimal5",
-          "Expression": "(-1.587).lowBoundary(32)",
-          "Result": true
-        },
-        {
-          "Name": "LowBoundaryNegDecimalDefault",
-          "Expression": "(-1.587).lowBoundary()",
-          "Result": true
-        },
-        {
-          "Name": "LowBoundaryQuantity",
-          "Expression": "1.587 'cm'.lowBoundary(8)",
-          "Result": true
-        },
-        {
-          "Name": "LowBoundaryTimeMillisecond",
-          "Expression": "@T10:30.lowBoundary(9)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
-        },
-        {
-          "Name": "LowBoundaryDecimal1",
-          "Expression": "1.587.lowBoundary(6)",
-          "Result": true
-        },
-        {
-          "Name": "LowBoundaryDecimal11",
-          "Expression": "12.500.lowBoundary(4)",
-          "Result": true
-        },
-        {
-          "Name": "LowBoundaryDecimal12",
-          "Expression": "120.lowBoundary(2)",
-          "Result": true
-        },
-        {
-          "Name": "LowBoundaryDecimal13",
-          "Expression": "(-120).lowBoundary(2)",
-          "Result": true
-        },
-        {
-          "Name": "LowBoundaryDecimal3",
-          "Expression": "1.587.lowBoundary(-1)",
-          "Result": true
-        },
-        {
-          "Name": "LowBoundaryDecimal9",
-          "Expression": "1.lowBoundary(5)",
-          "Result": true
-        },
-        {
-          "Name": "LowBoundaryNegDecimal1",
-          "Expression": "(-1.587).lowBoundary(6)",
-          "Result": true
-        },
-        {
-          "Name": "LowBoundaryNegDecimal3",
-          "Expression": "(-1.587).lowBoundary(-1)",
-          "Result": true
-        },
-        {
-          "Name": "LowBoundaryDateTimeMillisecond1",
-          "Expression": "@2014-01-01T08.lowBoundary(17)",
-          "Result": false,
-          "FailureMessage": "Error (Exception) Unknown error evaluating fhirpath expression\n   - Invalid date/time format: \"2014-01-01T08:00\""
-        },
-        {
-          "Name": "LowBoundaryDateTimeMillisecond3",
-          "Expression": "@2014-01-01T08.lowBoundary(8)",
-          "Result": false,
-          "FailureMessage": "Error (Exception) Unknown error evaluating fhirpath expression\n   - Invalid date/time format: \"2014-01-01T08:00\""
         }
       ]
     },
@@ -336,21 +75,21 @@
       "Name": "defineVariable",
       "TestCases": [
         {
-          "Name": "defineVariable8",
-          "Description": "CompositeVariableUse",
-          "Expression": "defineVariable('v1', 'value1').select(%v1).trace('data').defineVariable('v2', 'value2').select($this & ':' & %v1 & '-' & %v2) | defineVariable('v3', 'value3').select(%v3)",
-          "Result": true
-        },
-        {
-          "Name": "dvConceptMapExample",
-          "Description": "realistic example with conceptmap",
-          "Expression": "\n\t\t\tgroup.select(\n\t\t\t\tdefineVariable('grp')\n\t\t\t\t.element\n\t\t\t\t.select(\n\t\t\t\t\tdefineVariable('ele')\n\t\t\t\t\t.target\n\t\t\t\t\t.select(%grp.source & '|' & %ele.code & ' ' & relationship & ' ' & %grp.target & '|' & code)\n\t\t\t\t)\n\t\t\t)\n\t\t\t.trace('all')\n\t\t\t.isDistinct()\n\t\t",
-          "Result": true
-        },
-        {
           "Name": "defineVariable1",
           "Description": "simplest variable",
           "Expression": "defineVariable('v1', 'value1').select(%v1)",
+          "Result": true
+        },
+        {
+          "Name": "defineVariable10",
+          "Description": "use undefined variable throws error",
+          "Expression": "select(%fam.given)",
+          "Result": true
+        },
+        {
+          "Name": "defineVariable12",
+          "Description": "defineVariable() could not be the first child",
+          "Expression": "Patient.name.defineVariable('n1', first()).active | Patient.name.defineVariable('n2', skip(1).first()).select(%n1.given)",
           "Result": true
         },
         {
@@ -369,6 +108,12 @@
           "Name": "defineVariable15",
           "Description": "multi-tree vars valid",
           "Expression": "defineVariable('root', 'r1-').select(defineVariable('v1', 'v1').defineVariable('v2', 'v2').select(%v1 | %v2)).select(%root & $this)",
+          "Result": true
+        },
+        {
+          "Name": "defineVariable16",
+          "Description": "multi-tree vars exception",
+          "Expression": "defineVariable('root', 'r1-').select(defineVariable('v1', 'v1').defineVariable('v2', 'v2').select(%v1 | %v2)).select(%root & $this & %v1)",
           "Result": true
         },
         {
@@ -414,27 +159,9 @@
           "Result": true
         },
         {
-          "Name": "dvParametersDontColide",
-          "Description": "defineVariable in function parameters (2)",
-          "Expression": "'aaa'.replace(defineVariable('param', 'aaa').select(%param), defineVariable('param','bbb').select(%param))",
-          "Result": true
-        },
-        {
-          "Name": "defineVariable10",
-          "Description": "use undefined variable throws error",
-          "Expression": "select(%fam.given)",
-          "Result": true
-        },
-        {
-          "Name": "defineVariable12",
-          "Description": "defineVariable() could not be the first child",
-          "Expression": "Patient.name.defineVariable('n1', first()).active | Patient.name.defineVariable('n2', skip(1).first()).select(%n1.given)",
-          "Result": true
-        },
-        {
-          "Name": "defineVariable16",
-          "Description": "multi-tree vars exception",
-          "Expression": "defineVariable('root', 'r1-').select(defineVariable('v1', 'v1').defineVariable('v2', 'v2').select(%v1 | %v2)).select(%root & $this & %v1)",
+          "Name": "defineVariable8",
+          "Description": "CompositeVariableUse",
+          "Expression": "defineVariable('v1', 'value1').select(%v1).trace('data').defineVariable('v2', 'value2').select($this & ':' & %v1 & '-' & %v2) | defineVariable('v3', 'value3').select(%v3)",
           "Result": true
         },
         {
@@ -449,6 +176,18 @@
           "Result": true
         },
         {
+          "Name": "dvConceptMapExample",
+          "Description": "realistic example with conceptmap",
+          "Expression": "\n\t\t\tgroup.select(\n\t\t\t\tdefineVariable('grp')\n\t\t\t\t.element\n\t\t\t\t.select(\n\t\t\t\t\tdefineVariable('ele')\n\t\t\t\t\t.target\n\t\t\t\t\t.select(%grp.source & '|' & %ele.code & ' ' & relationship & ' ' & %grp.target & '|' & code)\n\t\t\t\t)\n\t\t\t)\n\t\t\t.trace('all')\n\t\t\t.isDistinct()\n\t\t",
+          "Result": true
+        },
+        {
+          "Name": "dvParametersDontColide",
+          "Description": "defineVariable in function parameters (2)",
+          "Expression": "'aaa'.replace(defineVariable('param', 'aaa').select(%param), defineVariable('param','bbb').select(%param))",
+          "Result": true
+        },
+        {
           "Name": "dvRedefiningVariableThrowsError",
           "Expression": "defineVariable('v1').defineVariable('v1').select(%v1)",
           "Result": true
@@ -457,1593 +196,6 @@
           "Name": "dvUsageOutsideScopeThrows",
           "Description": "use of a variable outside context throws error",
           "Expression": "defineVariable('n1', 'v1').active | defineVariable('n2', 'v2').select(%n1)",
-          "Result": true
-        }
-      ]
-    },
-    {
-      "Name": "period",
-      "TestCases": [
-        {
-          "Name": "testPeriodInvariantNew",
-          "Expression": "Patient.identifier.period.all(start.empty() or end.empty() or (start.lowBoundary() < end.highBoundary()))",
-          "Result": true
-        },
-        {
-          "Name": "testPeriodInvariantOld",
-          "Expression": "Patient.identifier.period.all(start.hasValue().not() or end.hasValue().not() or (start <= end))",
-          "Result": true
-        }
-      ]
-    },
-    {
-      "Name": "Precision",
-      "TestCases": [
-        {
-          "Name": "PrecisionDateTimeMilliseconds",
-          "Expression": "@2014-01-05T10:30:00.000.precision()",
-          "Result": true
-        },
-        {
-          "Name": "PrecisionDecimal",
-          "Expression": "1.58700.precision()",
-          "Result": true
-        },
-        {
-          "Name": "PrecisionTimeMilliseconds",
-          "Expression": "@T10:30:00.000.precision()",
-          "Result": true
-        },
-        {
-          "Name": "PrecisionTimeMinutes",
-          "Expression": "@T10:30.precision()",
-          "Result": true
-        },
-        {
-          "Name": "PrecisionYear",
-          "Expression": "@2014.precision()",
-          "Result": true
-        }
-      ]
-    },
-    {
-      "Name": "testContainsString",
-      "TestCases": [
-        {
-          "Name": "testContainsString10",
-          "Expression": "Patient.name.family.first().contains(toChars().skip(3).take(3).join())",
-          "Result": true
-        },
-        {
-          "Name": "testContainsString1",
-          "Expression": "'12345'.contains('6') = false",
-          "Result": true
-        },
-        {
-          "Name": "testContainsString2",
-          "Expression": "'12345'.contains('5') = true",
-          "Result": true
-        },
-        {
-          "Name": "testContainsString3",
-          "Expression": "'12345'.contains('45') = true",
-          "Result": true
-        },
-        {
-          "Name": "testContainsString4",
-          "Expression": "'12345'.contains('35') = false",
-          "Result": true
-        },
-        {
-          "Name": "testContainsString5",
-          "Expression": "'12345'.contains('12345') = true",
-          "Result": true
-        },
-        {
-          "Name": "testContainsString6",
-          "Expression": "'12345'.contains('012345') = false",
-          "Result": true
-        },
-        {
-          "Name": "testContainsString7",
-          "Expression": "'12345'.contains('') = true",
-          "Result": true
-        },
-        {
-          "Name": "testContainsString8",
-          "Expression": "{}.contains('a').empty() = true",
-          "Result": true
-        },
-        {
-          "Name": "testContainsString9",
-          "Expression": "{}.contains('').empty() = true",
-          "Result": true
-        },
-        {
-          "Name": "testContainsNonString1",
-          "Expression": "Appointment.identifier.contains('rand')",
-          "Result": true
-        }
-      ]
-    },
-    {
-      "Name": "testEndsWith",
-      "TestCases": [
-        {
-          "Name": "testEndsWith10",
-          "Expression": "Patient.name.family.first().endsWith(toChars().skip(3).join())",
-          "Result": true
-        },
-        {
-          "Name": "testEndsWith1",
-          "Expression": "'12345'.endsWith('2') = false",
-          "Result": true
-        },
-        {
-          "Name": "testEndsWith2",
-          "Expression": "'12345'.endsWith('5') = true",
-          "Result": true
-        },
-        {
-          "Name": "testEndsWith3",
-          "Expression": "'12345'.endsWith('45') = true",
-          "Result": true
-        },
-        {
-          "Name": "testEndsWith4",
-          "Expression": "'12345'.endsWith('35') = false",
-          "Result": true
-        },
-        {
-          "Name": "testEndsWith5",
-          "Expression": "'12345'.endsWith('12345') = true",
-          "Result": true
-        },
-        {
-          "Name": "testEndsWith6",
-          "Expression": "'12345'.endsWith('012345') = false",
-          "Result": true
-        },
-        {
-          "Name": "testEndsWith7",
-          "Expression": "'12345'.endsWith('') = true",
-          "Result": true
-        },
-        {
-          "Name": "testEndsWith8",
-          "Expression": "{}.endsWith('1').empty() = true",
-          "Result": true
-        },
-        {
-          "Name": "testEndsWith9",
-          "Expression": "{}.endsWith('').empty() = true",
-          "Result": true
-        },
-        {
-          "Name": "testEndsWithNonString1",
-          "Expression": "Appointment.identifier.endsWith('rand')",
-          "Result": true
-        }
-      ]
-    },
-    {
-      "Name": "testIif",
-      "TestCases": [
-        {
-          "Name": "testIif6",
-          "Expression": "iif('non boolean criteria', 'true-result', 'true-result')",
-          "Result": false,
-          "FailureMessage": "Expected no results, but got some."
-        },
-        {
-          "Name": "testIif1",
-          "Expression": "iif(Patient.name.exists(), 'named', 'unnamed') = 'named'",
-          "Result": true
-        },
-        {
-          "Name": "testIif11",
-          "Expression": "('context').iif($this = 'context','true-result', 'false-result')",
-          "Result": true
-        },
-        {
-          "Name": "testIif2",
-          "Expression": "iif(Patient.name.empty(), 'unnamed', 'named') = 'named'",
-          "Result": true
-        },
-        {
-          "Name": "testIif3",
-          "Expression": "iif(true, true, (1 | 2).toString())",
-          "Result": true
-        },
-        {
-          "Name": "testIif4",
-          "Expression": "iif(false, (1 | 2).toString(), true)",
-          "Result": true
-        },
-        {
-          "Name": "testIif5",
-          "Expression": "iif(false, 'true-result').empty()",
-          "Result": true
-        },
-        {
-          "Name": "testIif7",
-          "Expression": "{}.iif(true, 'true-result', 'false-result')",
-          "Result": true
-        },
-        {
-          "Name": "testIif8",
-          "Expression": "('item').iif(true, 'true-result', 'false-result')",
-          "Result": true
-        },
-        {
-          "Name": "testIif9",
-          "Expression": "('context').iif(true, select($this), 'false-result')",
-          "Result": true
-        },
-        {
-          "Name": "testIif10",
-          "Expression": "('item1' | 'item2').iif(true, 'true-result', 'false-result')",
-          "Result": true
-        }
-      ]
-    },
-    {
-      "Name": "testInheritance",
-      "TestCases": [
-        {
-          "Name": "testFHIRPathIsFunction2",
-          "Expression": "Patient.gender.is(string)",
-          "Result": true
-        },
-        {
-          "Name": "testFHIRPathIsFunction9",
-          "Expression": "Observation.extension('http://example.com/fhir/StructureDefinition/patient-age').value is Quantity",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
-        },
-        {
-          "Name": "testFHIRPathAsFunction11",
-          "Expression": "Patient.gender.as(string)",
-          "Result": true
-        },
-        {
-          "Name": "testFHIRPathAsFunction12",
-          "Expression": "Patient.gender.as(code)",
-          "Result": true
-        },
-        {
-          "Name": "testFHIRPathAsFunction13",
-          "Expression": "Patient.gender.as(id)",
-          "Result": true
-        },
-        {
-          "Name": "testFHIRPathAsFunction14",
-          "Expression": "ValueSet.version.as(string)",
-          "Result": true
-        },
-        {
-          "Name": "testFHIRPathAsFunction15",
-          "Expression": "ValueSet.version.as(code)",
-          "Result": true
-        },
-        {
-          "Name": "testFHIRPathAsFunction16",
-          "Expression": "Patient.gender.ofType(string)",
-          "Result": true
-        },
-        {
-          "Name": "testFHIRPathAsFunction17",
-          "Expression": "Patient.gender.ofType(code)",
-          "Result": true
-        },
-        {
-          "Name": "testFHIRPathAsFunction18",
-          "Expression": "Patient.gender.ofType(id)",
-          "Result": true
-        },
-        {
-          "Name": "testFHIRPathAsFunction19",
-          "Expression": "ValueSet.version.ofType(string)",
-          "Result": true
-        },
-        {
-          "Name": "testFHIRPathAsFunction20",
-          "Expression": "ValueSet.version.ofType(code)",
-          "Result": true
-        },
-        {
-          "Name": "testFHIRPathAsFunction22",
-          "Expression": "Patient.name.ofType(HumanName).use",
-          "Result": true
-        },
-        {
-          "Name": "testFHIRPathIsFunction1",
-          "Expression": "Patient.gender.is(code)",
-          "Result": true
-        },
-        {
-          "Name": "testFHIRPathIsFunction10",
-          "Expression": "Observation.extension('http://example.com/fhir/StructureDefinition/patient-age').value is Duration",
-          "Result": true
-        },
-        {
-          "Name": "testFHIRPathIsFunction3",
-          "Expression": "Patient.gender.is(id)",
-          "Result": true
-        },
-        {
-          "Name": "testFHIRPathIsFunction6",
-          "Expression": "ValueSet.version.is(string)",
-          "Result": true
-        },
-        {
-          "Name": "testFHIRPathIsFunction7",
-          "Expression": "ValueSet.version.is(code)",
-          "Result": true
-        },
-        {
-          "Name": "testFHIRPathIsFunction8",
-          "Expression": "Observation.extension('http://example.com/fhir/StructureDefinition/patient-age').value is Age",
-          "Result": true
-        },
-        {
-          "Name": "testFHIRPathAsFunction21",
-          "Expression": "Patient.name.as(HumanName).use",
-          "Result": true
-        },
-        {
-          "Name": "testFHIRPathAsFunction23",
-          "Expression": "Patient.gender.as(string1)",
-          "Result": true
-        },
-        {
-          "Name": "testFHIRPathAsFunction24",
-          "Expression": "Patient.gender.ofType(string1)",
-          "Result": true
-        },
-        {
-          "Name": "testFHIRPathIsFunction4",
-          "Expression": "Questionnaire.url.is(uri)",
-          "Result": false,
-          "FailureMessage": "Error (Exception) Unknown error evaluating fhirpath expression\n   - Unknown QuestionnaireItemType code 'coding'"
-        },
-        {
-          "Name": "testFHIRPathIsFunction5",
-          "Expression": "Questionnaire.url.is(url)",
-          "Result": false,
-          "FailureMessage": "Error (Exception) Unknown error evaluating fhirpath expression\n   - Unknown QuestionnaireItemType code 'coding'"
-        }
-      ]
-    },
-    {
-      "Name": "testMatches",
-      "TestCases": [
-        {
-          "Name": "testMatchesFullWithinUrl1",
-          "Expression": "'http://fhir.org/guides/cqf/common/Library/FHIR-ModelInfo|4.0.1'.matchesFull('library')",
-          "Result": true
-        },
-        {
-          "Name": "testMatchesFullWithinUrl1a",
-          "Expression": "'http://fhir.org/guides/cqf/common/Library/FHIR-ModelInfo|4.0.1'.matchesFull('.*Library.*')",
-          "Result": true
-        },
-        {
-          "Name": "testMatchesFullWithinUrl2",
-          "Expression": "'http://fhir.org/guides/cqf/common/Library/FHIR-ModelInfo|4.0.1'.matchesFull('Measure')",
-          "Result": true
-        },
-        {
-          "Name": "testMatchesFullWithinUrl3",
-          "Expression": "'http://fhir.org/guides/cqf/common/Library/FHIR-ModelInfo|4.0.1'.matchesFull('Library')",
-          "Result": true
-        },
-        {
-          "Name": "testMatchesFullWithinUrl4",
-          "Expression": "'http://fhir.org/guides/cqf/common/Library/FHIR-ModelInfo|4.0.1'.matchesFull('^Library$')",
-          "Result": true
-        },
-        {
-          "Name": "testMatchesSingleLineMode1",
-          "Expression": "'A\n\t\t\tB'.matches('A.*B')",
-          "Result": true
-        },
-        {
-          "Name": "testMatchesCaseSensitive1",
-          "Expression": "'FHIR'.matches('FHIR')",
-          "Result": true
-        },
-        {
-          "Name": "testMatchesCaseSensitive2",
-          "Expression": "'FHIR'.matches('fhir')",
-          "Result": true
-        },
-        {
-          "Name": "testMatchesEmpty",
-          "Expression": "'FHIR'.matches({}).empty() = true",
-          "Result": true
-        },
-        {
-          "Name": "testMatchesEmpty2",
-          "Expression": "{}.matches('FHIR').empty() = true",
-          "Result": true
-        },
-        {
-          "Name": "testMatchesEmpty3",
-          "Expression": "{}.matches({}).empty() = true",
-          "Result": true
-        },
-        {
-          "Name": "testMatchesWithinUrl1",
-          "Expression": "'http://fhir.org/guides/cqf/common/Library/FHIR-ModelInfo|4.0.1'.matches('library')",
-          "Result": true
-        },
-        {
-          "Name": "testMatchesWithinUrl1a",
-          "Expression": "'http://fhir.org/guides/cqf/common/Library/FHIR-ModelInfo|4.0.1'.matches('.*Library.*')",
-          "Result": true
-        },
-        {
-          "Name": "testMatchesWithinUrl2",
-          "Expression": "'http://fhir.org/guides/cqf/common/Library/FHIR-ModelInfo|4.0.1'.matches('Library')",
-          "Result": true
-        },
-        {
-          "Name": "testMatchesWithinUrl3",
-          "Expression": "'http://fhir.org/guides/cqf/common/Library/FHIR-ModelInfo|4.0.1'.matches('^Library$')",
-          "Result": true
-        },
-        {
-          "Name": "testMatchesWithinUrl4",
-          "Expression": "'http://fhir.org/guides/cqf/common/Library/FHIR-ModelInfo|4.0.1'.matches('Measure')",
-          "Result": true
-        }
-      ]
-    },
-    {
-      "Name": "testMiscellaneousAccessorTests",
-      "TestCases": [
-        {
-          "Name": "testPatientHasBirthDate",
-          "Description": "patient has a birthDate",
-          "Expression": "birthDate",
-          "Result": false,
-          "FailureMessage": "Expected a single boolean result for predicate evaluation."
-        },
-        {
-          "Name": "testExtractBirthDate",
-          "Description": "Extract birthDate",
-          "Expression": "birthDate",
-          "Result": true
-        },
-        {
-          "Name": "testPatientTelecomTypes",
-          "Description": "patient telecom types",
-          "Expression": "telecom.use",
-          "Result": true
-        }
-      ]
-    },
-    {
-      "Name": "testPrecedence",
-      "TestCases": [
-        {
-          "Name": "testPrecedence6",
-          "Expression": "category.exists(coding.exists(system = 'http://terminology.hl7.org/CodeSystem/observation-category' and code.trace('c') in ('vital-signs' | 'vital-signs2').trace('codes')))",
-          "Result": true
-        },
-        {
-          "Name": "testPrecedence2",
-          "Expression": "1+2*3+4 = 11",
-          "Result": true
-        },
-        {
-          "Name": "testPrecedence3",
-          "Expression": "1 > 2 is Boolean",
-          "Result": true
-        },
-        {
-          "Name": "testPrecedence4",
-          "Expression": "1 | 1 is Integer",
-          "Result": true
-        },
-        {
-          "Name": "testPrecedence5",
-          "Expression": "true and '0215' in ('0215' | '0216')",
-          "Result": true
-        },
-        {
-          "Name": "testPrecedence1",
-          "Description": "test unary precedence",
-          "Expression": "-1.convertsToInteger()",
-          "Result": true
-        }
-      ]
-    },
-    {
-      "Name": "testQuantity",
-      "TestCases": [
-        {
-          "Name": "testQuantity5",
-          "Expression": "7 days = 1 week",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
-        },
-        {
-          "Name": "testQuantity6",
-          "Expression": "7 days = 1 'wk'",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
-        },
-        {
-          "Name": "testQuantity7",
-          "Expression": "6 days < 1 week",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
-        },
-        {
-          "Name": "testQuantity8",
-          "Expression": "8 days > 1 week",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
-        },
-        {
-          "Name": "testQuantity1",
-          "Expression": "4.0000 'g' = 4000.0 'mg'",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
-        },
-        {
-          "Name": "testQuantity3",
-          "Expression": "4 'g' != 4040 'mg'",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
-        },
-        {
-          "Name": "testQuantity4",
-          "Expression": "4 'g' ~ 4040 'mg'",
-          "Result": false,
-          "FailureMessage": "Error (Exception) Unknown error evaluating fhirpath expression\n   - Cannot invoke \"java.lang.Boolean.booleanValue()\" because the return value of \"org.hl7.fhir.r5.fhirpath.FHIRPathEngine.qtyEquivalent(org.hl7.fhir.r5.model.Quantity, org.hl7.fhir.r5.model.Quantity)\" is null"
-        },
-        {
-          "Name": "testQuantity10",
-          "Expression": "4.0 'g' / 2.0 'm' = 2 'g/m'",
-          "Result": false,
-          "FailureMessage": "Error (Exception) Error evaluating FHIRPath expression /: left and right operand have incompatible or invalid types (Quantity, Quantity) (@char 1)"
-        },
-        {
-          "Name": "testQuantity11",
-          "Expression": "1.0 'm' / 1.0 'm' = 1 '1'",
-          "Result": false,
-          "FailureMessage": "Error (Exception) Error evaluating FHIRPath expression /: left and right operand have incompatible or invalid types (Quantity, Quantity) (@char 1)"
-        },
-        {
-          "Name": "testQuantity2",
-          "Expression": "4 'g' ~ 4000 'mg'",
-          "Result": false,
-          "FailureMessage": "Error (Exception) Unknown error evaluating fhirpath expression\n   - Cannot invoke \"java.lang.Boolean.booleanValue()\" because the return value of \"org.hl7.fhir.r5.fhirpath.FHIRPathEngine.qtyEquivalent(org.hl7.fhir.r5.model.Quantity, org.hl7.fhir.r5.model.Quantity)\" is null"
-        },
-        {
-          "Name": "testQuantity9",
-          "Expression": "2.0 'cm' * 2.0 'm' = 0.040 'm2'",
-          "Result": false,
-          "FailureMessage": "Error (Exception) Error evaluating FHIRPath expression *: left and right operand have incompatible or invalid types (Quantity, Quantity) (@char 1)"
-        }
-      ]
-    },
-    {
-      "Name": "testRepeat",
-      "TestCases": [
-        {
-          "Name": "testRepeat5",
-          "Expression": "Patient.name.repeat('test')",
-          "Result": true
-        },
-        {
-          "Name": "testRepeat1",
-          "Expression": "ValueSet.expansion.repeat(contains).count() = 10",
-          "Result": true
-        },
-        {
-          "Name": "testRepeat2",
-          "Expression": "Questionnaire.repeat(item).code.count() = 11",
-          "Result": false,
-          "FailureMessage": "Error (Exception) Unknown error evaluating fhirpath expression\n   - Unknown QuestionnaireItemType code 'coding'"
-        },
-        {
-          "Name": "testRepeat3",
-          "Expression": "Questionnaire.descendants().code.count() = 23",
-          "Result": false,
-          "FailureMessage": "Error (Exception) Unknown error evaluating fhirpath expression\n   - Unknown QuestionnaireItemType code 'coding'"
-        },
-        {
-          "Name": "testRepeat4",
-          "Expression": "Questionnaire.children().code.count() = 2",
-          "Result": false,
-          "FailureMessage": "Error (Exception) Unknown error evaluating fhirpath expression\n   - Unknown QuestionnaireItemType code 'coding'"
-        }
-      ]
-    },
-    {
-      "Name": "testReplaceMatches",
-      "TestCases": [
-        {
-          "Name": "testReplaceMatches2",
-          "Expression": "'abc'.replaceMatches('', 'x')",
-          "Result": true
-        },
-        {
-          "Name": "testReplaceMatches1",
-          "Expression": "'123456'.replaceMatches('234', 'X')",
-          "Result": true
-        },
-        {
-          "Name": "testReplaceMatches3",
-          "Expression": "'123456'.replaceMatches('234', '')",
-          "Result": true
-        },
-        {
-          "Name": "testReplaceMatches4",
-          "Expression": "{}.replaceMatches('234', 'X').empty() = true",
-          "Result": true
-        },
-        {
-          "Name": "testReplaceMatches5",
-          "Expression": "'123'.replaceMatches({}, 'X').empty() = true",
-          "Result": true
-        },
-        {
-          "Name": "testReplaceMatches6",
-          "Expression": "'123'.replaceMatches('2', {}).empty() = true",
-          "Result": true
-        },
-        {
-          "Name": "testReplaceMatches7",
-          "Expression": "'abc123'.replaceMatches('[0-9]', '-')",
-          "Result": true
-        }
-      ]
-    },
-    {
-      "Name": "testSkip",
-      "TestCases": [
-        {
-          "Name": "testSkip3",
-          "Expression": "Patient.name.skip(1).given.trace('test') = 'Jim' | 'Peter' | 'James'",
-          "Result": true
-        },
-        {
-          "Name": "testSkip1",
-          "Expression": "(0 | 1 | 2).skip(1) = 1 | 2",
-          "Result": true
-        },
-        {
-          "Name": "testSkip2",
-          "Expression": "(0 | 1 | 2).skip(2) = 2",
-          "Result": true
-        },
-        {
-          "Name": "testSkip4",
-          "Expression": "Patient.name.skip(3).given.exists() = false",
-          "Result": true
-        }
-      ]
-    },
-    {
-      "Name": "testSort",
-      "TestCases": [
-        {
-          "Name": "testSort1",
-          "Expression": "(1 | 2 | 3).sort() = (1 | 2 | 3)",
-          "Result": true
-        },
-        {
-          "Name": "testSort2",
-          "Expression": "(3 | 2 | 1).sort() = (1 | 2 | 3)",
-          "Result": true
-        },
-        {
-          "Name": "testSort3",
-          "Expression": "(1 | 2 | 3).sort($this) = (1 | 2 | 3)",
-          "Result": true
-        },
-        {
-          "Name": "testSort4",
-          "Expression": "(3 | 2 | 1).sort($this) = (1 | 2 | 3)",
-          "Result": true
-        },
-        {
-          "Name": "testSort5",
-          "Expression": "(1 | 2 | 3).sort(-$this) = (3 | 2 | 1)",
-          "Result": true
-        },
-        {
-          "Name": "testSort6",
-          "Expression": "('a' | 'b' | 'c').sort($this) = ('a' | 'b' | 'c')",
-          "Result": true
-        },
-        {
-          "Name": "testSort7",
-          "Expression": "('c' | 'b' | 'a').sort($this) = ('a' | 'b' | 'c')",
-          "Result": true
-        },
-        {
-          "Name": "testSort8",
-          "Expression": "('a' | 'b' | 'c').sort(-$this) = ('c' | 'b' | 'a')",
-          "Result": true
-        },
-        {
-          "Name": "testSort9",
-          "Expression": "Patient.name[0].given.sort() = ('James' | 'Peter')",
-          "Result": true
-        },
-        {
-          "Name": "testSort10",
-          "Expression": "Patient.name.sort(-family, -given.first()).first().use = 'usual'",
-          "Result": false,
-          "FailureMessage": "Error (Exception) Unknown error evaluating fhirpath expression"
-        }
-      ]
-    },
-    {
-      "Name": "testSplit",
-      "TestCases": [
-        {
-          "Name": "testSplit3",
-          "Expression": "'[stop]ONE[stop][stop]TWO[stop][stop][stop]THREE[stop][stop]'.split('[stop]').trace('n').count() = 9",
-          "Result": true
-        },
-        {
-          "Name": "testSplit1",
-          "Expression": "'Peter,James,Jim,Peter,James'.split(',').count() = 5",
-          "Result": true
-        },
-        {
-          "Name": "testSplit2",
-          "Expression": "'A,,C'.split(',').join(',') = 'A,,C'",
-          "Result": true
-        },
-        {
-          "Name": "testSplit4",
-          "Expression": "'[stop]ONE[stop][stop]TWO[stop][stop][stop]THREE[stop][stop]'.split('[stop]').join('[stop]')",
-          "Result": true
-        }
-      ]
-    },
-    {
-      "Name": "testStartsWith",
-      "TestCases": [
-        {
-          "Name": "testStartsWith12",
-          "Expression": "Patient.name.family.first().startsWith(toChars().take(3).join())",
-          "Result": true
-        },
-        {
-          "Name": "testStartsWith1",
-          "Expression": "'12345'.startsWith('2') = false",
-          "Result": true
-        },
-        {
-          "Name": "testStartsWith10",
-          "Expression": "''.startsWith('') = true",
-          "Result": true
-        },
-        {
-          "Name": "testStartsWith11",
-          "Expression": "{}.startsWith('').exists() = false",
-          "Result": true
-        },
-        {
-          "Name": "testStartsWith2",
-          "Expression": "'12345'.startsWith('1') = true",
-          "Result": true
-        },
-        {
-          "Name": "testStartsWith3",
-          "Expression": "'12345'.startsWith('12') = true",
-          "Result": true
-        },
-        {
-          "Name": "testStartsWith4",
-          "Expression": "'12345'.startsWith('13') = false",
-          "Result": true
-        },
-        {
-          "Name": "testStartsWith5",
-          "Expression": "'12345'.startsWith('12345') = true",
-          "Result": true
-        },
-        {
-          "Name": "testStartsWith6",
-          "Expression": "'12345'.startsWith('123456') = false",
-          "Result": true
-        },
-        {
-          "Name": "testStartsWith7",
-          "Expression": "'12345'.startsWith('') = true",
-          "Result": true
-        },
-        {
-          "Name": "testStartsWith8",
-          "Expression": "{}.startsWith('1').empty() = true",
-          "Result": true
-        },
-        {
-          "Name": "testStartsWith9",
-          "Expression": "{}.startsWith('').empty() = true",
-          "Result": true
-        },
-        {
-          "Name": "testStartsWithNonString1",
-          "Expression": "Appointment.identifier.startsWith('rand')",
-          "Result": true
-        }
-      ]
-    },
-    {
-      "Name": "testSubSetOf",
-      "TestCases": [
-        {
-          "Name": "testSubSetOf3",
-          "Expression": "supportingInfo.where(category.coding.code = 'additionalbodysite').sequence.subsetOf($this.item.informationSequence)",
-          "Result": true
-        },
-        {
-          "Name": "testSubSetOf1",
-          "Expression": "Patient.name.first().subsetOf($this.name)",
-          "Result": true
-        },
-        {
-          "Name": "testSubSetOf2",
-          "Expression": "Patient.name.subsetOf($this.name.first()).not()",
-          "Result": true
-        }
-      ]
-    },
-    {
-      "Name": "testSubstring",
-      "TestCases": [
-        {
-          "Name": "testSubstring1",
-          "Expression": "'12345'.substring(2) = '345'",
-          "Result": true
-        },
-        {
-          "Name": "testSubstring10",
-          "Expression": "Patient.name.family.first().substring(2, length()-5)",
-          "Result": true
-        },
-        {
-          "Name": "testSubstring2",
-          "Expression": "'12345'.substring(2,1) = '3'",
-          "Result": true
-        },
-        {
-          "Name": "testSubstring3",
-          "Expression": "'12345'.substring(2,5) = '345'",
-          "Result": true
-        },
-        {
-          "Name": "testSubstring4",
-          "Expression": "'12345'.substring(25).empty()",
-          "Result": true
-        },
-        {
-          "Name": "testSubstring5",
-          "Expression": "'12345'.substring(-1).empty()",
-          "Result": true
-        },
-        {
-          "Name": "testSubstring7",
-          "Expression": "'LogicalModel-Person'.substring(0, 12)",
-          "Result": true
-        },
-        {
-          "Name": "testSubstring8",
-          "Expression": "'LogicalModel-Person'.substring(0, 'LogicalModel-Person'.indexOf('-'))",
-          "Result": true
-        },
-        {
-          "Name": "testSubstring9",
-          "Expression": "{}.substring(25).empty() = true",
-          "Result": true
-        }
-      ]
-    },
-    {
-      "Name": "testTrace",
-      "TestCases": [
-        {
-          "Name": "testTrace1",
-          "Expression": "name.given.trace('test').count() = 5",
-          "Result": true
-        },
-        {
-          "Name": "testTrace2",
-          "Expression": "name.trace('test', given).count() = 3",
-          "Result": true
-        }
-      ]
-    },
-    {
-      "Name": "testType",
-      "TestCases": [
-        {
-          "Name": "testType1",
-          "Expression": "1.type().namespace = 'System'",
-          "Result": true
-        },
-        {
-          "Name": "testType10",
-          "Expression": "Patient.active.type().name = 'boolean'",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
-        },
-        {
-          "Name": "testType15",
-          "Expression": "Patient.type().namespace = 'FHIR'",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
-        },
-        {
-          "Name": "testType16",
-          "Expression": "Patient.type().name = 'Patient'",
-          "Result": true
-        },
-        {
-          "Name": "testType1a",
-          "Expression": "1.type().name = 'Integer'",
-          "Result": true
-        },
-        {
-          "Name": "testType2",
-          "Expression": "'1'.type().namespace = 'System'",
-          "Result": true
-        },
-        {
-          "Name": "testType20",
-          "Expression": "Patient.ofType(Patient).type().name",
-          "Result": true
-        },
-        {
-          "Name": "testType21",
-          "Expression": "Patient.ofType(FHIR.Patient).type().name",
-          "Result": true
-        },
-        {
-          "Name": "testType23",
-          "Expression": "Patient.ofType(FHIR.`Patient`).type().name",
-          "Result": true
-        },
-        {
-          "Name": "testType2a",
-          "Expression": "'1'.type().name = 'String'",
-          "Result": true
-        },
-        {
-          "Name": "testType3",
-          "Expression": "true.type().namespace = 'System'",
-          "Result": true
-        },
-        {
-          "Name": "testType4",
-          "Expression": "true.type().name = 'Boolean'",
-          "Result": true
-        },
-        {
-          "Name": "testType9",
-          "Expression": "Patient.active.type().namespace = 'FHIR'",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
-        },
-        {
-          "Name": "testTypeA4",
-          "Expression": "Parameters.parameter[2].value.is(FHIR.uri)",
-          "Result": true
-        },
-        {
-          "Name": "testType11",
-          "Expression": "Patient.active.is(boolean)",
-          "Result": true
-        },
-        {
-          "Name": "testType12",
-          "Expression": "Patient.active.is(Boolean).not()",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
-        },
-        {
-          "Name": "testType13",
-          "Expression": "Patient.active.is(FHIR.boolean)",
-          "Result": true
-        },
-        {
-          "Name": "testType14",
-          "Expression": "Patient.active.is(System.Boolean).not()",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
-        },
-        {
-          "Name": "testType17",
-          "Expression": "Patient.is(Patient)",
-          "Result": true
-        },
-        {
-          "Name": "testType18",
-          "Expression": "Patient.is(FHIR.Patient)",
-          "Result": true
-        },
-        {
-          "Name": "testType19",
-          "Expression": "Patient.is(FHIR.`Patient`)",
-          "Result": true
-        },
-        {
-          "Name": "testType22",
-          "Description": "Note: Some systems may return an error due to failing to resolve System.Patient",
-          "Expression": "Patient.is(System.Patient).not()",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
-        },
-        {
-          "Name": "testType5",
-          "Expression": "true.is(Boolean)",
-          "Result": true
-        },
-        {
-          "Name": "testType6",
-          "Expression": "true.is(System.Boolean)",
-          "Result": true
-        },
-        {
-          "Name": "testType7",
-          "Expression": "true is Boolean",
-          "Result": true
-        },
-        {
-          "Name": "testType8",
-          "Expression": "true is System.Boolean",
-          "Result": true
-        },
-        {
-          "Name": "testTypeA",
-          "Expression": "Parameters.parameter[3].value.is(FHIR.decimal)",
-          "Result": true
-        },
-        {
-          "Name": "testTypeA1",
-          "Expression": "Parameters.parameter[0].value.is(FHIR.string)",
-          "Result": true
-        },
-        {
-          "Name": "testTypeA2",
-          "Expression": "Parameters.parameter[1].value.is(FHIR.integer)",
-          "Result": true
-        },
-        {
-          "Name": "testTypeA3",
-          "Expression": "Parameters.parameter[2].value.is(FHIR.uuid)",
-          "Result": true
-        }
-      ]
-    },
-    {
-      "Name": "testTypes",
-      "TestCases": [
-        {
-          "Name": "testQuantityLiteralWeekToString",
-          "Expression": "1 week.toString()",
-          "Result": true
-        },
-        {
-          "Name": "testStringIntegerLiteralToQuantity",
-          "Expression": "'1'.toQuantity()",
-          "Result": true
-        },
-        {
-          "Name": "testBooleanLiteralConvertsToDecimal",
-          "Expression": "true.convertsToDecimal()",
-          "Result": true
-        },
-        {
-          "Name": "testBooleanLiteralConvertsToInteger",
-          "Expression": "true.convertsToInteger()",
-          "Result": true
-        },
-        {
-          "Name": "testBooleanLiteralConvertsToQuantity",
-          "Expression": "true.convertsToQuantity()",
-          "Result": true
-        },
-        {
-          "Name": "testBooleanLiteralConvertsToString",
-          "Expression": "true.convertsToString()",
-          "Result": true
-        },
-        {
-          "Name": "testBooleanLiteralIsNotDecimal",
-          "Expression": "true.is(Decimal).not()",
-          "Result": true
-        },
-        {
-          "Name": "testBooleanLiteralIsNotInteger",
-          "Expression": "true.is(Integer).not()",
-          "Result": true
-        },
-        {
-          "Name": "testBooleanLiteralIsNotSystemQuantity",
-          "Expression": "true.is(System.Quantity).not()",
-          "Result": true
-        },
-        {
-          "Name": "testBooleanLiteralToDecimal",
-          "Expression": "true.toDecimal() = 1",
-          "Result": true
-        },
-        {
-          "Name": "testBooleanLiteralToInteger",
-          "Expression": "true.toInteger() = 1",
-          "Result": true
-        },
-        {
-          "Name": "testBooleanLiteralToString",
-          "Expression": "true.toString()",
-          "Result": true
-        },
-        {
-          "Name": "testDateIsNotInteger",
-          "Expression": "@2013-04-05.is(Integer).not()",
-          "Result": true
-        },
-        {
-          "Name": "testDecimalLiteralConvertsToBoolean",
-          "Expression": "1.0.convertsToBoolean()",
-          "Result": true
-        },
-        {
-          "Name": "testDecimalLiteralConvertsToDecimal",
-          "Expression": "1.0.convertsToDecimal()",
-          "Result": true
-        },
-        {
-          "Name": "testDecimalLiteralConvertsToQuantity",
-          "Expression": "1.0.convertsToQuantity()",
-          "Result": true
-        },
-        {
-          "Name": "testDecimalLiteralConvertsToString",
-          "Expression": "1.0.convertsToString()",
-          "Result": true
-        },
-        {
-          "Name": "testDecimalLiteralIsDecimal",
-          "Expression": "1.0.is(Decimal)",
-          "Result": true
-        },
-        {
-          "Name": "testDecimalLiteralIsNotQuantity",
-          "Expression": "1.0.is(System.Quantity).not()",
-          "Result": true
-        },
-        {
-          "Name": "testDecimalLiteralToDecimal",
-          "Expression": "1.0.toDecimal() = 1.0",
-          "Result": true
-        },
-        {
-          "Name": "testDecimalLiteralToDecimalEqual",
-          "Expression": "'1.1'.toDecimal() = 1.1",
-          "Result": true
-        },
-        {
-          "Name": "testDecimalLiteralToInteger",
-          "Expression": "'1.1'.toInteger() = {}",
-          "Result": true
-        },
-        {
-          "Name": "testDecimalLiteralToIntegerIsEmpty",
-          "Expression": "'1.1'.toInteger().empty()",
-          "Result": true
-        },
-        {
-          "Name": "testDecimalLiteralToQuantity",
-          "Expression": "1.0.toQuantity() = 1.0 '1'",
-          "Result": true
-        },
-        {
-          "Name": "testDecimalLiteralToString",
-          "Expression": "1.0.toString()",
-          "Result": true
-        },
-        {
-          "Name": "testFalseLiteralConvertsToBoolean",
-          "Expression": "false.convertsToBoolean()",
-          "Result": true
-        },
-        {
-          "Name": "testIntegerLiteralConvertsToBoolean",
-          "Expression": "1.convertsToBoolean()",
-          "Result": true
-        },
-        {
-          "Name": "testIntegerLiteralConvertsToBooleanFalse",
-          "Expression": "2.convertsToBoolean()",
-          "Result": true
-        },
-        {
-          "Name": "testIntegerLiteralConvertsToDecimal",
-          "Expression": "1.convertsToDecimal()",
-          "Result": true
-        },
-        {
-          "Name": "testIntegerLiteralConvertsToInteger",
-          "Expression": "1.convertsToInteger()",
-          "Result": true
-        },
-        {
-          "Name": "testIntegerLiteralConvertsToQuantity",
-          "Expression": "1.convertsToQuantity()",
-          "Result": true
-        },
-        {
-          "Name": "testIntegerLiteralConvertsToString",
-          "Expression": "1.convertsToString()",
-          "Result": true
-        },
-        {
-          "Name": "testIntegerLiteralFalseConvertsToBoolean",
-          "Expression": "0.convertsToBoolean()",
-          "Result": true
-        },
-        {
-          "Name": "testIntegerLiteralIsInteger",
-          "Expression": "1.is(Integer)",
-          "Result": true
-        },
-        {
-          "Name": "testIntegerLiteralIsNotDecimal",
-          "Expression": "1.is(Decimal).not()",
-          "Result": true
-        },
-        {
-          "Name": "testIntegerLiteralIsNotQuantity",
-          "Expression": "1.is(Quantity).not()",
-          "Result": true
-        },
-        {
-          "Name": "testIntegerLiteralIsNotString",
-          "Expression": "1.is(String).not()",
-          "Result": true
-        },
-        {
-          "Name": "testIntegerLiteralIsSystemInteger",
-          "Expression": "1.is(System.Integer)",
-          "Result": true
-        },
-        {
-          "Name": "testIntegerLiteralToBoolean",
-          "Expression": "1.toBoolean()",
-          "Result": true
-        },
-        {
-          "Name": "testIntegerLiteralToBooleanEmpty",
-          "Expression": "2.toBoolean()",
-          "Result": true
-        },
-        {
-          "Name": "testIntegerLiteralToBooleanFalse",
-          "Expression": "0.toBoolean()",
-          "Result": true
-        },
-        {
-          "Name": "testIntegerLiteralToDeciamlEquivalent",
-          "Expression": "1.toDecimal() ~ 1.0",
-          "Result": true
-        },
-        {
-          "Name": "testIntegerLiteralToDecimal",
-          "Expression": "1.toDecimal() = 1.0",
-          "Result": true
-        },
-        {
-          "Name": "testIntegerLiteralToInteger",
-          "Expression": "1.toInteger() = 1",
-          "Result": true
-        },
-        {
-          "Name": "testIntegerLiteralToQuantity",
-          "Expression": "1.toQuantity() = 1 '1'",
-          "Result": true
-        },
-        {
-          "Name": "testIntegerLiteralToString",
-          "Expression": "1.toString()",
-          "Result": true
-        },
-        {
-          "Name": "testNegativeIntegerLiteralConvertsToBooleanFalse",
-          "Expression": "(-1).convertsToBoolean()",
-          "Result": true
-        },
-        {
-          "Name": "testNegativeIntegerLiteralConvertsToString",
-          "Expression": "(-1).convertsToString()",
-          "Result": true
-        },
-        {
-          "Name": "testNegativeIntegerLiteralToString",
-          "Expression": "(-1).toString()",
-          "Result": true
-        },
-        {
-          "Name": "testQuantityLiteralConvertsToString",
-          "Expression": "1 'wk'.convertsToString()",
-          "Result": true
-        },
-        {
-          "Name": "testQuantityLiteralWkToString",
-          "Expression": "1 'wk'.toString()",
-          "Result": true
-        },
-        {
-          "Name": "testStringDayConvertsToDate",
-          "Expression": "'2015-02-04'.convertsToDate()",
-          "Result": true
-        },
-        {
-          "Name": "testStringDayConvertsToDateTime",
-          "Expression": "'2015-02-04'.convertsToDateTime()",
-          "Result": true
-        },
-        {
-          "Name": "testStringDecimalConvertsToIntegerFalse",
-          "Expression": "'1.0'.convertsToInteger().not()",
-          "Result": true
-        },
-        {
-          "Name": "testStringDecimalLiteralConvertsToDecimal",
-          "Expression": "'1.0'.convertsToDecimal()",
-          "Result": true
-        },
-        {
-          "Name": "testStringDecimalLiteralConvertsToQuantity",
-          "Expression": "'1.0'.convertsToQuantity()",
-          "Result": true
-        },
-        {
-          "Name": "testStringDecimalLiteralConvertsToQuantityFalse",
-          "Expression": "'1.a'.convertsToQuantity().not()",
-          "Result": true
-        },
-        {
-          "Name": "testStringDecimalLiteralIsNotDecimal",
-          "Expression": "'1.0'.is(Decimal).not()",
-          "Result": true
-        },
-        {
-          "Name": "testStringDecimalLiteralIsNotSystemQuantity",
-          "Expression": "'1.0'.is(System.Quantity).not()",
-          "Result": true
-        },
-        {
-          "Name": "testStringDecimalLiteralToQuantity",
-          "Expression": "'1.0'.toQuantity() ~ 1 '1'",
-          "Result": true
-        },
-        {
-          "Name": "testStringFalseLiteralAlsoConvertsToBoolean",
-          "Expression": "'False'.convertsToBoolean()",
-          "Result": true
-        },
-        {
-          "Name": "testStringFalseLiteralConvertsToBoolean",
-          "Expression": "'false'.convertsToBoolean()",
-          "Result": true
-        },
-        {
-          "Name": "testStringFalseToBoolean",
-          "Expression": "'false'.toBoolean()",
-          "Result": true
-        },
-        {
-          "Name": "testStringHourConvertsToDateTime",
-          "Expression": "'2015-02-04T14'.convertsToDateTime()",
-          "Result": true
-        },
-        {
-          "Name": "testStringHourConvertsToTime",
-          "Expression": "'14'.convertsToTime()",
-          "Result": true
-        },
-        {
-          "Name": "testStringIntegerLiteralConvertsToDecimal",
-          "Expression": "'1'.convertsToDecimal()",
-          "Result": true
-        },
-        {
-          "Name": "testStringIntegerLiteralConvertsToQuantity",
-          "Expression": "'1'.convertsToQuantity()",
-          "Result": true
-        },
-        {
-          "Name": "testStringIntegerLiteralIsNotDecimal",
-          "Expression": "'1'.is(Decimal).not()",
-          "Result": true
-        },
-        {
-          "Name": "testStringIntegerLiteralIsNotQuantity",
-          "Expression": "'1'.is(System.Quantity).not()",
-          "Result": true
-        },
-        {
-          "Name": "testStringIntegerLiteralToInteger",
-          "Expression": "'1'.toInteger() = 1",
-          "Result": true
-        },
-        {
-          "Name": "testStringLiteralConvertsToDecimalFalse",
-          "Expression": "'1.a'.convertsToDecimal().not()",
-          "Result": true
-        },
-        {
-          "Name": "testStringLiteralConvertsToInteger",
-          "Expression": "'1'.convertsToInteger()",
-          "Result": true
-        },
-        {
-          "Name": "testStringLiteralConvertsToIntegerFalse",
-          "Expression": "'a'.convertsToInteger().not()",
-          "Result": true
-        },
-        {
-          "Name": "testStringLiteralConvertsToString",
-          "Expression": "'true'.convertsToString()",
-          "Result": true
-        },
-        {
-          "Name": "testStringLiteralIsNotInteger",
-          "Expression": "'1'.is(Integer).not()",
-          "Result": true
-        },
-        {
-          "Name": "testStringLiteralToString",
-          "Expression": "'true'.toString()",
-          "Result": true
-        },
-        {
-          "Name": "testStringMillisecondConvertsToDateTime",
-          "Expression": "'2015-02-04T14:34:28.123'.convertsToDateTime()",
-          "Result": true
-        },
-        {
-          "Name": "testStringMillisecondConvertsToTime",
-          "Expression": "'14:34:28.123'.convertsToTime()",
-          "Result": true
-        },
-        {
-          "Name": "testStringMinuteConvertsToDateTime",
-          "Expression": "'2015-02-04T14:34'.convertsToDateTime()",
-          "Result": true
-        },
-        {
-          "Name": "testStringMinuteConvertsToTime",
-          "Expression": "'14:34'.convertsToTime()",
-          "Result": true
-        },
-        {
-          "Name": "testStringMonthConvertsToDate",
-          "Expression": "'2015-02'.convertsToDate()",
-          "Result": true
-        },
-        {
-          "Name": "testStringMonthConvertsToDateTime",
-          "Expression": "'2015-02'.convertsToDateTime()",
-          "Result": true
-        },
-        {
-          "Name": "testStringQuantityDayLiteralToQuantity",
-          "Expression": "'1 day'.toQuantity() = 1 'd'",
-          "Result": true
-        },
-        {
-          "Name": "testStringQuantityLiteralConvertsToQuantity",
-          "Expression": "'1 day'.convertsToQuantity()",
-          "Result": true
-        },
-        {
-          "Name": "testStringQuantityLiteralToQuantity",
-          "Expression": "'1 day'.toQuantity() = 1 day",
-          "Result": true
-        },
-        {
-          "Name": "testStringQuantityMonthLiteralToQuantity",
-          "Expression": "'1 \\'mo\\''.toQuantity() = 1 month",
-          "Result": true
-        },
-        {
-          "Name": "testStringQuantityWeekConvertsToQuantity",
-          "Expression": "'1 \\'wk\\''.convertsToQuantity()",
-          "Result": true
-        },
-        {
-          "Name": "testStringQuantityWeekConvertsToQuantityFalse",
-          "Expression": "'1 wk'.convertsToQuantity().not()",
-          "Result": true
-        },
-        {
-          "Name": "testStringQuantityWeekLiteralToQuantity",
-          "Expression": "'1 \\'wk\\''.toQuantity() = 1 week",
-          "Result": true
-        },
-        {
-          "Name": "testStringQuantityYearLiteralToQuantity",
-          "Expression": "'1 \\'a\\''.toQuantity() = 1 year",
-          "Result": true
-        },
-        {
-          "Name": "testStringSecondConvertsToDateTime",
-          "Expression": "'2015-02-04T14:34:28'.convertsToDateTime()",
-          "Result": true
-        },
-        {
-          "Name": "testStringSecondConvertsToTime",
-          "Expression": "'14:34:28'.convertsToTime()",
-          "Result": true
-        },
-        {
-          "Name": "testStringTrueLiteralConvertsToBoolean",
-          "Expression": "'true'.convertsToBoolean()",
-          "Result": true
-        },
-        {
-          "Name": "testStringTrueToBoolean",
-          "Expression": "'true'.toBoolean()",
-          "Result": true
-        },
-        {
-          "Name": "testStringTZConvertsToDateTime",
-          "Expression": "'2015-02-04T14:34:28+10:00'.convertsToDateTime()",
-          "Result": true
-        },
-        {
-          "Name": "testStringUTCConvertsToDateTime",
-          "Expression": "'2015-02-04T14:34:28Z'.convertsToDateTime()",
-          "Result": true
-        },
-        {
-          "Name": "testStringYearConvertsToDate",
-          "Expression": "'2015'.convertsToDate()",
-          "Result": true
-        },
-        {
-          "Name": "testStringYearConvertsToDateTime",
-          "Expression": "'2015'.convertsToDateTime()",
-          "Result": true
-        },
-        {
-          "Name": "testTrueLiteralConvertsToBoolean",
-          "Expression": "true.convertsToBoolean()",
-          "Result": true
-        }
-      ]
-    },
-    {
-      "Name": "Comparable",
-      "TestCases": [
-        {
-          "Name": "Comparable1",
-          "Expression": "1 'cm'.comparable(1 '[in_i]')",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
-        },
-        {
-          "Name": "Comparable2",
-          "Expression": "1 'cm'.comparable(1 '[s]')",
-          "Result": true
-        },
-        {
-          "Name": "Comparable3",
-          "Expression": "1 'cm'.comparable(1 's')",
           "Result": true
         }
       ]
@@ -2064,11 +216,281 @@
       ]
     },
     {
+      "Name": "HighBoundary",
+      "TestCases": [
+        {
+          "Name": "HighBoundaryDateMonth",
+          "Expression": "@2014.highBoundary(6)",
+          "Result": true
+        },
+        {
+          "Name": "HighBoundaryDateTimeMillisecond1",
+          "Expression": "@2014-01-01T08.highBoundary(17)",
+          "Result": true
+        },
+        {
+          "Name": "HighBoundaryDateTimeMillisecond2",
+          "Expression": "@2014-01-01T08:05-05:00.highBoundary(17)",
+          "Result": true
+        },
+        {
+          "Name": "HighBoundaryDateTimeMillisecond3",
+          "Expression": "@2014-01-01T08.highBoundary(17)",
+          "Result": true
+        },
+        {
+          "Name": "HighBoundaryDecimal",
+          "Expression": "1.587.highBoundary(8)",
+          "Result": true
+        },
+        {
+          "Name": "HighBoundaryDecimal1",
+          "Expression": "1.587.highBoundary(2)",
+          "Result": true
+        },
+        {
+          "Name": "HighBoundaryDecimal10",
+          "Expression": "1.highBoundary(5)",
+          "Result": true
+        },
+        {
+          "Name": "HighBoundaryDecimal11",
+          "Expression": "12.587.highBoundary(2)",
+          "Result": true
+        },
+        {
+          "Name": "HighBoundaryDecimal12",
+          "Expression": "12.500.highBoundary(4)",
+          "Result": true
+        },
+        {
+          "Name": "HighBoundaryDecimal13",
+          "Expression": "120.highBoundary(2)",
+          "Result": true
+        },
+        {
+          "Name": "HighBoundaryDecimal14",
+          "Expression": "-120.highBoundary(2)",
+          "Result": true
+        },
+        {
+          "Name": "HighBoundaryDecimal15",
+          "Expression": "0.0034.highBoundary(1)",
+          "Result": true
+        },
+        {
+          "Name": "HighBoundaryDecimal16",
+          "Expression": "-0.0034.highBoundary(1)",
+          "Result": true
+        },
+        {
+          "Name": "HighBoundaryDecimal2",
+          "Expression": "1.587.highBoundary(6)",
+          "Result": true
+        },
+        {
+          "Name": "HighBoundaryDecimal3",
+          "Expression": "1.587.highBoundary(-1)",
+          "Result": true
+        },
+        {
+          "Name": "HighBoundaryDecimal4",
+          "Expression": "(-1.587).highBoundary()",
+          "Result": true
+        },
+        {
+          "Name": "HighBoundaryDecimal5",
+          "Expression": "(-1.587).highBoundary(2)",
+          "Result": true
+        },
+        {
+          "Name": "HighBoundaryDecimal6",
+          "Expression": "(-1.587).highBoundary(6)",
+          "Result": true
+        },
+        {
+          "Name": "HighBoundaryDecimal7",
+          "Expression": "1.587.highBoundary(39)",
+          "Result": true
+        },
+        {
+          "Name": "HighBoundaryDecimal8",
+          "Expression": "1.highBoundary()",
+          "Result": true
+        },
+        {
+          "Name": "HighBoundaryDecimal9",
+          "Expression": "1.highBoundary(0)",
+          "Result": true
+        },
+        {
+          "Name": "HighBoundaryDecimalDefault",
+          "Expression": "1.587.highBoundary()",
+          "Result": true
+        },
+        {
+          "Name": "HighBoundaryQuantity",
+          "Expression": "1.587 'm'.highBoundary(8)",
+          "Result": true
+        },
+        {
+          "Name": "HighBoundaryTimeMillisecond",
+          "Expression": "@T10:30.highBoundary(9)",
+          "Result": true
+        }
+      ]
+    },
+    {
       "Name": "index-part",
       "TestCases": [
         {
           "Name": "testIndex",
           "Expression": "Patient.telecom.select(iif(value='(03) 3410 5613', $index, {} ))",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "LowBoundary",
+      "TestCases": [
+        {
+          "Name": "LowBoundaryDateMonth",
+          "Expression": "@2014.lowBoundary(6)",
+          "Result": true
+        },
+        {
+          "Name": "LowBoundaryDateTimeMillisecond1",
+          "Expression": "@2014-01-01T08.lowBoundary(17)",
+          "Result": true
+        },
+        {
+          "Name": "LowBoundaryDateTimeMillisecond2",
+          "Expression": "@2014-01-01T08:05+08:00.lowBoundary(17)",
+          "Result": true
+        },
+        {
+          "Name": "LowBoundaryDateTimeMillisecond3",
+          "Expression": "@2014-01-01T08.lowBoundary(8)",
+          "Result": true
+        },
+        {
+          "Name": "LowBoundaryDecimal1",
+          "Expression": "1.587.lowBoundary(6)",
+          "Result": true
+        },
+        {
+          "Name": "LowBoundaryDecimal10",
+          "Expression": "12.587.lowBoundary(2)",
+          "Result": true
+        },
+        {
+          "Name": "LowBoundaryDecimal11",
+          "Expression": "12.500.lowBoundary(4)",
+          "Result": true
+        },
+        {
+          "Name": "LowBoundaryDecimal12",
+          "Expression": "120.lowBoundary(2)",
+          "Result": true
+        },
+        {
+          "Name": "LowBoundaryDecimal13",
+          "Expression": "(-120).lowBoundary(2)",
+          "Result": true
+        },
+        {
+          "Name": "LowBoundaryDecimal14",
+          "Expression": "0.0034.lowBoundary(1)",
+          "Result": true
+        },
+        {
+          "Name": "LowBoundaryDecimal15",
+          "Expression": "(-0.0034).lowBoundary(1)",
+          "Result": true
+        },
+        {
+          "Name": "LowBoundaryDecimal2",
+          "Expression": "1.587.lowBoundary(2)",
+          "Result": true
+        },
+        {
+          "Name": "LowBoundaryDecimal3",
+          "Expression": "1.587.lowBoundary(-1)",
+          "Result": true
+        },
+        {
+          "Name": "LowBoundaryDecimal4",
+          "Expression": "1.587.lowBoundary(0)",
+          "Result": true
+        },
+        {
+          "Name": "LowBoundaryDecimal5",
+          "Expression": "1.587.lowBoundary(32)",
+          "Result": true
+        },
+        {
+          "Name": "LowBoundaryDecimal6",
+          "Expression": "1.587.lowBoundary(39)",
+          "Result": true
+        },
+        {
+          "Name": "LowBoundaryDecimal7",
+          "Expression": "1.toDecimal().lowBoundary()",
+          "Result": true
+        },
+        {
+          "Name": "LowBoundaryDecimal8",
+          "Expression": "1.lowBoundary(0)",
+          "Result": true
+        },
+        {
+          "Name": "LowBoundaryDecimal9",
+          "Expression": "1.lowBoundary(5)",
+          "Result": true
+        },
+        {
+          "Name": "LowBoundaryDecimalDefault",
+          "Expression": "1.587.lowBoundary()",
+          "Result": true
+        },
+        {
+          "Name": "LowBoundaryNegDecimal1",
+          "Expression": "(-1.587).lowBoundary(6)",
+          "Result": true
+        },
+        {
+          "Name": "LowBoundaryNegDecimal2",
+          "Expression": "(-1.587).lowBoundary(2)",
+          "Result": true
+        },
+        {
+          "Name": "LowBoundaryNegDecimal3",
+          "Expression": "(-1.587).lowBoundary(-1)",
+          "Result": true
+        },
+        {
+          "Name": "LowBoundaryNegDecimal4",
+          "Expression": "(-1.587).lowBoundary(0)",
+          "Result": true
+        },
+        {
+          "Name": "LowBoundaryNegDecimal5",
+          "Expression": "(-1.587).lowBoundary(32)",
+          "Result": true
+        },
+        {
+          "Name": "LowBoundaryNegDecimalDefault",
+          "Expression": "(-1.587).lowBoundary()",
+          "Result": true
+        },
+        {
+          "Name": "LowBoundaryQuantity",
+          "Expression": "1.587 'cm'.lowBoundary(8)",
+          "Result": true
+        },
+        {
+          "Name": "LowBoundaryTimeMillisecond",
+          "Expression": "@T10:30.lowBoundary(9)",
           "Result": true
         }
       ]
@@ -2083,9 +505,23 @@
         },
         {
           "Name": "testMultipleResolve",
-          "Expression": "composition.exists() implies (composition.resolve().section.entry.reference.where(resolve() is Observation) in (result.reference | result.reference.resolve().hasMember.reference))",
-          "Result": false,
-          "FailureMessage": "Error (Exception) Unknown error evaluating fhirpath expression\n   - property subject is a class com.google.gson.JsonArray looking for an object"
+          "Expression": "\n\t\t\tcomposition.exists() \n\t\t\timplies \n\t\t\t(\n\t\t\t\tcomposition.resolve().section.entry.reference.where(resolve() is Observation)\n\t\t\t\t.where($this in (%resource.result.reference | %resource.result.reference.resolve().hasMember.reference)).exists()\n\t\t\t)\n\t\t\t",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "period",
+      "TestCases": [
+        {
+          "Name": "testPeriodInvariantNew",
+          "Expression": "Patient.identifier.period.all(start.empty() or end.empty() or (start.lowBoundary() < end.highBoundary()))",
+          "Result": true
+        },
+        {
+          "Name": "testPeriodInvariantOld",
+          "Expression": "Patient.identifier.period.all(start.hasValue().not() or end.hasValue().not() or (start <= end))",
+          "Result": true
         }
       ]
     },
@@ -2102,6 +538,41 @@
           "Expression": "Observation.valueQuantity.exists()",
           "Result": false,
           "FailureMessage": "Some results didn't match expected values (1 values)"
+        }
+      ]
+    },
+    {
+      "Name": "Precision",
+      "TestCases": [
+        {
+          "Name": "PrecisionDateTimeMilliseconds",
+          "Expression": "@2014-01-05T10:30:00.000.precision()",
+          "Result": true
+        },
+        {
+          "Name": "PrecisionDecimal",
+          "Expression": "1.58700.precision()",
+          "Result": true
+        },
+        {
+          "Name": "PrecisionEmpty",
+          "Expression": "{}.precision().empty()",
+          "Result": true
+        },
+        {
+          "Name": "PrecisionTimeMilliseconds",
+          "Expression": "@T10:30:00.000.precision()",
+          "Result": true
+        },
+        {
+          "Name": "PrecisionTimeMinutes",
+          "Expression": "@T10:30.precision()",
+          "Result": true
+        },
+        {
+          "Name": "PrecisionYear",
+          "Expression": "@2014.precision()",
+          "Result": true
         }
       ]
     },
@@ -2126,8 +597,7 @@
         {
           "Name": "testAbsEmpty",
           "Expression": "{}.abs().empty()",
-          "Result": false,
-          "FailureMessage": "Error (Exception) Error evaluating FHIRPath expression: focus for 0 can only have one value, but has 0 values (@char 4)"
+          "Result": true
         }
       ]
     },
@@ -2467,14 +937,18 @@
         {
           "Name": "testCeilingEmpty",
           "Expression": "{}.ceiling().empty()",
-          "Result": false,
-          "FailureMessage": "Error (Exception) Error evaluating FHIRPath expression: focus for 0 can only have one value, but has 0 values (@char 4)"
+          "Result": true
         }
       ]
     },
     {
       "Name": "testCollectionBoolean",
       "TestCases": [
+        {
+          "Name": "testCollectionBoolean1",
+          "Expression": "iif(1 | 2 | 3, true, false)",
+          "Result": true
+        },
         {
           "Name": "testCollectionBoolean2",
           "Expression": "iif({}, true, false)",
@@ -2498,11 +972,6 @@
         {
           "Name": "testCollectionBoolean6",
           "Expression": "iif(false, 1/0, true)",
-          "Result": true
-        },
-        {
-          "Name": "testCollectionBoolean1",
-          "Expression": "iif(1 | 2 | 3, true, false)",
           "Result": true
         }
       ]
@@ -2553,6 +1022,28 @@
       ]
     },
     {
+      "Name": "testConformsTo",
+      "TestCases": [
+        {
+          "Name": "testConformsTo1",
+          "Expression": "conformsTo('http://hl7.org/fhir/StructureDefinition/Patient')",
+          "Result": false,
+          "FailureMessage": "Error (Exception) unknown profile http://hl7.org/fhir/StructureDefinition/Patient"
+        },
+        {
+          "Name": "testConformsTo2",
+          "Expression": "conformsTo('http://hl7.org/fhir/StructureDefinition/Person')",
+          "Result": false,
+          "FailureMessage": "Error (Exception) unknown profile http://hl7.org/fhir/StructureDefinition/Person"
+        },
+        {
+          "Name": "testConformsTo3",
+          "Expression": "conformsTo('http://trash')",
+          "Result": true
+        }
+      ]
+    },
+    {
       "Name": "testContainsCollection",
       "TestCases": [
         {
@@ -2578,32 +1069,87 @@
         {
           "Name": "testContainsCollectionEmpty1",
           "Expression": "{} contains 1",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
+          "Result": true
         },
         {
           "Name": "testContainsCollectionEmpty2",
           "Expression": "{} contains 'value'",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
+          "Result": true
         },
         {
           "Name": "testContainsCollectionEmpty3",
           "Expression": "{} contains true",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
+          "Result": true
         },
         {
           "Name": "testContainsCollectionEmpty4",
           "Expression": "{} contains {}",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
+          "Result": true
         },
         {
           "Name": "testContainsCollectionEmptyDateTime",
           "Expression": "{} contains @2023-01-01",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testContainsString",
+      "TestCases": [
+        {
+          "Name": "testContainsNonString1",
+          "Expression": "Appointment.identifier.contains('rand')",
+          "Result": true
+        },
+        {
+          "Name": "testContainsString1",
+          "Expression": "'12345'.contains('6') = false",
+          "Result": true
+        },
+        {
+          "Name": "testContainsString10",
+          "Expression": "Patient.name.family.first().contains(toChars().skip(3).take(3).join())",
+          "Result": true
+        },
+        {
+          "Name": "testContainsString2",
+          "Expression": "'12345'.contains('5') = true",
+          "Result": true
+        },
+        {
+          "Name": "testContainsString3",
+          "Expression": "'12345'.contains('45') = true",
+          "Result": true
+        },
+        {
+          "Name": "testContainsString4",
+          "Expression": "'12345'.contains('35') = false",
+          "Result": true
+        },
+        {
+          "Name": "testContainsString5",
+          "Expression": "'12345'.contains('12345') = true",
+          "Result": true
+        },
+        {
+          "Name": "testContainsString6",
+          "Expression": "'12345'.contains('012345') = false",
+          "Result": true
+        },
+        {
+          "Name": "testContainsString7",
+          "Expression": "'12345'.contains('') = true",
+          "Result": true
+        },
+        {
+          "Name": "testContainsString8",
+          "Expression": "{}.contains('a').empty() = true",
+          "Result": true
+        },
+        {
+          "Name": "testContainsString9",
+          "Expression": "{}.contains('').empty() = true",
+          "Result": true
         }
       ]
     },
@@ -2641,33 +1187,29 @@
           "Result": true
         },
         {
+          "Name": "testDistinct2",
+          "Expression": "Questionnaire.descendants().linkId.isDistinct()",
+          "Result": true
+        },
+        {
+          "Name": "testDistinct3",
+          "Expression": "Questionnaire.descendants().linkId.select(substring(0,1)).isDistinct().not()",
+          "Result": true
+        },
+        {
           "Name": "testDistinct4",
           "Expression": "(1 | 2 | 3).distinct()",
           "Result": true
         },
         {
-          "Name": "testDistinct2",
-          "Expression": "Questionnaire.descendants().linkId.isDistinct()",
-          "Result": false,
-          "FailureMessage": "Error (Exception) Unknown error evaluating fhirpath expression\n   - Unknown QuestionnaireItemType code 'coding'"
-        },
-        {
-          "Name": "testDistinct3",
-          "Expression": "Questionnaire.descendants().linkId.select(substring(0,1)).isDistinct().not()",
-          "Result": false,
-          "FailureMessage": "Error (Exception) Unknown error evaluating fhirpath expression\n   - Unknown QuestionnaireItemType code 'coding'"
-        },
-        {
           "Name": "testDistinct5",
           "Expression": "Questionnaire.descendants().linkId.distinct().count()",
-          "Result": false,
-          "FailureMessage": "Error (Exception) Unknown error evaluating fhirpath expression\n   - Unknown QuestionnaireItemType code 'coding'"
+          "Result": true
         },
         {
           "Name": "testDistinct6",
           "Expression": "Questionnaire.descendants().linkId.select(substring(0,1)).distinct().count()",
-          "Result": false,
-          "FailureMessage": "Error (Exception) Unknown error evaluating fhirpath expression\n   - Unknown QuestionnaireItemType code 'coding'"
+          "Result": true
         }
       ]
     },
@@ -2780,6 +1322,12 @@
           "Result": true
         },
         {
+          "Name": "testDollarOrderNotAllowed",
+          "Expression": "Patient.children().skip(1)",
+          "Result": false,
+          "FailureMessage": "Expected no results, but got some."
+        },
+        {
           "Name": "testDollarThis1",
           "Expression": "Patient.name.given.where(substring($this.length()-3) = 'out')",
           "Result": true
@@ -2832,6 +1380,66 @@
         {
           "Name": "testEncodeUrlBase64",
           "Expression": "'subjects?_d'.encode('urlbase64')",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testEndsWith",
+      "TestCases": [
+        {
+          "Name": "testEndsWith1",
+          "Expression": "'12345'.endsWith('2') = false",
+          "Result": true
+        },
+        {
+          "Name": "testEndsWith10",
+          "Expression": "Patient.name.family.first().endsWith(toChars().skip(3).join())",
+          "Result": true
+        },
+        {
+          "Name": "testEndsWith2",
+          "Expression": "'12345'.endsWith('5') = true",
+          "Result": true
+        },
+        {
+          "Name": "testEndsWith3",
+          "Expression": "'12345'.endsWith('45') = true",
+          "Result": true
+        },
+        {
+          "Name": "testEndsWith4",
+          "Expression": "'12345'.endsWith('35') = false",
+          "Result": true
+        },
+        {
+          "Name": "testEndsWith5",
+          "Expression": "'12345'.endsWith('12345') = true",
+          "Result": true
+        },
+        {
+          "Name": "testEndsWith6",
+          "Expression": "'12345'.endsWith('012345') = false",
+          "Result": true
+        },
+        {
+          "Name": "testEndsWith7",
+          "Expression": "'12345'.endsWith('') = true",
+          "Result": true
+        },
+        {
+          "Name": "testEndsWith8",
+          "Expression": "{}.endsWith('1').empty() = true",
+          "Result": true
+        },
+        {
+          "Name": "testEndsWith9",
+          "Expression": "{}.endsWith('').empty() = true",
+          "Result": true
+        },
+        {
+          "Name": "testEndsWithNonString1",
+          "Expression": "Appointment.identifier.endsWith('rand')",
           "Result": true
         }
       ]
@@ -2917,7 +1525,8 @@
         {
           "Name": "testEquality23",
           "Expression": "@2012-04-15T15:00:00Z = @2012-04-15T10:00:00",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Expected no results, but got some."
         },
         {
           "Name": "testEquality24",
@@ -3264,8 +1873,7 @@
         {
           "Name": "testFloorEmpty",
           "Expression": "{}.floor().empty()",
-          "Result": false,
-          "FailureMessage": "Error (Exception) Error evaluating FHIRPath expression: focus for 0 can only have one value, but has 0 values (@char 4)"
+          "Result": true
         }
       ]
     },
@@ -3346,11 +1954,16 @@
           "Name": "testGreaterThan22",
           "Expression": "Observation.value > 100 '[lb_av]'",
           "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "FailureMessage": "Error (Exception) Unknown error evaluating fhirpath expression\n   - class org.hl7.fhir.r5.elementmodel.Element cannot be cast to class org.hl7.fhir.r5.model.Quantity (org.hl7.fhir.r5.elementmodel.Element and org.hl7.fhir.r5.model.Quantity are in unnamed module of loader 'app')"
         },
         {
           "Name": "testGreaterThan23",
           "Expression": "@2018-03 > @2018-03-01",
+          "Result": true
+        },
+        {
+          "Name": "testGreaterThan24",
+          "Expression": "@2018-03-01T10:30 > @2018-03-01T10:30:00",
           "Result": true
         },
         {
@@ -3402,12 +2015,6 @@
           "Name": "testGreaterThan9",
           "Expression": "1.0 > 1.0",
           "Result": true
-        },
-        {
-          "Name": "testGreaterThan24",
-          "Expression": "@2018-03-01T10:30 > @2018-03-01T10:30:00",
-          "Result": false,
-          "FailureMessage": "Error (Exception) Unknown error evaluating fhirpath expression\n   - Invalid date/time format: \"2018-03-01T10:30\""
         },
         {
           "Name": "testGreaterThanEmpty1",
@@ -3503,11 +2110,16 @@
           "Name": "testGreatorOrEqual22",
           "Expression": "Observation.value >= 100 '[lb_av]'",
           "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "FailureMessage": "Error (Exception) Unknown error evaluating fhirpath expression\n   - class org.hl7.fhir.r5.elementmodel.Element cannot be cast to class org.hl7.fhir.r5.model.Quantity (org.hl7.fhir.r5.elementmodel.Element and org.hl7.fhir.r5.model.Quantity are in unnamed module of loader 'app')"
         },
         {
           "Name": "testGreatorOrEqual23",
           "Expression": "@2018-03 >= @2018-03-01",
+          "Result": true
+        },
+        {
+          "Name": "testGreatorOrEqual24",
+          "Expression": "@2018-03-01T10:30 >= @2018-03-01T10:30:00",
           "Result": true
         },
         {
@@ -3561,12 +2173,6 @@
           "Result": true
         },
         {
-          "Name": "testGreatorOrEqual24",
-          "Expression": "@2018-03-01T10:30 >= @2018-03-01T10:30:00",
-          "Result": false,
-          "FailureMessage": "Error (Exception) Unknown error evaluating fhirpath expression\n   - Invalid date/time format: \"2018-03-01T10:30\""
-        },
-        {
           "Name": "testGreatorOrEqualEmpty1",
           "Expression": "1 >= {}",
           "Result": true
@@ -3579,6 +2185,67 @@
         {
           "Name": "testGreatorOrEqualEmpty3",
           "Expression": "{} >= {}",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testIif",
+      "TestCases": [
+        {
+          "Name": "testIif1",
+          "Expression": "iif(Patient.name.exists(), 'named', 'unnamed') = 'named'",
+          "Result": true
+        },
+        {
+          "Name": "testIif10",
+          "Expression": "('item1' | 'item2').iif(true, 'true-result', 'false-result')",
+          "Result": true
+        },
+        {
+          "Name": "testIif11",
+          "Expression": "('context').iif($this = 'context','true-result', 'false-result')",
+          "Result": true
+        },
+        {
+          "Name": "testIif2",
+          "Expression": "iif(Patient.name.empty(), 'unnamed', 'named') = 'named'",
+          "Result": true
+        },
+        {
+          "Name": "testIif3",
+          "Expression": "iif(true, true, (1 | 2).toString())",
+          "Result": true
+        },
+        {
+          "Name": "testIif4",
+          "Expression": "iif(false, (1 | 2).toString(), true)",
+          "Result": true
+        },
+        {
+          "Name": "testIif5",
+          "Expression": "iif(false, 'true-result').empty()",
+          "Result": true
+        },
+        {
+          "Name": "testIif6",
+          "Expression": "iif('non boolean criteria', 'true-result', 'true-result')",
+          "Result": false,
+          "FailureMessage": "Expected no results, but got some."
+        },
+        {
+          "Name": "testIif7",
+          "Expression": "{}.iif(true, 'true-result', 'false-result')",
+          "Result": true
+        },
+        {
+          "Name": "testIif8",
+          "Expression": "('item').iif(true, 'true-result', 'false-result')",
+          "Result": true
+        },
+        {
+          "Name": "testIif9",
+          "Expression": "('context').iif(true, select($this), 'false-result')",
           "Result": true
         }
       ]
@@ -3607,10 +2274,14 @@
           "Result": true
         },
         {
+          "Name": "testIn5",
+          "Expression": "('a' | 'c' | 'd') in 'b'",
+          "Result": true
+        },
+        {
           "Name": "testInEmptyBoth",
           "Expression": "{} in {}",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
+          "Result": true
         },
         {
           "Name": "testInEmptyCollection",
@@ -3620,8 +2291,7 @@
         {
           "Name": "testInEmptyValue",
           "Expression": "{} in (1 | 2 | 3)",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
+          "Result": true
         }
       ]
     },
@@ -3672,6 +2342,132 @@
           "Name": "testIndexOf6",
           "Expression": "{}.indexOf({}).empty() = true",
           "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testInheritance",
+      "TestCases": [
+        {
+          "Name": "testFHIRPathAsFunction11",
+          "Expression": "Patient.gender.as(string)",
+          "Result": true
+        },
+        {
+          "Name": "testFHIRPathAsFunction12",
+          "Expression": "Patient.gender.as(code)",
+          "Result": true
+        },
+        {
+          "Name": "testFHIRPathAsFunction13",
+          "Expression": "Patient.gender.as(id)",
+          "Result": true
+        },
+        {
+          "Name": "testFHIRPathAsFunction14",
+          "Expression": "ValueSet.version.as(string)",
+          "Result": true
+        },
+        {
+          "Name": "testFHIRPathAsFunction15",
+          "Expression": "ValueSet.version.as(code)",
+          "Result": true
+        },
+        {
+          "Name": "testFHIRPathAsFunction16",
+          "Expression": "Patient.gender.ofType(string)",
+          "Result": true
+        },
+        {
+          "Name": "testFHIRPathAsFunction17",
+          "Expression": "Patient.gender.ofType(code)",
+          "Result": true
+        },
+        {
+          "Name": "testFHIRPathAsFunction18",
+          "Expression": "Patient.gender.ofType(id)",
+          "Result": true
+        },
+        {
+          "Name": "testFHIRPathAsFunction19",
+          "Expression": "ValueSet.version.ofType(string)",
+          "Result": true
+        },
+        {
+          "Name": "testFHIRPathAsFunction20",
+          "Expression": "ValueSet.version.ofType(code)",
+          "Result": true
+        },
+        {
+          "Name": "testFHIRPathAsFunction21",
+          "Expression": "Patient.name.as(HumanName).use",
+          "Result": true
+        },
+        {
+          "Name": "testFHIRPathAsFunction22",
+          "Expression": "Patient.name.ofType(HumanName).use",
+          "Result": true
+        },
+        {
+          "Name": "testFHIRPathAsFunction23",
+          "Expression": "Patient.gender.as(string1)",
+          "Result": true
+        },
+        {
+          "Name": "testFHIRPathAsFunction24",
+          "Expression": "Patient.gender.ofType(string1)",
+          "Result": true
+        },
+        {
+          "Name": "testFHIRPathIsFunction1",
+          "Expression": "Patient.gender.is(code)",
+          "Result": true
+        },
+        {
+          "Name": "testFHIRPathIsFunction10",
+          "Expression": "Observation.extension('http://example.com/fhir/StructureDefinition/patient-age').value is Duration",
+          "Result": true
+        },
+        {
+          "Name": "testFHIRPathIsFunction2",
+          "Expression": "Patient.gender.is(string)",
+          "Result": true
+        },
+        {
+          "Name": "testFHIRPathIsFunction3",
+          "Expression": "Patient.gender.is(id)",
+          "Result": true
+        },
+        {
+          "Name": "testFHIRPathIsFunction4",
+          "Expression": "Questionnaire.url.is(uri)",
+          "Result": true
+        },
+        {
+          "Name": "testFHIRPathIsFunction5",
+          "Expression": "Questionnaire.url.is(url)",
+          "Result": true
+        },
+        {
+          "Name": "testFHIRPathIsFunction6",
+          "Expression": "ValueSet.version.is(string)",
+          "Result": true
+        },
+        {
+          "Name": "testFHIRPathIsFunction7",
+          "Expression": "ValueSet.version.is(code)",
+          "Result": true
+        },
+        {
+          "Name": "testFHIRPathIsFunction8",
+          "Expression": "Observation.extension('http://example.com/fhir/StructureDefinition/patient-age').value is Age",
+          "Result": true
+        },
+        {
+          "Name": "testFHIRPathIsFunction9",
+          "Expression": "Observation.extension('http://example.com/fhir/StructureDefinition/patient-age').value is Quantity",
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         }
       ]
     },
@@ -3822,11 +2618,16 @@
           "Name": "testLessOrEqual22",
           "Expression": "Observation.value <= 200 '[lb_av]'",
           "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "FailureMessage": "Error (Exception) Unknown error evaluating fhirpath expression\n   - class org.hl7.fhir.r5.elementmodel.Element cannot be cast to class org.hl7.fhir.r5.model.Quantity (org.hl7.fhir.r5.elementmodel.Element and org.hl7.fhir.r5.model.Quantity are in unnamed module of loader 'app')"
         },
         {
           "Name": "testLessOrEqual23",
           "Expression": "@2018-03 <= @2018-03-01",
+          "Result": true
+        },
+        {
+          "Name": "testLessOrEqual24",
+          "Expression": "@2018-03-01T10:30 <= @2018-03-01T10:30:00",
           "Result": true
         },
         {
@@ -3878,12 +2679,6 @@
           "Name": "testLessOrEqual9",
           "Expression": "1.0 <= 1.0",
           "Result": true
-        },
-        {
-          "Name": "testLessOrEqual24",
-          "Expression": "@2018-03-01T10:30 <= @2018-03-01T10:30:00",
-          "Result": false,
-          "FailureMessage": "Error (Exception) Unknown error evaluating fhirpath expression\n   - Invalid date/time format: \"2018-03-01T10:30\""
         },
         {
           "Name": "testLessOrEqualEmpty1",
@@ -3986,6 +2781,11 @@
           "Result": true
         },
         {
+          "Name": "testLessThan24",
+          "Expression": "@2018-03-01T10:30 < @2018-03-01T10:30:00",
+          "Result": true
+        },
+        {
           "Name": "testLessThan25",
           "Expression": "@T10:30 < @T10:30:00",
           "Result": true
@@ -4034,12 +2834,6 @@
           "Name": "testLessThan9",
           "Expression": "1.0 < 1.0",
           "Result": true
-        },
-        {
-          "Name": "testLessThan24",
-          "Expression": "@2018-03-01T10:30 < @2018-03-01T10:30:00",
-          "Result": false,
-          "FailureMessage": "Error (Exception) Unknown error evaluating fhirpath expression\n   - Invalid date/time format: \"2018-03-01T10:30\""
         },
         {
           "Name": "testLessThanEmpty1",
@@ -4138,8 +2932,7 @@
         {
           "Name": "testExpressions",
           "Expression": "Patient.name.select(given | family).distinct()",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (4 values)"
+          "Result": true
         },
         {
           "Name": "testExpressionsEqual",
@@ -4182,8 +2975,18 @@
           "Result": true
         },
         {
+          "Name": "testLiteralDateTimeHour",
+          "Expression": "@2015-02-04T14.is(DateTime)",
+          "Result": true
+        },
+        {
           "Name": "testLiteralDateTimeMillisecond",
           "Expression": "@2015-02-04T14:34:28.123.is(DateTime)",
+          "Result": true
+        },
+        {
+          "Name": "testLiteralDateTimeMinute",
+          "Expression": "@2015-02-04T14:34.is(DateTime)",
           "Result": true
         },
         {
@@ -4272,6 +3075,11 @@
           "Result": true
         },
         {
+          "Name": "testLiteralDecimalLessThanInvalid",
+          "Expression": "Observation.value.value < 'test'",
+          "Result": true
+        },
+        {
           "Name": "testLiteralDecimalMax",
           "Expression": "1234567890987654321.0.convertsToDecimal()",
           "Result": true
@@ -4279,6 +3087,11 @@
         {
           "Name": "testLiteralDecimalNegative01",
           "Expression": "(-0.1).convertsToDecimal()",
+          "Result": true
+        },
+        {
+          "Name": "testLiteralDecimalNegative01Invalid",
+          "Expression": "-0.1.convertsToDecimal()",
           "Result": true
         },
         {
@@ -4344,6 +3157,11 @@
         {
           "Name": "testLiteralIntegerNegative1",
           "Expression": "(-1).convertsToInteger()",
+          "Result": true
+        },
+        {
+          "Name": "testLiteralIntegerNegative1Invalid",
+          "Expression": "-1.convertsToInteger()",
           "Result": true
         },
         {
@@ -4417,6 +3235,16 @@
           "Result": true
         },
         {
+          "Name": "testLiteralTimeTimezoneOffset",
+          "Expression": "@T14:34:28+10:00.is(Time)",
+          "Result": true
+        },
+        {
+          "Name": "testLiteralTimeUTC",
+          "Expression": "@T14:34:28Z.is(Time)",
+          "Result": true
+        },
+        {
           "Name": "testLiteralTrue",
           "Expression": "Patient.name.exists() = true",
           "Result": true
@@ -4432,51 +3260,13 @@
           "Result": true
         },
         {
-          "Name": "testLiteralDateTimeHour",
-          "Expression": "@2015-02-04T14.is(DateTime)",
-          "Result": false,
-          "FailureMessage": "Error (Exception) Unknown error evaluating fhirpath expression\n   - Invalid date/time format: \"2015-02-04T14:00\""
-        },
-        {
-          "Name": "testLiteralDateTimeMinute",
-          "Expression": "@2015-02-04T14:34.is(DateTime)",
-          "Result": false,
-          "FailureMessage": "Error (Exception) Unknown error evaluating fhirpath expression\n   - Invalid date/time format: \"2015-02-04T14:34\""
+          "Name": "testNotInvalid",
+          "Expression": "(1|2).not() = false",
+          "Result": true
         },
         {
           "Name": "testPolarityPrecedence",
           "Expression": "-Patient.name.given.count() = -5",
-          "Result": false,
-          "FailureMessage": "Error (Exception) Unknown error evaluating fhirpath expression"
-        },
-        {
-          "Name": "testLiteralDecimalLessThanInvalid",
-          "Expression": "Observation.value.value < 'test'",
-          "Result": true
-        },
-        {
-          "Name": "testLiteralDecimalNegative01Invalid",
-          "Expression": "-0.1.convertsToDecimal()",
-          "Result": true
-        },
-        {
-          "Name": "testLiteralIntegerNegative1Invalid",
-          "Expression": "-1.convertsToInteger()",
-          "Result": true
-        },
-        {
-          "Name": "testLiteralTimeTimezoneOffset",
-          "Expression": "@T14:34:28+10:00.is(Time)",
-          "Result": true
-        },
-        {
-          "Name": "testLiteralTimeUTC",
-          "Expression": "@T14:34:28Z.is(Time)",
-          "Result": true
-        },
-        {
-          "Name": "testNotInvalid",
-          "Expression": "(1|2).not() = false",
           "Result": true
         }
       ]
@@ -4493,6 +3283,11 @@
           "Name": "testLn2",
           "Expression": "1.0.ln() = 0.0",
           "Result": true
+        },
+        {
+          "Name": "testLnEmpty",
+          "Expression": "{}.ln().empty()",
+          "Result": true
         }
       ]
     },
@@ -4507,6 +3302,106 @@
         {
           "Name": "testLog2",
           "Expression": "100.0.log(10.0) = 2.0",
+          "Result": true
+        },
+        {
+          "Name": "testLogEmpty",
+          "Expression": "{}.log(10).empty()",
+          "Result": true
+        },
+        {
+          "Name": "testLogEmpty2",
+          "Expression": "{}.log({}).empty()",
+          "Result": true
+        },
+        {
+          "Name": "testLogEmpty3",
+          "Expression": "16.log({}).empty()",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testMatches",
+      "TestCases": [
+        {
+          "Name": "testMatchesCaseSensitive1",
+          "Expression": "'FHIR'.matches('FHIR')",
+          "Result": true
+        },
+        {
+          "Name": "testMatchesCaseSensitive2",
+          "Expression": "'FHIR'.matches('fhir')",
+          "Result": true
+        },
+        {
+          "Name": "testMatchesEmpty",
+          "Expression": "'FHIR'.matches({}).empty() = true",
+          "Result": true
+        },
+        {
+          "Name": "testMatchesEmpty2",
+          "Expression": "{}.matches('FHIR').empty() = true",
+          "Result": true
+        },
+        {
+          "Name": "testMatchesEmpty3",
+          "Expression": "{}.matches({}).empty() = true",
+          "Result": true
+        },
+        {
+          "Name": "testMatchesFullWithinUrl1",
+          "Expression": "'http://fhir.org/guides/cqf/common/Library/FHIR-ModelInfo|4.0.1'.matchesFull('library')",
+          "Result": true
+        },
+        {
+          "Name": "testMatchesFullWithinUrl1a",
+          "Expression": "'http://fhir.org/guides/cqf/common/Library/FHIR-ModelInfo|4.0.1'.matchesFull('.*Library.*')",
+          "Result": true
+        },
+        {
+          "Name": "testMatchesFullWithinUrl2",
+          "Expression": "'http://fhir.org/guides/cqf/common/Library/FHIR-ModelInfo|4.0.1'.matchesFull('Measure')",
+          "Result": true
+        },
+        {
+          "Name": "testMatchesFullWithinUrl3",
+          "Expression": "'http://fhir.org/guides/cqf/common/Library/FHIR-ModelInfo|4.0.1'.matchesFull('Library')",
+          "Result": true
+        },
+        {
+          "Name": "testMatchesFullWithinUrl4",
+          "Expression": "'http://fhir.org/guides/cqf/common/Library/FHIR-ModelInfo|4.0.1'.matchesFull('^Library$')",
+          "Result": true
+        },
+        {
+          "Name": "testMatchesSingleLineMode1",
+          "Expression": "'A\n\t\t\tB'.matches('A.*B')",
+          "Result": true
+        },
+        {
+          "Name": "testMatchesWithinUrl1",
+          "Expression": "'http://fhir.org/guides/cqf/common/Library/FHIR-ModelInfo|4.0.1'.matches('library')",
+          "Result": true
+        },
+        {
+          "Name": "testMatchesWithinUrl1a",
+          "Expression": "'http://fhir.org/guides/cqf/common/Library/FHIR-ModelInfo|4.0.1'.matches('.*Library.*')",
+          "Result": true
+        },
+        {
+          "Name": "testMatchesWithinUrl2",
+          "Expression": "'http://fhir.org/guides/cqf/common/Library/FHIR-ModelInfo|4.0.1'.matches('Library')",
+          "Result": true
+        },
+        {
+          "Name": "testMatchesWithinUrl3",
+          "Expression": "'http://fhir.org/guides/cqf/common/Library/FHIR-ModelInfo|4.0.1'.matches('^Library$')",
+          "Result": true
+        },
+        {
+          "Name": "testMatchesWithinUrl4",
+          "Expression": "'http://fhir.org/guides/cqf/common/Library/FHIR-ModelInfo|4.0.1'.matches('Measure')",
           "Result": true
         }
       ]
@@ -4530,13 +3425,13 @@
           "Result": true
         },
         {
-          "Name": "testMinus5",
-          "Expression": "@1974-12-25 - 1 'month'",
+          "Name": "testMinus4",
+          "Expression": "'a'-'b' = 'ab'",
           "Result": true
         },
         {
-          "Name": "testMinus4",
-          "Expression": "'a'-'b' = 'ab'",
+          "Name": "testMinus5",
+          "Expression": "@1974-12-25 - 1 'month'",
           "Result": true
         },
         {
@@ -4547,14 +3442,12 @@
         {
           "Name": "testMinus7",
           "Expression": "@T00:30:00 - 1 hour",
-          "Result": false,
-          "FailureMessage": "Error (Exception) Error evaluating FHIRPath expression: right operand to - has the wrong type Quantity (@char 1)"
+          "Result": true
         },
         {
           "Name": "testMinus8",
           "Expression": "@T01:00:00 - 2 hours",
-          "Result": false,
-          "FailureMessage": "Error (Exception) Error evaluating FHIRPath expression: right operand to - has the wrong type Quantity (@char 1)"
+          "Result": true
         },
         {
           "Name": "testMinusEmpty1",
@@ -4569,6 +3462,130 @@
         {
           "Name": "testMinusEmpty3",
           "Expression": "{} - {}",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testMiscellaneousAccessorTests",
+      "TestCases": [
+        {
+          "Name": "testExtractBirthDate",
+          "Description": "Extract birthDate",
+          "Expression": "birthDate",
+          "Result": true
+        },
+        {
+          "Name": "testPatientHasBirthDate",
+          "Description": "patient has a birthDate",
+          "Expression": "birthDate",
+          "Result": false,
+          "FailureMessage": "Expected a single boolean result for predicate evaluation."
+        },
+        {
+          "Name": "testPatientTelecomTypes",
+          "Description": "patient telecom types",
+          "Expression": "telecom.use",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testMixedPrecision",
+      "TestCases": [
+        {
+          "Name": "testMixedPrecisionArithmetic1",
+          "Expression": "1 + 1.5 = 2.5",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionArithmetic2",
+          "Expression": "2.0 * 3 = 6.0",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionArithmetic3",
+          "Expression": "5 / 2.0 = 2.5",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionArithmetic4",
+          "Expression": "7.0 - 3 = 4.0",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionArithmetic5",
+          "Expression": "10 div 3.0 = 3",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionArithmetic6",
+          "Expression": "10.0 mod 3 = 1.0",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionEquals1",
+          "Expression": "1 = 1.0",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionEquals2",
+          "Expression": "1.0 = 1",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionEquals3",
+          "Expression": "2 = 2.000",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionGreaterOrEqual1",
+          "Expression": "1.0 >= 1",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionGreaterOrEqual2",
+          "Expression": "2 >= 1.5",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionGreaterThan1",
+          "Expression": "2 > 1.5",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionGreaterThan2",
+          "Expression": "2.0 > 1",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionLessOrEqual1",
+          "Expression": "1 <= 1.0",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionLessOrEqual2",
+          "Expression": "1.5 <= 2",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionLessThan1",
+          "Expression": "1 < 1.1",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionLessThan2",
+          "Expression": "1.0 < 2",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionNotEquals1",
+          "Expression": "1 != 1.0",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionNotEquals2",
+          "Expression": "1.0 != 1",
           "Result": true
         }
       ]
@@ -4699,7 +3716,8 @@
         {
           "Name": "testNEquality17",
           "Expression": "@2012-04-15T15:00:00Z != @2012-04-15T10:00:00",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Expected no results, but got some."
         },
         {
           "Name": "testNEquality18",
@@ -4939,8 +3957,7 @@
         {
           "Name": "testPolymorphismB",
           "Expression": "Observation.valueQuantity.unit",
-          "Result": false,
-          "FailureMessage": "Expected no results, but got some."
+          "Result": true
         },
         {
           "Name": "testPolymorphismIsA1",
@@ -4988,6 +4005,16 @@
           "Result": true
         },
         {
+          "Name": "testPlus5",
+          "Expression": "'a'+{}",
+          "Result": true
+        },
+        {
+          "Name": "testPlus6",
+          "Expression": "@1974-12-25 + 7",
+          "Result": true
+        },
+        {
           "Name": "testPlusDate1",
           "Expression": "@1973-12-25 + 7 days",
           "Result": true
@@ -5013,8 +4040,23 @@
           "Result": true
         },
         {
+          "Name": "testPlusDate14",
+          "Expression": "@1973-12-25 + 1 'mo'",
+          "Result": true
+        },
+        {
           "Name": "testPlusDate15",
           "Expression": "@1973-12-25 + 1 'wk'",
+          "Result": true
+        },
+        {
+          "Name": "testPlusDate16",
+          "Expression": "@1973-12-25 + 1 'a'",
+          "Result": true
+        },
+        {
+          "Name": "testPlusDate17",
+          "Expression": "@1975-12-25 + 1 'a'",
           "Result": true
         },
         {
@@ -5025,8 +4067,7 @@
         {
           "Name": "testPlusDate19",
           "Expression": "@1973-12-25T00:00:00.000+10:00 + 0.1 's'",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "Result": true
         },
         {
           "Name": "testPlusDate2",
@@ -5084,38 +4125,6 @@
           "Result": true
         },
         {
-          "Name": "testPlus6",
-          "Expression": "@1974-12-25 + 7",
-          "Result": true
-        },
-        {
-          "Name": "testPlusDate14",
-          "Expression": "@1973-12-25 + 1 'mo'",
-          "Result": true
-        },
-        {
-          "Name": "testPlusDate16",
-          "Expression": "@1973-12-25 + 1 'a'",
-          "Result": true
-        },
-        {
-          "Name": "testPlusDate17",
-          "Expression": "@1975-12-25 + 1 'a'",
-          "Result": true
-        },
-        {
-          "Name": "testPlusTime1",
-          "Expression": "@T01:00:00 + 2 hours",
-          "Result": false,
-          "FailureMessage": "Error (Exception) Error evaluating FHIRPath expression: right operand to + has the wrong type Quantity (@char 1)"
-        },
-        {
-          "Name": "testPlusTime2",
-          "Expression": "@T23:00:00 + 2 hours",
-          "Result": false,
-          "FailureMessage": "Error (Exception) Error evaluating FHIRPath expression: right operand to + has the wrong type Quantity (@char 1)"
-        },
-        {
           "Name": "testPlusEmpty1",
           "Expression": "1 + {}",
           "Result": true
@@ -5128,6 +4137,21 @@
         {
           "Name": "testPlusEmpty3",
           "Expression": "{} + {}",
+          "Result": true
+        },
+        {
+          "Name": "testPlusTime1",
+          "Expression": "@T01:00:00 + 2 hours",
+          "Result": true
+        },
+        {
+          "Name": "testPlusTime2",
+          "Expression": "@T23:00:00 + 2 hours",
+          "Result": true
+        },
+        {
+          "Name": "testPlusTime3",
+          "Expression": "@T23:00:00 + 50 hours",
           "Result": true
         }
       ]
@@ -5148,6 +4172,147 @@
         {
           "Name": "testPower3",
           "Expression": "(-1).power(0.5)",
+          "Result": true
+        },
+        {
+          "Name": "testPowerEmpty",
+          "Expression": "{}.power(2).empty()",
+          "Result": true
+        },
+        {
+          "Name": "testPowerEmpty2",
+          "Expression": "{}.power({}).empty()",
+          "Result": true
+        },
+        {
+          "Name": "testPowerEmpty3",
+          "Expression": "2.5.power({}).empty()",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testPrecedence",
+      "TestCases": [
+        {
+          "Name": "testPrecedence1",
+          "Description": "test unary precedence",
+          "Expression": "-1.convertsToInteger()",
+          "Result": true
+        },
+        {
+          "Name": "testPrecedence2",
+          "Expression": "1+2*3+4 = 11",
+          "Result": true
+        },
+        {
+          "Name": "testPrecedence3",
+          "Expression": "1 > 2 is Boolean",
+          "Result": true
+        },
+        {
+          "Name": "testPrecedence4",
+          "Expression": "1 | 1 is Integer",
+          "Result": true
+        },
+        {
+          "Name": "testPrecedence5",
+          "Expression": "true and '0215' in ('0215' | '0216')",
+          "Result": true
+        },
+        {
+          "Name": "testPrecedence6",
+          "Expression": "category.exists(coding.exists(system = 'http://terminology.hl7.org/CodeSystem/observation-category' and code.trace('c') in ('vital-signs' | 'vital-signs2').trace('codes')))",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testQuantity",
+      "TestCases": [
+        {
+          "Name": "testQuantity1",
+          "Expression": "4.0000 'g' = 4000.0 'mg'",
+          "Result": true
+        },
+        {
+          "Name": "testQuantity10",
+          "Expression": "4.0 'g' / 2.0 'm' = 2 'g/m'",
+          "Result": true
+        },
+        {
+          "Name": "testQuantity11",
+          "Expression": "1.0 'm' / 1.0 'm' = 1 '1'",
+          "Result": true
+        },
+        {
+          "Name": "testQuantity2",
+          "Expression": "4 'g' ~ 4000 'mg'",
+          "Result": true
+        },
+        {
+          "Name": "testQuantity3",
+          "Expression": "4 'g' != 4040 'mg'",
+          "Result": true
+        },
+        {
+          "Name": "testQuantity4",
+          "Expression": "4 'g' ~ 4040 'mg'",
+          "Result": true
+        },
+        {
+          "Name": "testQuantity5",
+          "Expression": "7 days = 1 week",
+          "Result": true
+        },
+        {
+          "Name": "testQuantity6",
+          "Expression": "7 days = 1 'wk'",
+          "Result": true
+        },
+        {
+          "Name": "testQuantity7",
+          "Expression": "6 days < 1 week",
+          "Result": true
+        },
+        {
+          "Name": "testQuantity8",
+          "Expression": "8 days > 1 week",
+          "Result": true
+        },
+        {
+          "Name": "testQuantity9",
+          "Expression": "2.0 'cm' * 2.0 'm' = 0.040 'm2'",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testRepeat",
+      "TestCases": [
+        {
+          "Name": "testRepeat1",
+          "Expression": "ValueSet.expansion.repeat(contains).count() = 10",
+          "Result": true
+        },
+        {
+          "Name": "testRepeat2",
+          "Expression": "Questionnaire.repeat(item).code.count() = 11",
+          "Result": true
+        },
+        {
+          "Name": "testRepeat3",
+          "Expression": "Questionnaire.descendants().code.count() = 23",
+          "Result": true
+        },
+        {
+          "Name": "testRepeat4",
+          "Expression": "Questionnaire.children().code.count() = 2",
+          "Result": true
+        },
+        {
+          "Name": "testRepeat5",
+          "Expression": "Patient.name.repeat('test')",
           "Result": true
         }
       ]
@@ -5188,6 +4353,46 @@
       ]
     },
     {
+      "Name": "testReplaceMatches",
+      "TestCases": [
+        {
+          "Name": "testReplaceMatches1",
+          "Expression": "'123456'.replaceMatches('234', 'X')",
+          "Result": true
+        },
+        {
+          "Name": "testReplaceMatches2",
+          "Expression": "'abc'.replaceMatches('', 'x')",
+          "Result": true
+        },
+        {
+          "Name": "testReplaceMatches3",
+          "Expression": "'123456'.replaceMatches('234', '')",
+          "Result": true
+        },
+        {
+          "Name": "testReplaceMatches4",
+          "Expression": "{}.replaceMatches('234', 'X').empty() = true",
+          "Result": true
+        },
+        {
+          "Name": "testReplaceMatches5",
+          "Expression": "'123'.replaceMatches({}, 'X').empty() = true",
+          "Result": true
+        },
+        {
+          "Name": "testReplaceMatches6",
+          "Expression": "'123'.replaceMatches('2', {}).empty() = true",
+          "Result": true
+        },
+        {
+          "Name": "testReplaceMatches7",
+          "Expression": "'abc123'.replaceMatches('[0-9]', '-')",
+          "Result": true
+        }
+      ]
+    },
+    {
       "Name": "testRound",
       "TestCases": [
         {
@@ -5203,8 +4408,7 @@
         {
           "Name": "testRoundEmpty",
           "Expression": "{}.round().empty()",
-          "Result": false,
-          "FailureMessage": "Error (Exception) Error evaluating FHIRPath expression: focus for 0 can only have one value, but has 0 values (@char 4)"
+          "Result": true
         }
       ]
     },
@@ -5244,6 +4448,121 @@
       ]
     },
     {
+      "Name": "testSkip",
+      "TestCases": [
+        {
+          "Name": "testSkip1",
+          "Expression": "(0 | 1 | 2).skip(1) = 1 | 2",
+          "Result": true
+        },
+        {
+          "Name": "testSkip2",
+          "Expression": "(0 | 1 | 2).skip(2) = 2",
+          "Result": true
+        },
+        {
+          "Name": "testSkip3",
+          "Expression": "Patient.name.skip(1).given.trace('test') = 'Jim' | 'Peter' | 'James'",
+          "Result": true
+        },
+        {
+          "Name": "testSkip4",
+          "Expression": "Patient.name.skip(3).given.exists() = false",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testSort",
+      "TestCases": [
+        {
+          "Name": "testSort1",
+          "Description": "Prototype definition - not part of spec yet",
+          "Expression": "(1 | 2 | 3).sort() = (1 | 2 | 3)",
+          "Result": true
+        },
+        {
+          "Name": "testSort10",
+          "Description": "Prototype definition - not part of spec yet",
+          "Expression": "Patient.name.sort(-family, -given.first()).first().use = 'usual'",
+          "Result": true
+        },
+        {
+          "Name": "testSort2",
+          "Description": "Prototype definition - not part of spec yet",
+          "Expression": "(3 | 2 | 1).sort() = (1 | 2 | 3)",
+          "Result": true
+        },
+        {
+          "Name": "testSort3",
+          "Description": "Prototype definition - not part of spec yet",
+          "Expression": "(1 | 2 | 3).sort($this) = (1 | 2 | 3)",
+          "Result": true
+        },
+        {
+          "Name": "testSort4",
+          "Description": "Prototype definition - not part of spec yet",
+          "Expression": "(3 | 2 | 1).sort($this) = (1 | 2 | 3)",
+          "Result": true
+        },
+        {
+          "Name": "testSort5",
+          "Description": "Prototype definition - not part of spec yet",
+          "Expression": "(1 | 2 | 3).sort(-$this) = (3 | 2 | 1)",
+          "Result": true
+        },
+        {
+          "Name": "testSort6",
+          "Description": "Prototype definition - not part of spec yet",
+          "Expression": "('a' | 'b' | 'c').sort($this) = ('a' | 'b' | 'c')",
+          "Result": true
+        },
+        {
+          "Name": "testSort7",
+          "Description": "Prototype definition - not part of spec yet",
+          "Expression": "('c' | 'b' | 'a').sort($this) = ('a' | 'b' | 'c')",
+          "Result": true
+        },
+        {
+          "Name": "testSort8",
+          "Description": "Prototype definition - not part of spec yet",
+          "Expression": "('a' | 'b' | 'c').sort(-$this) = ('c' | 'b' | 'a')",
+          "Result": true
+        },
+        {
+          "Name": "testSort9",
+          "Description": "Prototype definition - not part of spec yet",
+          "Expression": "Patient.name[0].given.sort() = ('James' | 'Peter')",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testSplit",
+      "TestCases": [
+        {
+          "Name": "testSplit1",
+          "Expression": "'Peter,James,Jim,Peter,James'.split(',').count() = 5",
+          "Result": true
+        },
+        {
+          "Name": "testSplit2",
+          "Expression": "'A,,C'.split(',').join(',') = 'A,,C'",
+          "Result": true
+        },
+        {
+          "Name": "testSplit3",
+          "Expression": "'[stop]ONE[stop][stop]TWO[stop][stop][stop]THREE[stop][stop]'.split('[stop]').trace('n').count() = 9",
+          "Result": true
+        },
+        {
+          "Name": "testSplit4",
+          "Expression": "'[stop]ONE[stop][stop]TWO[stop][stop][stop]THREE[stop][stop]'.split('[stop]').join('[stop]')",
+          "Result": true
+        }
+      ]
+    },
+    {
       "Name": "testSqrt",
       "TestCases": [
         {
@@ -5259,8 +4578,157 @@
         {
           "Name": "testSqrtEmpty",
           "Expression": "{}.sqrt().empty()",
-          "Result": false,
-          "FailureMessage": "Error (Exception) Error evaluating FHIRPath expression: focus for 0 can only have one value, but has 0 values (@char 4)"
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testStartsWith",
+      "TestCases": [
+        {
+          "Name": "testStartsWith1",
+          "Expression": "'12345'.startsWith('2') = false",
+          "Result": true
+        },
+        {
+          "Name": "testStartsWith10",
+          "Expression": "''.startsWith('') = true",
+          "Result": true
+        },
+        {
+          "Name": "testStartsWith11",
+          "Expression": "{}.startsWith('').exists() = false",
+          "Result": true
+        },
+        {
+          "Name": "testStartsWith12",
+          "Expression": "Patient.name.family.first().startsWith(toChars().take(3).join())",
+          "Result": true
+        },
+        {
+          "Name": "testStartsWith2",
+          "Expression": "'12345'.startsWith('1') = true",
+          "Result": true
+        },
+        {
+          "Name": "testStartsWith3",
+          "Expression": "'12345'.startsWith('12') = true",
+          "Result": true
+        },
+        {
+          "Name": "testStartsWith4",
+          "Expression": "'12345'.startsWith('13') = false",
+          "Result": true
+        },
+        {
+          "Name": "testStartsWith5",
+          "Expression": "'12345'.startsWith('12345') = true",
+          "Result": true
+        },
+        {
+          "Name": "testStartsWith6",
+          "Expression": "'12345'.startsWith('123456') = false",
+          "Result": true
+        },
+        {
+          "Name": "testStartsWith7",
+          "Expression": "'12345'.startsWith('') = true",
+          "Result": true
+        },
+        {
+          "Name": "testStartsWith8",
+          "Expression": "{}.startsWith('1').empty() = true",
+          "Result": true
+        },
+        {
+          "Name": "testStartsWith9",
+          "Expression": "{}.startsWith('').empty() = true",
+          "Result": true
+        },
+        {
+          "Name": "testStartsWithNonString1",
+          "Expression": "Appointment.identifier.startsWith('rand')",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testSubSetOf",
+      "TestCases": [
+        {
+          "Name": "testSubSetOf1",
+          "Expression": "Patient.name.first().subsetOf($this.name)",
+          "Result": true
+        },
+        {
+          "Name": "testSubSetOf2",
+          "Expression": "Patient.name.subsetOf($this.name.first()).not()",
+          "Result": true
+        },
+        {
+          "Name": "testSubSetOf3",
+          "Expression": "supportingInfo.where(category.coding.code = 'additionalbodysite').sequence.subsetOf($this.item.informationSequence)",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testSubstring",
+      "TestCases": [
+        {
+          "Name": "testSubstring1",
+          "Expression": "'12345'.substring(2) = '345'",
+          "Result": true
+        },
+        {
+          "Name": "testSubstring10",
+          "Expression": "Patient.name.family.first().substring(2, length()-5)",
+          "Result": true
+        },
+        {
+          "Name": "testSubstring11",
+          "Expression": "{}.substring({}).empty() = true",
+          "Result": true
+        },
+        {
+          "Name": "testSubstring12",
+          "Expression": "'string'.substring({}).empty() = true",
+          "Result": true
+        },
+        {
+          "Name": "testSubstring2",
+          "Expression": "'12345'.substring(2,1) = '3'",
+          "Result": true
+        },
+        {
+          "Name": "testSubstring3",
+          "Expression": "'12345'.substring(2,5) = '345'",
+          "Result": true
+        },
+        {
+          "Name": "testSubstring4",
+          "Expression": "'12345'.substring(25).empty()",
+          "Result": true
+        },
+        {
+          "Name": "testSubstring5",
+          "Expression": "'12345'.substring(-1).empty()",
+          "Result": true
+        },
+        {
+          "Name": "testSubstring7",
+          "Expression": "'LogicalModel-Person'.substring(0, 12)",
+          "Result": true
+        },
+        {
+          "Name": "testSubstring8",
+          "Expression": "'LogicalModel-Person'.substring(0, 'LogicalModel-Person'.indexOf('-'))",
+          "Result": true
+        },
+        {
+          "Name": "testSubstring9",
+          "Expression": "{}.substring(25).empty() = true",
+          "Result": true
         }
       ]
     },
@@ -5450,6 +4918,21 @@
       ]
     },
     {
+      "Name": "testTrace",
+      "TestCases": [
+        {
+          "Name": "testTrace1",
+          "Expression": "name.given.trace('test').count() = 5",
+          "Result": true
+        },
+        {
+          "Name": "testTrace2",
+          "Expression": "name.trace('test', given).count() = 3",
+          "Result": true
+        }
+      ]
+    },
+    {
       "Name": "testTrim",
       "TestCases": [
         {
@@ -5505,8 +4988,669 @@
         {
           "Name": "testTruncateEmpty",
           "Expression": "{}.truncate().empty()",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testType",
+      "TestCases": [
+        {
+          "Name": "testType1",
+          "Expression": "1.type().namespace = 'System'",
+          "Result": true
+        },
+        {
+          "Name": "testType10",
+          "Expression": "Patient.active.type().name = 'boolean'",
           "Result": false,
-          "FailureMessage": "Error (Exception) Error evaluating FHIRPath expression: focus for 0 can only have one value, but has 0 values (@char 4)"
+          "FailureMessage": "Some results didn't match expected values (1 values)"
+        },
+        {
+          "Name": "testType11",
+          "Expression": "Patient.active.is(boolean)",
+          "Result": true
+        },
+        {
+          "Name": "testType12",
+          "Expression": "Patient.active.is(Boolean).not()",
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
+        },
+        {
+          "Name": "testType13",
+          "Expression": "Patient.active.is(FHIR.boolean)",
+          "Result": true
+        },
+        {
+          "Name": "testType14",
+          "Expression": "Patient.active.is(System.Boolean).not()",
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
+        },
+        {
+          "Name": "testType15",
+          "Expression": "Patient.type().namespace = 'FHIR'",
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
+        },
+        {
+          "Name": "testType16",
+          "Expression": "Patient.type().name = 'Patient'",
+          "Result": true
+        },
+        {
+          "Name": "testType17",
+          "Expression": "Patient.is(Patient)",
+          "Result": true
+        },
+        {
+          "Name": "testType18",
+          "Expression": "Patient.is(FHIR.Patient)",
+          "Result": true
+        },
+        {
+          "Name": "testType19",
+          "Expression": "Patient.is(FHIR.`Patient`)",
+          "Result": true
+        },
+        {
+          "Name": "testType1a",
+          "Expression": "1.type().name = 'Integer'",
+          "Result": true
+        },
+        {
+          "Name": "testType2",
+          "Expression": "'1'.type().namespace = 'System'",
+          "Result": true
+        },
+        {
+          "Name": "testType20",
+          "Expression": "Patient.ofType(Patient).type().name",
+          "Result": true
+        },
+        {
+          "Name": "testType21",
+          "Expression": "Patient.ofType(FHIR.Patient).type().name",
+          "Result": true
+        },
+        {
+          "Name": "testType22",
+          "Description": "Note: Some systems may return an error due to failing to resolve System.Patient",
+          "Expression": "Patient.is(System.Patient).not()",
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
+        },
+        {
+          "Name": "testType23",
+          "Expression": "Patient.ofType(FHIR.`Patient`).type().name",
+          "Result": true
+        },
+        {
+          "Name": "testType2a",
+          "Expression": "'1'.type().name = 'String'",
+          "Result": true
+        },
+        {
+          "Name": "testType3",
+          "Expression": "true.type().namespace = 'System'",
+          "Result": true
+        },
+        {
+          "Name": "testType4",
+          "Expression": "true.type().name = 'Boolean'",
+          "Result": true
+        },
+        {
+          "Name": "testType5",
+          "Expression": "true.is(Boolean)",
+          "Result": true
+        },
+        {
+          "Name": "testType6",
+          "Expression": "true.is(System.Boolean)",
+          "Result": true
+        },
+        {
+          "Name": "testType7",
+          "Expression": "true is Boolean",
+          "Result": true
+        },
+        {
+          "Name": "testType8",
+          "Expression": "true is System.Boolean",
+          "Result": true
+        },
+        {
+          "Name": "testType9",
+          "Expression": "Patient.active.type().namespace = 'FHIR'",
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
+        },
+        {
+          "Name": "testTypeA",
+          "Expression": "Parameters.parameter[3].value.is(FHIR.decimal)",
+          "Result": true
+        },
+        {
+          "Name": "testTypeA1",
+          "Expression": "Parameters.parameter[0].value.is(FHIR.string)",
+          "Result": true
+        },
+        {
+          "Name": "testTypeA2",
+          "Expression": "Parameters.parameter[1].value.is(FHIR.integer)",
+          "Result": true
+        },
+        {
+          "Name": "testTypeA3",
+          "Expression": "Parameters.parameter[2].value.is(FHIR.uuid)",
+          "Result": true
+        },
+        {
+          "Name": "testTypeA4",
+          "Expression": "Parameters.parameter[2].value.is(FHIR.uri)",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testTypes",
+      "TestCases": [
+        {
+          "Name": "testBooleanLiteralConvertsToDecimal",
+          "Expression": "true.convertsToDecimal()",
+          "Result": true
+        },
+        {
+          "Name": "testBooleanLiteralConvertsToInteger",
+          "Expression": "true.convertsToInteger()",
+          "Result": true
+        },
+        {
+          "Name": "testBooleanLiteralConvertsToQuantity",
+          "Expression": "true.convertsToQuantity()",
+          "Result": true
+        },
+        {
+          "Name": "testBooleanLiteralConvertsToString",
+          "Expression": "true.convertsToString()",
+          "Result": true
+        },
+        {
+          "Name": "testBooleanLiteralIsNotDecimal",
+          "Expression": "true.is(Decimal).not()",
+          "Result": true
+        },
+        {
+          "Name": "testBooleanLiteralIsNotInteger",
+          "Expression": "true.is(Integer).not()",
+          "Result": true
+        },
+        {
+          "Name": "testBooleanLiteralIsNotSystemQuantity",
+          "Expression": "true.is(System.Quantity).not()",
+          "Result": true
+        },
+        {
+          "Name": "testBooleanLiteralToDecimal",
+          "Expression": "true.toDecimal() = 1",
+          "Result": true
+        },
+        {
+          "Name": "testBooleanLiteralToInteger",
+          "Expression": "true.toInteger() = 1",
+          "Result": true
+        },
+        {
+          "Name": "testBooleanLiteralToString",
+          "Expression": "true.toString()",
+          "Result": true
+        },
+        {
+          "Name": "testDateIsNotInteger",
+          "Expression": "@2013-04-05.is(Integer).not()",
+          "Result": true
+        },
+        {
+          "Name": "testDecimalLiteralConvertsToBoolean",
+          "Expression": "1.0.convertsToBoolean()",
+          "Result": true
+        },
+        {
+          "Name": "testDecimalLiteralConvertsToDecimal",
+          "Expression": "1.0.convertsToDecimal()",
+          "Result": true
+        },
+        {
+          "Name": "testDecimalLiteralConvertsToQuantity",
+          "Expression": "1.0.convertsToQuantity()",
+          "Result": true
+        },
+        {
+          "Name": "testDecimalLiteralConvertsToString",
+          "Expression": "1.0.convertsToString()",
+          "Result": true
+        },
+        {
+          "Name": "testDecimalLiteralIsDecimal",
+          "Expression": "1.0.is(Decimal)",
+          "Result": true
+        },
+        {
+          "Name": "testDecimalLiteralIsNotQuantity",
+          "Expression": "1.0.is(System.Quantity).not()",
+          "Result": true
+        },
+        {
+          "Name": "testDecimalLiteralToDecimal",
+          "Expression": "1.0.toDecimal() = 1.0",
+          "Result": true
+        },
+        {
+          "Name": "testDecimalLiteralToDecimalEqual",
+          "Expression": "'1.1'.toDecimal() = 1.1",
+          "Result": true
+        },
+        {
+          "Name": "testDecimalLiteralToInteger",
+          "Expression": "'1.1'.toInteger() = {}",
+          "Result": true
+        },
+        {
+          "Name": "testDecimalLiteralToIntegerIsEmpty",
+          "Expression": "'1.1'.toInteger().empty()",
+          "Result": true
+        },
+        {
+          "Name": "testDecimalLiteralToQuantity",
+          "Expression": "1.0.toQuantity() = 1.0 '1'",
+          "Result": true
+        },
+        {
+          "Name": "testDecimalLiteralToString",
+          "Expression": "1.0.toString()",
+          "Result": true
+        },
+        {
+          "Name": "testFalseLiteralConvertsToBoolean",
+          "Expression": "false.convertsToBoolean()",
+          "Result": true
+        },
+        {
+          "Name": "testIntegerLiteralConvertsToBoolean",
+          "Expression": "1.convertsToBoolean()",
+          "Result": true
+        },
+        {
+          "Name": "testIntegerLiteralConvertsToBooleanFalse",
+          "Expression": "2.convertsToBoolean()",
+          "Result": true
+        },
+        {
+          "Name": "testIntegerLiteralConvertsToDecimal",
+          "Expression": "1.convertsToDecimal()",
+          "Result": true
+        },
+        {
+          "Name": "testIntegerLiteralConvertsToInteger",
+          "Expression": "1.convertsToInteger()",
+          "Result": true
+        },
+        {
+          "Name": "testIntegerLiteralConvertsToQuantity",
+          "Expression": "1.convertsToQuantity()",
+          "Result": true
+        },
+        {
+          "Name": "testIntegerLiteralConvertsToString",
+          "Expression": "1.convertsToString()",
+          "Result": true
+        },
+        {
+          "Name": "testIntegerLiteralFalseConvertsToBoolean",
+          "Expression": "0.convertsToBoolean()",
+          "Result": true
+        },
+        {
+          "Name": "testIntegerLiteralIsInteger",
+          "Expression": "1.is(Integer)",
+          "Result": true
+        },
+        {
+          "Name": "testIntegerLiteralIsNotDecimal",
+          "Expression": "1.is(Decimal).not()",
+          "Result": true
+        },
+        {
+          "Name": "testIntegerLiteralIsNotQuantity",
+          "Expression": "1.is(Quantity).not()",
+          "Result": true
+        },
+        {
+          "Name": "testIntegerLiteralIsNotString",
+          "Expression": "1.is(String).not()",
+          "Result": true
+        },
+        {
+          "Name": "testIntegerLiteralIsSystemInteger",
+          "Expression": "1.is(System.Integer)",
+          "Result": true
+        },
+        {
+          "Name": "testIntegerLiteralToBoolean",
+          "Expression": "1.toBoolean()",
+          "Result": true
+        },
+        {
+          "Name": "testIntegerLiteralToBooleanEmpty",
+          "Expression": "2.toBoolean()",
+          "Result": true
+        },
+        {
+          "Name": "testIntegerLiteralToBooleanFalse",
+          "Expression": "0.toBoolean()",
+          "Result": true
+        },
+        {
+          "Name": "testIntegerLiteralToDeciamlEquivalent",
+          "Expression": "1.toDecimal() ~ 1.0",
+          "Result": true
+        },
+        {
+          "Name": "testIntegerLiteralToDecimal",
+          "Expression": "1.toDecimal() = 1.0",
+          "Result": true
+        },
+        {
+          "Name": "testIntegerLiteralToInteger",
+          "Expression": "1.toInteger() = 1",
+          "Result": true
+        },
+        {
+          "Name": "testIntegerLiteralToQuantity",
+          "Expression": "1.toQuantity() = 1 '1'",
+          "Result": true
+        },
+        {
+          "Name": "testIntegerLiteralToString",
+          "Expression": "1.toString()",
+          "Result": true
+        },
+        {
+          "Name": "testNegativeIntegerLiteralConvertsToBooleanFalse",
+          "Expression": "(-1).convertsToBoolean()",
+          "Result": true
+        },
+        {
+          "Name": "testNegativeIntegerLiteralConvertsToString",
+          "Expression": "(-1).convertsToString()",
+          "Result": true
+        },
+        {
+          "Name": "testNegativeIntegerLiteralToString",
+          "Expression": "(-1).toString()",
+          "Result": true
+        },
+        {
+          "Name": "testQuantityLiteralConvertsToString",
+          "Expression": "1 'wk'.convertsToString()",
+          "Result": true
+        },
+        {
+          "Name": "testQuantityLiteralWeekToString",
+          "Expression": "1 week.toString()",
+          "Result": true
+        },
+        {
+          "Name": "testQuantityLiteralWkToString",
+          "Expression": "1 'wk'.toString()",
+          "Result": true
+        },
+        {
+          "Name": "testStringDayConvertsToDate",
+          "Expression": "'2015-02-04'.convertsToDate()",
+          "Result": true
+        },
+        {
+          "Name": "testStringDayConvertsToDateTime",
+          "Expression": "'2015-02-04'.convertsToDateTime()",
+          "Result": true
+        },
+        {
+          "Name": "testStringDecimalConvertsToIntegerFalse",
+          "Expression": "'1.0'.convertsToInteger().not()",
+          "Result": true
+        },
+        {
+          "Name": "testStringDecimalLiteralConvertsToDecimal",
+          "Expression": "'1.0'.convertsToDecimal()",
+          "Result": true
+        },
+        {
+          "Name": "testStringDecimalLiteralConvertsToQuantity",
+          "Expression": "'1.0'.convertsToQuantity()",
+          "Result": true
+        },
+        {
+          "Name": "testStringDecimalLiteralConvertsToQuantityFalse",
+          "Expression": "'1.a'.convertsToQuantity().not()",
+          "Result": true
+        },
+        {
+          "Name": "testStringDecimalLiteralIsNotDecimal",
+          "Expression": "'1.0'.is(Decimal).not()",
+          "Result": true
+        },
+        {
+          "Name": "testStringDecimalLiteralIsNotSystemQuantity",
+          "Expression": "'1.0'.is(System.Quantity).not()",
+          "Result": true
+        },
+        {
+          "Name": "testStringDecimalLiteralToQuantity",
+          "Expression": "'1.0'.toQuantity() ~ 1 '1'",
+          "Result": true
+        },
+        {
+          "Name": "testStringFalseLiteralAlsoConvertsToBoolean",
+          "Expression": "'False'.convertsToBoolean()",
+          "Result": true
+        },
+        {
+          "Name": "testStringFalseLiteralConvertsToBoolean",
+          "Expression": "'false'.convertsToBoolean()",
+          "Result": true
+        },
+        {
+          "Name": "testStringFalseToBoolean",
+          "Expression": "'false'.toBoolean()",
+          "Result": true
+        },
+        {
+          "Name": "testStringHourConvertsToDateTime",
+          "Expression": "'2015-02-04T14'.convertsToDateTime()",
+          "Result": true
+        },
+        {
+          "Name": "testStringHourConvertsToTime",
+          "Expression": "'14'.convertsToTime()",
+          "Result": true
+        },
+        {
+          "Name": "testStringIntegerLiteralConvertsToDecimal",
+          "Expression": "'1'.convertsToDecimal()",
+          "Result": true
+        },
+        {
+          "Name": "testStringIntegerLiteralConvertsToQuantity",
+          "Expression": "'1'.convertsToQuantity()",
+          "Result": true
+        },
+        {
+          "Name": "testStringIntegerLiteralIsNotDecimal",
+          "Expression": "'1'.is(Decimal).not()",
+          "Result": true
+        },
+        {
+          "Name": "testStringIntegerLiteralIsNotQuantity",
+          "Expression": "'1'.is(System.Quantity).not()",
+          "Result": true
+        },
+        {
+          "Name": "testStringIntegerLiteralToInteger",
+          "Expression": "'1'.toInteger() = 1",
+          "Result": true
+        },
+        {
+          "Name": "testStringIntegerLiteralToQuantity",
+          "Expression": "'1'.toQuantity()",
+          "Result": true
+        },
+        {
+          "Name": "testStringLiteralConvertsToDecimalFalse",
+          "Expression": "'1.a'.convertsToDecimal().not()",
+          "Result": true
+        },
+        {
+          "Name": "testStringLiteralConvertsToInteger",
+          "Expression": "'1'.convertsToInteger()",
+          "Result": true
+        },
+        {
+          "Name": "testStringLiteralConvertsToIntegerFalse",
+          "Expression": "'a'.convertsToInteger().not()",
+          "Result": true
+        },
+        {
+          "Name": "testStringLiteralConvertsToString",
+          "Expression": "'true'.convertsToString()",
+          "Result": true
+        },
+        {
+          "Name": "testStringLiteralIsNotInteger",
+          "Expression": "'1'.is(Integer).not()",
+          "Result": true
+        },
+        {
+          "Name": "testStringLiteralToString",
+          "Expression": "'true'.toString()",
+          "Result": true
+        },
+        {
+          "Name": "testStringMillisecondConvertsToDateTime",
+          "Expression": "'2015-02-04T14:34:28.123'.convertsToDateTime()",
+          "Result": true
+        },
+        {
+          "Name": "testStringMillisecondConvertsToTime",
+          "Expression": "'14:34:28.123'.convertsToTime()",
+          "Result": true
+        },
+        {
+          "Name": "testStringMinuteConvertsToDateTime",
+          "Expression": "'2015-02-04T14:34'.convertsToDateTime()",
+          "Result": true
+        },
+        {
+          "Name": "testStringMinuteConvertsToTime",
+          "Expression": "'14:34'.convertsToTime()",
+          "Result": true
+        },
+        {
+          "Name": "testStringMonthConvertsToDate",
+          "Expression": "'2015-02'.convertsToDate()",
+          "Result": true
+        },
+        {
+          "Name": "testStringMonthConvertsToDateTime",
+          "Expression": "'2015-02'.convertsToDateTime()",
+          "Result": true
+        },
+        {
+          "Name": "testStringQuantityDayLiteralToQuantity",
+          "Expression": "'1 day'.toQuantity() = 1 'd'",
+          "Result": true
+        },
+        {
+          "Name": "testStringQuantityLiteralConvertsToQuantity",
+          "Expression": "'1 day'.convertsToQuantity()",
+          "Result": true
+        },
+        {
+          "Name": "testStringQuantityLiteralToQuantity",
+          "Expression": "'1 day'.toQuantity() = 1 day",
+          "Result": true
+        },
+        {
+          "Name": "testStringQuantityMonthLiteralToQuantity",
+          "Expression": "'1 \\'mo\\''.toQuantity() = 1 month",
+          "Result": true
+        },
+        {
+          "Name": "testStringQuantityWeekConvertsToQuantity",
+          "Expression": "'1 \\'wk\\''.convertsToQuantity()",
+          "Result": true
+        },
+        {
+          "Name": "testStringQuantityWeekConvertsToQuantityFalse",
+          "Expression": "'1 wk'.convertsToQuantity().not()",
+          "Result": true
+        },
+        {
+          "Name": "testStringQuantityWeekLiteralToQuantity",
+          "Expression": "'1 \\'wk\\''.toQuantity() = 1 week",
+          "Result": true
+        },
+        {
+          "Name": "testStringQuantityYearLiteralToQuantity",
+          "Expression": "'1 \\'a\\''.toQuantity() = 1 year",
+          "Result": true
+        },
+        {
+          "Name": "testStringSecondConvertsToDateTime",
+          "Expression": "'2015-02-04T14:34:28'.convertsToDateTime()",
+          "Result": true
+        },
+        {
+          "Name": "testStringSecondConvertsToTime",
+          "Expression": "'14:34:28'.convertsToTime()",
+          "Result": true
+        },
+        {
+          "Name": "testStringTrueLiteralConvertsToBoolean",
+          "Expression": "'true'.convertsToBoolean()",
+          "Result": true
+        },
+        {
+          "Name": "testStringTrueToBoolean",
+          "Expression": "'true'.toBoolean()",
+          "Result": true
+        },
+        {
+          "Name": "testStringTZConvertsToDateTime",
+          "Expression": "'2015-02-04T14:34:28+10:00'.convertsToDateTime()",
+          "Result": true
+        },
+        {
+          "Name": "testStringUTCConvertsToDateTime",
+          "Expression": "'2015-02-04T14:34:28Z'.convertsToDateTime()",
+          "Result": true
+        },
+        {
+          "Name": "testStringYearConvertsToDate",
+          "Expression": "'2015'.convertsToDate()",
+          "Result": true
+        },
+        {
+          "Name": "testStringYearConvertsToDateTime",
+          "Expression": "'2015'.convertsToDateTime()",
+          "Result": true
+        },
+        {
+          "Name": "testTrueLiteralConvertsToBoolean",
+          "Expression": "true.convertsToBoolean()",
+          "Result": true
         }
       ]
     },
@@ -5526,6 +5670,11 @@
         {
           "Name": "testUnion11",
           "Expression": "name.select(use.union(given)).count()",
+          "Result": true
+        },
+        {
+          "Name": "testUnion12",
+          "Expression": "true | Patient.name.given.first()",
           "Result": true
         },
         {
@@ -5616,128 +5765,6 @@
         {
           "Name": "testWhere4",
           "Expression": "Patient.name.where($this.given = 'Jim').count() = 1",
-          "Result": true
-        }
-      ]
-    },
-    {
-      "Name": "testConformsTo",
-      "TestCases": [
-        {
-          "Name": "testConformsTo1",
-          "Expression": "conformsTo('http://hl7.org/fhir/StructureDefinition/Patient')",
-          "Result": false,
-          "FailureMessage": "Error (Exception) unknown profile http://hl7.org/fhir/StructureDefinition/Patient"
-        },
-        {
-          "Name": "testConformsTo2",
-          "Expression": "conformsTo('http://hl7.org/fhir/StructureDefinition/Person')",
-          "Result": false,
-          "FailureMessage": "Error (Exception) unknown profile http://hl7.org/fhir/StructureDefinition/Person"
-        },
-        {
-          "Name": "testConformsTo3",
-          "Expression": "conformsTo('http://trash')",
-          "Result": true
-        }
-      ]
-    },
-    {
-      "Name": "testMixedPrecision",
-      "TestCases": [
-        {
-          "Name": "testMixedPrecisionArithmetic1",
-          "Expression": "1 + 1.5 = 2.5",
-          "Result": true
-        },
-        {
-          "Name": "testMixedPrecisionArithmetic2",
-          "Expression": "2.0 * 3 = 6.0",
-          "Result": true
-        },
-        {
-          "Name": "testMixedPrecisionArithmetic3",
-          "Expression": "5 / 2.0 = 2.5",
-          "Result": true
-        },
-        {
-          "Name": "testMixedPrecisionArithmetic4",
-          "Expression": "7.0 - 3 = 4.0",
-          "Result": true
-        },
-        {
-          "Name": "testMixedPrecisionArithmetic5",
-          "Expression": "10 div 3.0 = 3",
-          "Result": true
-        },
-        {
-          "Name": "testMixedPrecisionArithmetic6",
-          "Expression": "10.0 mod 3 = 1.0",
-          "Result": true
-        },
-        {
-          "Name": "testMixedPrecisionEquals1",
-          "Expression": "1 = 1.0",
-          "Result": true
-        },
-        {
-          "Name": "testMixedPrecisionEquals2",
-          "Expression": "1.0 = 1",
-          "Result": true
-        },
-        {
-          "Name": "testMixedPrecisionEquals3",
-          "Expression": "2 = 2.000",
-          "Result": true
-        },
-        {
-          "Name": "testMixedPrecisionGreaterOrEqual1",
-          "Expression": "1.0 >= 1",
-          "Result": true
-        },
-        {
-          "Name": "testMixedPrecisionGreaterOrEqual2",
-          "Expression": "2 >= 1.5",
-          "Result": true
-        },
-        {
-          "Name": "testMixedPrecisionGreaterThan1",
-          "Expression": "2 > 1.5",
-          "Result": true
-        },
-        {
-          "Name": "testMixedPrecisionGreaterThan2",
-          "Expression": "2.0 > 1",
-          "Result": true
-        },
-        {
-          "Name": "testMixedPrecisionLessOrEqual1",
-          "Expression": "1 <= 1.0",
-          "Result": true
-        },
-        {
-          "Name": "testMixedPrecisionLessOrEqual2",
-          "Expression": "1.5 <= 2",
-          "Result": true
-        },
-        {
-          "Name": "testMixedPrecisionLessThan1",
-          "Expression": "1 < 1.1",
-          "Result": true
-        },
-        {
-          "Name": "testMixedPrecisionLessThan2",
-          "Expression": "1.0 < 2",
-          "Result": true
-        },
-        {
-          "Name": "testMixedPrecisionNotEquals1",
-          "Expression": "1 != 1.0",
-          "Result": true
-        },
-        {
-          "Name": "testMixedPrecisionNotEquals2",
-          "Expression": "1.0 != 1",
           "Result": true
         }
       ]

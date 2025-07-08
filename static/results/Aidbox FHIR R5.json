@@ -1,5 +1,5 @@
 {
-  "EngineName": "Firely-5.11.4 (R5)",
+  "EngineName": "Aidbox FHIR R5",
   "Groups": [
     {
       "Name": "comments",
@@ -57,17 +57,20 @@
         {
           "Name": "Comparable1",
           "Expression": "1 'cm'.comparable(1 '[in_i]')",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: comparable"
         },
         {
           "Name": "Comparable2",
           "Expression": "1 'cm'.comparable(1 '[s]')",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: comparable"
         },
         {
           "Name": "Comparable3",
           "Expression": "1 'cm'.comparable(1 's')",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: comparable"
         }
       ]
     },
@@ -78,7 +81,8 @@
           "Name": "defineVariable1",
           "Description": "simplest variable",
           "Expression": "defineVariable('v1', 'value1').select(%v1)",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: defineVariable"
         },
         {
           "Name": "defineVariable10",
@@ -96,19 +100,22 @@
           "Name": "defineVariable13",
           "Description": "sequence of variable definitions tweak",
           "Expression": "Patient.name.defineVariable('n2', skip(1).first()).defineVariable('res', %n2.given+%n2.given).select(%res)",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: defineVariable"
         },
         {
           "Name": "defineVariable14",
           "Description": "sequence of variable definitions original",
           "Expression": "Patient.name.defineVariable('n1', first()).select(%n1).exists() | Patient.name.defineVariable('n2', skip(1).first()).defineVariable('res', %n2.given+%n2.given).select(%res)",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: defineVariable"
         },
         {
           "Name": "defineVariable15",
           "Description": "multi-tree vars valid",
           "Expression": "defineVariable('root', 'r1-').select(defineVariable('v1', 'v1').defineVariable('v2', 'v2').select(%v1 | %v2)).select(%root & $this)",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: defineVariable"
         },
         {
           "Name": "defineVariable16",
@@ -120,49 +127,50 @@
           "Name": "defineVariable19",
           "Description": "defineVariable in function parameters (1)",
           "Expression": "defineVariable(defineVariable('param','ppp').select(%param), defineVariable('param','value').select(%param)).select(%ppp)",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: defineVariable"
         },
         {
           "Name": "defineVariable2",
           "Description": "simple use of a variable",
           "Expression": "defineVariable('n1', name.first()).select(%n1.given)",
-          "Result": true
-        },
-        {
-          "Name": "defineVariable3",
-          "Description": "simple use of a variable 2 selects",
-          "Expression": "defineVariable('n1', name.first()).select(%n1.given).first()",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: defineVariable"
         },
         {
           "Name": "defineVariable4",
           "Description": "use of a variable in separate contexts",
           "Expression": "defineVariable('n1', name.first()).select(%n1.given) | defineVariable('n1', name.skip(1).first()).select(%n1.given)",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: defineVariable"
         },
         {
           "Name": "defineVariable5",
           "Description": "use of a variable in separate contexts defined in 2 but used in 1",
           "Expression": "defineVariable('n1', name.first()).where(active.not()) | defineVariable('n1', name.skip(1).first()).select(%n1.given)",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: defineVariable"
         },
         {
           "Name": "defineVariable6",
           "Description": "use of different variables in different contexts",
           "Expression": "defineVariable('n1', name.first()).select(id & '-' & %n1.given.join('|')) | defineVariable('n2', name.skip(1).first()).select(%n2.given)",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: defineVariable"
         },
         {
           "Name": "defineVariable7",
           "Description": "2 vars, one unused",
           "Expression": "defineVariable('n1', name.first()).active | defineVariable('n2', name.skip(1).first()).select(%n2.given)",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: defineVariable"
         },
         {
           "Name": "defineVariable8",
           "Description": "CompositeVariableUse",
           "Expression": "defineVariable('v1', 'value1').select(%v1).trace('data').defineVariable('v2', 'value2').select($this & ':' & %v1 & '-' & %v2) | defineVariable('v3', 'value3').select(%v3)",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: defineVariable"
         },
         {
           "Name": "defineVariable9",
@@ -179,13 +187,15 @@
           "Name": "dvConceptMapExample",
           "Description": "realistic example with conceptmap",
           "Expression": "\n\t\t\tgroup.select(\n\t\t\t\tdefineVariable('grp')\n\t\t\t\t.element\n\t\t\t\t.select(\n\t\t\t\t\tdefineVariable('ele')\n\t\t\t\t\t.target\n\t\t\t\t\t.select(%grp.source & '|' & %ele.code & ' ' & relationship & ' ' & %grp.target & '|' & code)\n\t\t\t\t)\n\t\t\t)\n\t\t\t.trace('all')\n\t\t\t.isDistinct()\n\t\t",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: defineVariable"
         },
         {
           "Name": "dvParametersDontColide",
           "Description": "defineVariable in function parameters (2)",
           "Expression": "'aaa'.replace(defineVariable('param', 'aaa').select(%param), defineVariable('param','bbb').select(%param))",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: defineVariable"
         },
         {
           "Name": "dvRedefiningVariableThrowsError",
@@ -211,7 +221,8 @@
         {
           "Name": "from-zulip-2",
           "Expression": "(true | 'foo').allTrue()",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         }
       ]
     },
@@ -221,135 +232,146 @@
         {
           "Name": "HighBoundaryDateMonth",
           "Expression": "@2014.highBoundary(6)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: highBoundary"
         },
         {
           "Name": "HighBoundaryDateTimeMillisecond1",
           "Expression": "@2014-01-01T08.highBoundary(17)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: highBoundary"
         },
         {
           "Name": "HighBoundaryDateTimeMillisecond2",
           "Expression": "@2014-01-01T08:05-05:00.highBoundary(17)",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Error (Processing) Error while parsing expression:\nText '2014-01-01T08:05-05:00' could not be parsed, unparsed text found at index 16"
         },
         {
           "Name": "HighBoundaryDateTimeMillisecond3",
           "Expression": "@2014-01-01T08.highBoundary(17)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: highBoundary"
         },
         {
           "Name": "HighBoundaryDecimal",
           "Expression": "1.587.highBoundary(8)",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: highBoundary"
         },
         {
           "Name": "HighBoundaryDecimal1",
           "Expression": "1.587.highBoundary(2)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: highBoundary"
         },
         {
           "Name": "HighBoundaryDecimal10",
           "Expression": "1.highBoundary(5)",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: highBoundary"
         },
         {
           "Name": "HighBoundaryDecimal11",
           "Expression": "12.587.highBoundary(2)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: highBoundary"
         },
         {
           "Name": "HighBoundaryDecimal12",
           "Expression": "12.500.highBoundary(4)",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: highBoundary"
         },
         {
           "Name": "HighBoundaryDecimal13",
           "Expression": "120.highBoundary(2)",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: highBoundary"
         },
         {
           "Name": "HighBoundaryDecimal14",
           "Expression": "-120.highBoundary(2)",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: highBoundary"
         },
         {
           "Name": "HighBoundaryDecimal15",
           "Expression": "0.0034.highBoundary(1)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: highBoundary"
         },
         {
           "Name": "HighBoundaryDecimal16",
           "Expression": "-0.0034.highBoundary(1)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: highBoundary"
         },
         {
           "Name": "HighBoundaryDecimal2",
           "Expression": "1.587.highBoundary(6)",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: highBoundary"
         },
         {
           "Name": "HighBoundaryDecimal3",
           "Expression": "1.587.highBoundary(-1)",
-          "Result": false,
-          "FailureMessage": "Error (Exception) Invalid expression: Invocation of function 'highBoundary' failed: repeatCount ('-1') must be a non-negative value. (Parameter 'repeatCount')\r\nActual value was -1."
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: highBoundary"
         },
         {
           "Name": "HighBoundaryDecimal4",
           "Expression": "(-1.587).highBoundary()",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: highBoundary"
         },
         {
           "Name": "HighBoundaryDecimal5",
           "Expression": "(-1.587).highBoundary(2)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: highBoundary"
         },
         {
           "Name": "HighBoundaryDecimal6",
           "Expression": "(-1.587).highBoundary(6)",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: highBoundary"
         },
         {
           "Name": "HighBoundaryDecimal7",
           "Expression": "1.587.highBoundary(39)",
-          "Result": false,
-          "FailureMessage": "Expected no results, but got some."
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: highBoundary"
         },
         {
           "Name": "HighBoundaryDecimal8",
           "Expression": "1.highBoundary()",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: highBoundary"
         },
         {
           "Name": "HighBoundaryDecimal9",
           "Expression": "1.highBoundary(0)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: highBoundary"
         },
         {
           "Name": "HighBoundaryDecimalDefault",
           "Expression": "1.587.highBoundary()",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: highBoundary"
         },
         {
           "Name": "HighBoundaryQuantity",
           "Expression": "1.587 'm'.highBoundary(8)",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: highBoundary"
         },
         {
           "Name": "HighBoundaryTimeMillisecond",
           "Expression": "@T10:30.highBoundary(9)",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: highBoundary"
         }
       ]
     },
@@ -369,159 +391,164 @@
         {
           "Name": "LowBoundaryDateMonth",
           "Expression": "@2014.lowBoundary(6)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: lowBoundary"
         },
         {
           "Name": "LowBoundaryDateTimeMillisecond1",
           "Expression": "@2014-01-01T08.lowBoundary(17)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: lowBoundary"
         },
         {
           "Name": "LowBoundaryDateTimeMillisecond2",
           "Expression": "@2014-01-01T08:05+08:00.lowBoundary(17)",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: lowBoundary"
         },
         {
           "Name": "LowBoundaryDateTimeMillisecond3",
           "Expression": "@2014-01-01T08.lowBoundary(8)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: lowBoundary"
         },
         {
           "Name": "LowBoundaryDecimal1",
           "Expression": "1.587.lowBoundary(6)",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: lowBoundary"
         },
         {
           "Name": "LowBoundaryDecimal10",
           "Expression": "12.587.lowBoundary(2)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: lowBoundary"
         },
         {
           "Name": "LowBoundaryDecimal11",
           "Expression": "12.500.lowBoundary(4)",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: lowBoundary"
         },
         {
           "Name": "LowBoundaryDecimal12",
           "Expression": "120.lowBoundary(2)",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: lowBoundary"
         },
         {
           "Name": "LowBoundaryDecimal13",
           "Expression": "(-120).lowBoundary(2)",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: lowBoundary"
         },
         {
           "Name": "LowBoundaryDecimal14",
           "Expression": "0.0034.lowBoundary(1)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: lowBoundary"
         },
         {
           "Name": "LowBoundaryDecimal15",
           "Expression": "(-0.0034).lowBoundary(1)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: lowBoundary"
         },
         {
           "Name": "LowBoundaryDecimal2",
           "Expression": "1.587.lowBoundary(2)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: lowBoundary"
         },
         {
           "Name": "LowBoundaryDecimal3",
           "Expression": "1.587.lowBoundary(-1)",
-          "Result": false,
-          "FailureMessage": "Error (Exception) Invalid expression: Invocation of function 'lowBoundary' failed: repeatCount ('-1') must be a non-negative value. (Parameter 'repeatCount')\r\nActual value was -1."
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: lowBoundary"
         },
         {
           "Name": "LowBoundaryDecimal4",
           "Expression": "1.587.lowBoundary(0)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
-        },
-        {
-          "Name": "LowBoundaryDecimal5",
-          "Expression": "1.587.lowBoundary(32)",
-          "Result": false,
-          "FailureMessage": "Expected no results, but got some."
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: lowBoundary"
         },
         {
           "Name": "LowBoundaryDecimal6",
           "Expression": "1.587.lowBoundary(39)",
-          "Result": false,
-          "FailureMessage": "Expected no results, but got some."
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: lowBoundary"
         },
         {
           "Name": "LowBoundaryDecimal7",
           "Expression": "1.toDecimal().lowBoundary()",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: lowBoundary"
         },
         {
           "Name": "LowBoundaryDecimal8",
           "Expression": "1.lowBoundary(0)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: lowBoundary"
         },
         {
           "Name": "LowBoundaryDecimal9",
           "Expression": "1.lowBoundary(5)",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: lowBoundary"
         },
         {
           "Name": "LowBoundaryDecimalDefault",
           "Expression": "1.587.lowBoundary()",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: lowBoundary"
         },
         {
           "Name": "LowBoundaryNegDecimal1",
           "Expression": "(-1.587).lowBoundary(6)",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: lowBoundary"
         },
         {
           "Name": "LowBoundaryNegDecimal2",
           "Expression": "(-1.587).lowBoundary(2)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: lowBoundary"
         },
         {
           "Name": "LowBoundaryNegDecimal3",
           "Expression": "(-1.587).lowBoundary(-1)",
-          "Result": false,
-          "FailureMessage": "Error (Exception) Invalid expression: Invocation of function 'lowBoundary' failed: repeatCount ('-1') must be a non-negative value. (Parameter 'repeatCount')\r\nActual value was -1."
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: lowBoundary"
         },
         {
           "Name": "LowBoundaryNegDecimal4",
           "Expression": "(-1.587).lowBoundary(0)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: lowBoundary"
         },
         {
           "Name": "LowBoundaryNegDecimal5",
           "Expression": "(-1.587).lowBoundary(32)",
-          "Result": false,
-          "FailureMessage": "Expected no results, but got some."
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: lowBoundary"
         },
         {
           "Name": "LowBoundaryNegDecimalDefault",
           "Expression": "(-1.587).lowBoundary()",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: lowBoundary"
         },
         {
           "Name": "LowBoundaryQuantity",
           "Expression": "1.587 'cm'.lowBoundary(8)",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: lowBoundary"
         },
         {
           "Name": "LowBoundaryTimeMillisecond",
           "Expression": "@T10:30.lowBoundary(9)",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: lowBoundary"
         }
       ]
     },
@@ -531,12 +558,14 @@
         {
           "Name": "testContainedId",
           "Expression": "contained.id",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testMultipleResolve",
           "Expression": "\n\t\t\tcomposition.exists() \n\t\t\timplies \n\t\t\t(\n\t\t\t\tcomposition.resolve().section.entry.reference.where(resolve() is Observation)\n\t\t\t\t.where($this in (%resource.result.reference | %resource.result.reference.resolve().hasMember.reference)).exists()\n\t\t\t)\n\t\t\t",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         }
       ]
     },
@@ -546,14 +575,13 @@
         {
           "Name": "testPeriodInvariantNew",
           "Expression": "Patient.identifier.period.all(start.empty() or end.empty() or (start.lowBoundary() < end.highBoundary()))",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: lowBoundary"
         },
         {
           "Name": "testPeriodInvariantOld",
           "Expression": "Patient.identifier.period.all(start.hasValue().not() or end.hasValue().not() or (start <= end))",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
+          "Result": true
         }
       ]
     },
@@ -568,7 +596,8 @@
         {
           "Name": "testPolymorphicsB",
           "Expression": "Observation.valueQuantity.exists()",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         }
       ]
     },
@@ -579,37 +608,37 @@
           "Name": "PrecisionDateTimeMilliseconds",
           "Expression": "@2014-01-05T10:30:00.000.precision()",
           "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'precision'\nError (Exception) Invalid expression: Unknown symbol 'precision'"
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: precision"
         },
         {
           "Name": "PrecisionDecimal",
           "Expression": "1.58700.precision()",
           "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'precision'\nError (Exception) Invalid expression: Unknown symbol 'precision'"
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: precision"
         },
         {
           "Name": "PrecisionEmpty",
           "Expression": "{}.precision().empty()",
           "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'precision'\nError (Exception) Invalid expression: Unknown symbol 'precision'"
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: precision"
         },
         {
           "Name": "PrecisionTimeMilliseconds",
           "Expression": "@T10:30:00.000.precision()",
           "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'precision'\nError (Exception) Invalid expression: Unknown symbol 'precision'"
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: precision"
         },
         {
           "Name": "PrecisionTimeMinutes",
           "Expression": "@T10:30.precision()",
           "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'precision'\nError (Exception) Invalid expression: Unknown symbol 'precision'"
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: precision"
         },
         {
           "Name": "PrecisionYear",
           "Expression": "@2014.precision()",
           "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'precision'\nError (Exception) Invalid expression: Unknown symbol 'precision'"
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: precision"
         }
       ]
     },
@@ -629,7 +658,8 @@
         {
           "Name": "testAbs3",
           "Expression": "(-5.5 'mg').abs() = 5.5 'mg'",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Error (Processing) Err"
         },
         {
           "Name": "testAbsEmpty",
@@ -644,22 +674,26 @@
         {
           "Name": "testAggregate1",
           "Expression": "(1|2|3|4|5|6|7|8|9).aggregate($this+$total, 0) = 45",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: aggregate"
         },
         {
           "Name": "testAggregate2",
           "Expression": "(1|2|3|4|5|6|7|8|9).aggregate($this+$total, 2) = 47",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: aggregate"
         },
         {
           "Name": "testAggregate3",
           "Expression": "(1|2|3|4|5|6|7|8|9).aggregate(iif($total.empty(), $this, iif($this < $total, $this, $total))) = 1",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: aggregate"
         },
         {
           "Name": "testAggregate4",
           "Expression": "(1|2|3|4|5|6|7|8|9).aggregate(iif($total.empty(), $this, iif($this > $total, $this, $total))) = 9",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: aggregate"
         }
       ]
     },
@@ -694,7 +728,8 @@
         {
           "Name": "testEscapedIdentifier",
           "Expression": "name.`given`",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Expected 5 results, got 0"
         },
         {
           "Name": "testSimple",
@@ -704,7 +739,8 @@
         {
           "Name": "testSimpleBackTick1",
           "Expression": "`Patient`.name.`given`",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Expected 5 results, got 0"
         },
         {
           "Name": "testSimpleFail",
@@ -964,12 +1000,14 @@
         {
           "Name": "testCeiling2",
           "Expression": "(-1.1).ceiling() = -1",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testCeiling3",
           "Expression": "1.1.ceiling() = 2",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testCeilingEmpty",
@@ -984,7 +1022,8 @@
         {
           "Name": "testCollectionBoolean1",
           "Expression": "iif(1 | 2 | 3, true, false)",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Expected no results, but got some."
         },
         {
           "Name": "testCollectionBoolean2",
@@ -1004,12 +1043,14 @@
         {
           "Name": "testCollectionBoolean5",
           "Expression": "iif(true, true, 1/0)",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Error (Processing) Divide by zero"
         },
         {
           "Name": "testCollectionBoolean6",
           "Expression": "iif(false, 1/0, true)",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Error (Processing) Divide by zero"
         }
       ]
     },
@@ -1065,14 +1106,14 @@
         {
           "Name": "testConformsTo1",
           "Expression": "conformsTo('http://hl7.org/fhir/StructureDefinition/Patient')",
-          "Result": false,
-          "FailureMessage": "Error (Exception) Invalid expression: Unknown symbol 'conformsTo'"
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: conformsTo"
         },
         {
           "Name": "testConformsTo2",
           "Expression": "conformsTo('http://hl7.org/fhir/StructureDefinition/Person')",
-          "Result": false,
-          "FailureMessage": "Error (Exception) Invalid expression: Unknown symbol 'conformsTo'"
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: conformsTo"
         },
         {
           "Name": "testConformsTo3",
@@ -1122,8 +1163,7 @@
         {
           "Name": "testContainsCollectionEmpty4",
           "Expression": "{} contains {}",
-          "Result": false,
-          "FailureMessage": "Expected no results, but got some."
+          "Result": true
         },
         {
           "Name": "testContainsCollectionEmptyDateTime",
@@ -1148,8 +1188,7 @@
         {
           "Name": "testContainsString10",
           "Expression": "Patient.name.family.first().contains(toChars().skip(3).take(3).join())",
-          "Result": false,
-          "FailureMessage": "Error (NotSupported) String function 'toChars' is not supported on Patient\nError (Exception) Invalid expression: Invocation of function 'contains' failed: Invocation of function 'join' failed: Invocation of function 'take' failed: Invocation of function 'skip' failed: Invocation of function 'toChars' failed: Cannot cast from 'Patient' to '.NET type String'"
+          "Result": true
         },
         {
           "Name": "testContainsString2",
@@ -1279,7 +1318,8 @@
         {
           "Name": "testDiv5",
           "Expression": "5 div 0",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Error (Processing) Divide by zero"
         },
         {
           "Name": "testDivEmpty1",
@@ -1319,17 +1359,20 @@
         {
           "Name": "testDivide4",
           "Expression": "1 / 2 = 0.5",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testDivide5",
           "Expression": "(1.2 / 1.8).round(2) = 0.67",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Error (Processing) Non-terminating decimal expansion; no exact representable decimal result."
         },
         {
           "Name": "testDivide6",
           "Expression": "1 / 0",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Error (Processing) Divide by zero"
         },
         {
           "Name": "testDivideEmpty1",
@@ -1362,12 +1405,6 @@
           "Result": true
         },
         {
-          "Name": "testDollarOrderNotAllowed",
-          "Expression": "Patient.children().skip(1)",
-          "Result": false,
-          "FailureMessage": "Expected no results, but got some."
-        },
-        {
           "Name": "testDollarThis1",
           "Expression": "Patient.name.given.where(substring($this.length()-3) = 'out')",
           "Result": true
@@ -1385,42 +1422,50 @@
         {
           "Name": "testDecodeBase64A",
           "Expression": "'dGVzdA=='.decode('base64')",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: decode"
         },
         {
           "Name": "testDecodeBase64B",
           "Expression": "'c3ViamVjdHM/X2Q='.decode('base64')",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: decode"
         },
         {
           "Name": "testDecodeHex",
           "Expression": "'74657374'.decode('hex')",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: decode"
         },
         {
           "Name": "testDecodeUrlBase64",
           "Expression": "'c3ViamVjdHM_X2Q='.decode('urlbase64')",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: decode"
         },
         {
           "Name": "testEncodeBase64A",
           "Expression": "'test'.encode('base64')",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: encode"
         },
         {
           "Name": "testEncodeBase64B",
           "Expression": "'subjects?_d'.encode('base64')",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: encode"
         },
         {
           "Name": "testEncodeHex",
           "Expression": "'test'.encode('hex')",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: encode"
         },
         {
           "Name": "testEncodeUrlBase64",
           "Expression": "'subjects?_d'.encode('urlbase64')",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: encode"
         }
       ]
     },
@@ -1435,8 +1480,7 @@
         {
           "Name": "testEndsWith10",
           "Expression": "Patient.name.family.first().endsWith(toChars().skip(3).join())",
-          "Result": false,
-          "FailureMessage": "Error (NotSupported) String function 'toChars' is not supported on Patient\nError (Exception) Invalid expression: Invocation of function 'endsWith' failed: Invocation of function 'join' failed: Invocation of function 'skip' failed: Invocation of function 'toChars' failed: Cannot cast from 'Patient' to '.NET type String'"
+          "Result": true
         },
         {
           "Name": "testEndsWith2",
@@ -1546,7 +1590,8 @@
         {
           "Name": "testEquality2",
           "Expression": "{} = {}",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Expected no results, but got some."
         },
         {
           "Name": "testEquality20",
@@ -1556,22 +1601,26 @@
         {
           "Name": "testEquality21",
           "Expression": "@2012-04-15T15:30:31 = @2012-04-15T15:30:31.0",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
         },
         {
           "Name": "testEquality22",
           "Expression": "@2012-04-15T15:30:31 = @2012-04-15T15:30:31.1",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
         },
         {
           "Name": "testEquality23",
           "Expression": "@2012-04-15T15:00:00Z = @2012-04-15T10:00:00",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Expected no results, but got some."
         },
         {
           "Name": "testEquality24",
           "Expression": "@2012-04-15T15:00:00+02:00 = @2012-04-15T16:00:00+03:00",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testEquality25",
@@ -1591,12 +1640,14 @@
         {
           "Name": "testEquality28",
           "Expression": "Observation.value = 185 '[lb_av]'",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testEquality3",
           "Expression": "true = {}",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Expected no results, but got some."
         },
         {
           "Name": "testEquality4",
@@ -1646,7 +1697,8 @@
         {
           "Name": "testEquivalent11",
           "Expression": "1.2 / 1.8 ~ 0.67",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Error (Processing) Non-terminating decimal expansion; no exact representable decimal result."
         },
         {
           "Name": "testEquivalent12",
@@ -1696,17 +1748,20 @@
         {
           "Name": "testEquivalent20",
           "Expression": "name.take(2).given ~ name.take(2).first().given | name.take(2).last().given",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testEquivalent21",
           "Expression": "name.take(2).given ~ name.take(2).last().given | name.take(2).first().given",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testEquivalent22",
           "Expression": "Observation.value ~ 185 '[lb_av]'",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testEquivalent23",
@@ -1761,22 +1816,26 @@
         {
           "Name": "testEscapeHtml",
           "Expression": "'\"1<2\"'.escape('html')",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: escape"
         },
         {
           "Name": "testEscapeJson",
           "Expression": "'\"1<2\"'.escape('json')",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: escape"
         },
         {
           "Name": "testUnescapeHtml",
           "Expression": "'&quot;1&lt;2&quot;'.unescape('html')",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: unescape"
         },
         {
           "Name": "testUnescapeJson",
           "Expression": "'\\\"1<2\\\"'.unescape('json')",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: unescape"
         }
       ]
     },
@@ -1867,7 +1926,7 @@
           "Name": "testExtension2",
           "Expression": "Patient.birthDate.extension(%`ext-patient-birthTime`).exists()",
           "Result": false,
-          "FailureMessage": "Error (Exception) Invalid expression: Object reference not set to an instance of an object."
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testExtension3",
@@ -1882,12 +1941,14 @@
         {
           "Name": "testFirstLast1",
           "Expression": "Patient.name.first().given = 'Peter' | 'James'",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testFirstLast2",
           "Expression": "Patient.name.last().given = 'Peter' | 'James'",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         }
       ]
     },
@@ -1902,12 +1963,14 @@
         {
           "Name": "testFloor2",
           "Expression": "2.1.floor() = 2",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Error (Processing) class java.math.BigInteger cannot be cast to class java.math.BigDecimal (java.math.BigInteger and java.math.BigDecimal are in module java.base of loader 'bootstrap')"
         },
         {
           "Name": "testFloor3",
           "Expression": "(-2.1).floor() = -3",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Error (Processing) class java.math.BigInteger cannot be cast to class java.math.BigDecimal (java.math.BigInteger and java.math.BigDecimal are in module java.base of loader 'bootstrap')"
         },
         {
           "Name": "testFloorEmpty",
@@ -1992,7 +2055,8 @@
         {
           "Name": "testGreaterThan22",
           "Expression": "Observation.value > 100 '[lb_av]'",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
         },
         {
           "Name": "testGreaterThan23",
@@ -2012,12 +2076,14 @@
         {
           "Name": "testGreaterThan26",
           "Expression": "@2018-03-01T10:30:00 > @2018-03-01T10:30:00.0",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
         },
         {
           "Name": "testGreaterThan27",
           "Expression": "@T10:30:00 > @T10:30:00.0",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
         },
         {
           "Name": "testGreaterThan3",
@@ -2147,7 +2213,8 @@
         {
           "Name": "testGreatorOrEqual22",
           "Expression": "Observation.value >= 100 '[lb_av]'",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
         },
         {
           "Name": "testGreatorOrEqual23",
@@ -2167,12 +2234,14 @@
         {
           "Name": "testGreatorOrEqual26",
           "Expression": "@2018-03-01T10:30:00 >= @2018-03-01T10:30:00.0",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
         },
         {
           "Name": "testGreatorOrEqual27",
           "Expression": "@T10:30:00 >= @T10:30:00.0",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
         },
         {
           "Name": "testGreatorOrEqual3",
@@ -2243,7 +2312,8 @@
         {
           "Name": "testIif11",
           "Expression": "('context').iif($this = 'context','true-result', 'false-result')",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testIif2",
@@ -2253,12 +2323,14 @@
         {
           "Name": "testIif3",
           "Expression": "iif(true, true, (1 | 2).toString())",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Error (Processing) Fn awaits singleton argument"
         },
         {
           "Name": "testIif4",
           "Expression": "iif(false, (1 | 2).toString(), true)",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Error (Processing) Fn awaits singleton argument"
         },
         {
           "Name": "testIif5",
@@ -2319,8 +2391,7 @@
         {
           "Name": "testInEmptyBoth",
           "Expression": "{} in {}",
-          "Result": false,
-          "FailureMessage": "Expected no results, but got some."
+          "Result": true
         },
         {
           "Name": "testInEmptyCollection",
@@ -2330,8 +2401,7 @@
         {
           "Name": "testInEmptyValue",
           "Expression": "{} in (1 | 2 | 3)",
-          "Result": false,
-          "FailureMessage": "Expected no results, but got some."
+          "Result": true
         }
       ]
     },
@@ -2341,7 +2411,8 @@
         {
           "Name": "testIndexer1",
           "Expression": "Patient.name[0].given = 'Peter' | 'James'",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testIndexer2",
@@ -2376,7 +2447,8 @@
         {
           "Name": "testIndexOf5",
           "Expression": "'LogicalModel-Person'.indexOf({}).empty() = true",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Error (Processing) Fn awaits singleton substring : string argument"
         },
         {
           "Name": "testIndexOf6",
@@ -2391,7 +2463,8 @@
         {
           "Name": "testFHIRPathAsFunction11",
           "Expression": "Patient.gender.as(string)",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Expected no results, but got some."
         },
         {
           "Name": "testFHIRPathAsFunction12",
@@ -2416,7 +2489,8 @@
         {
           "Name": "testFHIRPathAsFunction16",
           "Expression": "Patient.gender.ofType(string)",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Expected no results, but got some."
         },
         {
           "Name": "testFHIRPathAsFunction17",
@@ -2472,8 +2546,7 @@
         {
           "Name": "testFHIRPathIsFunction2",
           "Expression": "Patient.gender.is(string)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "Result": true
         },
         {
           "Name": "testFHIRPathIsFunction3",
@@ -2508,8 +2581,7 @@
         {
           "Name": "testFHIRPathIsFunction9",
           "Expression": "Observation.extension('http://example.com/fhir/StructureDefinition/patient-age').value is Quantity",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "Result": true
         }
       ]
     },
@@ -2659,7 +2731,8 @@
         {
           "Name": "testLessOrEqual22",
           "Expression": "Observation.value <= 200 '[lb_av]'",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
         },
         {
           "Name": "testLessOrEqual23",
@@ -2679,12 +2752,14 @@
         {
           "Name": "testLessOrEqual26",
           "Expression": "@2018-03-01T10:30:00  <= @2018-03-01T10:30:00.0",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
         },
         {
           "Name": "testLessOrEqual27",
           "Expression": "@T10:30:00 <= @T10:30:00.0",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
         },
         {
           "Name": "testLessOrEqual3",
@@ -2814,7 +2889,8 @@
         {
           "Name": "testLessThan22",
           "Expression": "Observation.value < 200 '[lb_av]'",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
         },
         {
           "Name": "testLessThan23",
@@ -2834,12 +2910,14 @@
         {
           "Name": "testLessThan26",
           "Expression": "@2018-03-01T10:30:00 < @2018-03-01T10:30:00.0",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
         },
         {
           "Name": "testLessThan27",
           "Expression": "@T10:30:00 < @T10:30:00.0",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
         },
         {
           "Name": "testLessThan3",
@@ -2904,7 +2982,8 @@
         {
           "Name": "testCollectionNotEqualEmpty",
           "Expression": "Patient.name.given != {}",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Expected no results, but got some."
         },
         {
           "Name": "testDateEqual",
@@ -2939,7 +3018,8 @@
         {
           "Name": "testDateNotEqualTimezoneOffsetBefore",
           "Expression": "Patient.birthDate != @1974-12-25T12:34:00-10:00",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Error (Processing) Error while parsing expression:\nText '1974-12-25T12:34:00-10:00' could not be parsed, unparsed text found at index 19"
         },
         {
           "Name": "testDateNotEqualToday",
@@ -2954,7 +3034,8 @@
         {
           "Name": "testDateTimeGreaterThanDate1",
           "Expression": "now() > Patient.birthDate",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
         },
         {
           "Name": "testDateTimeGreaterThanDate2",
@@ -2969,7 +3050,8 @@
         {
           "Name": "testExpressions",
           "Expression": "Patient.name.select(given | family).distinct()",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Expected 5 results, got 2"
         },
         {
           "Name": "testExpressionsEqual",
@@ -3044,22 +3126,26 @@
         {
           "Name": "testLiteralDateTimeTZEqualFalse",
           "Expression": "@2017-11-05T01:30:00.0-04:00 = @2017-11-05T01:15:00.0-05:00",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Error (Processing) Error while parsing expression:\nText '2017-11-05T01:30:00.0-04:00' could not be parsed, unparsed text found at index 21"
         },
         {
           "Name": "testLiteralDateTimeTZEqualTrue",
           "Expression": "@2017-11-05T01:30:00.0-04:00 = @2017-11-05T00:30:00.0-05:00",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Error (Processing) Error while parsing expression:\nText '2017-11-05T01:30:00.0-04:00' could not be parsed, unparsed text found at index 21"
         },
         {
           "Name": "testLiteralDateTimeTZGreater",
           "Expression": "@2017-11-05T01:30:00.0-04:00 > @2017-11-05T01:15:00.0-05:00",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Error (Processing) Error while parsing expression:\nText '2017-11-05T01:30:00.0-04:00' could not be parsed, unparsed text found at index 21"
         },
         {
           "Name": "testLiteralDateTimeTZLess",
           "Expression": "@2017-11-05T01:30:00.0-04:00 < @2017-11-05T01:15:00.0-05:00",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Error (Processing) Error while parsing expression:\nText '2017-11-05T01:30:00.0-04:00' could not be parsed, unparsed text found at index 21"
         },
         {
           "Name": "testLiteralDateTimeUTC",
@@ -3179,7 +3265,8 @@
         {
           "Name": "testLiteralIntegerLessThanPolarityTrue",
           "Expression": "+1 < +2",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Error (Processing) Error while parsing expression:\nCannot invoke \"org.antlr.v4.runtime.tree.ParseTree.getText()\" because the return value of \"org.antlr.v4.runtime.ParserRuleContext.getToken(int, int)\" is null"
         },
         {
           "Name": "testLiteralIntegerLessThanTrue",
@@ -3204,7 +3291,8 @@
         {
           "Name": "testLiteralIntegerNotEqual",
           "Expression": "-3 != 3",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Error (Processing) class java.lang.Long cannot be cast to class java.lang.Integer (java.lang.Long and java.lang.Integer are in module java.base of loader 'bootstrap')"
         },
         {
           "Name": "testLiteralNotFalse",
@@ -3279,7 +3367,8 @@
         {
           "Name": "testLiteralTimeUTC",
           "Expression": "@T14:34:28Z.is(Time)",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Expected no results, but got some."
         },
         {
           "Name": "testLiteralTrue",
@@ -3289,7 +3378,8 @@
         {
           "Name": "testLiteralUnicode",
           "Expression": "Patient.name.given.first() = 'P\\u0065ter'",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testNotEmpty",
@@ -3304,7 +3394,8 @@
         {
           "Name": "testPolarityPrecedence",
           "Expression": "-Patient.name.given.count() = -5",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Error (Processing) class java.lang.Long cannot be cast to class java.lang.Integer (java.lang.Long and java.lang.Integer are in module java.base of loader 'bootstrap')"
         }
       ]
     },
@@ -3354,7 +3445,8 @@
         {
           "Name": "testLogEmpty3",
           "Expression": "16.log({}).empty()",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Error (Processing) Index 0 out of bounds for length 0"
         }
       ]
     },
@@ -3374,7 +3466,8 @@
         {
           "Name": "testMatchesEmpty",
           "Expression": "'FHIR'.matches({}).empty() = true",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Error (Processing) Fn awaits singleton substring : string argument"
         },
         {
           "Name": "testMatchesEmpty2",
@@ -3390,31 +3483,31 @@
           "Name": "testMatchesFullWithinUrl1",
           "Expression": "'http://fhir.org/guides/cqf/common/Library/FHIR-ModelInfo|4.0.1'.matchesFull('library')",
           "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'matchesFull'\nError (Exception) Invalid expression: Unknown symbol 'matchesFull'"
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: matchesFull"
         },
         {
           "Name": "testMatchesFullWithinUrl1a",
           "Expression": "'http://fhir.org/guides/cqf/common/Library/FHIR-ModelInfo|4.0.1'.matchesFull('.*Library.*')",
           "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'matchesFull'\nError (Exception) Invalid expression: Unknown symbol 'matchesFull'"
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: matchesFull"
         },
         {
           "Name": "testMatchesFullWithinUrl2",
           "Expression": "'http://fhir.org/guides/cqf/common/Library/FHIR-ModelInfo|4.0.1'.matchesFull('Measure')",
           "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'matchesFull'\nError (Exception) Invalid expression: Unknown symbol 'matchesFull'"
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: matchesFull"
         },
         {
           "Name": "testMatchesFullWithinUrl3",
           "Expression": "'http://fhir.org/guides/cqf/common/Library/FHIR-ModelInfo|4.0.1'.matchesFull('Library')",
           "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'matchesFull'\nError (Exception) Invalid expression: Unknown symbol 'matchesFull'"
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: matchesFull"
         },
         {
           "Name": "testMatchesFullWithinUrl4",
           "Expression": "'http://fhir.org/guides/cqf/common/Library/FHIR-ModelInfo|4.0.1'.matchesFull('^Library$')",
           "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'matchesFull'\nError (Exception) Invalid expression: Unknown symbol 'matchesFull'"
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: matchesFull"
         },
         {
           "Name": "testMatchesSingleLineMode1",
@@ -3435,7 +3528,8 @@
         {
           "Name": "testMatchesWithinUrl2",
           "Expression": "'http://fhir.org/guides/cqf/common/Library/FHIR-ModelInfo|4.0.1'.matches('Library')",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testMatchesWithinUrl3",
@@ -3475,7 +3569,8 @@
         {
           "Name": "testMinus5",
           "Expression": "@1974-12-25 - 1 'month'",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Error (Processing) Operation `-` not supported on operand types: date, Quantity"
         },
         {
           "Name": "testMinus6",
@@ -3486,13 +3581,13 @@
           "Name": "testMinus7",
           "Expression": "@T00:30:00 - 1 hour",
           "Result": false,
-          "FailureMessage": "Error (Exception) Invalid expression: Invocation of operator '-' failed: Unable to cast object of type 'Hl7.Fhir.ElementModel.Types.Time' to type 'Hl7.Fhir.ElementModel.Types.DateTime'."
+          "FailureMessage": "Error (Processing) Operation `-` not supported on operand types: time, Quantity"
         },
         {
           "Name": "testMinus8",
           "Expression": "@T01:00:00 - 2 hours",
           "Result": false,
-          "FailureMessage": "Error (Exception) Invalid expression: Invocation of operator '-' failed: Unable to cast object of type 'Hl7.Fhir.ElementModel.Types.Time' to type 'Hl7.Fhir.ElementModel.Types.DateTime'."
+          "FailureMessage": "Error (Processing) Operation `-` not supported on operand types: time, Quantity"
         },
         {
           "Name": "testMinusEmpty1",
@@ -3571,7 +3666,8 @@
         {
           "Name": "testMixedPrecisionEquals1",
           "Expression": "1 = 1.0",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testMixedPrecisionEquals2",
@@ -3581,7 +3677,8 @@
         {
           "Name": "testMixedPrecisionEquals3",
           "Expression": "2 = 2.000",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testMixedPrecisionGreaterOrEqual1",
@@ -3626,7 +3723,8 @@
         {
           "Name": "testMixedPrecisionNotEquals1",
           "Expression": "1 != 1.0",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testMixedPrecisionNotEquals2",
@@ -3661,7 +3759,8 @@
         {
           "Name": "testMod5",
           "Expression": "5 mod 0",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Error (Processing) Divide by zero"
         },
         {
           "Name": "testModEmpty1",
@@ -3751,22 +3850,26 @@
         {
           "Name": "testNEquality15",
           "Expression": "@2012-04-15T15:30:31 != @2012-04-15T15:30:31.0",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
         },
         {
           "Name": "testNEquality16",
           "Expression": "@2012-04-15T15:30:31 != @2012-04-15T15:30:31.1",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
         },
         {
           "Name": "testNEquality17",
           "Expression": "@2012-04-15T15:00:00Z != @2012-04-15T10:00:00",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Expected no results, but got some."
         },
         {
           "Name": "testNEquality18",
           "Expression": "@2012-04-15T15:00:00+02:00 != @2012-04-15T16:00:00+03:00",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testNEquality19",
@@ -3776,7 +3879,8 @@
         {
           "Name": "testNEquality2",
           "Expression": "{} != {}",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Expected no results, but got some."
         },
         {
           "Name": "testNEquality20",
@@ -3791,12 +3895,14 @@
         {
           "Name": "testNEquality22",
           "Expression": "(1.2 / 1.8).round(2) != 0.6666667",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Error (Processing) Non-terminating decimal expansion; no exact representable decimal result."
         },
         {
           "Name": "testNEquality23",
           "Expression": "(1.2 / 1.8).round(2) != 0.67",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Error (Processing) Non-terminating decimal expansion; no exact representable decimal result."
         },
         {
           "Name": "testNEquality24",
@@ -3866,7 +3972,8 @@
         {
           "Name": "testNotEquivalent13",
           "Expression": "1.2 / 1.8 !~ 0.6",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Error (Processing) Non-terminating decimal expansion; no exact representable decimal result."
         },
         {
           "Name": "testNotEquivalent14",
@@ -3911,7 +4018,8 @@
         {
           "Name": "testNotEquivalent21",
           "Expression": "name.take(2).given !~ name.take(2).last().given | name.take(2).first().given",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testNotEquivalent22",
@@ -3961,7 +4069,8 @@
         {
           "Name": "testNow1",
           "Expression": "Patient.birthDate < now()",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
         },
         {
           "Name": "testNow2",
@@ -4001,8 +4110,7 @@
         {
           "Name": "testPolymorphismB",
           "Expression": "Observation.valueQuantity.unit",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
+          "Result": true
         },
         {
           "Name": "testPolymorphismIsA1",
@@ -4072,7 +4180,8 @@
         {
           "Name": "testPlusDate11",
           "Expression": "@1973-12-25 + 1 week",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Error (Processing) Operation `+` not supported on operand types: date, week"
         },
         {
           "Name": "testPlusDate12",
@@ -4082,7 +4191,8 @@
         {
           "Name": "testPlusDate13",
           "Expression": "@1973-12-25 + 1 'd'",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Error (Processing) Operation `+` not supported on operand types: date, d"
         },
         {
           "Name": "testPlusDate14",
@@ -4092,7 +4202,8 @@
         {
           "Name": "testPlusDate15",
           "Expression": "@1973-12-25 + 1 'wk'",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Error (Processing) Operation `+` not supported on operand types: date, wk"
         },
         {
           "Name": "testPlusDate16",
@@ -4107,12 +4218,14 @@
         {
           "Name": "testPlusDate18",
           "Expression": "@1973-12-25T00:00:00.000+10:00 + 1 's'",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Error (Processing) Operation `+` not supported on operand types: datetime, s"
         },
         {
           "Name": "testPlusDate19",
           "Expression": "@1973-12-25T00:00:00.000+10:00 + 0.1 's'",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Error (Processing) Operation `+` not supported on operand types: datetime, s"
         },
         {
           "Name": "testPlusDate2",
@@ -4122,17 +4235,20 @@
         {
           "Name": "testPlusDate20",
           "Expression": "@1973-12-25T00:00:00.000+10:00 + 10 'ms'",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Error (Processing) Operation `+` not supported on operand types: datetime, ms"
         },
         {
           "Name": "testPlusDate21",
           "Expression": "@1973-12-25T00:00:00.000+10:00 + 1 'min'",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Error (Processing) Operation `+` not supported on operand types: datetime, min"
         },
         {
           "Name": "testPlusDate22",
           "Expression": "@1973-12-25T00:00:00.000+10:00 + 1 'h'",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Error (Processing) Operation `+` not supported on operand types: datetime, h"
         },
         {
           "Name": "testPlusDate3",
@@ -4152,7 +4268,8 @@
         {
           "Name": "testPlusDate6",
           "Expression": "@1973-12-25T00:00:00.000+10:00 + 10 millisecond",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Error (Processing) No implementation of method: :* of protocol: #'fhir.fhirpath.impl.types/Ifp-element found for class: java.lang.Double"
         },
         {
           "Name": "testPlusDate7",
@@ -4187,20 +4304,17 @@
         {
           "Name": "testPlusTime1",
           "Expression": "@T01:00:00 + 2 hours",
-          "Result": false,
-          "FailureMessage": "Error (Exception) Invalid expression: Invocation of operator '+' failed: Unable to cast object of type 'Hl7.Fhir.ElementModel.Types.Time' to type 'Hl7.Fhir.ElementModel.Types.DateTime'."
+          "Result": true
         },
         {
           "Name": "testPlusTime2",
           "Expression": "@T23:00:00 + 2 hours",
-          "Result": false,
-          "FailureMessage": "Error (Exception) Invalid expression: Invocation of operator '+' failed: Unable to cast object of type 'Hl7.Fhir.ElementModel.Types.Time' to type 'Hl7.Fhir.ElementModel.Types.DateTime'."
+          "Result": true
         },
         {
           "Name": "testPlusTime3",
           "Expression": "@T23:00:00 + 50 hours",
-          "Result": false,
-          "FailureMessage": "Error (Exception) Invalid expression: Invocation of operator '+' failed: Unable to cast object of type 'Hl7.Fhir.ElementModel.Types.Time' to type 'Hl7.Fhir.ElementModel.Types.DateTime'."
+          "Result": true
         }
       ]
     },
@@ -4235,7 +4349,8 @@
         {
           "Name": "testPowerEmpty3",
           "Expression": "2.5.power({}).empty()",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Error (Processing) Index 0 out of bounds for length 0"
         }
       ]
     },
@@ -4256,12 +4371,14 @@
         {
           "Name": "testPrecedence3",
           "Expression": "1 > 2 is Boolean",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Error (Processing) Operation `>` not supported on operand types: integer, boolean"
         },
         {
           "Name": "testPrecedence4",
           "Expression": "1 | 1 is Integer",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 2"
         },
         {
           "Name": "testPrecedence5",
@@ -4281,22 +4398,26 @@
         {
           "Name": "testQuantity1",
           "Expression": "4.0000 'g' = 4000.0 'mg'",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testQuantity10",
           "Expression": "4.0 'g' / 2.0 'm' = 2 'g/m'",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Error (Processing) Operation `/` not supported on operand types: Quantity, Quantity"
         },
         {
           "Name": "testQuantity11",
           "Expression": "1.0 'm' / 1.0 'm' = 1 '1'",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Error (Processing) Operation `/` not supported on operand types: Quantity, Quantity"
         },
         {
           "Name": "testQuantity2",
           "Expression": "4 'g' ~ 4000 'mg'",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testQuantity3",
@@ -4313,13 +4434,13 @@
           "Name": "testQuantity5",
           "Expression": "7 days = 1 week",
           "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testQuantity6",
           "Expression": "7 days = 1 'wk'",
           "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testQuantity7",
@@ -4336,7 +4457,8 @@
         {
           "Name": "testQuantity9",
           "Expression": "2.0 'cm' * 2.0 'm' = 0.040 'm2'",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Error (Processing) Operation `*` not supported on operand types: Quantity, Quantity"
         }
       ]
     },
@@ -4366,8 +4488,7 @@
         {
           "Name": "testRepeat5",
           "Expression": "Patient.name.repeat('test')",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 3"
+          "Result": true
         }
       ]
     },
@@ -4397,12 +4518,14 @@
         {
           "Name": "testReplace5",
           "Expression": "'123'.replace({}, 'X').empty() = true",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Error (Processing) Fn awaits singleton match : string, replace : string arguments"
         },
         {
           "Name": "testReplace6",
           "Expression": "'123'.replace('2', {}).empty() = true",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Error (Processing) Fn awaits singleton match : string, replace : string arguments"
         }
       ]
     },
@@ -4433,12 +4556,14 @@
         {
           "Name": "testReplaceMatches5",
           "Expression": "'123'.replaceMatches({}, 'X').empty() = true",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Error (Processing) Fn awaits singleton match : string, replace : string arguments"
         },
         {
           "Name": "testReplaceMatches6",
           "Expression": "'123'.replaceMatches('2', {}).empty() = true",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Error (Processing) Fn awaits singleton match : string, replace : string arguments"
         },
         {
           "Name": "testReplaceMatches7",
@@ -4473,12 +4598,14 @@
         {
           "Name": "testSelect1",
           "Expression": "Patient.name.select(given).count() = 5",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testSelect2",
           "Expression": "Patient.name.select(given | family).count() = 7 ",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testSelect3",
@@ -4508,7 +4635,8 @@
         {
           "Name": "testSkip1",
           "Expression": "(0 | 1 | 2).skip(1) = 1 | 2",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testSkip2",
@@ -4518,7 +4646,8 @@
         {
           "Name": "testSkip3",
           "Expression": "Patient.name.skip(1).given.trace('test') = 'Jim' | 'Peter' | 'James'",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testSkip4",
@@ -4535,70 +4664,70 @@
           "Description": "Prototype definition - not part of spec yet",
           "Expression": "(1 | 2 | 3).sort() = (1 | 2 | 3)",
           "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'sort'\nWarning (MultipleMatches) Operator '=' can experience unexpected runtime errors when used with a collection\nError (Exception) Invalid expression: Unknown symbol 'sort'"
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: sort"
         },
         {
           "Name": "testSort10",
           "Description": "Prototype definition - not part of spec yet",
           "Expression": "Patient.name.sort(-family, -given.first()).first().use = 'usual'",
           "NotImplemented": true,
-          "FailureMessage": "Error (NotFound) prop 'family' not found on Patient\nError (NotFound) prop 'given' not found on Patient\nWarning (NotSupported) Unhandled function 'sort'\nError (NotFound) prop 'use' not found on ???\nError (Exception) Invalid expression: Unknown symbol 'sort'"
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: sort"
         },
         {
           "Name": "testSort2",
           "Description": "Prototype definition - not part of spec yet",
           "Expression": "(3 | 2 | 1).sort() = (1 | 2 | 3)",
           "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'sort'\nWarning (MultipleMatches) Operator '=' can experience unexpected runtime errors when used with a collection\nError (Exception) Invalid expression: Unknown symbol 'sort'"
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: sort"
         },
         {
           "Name": "testSort3",
           "Description": "Prototype definition - not part of spec yet",
           "Expression": "(1 | 2 | 3).sort($this) = (1 | 2 | 3)",
           "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'sort'\nWarning (MultipleMatches) Operator '=' can experience unexpected runtime errors when used with a collection\nError (Exception) Invalid expression: Unknown symbol 'sort'"
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: sort"
         },
         {
           "Name": "testSort4",
           "Description": "Prototype definition - not part of spec yet",
           "Expression": "(3 | 2 | 1).sort($this) = (1 | 2 | 3)",
           "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'sort'\nWarning (MultipleMatches) Operator '=' can experience unexpected runtime errors when used with a collection\nError (Exception) Invalid expression: Unknown symbol 'sort'"
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: sort"
         },
         {
           "Name": "testSort5",
           "Description": "Prototype definition - not part of spec yet",
           "Expression": "(1 | 2 | 3).sort(-$this) = (3 | 2 | 1)",
           "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'sort'\nWarning (MultipleMatches) Operator '=' can experience unexpected runtime errors when used with a collection\nError (Exception) Invalid expression: Unknown symbol 'sort'"
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: sort"
         },
         {
           "Name": "testSort6",
           "Description": "Prototype definition - not part of spec yet",
           "Expression": "('a' | 'b' | 'c').sort($this) = ('a' | 'b' | 'c')",
           "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'sort'\nWarning (MultipleMatches) Operator '=' can experience unexpected runtime errors when used with a collection\nError (Exception) Invalid expression: Unknown symbol 'sort'"
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: sort"
         },
         {
           "Name": "testSort7",
           "Description": "Prototype definition - not part of spec yet",
           "Expression": "('c' | 'b' | 'a').sort($this) = ('a' | 'b' | 'c')",
           "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'sort'\nWarning (MultipleMatches) Operator '=' can experience unexpected runtime errors when used with a collection\nError (Exception) Invalid expression: Unknown symbol 'sort'"
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: sort"
         },
         {
           "Name": "testSort8",
           "Description": "Prototype definition - not part of spec yet",
           "Expression": "('a' | 'b' | 'c').sort(-$this) = ('c' | 'b' | 'a')",
           "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'sort'\nWarning (MultipleMatches) Operator '=' can experience unexpected runtime errors when used with a collection\nError (Exception) Invalid expression: Unknown symbol 'sort'"
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: sort"
         },
         {
           "Name": "testSort9",
           "Description": "Prototype definition - not part of spec yet",
           "Expression": "Patient.name[0].given.sort() = ('James' | 'Peter')",
           "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'sort'\nWarning (MultipleMatches) Operator '=' can experience unexpected runtime errors when used with a collection\nError (Exception) Invalid expression: Unknown symbol 'sort'"
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: sort"
         }
       ]
     },
@@ -4608,22 +4737,26 @@
         {
           "Name": "testSplit1",
           "Expression": "'Peter,James,Jim,Peter,James'.split(',').count() = 5",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: split"
         },
         {
           "Name": "testSplit2",
           "Expression": "'A,,C'.split(',').join(',') = 'A,,C'",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: split"
         },
         {
           "Name": "testSplit3",
           "Expression": "'[stop]ONE[stop][stop]TWO[stop][stop][stop]THREE[stop][stop]'.split('[stop]').trace('n').count() = 9",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: split"
         },
         {
           "Name": "testSplit4",
           "Expression": "'[stop]ONE[stop][stop]TWO[stop][stop][stop]THREE[stop][stop]'.split('[stop]').join('[stop]')",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: split"
         }
       ]
     },
@@ -4668,8 +4801,7 @@
         {
           "Name": "testStartsWith12",
           "Expression": "Patient.name.family.first().startsWith(toChars().take(3).join())",
-          "Result": false,
-          "FailureMessage": "Error (NotSupported) String function 'toChars' is not supported on Patient\nError (Exception) Invalid expression: Invocation of function 'startsWith' failed: Invocation of function 'join' failed: Invocation of function 'take' failed: Invocation of function 'toChars' failed: Cannot cast from 'Patient' to '.NET type String'"
+          "Result": true
         },
         {
           "Name": "testStartsWith2",
@@ -4734,7 +4866,8 @@
         {
           "Name": "testSubSetOf3",
           "Expression": "supportingInfo.where(category.coding.code = 'additionalbodysite').sequence.subsetOf($this.item.informationSequence)",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         }
       ]
     },
@@ -4749,8 +4882,7 @@
         {
           "Name": "testSubstring10",
           "Expression": "Patient.name.family.first().substring(2, length()-5)",
-          "Result": false,
-          "FailureMessage": "Error (NotSupported) Function 'length' is not supported on context type 'Patient'\nError (Exception) Invalid expression: Invocation of function 'substring' failed: Invocation of operator '-' failed: Invocation of function 'length' failed: Cannot cast from 'Patient' to '.NET type String'"
+          "Result": true
         },
         {
           "Name": "testSubstring11",
@@ -4760,7 +4892,8 @@
         {
           "Name": "testSubstring12",
           "Expression": "'string'.substring({}).empty() = true",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Error (Processing) Fn awaits singleton start : integer argument"
         },
         {
           "Name": "testSubstring2",
@@ -4780,7 +4913,8 @@
         {
           "Name": "testSubstring5",
           "Expression": "'12345'.substring(-1).empty()",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Error (Processing) Range [-1, 5) out of bounds for length 5"
         },
         {
           "Name": "testSubstring7",
@@ -4820,12 +4954,14 @@
         {
           "Name": "testTail1",
           "Expression": "(0 | 1 | 2).tail() = 1 | 2",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testTail2",
           "Expression": "Patient.name.tail().given = 'Jim' | 'Peter' | 'James'",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         }
       ]
     },
@@ -4845,12 +4981,14 @@
         {
           "Name": "testTake3",
           "Expression": "Patient.name.take(1).given = 'Peter' | 'James'",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testTake4",
           "Expression": "Patient.name.take(2).given = 'Peter' | 'James' | 'Jim'",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testTake5",
@@ -4905,7 +5043,8 @@
         {
           "Name": "testToDecimal2",
           "Expression": "'-1'.toInteger() = -1",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testToDecimal3",
@@ -4935,7 +5074,8 @@
         {
           "Name": "testToInteger2",
           "Expression": "'-1'.toInteger() = -1",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testToInteger3",
@@ -4965,7 +5105,8 @@
         {
           "Name": "testToString2",
           "Expression": "'-1'.toInteger() = -1",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testToString3",
@@ -5005,32 +5146,38 @@
         {
           "Name": "testTrim1",
           "Expression": "'123456'.trim().length() = 6",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: trim"
         },
         {
           "Name": "testTrim2",
           "Expression": "'123 456'.trim().length() = 7",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: trim"
         },
         {
           "Name": "testTrim3",
           "Expression": "' 123456 '.trim().length() = 6",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: trim"
         },
         {
           "Name": "testTrim4",
           "Expression": "'  '.trim().length() = 0",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: trim"
         },
         {
           "Name": "testTrim5",
           "Expression": "{}.trim().empty() = true",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: trim"
         },
         {
           "Name": "testTrim6",
           "Expression": "'      '.trim() = ''",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: trim"
         }
       ]
     },
@@ -5050,7 +5197,8 @@
         {
           "Name": "testTruncate3",
           "Expression": "(-1.56).truncate() = -1",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testTruncateEmpty",
@@ -5065,14 +5213,13 @@
         {
           "Name": "testType1",
           "Expression": "1.type().namespace = 'System'",
-          "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'type'\nError (NotFound) prop 'namespace' not found on ???\nError (Exception) Invalid expression: Unknown symbol 'type'"
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testType10",
           "Expression": "Patient.active.type().name = 'boolean'",
-          "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'type'\nError (NotFound) prop 'name' not found on ???\nError (Exception) Invalid expression: Unknown symbol 'type'"
+          "Result": true
         },
         {
           "Name": "testType11",
@@ -5082,7 +5229,8 @@
         {
           "Name": "testType12",
           "Expression": "Patient.active.is(Boolean).not()",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testType13",
@@ -5092,19 +5240,18 @@
         {
           "Name": "testType14",
           "Expression": "Patient.active.is(System.Boolean).not()",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testType15",
           "Expression": "Patient.type().namespace = 'FHIR'",
-          "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'type'\nError (NotFound) prop 'namespace' not found on ???\nError (Exception) Invalid expression: Unknown symbol 'type'"
+          "Result": true
         },
         {
           "Name": "testType16",
           "Expression": "Patient.type().name = 'Patient'",
-          "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'type'\nError (NotFound) prop 'name' not found on ???\nError (Exception) Invalid expression: Unknown symbol 'type'"
+          "Result": true
         },
         {
           "Name": "testType17",
@@ -5119,61 +5266,61 @@
         {
           "Name": "testType19",
           "Expression": "Patient.is(FHIR.`Patient`)",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testType1a",
           "Expression": "1.type().name = 'Integer'",
-          "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'type'\nError (NotFound) prop 'name' not found on ???\nError (Exception) Invalid expression: Unknown symbol 'type'"
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testType2",
           "Expression": "'1'.type().namespace = 'System'",
-          "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'type'\nError (NotFound) prop 'namespace' not found on ???\nError (Exception) Invalid expression: Unknown symbol 'type'"
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testType20",
           "Expression": "Patient.ofType(Patient).type().name",
-          "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'type'\nError (NotFound) prop 'name' not found on ???\nError (Exception) Invalid expression: Unknown symbol 'type'"
+          "Result": true
         },
         {
           "Name": "testType21",
           "Expression": "Patient.ofType(FHIR.Patient).type().name",
-          "NotImplemented": true,
-          "FailureMessage": "Error (NotSupported) Expression included an 'ofType' test for FHIR.Patient where possible types are Patient\nWarning (NotSupported) Unhandled function 'type'\nError (NotFound) prop 'name' not found on ???\nError (Exception) Invalid expression: Unknown symbol 'type'"
+          "Result": true
         },
         {
           "Name": "testType22",
           "Description": "Note: Some systems may return an error due to failing to resolve System.Patient",
           "Expression": "Patient.is(System.Patient).not()",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testType23",
           "Expression": "Patient.ofType(FHIR.`Patient`).type().name",
-          "NotImplemented": true,
-          "FailureMessage": "Error (NotSupported) Expression included an 'ofType' test for FHIR.Patient where possible types are Patient\nWarning (NotSupported) Unhandled function 'type'\nError (NotFound) prop 'name' not found on ???\nError (Exception) Invalid expression: Unknown symbol 'type'"
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
         },
         {
           "Name": "testType2a",
           "Expression": "'1'.type().name = 'String'",
-          "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'type'\nError (NotFound) prop 'name' not found on ???\nError (Exception) Invalid expression: Unknown symbol 'type'"
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testType3",
           "Expression": "true.type().namespace = 'System'",
-          "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'type'\nError (NotFound) prop 'namespace' not found on ???\nError (Exception) Invalid expression: Unknown symbol 'type'"
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testType4",
           "Expression": "true.type().name = 'Boolean'",
-          "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'type'\nError (NotFound) prop 'name' not found on ???\nError (Exception) Invalid expression: Unknown symbol 'type'"
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testType5",
@@ -5198,8 +5345,7 @@
         {
           "Name": "testType9",
           "Expression": "Patient.active.type().namespace = 'FHIR'",
-          "NotImplemented": true,
-          "FailureMessage": "Warning (NotSupported) Unhandled function 'type'\nError (NotFound) prop 'namespace' not found on ???\nError (Exception) Invalid expression: Unknown symbol 'type'"
+          "Result": true
         },
         {
           "Name": "testTypeA",
@@ -5224,8 +5370,7 @@
         {
           "Name": "testTypeA4",
           "Expression": "Parameters.parameter[2].value.is(FHIR.uri)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "Result": true
         }
       ]
     },
@@ -5330,7 +5475,8 @@
         {
           "Name": "testDecimalLiteralToInteger",
           "Expression": "'1.1'.toInteger() = {}",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Expected no results, but got some."
         },
         {
           "Name": "testDecimalLiteralToIntegerIsEmpty",
@@ -5360,7 +5506,8 @@
         {
           "Name": "testIntegerLiteralConvertsToBooleanFalse",
           "Expression": "2.convertsToBoolean()",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testIntegerLiteralConvertsToDecimal",
@@ -5455,7 +5602,8 @@
         {
           "Name": "testNegativeIntegerLiteralConvertsToBooleanFalse",
           "Expression": "(-1).convertsToBoolean()",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testNegativeIntegerLiteralConvertsToString",
@@ -5481,7 +5629,8 @@
         {
           "Name": "testQuantityLiteralWkToString",
           "Expression": "1 'wk'.toString()",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testStringDayConvertsToDate",
@@ -5506,7 +5655,8 @@
         {
           "Name": "testStringDecimalLiteralConvertsToQuantity",
           "Expression": "'1.0'.convertsToQuantity()",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testStringDecimalLiteralConvertsToQuantityFalse",
@@ -5526,12 +5676,14 @@
         {
           "Name": "testStringDecimalLiteralToQuantity",
           "Expression": "'1.0'.toQuantity() ~ 1 '1'",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testStringFalseLiteralAlsoConvertsToBoolean",
           "Expression": "'False'.convertsToBoolean()",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testStringFalseLiteralConvertsToBoolean",
@@ -5551,7 +5703,8 @@
         {
           "Name": "testStringHourConvertsToTime",
           "Expression": "'14'.convertsToTime()",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testStringIntegerLiteralConvertsToDecimal",
@@ -5561,7 +5714,8 @@
         {
           "Name": "testStringIntegerLiteralConvertsToQuantity",
           "Expression": "'1'.convertsToQuantity()",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testStringIntegerLiteralIsNotDecimal",
@@ -5647,7 +5801,8 @@
         {
           "Name": "testStringQuantityDayLiteralToQuantity",
           "Expression": "'1 day'.toQuantity() = 1 'd'",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testStringQuantityLiteralConvertsToQuantity",
@@ -5662,7 +5817,8 @@
         {
           "Name": "testStringQuantityMonthLiteralToQuantity",
           "Expression": "'1 \\'mo\\''.toQuantity() = 1 month",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Expected no results, but got some."
         },
         {
           "Name": "testStringQuantityWeekConvertsToQuantity",
@@ -5677,12 +5833,14 @@
         {
           "Name": "testStringQuantityWeekLiteralToQuantity",
           "Expression": "'1 \\'wk\\''.toQuantity() = 1 week",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testStringQuantityYearLiteralToQuantity",
           "Expression": "'1 \\'a\\''.toQuantity() = 1 year",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Expected no results, but got some."
         },
         {
           "Name": "testStringSecondConvertsToDateTime",
@@ -5742,13 +5900,13 @@
         {
           "Name": "testUnion10",
           "Expression": "name.select(use.union($this.given)).count()",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testUnion11",
           "Expression": "name.select(use.union(given)).count()",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "Result": true
         },
         {
           "Name": "testUnion12",
@@ -5793,7 +5951,8 @@
         {
           "Name": "testUnion9",
           "Expression": "name.select(use | given).count()",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         }
       ]
     },
@@ -5803,12 +5962,14 @@
         {
           "Name": "testVariables1",
           "Expression": "%sct = 'http://snomed.info/sct'",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testVariables2",
           "Expression": "%loinc = 'http://loinc.org'",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testVariables3",
@@ -5819,7 +5980,7 @@
           "Name": "testVariables4",
           "Expression": "%`vs-administrative-gender` = 'http://hl7.org/fhir/ValueSet/administrative-gender'",
           "Result": false,
-          "FailureMessage": "Error (Exception) Invalid expression: Object reference not set to an instance of an object."
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         }
       ]
     },
