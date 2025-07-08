@@ -1,0 +1,5880 @@
+{
+  "EngineName": "fhirpath-py 1.0.3",
+  "Groups": [
+    {
+      "Name": "comments",
+      "TestCases": [
+        {
+          "Name": "testComment1",
+          "Expression": "2 + 2 // This is a single-line comment + 4",
+          "Result": true
+        },
+        {
+          "Name": "testComment2",
+          "Expression": "// This is a multi line comment using // that\n  // should not fail during parsing\n  2+2",
+          "Result": true
+        },
+        {
+          "Name": "testComment3",
+          "Expression": "2 + 2 \n      /*\nThis is a multi-line comment\nAny text enclosed within is ignored\n+2\n*/",
+          "Result": true
+        },
+        {
+          "Name": "testComment4",
+          "Expression": "2 + 2 \n      /*\nThis is a multi-line comment\nAny text enclosed within is ignored\n*/\n+2",
+          "Result": true
+        },
+        {
+          "Name": "testComment5",
+          "Expression": "/*\nThis is a multi-line comment\nAny text enclosed within is ignored\n*/\n2+2",
+          "Result": true
+        },
+        {
+          "Name": "testComment6",
+          "Expression": "2 // comment\n/ 2",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "testComment7",
+          "Expression": "2 + 2 /",
+          "Result": true
+        },
+        {
+          "Name": "testComment8",
+          "Expression": "2 + 2 /* not finished",
+          "Result": true
+        },
+        {
+          "Name": "testComment9",
+          "Expression": "2 + /* inline $@%^+ * */ 2 = 4",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "Comparable",
+      "TestCases": [
+        {
+          "Name": "Comparable1",
+          "Expression": "1 'cm'.comparable(1 '[in_i]')",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "Comparable2",
+          "Expression": "1 'cm'.comparable(1 '[s]')",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "Comparable3",
+          "Expression": "1 'cm'.comparable(1 's')",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        }
+      ]
+    },
+    {
+      "Name": "defineVariable",
+      "TestCases": [
+        {
+          "Name": "defineVariable1",
+          "Description": "simplest variable",
+          "Expression": "defineVariable('v1', 'value1').select(%v1)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "defineVariable10",
+          "Description": "use undefined variable throws error",
+          "Expression": "select(%fam.given)",
+          "Result": true
+        },
+        {
+          "Name": "defineVariable12",
+          "Description": "defineVariable() could not be the first child",
+          "Expression": "Patient.name.defineVariable('n1', first()).active | Patient.name.defineVariable('n2', skip(1).first()).select(%n1.given)",
+          "Result": true
+        },
+        {
+          "Name": "defineVariable13",
+          "Description": "sequence of variable definitions tweak",
+          "Expression": "Patient.name.defineVariable('n2', skip(1).first()).defineVariable('res', %n2.given+%n2.given).select(%res)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "defineVariable14",
+          "Description": "sequence of variable definitions original",
+          "Expression": "Patient.name.defineVariable('n1', first()).select(%n1).exists() | Patient.name.defineVariable('n2', skip(1).first()).defineVariable('res', %n2.given+%n2.given).select(%res)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "defineVariable15",
+          "Description": "multi-tree vars valid",
+          "Expression": "defineVariable('root', 'r1-').select(defineVariable('v1', 'v1').defineVariable('v2', 'v2').select(%v1 | %v2)).select(%root & $this)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "defineVariable16",
+          "Description": "multi-tree vars exception",
+          "Expression": "defineVariable('root', 'r1-').select(defineVariable('v1', 'v1').defineVariable('v2', 'v2').select(%v1 | %v2)).select(%root & $this & %v1)",
+          "Result": true
+        },
+        {
+          "Name": "defineVariable19",
+          "Description": "defineVariable in function parameters (1)",
+          "Expression": "defineVariable(defineVariable('param','ppp').select(%param), defineVariable('param','value').select(%param)).select(%ppp)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "defineVariable2",
+          "Description": "simple use of a variable",
+          "Expression": "defineVariable('n1', name.first()).select(%n1.given)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "defineVariable3",
+          "Description": "simple use of a variable 2 selects",
+          "Expression": "defineVariable('n1', name.first()).select(%n1.given).first()",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "defineVariable4",
+          "Description": "use of a variable in separate contexts",
+          "Expression": "defineVariable('n1', name.first()).select(%n1.given) | defineVariable('n1', name.skip(1).first()).select(%n1.given)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "defineVariable5",
+          "Description": "use of a variable in separate contexts defined in 2 but used in 1",
+          "Expression": "defineVariable('n1', name.first()).where(active.not()) | defineVariable('n1', name.skip(1).first()).select(%n1.given)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "defineVariable6",
+          "Description": "use of different variables in different contexts",
+          "Expression": "defineVariable('n1', name.first()).select(id & '-' & %n1.given.join('|')) | defineVariable('n2', name.skip(1).first()).select(%n2.given)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "defineVariable7",
+          "Description": "2 vars, one unused",
+          "Expression": "defineVariable('n1', name.first()).active | defineVariable('n2', name.skip(1).first()).select(%n2.given)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "defineVariable8",
+          "Description": "CompositeVariableUse",
+          "Expression": "defineVariable('v1', 'value1').select(%v1).trace('data').defineVariable('v2', 'value2').select($this & ':' & %v1 & '-' & %v2) | defineVariable('v3', 'value3').select(%v3)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "defineVariable9",
+          "Description": "use of a variable outside context throws error",
+          "Expression": "defineVariable('n1', name.first()).active | defineVariable('n2', name.skip(1).first()).select(%n1.given)",
+          "Result": true
+        },
+        {
+          "Name": "dvCantOverwriteSystemVar",
+          "Expression": "defineVariable('context', 'oops')",
+          "Result": true
+        },
+        {
+          "Name": "dvConceptMapExample",
+          "Description": "realistic example with conceptmap",
+          "Expression": "\n\t\t\tgroup.select(\n\t\t\t\tdefineVariable('grp')\n\t\t\t\t.element\n\t\t\t\t.select(\n\t\t\t\t\tdefineVariable('ele')\n\t\t\t\t\t.target\n\t\t\t\t\t.select(%grp.source & '|' & %ele.code & ' ' & relationship & ' ' & %grp.target & '|' & code)\n\t\t\t\t)\n\t\t\t)\n\t\t\t.trace('all')\n\t\t\t.isDistinct()\n\t\t",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "dvParametersDontColide",
+          "Description": "defineVariable in function parameters (2)",
+          "Expression": "'aaa'.replace(defineVariable('param', 'aaa').select(%param), defineVariable('param','bbb').select(%param))",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "dvRedefiningVariableThrowsError",
+          "Expression": "defineVariable('v1').defineVariable('v1').select(%v1)",
+          "Result": true
+        },
+        {
+          "Name": "dvUsageOutsideScopeThrows",
+          "Description": "use of a variable outside context throws error",
+          "Expression": "defineVariable('n1', 'v1').active | defineVariable('n2', 'v2').select(%n1)",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "from-Zulip",
+      "TestCases": [
+        {
+          "Name": "from-zulip-1",
+          "Expression": "(true and 'foo').empty()",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "from-zulip-2",
+          "Expression": "(true | 'foo').allTrue()",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "HighBoundary",
+      "TestCases": [
+        {
+          "Name": "HighBoundaryDateMonth",
+          "Expression": "@2014.highBoundary(6)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "HighBoundaryDateTimeMillisecond1",
+          "Expression": "@2014-01-01T08.highBoundary(17)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "HighBoundaryDateTimeMillisecond2",
+          "Expression": "@2014-01-01T08:05-05:00.highBoundary(17)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "HighBoundaryDateTimeMillisecond3",
+          "Expression": "@2014-01-01T08.highBoundary(17)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "HighBoundaryDecimal",
+          "Expression": "1.587.highBoundary(8)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "HighBoundaryDecimal1",
+          "Expression": "1.587.highBoundary(2)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "HighBoundaryDecimal10",
+          "Expression": "1.highBoundary(5)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "HighBoundaryDecimal11",
+          "Expression": "12.587.highBoundary(2)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "HighBoundaryDecimal12",
+          "Expression": "12.500.highBoundary(4)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "HighBoundaryDecimal13",
+          "Expression": "120.highBoundary(2)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "HighBoundaryDecimal14",
+          "Expression": "-120.highBoundary(2)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "HighBoundaryDecimal15",
+          "Expression": "0.0034.highBoundary(1)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "HighBoundaryDecimal16",
+          "Expression": "-0.0034.highBoundary(1)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "HighBoundaryDecimal2",
+          "Expression": "1.587.highBoundary(6)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "HighBoundaryDecimal3",
+          "Expression": "1.587.highBoundary(-1)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "HighBoundaryDecimal4",
+          "Expression": "(-1.587).highBoundary()",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "HighBoundaryDecimal5",
+          "Expression": "(-1.587).highBoundary(2)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "HighBoundaryDecimal6",
+          "Expression": "(-1.587).highBoundary(6)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "HighBoundaryDecimal7",
+          "Expression": "1.587.highBoundary(39)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "HighBoundaryDecimal8",
+          "Expression": "1.highBoundary()",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "HighBoundaryDecimal9",
+          "Expression": "1.highBoundary(0)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "HighBoundaryDecimalDefault",
+          "Expression": "1.587.highBoundary()",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "HighBoundaryQuantity",
+          "Expression": "1.587 'm'.highBoundary(8)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "HighBoundaryTimeMillisecond",
+          "Expression": "@T10:30.highBoundary(9)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        }
+      ]
+    },
+    {
+      "Name": "index-part",
+      "TestCases": [
+        {
+          "Name": "testIndex",
+          "Expression": "Patient.telecom.select(iif(value='(03) 3410 5613', $index, {} ))",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "LowBoundary",
+      "TestCases": [
+        {
+          "Name": "LowBoundaryDateMonth",
+          "Expression": "@2014.lowBoundary(6)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "LowBoundaryDateTimeMillisecond1",
+          "Expression": "@2014-01-01T08.lowBoundary(17)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "LowBoundaryDateTimeMillisecond2",
+          "Expression": "@2014-01-01T08:05+08:00.lowBoundary(17)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "LowBoundaryDateTimeMillisecond3",
+          "Expression": "@2014-01-01T08.lowBoundary(8)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "LowBoundaryDecimal1",
+          "Expression": "1.587.lowBoundary(6)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "LowBoundaryDecimal10",
+          "Expression": "12.587.lowBoundary(2)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "LowBoundaryDecimal11",
+          "Expression": "12.500.lowBoundary(4)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "LowBoundaryDecimal12",
+          "Expression": "120.lowBoundary(2)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "LowBoundaryDecimal13",
+          "Expression": "(-120).lowBoundary(2)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "LowBoundaryDecimal14",
+          "Expression": "0.0034.lowBoundary(1)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "LowBoundaryDecimal15",
+          "Expression": "(-0.0034).lowBoundary(1)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "LowBoundaryDecimal2",
+          "Expression": "1.587.lowBoundary(2)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "LowBoundaryDecimal3",
+          "Expression": "1.587.lowBoundary(-1)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "LowBoundaryDecimal4",
+          "Expression": "1.587.lowBoundary(0)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "LowBoundaryDecimal5",
+          "Expression": "1.587.lowBoundary(32)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "LowBoundaryDecimal6",
+          "Expression": "1.587.lowBoundary(39)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "LowBoundaryDecimal7",
+          "Expression": "1.toDecimal().lowBoundary()",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "LowBoundaryDecimal8",
+          "Expression": "1.lowBoundary(0)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "LowBoundaryDecimal9",
+          "Expression": "1.lowBoundary(5)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "LowBoundaryDecimalDefault",
+          "Expression": "1.587.lowBoundary()",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "LowBoundaryNegDecimal1",
+          "Expression": "(-1.587).lowBoundary(6)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "LowBoundaryNegDecimal2",
+          "Expression": "(-1.587).lowBoundary(2)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "LowBoundaryNegDecimal3",
+          "Expression": "(-1.587).lowBoundary(-1)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "LowBoundaryNegDecimal4",
+          "Expression": "(-1.587).lowBoundary(0)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "LowBoundaryNegDecimal5",
+          "Expression": "(-1.587).lowBoundary(32)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "LowBoundaryNegDecimalDefault",
+          "Expression": "(-1.587).lowBoundary()",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "LowBoundaryQuantity",
+          "Expression": "1.587 'cm'.lowBoundary(8)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "LowBoundaryTimeMillisecond",
+          "Expression": "@T10:30.lowBoundary(9)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        }
+      ]
+    },
+    {
+      "Name": "miscEngineTests",
+      "TestCases": [
+        {
+          "Name": "testContainedId",
+          "Expression": "contained.id",
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
+        },
+        {
+          "Name": "testMultipleResolve",
+          "Expression": "composition.exists() implies (composition.resolve().section.entry.reference.where(resolve() is Observation) in (result.reference | result.reference.resolve().hasMember.reference))",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        }
+      ]
+    },
+    {
+      "Name": "period",
+      "TestCases": [
+        {
+          "Name": "testPeriodInvariantNew",
+          "Expression": "Patient.identifier.period.all(start.empty() or end.empty() or (start.lowBoundary() < end.highBoundary()))",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "testPeriodInvariantOld",
+          "Expression": "Patient.identifier.period.all(start.hasValue().not() or end.hasValue().not() or (start <= end))",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        }
+      ]
+    },
+    {
+      "Name": "polymorphics",
+      "TestCases": [
+        {
+          "Name": "testPolymorphicsA",
+          "Expression": "Observation.value.exists()",
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
+        },
+        {
+          "Name": "testPolymorphicsB",
+          "Expression": "Observation.valueQuantity.exists()",
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
+        }
+      ]
+    },
+    {
+      "Name": "Precision",
+      "TestCases": [
+        {
+          "Name": "PrecisionDateTimeMilliseconds",
+          "Expression": "@2014-01-05T10:30:00.000.precision()",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "PrecisionDecimal",
+          "Expression": "1.58700.precision()",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "PrecisionTimeMilliseconds",
+          "Expression": "@T10:30:00.000.precision()",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "PrecisionTimeMinutes",
+          "Expression": "@T10:30.precision()",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "PrecisionYear",
+          "Expression": "@2014.precision()",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        }
+      ]
+    },
+    {
+      "Name": "testAbs",
+      "TestCases": [
+        {
+          "Name": "testAbs1",
+          "Expression": "(-5).abs() = 5",
+          "Result": true
+        },
+        {
+          "Name": "testAbs2",
+          "Expression": "(-5.5).abs() = 5.5",
+          "Result": true
+        },
+        {
+          "Name": "testAbs3",
+          "Expression": "(-5.5 'mg').abs() = 5.5 'mg'",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "testAbsEmpty",
+          "Expression": "{}.abs().empty()",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testAggregate",
+      "TestCases": [
+        {
+          "Name": "testAggregate1",
+          "Expression": "(1|2|3|4|5|6|7|8|9).aggregate($this+$total, 0) = 45",
+          "Result": true
+        },
+        {
+          "Name": "testAggregate2",
+          "Expression": "(1|2|3|4|5|6|7|8|9).aggregate($this+$total, 2) = 47",
+          "Result": true
+        },
+        {
+          "Name": "testAggregate3",
+          "Expression": "(1|2|3|4|5|6|7|8|9).aggregate(iif($total.empty(), $this, iif($this < $total, $this, $total))) = 1",
+          "Result": true
+        },
+        {
+          "Name": "testAggregate4",
+          "Expression": "(1|2|3|4|5|6|7|8|9).aggregate(iif($total.empty(), $this, iif($this > $total, $this, $total))) = 9",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testAll",
+      "TestCases": [
+        {
+          "Name": "testAllTrue1",
+          "Expression": "Patient.name.select(given.exists()).allTrue()",
+          "Result": true
+        },
+        {
+          "Name": "testAllTrue2",
+          "Expression": "Patient.name.select(period.exists()).allTrue()",
+          "Result": true
+        },
+        {
+          "Name": "testAllTrue3",
+          "Expression": "Patient.name.all(given.exists())",
+          "Result": true
+        },
+        {
+          "Name": "testAllTrue4",
+          "Expression": "Patient.name.all(period.exists())",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testBasics",
+      "TestCases": [
+        {
+          "Name": "testEscapedIdentifier",
+          "Expression": "name.`given`",
+          "Result": true
+        },
+        {
+          "Name": "testSimple",
+          "Expression": "name.given",
+          "Result": true
+        },
+        {
+          "Name": "testSimpleBackTick1",
+          "Expression": "`Patient`.name.`given`",
+          "Result": true
+        },
+        {
+          "Name": "testSimpleFail",
+          "Expression": "name.given1",
+          "Result": true
+        },
+        {
+          "Name": "testSimpleNone",
+          "Expression": "name.suffix",
+          "Result": true
+        },
+        {
+          "Name": "testSimpleWithContext",
+          "Expression": "Patient.name.given",
+          "Result": true
+        },
+        {
+          "Name": "testSimpleWithWrongContext",
+          "Expression": "Encounter.name.given",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testBooleanImplies",
+      "TestCases": [
+        {
+          "Name": "testBooleanImplies1",
+          "Expression": "(true implies true) = true",
+          "Result": true
+        },
+        {
+          "Name": "testBooleanImplies2",
+          "Expression": "(true implies false) = false",
+          "Result": true
+        },
+        {
+          "Name": "testBooleanImplies3",
+          "Expression": "(true implies {}).empty()",
+          "Result": true
+        },
+        {
+          "Name": "testBooleanImplies4",
+          "Expression": "(false implies true) = true",
+          "Result": true
+        },
+        {
+          "Name": "testBooleanImplies5",
+          "Expression": "(false implies false) = true",
+          "Result": true
+        },
+        {
+          "Name": "testBooleanImplies6",
+          "Expression": "(false implies {}) = true",
+          "Result": true
+        },
+        {
+          "Name": "testBooleanImplies7",
+          "Expression": "({} implies true) = true",
+          "Result": true
+        },
+        {
+          "Name": "testBooleanImplies8",
+          "Expression": "({} implies false).empty()",
+          "Result": true
+        },
+        {
+          "Name": "testBooleanImplies9",
+          "Expression": "({} implies {}).empty()",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testBooleanLogicAnd",
+      "TestCases": [
+        {
+          "Name": "testBooleanLogicAnd1",
+          "Expression": "(true and true) = true",
+          "Result": true
+        },
+        {
+          "Name": "testBooleanLogicAnd2",
+          "Expression": "(true and false) = false",
+          "Result": true
+        },
+        {
+          "Name": "testBooleanLogicAnd3",
+          "Expression": "(true and {}).empty()",
+          "Result": true
+        },
+        {
+          "Name": "testBooleanLogicAnd4",
+          "Expression": "(false and true) = false",
+          "Result": true
+        },
+        {
+          "Name": "testBooleanLogicAnd5",
+          "Expression": "(false and false) = false",
+          "Result": true
+        },
+        {
+          "Name": "testBooleanLogicAnd6",
+          "Expression": "(false and {}) = false",
+          "Result": true
+        },
+        {
+          "Name": "testBooleanLogicAnd7",
+          "Expression": "({} and true).empty()",
+          "Result": true
+        },
+        {
+          "Name": "testBooleanLogicAnd8",
+          "Expression": "({} and false) = false",
+          "Result": true
+        },
+        {
+          "Name": "testBooleanLogicAnd9",
+          "Expression": "({} and {}).empty()",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testBooleanLogicOr",
+      "TestCases": [
+        {
+          "Name": "testBooleanLogicOr1",
+          "Expression": "(true or true) = true",
+          "Result": true
+        },
+        {
+          "Name": "testBooleanLogicOr2",
+          "Expression": "(true or false) = true",
+          "Result": true
+        },
+        {
+          "Name": "testBooleanLogicOr3",
+          "Expression": "(true or {}) = true",
+          "Result": true
+        },
+        {
+          "Name": "testBooleanLogicOr4",
+          "Expression": "(false or true) = true",
+          "Result": true
+        },
+        {
+          "Name": "testBooleanLogicOr5",
+          "Expression": "(false or false) = false",
+          "Result": true
+        },
+        {
+          "Name": "testBooleanLogicOr6",
+          "Expression": "(false or {}).empty()",
+          "Result": true
+        },
+        {
+          "Name": "testBooleanLogicOr7",
+          "Expression": "({} or true) = true",
+          "Result": true
+        },
+        {
+          "Name": "testBooleanLogicOr8",
+          "Expression": "({} or false).empty()",
+          "Result": true
+        },
+        {
+          "Name": "testBooleanLogicOr9",
+          "Expression": "({} or {}).empty()",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testBooleanLogicXOr",
+      "TestCases": [
+        {
+          "Name": "testBooleanLogicXOr1",
+          "Expression": "(true xor true) = false",
+          "Result": true
+        },
+        {
+          "Name": "testBooleanLogicXOr2",
+          "Expression": "(true xor false) = true",
+          "Result": true
+        },
+        {
+          "Name": "testBooleanLogicXOr3",
+          "Expression": "(true xor {}).empty()",
+          "Result": true
+        },
+        {
+          "Name": "testBooleanLogicXOr4",
+          "Expression": "(false xor true) = true",
+          "Result": true
+        },
+        {
+          "Name": "testBooleanLogicXOr5",
+          "Expression": "(false xor false) = false",
+          "Result": true
+        },
+        {
+          "Name": "testBooleanLogicXOr6",
+          "Expression": "(false xor {}).empty()",
+          "Result": true
+        },
+        {
+          "Name": "testBooleanLogicXOr7",
+          "Expression": "({} xor true).empty()",
+          "Result": true
+        },
+        {
+          "Name": "testBooleanLogicXOr8",
+          "Expression": "({} xor false).empty()",
+          "Result": true
+        },
+        {
+          "Name": "testBooleanLogicXOr9",
+          "Expression": "({} xor {}).empty()",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testCase",
+      "TestCases": [
+        {
+          "Name": "testCase1",
+          "Expression": "'t'.upper() = 'T'",
+          "Result": true
+        },
+        {
+          "Name": "testCase2",
+          "Expression": "'t'.lower() = 't'",
+          "Result": true
+        },
+        {
+          "Name": "testCase3",
+          "Expression": "'T'.upper() = 'T'",
+          "Result": true
+        },
+        {
+          "Name": "testCase4",
+          "Expression": "'T'.lower() = 't'",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testCeiling",
+      "TestCases": [
+        {
+          "Name": "testCeiling1",
+          "Expression": "1.ceiling() = 1",
+          "Result": true
+        },
+        {
+          "Name": "testCeiling2",
+          "Expression": "(-1.1).ceiling() = -1",
+          "Result": true
+        },
+        {
+          "Name": "testCeiling3",
+          "Expression": "1.1.ceiling() = 2",
+          "Result": true
+        },
+        {
+          "Name": "testCeilingEmpty",
+          "Expression": "{}.ceiling().empty()",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testCollectionBoolean",
+      "TestCases": [
+        {
+          "Name": "testCollectionBoolean1",
+          "Expression": "iif(1 | 2 | 3, true, false)",
+          "Result": false,
+          "FailureMessage": "Expected no results, but got some."
+        },
+        {
+          "Name": "testCollectionBoolean2",
+          "Expression": "iif({}, true, false)",
+          "Result": true
+        },
+        {
+          "Name": "testCollectionBoolean3",
+          "Expression": "iif(true, true, false)",
+          "Result": true
+        },
+        {
+          "Name": "testCollectionBoolean4",
+          "Expression": "iif({} | true, true, false)",
+          "Result": true
+        },
+        {
+          "Name": "testCollectionBoolean5",
+          "Expression": "iif(true, true, 1/0)",
+          "Result": true
+        },
+        {
+          "Name": "testCollectionBoolean6",
+          "Expression": "iif(false, 1/0, true)",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testCombine()",
+      "TestCases": [
+        {
+          "Name": "testCombine1",
+          "Expression": "concept.code.combine($this.descendants().concept.code).isDistinct()",
+          "Result": true
+        },
+        {
+          "Name": "testCombine2",
+          "Expression": "name.given.combine(name.family).exclude('Jim')",
+          "Result": true
+        },
+        {
+          "Name": "testCombine3",
+          "Expression": "name.given.combine($this.name.family).exclude('Jim')",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testConcatenate",
+      "TestCases": [
+        {
+          "Name": "testConcatenate1",
+          "Expression": "'a' & 'b' = 'ab'",
+          "Result": true
+        },
+        {
+          "Name": "testConcatenate2",
+          "Expression": "'1' & {} = '1'",
+          "Result": true
+        },
+        {
+          "Name": "testConcatenate3",
+          "Expression": "{} & 'b' = 'b'",
+          "Result": true
+        },
+        {
+          "Name": "testConcatenate4",
+          "Expression": "(1 | 2 | 3) & 'b' = '1,2,3b'",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testConformsTo",
+      "TestCases": [
+        {
+          "Name": "testConformsTo1",
+          "Expression": "conformsTo('http://hl7.org/fhir/StructureDefinition/Patient')",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "testConformsTo2",
+          "Expression": "conformsTo('http://hl7.org/fhir/StructureDefinition/Person')",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "testConformsTo3",
+          "Expression": "conformsTo('http://trash')",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testContainsCollection",
+      "TestCases": [
+        {
+          "Name": "testContainsCollection1",
+          "Expression": "(1 | 2 | 3) contains 1",
+          "Result": true
+        },
+        {
+          "Name": "testContainsCollection2",
+          "Expression": "(2 | 3) contains 1 ",
+          "Result": true
+        },
+        {
+          "Name": "testContainsCollection3",
+          "Expression": "('a' | 'c' | 'd') contains 'a'",
+          "Result": true
+        },
+        {
+          "Name": "testContainsCollection4",
+          "Expression": "('a' | 'c' | 'd') contains 'b'",
+          "Result": true
+        },
+        {
+          "Name": "testContainsCollectionEmpty1",
+          "Expression": "{} contains 1",
+          "Result": true
+        },
+        {
+          "Name": "testContainsCollectionEmpty2",
+          "Expression": "{} contains 'value'",
+          "Result": true
+        },
+        {
+          "Name": "testContainsCollectionEmpty3",
+          "Expression": "{} contains true",
+          "Result": true
+        },
+        {
+          "Name": "testContainsCollectionEmpty4",
+          "Expression": "{} contains {}",
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
+        },
+        {
+          "Name": "testContainsCollectionEmptyDateTime",
+          "Expression": "{} contains @2023-01-01",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testContainsString",
+      "TestCases": [
+        {
+          "Name": "testContainsNonString1",
+          "Expression": "Appointment.identifier.contains('rand')",
+          "Result": true
+        },
+        {
+          "Name": "testContainsString1",
+          "Expression": "'12345'.contains('6') = false",
+          "Result": true
+        },
+        {
+          "Name": "testContainsString10",
+          "Expression": "Patient.name.family.first().contains(toChars().skip(3).take(3).join())",
+          "Result": true
+        },
+        {
+          "Name": "testContainsString2",
+          "Expression": "'12345'.contains('5') = true",
+          "Result": true
+        },
+        {
+          "Name": "testContainsString3",
+          "Expression": "'12345'.contains('45') = true",
+          "Result": true
+        },
+        {
+          "Name": "testContainsString4",
+          "Expression": "'12345'.contains('35') = false",
+          "Result": true
+        },
+        {
+          "Name": "testContainsString5",
+          "Expression": "'12345'.contains('12345') = true",
+          "Result": true
+        },
+        {
+          "Name": "testContainsString6",
+          "Expression": "'12345'.contains('012345') = false",
+          "Result": true
+        },
+        {
+          "Name": "testContainsString7",
+          "Expression": "'12345'.contains('') = true",
+          "Result": true
+        },
+        {
+          "Name": "testContainsString8",
+          "Expression": "{}.contains('a').empty() = true",
+          "Result": true
+        },
+        {
+          "Name": "testContainsString9",
+          "Expression": "{}.contains('').empty() = true",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testCount",
+      "TestCases": [
+        {
+          "Name": "testCount1",
+          "Expression": "Patient.name.count()",
+          "Result": true
+        },
+        {
+          "Name": "testCount2",
+          "Expression": "Patient.name.count() = 3",
+          "Result": true
+        },
+        {
+          "Name": "testCount3",
+          "Expression": "Patient.name.first().count()",
+          "Result": true
+        },
+        {
+          "Name": "testCount4",
+          "Expression": "Patient.name.first().count() = 1",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testDistinct",
+      "TestCases": [
+        {
+          "Name": "testDistinct1",
+          "Expression": "(1 | 2 | 3).isDistinct()",
+          "Result": true
+        },
+        {
+          "Name": "testDistinct2",
+          "Expression": "Questionnaire.descendants().linkId.isDistinct()",
+          "Result": true
+        },
+        {
+          "Name": "testDistinct3",
+          "Expression": "Questionnaire.descendants().linkId.select(substring(0,1)).isDistinct().not()",
+          "Result": true
+        },
+        {
+          "Name": "testDistinct4",
+          "Expression": "(1 | 2 | 3).distinct()",
+          "Result": true
+        },
+        {
+          "Name": "testDistinct5",
+          "Expression": "Questionnaire.descendants().linkId.distinct().count()",
+          "Result": true
+        },
+        {
+          "Name": "testDistinct6",
+          "Expression": "Questionnaire.descendants().linkId.select(substring(0,1)).distinct().count()",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testDiv",
+      "TestCases": [
+        {
+          "Name": "testDiv1",
+          "Expression": "1 div 1 = 1",
+          "Result": true
+        },
+        {
+          "Name": "testDiv2",
+          "Expression": "4 div 2 = 2",
+          "Result": true
+        },
+        {
+          "Name": "testDiv3",
+          "Expression": "5 div 2 = 2",
+          "Result": true
+        },
+        {
+          "Name": "testDiv4",
+          "Expression": "2.2 div 1.8 = 1",
+          "Result": true
+        },
+        {
+          "Name": "testDiv5",
+          "Expression": "5 div 0",
+          "Result": true
+        },
+        {
+          "Name": "testDivEmpty1",
+          "Expression": "1 div {}",
+          "Result": true
+        },
+        {
+          "Name": "testDivEmpty2",
+          "Expression": "{} div 1",
+          "Result": true
+        },
+        {
+          "Name": "testDivEmpty3",
+          "Expression": "{} div {}",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testDivide",
+      "TestCases": [
+        {
+          "Name": "testDivide1",
+          "Expression": "1 / 1 = 1",
+          "Result": true
+        },
+        {
+          "Name": "testDivide2",
+          "Expression": "4 / 2 = 2",
+          "Result": true
+        },
+        {
+          "Name": "testDivide3",
+          "Expression": "4.0 / 2.0 = 2.0",
+          "Result": true
+        },
+        {
+          "Name": "testDivide4",
+          "Expression": "1 / 2 = 0.5",
+          "Result": true
+        },
+        {
+          "Name": "testDivide5",
+          "Expression": "(1.2 / 1.8).round(2) = 0.67",
+          "Result": true
+        },
+        {
+          "Name": "testDivide6",
+          "Expression": "1 / 0",
+          "Result": true
+        },
+        {
+          "Name": "testDivideEmpty1",
+          "Expression": "1 / {}",
+          "Result": true
+        },
+        {
+          "Name": "testDivideEmpty2",
+          "Expression": "{} / 1",
+          "Result": true
+        },
+        {
+          "Name": "testDivideEmpty3",
+          "Expression": "{} / {}",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testDollar",
+      "TestCases": [
+        {
+          "Name": "testDollarOrderAllowed",
+          "Expression": "Patient.name.skip(1).given",
+          "Result": true
+        },
+        {
+          "Name": "testDollarOrderAllowedA",
+          "Expression": "Patient.name.skip(3).given",
+          "Result": true
+        },
+        {
+          "Name": "testDollarOrderNotAllowed",
+          "Expression": "Patient.children().skip(1)",
+          "Result": false,
+          "FailureMessage": "Expected no results, but got some."
+        },
+        {
+          "Name": "testDollarThis1",
+          "Expression": "Patient.name.given.where(substring($this.length()-3) = 'out')",
+          "Result": true
+        },
+        {
+          "Name": "testDollarThis2",
+          "Expression": "Patient.name.given.where(substring($this.length()-3) = 'ter')",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testEncodeDecode",
+      "TestCases": [
+        {
+          "Name": "testDecodeBase64A",
+          "Expression": "'dGVzdA=='.decode('base64')",
+          "Result": true
+        },
+        {
+          "Name": "testDecodeBase64B",
+          "Expression": "'c3ViamVjdHM/X2Q='.decode('base64')",
+          "Result": true
+        },
+        {
+          "Name": "testDecodeHex",
+          "Expression": "'74657374'.decode('hex')",
+          "Result": true
+        },
+        {
+          "Name": "testDecodeUrlBase64",
+          "Expression": "'c3ViamVjdHM_X2Q='.decode('urlbase64')",
+          "Result": true
+        },
+        {
+          "Name": "testEncodeBase64A",
+          "Expression": "'test'.encode('base64')",
+          "Result": true
+        },
+        {
+          "Name": "testEncodeBase64B",
+          "Expression": "'subjects?_d'.encode('base64')",
+          "Result": true
+        },
+        {
+          "Name": "testEncodeHex",
+          "Expression": "'test'.encode('hex')",
+          "Result": true
+        },
+        {
+          "Name": "testEncodeUrlBase64",
+          "Expression": "'subjects?_d'.encode('urlbase64')",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testEndsWith",
+      "TestCases": [
+        {
+          "Name": "testEndsWith1",
+          "Expression": "'12345'.endsWith('2') = false",
+          "Result": true
+        },
+        {
+          "Name": "testEndsWith10",
+          "Expression": "Patient.name.family.first().endsWith(toChars().skip(3).join())",
+          "Result": true
+        },
+        {
+          "Name": "testEndsWith2",
+          "Expression": "'12345'.endsWith('5') = true",
+          "Result": true
+        },
+        {
+          "Name": "testEndsWith3",
+          "Expression": "'12345'.endsWith('45') = true",
+          "Result": true
+        },
+        {
+          "Name": "testEndsWith4",
+          "Expression": "'12345'.endsWith('35') = false",
+          "Result": true
+        },
+        {
+          "Name": "testEndsWith5",
+          "Expression": "'12345'.endsWith('12345') = true",
+          "Result": true
+        },
+        {
+          "Name": "testEndsWith6",
+          "Expression": "'12345'.endsWith('012345') = false",
+          "Result": true
+        },
+        {
+          "Name": "testEndsWith7",
+          "Expression": "'12345'.endsWith('') = true",
+          "Result": true
+        },
+        {
+          "Name": "testEndsWith8",
+          "Expression": "{}.endsWith('1').empty() = true",
+          "Result": true
+        },
+        {
+          "Name": "testEndsWith9",
+          "Expression": "{}.endsWith('').empty() = true",
+          "Result": true
+        },
+        {
+          "Name": "testEndsWithNonString1",
+          "Expression": "Appointment.identifier.endsWith('rand')",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testEquality",
+      "TestCases": [
+        {
+          "Name": "testEquality1",
+          "Expression": "1 = 1",
+          "Result": true
+        },
+        {
+          "Name": "testEquality10",
+          "Expression": "'a' = 'A'",
+          "Result": true
+        },
+        {
+          "Name": "testEquality11",
+          "Expression": "'a' = 'b'",
+          "Result": true
+        },
+        {
+          "Name": "testEquality12",
+          "Expression": "1.1 = 1.1",
+          "Result": true
+        },
+        {
+          "Name": "testEquality13",
+          "Expression": "1.1 = 1.2",
+          "Result": true
+        },
+        {
+          "Name": "testEquality14",
+          "Expression": "1.10 = 1.1",
+          "Result": true
+        },
+        {
+          "Name": "testEquality15",
+          "Expression": "0 = 0",
+          "Result": true
+        },
+        {
+          "Name": "testEquality16",
+          "Expression": "0.0 = 0",
+          "Result": true
+        },
+        {
+          "Name": "testEquality17",
+          "Expression": "@2012-04-15 = @2012-04-15",
+          "Result": true
+        },
+        {
+          "Name": "testEquality18",
+          "Expression": "@2012-04-15 = @2012-04-16",
+          "Result": true
+        },
+        {
+          "Name": "testEquality19",
+          "Expression": "@2012-04-15 = @2012-04-15T10:00:00",
+          "Result": true
+        },
+        {
+          "Name": "testEquality2",
+          "Expression": "{} = {}",
+          "Result": true
+        },
+        {
+          "Name": "testEquality20",
+          "Expression": "@2012-04-15T15:00:00 = @2012-04-15T10:00:00",
+          "Result": true
+        },
+        {
+          "Name": "testEquality21",
+          "Expression": "@2012-04-15T15:30:31 = @2012-04-15T15:30:31.0",
+          "Result": true
+        },
+        {
+          "Name": "testEquality22",
+          "Expression": "@2012-04-15T15:30:31 = @2012-04-15T15:30:31.1",
+          "Result": true
+        },
+        {
+          "Name": "testEquality23",
+          "Expression": "@2012-04-15T15:00:00Z = @2012-04-15T10:00:00",
+          "Result": false,
+          "FailureMessage": "Expected no results, but got some."
+        },
+        {
+          "Name": "testEquality24",
+          "Expression": "@2012-04-15T15:00:00+02:00 = @2012-04-15T16:00:00+03:00",
+          "Result": true
+        },
+        {
+          "Name": "testEquality25",
+          "Expression": "name = name",
+          "Result": true
+        },
+        {
+          "Name": "testEquality26",
+          "Expression": "name.take(2) = name.take(2).first() | name.take(2).last()",
+          "Result": true
+        },
+        {
+          "Name": "testEquality27",
+          "Expression": "name.take(2) = name.take(2).last() | name.take(2).first()",
+          "Result": true
+        },
+        {
+          "Name": "testEquality28",
+          "Expression": "Observation.value = 185 '[lb_av]'",
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
+        },
+        {
+          "Name": "testEquality3",
+          "Expression": "true = {}",
+          "Result": true
+        },
+        {
+          "Name": "testEquality4",
+          "Expression": "(1) = (1)",
+          "Result": true
+        },
+        {
+          "Name": "testEquality5",
+          "Expression": "(1 | 2) = (1 | 2)",
+          "Result": true
+        },
+        {
+          "Name": "testEquality6",
+          "Expression": "(1 | 2 | 3) = (1 | 2 | 3)",
+          "Result": true
+        },
+        {
+          "Name": "testEquality7",
+          "Expression": "(1 | 1) = (1 | 2 | {})",
+          "Result": true
+        },
+        {
+          "Name": "testEquality8",
+          "Expression": "1 = 2",
+          "Result": true
+        },
+        {
+          "Name": "testEquality9",
+          "Expression": "'a' = 'a'",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testEquivalent",
+      "TestCases": [
+        {
+          "Name": "testEquivalent1",
+          "Expression": "1 ~ 1",
+          "Result": true
+        },
+        {
+          "Name": "testEquivalent10",
+          "Expression": "1.10 ~ 1.1",
+          "Result": true
+        },
+        {
+          "Name": "testEquivalent11",
+          "Expression": "1.2 / 1.8 ~ 0.67",
+          "Result": true
+        },
+        {
+          "Name": "testEquivalent12",
+          "Expression": "0 ~ 0",
+          "Result": true
+        },
+        {
+          "Name": "testEquivalent13",
+          "Expression": "0.0 ~ 0",
+          "Result": true
+        },
+        {
+          "Name": "testEquivalent14",
+          "Expression": "@2012-04-15 ~ @2012-04-15",
+          "Result": true
+        },
+        {
+          "Name": "testEquivalent15",
+          "Expression": "@2012-04-15 ~ @2012-04-16",
+          "Result": true
+        },
+        {
+          "Name": "testEquivalent16",
+          "Expression": "@2012-04-15 ~ @2012-04-15T10:00:00",
+          "Result": true
+        },
+        {
+          "Name": "testEquivalent17",
+          "Expression": "@2012-04-15T15:30:31 ~ @2012-04-15T15:30:31.0",
+          "Result": true
+        },
+        {
+          "Name": "testEquivalent18",
+          "Expression": "@2012-04-15T15:30:31 ~ @2012-04-15T15:30:31.1",
+          "Result": true
+        },
+        {
+          "Name": "testEquivalent19",
+          "Expression": "name ~ name",
+          "Result": true
+        },
+        {
+          "Name": "testEquivalent2",
+          "Expression": "{} ~ {}",
+          "Result": true
+        },
+        {
+          "Name": "testEquivalent20",
+          "Expression": "name.take(2).given ~ name.take(2).first().given | name.take(2).last().given",
+          "Result": true
+        },
+        {
+          "Name": "testEquivalent21",
+          "Expression": "name.take(2).given ~ name.take(2).last().given | name.take(2).first().given",
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
+        },
+        {
+          "Name": "testEquivalent22",
+          "Expression": "Observation.value ~ 185 '[lb_av]'",
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
+        },
+        {
+          "Name": "testEquivalent23",
+          "Expression": "(1 | 2 | 3) ~ (1 | 2 | 3)",
+          "Result": true
+        },
+        {
+          "Name": "testEquivalent24",
+          "Expression": "(1 | 2 | 3) ~ (3 | 2 | 1)",
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
+        },
+        {
+          "Name": "testEquivalent3",
+          "Expression": "1 ~ {}",
+          "Result": true
+        },
+        {
+          "Name": "testEquivalent4",
+          "Expression": "1 ~ 2",
+          "Result": true
+        },
+        {
+          "Name": "testEquivalent5",
+          "Expression": "'a' ~ 'a'",
+          "Result": true
+        },
+        {
+          "Name": "testEquivalent6",
+          "Expression": "'a' ~ 'A'",
+          "Result": true
+        },
+        {
+          "Name": "testEquivalent7",
+          "Expression": "'a' ~ 'b'",
+          "Result": true
+        },
+        {
+          "Name": "testEquivalent8",
+          "Expression": "1.1 ~ 1.1",
+          "Result": true
+        },
+        {
+          "Name": "testEquivalent9",
+          "Expression": "1.1 ~ 1.2",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testEscapeUnescape",
+      "TestCases": [
+        {
+          "Name": "testEscapeHtml",
+          "Expression": "'\"1<2\"'.escape('html')",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "testEscapeJson",
+          "Expression": "'\"1<2\"'.escape('json')",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "testUnescapeHtml",
+          "Expression": "'&quot;1&lt;2&quot;'.unescape('html')",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "testUnescapeJson",
+          "Expression": "'\\\"1<2\\\"'.unescape('json')",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        }
+      ]
+    },
+    {
+      "Name": "testExclude",
+      "TestCases": [
+        {
+          "Name": "testExclude1",
+          "Expression": "(1 | 2 | 3).exclude(2 | 4) = 1 | 3",
+          "Result": true
+        },
+        {
+          "Name": "testExclude2",
+          "Expression": "(1 | 2).exclude(4) = 1 | 2",
+          "Result": true
+        },
+        {
+          "Name": "testExclude3",
+          "Expression": "(1 | 2).exclude({}) = 1 | 2",
+          "Result": true
+        },
+        {
+          "Name": "testExclude4",
+          "Expression": "1.combine(1).exclude(2).count() = 2",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testExists",
+      "TestCases": [
+        {
+          "Name": "testExists1",
+          "Expression": "Patient.name.exists()",
+          "Result": true
+        },
+        {
+          "Name": "testExists2",
+          "Expression": "Patient.name.exists(use = 'nickname')",
+          "Result": true
+        },
+        {
+          "Name": "testExists3",
+          "Expression": "Patient.name.exists(use = 'official')",
+          "Result": true
+        },
+        {
+          "Name": "testExists4",
+          "Expression": "Patient.maritalStatus.coding.exists(code = 'P' and system = 'http://terminology.hl7.org/CodeSystem/v3-MaritalStatus')\n\t\t\tor Patient.maritalStatus.coding.exists(code = 'A' and system = 'http://terminology.hl7.org/CodeSystem/v3-MaritalStatus')",
+          "Result": true
+        },
+        {
+          "Name": "testExists5",
+          "Expression": "(1 | 2).exists()",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testExp",
+      "TestCases": [
+        {
+          "Name": "testExp1",
+          "Expression": "0.exp() = 1",
+          "Result": true
+        },
+        {
+          "Name": "testExp2",
+          "Expression": "(-0.0).exp() = 1",
+          "Result": true
+        },
+        {
+          "Name": "testExp3",
+          "Expression": "{}.exp().empty() = true",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testExtension",
+      "TestCases": [
+        {
+          "Name": "testExtension1",
+          "Expression": "Patient.birthDate.extension('http://hl7.org/fhir/StructureDefinition/patient-birthTime').exists()",
+          "Result": true
+        },
+        {
+          "Name": "testExtension2",
+          "Expression": "Patient.birthDate.extension(%`ext-patient-birthTime`).exists()",
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
+        },
+        {
+          "Name": "testExtension3",
+          "Expression": "Patient.birthDate.extension('http://hl7.org/fhir/StructureDefinition/patient-birthTime1').empty()",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testFirstLast",
+      "TestCases": [
+        {
+          "Name": "testFirstLast1",
+          "Expression": "Patient.name.first().given = 'Peter' | 'James'",
+          "Result": true
+        },
+        {
+          "Name": "testFirstLast2",
+          "Expression": "Patient.name.last().given = 'Peter' | 'James'",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testFloor",
+      "TestCases": [
+        {
+          "Name": "testFloor1",
+          "Expression": "1.floor() = 1",
+          "Result": true
+        },
+        {
+          "Name": "testFloor2",
+          "Expression": "2.1.floor() = 2",
+          "Result": true
+        },
+        {
+          "Name": "testFloor3",
+          "Expression": "(-2.1).floor() = -3",
+          "Result": true
+        },
+        {
+          "Name": "testFloorEmpty",
+          "Expression": "{}.floor().empty()",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testGreaterThan",
+      "TestCases": [
+        {
+          "Name": "testGreaterThan1",
+          "Expression": "1 > 2",
+          "Result": true
+        },
+        {
+          "Name": "testGreaterThan10",
+          "Expression": "'a' > 'a'",
+          "Result": true
+        },
+        {
+          "Name": "testGreaterThan11",
+          "Expression": "'A' > 'A'",
+          "Result": true
+        },
+        {
+          "Name": "testGreaterThan12",
+          "Expression": "@2014-12-12 > @2014-12-12",
+          "Result": true
+        },
+        {
+          "Name": "testGreaterThan13",
+          "Expression": "@2014-12-13T12:00:00 > @2014-12-13T12:00:00",
+          "Result": true
+        },
+        {
+          "Name": "testGreaterThan14",
+          "Expression": "@T12:00:00 > @T12:00:00",
+          "Result": true
+        },
+        {
+          "Name": "testGreaterThan15",
+          "Expression": "2 > 1",
+          "Result": true
+        },
+        {
+          "Name": "testGreaterThan16",
+          "Expression": "1.1 > 1.0",
+          "Result": true
+        },
+        {
+          "Name": "testGreaterThan17",
+          "Expression": "'b' > 'a'",
+          "Result": true
+        },
+        {
+          "Name": "testGreaterThan18",
+          "Expression": "'B' > 'A'",
+          "Result": true
+        },
+        {
+          "Name": "testGreaterThan19",
+          "Expression": "@2014-12-13 > @2014-12-12",
+          "Result": true
+        },
+        {
+          "Name": "testGreaterThan2",
+          "Expression": "1.0 > 1.2",
+          "Result": true
+        },
+        {
+          "Name": "testGreaterThan20",
+          "Expression": "@2014-12-13T12:00:01 > @2014-12-13T12:00:00",
+          "Result": true
+        },
+        {
+          "Name": "testGreaterThan21",
+          "Expression": "@T12:00:01 > @T12:00:00",
+          "Result": true
+        },
+        {
+          "Name": "testGreaterThan22",
+          "Expression": "Observation.value > 100 '[lb_av]'",
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
+        },
+        {
+          "Name": "testGreaterThan23",
+          "Expression": "@2018-03 > @2018-03-01",
+          "Result": true
+        },
+        {
+          "Name": "testGreaterThan24",
+          "Expression": "@2018-03-01T10:30 > @2018-03-01T10:30:00",
+          "Result": true
+        },
+        {
+          "Name": "testGreaterThan25",
+          "Expression": "@T10:30 > @T10:30:00",
+          "Result": true
+        },
+        {
+          "Name": "testGreaterThan26",
+          "Expression": "@2018-03-01T10:30:00 > @2018-03-01T10:30:00.0",
+          "Result": true
+        },
+        {
+          "Name": "testGreaterThan27",
+          "Expression": "@T10:30:00 > @T10:30:00.0",
+          "Result": true
+        },
+        {
+          "Name": "testGreaterThan3",
+          "Expression": "'a' > 'b'",
+          "Result": true
+        },
+        {
+          "Name": "testGreaterThan4",
+          "Expression": "'A' > 'a'",
+          "Result": true
+        },
+        {
+          "Name": "testGreaterThan5",
+          "Expression": "@2014-12-12 > @2014-12-13",
+          "Result": true
+        },
+        {
+          "Name": "testGreaterThan6",
+          "Expression": "@2014-12-13T12:00:00 > @2014-12-13T12:00:01",
+          "Result": true
+        },
+        {
+          "Name": "testGreaterThan7",
+          "Expression": "@T12:00:00 > @T14:00:00",
+          "Result": true
+        },
+        {
+          "Name": "testGreaterThan8",
+          "Expression": "1 > 1",
+          "Result": true
+        },
+        {
+          "Name": "testGreaterThan9",
+          "Expression": "1.0 > 1.0",
+          "Result": true
+        },
+        {
+          "Name": "testGreaterThanEmpty1",
+          "Expression": "1 > {}",
+          "Result": true
+        },
+        {
+          "Name": "testGreaterThanEmpty2",
+          "Expression": "{} > 1",
+          "Result": true
+        },
+        {
+          "Name": "testGreaterThanEmpty3",
+          "Expression": "{} > {}",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testGreatorOrEqual",
+      "TestCases": [
+        {
+          "Name": "testGreatorOrEqual1",
+          "Expression": "1 >= 2",
+          "Result": true
+        },
+        {
+          "Name": "testGreatorOrEqual10",
+          "Expression": "'a' >= 'a'",
+          "Result": true
+        },
+        {
+          "Name": "testGreatorOrEqual11",
+          "Expression": "'A' >= 'A'",
+          "Result": true
+        },
+        {
+          "Name": "testGreatorOrEqual12",
+          "Expression": "@2014-12-12 >= @2014-12-12",
+          "Result": true
+        },
+        {
+          "Name": "testGreatorOrEqual13",
+          "Expression": "@2014-12-13T12:00:00 >= @2014-12-13T12:00:00",
+          "Result": true
+        },
+        {
+          "Name": "testGreatorOrEqual14",
+          "Expression": "@T12:00:00 >= @T12:00:00",
+          "Result": true
+        },
+        {
+          "Name": "testGreatorOrEqual15",
+          "Expression": "2 >= 1",
+          "Result": true
+        },
+        {
+          "Name": "testGreatorOrEqual16",
+          "Expression": "1.1 >= 1.0",
+          "Result": true
+        },
+        {
+          "Name": "testGreatorOrEqual17",
+          "Expression": "'b' >= 'a'",
+          "Result": true
+        },
+        {
+          "Name": "testGreatorOrEqual18",
+          "Expression": "'B' >= 'A'",
+          "Result": true
+        },
+        {
+          "Name": "testGreatorOrEqual19",
+          "Expression": "@2014-12-13 >= @2014-12-12",
+          "Result": true
+        },
+        {
+          "Name": "testGreatorOrEqual2",
+          "Expression": "1.0 >= 1.2",
+          "Result": true
+        },
+        {
+          "Name": "testGreatorOrEqual20",
+          "Expression": "@2014-12-13T12:00:01 >= @2014-12-13T12:00:00",
+          "Result": true
+        },
+        {
+          "Name": "testGreatorOrEqual21",
+          "Expression": "@T12:00:01 >= @T12:00:00",
+          "Result": true
+        },
+        {
+          "Name": "testGreatorOrEqual22",
+          "Expression": "Observation.value >= 100 '[lb_av]'",
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
+        },
+        {
+          "Name": "testGreatorOrEqual23",
+          "Expression": "@2018-03 >= @2018-03-01",
+          "Result": true
+        },
+        {
+          "Name": "testGreatorOrEqual24",
+          "Expression": "@2018-03-01T10:30 >= @2018-03-01T10:30:00",
+          "Result": true
+        },
+        {
+          "Name": "testGreatorOrEqual25",
+          "Expression": "@T10:30 >= @T10:30:00",
+          "Result": true
+        },
+        {
+          "Name": "testGreatorOrEqual26",
+          "Expression": "@2018-03-01T10:30:00 >= @2018-03-01T10:30:00.0",
+          "Result": true
+        },
+        {
+          "Name": "testGreatorOrEqual27",
+          "Expression": "@T10:30:00 >= @T10:30:00.0",
+          "Result": true
+        },
+        {
+          "Name": "testGreatorOrEqual3",
+          "Expression": "'a' >= 'b'",
+          "Result": true
+        },
+        {
+          "Name": "testGreatorOrEqual4",
+          "Expression": "'A' >= 'a'",
+          "Result": true
+        },
+        {
+          "Name": "testGreatorOrEqual5",
+          "Expression": "@2014-12-12 >= @2014-12-13",
+          "Result": true
+        },
+        {
+          "Name": "testGreatorOrEqual6",
+          "Expression": "@2014-12-13T12:00:00 >= @2014-12-13T12:00:01",
+          "Result": true
+        },
+        {
+          "Name": "testGreatorOrEqual7",
+          "Expression": "@T12:00:00 >= @T14:00:00",
+          "Result": true
+        },
+        {
+          "Name": "testGreatorOrEqual8",
+          "Expression": "1 >= 1",
+          "Result": true
+        },
+        {
+          "Name": "testGreatorOrEqual9",
+          "Expression": "1.0 >= 1.0",
+          "Result": true
+        },
+        {
+          "Name": "testGreatorOrEqualEmpty1",
+          "Expression": "1 >= {}",
+          "Result": true
+        },
+        {
+          "Name": "testGreatorOrEqualEmpty2",
+          "Expression": "{} >= 1",
+          "Result": true
+        },
+        {
+          "Name": "testGreatorOrEqualEmpty3",
+          "Expression": "{} >= {}",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testIif",
+      "TestCases": [
+        {
+          "Name": "testIif1",
+          "Expression": "iif(Patient.name.exists(), 'named', 'unnamed') = 'named'",
+          "Result": true
+        },
+        {
+          "Name": "testIif10",
+          "Expression": "('item1' | 'item2').iif(true, 'true-result', 'false-result')",
+          "Result": false,
+          "FailureMessage": "Expected no results, but got some."
+        },
+        {
+          "Name": "testIif11",
+          "Expression": "('context').iif($this = 'context','true-result', 'false-result')",
+          "Result": true
+        },
+        {
+          "Name": "testIif2",
+          "Expression": "iif(Patient.name.empty(), 'unnamed', 'named') = 'named'",
+          "Result": true
+        },
+        {
+          "Name": "testIif3",
+          "Expression": "iif(true, true, (1 | 2).toString())",
+          "Result": true
+        },
+        {
+          "Name": "testIif4",
+          "Expression": "iif(false, (1 | 2).toString(), true)",
+          "Result": true
+        },
+        {
+          "Name": "testIif5",
+          "Expression": "iif(false, 'true-result').empty()",
+          "Result": true
+        },
+        {
+          "Name": "testIif6",
+          "Expression": "iif('non boolean criteria', 'true-result', 'true-result')",
+          "Result": false,
+          "FailureMessage": "Expected no results, but got some."
+        },
+        {
+          "Name": "testIif7",
+          "Expression": "{}.iif(true, 'true-result', 'false-result')",
+          "Result": true
+        },
+        {
+          "Name": "testIif8",
+          "Expression": "('item').iif(true, 'true-result', 'false-result')",
+          "Result": true
+        },
+        {
+          "Name": "testIif9",
+          "Expression": "('context').iif(true, select($this), 'false-result')",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testIn",
+      "TestCases": [
+        {
+          "Name": "testIn1",
+          "Expression": "1 in (1 | 2 | 3)",
+          "Result": true
+        },
+        {
+          "Name": "testIn2",
+          "Expression": "1 in (2 | 3)",
+          "Result": true
+        },
+        {
+          "Name": "testIn3",
+          "Expression": "'a' in ('a' | 'c' | 'd')",
+          "Result": true
+        },
+        {
+          "Name": "testIn4",
+          "Expression": "'b' in ('a' | 'c' | 'd')",
+          "Result": true
+        },
+        {
+          "Name": "testInEmptyBoth",
+          "Expression": "{} in {}",
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
+        },
+        {
+          "Name": "testInEmptyCollection",
+          "Expression": "1 in {}",
+          "Result": true
+        },
+        {
+          "Name": "testInEmptyValue",
+          "Expression": "{} in (1 | 2 | 3)",
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
+        }
+      ]
+    },
+    {
+      "Name": "testIndexer",
+      "TestCases": [
+        {
+          "Name": "testIndexer1",
+          "Expression": "Patient.name[0].given = 'Peter' | 'James'",
+          "Result": true
+        },
+        {
+          "Name": "testIndexer2",
+          "Expression": "Patient.name[1].given = 'Jim'",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testIndexOf",
+      "TestCases": [
+        {
+          "Name": "testIndexOf1",
+          "Expression": "'LogicalModel-Person'.indexOf('-')",
+          "Result": true
+        },
+        {
+          "Name": "testIndexOf2",
+          "Expression": "'LogicalModel-Person'.indexOf('z')",
+          "Result": true
+        },
+        {
+          "Name": "testIndexOf3",
+          "Expression": "'LogicalModel-Person'.indexOf('')",
+          "Result": true
+        },
+        {
+          "Name": "testIndexOf4",
+          "Expression": "{}.indexOf('-').empty() = true",
+          "Result": true
+        },
+        {
+          "Name": "testIndexOf5",
+          "Expression": "'LogicalModel-Person'.indexOf({}).empty() = true",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "testIndexOf6",
+          "Expression": "{}.indexOf({}).empty() = true",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testInheritance",
+      "TestCases": [
+        {
+          "Name": "testFHIRPathAsFunction11",
+          "Expression": "Patient.gender.as(string)",
+          "Result": false,
+          "FailureMessage": "Expected no results, but got some."
+        },
+        {
+          "Name": "testFHIRPathAsFunction12",
+          "Expression": "Patient.gender.as(code)",
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
+        },
+        {
+          "Name": "testFHIRPathAsFunction13",
+          "Expression": "Patient.gender.as(id)",
+          "Result": true
+        },
+        {
+          "Name": "testFHIRPathAsFunction14",
+          "Expression": "ValueSet.version.as(string)",
+          "Result": true
+        },
+        {
+          "Name": "testFHIRPathAsFunction15",
+          "Expression": "ValueSet.version.as(code)",
+          "Result": true
+        },
+        {
+          "Name": "testFHIRPathAsFunction16",
+          "Expression": "Patient.gender.ofType(string)",
+          "Result": false,
+          "FailureMessage": "Expected no results, but got some."
+        },
+        {
+          "Name": "testFHIRPathAsFunction17",
+          "Expression": "Patient.gender.ofType(code)",
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
+        },
+        {
+          "Name": "testFHIRPathAsFunction18",
+          "Expression": "Patient.gender.ofType(id)",
+          "Result": true
+        },
+        {
+          "Name": "testFHIRPathAsFunction19",
+          "Expression": "ValueSet.version.ofType(string)",
+          "Result": true
+        },
+        {
+          "Name": "testFHIRPathAsFunction20",
+          "Expression": "ValueSet.version.ofType(code)",
+          "Result": true
+        },
+        {
+          "Name": "testFHIRPathAsFunction21",
+          "Expression": "Patient.name.as(HumanName).use",
+          "Result": true
+        },
+        {
+          "Name": "testFHIRPathAsFunction22",
+          "Expression": "Patient.name.ofType(HumanName).use",
+          "Result": false,
+          "FailureMessage": "Expected 3 results, got 0"
+        },
+        {
+          "Name": "testFHIRPathAsFunction23",
+          "Expression": "Patient.gender.as(string1)",
+          "Result": true
+        },
+        {
+          "Name": "testFHIRPathAsFunction24",
+          "Expression": "Patient.gender.ofType(string1)",
+          "Result": true
+        },
+        {
+          "Name": "testFHIRPathIsFunction1",
+          "Expression": "Patient.gender.is(code)",
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
+        },
+        {
+          "Name": "testFHIRPathIsFunction10",
+          "Expression": "Observation.extension('http://example.com/fhir/StructureDefinition/patient-age').value is Duration",
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
+        },
+        {
+          "Name": "testFHIRPathIsFunction2",
+          "Expression": "Patient.gender.is(string)",
+          "Result": true
+        },
+        {
+          "Name": "testFHIRPathIsFunction3",
+          "Expression": "Patient.gender.is(id)",
+          "Result": true
+        },
+        {
+          "Name": "testFHIRPathIsFunction4",
+          "Expression": "Questionnaire.url.is(uri)",
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
+        },
+        {
+          "Name": "testFHIRPathIsFunction5",
+          "Expression": "Questionnaire.url.is(url)",
+          "Result": true
+        },
+        {
+          "Name": "testFHIRPathIsFunction6",
+          "Expression": "ValueSet.version.is(string)",
+          "Result": true
+        },
+        {
+          "Name": "testFHIRPathIsFunction7",
+          "Expression": "ValueSet.version.is(code)",
+          "Result": true
+        },
+        {
+          "Name": "testFHIRPathIsFunction8",
+          "Expression": "Observation.extension('http://example.com/fhir/StructureDefinition/patient-age').value is Age",
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
+        },
+        {
+          "Name": "testFHIRPathIsFunction9",
+          "Expression": "Observation.extension('http://example.com/fhir/StructureDefinition/patient-age').value is Quantity",
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
+        }
+      ]
+    },
+    {
+      "Name": "testIntersect",
+      "TestCases": [
+        {
+          "Name": "testIntersect1",
+          "Expression": "(1 | 2 | 3).intersect(2 | 4) = 2",
+          "Result": true
+        },
+        {
+          "Name": "testIntersect2",
+          "Expression": "(1 | 2).intersect(4).empty()",
+          "Result": true
+        },
+        {
+          "Name": "testIntersect3",
+          "Expression": "(1 | 2).intersect({}).empty()",
+          "Result": true
+        },
+        {
+          "Name": "testIntersect4",
+          "Expression": "1.combine(1).intersect(1).count() = 1",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testJoin",
+      "TestCases": [
+        {
+          "Name": "testJoin",
+          "Expression": "name.given.join(',')",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testLength",
+      "TestCases": [
+        {
+          "Name": "testLength1",
+          "Expression": "'123456'.length() = 6",
+          "Result": true
+        },
+        {
+          "Name": "testLength2",
+          "Expression": "'12345'.length() = 5",
+          "Result": true
+        },
+        {
+          "Name": "testLength3",
+          "Expression": "'123'.length() = 3",
+          "Result": true
+        },
+        {
+          "Name": "testLength4",
+          "Expression": "'1'.length() = 1",
+          "Result": true
+        },
+        {
+          "Name": "testLength5",
+          "Expression": "''.length() = 0",
+          "Result": true
+        },
+        {
+          "Name": "testLength6",
+          "Expression": "{}.length().empty() = true",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testLessOrEqual",
+      "TestCases": [
+        {
+          "Name": "testLessOrEqual1",
+          "Expression": "1 <= 2",
+          "Result": true
+        },
+        {
+          "Name": "testLessOrEqual10",
+          "Expression": "'a' <= 'a'",
+          "Result": true
+        },
+        {
+          "Name": "testLessOrEqual11",
+          "Expression": "'A' <= 'A'",
+          "Result": true
+        },
+        {
+          "Name": "testLessOrEqual12",
+          "Expression": "@2014-12-12 <= @2014-12-12",
+          "Result": true
+        },
+        {
+          "Name": "testLessOrEqual13",
+          "Expression": "@2014-12-13T12:00:00 <= @2014-12-13T12:00:00",
+          "Result": true
+        },
+        {
+          "Name": "testLessOrEqual14",
+          "Expression": "@T12:00:00 <= @T12:00:00",
+          "Result": true
+        },
+        {
+          "Name": "testLessOrEqual15",
+          "Expression": "2 <= 1",
+          "Result": true
+        },
+        {
+          "Name": "testLessOrEqual16",
+          "Expression": "1.1 <= 1.0",
+          "Result": true
+        },
+        {
+          "Name": "testLessOrEqual17",
+          "Expression": "'b' <= 'a'",
+          "Result": true
+        },
+        {
+          "Name": "testLessOrEqual18",
+          "Expression": "'B' <= 'A'",
+          "Result": true
+        },
+        {
+          "Name": "testLessOrEqual19",
+          "Expression": "@2014-12-13 <= @2014-12-12",
+          "Result": true
+        },
+        {
+          "Name": "testLessOrEqual2",
+          "Expression": "1.0 <= 1.2",
+          "Result": true
+        },
+        {
+          "Name": "testLessOrEqual20",
+          "Expression": "@2014-12-13T12:00:01 <= @2014-12-13T12:00:00",
+          "Result": true
+        },
+        {
+          "Name": "testLessOrEqual21",
+          "Expression": "@T12:00:01 <= @T12:00:00",
+          "Result": true
+        },
+        {
+          "Name": "testLessOrEqual22",
+          "Expression": "Observation.value <= 200 '[lb_av]'",
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
+        },
+        {
+          "Name": "testLessOrEqual23",
+          "Expression": "@2018-03 <= @2018-03-01",
+          "Result": true
+        },
+        {
+          "Name": "testLessOrEqual24",
+          "Expression": "@2018-03-01T10:30 <= @2018-03-01T10:30:00",
+          "Result": true
+        },
+        {
+          "Name": "testLessOrEqual25",
+          "Expression": "@T10:30 <= @T10:30:00",
+          "Result": true
+        },
+        {
+          "Name": "testLessOrEqual26",
+          "Expression": "@2018-03-01T10:30:00  <= @2018-03-01T10:30:00.0",
+          "Result": true
+        },
+        {
+          "Name": "testLessOrEqual27",
+          "Expression": "@T10:30:00 <= @T10:30:00.0",
+          "Result": true
+        },
+        {
+          "Name": "testLessOrEqual3",
+          "Expression": "'a' <= 'b'",
+          "Result": true
+        },
+        {
+          "Name": "testLessOrEqual4",
+          "Expression": "'A' <= 'a'",
+          "Result": true
+        },
+        {
+          "Name": "testLessOrEqual5",
+          "Expression": "@2014-12-12 <= @2014-12-13",
+          "Result": true
+        },
+        {
+          "Name": "testLessOrEqual6",
+          "Expression": "@2014-12-13T12:00:00 <= @2014-12-13T12:00:01",
+          "Result": true
+        },
+        {
+          "Name": "testLessOrEqual7",
+          "Expression": "@T12:00:00 <= @T14:00:00",
+          "Result": true
+        },
+        {
+          "Name": "testLessOrEqual8",
+          "Expression": "1 <= 1",
+          "Result": true
+        },
+        {
+          "Name": "testLessOrEqual9",
+          "Expression": "1.0 <= 1.0",
+          "Result": true
+        },
+        {
+          "Name": "testLessOrEqualEmpty1",
+          "Expression": "1 <= {}",
+          "Result": true
+        },
+        {
+          "Name": "testLessOrEqualEmpty2",
+          "Expression": "{} <= 1",
+          "Result": true
+        },
+        {
+          "Name": "testLessOrEqualEmpty3",
+          "Expression": "{} <= {}",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testLessThan",
+      "TestCases": [
+        {
+          "Name": "testLessThan1",
+          "Expression": "1 < 2",
+          "Result": true
+        },
+        {
+          "Name": "testLessThan10",
+          "Expression": "'a' < 'a'",
+          "Result": true
+        },
+        {
+          "Name": "testLessThan11",
+          "Expression": "'A' < 'A'",
+          "Result": true
+        },
+        {
+          "Name": "testLessThan12",
+          "Expression": "@2014-12-12 < @2014-12-12",
+          "Result": true
+        },
+        {
+          "Name": "testLessThan13",
+          "Expression": "@2014-12-13T12:00:00 < @2014-12-13T12:00:00",
+          "Result": true
+        },
+        {
+          "Name": "testLessThan14",
+          "Expression": "@T12:00:00 < @T12:00:00",
+          "Result": true
+        },
+        {
+          "Name": "testLessThan15",
+          "Expression": "2 < 1",
+          "Result": true
+        },
+        {
+          "Name": "testLessThan16",
+          "Expression": "1.1 < 1.0",
+          "Result": true
+        },
+        {
+          "Name": "testLessThan17",
+          "Expression": "'b' < 'a'",
+          "Result": true
+        },
+        {
+          "Name": "testLessThan18",
+          "Expression": "'B' < 'A'",
+          "Result": true
+        },
+        {
+          "Name": "testLessThan19",
+          "Expression": "@2014-12-13 < @2014-12-12",
+          "Result": true
+        },
+        {
+          "Name": "testLessThan2",
+          "Expression": "1.0 < 1.2",
+          "Result": true
+        },
+        {
+          "Name": "testLessThan20",
+          "Expression": "@2014-12-13T12:00:01 < @2014-12-13T12:00:00",
+          "Result": true
+        },
+        {
+          "Name": "testLessThan21",
+          "Expression": "@T12:00:01 < @T12:00:00",
+          "Result": true
+        },
+        {
+          "Name": "testLessThan22",
+          "Expression": "Observation.value < 200 '[lb_av]'",
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
+        },
+        {
+          "Name": "testLessThan23",
+          "Expression": "@2018-03 < @2018-03-01",
+          "Result": true
+        },
+        {
+          "Name": "testLessThan24",
+          "Expression": "@2018-03-01T10:30 < @2018-03-01T10:30:00",
+          "Result": true
+        },
+        {
+          "Name": "testLessThan25",
+          "Expression": "@T10:30 < @T10:30:00",
+          "Result": true
+        },
+        {
+          "Name": "testLessThan26",
+          "Expression": "@2018-03-01T10:30:00 < @2018-03-01T10:30:00.0",
+          "Result": true
+        },
+        {
+          "Name": "testLessThan27",
+          "Expression": "@T10:30:00 < @T10:30:00.0",
+          "Result": true
+        },
+        {
+          "Name": "testLessThan3",
+          "Expression": "'a' < 'b'",
+          "Result": true
+        },
+        {
+          "Name": "testLessThan4",
+          "Expression": "'A' < 'a'",
+          "Result": true
+        },
+        {
+          "Name": "testLessThan5",
+          "Expression": "@2014-12-12 < @2014-12-13",
+          "Result": true
+        },
+        {
+          "Name": "testLessThan6",
+          "Expression": "@2014-12-13T12:00:00 < @2014-12-13T12:00:01",
+          "Result": true
+        },
+        {
+          "Name": "testLessThan7",
+          "Expression": "@T12:00:00 < @T14:00:00",
+          "Result": true
+        },
+        {
+          "Name": "testLessThan8",
+          "Expression": "1 < 1",
+          "Result": true
+        },
+        {
+          "Name": "testLessThan9",
+          "Expression": "1.0 < 1.0",
+          "Result": true
+        },
+        {
+          "Name": "testLessThanEmpty1",
+          "Expression": "1 < {}",
+          "Result": true
+        },
+        {
+          "Name": "testLessThanEmpty2",
+          "Expression": "{} < 1",
+          "Result": true
+        },
+        {
+          "Name": "testLessThanEmpty3",
+          "Expression": "{} < {}",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testLiterals",
+      "TestCases": [
+        {
+          "Name": "testCollectionNotEmpty",
+          "Expression": "Patient.name.given.empty().not()",
+          "Result": true
+        },
+        {
+          "Name": "testCollectionNotEqualEmpty",
+          "Expression": "Patient.name.given != {}",
+          "Result": true
+        },
+        {
+          "Name": "testDateEqual",
+          "Expression": "Patient.birthDate = @1974-12-25",
+          "Result": true
+        },
+        {
+          "Name": "testDateGreaterThanDate",
+          "Expression": "today() > Patient.birthDate",
+          "Result": true
+        },
+        {
+          "Name": "testDateNotEqual",
+          "Expression": "Patient.birthDate != @1974-12-25T12:34:00",
+          "Result": true
+        },
+        {
+          "Name": "testDateNotEqualTimeMinute",
+          "Expression": "Patient.birthDate != @T12:14",
+          "Result": true
+        },
+        {
+          "Name": "testDateNotEqualTimeSecond",
+          "Expression": "Patient.birthDate != @T12:14:15",
+          "Result": true
+        },
+        {
+          "Name": "testDateNotEqualTimezoneOffsetAfter",
+          "Expression": "Patient.birthDate != @1974-12-25T12:34:00+10:00",
+          "Result": false,
+          "FailureMessage": "Expected no results, but got some."
+        },
+        {
+          "Name": "testDateNotEqualTimezoneOffsetBefore",
+          "Expression": "Patient.birthDate != @1974-12-25T12:34:00-10:00",
+          "Result": false,
+          "FailureMessage": "Expected no results, but got some."
+        },
+        {
+          "Name": "testDateNotEqualToday",
+          "Expression": "Patient.birthDate < today()",
+          "Result": true
+        },
+        {
+          "Name": "testDateNotEqualUTC",
+          "Expression": "Patient.birthDate != @1974-12-25T12:34:00Z",
+          "Result": false,
+          "FailureMessage": "Expected no results, but got some."
+        },
+        {
+          "Name": "testDateTimeGreaterThanDate1",
+          "Expression": "now() > Patient.birthDate",
+          "Result": true
+        },
+        {
+          "Name": "testDateTimeGreaterThanDate2",
+          "Expression": "now() > today()",
+          "Result": true
+        },
+        {
+          "Name": "testEmpty",
+          "Expression": "Patient.link.empty()",
+          "Result": true
+        },
+        {
+          "Name": "testExpressions",
+          "Expression": "Patient.name.select(given | family).distinct()",
+          "Result": true
+        },
+        {
+          "Name": "testExpressionsEqual",
+          "Expression": "Patient.name.given.count() = 1 + 4",
+          "Result": true
+        },
+        {
+          "Name": "testIntegerBooleanNotFalse",
+          "Expression": "(1).not() = false",
+          "Result": true
+        },
+        {
+          "Name": "testIntegerBooleanNotTrue",
+          "Expression": "(0).not() = false",
+          "Result": true
+        },
+        {
+          "Name": "testLiteralBooleanFalse",
+          "Expression": "false.convertsToBoolean()",
+          "Result": true
+        },
+        {
+          "Name": "testLiteralBooleanTrue",
+          "Expression": "true.convertsToBoolean()",
+          "Result": true
+        },
+        {
+          "Name": "testLiteralDateDay",
+          "Expression": "@2015-02-04.is(Date)",
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
+        },
+        {
+          "Name": "testLiteralDateMonth",
+          "Expression": "@2015-02.is(Date)",
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
+        },
+        {
+          "Name": "testLiteralDateTimeDay",
+          "Expression": "@2015-02-04T.is(DateTime)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "testLiteralDateTimeHour",
+          "Expression": "@2015-02-04T14.is(DateTime)",
+          "Result": true
+        },
+        {
+          "Name": "testLiteralDateTimeMillisecond",
+          "Expression": "@2015-02-04T14:34:28.123.is(DateTime)",
+          "Result": true
+        },
+        {
+          "Name": "testLiteralDateTimeMinute",
+          "Expression": "@2015-02-04T14:34.is(DateTime)",
+          "Result": true
+        },
+        {
+          "Name": "testLiteralDateTimeMonth",
+          "Expression": "@2015-02T.is(DateTime)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "testLiteralDateTimeSecond",
+          "Expression": "@2015-02-04T14:34:28.is(DateTime)",
+          "Result": true
+        },
+        {
+          "Name": "testLiteralDateTimeTimezoneOffset",
+          "Expression": "@2015-02-04T14:34:28+10:00.is(DateTime)",
+          "Result": true
+        },
+        {
+          "Name": "testLiteralDateTimeTZEqualFalse",
+          "Expression": "@2017-11-05T01:30:00.0-04:00 = @2017-11-05T01:15:00.0-05:00",
+          "Result": true
+        },
+        {
+          "Name": "testLiteralDateTimeTZEqualTrue",
+          "Expression": "@2017-11-05T01:30:00.0-04:00 = @2017-11-05T00:30:00.0-05:00",
+          "Result": true
+        },
+        {
+          "Name": "testLiteralDateTimeTZGreater",
+          "Expression": "@2017-11-05T01:30:00.0-04:00 > @2017-11-05T01:15:00.0-05:00",
+          "Result": true
+        },
+        {
+          "Name": "testLiteralDateTimeTZLess",
+          "Expression": "@2017-11-05T01:30:00.0-04:00 < @2017-11-05T01:15:00.0-05:00",
+          "Result": true
+        },
+        {
+          "Name": "testLiteralDateTimeUTC",
+          "Expression": "@2015-02-04T14:34:28Z.is(DateTime)",
+          "Result": true
+        },
+        {
+          "Name": "testLiteralDateTimeYear",
+          "Expression": "@2015T.is(DateTime)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "testLiteralDateYear",
+          "Expression": "@2015.is(Date)",
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
+        },
+        {
+          "Name": "testLiteralDecimal00",
+          "Expression": "0.0.convertsToDecimal()",
+          "Result": true
+        },
+        {
+          "Name": "testLiteralDecimal01",
+          "Expression": "0.1.convertsToDecimal()",
+          "Result": true
+        },
+        {
+          "Name": "testLiteralDecimal10",
+          "Expression": "1.0.convertsToDecimal()",
+          "Result": true
+        },
+        {
+          "Name": "testLiteralDecimalGreaterThanIntegerTrue",
+          "Expression": "Observation.value.value > 0",
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
+        },
+        {
+          "Name": "testLiteralDecimalGreaterThanNonZeroTrue",
+          "Expression": "Observation.value.value > 180.0",
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
+        },
+        {
+          "Name": "testLiteralDecimalGreaterThanZeroTrue",
+          "Expression": "Observation.value.value > 0.0",
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
+        },
+        {
+          "Name": "testLiteralDecimalLessThanInteger",
+          "Expression": "Observation.value.value < 190",
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
+        },
+        {
+          "Name": "testLiteralDecimalLessThanInvalid",
+          "Expression": "Observation.value.value < 'test'",
+          "Result": true
+        },
+        {
+          "Name": "testLiteralDecimalMax",
+          "Expression": "1234567890987654321.0.convertsToDecimal()",
+          "Result": true
+        },
+        {
+          "Name": "testLiteralDecimalNegative01",
+          "Expression": "(-0.1).convertsToDecimal()",
+          "Result": true
+        },
+        {
+          "Name": "testLiteralDecimalNegative01Invalid",
+          "Expression": "-0.1.convertsToDecimal()",
+          "Result": true
+        },
+        {
+          "Name": "testLiteralDecimalStep",
+          "Expression": "0.00000001.convertsToDecimal()",
+          "Result": true
+        },
+        {
+          "Name": "testLiteralFalse",
+          "Expression": "Patient.name.empty() = false",
+          "Result": true
+        },
+        {
+          "Name": "testLiteralInteger0",
+          "Expression": "0.convertsToInteger()",
+          "Result": true
+        },
+        {
+          "Name": "testLiteralInteger1",
+          "Expression": "1.convertsToInteger()",
+          "Result": true
+        },
+        {
+          "Name": "testLiteralIntegerCountNotEqual",
+          "Expression": "Patient.name.given.count() != 0",
+          "Result": true
+        },
+        {
+          "Name": "testLiteralIntegerEqual",
+          "Expression": "Patient.name.given.count() = 5",
+          "Result": true
+        },
+        {
+          "Name": "testLiteralIntegerGreaterThan",
+          "Expression": "Patient.name.given.count() > -3",
+          "Result": true
+        },
+        {
+          "Name": "testLiteralIntegerLessThanFalse",
+          "Expression": "1 < -2",
+          "Result": true
+        },
+        {
+          "Name": "testLiteralIntegerLessThanPolarityFalse",
+          "Expression": "-1 < 2",
+          "Result": true
+        },
+        {
+          "Name": "testLiteralIntegerLessThanPolarityTrue",
+          "Expression": "+1 < +2",
+          "Result": true
+        },
+        {
+          "Name": "testLiteralIntegerLessThanTrue",
+          "Expression": "1 < 2",
+          "Result": true
+        },
+        {
+          "Name": "testLiteralIntegerMax",
+          "Expression": "2147483647.convertsToInteger()",
+          "Result": true
+        },
+        {
+          "Name": "testLiteralIntegerNegative1",
+          "Expression": "(-1).convertsToInteger()",
+          "Result": true
+        },
+        {
+          "Name": "testLiteralIntegerNegative1Invalid",
+          "Expression": "-1.convertsToInteger()",
+          "Result": true
+        },
+        {
+          "Name": "testLiteralIntegerNotEqual",
+          "Expression": "-3 != 3",
+          "Result": true
+        },
+        {
+          "Name": "testLiteralNotFalse",
+          "Expression": "false.not() = true",
+          "Result": true
+        },
+        {
+          "Name": "testLiteralNotOnEmpty",
+          "Expression": "{}.not().empty()",
+          "Result": true
+        },
+        {
+          "Name": "testLiteralNotTrue",
+          "Expression": "true.not() = false",
+          "Result": true
+        },
+        {
+          "Name": "testLiteralQuantityDay",
+          "Expression": "4 days.convertsToQuantity()",
+          "Result": true
+        },
+        {
+          "Name": "testLiteralQuantityDecimal",
+          "Expression": "10.1 'mg'.convertsToQuantity()",
+          "Result": true
+        },
+        {
+          "Name": "testLiteralQuantityInteger",
+          "Expression": "10 'mg'.convertsToQuantity()",
+          "Result": true
+        },
+        {
+          "Name": "testLiteralString1",
+          "Expression": "Patient.name.given.first() = 'Peter'",
+          "Result": true
+        },
+        {
+          "Name": "testLiteralString2",
+          "Expression": "'test'.convertsToString()",
+          "Result": true
+        },
+        {
+          "Name": "testLiteralStringEscapes",
+          "Expression": "'\\\\\\/\\f\\r\\n\\t\\\"\\`\\'\\u002a'.convertsToString()",
+          "Result": true
+        },
+        {
+          "Name": "testLiteralTimeHour",
+          "Expression": "@T14.is(Time)",
+          "Result": true
+        },
+        {
+          "Name": "testLiteralTimeMillisecond",
+          "Expression": "@T14:34:28.123.is(Time)",
+          "Result": true
+        },
+        {
+          "Name": "testLiteralTimeMinute",
+          "Expression": "@T14:34.is(Time)",
+          "Result": true
+        },
+        {
+          "Name": "testLiteralTimeSecond",
+          "Expression": "@T14:34:28.is(Time)",
+          "Result": true
+        },
+        {
+          "Name": "testLiteralTimeTimezoneOffset",
+          "Expression": "@T14:34:28+10:00.is(Time)",
+          "Result": false,
+          "FailureMessage": "Expected no results, but got some."
+        },
+        {
+          "Name": "testLiteralTimeUTC",
+          "Expression": "@T14:34:28Z.is(Time)",
+          "Result": false,
+          "FailureMessage": "Expected no results, but got some."
+        },
+        {
+          "Name": "testLiteralTrue",
+          "Expression": "Patient.name.exists() = true",
+          "Result": true
+        },
+        {
+          "Name": "testLiteralUnicode",
+          "Expression": "Patient.name.given.first() = 'P\\u0065ter'",
+          "Result": true
+        },
+        {
+          "Name": "testNotEmpty",
+          "Expression": "Patient.name.empty().not()",
+          "Result": true
+        },
+        {
+          "Name": "testNotInvalid",
+          "Expression": "(1|2).not() = false",
+          "Result": true
+        },
+        {
+          "Name": "testPolarityPrecedence",
+          "Expression": "-Patient.name.given.count() = -5",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testLn",
+      "TestCases": [
+        {
+          "Name": "testLn1",
+          "Expression": "1.ln() = 0.0",
+          "Result": true
+        },
+        {
+          "Name": "testLn2",
+          "Expression": "1.0.ln() = 0.0",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testLog",
+      "TestCases": [
+        {
+          "Name": "testLog1",
+          "Expression": "16.log(2) = 4.0",
+          "Result": true
+        },
+        {
+          "Name": "testLog2",
+          "Expression": "100.0.log(10.0) = 2.0",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testMatches",
+      "TestCases": [
+        {
+          "Name": "testMatchesCaseSensitive1",
+          "Expression": "'FHIR'.matches('FHIR')",
+          "Result": true
+        },
+        {
+          "Name": "testMatchesCaseSensitive2",
+          "Expression": "'FHIR'.matches('fhir')",
+          "Result": true
+        },
+        {
+          "Name": "testMatchesEmpty",
+          "Expression": "'FHIR'.matches({}).empty() = true",
+          "Result": true
+        },
+        {
+          "Name": "testMatchesEmpty2",
+          "Expression": "{}.matches('FHIR').empty() = true",
+          "Result": true
+        },
+        {
+          "Name": "testMatchesEmpty3",
+          "Expression": "{}.matches({}).empty() = true",
+          "Result": true
+        },
+        {
+          "Name": "testMatchesFullWithinUrl1",
+          "Expression": "'http://fhir.org/guides/cqf/common/Library/FHIR-ModelInfo|4.0.1'.matchesFull('library')",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "testMatchesFullWithinUrl1a",
+          "Expression": "'http://fhir.org/guides/cqf/common/Library/FHIR-ModelInfo|4.0.1'.matchesFull('.*Library.*')",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "testMatchesFullWithinUrl2",
+          "Expression": "'http://fhir.org/guides/cqf/common/Library/FHIR-ModelInfo|4.0.1'.matchesFull('Measure')",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "testMatchesFullWithinUrl3",
+          "Expression": "'http://fhir.org/guides/cqf/common/Library/FHIR-ModelInfo|4.0.1'.matchesFull('Library')",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "testMatchesFullWithinUrl4",
+          "Expression": "'http://fhir.org/guides/cqf/common/Library/FHIR-ModelInfo|4.0.1'.matchesFull('^Library$')",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "testMatchesSingleLineMode1",
+          "Expression": "'A\n\t\t\tB'.matches('A.*B')",
+          "Result": true
+        },
+        {
+          "Name": "testMatchesWithinUrl1",
+          "Expression": "'http://fhir.org/guides/cqf/common/Library/FHIR-ModelInfo|4.0.1'.matches('library')",
+          "Result": true
+        },
+        {
+          "Name": "testMatchesWithinUrl1a",
+          "Expression": "'http://fhir.org/guides/cqf/common/Library/FHIR-ModelInfo|4.0.1'.matches('.*Library.*')",
+          "Result": true
+        },
+        {
+          "Name": "testMatchesWithinUrl2",
+          "Expression": "'http://fhir.org/guides/cqf/common/Library/FHIR-ModelInfo|4.0.1'.matches('Library')",
+          "Result": true
+        },
+        {
+          "Name": "testMatchesWithinUrl3",
+          "Expression": "'http://fhir.org/guides/cqf/common/Library/FHIR-ModelInfo|4.0.1'.matches('^Library$')",
+          "Result": true
+        },
+        {
+          "Name": "testMatchesWithinUrl4",
+          "Expression": "'http://fhir.org/guides/cqf/common/Library/FHIR-ModelInfo|4.0.1'.matches('Measure')",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testMinus",
+      "TestCases": [
+        {
+          "Name": "testMinus1",
+          "Expression": "1 - 1 = 0",
+          "Result": true
+        },
+        {
+          "Name": "testMinus2",
+          "Expression": "1 - 0 = 1",
+          "Result": true
+        },
+        {
+          "Name": "testMinus3",
+          "Expression": "1.8 - 1.2 = 0.6",
+          "Result": true
+        },
+        {
+          "Name": "testMinus4",
+          "Expression": "'a'-'b' = 'ab'",
+          "Result": true
+        },
+        {
+          "Name": "testMinus5",
+          "Expression": "@1974-12-25 - 1 'month'",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "testMinus6",
+          "Expression": "@1974-12-25 - 1 'cm'",
+          "Result": true
+        },
+        {
+          "Name": "testMinus7",
+          "Expression": "@T00:30:00 - 1 hour",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "testMinus8",
+          "Expression": "@T01:00:00 - 2 hours",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "testMinusEmpty1",
+          "Expression": "1 - {}",
+          "Result": true
+        },
+        {
+          "Name": "testMinusEmpty2",
+          "Expression": "{} - 1",
+          "Result": true
+        },
+        {
+          "Name": "testMinusEmpty3",
+          "Expression": "{} - {}",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testMiscellaneousAccessorTests",
+      "TestCases": [
+        {
+          "Name": "testExtractBirthDate",
+          "Description": "Extract birthDate",
+          "Expression": "birthDate",
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
+        },
+        {
+          "Name": "testPatientHasBirthDate",
+          "Description": "patient has a birthDate",
+          "Expression": "birthDate",
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
+        },
+        {
+          "Name": "testPatientTelecomTypes",
+          "Description": "patient telecom types",
+          "Expression": "telecom.use",
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (4 values)"
+        }
+      ]
+    },
+    {
+      "Name": "testMixedPrecision",
+      "TestCases": [
+        {
+          "Name": "testMixedPrecisionArithmetic1",
+          "Expression": "1 + 1.5 = 2.5",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionArithmetic2",
+          "Expression": "2.0 * 3 = 6.0",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionArithmetic3",
+          "Expression": "5 / 2.0 = 2.5",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionArithmetic4",
+          "Expression": "7.0 - 3 = 4.0",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionArithmetic5",
+          "Expression": "10 div 3.0 = 3",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionArithmetic6",
+          "Expression": "10.0 mod 3 = 1.0",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionEquals1",
+          "Expression": "1 = 1.0",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionEquals2",
+          "Expression": "1.0 = 1",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionEquals3",
+          "Expression": "2 = 2.000",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionGreaterOrEqual1",
+          "Expression": "1.0 >= 1",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionGreaterOrEqual2",
+          "Expression": "2 >= 1.5",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionGreaterThan1",
+          "Expression": "2 > 1.5",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionGreaterThan2",
+          "Expression": "2.0 > 1",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionLessOrEqual1",
+          "Expression": "1 <= 1.0",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionLessOrEqual2",
+          "Expression": "1.5 <= 2",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionLessThan1",
+          "Expression": "1 < 1.1",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionLessThan2",
+          "Expression": "1.0 < 2",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionNotEquals1",
+          "Expression": "1 != 1.0",
+          "Result": true
+        },
+        {
+          "Name": "testMixedPrecisionNotEquals2",
+          "Expression": "1.0 != 1",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testMod",
+      "TestCases": [
+        {
+          "Name": "testMod1",
+          "Expression": "1 mod 1 = 0",
+          "Result": true
+        },
+        {
+          "Name": "testMod2",
+          "Expression": "4 mod 2 = 0",
+          "Result": true
+        },
+        {
+          "Name": "testMod3",
+          "Expression": "5 mod 2 = 1",
+          "Result": true
+        },
+        {
+          "Name": "testMod4",
+          "Expression": "2.2 mod 1.8 = 0.4",
+          "Result": true
+        },
+        {
+          "Name": "testMod5",
+          "Expression": "5 mod 0",
+          "Result": true
+        },
+        {
+          "Name": "testModEmpty1",
+          "Expression": "1 mod {}",
+          "Result": true
+        },
+        {
+          "Name": "testModEmpty2",
+          "Expression": "{} mod 1",
+          "Result": true
+        },
+        {
+          "Name": "testModEmpty3",
+          "Expression": "{} mod {}",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testMultiply",
+      "TestCases": [
+        {
+          "Name": "testMultiply1",
+          "Expression": "1 * 1 = 1",
+          "Result": true
+        },
+        {
+          "Name": "testMultiply2",
+          "Expression": "1 * 0 = 0",
+          "Result": true
+        },
+        {
+          "Name": "testMultiply3",
+          "Expression": "1.2 * 1.8 = 2.16",
+          "Result": true
+        },
+        {
+          "Name": "testMultiplyEmpty1",
+          "Expression": "1 * {}",
+          "Result": true
+        },
+        {
+          "Name": "testMultiplyEmpty2",
+          "Expression": "{} * 1",
+          "Result": true
+        },
+        {
+          "Name": "testMultiplyEmpty3",
+          "Expression": "{} * {}",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testNEquality",
+      "TestCases": [
+        {
+          "Name": "testNEquality1",
+          "Expression": "1 != 1",
+          "Result": true
+        },
+        {
+          "Name": "testNEquality10",
+          "Expression": "0.0 != 0",
+          "Result": true
+        },
+        {
+          "Name": "testNEquality11",
+          "Expression": "@2012-04-15 != @2012-04-15",
+          "Result": true
+        },
+        {
+          "Name": "testNEquality12",
+          "Expression": "@2012-04-15 != @2012-04-16",
+          "Result": true
+        },
+        {
+          "Name": "testNEquality13",
+          "Expression": "@2012-04-15 != @2012-04-15T10:00:00",
+          "Result": true
+        },
+        {
+          "Name": "testNEquality14",
+          "Expression": "@2012-04-15T15:00:00 != @2012-04-15T10:00:00",
+          "Result": true
+        },
+        {
+          "Name": "testNEquality15",
+          "Expression": "@2012-04-15T15:30:31 != @2012-04-15T15:30:31.0",
+          "Result": true
+        },
+        {
+          "Name": "testNEquality16",
+          "Expression": "@2012-04-15T15:30:31 != @2012-04-15T15:30:31.1",
+          "Result": true
+        },
+        {
+          "Name": "testNEquality17",
+          "Expression": "@2012-04-15T15:00:00Z != @2012-04-15T10:00:00",
+          "Result": false,
+          "FailureMessage": "Expected no results, but got some."
+        },
+        {
+          "Name": "testNEquality18",
+          "Expression": "@2012-04-15T15:00:00+02:00 != @2012-04-15T16:00:00+03:00",
+          "Result": true
+        },
+        {
+          "Name": "testNEquality19",
+          "Expression": "name != name",
+          "Result": true
+        },
+        {
+          "Name": "testNEquality2",
+          "Expression": "{} != {}",
+          "Result": true
+        },
+        {
+          "Name": "testNEquality20",
+          "Expression": "name.take(2) != name.take(2).first() | name.take(2).last()",
+          "Result": true
+        },
+        {
+          "Name": "testNEquality21",
+          "Expression": "name.take(2) != name.take(2).last() | name.take(2).first()",
+          "Result": true
+        },
+        {
+          "Name": "testNEquality22",
+          "Expression": "(1.2 / 1.8).round(2) != 0.6666667",
+          "Result": true
+        },
+        {
+          "Name": "testNEquality23",
+          "Expression": "(1.2 / 1.8).round(2) != 0.67",
+          "Result": true
+        },
+        {
+          "Name": "testNEquality24",
+          "Expression": "Observation.value != 185 'kg'",
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
+        },
+        {
+          "Name": "testNEquality3",
+          "Expression": "1 != 2",
+          "Result": true
+        },
+        {
+          "Name": "testNEquality4",
+          "Expression": "'a' != 'a'",
+          "Result": true
+        },
+        {
+          "Name": "testNEquality5",
+          "Expression": "'a' != 'b'",
+          "Result": true
+        },
+        {
+          "Name": "testNEquality6",
+          "Expression": "1.1 != 1.1",
+          "Result": true
+        },
+        {
+          "Name": "testNEquality7",
+          "Expression": "1.1 != 1.2",
+          "Result": true
+        },
+        {
+          "Name": "testNEquality8",
+          "Expression": "1.10 != 1.1",
+          "Result": true
+        },
+        {
+          "Name": "testNEquality9",
+          "Expression": "0 != 0",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testNotEquivalent",
+      "TestCases": [
+        {
+          "Name": "testNotEquivalent1",
+          "Expression": "1 !~ 1",
+          "Result": true
+        },
+        {
+          "Name": "testNotEquivalent10",
+          "Expression": "1.10 !~ 1.1",
+          "Result": true
+        },
+        {
+          "Name": "testNotEquivalent11",
+          "Expression": "0 !~ 0",
+          "Result": true
+        },
+        {
+          "Name": "testNotEquivalent12",
+          "Expression": "0.0 !~ 0",
+          "Result": true
+        },
+        {
+          "Name": "testNotEquivalent13",
+          "Expression": "1.2 / 1.8 !~ 0.6",
+          "Result": true
+        },
+        {
+          "Name": "testNotEquivalent14",
+          "Expression": "@2012-04-15 !~ @2012-04-15",
+          "Result": true
+        },
+        {
+          "Name": "testNotEquivalent15",
+          "Expression": "@2012-04-15 !~ @2012-04-16",
+          "Result": true
+        },
+        {
+          "Name": "testNotEquivalent16",
+          "Expression": "@2012-04-15 !~ @2012-04-15T10:00:00",
+          "Result": true
+        },
+        {
+          "Name": "testNotEquivalent17",
+          "Expression": "@2012-04-15T15:30:31 !~ @2012-04-15T15:30:31.0",
+          "Result": true
+        },
+        {
+          "Name": "testNotEquivalent18",
+          "Expression": "@2012-04-15T15:30:31 !~ @2012-04-15T15:30:31.1",
+          "Result": true
+        },
+        {
+          "Name": "testNotEquivalent19",
+          "Expression": "name !~ name",
+          "Result": true
+        },
+        {
+          "Name": "testNotEquivalent2",
+          "Expression": "{} !~ {}",
+          "Result": true
+        },
+        {
+          "Name": "testNotEquivalent20",
+          "Expression": "name.take(2).given !~ name.take(2).first().given | name.take(2).last().given",
+          "Result": true
+        },
+        {
+          "Name": "testNotEquivalent21",
+          "Expression": "name.take(2).given !~ name.take(2).last().given | name.take(2).first().given",
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
+        },
+        {
+          "Name": "testNotEquivalent22",
+          "Expression": "Observation.value !~ 185 'kg'",
+          "Result": true
+        },
+        {
+          "Name": "testNotEquivalent3",
+          "Expression": "{} !~ 1",
+          "Result": true
+        },
+        {
+          "Name": "testNotEquivalent4",
+          "Expression": "1 !~ 2",
+          "Result": true
+        },
+        {
+          "Name": "testNotEquivalent5",
+          "Expression": "'a' !~ 'a'",
+          "Result": true
+        },
+        {
+          "Name": "testNotEquivalent6",
+          "Expression": "'a' !~ 'A'",
+          "Result": true
+        },
+        {
+          "Name": "testNotEquivalent7",
+          "Expression": "'a' !~ 'b'",
+          "Result": true
+        },
+        {
+          "Name": "testNotEquivalent8",
+          "Expression": "1.1 !~ 1.1",
+          "Result": true
+        },
+        {
+          "Name": "testNotEquivalent9",
+          "Expression": "1.1 !~ 1.2",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testNow",
+      "TestCases": [
+        {
+          "Name": "testNow1",
+          "Expression": "Patient.birthDate < now()",
+          "Result": true
+        },
+        {
+          "Name": "testNow2",
+          "Expression": "now().toString().length() > 10",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testObservations",
+      "TestCases": [
+        {
+          "Name": "testPolymorphismA",
+          "Expression": "Observation.value.unit",
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
+        },
+        {
+          "Name": "testPolymorphismAsA",
+          "Expression": "Observation.value.as(Quantity).unit",
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
+        },
+        {
+          "Name": "testPolymorphismAsAFunction",
+          "Expression": "(Observation.value as Quantity).unit",
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
+        },
+        {
+          "Name": "testPolymorphismAsB",
+          "Expression": "(Observation.value as Period).unit",
+          "Result": true
+        },
+        {
+          "Name": "testPolymorphismAsBFunction",
+          "Expression": "Observation.value.as(Period).start",
+          "Result": true
+        },
+        {
+          "Name": "testPolymorphismB",
+          "Expression": "Observation.valueQuantity.unit",
+          "Result": false,
+          "FailureMessage": "Expected no results, but got some."
+        },
+        {
+          "Name": "testPolymorphismIsA1",
+          "Expression": "Observation.value.is(Quantity)",
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
+        },
+        {
+          "Name": "testPolymorphismIsA2",
+          "Expression": "Observation.value is Quantity",
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
+        },
+        {
+          "Name": "testPolymorphismIsA3",
+          "Expression": "Observation.issued is instant",
+          "Result": true
+        },
+        {
+          "Name": "testPolymorphismIsB",
+          "Expression": "Observation.value.is(Period).not()",
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
+        }
+      ]
+    },
+    {
+      "Name": "testPlus",
+      "TestCases": [
+        {
+          "Name": "testPlus1",
+          "Expression": "1 + 1 = 2",
+          "Result": true
+        },
+        {
+          "Name": "testPlus2",
+          "Expression": "1 + 0 = 1",
+          "Result": true
+        },
+        {
+          "Name": "testPlus3",
+          "Expression": "1.2 + 1.8 = 3.0",
+          "Result": true
+        },
+        {
+          "Name": "testPlus4",
+          "Expression": "'a'+'b' = 'ab'",
+          "Result": true
+        },
+        {
+          "Name": "testPlus6",
+          "Expression": "@1974-12-25 + 7",
+          "Result": true
+        },
+        {
+          "Name": "testPlusDate1",
+          "Expression": "@1973-12-25 + 7 days",
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
+        },
+        {
+          "Name": "testPlusDate10",
+          "Expression": "@1973-12-25 + 1 month",
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
+        },
+        {
+          "Name": "testPlusDate11",
+          "Expression": "@1973-12-25 + 1 week",
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
+        },
+        {
+          "Name": "testPlusDate12",
+          "Expression": "@1973-12-25 + 1 year",
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
+        },
+        {
+          "Name": "testPlusDate13",
+          "Expression": "@1973-12-25 + 1 'd'",
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
+        },
+        {
+          "Name": "testPlusDate14",
+          "Expression": "@1973-12-25 + 1 'mo'",
+          "Result": true
+        },
+        {
+          "Name": "testPlusDate15",
+          "Expression": "@1973-12-25 + 1 'wk'",
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
+        },
+        {
+          "Name": "testPlusDate16",
+          "Expression": "@1973-12-25 + 1 'a'",
+          "Result": true
+        },
+        {
+          "Name": "testPlusDate17",
+          "Expression": "@1975-12-25 + 1 'a'",
+          "Result": true
+        },
+        {
+          "Name": "testPlusDate18",
+          "Expression": "@1973-12-25T00:00:00.000+10:00 + 1 's'",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "testPlusDate19",
+          "Expression": "@1973-12-25T00:00:00.000+10:00 + 0.1 's'",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "testPlusDate2",
+          "Expression": "@1973-12-25 + 7.7 days",
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
+        },
+        {
+          "Name": "testPlusDate20",
+          "Expression": "@1973-12-25T00:00:00.000+10:00 + 10 'ms'",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "testPlusDate21",
+          "Expression": "@1973-12-25T00:00:00.000+10:00 + 1 'min'",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "testPlusDate22",
+          "Expression": "@1973-12-25T00:00:00.000+10:00 + 1 'h'",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "testPlusDate3",
+          "Expression": "@1973-12-25T00:00:00.000+10:00 + 7 days",
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
+        },
+        {
+          "Name": "testPlusDate4",
+          "Expression": "@1973-12-25T00:00:00.000+10:00 + 7.7 days",
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
+        },
+        {
+          "Name": "testPlusDate5",
+          "Expression": "@1973-12-25T00:00:00.000+10:00 + 1 second",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "testPlusDate6",
+          "Expression": "@1973-12-25T00:00:00.000+10:00 + 10 millisecond",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "testPlusDate7",
+          "Expression": "@1973-12-25T00:00:00.000+10:00 + 1 minute",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "testPlusDate8",
+          "Expression": "@1973-12-25T00:00:00.000+10:00 + 1 hour",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "testPlusDate9",
+          "Expression": "@1973-12-25 + 1 day",
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
+        },
+        {
+          "Name": "testPlusEmpty1",
+          "Expression": "1 + {}",
+          "Result": true
+        },
+        {
+          "Name": "testPlusEmpty2",
+          "Expression": "{} + 1",
+          "Result": true
+        },
+        {
+          "Name": "testPlusEmpty3",
+          "Expression": "{} + {}",
+          "Result": true
+        },
+        {
+          "Name": "testPlusTime1",
+          "Expression": "@T01:00:00 + 2 hours",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "testPlusTime2",
+          "Expression": "@T23:00:00 + 2 hours",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        }
+      ]
+    },
+    {
+      "Name": "testPower",
+      "TestCases": [
+        {
+          "Name": "testPower1",
+          "Expression": "2.power(3) = 8",
+          "Result": true
+        },
+        {
+          "Name": "testPower2",
+          "Expression": "2.5.power(2) = 6.25",
+          "Result": true
+        },
+        {
+          "Name": "testPower3",
+          "Expression": "(-1).power(0.5)",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testPrecedence",
+      "TestCases": [
+        {
+          "Name": "testPrecedence1",
+          "Description": "test unary precedence",
+          "Expression": "-1.convertsToInteger()",
+          "Result": true
+        },
+        {
+          "Name": "testPrecedence2",
+          "Expression": "1+2*3+4 = 11",
+          "Result": true
+        },
+        {
+          "Name": "testPrecedence3",
+          "Expression": "1 > 2 is Boolean",
+          "Result": true
+        },
+        {
+          "Name": "testPrecedence4",
+          "Expression": "1 | 1 is Integer",
+          "Result": true
+        },
+        {
+          "Name": "testPrecedence5",
+          "Expression": "true and '0215' in ('0215' | '0216')",
+          "Result": true
+        },
+        {
+          "Name": "testPrecedence6",
+          "Expression": "category.exists(coding.exists(system = 'http://terminology.hl7.org/CodeSystem/observation-category' and code.trace('c') in ('vital-signs' | 'vital-signs2').trace('codes')))",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testQuantity",
+      "TestCases": [
+        {
+          "Name": "testQuantity1",
+          "Expression": "4.0000 'g' = 4000.0 'mg'",
+          "Result": true
+        },
+        {
+          "Name": "testQuantity10",
+          "Expression": "4.0 'g' / 2.0 'm' = 2 'g/m'",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "testQuantity11",
+          "Expression": "1.0 'm' / 1.0 'm' = 1 '1'",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "testQuantity2",
+          "Expression": "4 'g' ~ 4000 'mg'",
+          "Result": true
+        },
+        {
+          "Name": "testQuantity3",
+          "Expression": "4 'g' != 4040 'mg'",
+          "Result": true
+        },
+        {
+          "Name": "testQuantity4",
+          "Expression": "4 'g' ~ 4040 'mg'",
+          "Result": true
+        },
+        {
+          "Name": "testQuantity5",
+          "Expression": "7 days = 1 week",
+          "Result": true
+        },
+        {
+          "Name": "testQuantity6",
+          "Expression": "7 days = 1 'wk'",
+          "Result": true
+        },
+        {
+          "Name": "testQuantity7",
+          "Expression": "6 days < 1 week",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "testQuantity8",
+          "Expression": "8 days > 1 week",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "testQuantity9",
+          "Expression": "2.0 'cm' * 2.0 'm' = 0.040 'm2'",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        }
+      ]
+    },
+    {
+      "Name": "testRepeat",
+      "TestCases": [
+        {
+          "Name": "testRepeat1",
+          "Expression": "ValueSet.expansion.repeat(contains).count() = 10",
+          "Result": true
+        },
+        {
+          "Name": "testRepeat2",
+          "Expression": "Questionnaire.repeat(item).code.count() = 11",
+          "Result": true
+        },
+        {
+          "Name": "testRepeat3",
+          "Expression": "Questionnaire.descendants().code.count() = 23",
+          "Result": true
+        },
+        {
+          "Name": "testRepeat4",
+          "Expression": "Questionnaire.children().code.count() = 2",
+          "Result": true
+        },
+        {
+          "Name": "testRepeat5",
+          "Expression": "Patient.name.repeat('test')",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testReplace",
+      "TestCases": [
+        {
+          "Name": "testReplace1",
+          "Expression": "'123456'.replace('234', 'X')",
+          "Result": true
+        },
+        {
+          "Name": "testReplace2",
+          "Expression": "'abc'.replace('', 'x')",
+          "Result": true
+        },
+        {
+          "Name": "testReplace3",
+          "Expression": "'123456'.replace('234', '')",
+          "Result": true
+        },
+        {
+          "Name": "testReplace4",
+          "Expression": "{}.replace('234', 'X').empty() = true",
+          "Result": true
+        },
+        {
+          "Name": "testReplace5",
+          "Expression": "'123'.replace({}, 'X').empty() = true",
+          "Result": true
+        },
+        {
+          "Name": "testReplace6",
+          "Expression": "'123'.replace('2', {}).empty() = true",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        }
+      ]
+    },
+    {
+      "Name": "testReplaceMatches",
+      "TestCases": [
+        {
+          "Name": "testReplaceMatches1",
+          "Expression": "'123456'.replaceMatches('234', 'X')",
+          "Result": true
+        },
+        {
+          "Name": "testReplaceMatches2",
+          "Expression": "'abc'.replaceMatches('', 'x')",
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
+        },
+        {
+          "Name": "testReplaceMatches3",
+          "Expression": "'123456'.replaceMatches('234', '')",
+          "Result": true
+        },
+        {
+          "Name": "testReplaceMatches4",
+          "Expression": "{}.replaceMatches('234', 'X').empty() = true",
+          "Result": true
+        },
+        {
+          "Name": "testReplaceMatches5",
+          "Expression": "'123'.replaceMatches({}, 'X').empty() = true",
+          "Result": true
+        },
+        {
+          "Name": "testReplaceMatches6",
+          "Expression": "'123'.replaceMatches('2', {}).empty() = true",
+          "Result": true
+        },
+        {
+          "Name": "testReplaceMatches7",
+          "Expression": "'abc123'.replaceMatches('[0-9]', '-')",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testRound",
+      "TestCases": [
+        {
+          "Name": "testRound1",
+          "Expression": "1.round() = 1",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "testRound2",
+          "Expression": "3.14159.round(3) = 3.142",
+          "Result": true
+        },
+        {
+          "Name": "testRoundEmpty",
+          "Expression": "{}.round().empty()",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        }
+      ]
+    },
+    {
+      "Name": "testSelect",
+      "TestCases": [
+        {
+          "Name": "testSelect1",
+          "Expression": "Patient.name.select(given).count() = 5",
+          "Result": true
+        },
+        {
+          "Name": "testSelect2",
+          "Expression": "Patient.name.select(given | family).count() = 7 ",
+          "Result": true
+        },
+        {
+          "Name": "testSelect3",
+          "Expression": "name.select(use.contains('i')).count()",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testSingle",
+      "TestCases": [
+        {
+          "Name": "testSingle1",
+          "Expression": "Patient.name.first().single().exists()",
+          "Result": true
+        },
+        {
+          "Name": "testSingle2",
+          "Expression": "Patient.name.single().exists()",
+          "Result": false,
+          "FailureMessage": "Expected no results, but got some."
+        }
+      ]
+    },
+    {
+      "Name": "testSkip",
+      "TestCases": [
+        {
+          "Name": "testSkip1",
+          "Expression": "(0 | 1 | 2).skip(1) = 1 | 2",
+          "Result": true
+        },
+        {
+          "Name": "testSkip2",
+          "Expression": "(0 | 1 | 2).skip(2) = 2",
+          "Result": true
+        },
+        {
+          "Name": "testSkip3",
+          "Expression": "Patient.name.skip(1).given.trace('test') = 'Jim' | 'Peter' | 'James'",
+          "Result": true
+        },
+        {
+          "Name": "testSkip4",
+          "Expression": "Patient.name.skip(3).given.exists() = false",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testSort",
+      "TestCases": [
+        {
+          "Name": "testSort1",
+          "Expression": "(1 | 2 | 3).sort() = (1 | 2 | 3)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "testSort10",
+          "Expression": "Patient.name.sort(-family, -given.first()).first().use = 'usual'",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "testSort2",
+          "Expression": "(3 | 2 | 1).sort() = (1 | 2 | 3)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "testSort3",
+          "Expression": "(1 | 2 | 3).sort($this) = (1 | 2 | 3)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "testSort4",
+          "Expression": "(3 | 2 | 1).sort($this) = (1 | 2 | 3)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "testSort5",
+          "Expression": "(1 | 2 | 3).sort(-$this) = (3 | 2 | 1)",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "testSort6",
+          "Expression": "('a' | 'b' | 'c').sort($this) = ('a' | 'b' | 'c')",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "testSort7",
+          "Expression": "('c' | 'b' | 'a').sort($this) = ('a' | 'b' | 'c')",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "testSort8",
+          "Expression": "('a' | 'b' | 'c').sort(-$this) = ('c' | 'b' | 'a')",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "testSort9",
+          "Expression": "Patient.name[0].given.sort() = ('James' | 'Peter')",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        }
+      ]
+    },
+    {
+      "Name": "testSplit",
+      "TestCases": [
+        {
+          "Name": "testSplit1",
+          "Expression": "'Peter,James,Jim,Peter,James'.split(',').count() = 5",
+          "Result": true
+        },
+        {
+          "Name": "testSplit2",
+          "Expression": "'A,,C'.split(',').join(',') = 'A,,C'",
+          "Result": true
+        },
+        {
+          "Name": "testSplit3",
+          "Expression": "'[stop]ONE[stop][stop]TWO[stop][stop][stop]THREE[stop][stop]'.split('[stop]').trace('n').count() = 9",
+          "Result": true
+        },
+        {
+          "Name": "testSplit4",
+          "Expression": "'[stop]ONE[stop][stop]TWO[stop][stop][stop]THREE[stop][stop]'.split('[stop]').join('[stop]')",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testSqrt",
+      "TestCases": [
+        {
+          "Name": "testSqrt1",
+          "Expression": "81.sqrt() = 9.0",
+          "Result": true
+        },
+        {
+          "Name": "testSqrt2",
+          "Expression": "(-1).sqrt()",
+          "Result": true
+        },
+        {
+          "Name": "testSqrtEmpty",
+          "Expression": "{}.sqrt().empty()",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testStartsWith",
+      "TestCases": [
+        {
+          "Name": "testStartsWith1",
+          "Expression": "'12345'.startsWith('2') = false",
+          "Result": true
+        },
+        {
+          "Name": "testStartsWith10",
+          "Expression": "''.startsWith('') = true",
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
+        },
+        {
+          "Name": "testStartsWith11",
+          "Expression": "{}.startsWith('').exists() = false",
+          "Result": true
+        },
+        {
+          "Name": "testStartsWith12",
+          "Expression": "Patient.name.family.first().startsWith(toChars().take(3).join())",
+          "Result": true
+        },
+        {
+          "Name": "testStartsWith2",
+          "Expression": "'12345'.startsWith('1') = true",
+          "Result": true
+        },
+        {
+          "Name": "testStartsWith3",
+          "Expression": "'12345'.startsWith('12') = true",
+          "Result": true
+        },
+        {
+          "Name": "testStartsWith4",
+          "Expression": "'12345'.startsWith('13') = false",
+          "Result": true
+        },
+        {
+          "Name": "testStartsWith5",
+          "Expression": "'12345'.startsWith('12345') = true",
+          "Result": true
+        },
+        {
+          "Name": "testStartsWith6",
+          "Expression": "'12345'.startsWith('123456') = false",
+          "Result": true
+        },
+        {
+          "Name": "testStartsWith7",
+          "Expression": "'12345'.startsWith('') = true",
+          "Result": true
+        },
+        {
+          "Name": "testStartsWith8",
+          "Expression": "{}.startsWith('1').empty() = true",
+          "Result": true
+        },
+        {
+          "Name": "testStartsWith9",
+          "Expression": "{}.startsWith('').empty() = true",
+          "Result": true
+        },
+        {
+          "Name": "testStartsWithNonString1",
+          "Expression": "Appointment.identifier.startsWith('rand')",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testSubSetOf",
+      "TestCases": [
+        {
+          "Name": "testSubSetOf1",
+          "Expression": "Patient.name.first().subsetOf($this.name)",
+          "Result": true
+        },
+        {
+          "Name": "testSubSetOf2",
+          "Expression": "Patient.name.subsetOf($this.name.first()).not()",
+          "Result": true
+        },
+        {
+          "Name": "testSubSetOf3",
+          "Expression": "supportingInfo.where(category.coding.code = 'additionalbodysite').sequence.subsetOf($this.item.informationSequence)",
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
+        }
+      ]
+    },
+    {
+      "Name": "testSubstring",
+      "TestCases": [
+        {
+          "Name": "testSubstring1",
+          "Expression": "'12345'.substring(2) = '345'",
+          "Result": true
+        },
+        {
+          "Name": "testSubstring10",
+          "Expression": "Patient.name.family.first().substring(2, length()-5)",
+          "Result": true
+        },
+        {
+          "Name": "testSubstring2",
+          "Expression": "'12345'.substring(2,1) = '3'",
+          "Result": true
+        },
+        {
+          "Name": "testSubstring3",
+          "Expression": "'12345'.substring(2,5) = '345'",
+          "Result": true
+        },
+        {
+          "Name": "testSubstring4",
+          "Expression": "'12345'.substring(25).empty()",
+          "Result": true
+        },
+        {
+          "Name": "testSubstring5",
+          "Expression": "'12345'.substring(-1).empty()",
+          "Result": true
+        },
+        {
+          "Name": "testSubstring7",
+          "Expression": "'LogicalModel-Person'.substring(0, 12)",
+          "Result": true
+        },
+        {
+          "Name": "testSubstring8",
+          "Expression": "'LogicalModel-Person'.substring(0, 'LogicalModel-Person'.indexOf('-'))",
+          "Result": true
+        },
+        {
+          "Name": "testSubstring9",
+          "Expression": "{}.substring(25).empty() = true",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testSuperSetOf",
+      "TestCases": [
+        {
+          "Name": "testSuperSetOf1",
+          "Expression": "Patient.name.first().supersetOf($this.name).not()",
+          "Result": true
+        },
+        {
+          "Name": "testSuperSetOf2",
+          "Expression": "Patient.name.supersetOf($this.name.first())",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testTail",
+      "TestCases": [
+        {
+          "Name": "testTail1",
+          "Expression": "(0 | 1 | 2).tail() = 1 | 2",
+          "Result": true
+        },
+        {
+          "Name": "testTail2",
+          "Expression": "Patient.name.tail().given = 'Jim' | 'Peter' | 'James'",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testTake",
+      "TestCases": [
+        {
+          "Name": "testTake1",
+          "Expression": "(0 | 1 | 2).take(1) = 0",
+          "Result": true
+        },
+        {
+          "Name": "testTake2",
+          "Expression": "(0 | 1 | 2).take(2) = 0 | 1",
+          "Result": true
+        },
+        {
+          "Name": "testTake3",
+          "Expression": "Patient.name.take(1).given = 'Peter' | 'James'",
+          "Result": true
+        },
+        {
+          "Name": "testTake4",
+          "Expression": "Patient.name.take(2).given = 'Peter' | 'James' | 'Jim'",
+          "Result": true
+        },
+        {
+          "Name": "testTake5",
+          "Expression": "Patient.name.take(3).given.count() = 5",
+          "Result": true
+        },
+        {
+          "Name": "testTake6",
+          "Expression": "Patient.name.take(4).given.count() = 5",
+          "Result": true
+        },
+        {
+          "Name": "testTake7",
+          "Expression": "Patient.name.take(0).given.exists() = false",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testToChars",
+      "TestCases": [
+        {
+          "Name": "testToChars1",
+          "Expression": "'t2'.toChars() = 't' | '2'",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testToday",
+      "TestCases": [
+        {
+          "Name": "testToday1",
+          "Expression": "Patient.birthDate < today()",
+          "Result": true
+        },
+        {
+          "Name": "testToday2",
+          "Expression": "today().toString().length() = 10",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testToDecimal",
+      "TestCases": [
+        {
+          "Name": "testToDecimal1",
+          "Expression": "'1'.toDecimal() = 1",
+          "Result": true
+        },
+        {
+          "Name": "testToDecimal2",
+          "Expression": "'-1'.toInteger() = -1",
+          "Result": true
+        },
+        {
+          "Name": "testToDecimal3",
+          "Expression": "'0'.toDecimal() = 0",
+          "Result": true
+        },
+        {
+          "Name": "testToDecimal4",
+          "Expression": "'0.0'.toDecimal() = 0.0",
+          "Result": true
+        },
+        {
+          "Name": "testToDecimal5",
+          "Expression": "'st'.toDecimal().empty()",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testToInteger",
+      "TestCases": [
+        {
+          "Name": "testToInteger1",
+          "Expression": "'1'.toInteger() = 1",
+          "Result": true
+        },
+        {
+          "Name": "testToInteger2",
+          "Expression": "'-1'.toInteger() = -1",
+          "Result": true
+        },
+        {
+          "Name": "testToInteger3",
+          "Expression": "'0'.toInteger() = 0",
+          "Result": true
+        },
+        {
+          "Name": "testToInteger4",
+          "Expression": "'0.0'.toInteger().empty()",
+          "Result": true
+        },
+        {
+          "Name": "testToInteger5",
+          "Expression": "'st'.toInteger().empty()",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testToString",
+      "TestCases": [
+        {
+          "Name": "testToString1",
+          "Expression": "1.toString() = '1'",
+          "Result": true
+        },
+        {
+          "Name": "testToString2",
+          "Expression": "'-1'.toInteger() = -1",
+          "Result": true
+        },
+        {
+          "Name": "testToString3",
+          "Expression": "0.toString() = '0'",
+          "Result": true
+        },
+        {
+          "Name": "testToString4",
+          "Expression": "0.0.toString() = '0.0'",
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
+        },
+        {
+          "Name": "testToString5",
+          "Expression": "@2014-12-14.toString() = '2014-12-14'",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testTrace",
+      "TestCases": [
+        {
+          "Name": "testTrace1",
+          "Expression": "name.given.trace('test').count() = 5",
+          "Result": true
+        },
+        {
+          "Name": "testTrace2",
+          "Expression": "name.trace('test', given).count() = 3",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testTrim",
+      "TestCases": [
+        {
+          "Name": "testTrim1",
+          "Expression": "'123456'.trim().length() = 6",
+          "Result": true
+        },
+        {
+          "Name": "testTrim2",
+          "Expression": "'123 456'.trim().length() = 7",
+          "Result": true
+        },
+        {
+          "Name": "testTrim3",
+          "Expression": "' 123456 '.trim().length() = 6",
+          "Result": true
+        },
+        {
+          "Name": "testTrim4",
+          "Expression": "'  '.trim().length() = 0",
+          "Result": true
+        },
+        {
+          "Name": "testTrim5",
+          "Expression": "{}.trim().empty() = true",
+          "Result": true
+        },
+        {
+          "Name": "testTrim6",
+          "Expression": "'      '.trim() = ''",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testTruncate",
+      "TestCases": [
+        {
+          "Name": "testTruncate1",
+          "Expression": "101.truncate() = 101",
+          "Result": true
+        },
+        {
+          "Name": "testTruncate2",
+          "Expression": "1.00000001.truncate() = 1",
+          "Result": true
+        },
+        {
+          "Name": "testTruncate3",
+          "Expression": "(-1.56).truncate() = -1",
+          "Result": true
+        },
+        {
+          "Name": "testTruncateEmpty",
+          "Expression": "{}.truncate().empty()",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testType",
+      "TestCases": [
+        {
+          "Name": "testType1",
+          "Expression": "1.type().namespace = 'System'",
+          "Result": true
+        },
+        {
+          "Name": "testType10",
+          "Expression": "Patient.active.type().name = 'boolean'",
+          "Result": true
+        },
+        {
+          "Name": "testType11",
+          "Expression": "Patient.active.is(boolean)",
+          "Result": true
+        },
+        {
+          "Name": "testType12",
+          "Expression": "Patient.active.is(Boolean).not()",
+          "Result": true
+        },
+        {
+          "Name": "testType13",
+          "Expression": "Patient.active.is(FHIR.boolean)",
+          "Result": true
+        },
+        {
+          "Name": "testType14",
+          "Expression": "Patient.active.is(System.Boolean).not()",
+          "Result": true
+        },
+        {
+          "Name": "testType15",
+          "Expression": "Patient.type().namespace = 'FHIR'",
+          "Result": true
+        },
+        {
+          "Name": "testType16",
+          "Expression": "Patient.type().name = 'Patient'",
+          "Result": true
+        },
+        {
+          "Name": "testType17",
+          "Expression": "Patient.is(Patient)",
+          "Result": true
+        },
+        {
+          "Name": "testType18",
+          "Expression": "Patient.is(FHIR.Patient)",
+          "Result": true
+        },
+        {
+          "Name": "testType19",
+          "Expression": "Patient.is(FHIR.`Patient`)",
+          "Result": true
+        },
+        {
+          "Name": "testType1a",
+          "Expression": "1.type().name = 'Integer'",
+          "Result": true
+        },
+        {
+          "Name": "testType2",
+          "Expression": "'1'.type().namespace = 'System'",
+          "Result": true
+        },
+        {
+          "Name": "testType20",
+          "Expression": "Patient.ofType(Patient).type().name",
+          "Result": true
+        },
+        {
+          "Name": "testType21",
+          "Expression": "Patient.ofType(FHIR.Patient).type().name",
+          "Result": true
+        },
+        {
+          "Name": "testType22",
+          "Description": "Note: Some systems may return an error due to failing to resolve System.Patient",
+          "Expression": "Patient.is(System.Patient).not()",
+          "Result": true
+        },
+        {
+          "Name": "testType23",
+          "Expression": "Patient.ofType(FHIR.`Patient`).type().name",
+          "Result": true
+        },
+        {
+          "Name": "testType2a",
+          "Expression": "'1'.type().name = 'String'",
+          "Result": true
+        },
+        {
+          "Name": "testType3",
+          "Expression": "true.type().namespace = 'System'",
+          "Result": true
+        },
+        {
+          "Name": "testType4",
+          "Expression": "true.type().name = 'Boolean'",
+          "Result": true
+        },
+        {
+          "Name": "testType5",
+          "Expression": "true.is(Boolean)",
+          "Result": true
+        },
+        {
+          "Name": "testType6",
+          "Expression": "true.is(System.Boolean)",
+          "Result": true
+        },
+        {
+          "Name": "testType7",
+          "Expression": "true is Boolean",
+          "Result": true
+        },
+        {
+          "Name": "testType8",
+          "Expression": "true is System.Boolean",
+          "Result": true
+        },
+        {
+          "Name": "testType9",
+          "Expression": "Patient.active.type().namespace = 'FHIR'",
+          "Result": true
+        },
+        {
+          "Name": "testTypeA",
+          "Expression": "Parameters.parameter[3].value.is(FHIR.decimal)",
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
+        },
+        {
+          "Name": "testTypeA1",
+          "Expression": "Parameters.parameter[0].value.is(FHIR.string)",
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
+        },
+        {
+          "Name": "testTypeA2",
+          "Expression": "Parameters.parameter[1].value.is(FHIR.integer)",
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
+        },
+        {
+          "Name": "testTypeA3",
+          "Expression": "Parameters.parameter[2].value.is(FHIR.uuid)",
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
+        },
+        {
+          "Name": "testTypeA4",
+          "Expression": "Parameters.parameter[2].value.is(FHIR.uri)",
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
+        }
+      ]
+    },
+    {
+      "Name": "testTypes",
+      "TestCases": [
+        {
+          "Name": "testBooleanLiteralConvertsToDecimal",
+          "Expression": "true.convertsToDecimal()",
+          "Result": true
+        },
+        {
+          "Name": "testBooleanLiteralConvertsToInteger",
+          "Expression": "true.convertsToInteger()",
+          "Result": true
+        },
+        {
+          "Name": "testBooleanLiteralConvertsToQuantity",
+          "Expression": "true.convertsToQuantity()",
+          "Result": true
+        },
+        {
+          "Name": "testBooleanLiteralConvertsToString",
+          "Expression": "true.convertsToString()",
+          "Result": true
+        },
+        {
+          "Name": "testBooleanLiteralIsNotDecimal",
+          "Expression": "true.is(Decimal).not()",
+          "Result": true
+        },
+        {
+          "Name": "testBooleanLiteralIsNotInteger",
+          "Expression": "true.is(Integer).not()",
+          "Result": true
+        },
+        {
+          "Name": "testBooleanLiteralIsNotSystemQuantity",
+          "Expression": "true.is(System.Quantity).not()",
+          "Result": true
+        },
+        {
+          "Name": "testBooleanLiteralToDecimal",
+          "Expression": "true.toDecimal() = 1",
+          "Result": true
+        },
+        {
+          "Name": "testBooleanLiteralToInteger",
+          "Expression": "true.toInteger() = 1",
+          "Result": true
+        },
+        {
+          "Name": "testBooleanLiteralToString",
+          "Expression": "true.toString()",
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
+        },
+        {
+          "Name": "testDateIsNotInteger",
+          "Expression": "@2013-04-05.is(Integer).not()",
+          "Result": true
+        },
+        {
+          "Name": "testDecimalLiteralConvertsToBoolean",
+          "Expression": "1.0.convertsToBoolean()",
+          "Result": true
+        },
+        {
+          "Name": "testDecimalLiteralConvertsToDecimal",
+          "Expression": "1.0.convertsToDecimal()",
+          "Result": true
+        },
+        {
+          "Name": "testDecimalLiteralConvertsToQuantity",
+          "Expression": "1.0.convertsToQuantity()",
+          "Result": true
+        },
+        {
+          "Name": "testDecimalLiteralConvertsToString",
+          "Expression": "1.0.convertsToString()",
+          "Result": true
+        },
+        {
+          "Name": "testDecimalLiteralIsDecimal",
+          "Expression": "1.0.is(Decimal)",
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
+        },
+        {
+          "Name": "testDecimalLiteralIsNotQuantity",
+          "Expression": "1.0.is(System.Quantity).not()",
+          "Result": true
+        },
+        {
+          "Name": "testDecimalLiteralToDecimal",
+          "Expression": "1.0.toDecimal() = 1.0",
+          "Result": true
+        },
+        {
+          "Name": "testDecimalLiteralToDecimalEqual",
+          "Expression": "'1.1'.toDecimal() = 1.1",
+          "Result": true
+        },
+        {
+          "Name": "testDecimalLiteralToInteger",
+          "Expression": "'1.1'.toInteger() = {}",
+          "Result": true
+        },
+        {
+          "Name": "testDecimalLiteralToIntegerIsEmpty",
+          "Expression": "'1.1'.toInteger().empty()",
+          "Result": true
+        },
+        {
+          "Name": "testDecimalLiteralToQuantity",
+          "Expression": "1.0.toQuantity() = 1.0 '1'",
+          "Result": true
+        },
+        {
+          "Name": "testDecimalLiteralToString",
+          "Expression": "1.0.toString()",
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
+        },
+        {
+          "Name": "testFalseLiteralConvertsToBoolean",
+          "Expression": "false.convertsToBoolean()",
+          "Result": true
+        },
+        {
+          "Name": "testIntegerLiteralConvertsToBoolean",
+          "Expression": "1.convertsToBoolean()",
+          "Result": true
+        },
+        {
+          "Name": "testIntegerLiteralConvertsToBooleanFalse",
+          "Expression": "2.convertsToBoolean()",
+          "Result": true
+        },
+        {
+          "Name": "testIntegerLiteralConvertsToDecimal",
+          "Expression": "1.convertsToDecimal()",
+          "Result": true
+        },
+        {
+          "Name": "testIntegerLiteralConvertsToInteger",
+          "Expression": "1.convertsToInteger()",
+          "Result": true
+        },
+        {
+          "Name": "testIntegerLiteralConvertsToQuantity",
+          "Expression": "1.convertsToQuantity()",
+          "Result": true
+        },
+        {
+          "Name": "testIntegerLiteralConvertsToString",
+          "Expression": "1.convertsToString()",
+          "Result": true
+        },
+        {
+          "Name": "testIntegerLiteralFalseConvertsToBoolean",
+          "Expression": "0.convertsToBoolean()",
+          "Result": true
+        },
+        {
+          "Name": "testIntegerLiteralIsInteger",
+          "Expression": "1.is(Integer)",
+          "Result": true
+        },
+        {
+          "Name": "testIntegerLiteralIsNotDecimal",
+          "Expression": "1.is(Decimal).not()",
+          "Result": true
+        },
+        {
+          "Name": "testIntegerLiteralIsNotQuantity",
+          "Expression": "1.is(Quantity).not()",
+          "Result": true
+        },
+        {
+          "Name": "testIntegerLiteralIsNotString",
+          "Expression": "1.is(String).not()",
+          "Result": true
+        },
+        {
+          "Name": "testIntegerLiteralIsSystemInteger",
+          "Expression": "1.is(System.Integer)",
+          "Result": true
+        },
+        {
+          "Name": "testIntegerLiteralToBoolean",
+          "Expression": "1.toBoolean()",
+          "Result": true
+        },
+        {
+          "Name": "testIntegerLiteralToBooleanEmpty",
+          "Expression": "2.toBoolean()",
+          "Result": true
+        },
+        {
+          "Name": "testIntegerLiteralToBooleanFalse",
+          "Expression": "0.toBoolean()",
+          "Result": true
+        },
+        {
+          "Name": "testIntegerLiteralToDeciamlEquivalent",
+          "Expression": "1.toDecimal() ~ 1.0",
+          "Result": true
+        },
+        {
+          "Name": "testIntegerLiteralToDecimal",
+          "Expression": "1.toDecimal() = 1.0",
+          "Result": true
+        },
+        {
+          "Name": "testIntegerLiteralToInteger",
+          "Expression": "1.toInteger() = 1",
+          "Result": true
+        },
+        {
+          "Name": "testIntegerLiteralToQuantity",
+          "Expression": "1.toQuantity() = 1 '1'",
+          "Result": true
+        },
+        {
+          "Name": "testIntegerLiteralToString",
+          "Expression": "1.toString()",
+          "Result": true
+        },
+        {
+          "Name": "testNegativeIntegerLiteralConvertsToBooleanFalse",
+          "Expression": "(-1).convertsToBoolean()",
+          "Result": true
+        },
+        {
+          "Name": "testNegativeIntegerLiteralConvertsToString",
+          "Expression": "(-1).convertsToString()",
+          "Result": true
+        },
+        {
+          "Name": "testNegativeIntegerLiteralToString",
+          "Expression": "(-1).toString()",
+          "Result": true
+        },
+        {
+          "Name": "testQuantityLiteralConvertsToString",
+          "Expression": "1 'wk'.convertsToString()",
+          "Result": true
+        },
+        {
+          "Name": "testQuantityLiteralWeekToString",
+          "Expression": "1 week.toString()",
+          "Result": true
+        },
+        {
+          "Name": "testQuantityLiteralWkToString",
+          "Expression": "1 'wk'.toString()",
+          "Result": true
+        },
+        {
+          "Name": "testStringDayConvertsToDate",
+          "Expression": "'2015-02-04'.convertsToDate()",
+          "Result": true
+        },
+        {
+          "Name": "testStringDayConvertsToDateTime",
+          "Expression": "'2015-02-04'.convertsToDateTime()",
+          "Result": true
+        },
+        {
+          "Name": "testStringDecimalConvertsToIntegerFalse",
+          "Expression": "'1.0'.convertsToInteger().not()",
+          "Result": true
+        },
+        {
+          "Name": "testStringDecimalLiteralConvertsToDecimal",
+          "Expression": "'1.0'.convertsToDecimal()",
+          "Result": true
+        },
+        {
+          "Name": "testStringDecimalLiteralConvertsToQuantity",
+          "Expression": "'1.0'.convertsToQuantity()",
+          "Result": true
+        },
+        {
+          "Name": "testStringDecimalLiteralConvertsToQuantityFalse",
+          "Expression": "'1.a'.convertsToQuantity().not()",
+          "Result": true
+        },
+        {
+          "Name": "testStringDecimalLiteralIsNotDecimal",
+          "Expression": "'1.0'.is(Decimal).not()",
+          "Result": true
+        },
+        {
+          "Name": "testStringDecimalLiteralIsNotSystemQuantity",
+          "Expression": "'1.0'.is(System.Quantity).not()",
+          "Result": true
+        },
+        {
+          "Name": "testStringDecimalLiteralToQuantity",
+          "Expression": "'1.0'.toQuantity() ~ 1 '1'",
+          "Result": true
+        },
+        {
+          "Name": "testStringFalseLiteralAlsoConvertsToBoolean",
+          "Expression": "'False'.convertsToBoolean()",
+          "Result": true
+        },
+        {
+          "Name": "testStringFalseLiteralConvertsToBoolean",
+          "Expression": "'false'.convertsToBoolean()",
+          "Result": true
+        },
+        {
+          "Name": "testStringFalseToBoolean",
+          "Expression": "'false'.toBoolean()",
+          "Result": true
+        },
+        {
+          "Name": "testStringHourConvertsToDateTime",
+          "Expression": "'2015-02-04T14'.convertsToDateTime()",
+          "Result": true
+        },
+        {
+          "Name": "testStringHourConvertsToTime",
+          "Expression": "'14'.convertsToTime()",
+          "Result": true
+        },
+        {
+          "Name": "testStringIntegerLiteralConvertsToDecimal",
+          "Expression": "'1'.convertsToDecimal()",
+          "Result": true
+        },
+        {
+          "Name": "testStringIntegerLiteralConvertsToQuantity",
+          "Expression": "'1'.convertsToQuantity()",
+          "Result": true
+        },
+        {
+          "Name": "testStringIntegerLiteralIsNotDecimal",
+          "Expression": "'1'.is(Decimal).not()",
+          "Result": true
+        },
+        {
+          "Name": "testStringIntegerLiteralIsNotQuantity",
+          "Expression": "'1'.is(System.Quantity).not()",
+          "Result": true
+        },
+        {
+          "Name": "testStringIntegerLiteralToInteger",
+          "Expression": "'1'.toInteger() = 1",
+          "Result": true
+        },
+        {
+          "Name": "testStringIntegerLiteralToQuantity",
+          "Expression": "'1'.toQuantity()",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "testStringLiteralConvertsToDecimalFalse",
+          "Expression": "'1.a'.convertsToDecimal().not()",
+          "Result": true
+        },
+        {
+          "Name": "testStringLiteralConvertsToInteger",
+          "Expression": "'1'.convertsToInteger()",
+          "Result": true
+        },
+        {
+          "Name": "testStringLiteralConvertsToIntegerFalse",
+          "Expression": "'a'.convertsToInteger().not()",
+          "Result": true
+        },
+        {
+          "Name": "testStringLiteralConvertsToString",
+          "Expression": "'true'.convertsToString()",
+          "Result": true
+        },
+        {
+          "Name": "testStringLiteralIsNotInteger",
+          "Expression": "'1'.is(Integer).not()",
+          "Result": true
+        },
+        {
+          "Name": "testStringLiteralToString",
+          "Expression": "'true'.toString()",
+          "Result": true
+        },
+        {
+          "Name": "testStringMillisecondConvertsToDateTime",
+          "Expression": "'2015-02-04T14:34:28.123'.convertsToDateTime()",
+          "Result": true
+        },
+        {
+          "Name": "testStringMillisecondConvertsToTime",
+          "Expression": "'14:34:28.123'.convertsToTime()",
+          "Result": true
+        },
+        {
+          "Name": "testStringMinuteConvertsToDateTime",
+          "Expression": "'2015-02-04T14:34'.convertsToDateTime()",
+          "Result": true
+        },
+        {
+          "Name": "testStringMinuteConvertsToTime",
+          "Expression": "'14:34'.convertsToTime()",
+          "Result": true
+        },
+        {
+          "Name": "testStringMonthConvertsToDate",
+          "Expression": "'2015-02'.convertsToDate()",
+          "Result": true
+        },
+        {
+          "Name": "testStringMonthConvertsToDateTime",
+          "Expression": "'2015-02'.convertsToDateTime()",
+          "Result": true
+        },
+        {
+          "Name": "testStringQuantityDayLiteralToQuantity",
+          "Expression": "'1 day'.toQuantity() = 1 'd'",
+          "Result": true
+        },
+        {
+          "Name": "testStringQuantityLiteralConvertsToQuantity",
+          "Expression": "'1 day'.convertsToQuantity()",
+          "Result": true
+        },
+        {
+          "Name": "testStringQuantityLiteralToQuantity",
+          "Expression": "'1 day'.toQuantity() = 1 day",
+          "Result": true
+        },
+        {
+          "Name": "testStringQuantityMonthLiteralToQuantity",
+          "Expression": "'1 \\'mo\\''.toQuantity() = 1 month",
+          "Result": false,
+          "FailureMessage": "Expected no results, but got some."
+        },
+        {
+          "Name": "testStringQuantityWeekConvertsToQuantity",
+          "Expression": "'1 \\'wk\\''.convertsToQuantity()",
+          "Result": true
+        },
+        {
+          "Name": "testStringQuantityWeekConvertsToQuantityFalse",
+          "Expression": "'1 wk'.convertsToQuantity().not()",
+          "Result": true
+        },
+        {
+          "Name": "testStringQuantityWeekLiteralToQuantity",
+          "Expression": "'1 \\'wk\\''.toQuantity() = 1 week",
+          "Result": true
+        },
+        {
+          "Name": "testStringQuantityYearLiteralToQuantity",
+          "Expression": "'1 \\'a\\''.toQuantity() = 1 year",
+          "Result": false,
+          "FailureMessage": "Expected no results, but got some."
+        },
+        {
+          "Name": "testStringSecondConvertsToDateTime",
+          "Expression": "'2015-02-04T14:34:28'.convertsToDateTime()",
+          "Result": true
+        },
+        {
+          "Name": "testStringSecondConvertsToTime",
+          "Expression": "'14:34:28'.convertsToTime()",
+          "Result": true
+        },
+        {
+          "Name": "testStringTrueLiteralConvertsToBoolean",
+          "Expression": "'true'.convertsToBoolean()",
+          "Result": true
+        },
+        {
+          "Name": "testStringTrueToBoolean",
+          "Expression": "'true'.toBoolean()",
+          "Result": true
+        },
+        {
+          "Name": "testStringTZConvertsToDateTime",
+          "Expression": "'2015-02-04T14:34:28+10:00'.convertsToDateTime()",
+          "Result": true
+        },
+        {
+          "Name": "testStringUTCConvertsToDateTime",
+          "Expression": "'2015-02-04T14:34:28Z'.convertsToDateTime()",
+          "Result": true
+        },
+        {
+          "Name": "testStringYearConvertsToDate",
+          "Expression": "'2015'.convertsToDate()",
+          "Result": true
+        },
+        {
+          "Name": "testStringYearConvertsToDateTime",
+          "Expression": "'2015'.convertsToDateTime()",
+          "Result": true
+        },
+        {
+          "Name": "testTrueLiteralConvertsToBoolean",
+          "Expression": "true.convertsToBoolean()",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testUnion",
+      "TestCases": [
+        {
+          "Name": "testUnion1",
+          "Expression": "(1 | 2 | 3).count() = 3",
+          "Result": true
+        },
+        {
+          "Name": "testUnion10",
+          "Expression": "name.select(use.union($this.given)).count()",
+          "Result": true
+        },
+        {
+          "Name": "testUnion11",
+          "Expression": "name.select(use.union(given)).count()",
+          "Result": true
+        },
+        {
+          "Name": "testUnion2",
+          "Expression": "(1 | 2 | 2).count() = 2",
+          "Result": true
+        },
+        {
+          "Name": "testUnion3",
+          "Expression": "(1|1).count() = 1",
+          "Result": true
+        },
+        {
+          "Name": "testUnion4",
+          "Expression": "1.union(2).union(3).count() = 3",
+          "Result": true
+        },
+        {
+          "Name": "testUnion5",
+          "Expression": "1.union(2.union(3)).count() = 3",
+          "Result": true
+        },
+        {
+          "Name": "testUnion6",
+          "Expression": "(1 | 2).combine(2).count() = 3",
+          "Result": true
+        },
+        {
+          "Name": "testUnion7",
+          "Expression": "1.combine(1).count() = 2",
+          "Result": true
+        },
+        {
+          "Name": "testUnion8",
+          "Expression": "1.combine(1).union(2).count() = 2",
+          "Result": true
+        },
+        {
+          "Name": "testUnion9",
+          "Expression": "name.select(use | given).count()",
+          "Result": true
+        }
+      ]
+    },
+    {
+      "Name": "testVariables",
+      "TestCases": [
+        {
+          "Name": "testVariables1",
+          "Expression": "%sct = 'http://snomed.info/sct'",
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
+        },
+        {
+          "Name": "testVariables2",
+          "Expression": "%loinc = 'http://loinc.org'",
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
+        },
+        {
+          "Name": "testVariables3",
+          "Expression": "%ucum = 'http://unitsofmeasure.org'",
+          "Result": true
+        },
+        {
+          "Name": "testVariables4",
+          "Expression": "%`vs-administrative-gender` = 'http://hl7.org/fhir/ValueSet/administrative-gender'",
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
+        }
+      ]
+    },
+    {
+      "Name": "testWhere",
+      "TestCases": [
+        {
+          "Name": "testWhere1",
+          "Expression": "Patient.name.count() = 3",
+          "Result": true
+        },
+        {
+          "Name": "testWhere2",
+          "Expression": "Patient.name.where(given = 'Jim').count() = 1",
+          "Result": true
+        },
+        {
+          "Name": "testWhere3",
+          "Expression": "Patient.name.where(given = 'X').count() = 0",
+          "Result": true
+        },
+        {
+          "Name": "testWhere4",
+          "Expression": "Patient.name.where($this.given = 'Jim').count() = 1",
+          "Result": true
+        }
+      ]
+    }
+  ]
+}

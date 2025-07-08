@@ -54,6 +54,18 @@
             </table>
           </v-tooltip>
           </template>
+          <template v-slot:header.AidboxData="{ header }">
+            <v-tooltip bottom color="primary">
+            <template v-slot:activator="{ on, attrs }">
+              <span v-bind="attrs" v-on="on">{{ header.text }}</span>
+            </template>
+            <table>
+              <tr><td>Passed</td><td align="right">{{ aggregateData.AidboxData?.passed }}</td></tr>
+              <tr><td>Failed</td><td align="right">{{ aggregateData.AidboxData?.failed }}</td></tr>
+              <tr><td>Not implemented</td><td align="right">{{ aggregateData.AidboxData?.notImplemented }}</td></tr>
+            </table>
+          </v-tooltip>
+          </template>
           <template v-slot:item.name="{ item }">
             <span v-html="item.name" />
             <template v-if="item.description">
@@ -75,6 +87,11 @@
             <v-icon v-if="item.Hapi?.result === true" color="rgb(16, 185, 129)">mdi-check</v-icon>
             <v-icon v-if="item.Hapi?.result === false" :title="computeMessage(item.Hapi)" color="rgb(239, 68, 68)">mdi-alert-outline</v-icon>
             <v-icon v-if="item.Hapi?.notImplemented === true" :title="computeMessage(item.Hapi)" color="grey">mdi-hammer-wrench</v-icon>
+          </template>
+          <template v-slot:item.AidboxData="{ item }">
+            <v-icon v-if="item.AidboxData?.result === true" color="rgb(16, 185, 129)">mdi-check</v-icon>
+            <v-icon v-if="item.AidboxData?.result === false" :title="computeMessage(item.AidboxData)" color="rgb(239, 68, 68)">mdi-alert-outline</v-icon>
+            <v-icon v-if="item.AidboxData?.notImplemented === true" :title="computeMessage(item.AidboxData)" color="grey">mdi-hammer-wrench</v-icon>
           </template>
           <template v-slot:item.Unknown="{ item }">
             <icon v-if="item.Unknown?.result === true">
@@ -198,6 +215,7 @@ import Vue from "vue";
 var firelyData = require('~/static/results/Firely-5.11.4 R5.json');
 var fhirPathJSData = require('~/static/results/fhirpath.js-4.4.0 R5.json');
 var hapiData = require('~/static/results/Java 6.5.27 R5.json');
+var aidboxData = require('~/static/results/Aidbox FHIR R5.json');
 // var unknownData = require('~/static/results/Unknown.json');
 
 interface ItemTestData {
@@ -211,6 +229,7 @@ export default Vue.extend({
     this.injectData('Firely', firelyData);
     this.injectData('FhirPathJS', fhirPathJSData);
     this.injectData('Hapi', hapiData);
+    this.injectData('AidboxData', aidboxData);
     // this.injectData('Unknown', unknownData);
     console.log('Summary results', this.aggregateData);
   },
