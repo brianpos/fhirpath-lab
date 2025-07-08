@@ -1210,7 +1210,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       });
 
       setCustomHighlightRules(this.expressionEditor, FhirPathHightlighter_Rules);
-      this.expressionEditor.setValue("trace('trc').given.join(' ')\n.combine(family).join(', ')");
+      this.expressionEditor.setValue("trace('trc').given.join(' ')\n.combine($this.family).join(', ')");
       this.expressionEditor.clearSelection();
       this.expressionEditor.on("change", this.fhirpathExpressionChangedEvent)
 
@@ -3210,6 +3210,9 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       }
 
       if (resourceJson) {
+        if (url === settings.java_server_r5())
+          p.parameter?.push({ name: "resource", extension: [{ url: "http://fhir.forms-lab.com/StructureDefinition/json-value", valueString: resourceJson }] });
+        else
         p.parameter?.push({ name: "resource", resource: JSON.parse(resourceJson) });
       }
       else {
