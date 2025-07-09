@@ -1187,7 +1187,7 @@
         },
         {
           "Name": "testContainsString10",
-          "Expression": "Patient.name.family.first().contains(toChars().skip(3).take(3).join())",
+          "Expression": "'123456789'.contains(length().toString())",
           "Result": true
         },
         {
@@ -1479,7 +1479,7 @@
         },
         {
           "Name": "testEndsWith10",
-          "Expression": "Patient.name.family.first().endsWith(toChars().skip(3).join())",
+          "Expression": "'123456789'.endsWith(length().toString())",
           "Result": true
         },
         {
@@ -2339,9 +2339,9 @@
         },
         {
           "Name": "testIif6",
-          "Expression": "iif('non boolean criteria', 'true-result', 'true-result')",
-          "Result": false,
-          "FailureMessage": "Expected no results, but got some."
+          "Description": "Contested: nothing in the spec about what to do with non-boolean criteria - mixed results from engines",
+          "Expression": "iif('non boolean criteria', 'true-result', 'false-result')",
+          "Result": true
         },
         {
           "Name": "testIif7",
@@ -4800,7 +4800,7 @@
         },
         {
           "Name": "testStartsWith12",
-          "Expression": "Patient.name.family.first().startsWith(toChars().take(3).join())",
+          "Expression": "'987654321'.startsWith(length().toString())",
           "Result": true
         },
         {

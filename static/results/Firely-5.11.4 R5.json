@@ -1434,9 +1434,9 @@
         },
         {
           "Name": "testEndsWith10",
-          "Expression": "Patient.name.family.first().endsWith(toChars().skip(3).join())",
+          "Expression": "'123456789'.endsWith(length().toString())",
           "Result": false,
-          "FailureMessage": "Error (NotSupported) String function 'toChars' is not supported on Patient\nError (Exception) Invalid expression: Invocation of function 'endsWith' failed: Invocation of function 'join' failed: Invocation of function 'skip' failed: Invocation of function 'toChars' failed: Cannot cast from 'Patient' to '.NET type String'"
+          "FailureMessage": "Error (NotSupported) Function 'length' is not supported on context type 'Patient'\nError (NotSupported) Function 'toString' is not supported on context type '???'\nError (Exception) Invalid expression: Invocation of function 'endsWith' failed: Invocation of function 'toString' failed: Invocation of function 'length' failed: Cannot cast from 'Patient' to '.NET type String'"
         },
         {
           "Name": "testEndsWith2",
@@ -2267,9 +2267,9 @@
         },
         {
           "Name": "testIif6",
-          "Expression": "iif('non boolean criteria', 'true-result', 'true-result')",
-          "Result": false,
-          "FailureMessage": "Expected no results, but got some."
+          "Description": "Contested: nothing in the spec about what to do with non-boolean criteria - mixed results from engines",
+          "Expression": "iif('non boolean criteria', 'true-result', 'false-result')",
+          "Result": true
         },
         {
           "Name": "testIif7",
@@ -4667,9 +4667,9 @@
         },
         {
           "Name": "testStartsWith12",
-          "Expression": "Patient.name.family.first().startsWith(toChars().take(3).join())",
+          "Expression": "'987654321'.startsWith(length().toString())",
           "Result": false,
-          "FailureMessage": "Error (NotSupported) String function 'toChars' is not supported on Patient\nError (Exception) Invalid expression: Invocation of function 'startsWith' failed: Invocation of function 'join' failed: Invocation of function 'take' failed: Invocation of function 'toChars' failed: Cannot cast from 'Patient' to '.NET type String'"
+          "FailureMessage": "Error (NotSupported) Function 'length' is not supported on context type 'Patient'\nError (NotSupported) Function 'toString' is not supported on context type '???'\nError (Exception) Invalid expression: Invocation of function 'startsWith' failed: Invocation of function 'toString' failed: Invocation of function 'length' failed: Cannot cast from 'Patient' to '.NET type String'"
         },
         {
           "Name": "testStartsWith2",

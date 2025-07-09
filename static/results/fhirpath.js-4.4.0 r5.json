@@ -1174,7 +1174,7 @@
         },
         {
           "Name": "testContainsString10",
-          "Expression": "Patient.name.family.first().contains(toChars().skip(3).take(3).join())",
+          "Expression": "'123456789'.contains(length().toString())",
           "Result": true
         },
         {
@@ -1460,7 +1460,7 @@
         },
         {
           "Name": "testEndsWith10",
-          "Expression": "Patient.name.family.first().endsWith(toChars().skip(3).join())",
+          "Expression": "'123456789'.endsWith(length().toString())",
           "Result": true
         },
         {
@@ -2300,9 +2300,10 @@
         },
         {
           "Name": "testIif6",
-          "Expression": "iif('non boolean criteria', 'true-result', 'true-result')",
+          "Description": "Contested: nothing in the spec about what to do with non-boolean criteria - mixed results from engines",
+          "Expression": "iif('non boolean criteria', 'true-result', 'false-result')",
           "Result": false,
-          "FailureMessage": "Expected no results, but got some."
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testIif7",
@@ -2421,6 +2422,7 @@
       "TestCases": [
         {
           "Name": "testFHIRPathAsFunction11",
+          "Description": "Contested: code type is a subtype of string",
           "Expression": "Patient.gender.as(string)",
           "Result": false,
           "FailureMessage": "Expected no results, but got some."
@@ -2447,6 +2449,7 @@
         },
         {
           "Name": "testFHIRPathAsFunction16",
+          "Description": "Contested: code type is a subtype of string",
           "Expression": "Patient.gender.ofType(string)",
           "Result": false,
           "FailureMessage": "Expected no results, but got some."
@@ -3503,6 +3506,7 @@
         },
         {
           "Name": "testMinus5",
+          "Description": "Contested: single quotes are ucum units, which are not applicable to date arithmetic",
           "Expression": "@1974-12-25 - 1 'month'",
           "Result": false,
           "FailureMessage": "Error (Invalid) Error processing request: For date/time arithmetic, the unit of the quantity must be one of the following time-based units: years,months,weeks,days,hours,minutes,seconds,milliseconds,year,month,week,day,hour,minute,second,millisecond,'s','ms'"
@@ -4695,7 +4699,7 @@
         },
         {
           "Name": "testStartsWith12",
-          "Expression": "Patient.name.family.first().startsWith(toChars().take(3).join())",
+          "Expression": "'987654321'.startsWith(length().toString())",
           "Result": true
         },
         {
@@ -5660,6 +5664,7 @@
         },
         {
           "Name": "testStringQuantityDayLiteralToQuantity",
+          "Description": "Contested: calendar day units are not equal to ucum day units",
           "Expression": "'1 day'.toQuantity() = 1 'd'",
           "Result": false,
           "FailureMessage": "Expected 1 results, got 0"

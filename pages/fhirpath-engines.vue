@@ -70,7 +70,9 @@
             <span v-html="item.name" />
             <template v-if="item.description">
               <br/>
-              <span style="color: grey; font-style: italic;" v-html="item.description" />
+              <v-icon v-if="item.description.startsWith('Contested:')" color="purple">mdi-information-outline</v-icon>
+              <span v-if="item.description.startsWith('Contested:')" style="color: purple;;" v-html="item.description" />
+              <span v-if="!item.description.startsWith('Contested:')" style="color: grey; font-style: italic;" v-html="item.description" />
             </template>
           </template>
           <template v-slot:item.Firely="{ item }">
@@ -265,7 +267,7 @@ export default Vue.extend({
       for (let group of data.Groups) {
         // console.log(group.Name);
         for (let test of group.TestCases) {
-          let item: { name: any; description?: string, groupName: any; expression?: string;[key: string]: any };
+          let item: { name: any; description?: string, groupName: any; expression?: string; successCount: number; [key: string]: any };
 
           // Check if the item already exists in testData
           let existingItem = this.testData.find(i => i.name === test.Name && i.groupName === group.Name);
@@ -275,6 +277,7 @@ export default Vue.extend({
             item = {
               name: test.Name,
               groupName: group.Name,
+              successCount: 0,
             };
             this.testData.push(item);
           }
@@ -283,6 +286,9 @@ export default Vue.extend({
           }
           if (test.Description) {
             item.description = test.Description;
+          }
+          if (test.Result == true){
+            item.successCount += 1;
           }
           item[engineName] = { 
             result: test.Result, 
@@ -325,11 +331,18 @@ export default Vue.extend({
           value: 'expression',
           groupable: false,
         },
+        {
+          text: '#',
+          align: 'center',
+          value: 'successCount',
+          groupable: true,
+        },
       ] as Array<{ text: string; value: string; align?: string; groupable?: boolean; sort?: (a: any, b: any) => number }>,
       testData: [
         {
           name: 'testWhere1',
           groupName: 'testWhere',
+          successCount: 0,
         }
       ],
       aggregateData: {

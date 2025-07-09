@@ -577,7 +577,7 @@
         },
         {
           "Name": "testMultipleResolve",
-          "Expression": "composition.exists() implies (composition.resolve().section.entry.reference.where(resolve() is Observation) in (result.reference | result.reference.resolve().hasMember.reference))",
+          "Expression": "\n\t\t\tcomposition.exists() \n\t\t\timplies \n\t\t\t(\n\t\t\t\tcomposition.resolve().section.entry.reference.where(resolve() is Observation)\n\t\t\t\t.where($this in (%resource.result.reference | %resource.result.reference.resolve().hasMember.reference)).exists()\n\t\t\t)\n\t\t\t",
           "Result": false,
           "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
         }
@@ -629,6 +629,12 @@
         {
           "Name": "PrecisionDecimal",
           "Expression": "1.58700.precision()",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "PrecisionEmpty",
+          "Expression": "{}.precision().empty()",
           "Result": false,
           "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
         },
@@ -1065,7 +1071,8 @@
         {
           "Name": "testCombine2",
           "Expression": "name.given.combine(name.family).exclude('Jim')",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Expected 4 results, got 6"
         },
         {
           "Name": "testCombine3",
@@ -1162,8 +1169,7 @@
         {
           "Name": "testContainsCollectionEmpty4",
           "Expression": "{} contains {}",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
+          "Result": true
         },
         {
           "Name": "testContainsCollectionEmptyDateTime",
@@ -1187,7 +1193,7 @@
         },
         {
           "Name": "testContainsString10",
-          "Expression": "Patient.name.family.first().contains(toChars().skip(3).take(3).join())",
+          "Expression": "'123456789'.contains(length().toString())",
           "Result": true
         },
         {
@@ -1473,7 +1479,7 @@
         },
         {
           "Name": "testEndsWith10",
-          "Expression": "Patient.name.family.first().endsWith(toChars().skip(3).join())",
+          "Expression": "'123456789'.endsWith(length().toString())",
           "Result": true
         },
         {
@@ -2316,9 +2322,10 @@
         },
         {
           "Name": "testIif6",
-          "Expression": "iif('non boolean criteria', 'true-result', 'true-result')",
+          "Description": "Contested: nothing in the spec about what to do with non-boolean criteria - mixed results from engines",
+          "Expression": "iif('non boolean criteria', 'true-result', 'false-result')",
           "Result": false,
-          "FailureMessage": "Expected no results, but got some."
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testIif7",
@@ -2361,10 +2368,14 @@
           "Result": true
         },
         {
+          "Name": "testIn5",
+          "Expression": "('a' | 'c' | 'd') in 'b'",
+          "Result": true
+        },
+        {
           "Name": "testInEmptyBoth",
           "Expression": "{} in {}",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
+          "Result": true
         },
         {
           "Name": "testInEmptyCollection",
@@ -2374,8 +2385,7 @@
         {
           "Name": "testInEmptyValue",
           "Expression": "{} in (1 | 2 | 3)",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
+          "Result": true
         }
       ]
     },
@@ -3389,6 +3399,11 @@
           "Name": "testLn2",
           "Expression": "1.0.ln() = 0.0",
           "Result": true
+        },
+        {
+          "Name": "testLnEmpty",
+          "Expression": "{}.ln().empty()",
+          "Result": true
         }
       ]
     },
@@ -3403,6 +3418,21 @@
         {
           "Name": "testLog2",
           "Expression": "100.0.log(10.0) = 2.0",
+          "Result": true
+        },
+        {
+          "Name": "testLogEmpty",
+          "Expression": "{}.log(10).empty()",
+          "Result": true
+        },
+        {
+          "Name": "testLogEmpty2",
+          "Expression": "{}.log({}).empty()",
+          "Result": true
+        },
+        {
+          "Name": "testLogEmpty3",
+          "Expression": "16.log({}).empty()",
           "Result": true
         }
       ]
@@ -3575,7 +3605,7 @@
           "Description": "patient has a birthDate",
           "Expression": "birthDate",
           "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "FailureMessage": "Expected a single boolean result for predicate evaluation."
         },
         {
           "Name": "testPatientTelecomTypes",
@@ -4058,8 +4088,7 @@
         {
           "Name": "testPolymorphismB",
           "Expression": "Observation.valueQuantity.unit",
-          "Result": false,
-          "FailureMessage": "Expected no results, but got some."
+          "Result": true
         },
         {
           "Name": "testPolymorphismIsA1",
@@ -4107,6 +4136,11 @@
         {
           "Name": "testPlus4",
           "Expression": "'a'+'b' = 'ab'",
+          "Result": true
+        },
+        {
+          "Name": "testPlus5",
+          "Expression": "'a'+{}",
           "Result": true
         },
         {
@@ -4269,6 +4303,12 @@
           "Expression": "@T23:00:00 + 2 hours",
           "Result": false,
           "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+        },
+        {
+          "Name": "testPlusTime3",
+          "Expression": "@T23:00:00 + 50 hours",
+          "Result": false,
+          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
         }
       ]
     },
@@ -4288,6 +4328,21 @@
         {
           "Name": "testPower3",
           "Expression": "(-1).power(0.5)",
+          "Result": true
+        },
+        {
+          "Name": "testPowerEmpty",
+          "Expression": "{}.power(2).empty()",
+          "Result": true
+        },
+        {
+          "Name": "testPowerEmpty2",
+          "Expression": "{}.power({}).empty()",
+          "Result": true
+        },
+        {
+          "Name": "testPowerEmpty3",
+          "Expression": "2.5.power({}).empty()",
           "Result": true
         }
       ]
@@ -4588,60 +4643,70 @@
       "TestCases": [
         {
           "Name": "testSort1",
+          "Description": "Prototype definition - not part of spec yet",
           "Expression": "(1 | 2 | 3).sort() = (1 | 2 | 3)",
           "Result": false,
           "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
         },
         {
           "Name": "testSort10",
+          "Description": "Prototype definition - not part of spec yet",
           "Expression": "Patient.name.sort(-family, -given.first()).first().use = 'usual'",
           "Result": false,
           "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
         },
         {
           "Name": "testSort2",
+          "Description": "Prototype definition - not part of spec yet",
           "Expression": "(3 | 2 | 1).sort() = (1 | 2 | 3)",
           "Result": false,
           "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
         },
         {
           "Name": "testSort3",
+          "Description": "Prototype definition - not part of spec yet",
           "Expression": "(1 | 2 | 3).sort($this) = (1 | 2 | 3)",
           "Result": false,
           "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
         },
         {
           "Name": "testSort4",
+          "Description": "Prototype definition - not part of spec yet",
           "Expression": "(3 | 2 | 1).sort($this) = (1 | 2 | 3)",
           "Result": false,
           "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
         },
         {
           "Name": "testSort5",
+          "Description": "Prototype definition - not part of spec yet",
           "Expression": "(1 | 2 | 3).sort(-$this) = (3 | 2 | 1)",
           "Result": false,
           "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
         },
         {
           "Name": "testSort6",
+          "Description": "Prototype definition - not part of spec yet",
           "Expression": "('a' | 'b' | 'c').sort($this) = ('a' | 'b' | 'c')",
           "Result": false,
           "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
         },
         {
           "Name": "testSort7",
+          "Description": "Prototype definition - not part of spec yet",
           "Expression": "('c' | 'b' | 'a').sort($this) = ('a' | 'b' | 'c')",
           "Result": false,
           "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
         },
         {
           "Name": "testSort8",
+          "Description": "Prototype definition - not part of spec yet",
           "Expression": "('a' | 'b' | 'c').sort(-$this) = ('c' | 'b' | 'a')",
           "Result": false,
           "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
         },
         {
           "Name": "testSort9",
+          "Description": "Prototype definition - not part of spec yet",
           "Expression": "Patient.name[0].given.sort() = ('James' | 'Peter')",
           "Result": false,
           "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
@@ -4714,7 +4779,7 @@
         },
         {
           "Name": "testStartsWith12",
-          "Expression": "Patient.name.family.first().startsWith(toChars().take(3).join())",
+          "Expression": "'987654321'.startsWith(length().toString())",
           "Result": true
         },
         {
@@ -4796,6 +4861,16 @@
         {
           "Name": "testSubstring10",
           "Expression": "Patient.name.family.first().substring(2, length()-5)",
+          "Result": true
+        },
+        {
+          "Name": "testSubstring11",
+          "Expression": "{}.substring({}).empty() = true",
+          "Result": true
+        },
+        {
+          "Name": "testSubstring12",
+          "Expression": "'string'.substring({}).empty() = true",
           "Result": true
         },
         {
@@ -5779,6 +5854,12 @@
         {
           "Name": "testUnion11",
           "Expression": "name.select(use.union(given)).count()",
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
+        },
+        {
+          "Name": "testUnion12",
+          "Expression": "true | Patient.name.given.first()",
           "Result": true
         },
         {
