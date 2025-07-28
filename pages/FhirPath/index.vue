@@ -128,7 +128,7 @@
                 </template>
                 <template v-for="(focusValue, i1) in debugTraceData[debugTracePosition].focusVar">
                 <tr :key="i1">
-                  <td class="result-type debug-row">
+                  <td title="Input Collection" class="result-type debug-row">
                     $focus
                   </td>
                   <td class="result-value debug-row">
@@ -1210,7 +1210,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       });
 
       setCustomHighlightRules(this.expressionEditor, FhirPathHightlighter_Rules);
-      this.expressionEditor.setValue("trace('trc').given.join(' ')\n.combine($this.family).join(', ')");
+      this.expressionEditor.setValue("trace('trc').given.join(' ')\n.combine(family).join(', ')");
       this.expressionEditor.clearSelection();
       this.expressionEditor.on("change", this.fhirpathExpressionChangedEvent)
 

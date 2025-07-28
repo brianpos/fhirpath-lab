@@ -54,6 +54,19 @@
             </table>
           </v-tooltip>
           </template>
+          <template v-slot:header.PythonData="{ header }">
+            <v-tooltip bottom color="primary">
+            <template v-slot:activator="{ on, attrs }">
+              <span v-bind="attrs" v-on="on">{{ header.text.toUpperCase() }}</span>
+            </template>
+            <table>
+              <tr><td>Passed</td><td align="right">{{ aggregateData.PythonData?.passed }}</td></tr>
+              <tr><td>Failed</td><td align="right">{{ aggregateData.PythonData?.failed }}</td></tr>
+              <tr><td>Not implemented</td><td align="right">{{ aggregateData.PythonData?.notImplemented }}</td></tr>
+            </table>
+          </v-tooltip>
+          </template>
+          
           <template v-slot:header.AidboxData="{ header }">
             <v-tooltip bottom color="primary">
             <template v-slot:activator="{ on, attrs }">
@@ -89,6 +102,11 @@
             <v-icon v-if="item.Hapi?.result === true" color="rgb(16, 185, 129)">mdi-check</v-icon>
             <v-icon v-if="item.Hapi?.result === false" :title="computeMessage(item.Hapi)" color="rgb(239, 68, 68)">mdi-alert-outline</v-icon>
             <v-icon v-if="item.Hapi?.notImplemented === true" :title="computeMessage(item.Hapi)" color="grey">mdi-hammer-wrench</v-icon>
+          </template>
+          <template v-slot:item.PythonData="{ item }">
+            <v-icon v-if="item.PythonData?.result === true" color="rgb(16, 185, 129)">mdi-check</v-icon>
+            <v-icon v-if="item.PythonData?.result === false" :title="computeMessage(item.PythonData)" color="rgb(239, 68, 68)">mdi-alert-outline</v-icon>
+            <v-icon v-if="item.PythonData?.notImplemented === true" :title="computeMessage(item.PythonData)" color="grey">mdi-hammer-wrench</v-icon>
           </template>
           <template v-slot:item.AidboxData="{ item }">
             <v-icon v-if="item.AidboxData?.result === true" color="rgb(16, 185, 129)">mdi-check</v-icon>
@@ -214,9 +232,10 @@ h5 {
 </style>
 <script lang="ts">
 import Vue from "vue";
-var firelyData = require('~/static/results/Firely-5.11.4 R5.json');
-var fhirPathJSData = require('~/static/results/fhirpath.js-4.4.0 R5.json');
-var hapiData = require('~/static/results/Java 6.5.27 R5.json');
+var firelyData = require('~/static/results/Firely-5.12.1 R5.json');
+var fhirPathJSData = require('~/static/results/fhirpath.js-4.5.1 R5.json');
+var hapiData = require('~/static/results/Java 6.6.2 R5.json');
+var pythonData = require('~/static/results/fhirpath-py 1.0.3.json');
 var aidboxData = require('~/static/results/Aidbox FHIR R5.json');
 // var unknownData = require('~/static/results/Unknown.json');
 
@@ -231,6 +250,7 @@ export default Vue.extend({
     this.injectData('Firely', firelyData);
     this.injectData('FhirPathJS', fhirPathJSData);
     this.injectData('Hapi', hapiData);
+    this.injectData('PythonData', pythonData);
     this.injectData('AidboxData', aidboxData);
     // this.injectData('Unknown', unknownData);
     console.log('Summary results', this.aggregateData);
@@ -263,7 +283,7 @@ export default Vue.extend({
       let  passed = 0;
       let failed = 0;
       let notImplemented = 0;
-
+      
       for (let group of data.Groups) {
         // console.log(group.Name);
         for (let test of group.TestCases) {

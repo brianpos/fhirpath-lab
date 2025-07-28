@@ -138,6 +138,13 @@
           "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: defineVariable"
         },
         {
+          "Name": "defineVariable3",
+          "Description": "simple use of a variable 2 selects",
+          "Expression": "defineVariable('n1', name.first()).select(%n1.given).first()",
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: defineVariable"
+        },
+        {
           "Name": "defineVariable4",
           "Description": "use of a variable in separate contexts",
           "Expression": "defineVariable('n1', name.first()).select(%n1.given) | defineVariable('n1', name.skip(1).first()).select(%n1.given)",
@@ -473,6 +480,12 @@
           "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: lowBoundary"
         },
         {
+          "Name": "LowBoundaryDecimal5",
+          "Expression": "1.587.lowBoundary(32)",
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: lowBoundary"
+        },
+        {
           "Name": "LowBoundaryDecimal6",
           "Expression": "1.587.lowBoundary(39)",
           "NotImplemented": true,
@@ -639,6 +652,29 @@
           "Expression": "@2014.precision()",
           "NotImplemented": true,
           "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: precision"
+        }
+      ]
+    },
+    {
+      "Name": "TerminologyTests",
+      "TestCases": [
+        {
+          "Name": "txTest01",
+          "Expression": "%terminologies.expand('http://hl7.org/fhir/ValueSet/administrative-gender').expansion.contains.count()",
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: expand"
+        },
+        {
+          "Name": "txTest02",
+          "Expression": "%terminologies.validateVS('http://hl7.org/fhir/ValueSet/administrative-gender', $this.gender).parameter.where(name = 'result').value",
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: validateVS"
+        },
+        {
+          "Name": "txTest03",
+          "Expression": "%terminologies.translate('http://hl7.org/fhir/ConceptMap/cm-address-use-v2', $this.address.use).parameter.where(name = 'match').part.where(name = 'concept').value.code",
+          "NotImplemented": true,
+          "FailureMessage": "Error (Processing) Error while compiling expression:\nNo method in multimethod 'compile-node' for dispatch value: translate"
         }
       ]
     },
@@ -1065,8 +1101,7 @@
         {
           "Name": "testCombine2",
           "Expression": "name.given.combine(name.family).exclude('Jim')",
-          "Result": false,
-          "FailureMessage": "Expected 4 results, got 6"
+          "Result": true
         },
         {
           "Name": "testCombine3",
@@ -1187,8 +1222,14 @@
         },
         {
           "Name": "testContainsString10",
-          "Expression": "'123456789'.contains(length().toString())",
+          "Expression": "'123456789'.select(contains(length().toString()))",
           "Result": true
+        },
+        {
+          "Name": "testContainsString10a",
+          "Expression": "'123456789'.contains(length().toString())",
+          "Result": false,
+          "FailureMessage": "Expected no results, but got some."
         },
         {
           "Name": "testContainsString2",
@@ -1479,8 +1520,14 @@
         },
         {
           "Name": "testEndsWith10",
-          "Expression": "'123456789'.endsWith(length().toString())",
+          "Expression": "'123456789'.select(endsWith(length().toString()))",
           "Result": true
+        },
+        {
+          "Name": "testEndsWith10a",
+          "Expression": "'123456789'.endsWith(length().toString())",
+          "Result": false,
+          "FailureMessage": "Expected no results, but got some."
         },
         {
           "Name": "testEndsWith2",
@@ -1612,6 +1659,7 @@
         },
         {
           "Name": "testEquality23",
+          "Description": "This could be impacted by the timezone of the engine running the test",
           "Expression": "@2012-04-15T15:00:00Z = @2012-04-15T10:00:00",
           "Result": false,
           "FailureMessage": "Expected no results, but got some."
@@ -2316,6 +2364,11 @@
           "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
+          "Name": "testIif12",
+          "Expression": "Patient.name.first().iif(text.exists(), text, family+given.first())",
+          "Result": true
+        },
+        {
           "Name": "testIif2",
           "Expression": "iif(Patient.name.empty(), 'unnamed', 'named') = 'named'",
           "Result": true
@@ -2462,6 +2515,7 @@
       "TestCases": [
         {
           "Name": "testFHIRPathAsFunction11",
+          "Description": "Contested: code type is a subtype of string",
           "Expression": "Patient.gender.as(string)",
           "Result": false,
           "FailureMessage": "Expected no results, but got some."
@@ -2488,6 +2542,7 @@
         },
         {
           "Name": "testFHIRPathAsFunction16",
+          "Description": "Contested: code type is a subtype of string",
           "Expression": "Patient.gender.ofType(string)",
           "Result": false,
           "FailureMessage": "Expected no results, but got some."
@@ -3568,6 +3623,7 @@
         },
         {
           "Name": "testMinus5",
+          "Description": "Contested: single quotes are ucum units, which are not applicable to date arithmetic",
           "Expression": "@1974-12-25 - 1 'month'",
           "Result": false,
           "FailureMessage": "Error (Processing) Operation `-` not supported on operand types: date, Quantity"
@@ -4800,8 +4856,14 @@
         },
         {
           "Name": "testStartsWith12",
-          "Expression": "'987654321'.startsWith(length().toString())",
+          "Expression": "'987654321'.select(startsWith(length().toString()))",
           "Result": true
+        },
+        {
+          "Name": "testStartsWith12a",
+          "Expression": "'987654321'.startsWith(length().toString())",
+          "Result": false,
+          "FailureMessage": "Expected no results, but got some."
         },
         {
           "Name": "testStartsWith2",
@@ -4881,8 +4943,14 @@
         },
         {
           "Name": "testSubstring10",
-          "Expression": "Patient.name.family.first().substring(2, length()-5)",
+          "Expression": "Patient.name.family.first().select(substring(2, length()-5))",
           "Result": true
+        },
+        {
+          "Name": "testSubstring10a",
+          "Expression": "Patient.name.family.first().substring(2, length()-5)",
+          "Result": false,
+          "FailureMessage": "Expected no results, but got some."
         },
         {
           "Name": "testSubstring11",
@@ -5800,6 +5868,7 @@
         },
         {
           "Name": "testStringQuantityDayLiteralToQuantity",
+          "Description": "Contested: calendar day units are not equal to ucum day units",
           "Expression": "'1 day'.toQuantity() = 1 'd'",
           "Result": false,
           "FailureMessage": "Some results didn't match expected values (1 values)"
@@ -5906,7 +5975,8 @@
         {
           "Name": "testUnion11",
           "Expression": "name.select(use.union(given)).count()",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testUnion12",

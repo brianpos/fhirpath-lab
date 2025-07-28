@@ -1,5 +1,5 @@
 {
-  "EngineName": "fhirpath-py 1.0.3",
+  "EngineName": "Firely-5.12.1 (R5)",
   "Groups": [
     {
       "Name": "comments",
@@ -32,8 +32,7 @@
         {
           "Name": "testComment6",
           "Expression": "2 // comment\n/ 2",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "testComment7",
@@ -58,20 +57,17 @@
         {
           "Name": "Comparable1",
           "Expression": "1 'cm'.comparable(1 '[in_i]')",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "Comparable2",
           "Expression": "1 'cm'.comparable(1 '[s]')",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "Comparable3",
           "Expression": "1 'cm'.comparable(1 's')",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         }
       ]
     },
@@ -82,8 +78,7 @@
           "Name": "defineVariable1",
           "Description": "simplest variable",
           "Expression": "defineVariable('v1', 'value1').select(%v1)",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "defineVariable10",
@@ -101,22 +96,19 @@
           "Name": "defineVariable13",
           "Description": "sequence of variable definitions tweak",
           "Expression": "Patient.name.defineVariable('n2', skip(1).first()).defineVariable('res', %n2.given+%n2.given).select(%res)",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "defineVariable14",
           "Description": "sequence of variable definitions original",
           "Expression": "Patient.name.defineVariable('n1', first()).select(%n1).exists() | Patient.name.defineVariable('n2', skip(1).first()).defineVariable('res', %n2.given+%n2.given).select(%res)",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "defineVariable15",
           "Description": "multi-tree vars valid",
           "Expression": "defineVariable('root', 'r1-').select(defineVariable('v1', 'v1').defineVariable('v2', 'v2').select(%v1 | %v2)).select(%root & $this)",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "defineVariable16",
@@ -128,57 +120,49 @@
           "Name": "defineVariable19",
           "Description": "defineVariable in function parameters (1)",
           "Expression": "defineVariable(defineVariable('param','ppp').select(%param), defineVariable('param','value').select(%param)).select(%ppp)",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "defineVariable2",
           "Description": "simple use of a variable",
           "Expression": "defineVariable('n1', name.first()).select(%n1.given)",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "defineVariable3",
           "Description": "simple use of a variable 2 selects",
           "Expression": "defineVariable('n1', name.first()).select(%n1.given).first()",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "defineVariable4",
           "Description": "use of a variable in separate contexts",
           "Expression": "defineVariable('n1', name.first()).select(%n1.given) | defineVariable('n1', name.skip(1).first()).select(%n1.given)",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "defineVariable5",
           "Description": "use of a variable in separate contexts defined in 2 but used in 1",
           "Expression": "defineVariable('n1', name.first()).where(active.not()) | defineVariable('n1', name.skip(1).first()).select(%n1.given)",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "defineVariable6",
           "Description": "use of different variables in different contexts",
           "Expression": "defineVariable('n1', name.first()).select(id & '-' & %n1.given.join('|')) | defineVariable('n2', name.skip(1).first()).select(%n2.given)",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "defineVariable7",
           "Description": "2 vars, one unused",
           "Expression": "defineVariable('n1', name.first()).active | defineVariable('n2', name.skip(1).first()).select(%n2.given)",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "defineVariable8",
           "Description": "CompositeVariableUse",
           "Expression": "defineVariable('v1', 'value1').select(%v1).trace('data').defineVariable('v2', 'value2').select($this & ':' & %v1 & '-' & %v2) | defineVariable('v3', 'value3').select(%v3)",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "defineVariable9",
@@ -195,15 +179,13 @@
           "Name": "dvConceptMapExample",
           "Description": "realistic example with conceptmap",
           "Expression": "\n\t\t\tgroup.select(\n\t\t\t\tdefineVariable('grp')\n\t\t\t\t.element\n\t\t\t\t.select(\n\t\t\t\t\tdefineVariable('ele')\n\t\t\t\t\t.target\n\t\t\t\t\t.select(%grp.source & '|' & %ele.code & ' ' & relationship & ' ' & %grp.target & '|' & code)\n\t\t\t\t)\n\t\t\t)\n\t\t\t.trace('all')\n\t\t\t.isDistinct()\n\t\t",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "dvParametersDontColide",
           "Description": "defineVariable in function parameters (2)",
           "Expression": "'aaa'.replace(defineVariable('param', 'aaa').select(%param), defineVariable('param','bbb').select(%param))",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "dvRedefiningVariableThrowsError",
@@ -224,8 +206,7 @@
         {
           "Name": "from-zulip-1",
           "Expression": "(true and 'foo').empty()",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "from-zulip-2",
@@ -241,145 +222,134 @@
           "Name": "HighBoundaryDateMonth",
           "Expression": "@2014.highBoundary(6)",
           "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "HighBoundaryDateTimeMillisecond1",
           "Expression": "@2014-01-01T08.highBoundary(17)",
           "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "HighBoundaryDateTimeMillisecond2",
           "Expression": "@2014-01-01T08:05-05:00.highBoundary(17)",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "HighBoundaryDateTimeMillisecond3",
           "Expression": "@2014-01-01T08.highBoundary(17)",
           "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "HighBoundaryDecimal",
           "Expression": "1.587.highBoundary(8)",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "HighBoundaryDecimal1",
           "Expression": "1.587.highBoundary(2)",
           "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "HighBoundaryDecimal10",
           "Expression": "1.highBoundary(5)",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "HighBoundaryDecimal11",
           "Expression": "12.587.highBoundary(2)",
           "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "HighBoundaryDecimal12",
           "Expression": "12.500.highBoundary(4)",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "HighBoundaryDecimal13",
           "Expression": "120.highBoundary(2)",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "HighBoundaryDecimal14",
           "Expression": "-120.highBoundary(2)",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "HighBoundaryDecimal15",
           "Expression": "0.0034.highBoundary(1)",
           "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "HighBoundaryDecimal16",
           "Expression": "-0.0034.highBoundary(1)",
           "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "HighBoundaryDecimal2",
           "Expression": "1.587.highBoundary(6)",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "HighBoundaryDecimal3",
           "Expression": "1.587.highBoundary(-1)",
           "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "FailureMessage": "Error (Exception) Invalid expression: Invocation of function 'highBoundary' failed: repeatCount ('-1') must be a non-negative value. (Parameter 'repeatCount')\r\nActual value was -1."
         },
         {
           "Name": "HighBoundaryDecimal4",
           "Expression": "(-1.587).highBoundary()",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "HighBoundaryDecimal5",
           "Expression": "(-1.587).highBoundary(2)",
           "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "HighBoundaryDecimal6",
           "Expression": "(-1.587).highBoundary(6)",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "HighBoundaryDecimal7",
           "Expression": "1.587.highBoundary(39)",
           "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "FailureMessage": "Expected no results, but got some."
         },
         {
           "Name": "HighBoundaryDecimal8",
           "Expression": "1.highBoundary()",
           "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "HighBoundaryDecimal9",
           "Expression": "1.highBoundary(0)",
           "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "HighBoundaryDecimalDefault",
           "Expression": "1.587.highBoundary()",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "HighBoundaryQuantity",
           "Expression": "1.587 'm'.highBoundary(8)",
           "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "FailureMessage": "Expected 1 results, got 0"
         },
         {
           "Name": "HighBoundaryTimeMillisecond",
           "Expression": "@T10:30.highBoundary(9)",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         }
       ]
     },
@@ -400,169 +370,158 @@
           "Name": "LowBoundaryDateMonth",
           "Expression": "@2014.lowBoundary(6)",
           "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "LowBoundaryDateTimeMillisecond1",
           "Expression": "@2014-01-01T08.lowBoundary(17)",
           "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "LowBoundaryDateTimeMillisecond2",
           "Expression": "@2014-01-01T08:05+08:00.lowBoundary(17)",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "LowBoundaryDateTimeMillisecond3",
           "Expression": "@2014-01-01T08.lowBoundary(8)",
           "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "LowBoundaryDecimal1",
           "Expression": "1.587.lowBoundary(6)",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "LowBoundaryDecimal10",
           "Expression": "12.587.lowBoundary(2)",
           "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "LowBoundaryDecimal11",
           "Expression": "12.500.lowBoundary(4)",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "LowBoundaryDecimal12",
           "Expression": "120.lowBoundary(2)",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "LowBoundaryDecimal13",
           "Expression": "(-120).lowBoundary(2)",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "LowBoundaryDecimal14",
           "Expression": "0.0034.lowBoundary(1)",
           "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "LowBoundaryDecimal15",
           "Expression": "(-0.0034).lowBoundary(1)",
           "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "LowBoundaryDecimal2",
           "Expression": "1.587.lowBoundary(2)",
           "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "LowBoundaryDecimal3",
           "Expression": "1.587.lowBoundary(-1)",
           "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "FailureMessage": "Error (Exception) Invalid expression: Invocation of function 'lowBoundary' failed: repeatCount ('-1') must be a non-negative value. (Parameter 'repeatCount')\r\nActual value was -1."
         },
         {
           "Name": "LowBoundaryDecimal4",
           "Expression": "1.587.lowBoundary(0)",
           "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "LowBoundaryDecimal5",
           "Expression": "1.587.lowBoundary(32)",
           "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "FailureMessage": "Expected no results, but got some."
         },
         {
           "Name": "LowBoundaryDecimal6",
           "Expression": "1.587.lowBoundary(39)",
           "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "FailureMessage": "Expected no results, but got some."
         },
         {
           "Name": "LowBoundaryDecimal7",
           "Expression": "1.toDecimal().lowBoundary()",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "LowBoundaryDecimal8",
           "Expression": "1.lowBoundary(0)",
           "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "LowBoundaryDecimal9",
           "Expression": "1.lowBoundary(5)",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "LowBoundaryDecimalDefault",
           "Expression": "1.587.lowBoundary()",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "LowBoundaryNegDecimal1",
           "Expression": "(-1.587).lowBoundary(6)",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "LowBoundaryNegDecimal2",
           "Expression": "(-1.587).lowBoundary(2)",
           "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "LowBoundaryNegDecimal3",
           "Expression": "(-1.587).lowBoundary(-1)",
           "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "FailureMessage": "Error (Exception) Invalid expression: Invocation of function 'lowBoundary' failed: repeatCount ('-1') must be a non-negative value. (Parameter 'repeatCount')\r\nActual value was -1."
         },
         {
           "Name": "LowBoundaryNegDecimal4",
           "Expression": "(-1.587).lowBoundary(0)",
           "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "LowBoundaryNegDecimal5",
           "Expression": "(-1.587).lowBoundary(32)",
           "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "FailureMessage": "Expected no results, but got some."
         },
         {
           "Name": "LowBoundaryNegDecimalDefault",
           "Expression": "(-1.587).lowBoundary()",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "LowBoundaryQuantity",
           "Expression": "1.587 'cm'.lowBoundary(8)",
           "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "FailureMessage": "Expected 1 results, got 0"
         },
         {
           "Name": "LowBoundaryTimeMillisecond",
           "Expression": "@T10:30.lowBoundary(9)",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         }
       ]
     },
@@ -572,14 +531,12 @@
         {
           "Name": "testContainedId",
           "Expression": "contained.id",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "Result": true
         },
         {
           "Name": "testMultipleResolve",
           "Expression": "\n\t\t\tcomposition.exists() \n\t\t\timplies \n\t\t\t(\n\t\t\t\tcomposition.resolve().section.entry.reference.where(resolve() is Observation)\n\t\t\t\t.where($this in (%resource.result.reference | %resource.result.reference.resolve().hasMember.reference)).exists()\n\t\t\t)\n\t\t\t",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         }
       ]
     },
@@ -590,13 +547,13 @@
           "Name": "testPeriodInvariantNew",
           "Expression": "Patient.identifier.period.all(start.empty() or end.empty() or (start.lowBoundary() < end.highBoundary()))",
           "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "FailureMessage": "Expected 1 results, got 0"
         },
         {
           "Name": "testPeriodInvariantOld",
           "Expression": "Patient.identifier.period.all(start.hasValue().not() or end.hasValue().not() or (start <= end))",
           "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "FailureMessage": "Expected 1 results, got 0"
         }
       ]
     },
@@ -606,14 +563,12 @@
         {
           "Name": "testPolymorphicsA",
           "Expression": "Observation.value.exists()",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "Result": true
         },
         {
           "Name": "testPolymorphicsB",
           "Expression": "Observation.valueQuantity.exists()",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "Result": true
         }
       ]
     },
@@ -623,38 +578,38 @@
         {
           "Name": "PrecisionDateTimeMilliseconds",
           "Expression": "@2014-01-05T10:30:00.000.precision()",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "NotImplemented": true,
+          "FailureMessage": "Warning (NotSupported) Unhandled function 'precision'\nError (Exception) Invalid expression: Unknown symbol 'precision'"
         },
         {
           "Name": "PrecisionDecimal",
           "Expression": "1.58700.precision()",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "NotImplemented": true,
+          "FailureMessage": "Warning (NotSupported) Unhandled function 'precision'\nError (Exception) Invalid expression: Unknown symbol 'precision'"
         },
         {
           "Name": "PrecisionEmpty",
           "Expression": "{}.precision().empty()",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "NotImplemented": true,
+          "FailureMessage": "Warning (NotSupported) Unhandled function 'precision'\nError (Exception) Invalid expression: Unknown symbol 'precision'"
         },
         {
           "Name": "PrecisionTimeMilliseconds",
           "Expression": "@T10:30:00.000.precision()",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "NotImplemented": true,
+          "FailureMessage": "Warning (NotSupported) Unhandled function 'precision'\nError (Exception) Invalid expression: Unknown symbol 'precision'"
         },
         {
           "Name": "PrecisionTimeMinutes",
           "Expression": "@T10:30.precision()",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "NotImplemented": true,
+          "FailureMessage": "Warning (NotSupported) Unhandled function 'precision'\nError (Exception) Invalid expression: Unknown symbol 'precision'"
         },
         {
           "Name": "PrecisionYear",
           "Expression": "@2014.precision()",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "NotImplemented": true,
+          "FailureMessage": "Warning (NotSupported) Unhandled function 'precision'\nError (Exception) Invalid expression: Unknown symbol 'precision'"
         }
       ]
     },
@@ -664,20 +619,19 @@
         {
           "Name": "txTest01",
           "Expression": "%terminologies.expand('http://hl7.org/fhir/ValueSet/administrative-gender').expansion.contains.count()",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "txTest02",
           "Expression": "%terminologies.validateVS('http://hl7.org/fhir/ValueSet/administrative-gender', $this.gender).parameter.where(name = 'result').value",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "NotImplemented": true,
+          "FailureMessage": "Error (NotFound) variable 'terminologies' not found\nWarning (NotSupported) Unhandled function 'validateVS'\nError (NotFound) prop 'parameter' not found on ???\nError (NotFound) prop 'name' not found on ???\nError (NotFound) prop 'value' not found on ???\nError (Exception) Invalid expression: Unknown symbol 'validateVS'"
         },
         {
           "Name": "txTest03",
           "Expression": "%terminologies.translate('http://hl7.org/fhir/ConceptMap/cm-address-use-v2', $this.address.use).parameter.where(name = 'match').part.where(name = 'concept').value.code",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "NotImplemented": true,
+          "FailureMessage": "Error (NotFound) variable 'terminologies' not found\nWarning (NotSupported) Unhandled function 'translate'\nError (NotFound) prop 'parameter' not found on ???\nError (NotFound) prop 'name' not found on ???\nError (NotFound) prop 'part' not found on ???\nError (NotFound) prop 'name' not found on ???\nError (NotFound) prop 'value' not found on ???\nError (NotFound) prop 'code' not found on ???\nError (Exception) Invalid expression: Unknown symbol 'translate'"
         }
       ]
     },
@@ -697,8 +651,7 @@
         {
           "Name": "testAbs3",
           "Expression": "(-5.5 'mg').abs() = 5.5 'mg'",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "testAbsEmpty",
@@ -1053,8 +1006,7 @@
         {
           "Name": "testCollectionBoolean1",
           "Expression": "iif(1 | 2 | 3, true, false)",
-          "Result": false,
-          "FailureMessage": "Expected no results, but got some."
+          "Result": true
         },
         {
           "Name": "testCollectionBoolean2",
@@ -1135,13 +1087,13 @@
           "Name": "testConformsTo1",
           "Expression": "conformsTo('http://hl7.org/fhir/StructureDefinition/Patient')",
           "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "FailureMessage": "Error (Exception) Invalid expression: Unknown symbol 'conformsTo'"
         },
         {
           "Name": "testConformsTo2",
           "Expression": "conformsTo('http://hl7.org/fhir/StructureDefinition/Person')",
           "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "FailureMessage": "Error (Exception) Invalid expression: Unknown symbol 'conformsTo'"
         },
         {
           "Name": "testConformsTo3",
@@ -1191,7 +1143,8 @@
         {
           "Name": "testContainsCollectionEmpty4",
           "Expression": "{} contains {}",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Expected no results, but got some."
         },
         {
           "Name": "testContainsCollectionEmptyDateTime",
@@ -1221,8 +1174,7 @@
         {
           "Name": "testContainsString10a",
           "Expression": "'123456789'.contains(length().toString())",
-          "Result": false,
-          "FailureMessage": "Expected no results, but got some."
+          "Result": true
         },
         {
           "Name": "testContainsString2",
@@ -1513,8 +1465,7 @@
         {
           "Name": "testEndsWith10a",
           "Expression": "'123456789'.endsWith(length().toString())",
-          "Result": false,
-          "FailureMessage": "Expected no results, but got some."
+          "Result": true
         },
         {
           "Name": "testEndsWith2",
@@ -1645,8 +1596,7 @@
           "Name": "testEquality23",
           "Description": "This could be impacted by the timezone of the engine running the test",
           "Expression": "@2012-04-15T15:00:00Z = @2012-04-15T10:00:00",
-          "Result": false,
-          "FailureMessage": "Expected no results, but got some."
+          "Result": true
         },
         {
           "Name": "testEquality24",
@@ -1671,8 +1621,7 @@
         {
           "Name": "testEquality28",
           "Expression": "Observation.value = 185 '[lb_av]'",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
+          "Result": true
         },
         {
           "Name": "testEquality3",
@@ -1782,14 +1731,12 @@
         {
           "Name": "testEquivalent21",
           "Expression": "name.take(2).given ~ name.take(2).last().given | name.take(2).first().given",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "Result": true
         },
         {
           "Name": "testEquivalent22",
           "Expression": "Observation.value ~ 185 '[lb_av]'",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "Result": true
         },
         {
           "Name": "testEquivalent23",
@@ -1799,8 +1746,7 @@
         {
           "Name": "testEquivalent24",
           "Expression": "(1 | 2 | 3) ~ (3 | 2 | 1)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "Result": true
         },
         {
           "Name": "testEquivalent3",
@@ -1845,26 +1791,22 @@
         {
           "Name": "testEscapeHtml",
           "Expression": "'\"1<2\"'.escape('html')",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "testEscapeJson",
           "Expression": "'\"1<2\"'.escape('json')",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "testUnescapeHtml",
           "Expression": "'&quot;1&lt;2&quot;'.unescape('html')",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "testUnescapeJson",
           "Expression": "'\\\"1<2\\\"'.unescape('json')",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         }
       ]
     },
@@ -1954,8 +1896,7 @@
         {
           "Name": "testExtension2",
           "Expression": "Patient.birthDate.extension(%`ext-patient-birthTime`).exists()",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "Result": true
         },
         {
           "Name": "testExtension3",
@@ -2080,8 +2021,7 @@
         {
           "Name": "testGreaterThan22",
           "Expression": "Observation.value > 100 '[lb_av]'",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
+          "Result": true
         },
         {
           "Name": "testGreaterThan23",
@@ -2236,8 +2176,7 @@
         {
           "Name": "testGreatorOrEqual22",
           "Expression": "Observation.value >= 100 '[lb_av]'",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
+          "Result": true
         },
         {
           "Name": "testGreatorOrEqual23",
@@ -2364,8 +2303,7 @@
           "Name": "testIif6",
           "Description": "Contested: nothing in the spec about what to do with non-boolean criteria - mixed results from engines",
           "Expression": "iif('non boolean criteria', 'true-result', 'false-result')",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "Result": true
         },
         {
           "Name": "testIif7",
@@ -2415,7 +2353,8 @@
         {
           "Name": "testInEmptyBoth",
           "Expression": "{} in {}",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Expected no results, but got some."
         },
         {
           "Name": "testInEmptyCollection",
@@ -2425,7 +2364,8 @@
         {
           "Name": "testInEmptyValue",
           "Expression": "{} in (1 | 2 | 3)",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Expected no results, but got some."
         }
       ]
     },
@@ -2470,8 +2410,7 @@
         {
           "Name": "testIndexOf5",
           "Expression": "'LogicalModel-Person'.indexOf({}).empty() = true",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "testIndexOf6",
@@ -2487,14 +2426,12 @@
           "Name": "testFHIRPathAsFunction11",
           "Description": "Contested: code type is a subtype of string",
           "Expression": "Patient.gender.as(string)",
-          "Result": false,
-          "FailureMessage": "Expected no results, but got some."
+          "Result": true
         },
         {
           "Name": "testFHIRPathAsFunction12",
           "Expression": "Patient.gender.as(code)",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
+          "Result": true
         },
         {
           "Name": "testFHIRPathAsFunction13",
@@ -2515,14 +2452,12 @@
           "Name": "testFHIRPathAsFunction16",
           "Description": "Contested: code type is a subtype of string",
           "Expression": "Patient.gender.ofType(string)",
-          "Result": false,
-          "FailureMessage": "Expected no results, but got some."
+          "Result": true
         },
         {
           "Name": "testFHIRPathAsFunction17",
           "Expression": "Patient.gender.ofType(code)",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
+          "Result": true
         },
         {
           "Name": "testFHIRPathAsFunction18",
@@ -2542,13 +2477,13 @@
         {
           "Name": "testFHIRPathAsFunction21",
           "Expression": "Patient.name.as(HumanName).use",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Expected no results, but got some."
         },
         {
           "Name": "testFHIRPathAsFunction22",
           "Expression": "Patient.name.ofType(HumanName).use",
-          "Result": false,
-          "FailureMessage": "Expected 3 results, got 0"
+          "Result": true
         },
         {
           "Name": "testFHIRPathAsFunction23",
@@ -2563,19 +2498,18 @@
         {
           "Name": "testFHIRPathIsFunction1",
           "Expression": "Patient.gender.is(code)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "Result": true
         },
         {
           "Name": "testFHIRPathIsFunction10",
           "Expression": "Observation.extension('http://example.com/fhir/StructureDefinition/patient-age').value is Duration",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
+          "Result": true
         },
         {
           "Name": "testFHIRPathIsFunction2",
           "Expression": "Patient.gender.is(string)",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testFHIRPathIsFunction3",
@@ -2585,8 +2519,7 @@
         {
           "Name": "testFHIRPathIsFunction4",
           "Expression": "Questionnaire.url.is(uri)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "Result": true
         },
         {
           "Name": "testFHIRPathIsFunction5",
@@ -2606,14 +2539,13 @@
         {
           "Name": "testFHIRPathIsFunction8",
           "Expression": "Observation.extension('http://example.com/fhir/StructureDefinition/patient-age').value is Age",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
+          "Result": true
         },
         {
           "Name": "testFHIRPathIsFunction9",
           "Expression": "Observation.extension('http://example.com/fhir/StructureDefinition/patient-age').value is Quantity",
           "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         }
       ]
     },
@@ -2763,8 +2695,7 @@
         {
           "Name": "testLessOrEqual22",
           "Expression": "Observation.value <= 200 '[lb_av]'",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
+          "Result": true
         },
         {
           "Name": "testLessOrEqual23",
@@ -2919,8 +2850,7 @@
         {
           "Name": "testLessThan22",
           "Expression": "Observation.value < 200 '[lb_av]'",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
+          "Result": true
         },
         {
           "Name": "testLessThan23",
@@ -3040,14 +2970,12 @@
         {
           "Name": "testDateNotEqualTimezoneOffsetAfter",
           "Expression": "Patient.birthDate != @1974-12-25T12:34:00+10:00",
-          "Result": false,
-          "FailureMessage": "Expected no results, but got some."
+          "Result": true
         },
         {
           "Name": "testDateNotEqualTimezoneOffsetBefore",
           "Expression": "Patient.birthDate != @1974-12-25T12:34:00-10:00",
-          "Result": false,
-          "FailureMessage": "Expected no results, but got some."
+          "Result": true
         },
         {
           "Name": "testDateNotEqualToday",
@@ -3057,8 +2985,7 @@
         {
           "Name": "testDateNotEqualUTC",
           "Expression": "Patient.birthDate != @1974-12-25T12:34:00Z",
-          "Result": false,
-          "FailureMessage": "Expected no results, but got some."
+          "Result": true
         },
         {
           "Name": "testDateTimeGreaterThanDate1",
@@ -3108,20 +3035,17 @@
         {
           "Name": "testLiteralDateDay",
           "Expression": "@2015-02-04.is(Date)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "Result": true
         },
         {
           "Name": "testLiteralDateMonth",
           "Expression": "@2015-02.is(Date)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "Result": true
         },
         {
           "Name": "testLiteralDateTimeDay",
           "Expression": "@2015-02-04T.is(DateTime)",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "testLiteralDateTimeHour",
@@ -3141,8 +3065,7 @@
         {
           "Name": "testLiteralDateTimeMonth",
           "Expression": "@2015-02T.is(DateTime)",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "testLiteralDateTimeSecond",
@@ -3182,14 +3105,12 @@
         {
           "Name": "testLiteralDateTimeYear",
           "Expression": "@2015T.is(DateTime)",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "testLiteralDateYear",
           "Expression": "@2015.is(Date)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "Result": true
         },
         {
           "Name": "testLiteralDecimal00",
@@ -3209,26 +3130,22 @@
         {
           "Name": "testLiteralDecimalGreaterThanIntegerTrue",
           "Expression": "Observation.value.value > 0",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
+          "Result": true
         },
         {
           "Name": "testLiteralDecimalGreaterThanNonZeroTrue",
           "Expression": "Observation.value.value > 180.0",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
+          "Result": true
         },
         {
           "Name": "testLiteralDecimalGreaterThanZeroTrue",
           "Expression": "Observation.value.value > 0.0",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
+          "Result": true
         },
         {
           "Name": "testLiteralDecimalLessThanInteger",
           "Expression": "Observation.value.value < 190",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
+          "Result": true
         },
         {
           "Name": "testLiteralDecimalLessThanInvalid",
@@ -3393,14 +3310,12 @@
         {
           "Name": "testLiteralTimeTimezoneOffset",
           "Expression": "@T14:34:28+10:00.is(Time)",
-          "Result": false,
-          "FailureMessage": "Expected no results, but got some."
+          "Result": true
         },
         {
           "Name": "testLiteralTimeUTC",
           "Expression": "@T14:34:28Z.is(Time)",
-          "Result": false,
-          "FailureMessage": "Expected no results, but got some."
+          "Result": true
         },
         {
           "Name": "testLiteralTrue",
@@ -3510,37 +3425,38 @@
         {
           "Name": "testMatchesFullWithinUrl1",
           "Expression": "'http://fhir.org/guides/cqf/common/Library/FHIR-ModelInfo|4.0.1'.matchesFull('library')",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "NotImplemented": true,
+          "FailureMessage": "Warning (NotSupported) Unhandled function 'matchesFull'\nError (Exception) Invalid expression: Unknown symbol 'matchesFull'"
         },
         {
           "Name": "testMatchesFullWithinUrl1a",
           "Expression": "'http://fhir.org/guides/cqf/common/Library/FHIR-ModelInfo|4.0.1'.matchesFull('.*Library.*')",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "NotImplemented": true,
+          "FailureMessage": "Warning (NotSupported) Unhandled function 'matchesFull'\nError (Exception) Invalid expression: Unknown symbol 'matchesFull'"
         },
         {
           "Name": "testMatchesFullWithinUrl2",
           "Expression": "'http://fhir.org/guides/cqf/common/Library/FHIR-ModelInfo|4.0.1'.matchesFull('Measure')",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "NotImplemented": true,
+          "FailureMessage": "Warning (NotSupported) Unhandled function 'matchesFull'\nError (Exception) Invalid expression: Unknown symbol 'matchesFull'"
         },
         {
           "Name": "testMatchesFullWithinUrl3",
           "Expression": "'http://fhir.org/guides/cqf/common/Library/FHIR-ModelInfo|4.0.1'.matchesFull('Library')",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "NotImplemented": true,
+          "FailureMessage": "Warning (NotSupported) Unhandled function 'matchesFull'\nError (Exception) Invalid expression: Unknown symbol 'matchesFull'"
         },
         {
           "Name": "testMatchesFullWithinUrl4",
           "Expression": "'http://fhir.org/guides/cqf/common/Library/FHIR-ModelInfo|4.0.1'.matchesFull('^Library$')",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "NotImplemented": true,
+          "FailureMessage": "Warning (NotSupported) Unhandled function 'matchesFull'\nError (Exception) Invalid expression: Unknown symbol 'matchesFull'"
         },
         {
           "Name": "testMatchesSingleLineMode1",
           "Expression": "'A\n\t\t\tB'.matches('A.*B')",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testMatchesWithinUrl1",
@@ -3596,8 +3512,7 @@
           "Name": "testMinus5",
           "Description": "Contested: single quotes are ucum units, which are not applicable to date arithmetic",
           "Expression": "@1974-12-25 - 1 'month'",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "testMinus6",
@@ -3608,13 +3523,13 @@
           "Name": "testMinus7",
           "Expression": "@T00:30:00 - 1 hour",
           "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "FailureMessage": "Error (Exception) Invalid expression: Invocation of operator '-' failed: Unable to cast object of type 'Hl7.Fhir.ElementModel.Types.Time' to type 'Hl7.Fhir.ElementModel.Types.DateTime'."
         },
         {
           "Name": "testMinus8",
           "Expression": "@T01:00:00 - 2 hours",
           "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "FailureMessage": "Error (Exception) Invalid expression: Invocation of operator '-' failed: Unable to cast object of type 'Hl7.Fhir.ElementModel.Types.Time' to type 'Hl7.Fhir.ElementModel.Types.DateTime'."
         },
         {
           "Name": "testMinusEmpty1",
@@ -3640,8 +3555,7 @@
           "Name": "testExtractBirthDate",
           "Description": "Extract birthDate",
           "Expression": "birthDate",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "Result": true
         },
         {
           "Name": "testPatientHasBirthDate",
@@ -3654,8 +3568,7 @@
           "Name": "testPatientTelecomTypes",
           "Description": "patient telecom types",
           "Expression": "telecom.use",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (4 values)"
+          "Result": true
         }
       ]
     },
@@ -3885,8 +3798,7 @@
         {
           "Name": "testNEquality17",
           "Expression": "@2012-04-15T15:00:00Z != @2012-04-15T10:00:00",
-          "Result": false,
-          "FailureMessage": "Expected no results, but got some."
+          "Result": true
         },
         {
           "Name": "testNEquality18",
@@ -3926,8 +3838,7 @@
         {
           "Name": "testNEquality24",
           "Expression": "Observation.value != 185 'kg'",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
+          "Result": true
         },
         {
           "Name": "testNEquality3",
@@ -4037,8 +3948,7 @@
         {
           "Name": "testNotEquivalent21",
           "Expression": "name.take(2).given !~ name.take(2).last().given | name.take(2).first().given",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "Result": true
         },
         {
           "Name": "testNotEquivalent22",
@@ -4103,20 +4013,17 @@
         {
           "Name": "testPolymorphismA",
           "Expression": "Observation.value.unit",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
+          "Result": true
         },
         {
           "Name": "testPolymorphismAsA",
           "Expression": "Observation.value.as(Quantity).unit",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
+          "Result": true
         },
         {
           "Name": "testPolymorphismAsAFunction",
           "Expression": "(Observation.value as Quantity).unit",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
+          "Result": true
         },
         {
           "Name": "testPolymorphismAsB",
@@ -4131,19 +4038,18 @@
         {
           "Name": "testPolymorphismB",
           "Expression": "Observation.valueQuantity.unit",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
         },
         {
           "Name": "testPolymorphismIsA1",
           "Expression": "Observation.value.is(Quantity)",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
+          "Result": true
         },
         {
           "Name": "testPolymorphismIsA2",
           "Expression": "Observation.value is Quantity",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
+          "Result": true
         },
         {
           "Name": "testPolymorphismIsA3",
@@ -4153,8 +4059,7 @@
         {
           "Name": "testPolymorphismIsB",
           "Expression": "Observation.value.is(Period).not()",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
+          "Result": true
         }
       ]
     },
@@ -4194,32 +4099,27 @@
         {
           "Name": "testPlusDate1",
           "Expression": "@1973-12-25 + 7 days",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "Result": true
         },
         {
           "Name": "testPlusDate10",
           "Expression": "@1973-12-25 + 1 month",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "Result": true
         },
         {
           "Name": "testPlusDate11",
           "Expression": "@1973-12-25 + 1 week",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "Result": true
         },
         {
           "Name": "testPlusDate12",
           "Expression": "@1973-12-25 + 1 year",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "Result": true
         },
         {
           "Name": "testPlusDate13",
           "Expression": "@1973-12-25 + 1 'd'",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "Result": true
         },
         {
           "Name": "testPlusDate14",
@@ -4229,8 +4129,7 @@
         {
           "Name": "testPlusDate15",
           "Expression": "@1973-12-25 + 1 'wk'",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "Result": true
         },
         {
           "Name": "testPlusDate16",
@@ -4245,80 +4144,67 @@
         {
           "Name": "testPlusDate18",
           "Expression": "@1973-12-25T00:00:00.000+10:00 + 1 's'",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "testPlusDate19",
           "Expression": "@1973-12-25T00:00:00.000+10:00 + 0.1 's'",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "testPlusDate2",
           "Expression": "@1973-12-25 + 7.7 days",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "Result": true
         },
         {
           "Name": "testPlusDate20",
           "Expression": "@1973-12-25T00:00:00.000+10:00 + 10 'ms'",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "testPlusDate21",
           "Expression": "@1973-12-25T00:00:00.000+10:00 + 1 'min'",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "testPlusDate22",
           "Expression": "@1973-12-25T00:00:00.000+10:00 + 1 'h'",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "testPlusDate3",
           "Expression": "@1973-12-25T00:00:00.000+10:00 + 7 days",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "Result": true
         },
         {
           "Name": "testPlusDate4",
           "Expression": "@1973-12-25T00:00:00.000+10:00 + 7.7 days",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "Result": true
         },
         {
           "Name": "testPlusDate5",
           "Expression": "@1973-12-25T00:00:00.000+10:00 + 1 second",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "testPlusDate6",
           "Expression": "@1973-12-25T00:00:00.000+10:00 + 10 millisecond",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "testPlusDate7",
           "Expression": "@1973-12-25T00:00:00.000+10:00 + 1 minute",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "testPlusDate8",
           "Expression": "@1973-12-25T00:00:00.000+10:00 + 1 hour",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "testPlusDate9",
           "Expression": "@1973-12-25 + 1 day",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "Result": true
         },
         {
           "Name": "testPlusEmpty1",
@@ -4339,19 +4225,19 @@
           "Name": "testPlusTime1",
           "Expression": "@T01:00:00 + 2 hours",
           "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "FailureMessage": "Error (Exception) Invalid expression: Invocation of operator '+' failed: Unable to cast object of type 'Hl7.Fhir.ElementModel.Types.Time' to type 'Hl7.Fhir.ElementModel.Types.DateTime'."
         },
         {
           "Name": "testPlusTime2",
           "Expression": "@T23:00:00 + 2 hours",
           "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "FailureMessage": "Error (Exception) Invalid expression: Invocation of operator '+' failed: Unable to cast object of type 'Hl7.Fhir.ElementModel.Types.Time' to type 'Hl7.Fhir.ElementModel.Types.DateTime'."
         },
         {
           "Name": "testPlusTime3",
           "Expression": "@T23:00:00 + 50 hours",
           "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "FailureMessage": "Error (Exception) Invalid expression: Invocation of operator '+' failed: Unable to cast object of type 'Hl7.Fhir.ElementModel.Types.Time' to type 'Hl7.Fhir.ElementModel.Types.DateTime'."
         }
       ]
     },
@@ -4437,14 +4323,12 @@
         {
           "Name": "testQuantity10",
           "Expression": "4.0 'g' / 2.0 'm' = 2 'g/m'",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "testQuantity11",
           "Expression": "1.0 'm' / 1.0 'm' = 1 '1'",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "testQuantity2",
@@ -4459,35 +4343,37 @@
         {
           "Name": "testQuantity4",
           "Expression": "4 'g' ~ 4040 'mg'",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testQuantity5",
           "Expression": "7 days = 1 week",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
         },
         {
           "Name": "testQuantity6",
           "Expression": "7 days = 1 'wk'",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 0"
         },
         {
           "Name": "testQuantity7",
           "Expression": "6 days < 1 week",
           "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "FailureMessage": "Expected 1 results, got 0"
         },
         {
           "Name": "testQuantity8",
           "Expression": "8 days > 1 week",
           "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "FailureMessage": "Expected 1 results, got 0"
         },
         {
           "Name": "testQuantity9",
           "Expression": "2.0 'cm' * 2.0 'm' = 0.040 'm2'",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         }
       ]
     },
@@ -4517,7 +4403,8 @@
         {
           "Name": "testRepeat5",
           "Expression": "Patient.name.repeat('test')",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Expected 1 results, got 3"
         }
       ]
     },
@@ -4552,8 +4439,7 @@
         {
           "Name": "testReplace6",
           "Expression": "'123'.replace('2', {}).empty() = true",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         }
       ]
     },
@@ -4604,8 +4490,7 @@
         {
           "Name": "testRound1",
           "Expression": "1.round() = 1",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         },
         {
           "Name": "testRound2",
@@ -4615,8 +4500,7 @@
         {
           "Name": "testRoundEmpty",
           "Expression": "{}.round().empty()",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "Result": true
         }
       ]
     },
@@ -4651,8 +4535,7 @@
         {
           "Name": "testSingle2",
           "Expression": "Patient.name.single().exists()",
-          "Result": false,
-          "FailureMessage": "Expected no results, but got some."
+          "Result": true
         }
       ]
     },
@@ -4688,71 +4571,71 @@
           "Name": "testSort1",
           "Description": "Prototype definition - not part of spec yet",
           "Expression": "(1 | 2 | 3).sort() = (1 | 2 | 3)",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "NotImplemented": true,
+          "FailureMessage": "Warning (NotSupported) Unhandled function 'sort'\nWarning (MultipleMatches) Operator '=' can experience unexpected runtime errors when used with a collection\nError (Exception) Invalid expression: Unknown symbol 'sort'"
         },
         {
           "Name": "testSort10",
           "Description": "Prototype definition - not part of spec yet",
           "Expression": "Patient.name.sort(-family, -given.first()).first().use = 'usual'",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "NotImplemented": true,
+          "FailureMessage": "Error (NotFound) prop 'family' not found on Patient\nError (NotFound) prop 'given' not found on Patient\nWarning (NotSupported) Unhandled function 'sort'\nError (NotFound) prop 'use' not found on ???\nError (Exception) Invalid expression: Unknown symbol 'sort'"
         },
         {
           "Name": "testSort2",
           "Description": "Prototype definition - not part of spec yet",
           "Expression": "(3 | 2 | 1).sort() = (1 | 2 | 3)",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "NotImplemented": true,
+          "FailureMessage": "Warning (NotSupported) Unhandled function 'sort'\nWarning (MultipleMatches) Operator '=' can experience unexpected runtime errors when used with a collection\nError (Exception) Invalid expression: Unknown symbol 'sort'"
         },
         {
           "Name": "testSort3",
           "Description": "Prototype definition - not part of spec yet",
           "Expression": "(1 | 2 | 3).sort($this) = (1 | 2 | 3)",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "NotImplemented": true,
+          "FailureMessage": "Warning (NotSupported) Unhandled function 'sort'\nWarning (MultipleMatches) Operator '=' can experience unexpected runtime errors when used with a collection\nError (Exception) Invalid expression: Unknown symbol 'sort'"
         },
         {
           "Name": "testSort4",
           "Description": "Prototype definition - not part of spec yet",
           "Expression": "(3 | 2 | 1).sort($this) = (1 | 2 | 3)",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "NotImplemented": true,
+          "FailureMessage": "Warning (NotSupported) Unhandled function 'sort'\nWarning (MultipleMatches) Operator '=' can experience unexpected runtime errors when used with a collection\nError (Exception) Invalid expression: Unknown symbol 'sort'"
         },
         {
           "Name": "testSort5",
           "Description": "Prototype definition - not part of spec yet",
           "Expression": "(1 | 2 | 3).sort(-$this) = (3 | 2 | 1)",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "NotImplemented": true,
+          "FailureMessage": "Warning (NotSupported) Unhandled function 'sort'\nWarning (MultipleMatches) Operator '=' can experience unexpected runtime errors when used with a collection\nError (Exception) Invalid expression: Unknown symbol 'sort'"
         },
         {
           "Name": "testSort6",
           "Description": "Prototype definition - not part of spec yet",
           "Expression": "('a' | 'b' | 'c').sort($this) = ('a' | 'b' | 'c')",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "NotImplemented": true,
+          "FailureMessage": "Warning (NotSupported) Unhandled function 'sort'\nWarning (MultipleMatches) Operator '=' can experience unexpected runtime errors when used with a collection\nError (Exception) Invalid expression: Unknown symbol 'sort'"
         },
         {
           "Name": "testSort7",
           "Description": "Prototype definition - not part of spec yet",
           "Expression": "('c' | 'b' | 'a').sort($this) = ('a' | 'b' | 'c')",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "NotImplemented": true,
+          "FailureMessage": "Warning (NotSupported) Unhandled function 'sort'\nWarning (MultipleMatches) Operator '=' can experience unexpected runtime errors when used with a collection\nError (Exception) Invalid expression: Unknown symbol 'sort'"
         },
         {
           "Name": "testSort8",
           "Description": "Prototype definition - not part of spec yet",
           "Expression": "('a' | 'b' | 'c').sort(-$this) = ('c' | 'b' | 'a')",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "NotImplemented": true,
+          "FailureMessage": "Warning (NotSupported) Unhandled function 'sort'\nWarning (MultipleMatches) Operator '=' can experience unexpected runtime errors when used with a collection\nError (Exception) Invalid expression: Unknown symbol 'sort'"
         },
         {
           "Name": "testSort9",
           "Description": "Prototype definition - not part of spec yet",
           "Expression": "Patient.name[0].given.sort() = ('James' | 'Peter')",
-          "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "NotImplemented": true,
+          "FailureMessage": "Warning (NotSupported) Unhandled function 'sort'\nWarning (MultipleMatches) Operator '=' can experience unexpected runtime errors when used with a collection\nError (Exception) Invalid expression: Unknown symbol 'sort'"
         }
       ]
     },
@@ -4812,8 +4695,7 @@
         {
           "Name": "testStartsWith10",
           "Expression": "''.startsWith('') = true",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "Result": true
         },
         {
           "Name": "testStartsWith11",
@@ -4828,8 +4710,7 @@
         {
           "Name": "testStartsWith12a",
           "Expression": "'987654321'.startsWith(length().toString())",
-          "Result": false,
-          "FailureMessage": "Expected no results, but got some."
+          "Result": true
         },
         {
           "Name": "testStartsWith2",
@@ -4894,8 +4775,7 @@
         {
           "Name": "testSubSetOf3",
           "Expression": "supportingInfo.where(category.coding.code = 'additionalbodysite').sequence.subsetOf($this.item.informationSequence)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "Result": true
         }
       ]
     },
@@ -4915,8 +4795,7 @@
         {
           "Name": "testSubstring10a",
           "Expression": "Patient.name.family.first().substring(2, length()-5)",
-          "Result": false,
-          "FailureMessage": "Expected no results, but got some."
+          "Result": true
         },
         {
           "Name": "testSubstring11",
@@ -5141,8 +5020,7 @@
         {
           "Name": "testToString4",
           "Expression": "0.0.toString() = '0.0'",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "Result": true
         },
         {
           "Name": "testToString5",
@@ -5232,12 +5110,14 @@
         {
           "Name": "testType1",
           "Expression": "1.type().namespace = 'System'",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Warning (NotSupported) Unhandled function 'type'\nError (NotFound) prop 'namespace' not found on ???\nError (Exception) Invalid expression: Unknown symbol 'type'"
         },
         {
           "Name": "testType10",
           "Expression": "Patient.active.type().name = 'boolean'",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Warning (NotSupported) Unhandled function 'type'\nError (NotFound) prop 'name' not found on ???\nError (Exception) Invalid expression: Unknown symbol 'type'"
         },
         {
           "Name": "testType11",
@@ -5262,12 +5142,14 @@
         {
           "Name": "testType15",
           "Expression": "Patient.type().namespace = 'FHIR'",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Warning (NotSupported) Unhandled function 'type'\nError (NotFound) prop 'namespace' not found on ???\nError (Exception) Invalid expression: Unknown symbol 'type'"
         },
         {
           "Name": "testType16",
           "Expression": "Patient.type().name = 'Patient'",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Warning (NotSupported) Unhandled function 'type'\nError (NotFound) prop 'name' not found on ???\nError (Exception) Invalid expression: Unknown symbol 'type'"
         },
         {
           "Name": "testType17",
@@ -5287,22 +5169,26 @@
         {
           "Name": "testType1a",
           "Expression": "1.type().name = 'Integer'",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Warning (NotSupported) Unhandled function 'type'\nError (NotFound) prop 'name' not found on ???\nError (Exception) Invalid expression: Unknown symbol 'type'"
         },
         {
           "Name": "testType2",
           "Expression": "'1'.type().namespace = 'System'",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Warning (NotSupported) Unhandled function 'type'\nError (NotFound) prop 'namespace' not found on ???\nError (Exception) Invalid expression: Unknown symbol 'type'"
         },
         {
           "Name": "testType20",
           "Expression": "Patient.ofType(Patient).type().name",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Warning (NotSupported) Unhandled function 'type'\nError (NotFound) prop 'name' not found on ???\nError (Exception) Invalid expression: Unknown symbol 'type'"
         },
         {
           "Name": "testType21",
           "Expression": "Patient.ofType(FHIR.Patient).type().name",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (NotSupported) Expression included an 'ofType' test for FHIR.Patient where possible types are Patient\nWarning (NotSupported) Unhandled function 'type'\nError (NotFound) prop 'name' not found on ???\nError (Exception) Invalid expression: Unknown symbol 'type'"
         },
         {
           "Name": "testType22",
@@ -5313,22 +5199,26 @@
         {
           "Name": "testType23",
           "Expression": "Patient.ofType(FHIR.`Patient`).type().name",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Error (NotSupported) Expression included an 'ofType' test for FHIR.Patient where possible types are Patient\nWarning (NotSupported) Unhandled function 'type'\nError (NotFound) prop 'name' not found on ???\nError (Exception) Invalid expression: Unknown symbol 'type'"
         },
         {
           "Name": "testType2a",
           "Expression": "'1'.type().name = 'String'",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Warning (NotSupported) Unhandled function 'type'\nError (NotFound) prop 'name' not found on ???\nError (Exception) Invalid expression: Unknown symbol 'type'"
         },
         {
           "Name": "testType3",
           "Expression": "true.type().namespace = 'System'",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Warning (NotSupported) Unhandled function 'type'\nError (NotFound) prop 'namespace' not found on ???\nError (Exception) Invalid expression: Unknown symbol 'type'"
         },
         {
           "Name": "testType4",
           "Expression": "true.type().name = 'Boolean'",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Warning (NotSupported) Unhandled function 'type'\nError (NotFound) prop 'name' not found on ???\nError (Exception) Invalid expression: Unknown symbol 'type'"
         },
         {
           "Name": "testType5",
@@ -5353,37 +5243,34 @@
         {
           "Name": "testType9",
           "Expression": "Patient.active.type().namespace = 'FHIR'",
-          "Result": true
+          "NotImplemented": true,
+          "FailureMessage": "Warning (NotSupported) Unhandled function 'type'\nError (NotFound) prop 'namespace' not found on ???\nError (Exception) Invalid expression: Unknown symbol 'type'"
         },
         {
           "Name": "testTypeA",
           "Expression": "Parameters.parameter[3].value.is(FHIR.decimal)",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
+          "Result": true
         },
         {
           "Name": "testTypeA1",
           "Expression": "Parameters.parameter[0].value.is(FHIR.string)",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
+          "Result": true
         },
         {
           "Name": "testTypeA2",
           "Expression": "Parameters.parameter[1].value.is(FHIR.integer)",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
+          "Result": true
         },
         {
           "Name": "testTypeA3",
           "Expression": "Parameters.parameter[2].value.is(FHIR.uuid)",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
+          "Result": true
         },
         {
           "Name": "testTypeA4",
           "Expression": "Parameters.parameter[2].value.is(FHIR.uri)",
           "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         }
       ]
     },
@@ -5438,8 +5325,7 @@
         {
           "Name": "testBooleanLiteralToString",
           "Expression": "true.toString()",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "Result": true
         },
         {
           "Name": "testDateIsNotInteger",
@@ -5469,8 +5355,7 @@
         {
           "Name": "testDecimalLiteralIsDecimal",
           "Expression": "1.0.is(Decimal)",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "Result": true
         },
         {
           "Name": "testDecimalLiteralIsNotQuantity",
@@ -5505,8 +5390,7 @@
         {
           "Name": "testDecimalLiteralToString",
           "Expression": "1.0.toString()",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "Result": true
         },
         {
           "Name": "testFalseLiteralConvertsToBoolean",
@@ -5636,7 +5520,8 @@
         {
           "Name": "testQuantityLiteralWeekToString",
           "Expression": "1 week.toString()",
-          "Result": true
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testQuantityLiteralWkToString",
@@ -5742,7 +5627,7 @@
           "Name": "testStringIntegerLiteralToQuantity",
           "Expression": "'1'.toQuantity()",
           "Result": false,
-          "FailureMessage": "Operation was unsuccessful, and returned status InternalServerError. Body: 500 Internal Server Error\n\nServer got itself in trouble"
+          "FailureMessage": "Expected 1 results, got 0"
         },
         {
           "Name": "testStringLiteralConvertsToDecimalFalse",
@@ -5823,8 +5708,7 @@
         {
           "Name": "testStringQuantityMonthLiteralToQuantity",
           "Expression": "'1 \\'mo\\''.toQuantity() = 1 month",
-          "Result": false,
-          "FailureMessage": "Expected no results, but got some."
+          "Result": true
         },
         {
           "Name": "testStringQuantityWeekConvertsToQuantity",
@@ -5844,8 +5728,7 @@
         {
           "Name": "testStringQuantityYearLiteralToQuantity",
           "Expression": "'1 \\'a\\''.toQuantity() = 1 year",
-          "Result": false,
-          "FailureMessage": "Expected no results, but got some."
+          "Result": true
         },
         {
           "Name": "testStringSecondConvertsToDateTime",
@@ -5965,14 +5848,12 @@
         {
           "Name": "testVariables1",
           "Expression": "%sct = 'http://snomed.info/sct'",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
+          "Result": true
         },
         {
           "Name": "testVariables2",
           "Expression": "%loinc = 'http://loinc.org'",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
+          "Result": true
         },
         {
           "Name": "testVariables3",
@@ -5982,8 +5863,7 @@
         {
           "Name": "testVariables4",
           "Expression": "%`vs-administrative-gender` = 'http://hl7.org/fhir/ValueSet/administrative-gender'",
-          "Result": false,
-          "FailureMessage": "Expected 1 results, got 0"
+          "Result": true
         }
       ]
     },

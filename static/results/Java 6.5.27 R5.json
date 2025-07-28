@@ -1551,8 +1551,7 @@
         {
           "Name": "testEquality28",
           "Expression": "Observation.value = 185 '[lb_av]'",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "Result": true
         },
         {
           "Name": "testEquality3",
@@ -1667,8 +1666,7 @@
         {
           "Name": "testEquivalent22",
           "Expression": "Observation.value ~ 185 '[lb_av]'",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "Result": true
         },
         {
           "Name": "testEquivalent23",
@@ -1953,8 +1951,7 @@
         {
           "Name": "testGreaterThan22",
           "Expression": "Observation.value > 100 '[lb_av]'",
-          "Result": false,
-          "FailureMessage": "Error (Exception) Unknown error evaluating fhirpath expression\n   - class org.hl7.fhir.r5.elementmodel.Element cannot be cast to class org.hl7.fhir.r5.model.Quantity (org.hl7.fhir.r5.elementmodel.Element and org.hl7.fhir.r5.model.Quantity are in unnamed module of loader 'app')"
+          "Result": true
         },
         {
           "Name": "testGreaterThan23",
@@ -2109,8 +2106,7 @@
         {
           "Name": "testGreatorOrEqual22",
           "Expression": "Observation.value >= 100 '[lb_av]'",
-          "Result": false,
-          "FailureMessage": "Error (Exception) Unknown error evaluating fhirpath expression\n   - class org.hl7.fhir.r5.elementmodel.Element cannot be cast to class org.hl7.fhir.r5.model.Quantity (org.hl7.fhir.r5.elementmodel.Element and org.hl7.fhir.r5.model.Quantity are in unnamed module of loader 'app')"
+          "Result": true
         },
         {
           "Name": "testGreatorOrEqual23",
@@ -2466,8 +2462,7 @@
         {
           "Name": "testFHIRPathIsFunction9",
           "Expression": "Observation.extension('http://example.com/fhir/StructureDefinition/patient-age').value is Quantity",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "Result": true
         }
       ]
     },
@@ -2617,8 +2612,7 @@
         {
           "Name": "testLessOrEqual22",
           "Expression": "Observation.value <= 200 '[lb_av]'",
-          "Result": false,
-          "FailureMessage": "Error (Exception) Unknown error evaluating fhirpath expression\n   - class org.hl7.fhir.r5.elementmodel.Element cannot be cast to class org.hl7.fhir.r5.model.Quantity (org.hl7.fhir.r5.elementmodel.Element and org.hl7.fhir.r5.model.Quantity are in unnamed module of loader 'app')"
+          "Result": true
         },
         {
           "Name": "testLessOrEqual23",
@@ -2878,8 +2872,7 @@
         {
           "Name": "testDateNotEqual",
           "Expression": "Patient.birthDate != @1974-12-25T12:34:00",
-          "Result": false,
-          "FailureMessage": "Expected no results, but got some."
+          "Result": true
         },
         {
           "Name": "testDateNotEqualTimeMinute",
@@ -2894,14 +2887,12 @@
         {
           "Name": "testDateNotEqualTimezoneOffsetAfter",
           "Expression": "Patient.birthDate != @1974-12-25T12:34:00+10:00",
-          "Result": false,
-          "FailureMessage": "Expected no results, but got some."
+          "Result": true
         },
         {
           "Name": "testDateNotEqualTimezoneOffsetBefore",
           "Expression": "Patient.birthDate != @1974-12-25T12:34:00-10:00",
-          "Result": false,
-          "FailureMessage": "Expected no results, but got some."
+          "Result": true
         },
         {
           "Name": "testDateNotEqualToday",
@@ -2911,8 +2902,7 @@
         {
           "Name": "testDateNotEqualUTC",
           "Expression": "Patient.birthDate != @1974-12-25T12:34:00Z",
-          "Result": false,
-          "FailureMessage": "Expected no results, but got some."
+          "Result": true
         },
         {
           "Name": "testDateTimeGreaterThanDate1",
@@ -5003,8 +4993,7 @@
         {
           "Name": "testType10",
           "Expression": "Patient.active.type().name = 'boolean'",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "Result": true
         },
         {
           "Name": "testType11",
@@ -5014,8 +5003,7 @@
         {
           "Name": "testType12",
           "Expression": "Patient.active.is(Boolean).not()",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "Result": true
         },
         {
           "Name": "testType13",
@@ -5025,14 +5013,12 @@
         {
           "Name": "testType14",
           "Expression": "Patient.active.is(System.Boolean).not()",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "Result": true
         },
         {
           "Name": "testType15",
           "Expression": "Patient.type().namespace = 'FHIR'",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "Result": true
         },
         {
           "Name": "testType16",
@@ -5078,8 +5064,7 @@
           "Name": "testType22",
           "Description": "Note: Some systems may return an error due to failing to resolve System.Patient",
           "Expression": "Patient.is(System.Patient).not()",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "Result": true
         },
         {
           "Name": "testType23",
@@ -5124,8 +5109,7 @@
         {
           "Name": "testType9",
           "Expression": "Patient.active.type().namespace = 'FHIR'",
-          "Result": false,
-          "FailureMessage": "Some results didn't match expected values (1 values)"
+          "Result": true
         },
         {
           "Name": "testTypeA",
