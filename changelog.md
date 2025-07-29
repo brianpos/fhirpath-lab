@@ -5,6 +5,7 @@
 
 # 29 July 2025 (dev)
 * Preliminary support for R6 ballot3 (from JAVA engine only)
+* fix target navigation to properties in contained resources
 
 # 2 July 2025 (dev)
 * Refinements to the debugger UI experience
