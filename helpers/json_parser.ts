@@ -124,48 +124,30 @@ interface IJsonNodeInternal extends IJsonNode {
 export function findNodeByPath(node: IJsonNode, path: string): IJsonNode | undefined {
   // If node has a DataType and path doesn't start with it, prepend the DataType
   if (node.DataType && !path.startsWith(node.DataType)) {
-    return findChildNodeByPathSegments(node, (node.DataType + "." + path).split("."));
+    return findChildNodeByPathSegments(node, (node.DataType + "." + path));
   }
-  return findChildNodeByPathSegments(node, path.split("."));
+  return findChildNodeByPathSegments(node, path);
 }
 
-function findChildNodeByPathSegments(node: IJsonNode, pathSegments: string[]): IJsonNode | undefined {
-  if (pathSegments.length === 0) {
-    // Not expected to get here as implied not searching for a path
+function findChildNodeByPathSegments(node: IJsonNode, path: string): IJsonNode | undefined {
+  // its this node exactly!
+  if (node.Path === path)
+    return node;
+
+  if (!path.startsWith(node.Path + '.') && !path.startsWith(node.Path + '[')) {
+    // not a child of this node
     return undefined;
   }
-
-  const processingSegment = pathSegments[0];
-  const processingSegmentWithoutArray = processingSegment.split("[")[0];
-
-  if (node.text !== processingSegmentWithoutArray) {
-    // this is not the node we are looking for ...
-    return undefined;
-  }
-
-  if (pathSegments.length === 1) {
-    // this IS the node we are looking for :)
-    if (!node.isArray || processingSegment === processingSegmentWithoutArray)
-      return node;
-  }
-
+  
   if (node.children) {
-    // this is one of our children!
-    const remainingSegments = node.isArray ? pathSegments : pathSegments.slice(1);
+    // Check for one of our children
     for (const child of node.children) {
       let found: IJsonNode | undefined = findChildNodeByPathSegments(
         child,
-        remainingSegments
+        path
       );
       if (found) {
-        if (node.isArray) {
-          if (node.children.length == 1 || child.text+'['+child.Index+']' === processingSegment) {
-            return found;
-          }
-        }
-        else {
-            return found;
-        }
+        return found;
       }
     }
   }

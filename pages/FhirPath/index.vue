@@ -808,11 +808,11 @@ function fullPropertyName(node: ResourceNode) : string | undefined {
   }
 
   let result = node.parentResNode ? fullPropertyName(node.parentResNode) + '.' + propName : node.path ?? undefined;
-    if (node.index !== undefined && node.index !== null) {
-      result += '[' + node.index + ']';
-    }
-    return result;
+  if (node.index !== undefined && node.index !== null) {
+    result += '[' + node.index + ']';
   }
+  return result;
+}
 
 interface ResourceNode {
   /**
@@ -857,7 +857,7 @@ interface ResourceNode {
    * The FHIR model used for this node
    */
   model : fhirpath.Model;
- 
+
   /**
    * Retrieve any type information if available
    */
@@ -1100,7 +1100,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       console.log("debug trace", traceData);
       if (traceData) {
         setTimeout(() => {
-            this.highlightText(this.expressionEditor, traceData.exprPosition, traceData.exprLength, true);
+          this.highlightText(this.expressionEditor, traceData.exprPosition, traceData.exprLength, true);
           this.removeMarkers(this.resourceJsonEditor, this.debugTestResourceSelectionMarker);
           this.debugTestResourceSelectionMarker = [];
           this.removeMarkers(this.resourceJsonEditor, this.debugThisSelectionMarker);
@@ -1109,7 +1109,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
             if (v.resourcePath) {
               this.navigateToContext(v.resourcePath, undefined, true);
             }
-            }
+          }
         });
       }
     },
@@ -1126,7 +1126,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       console.log("debug trace", traceData);
       if (traceData) {
         setTimeout(() => {
-            this.highlightText(this.expressionEditor, traceData.exprPosition, traceData.exprLength, true);
+          this.highlightText(this.expressionEditor, traceData.exprPosition, traceData.exprLength, true);
           this.removeMarkers(this.resourceJsonEditor, this.debugTestResourceSelectionMarker);
           this.debugTestResourceSelectionMarker = [];
           this.removeMarkers(this.resourceJsonEditor, this.debugThisSelectionMarker);
@@ -1135,7 +1135,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
             if (v.resourcePath) {
               this.navigateToContext(v.resourcePath, undefined, true);
             }
-            }
+          }
         });
       }
     },
@@ -1848,15 +1848,15 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
                   let exprLength = posParts && posParts.length > 1 ? parseInt(posParts[1]) : undefined;
                   let exprName = posParts && posParts.length > 2 ? posParts[2] : undefined;
 
-                    let debugTraceVal: DebugTraceData = {
-                      context: entry.valueString ?? '',
-                      exprName: exprName,
-                      exprPosition: exprPosition,
-                      exprLength: exprLength,
+                  let debugTraceVal: DebugTraceData = {
+                    context: entry.valueString ?? '',
+                    exprName: exprName,
+                    exprPosition: exprPosition,
+                    exprLength: exprLength,
                     values: [],
                     thisVar: [],
                     focusVar: [],
-                    };
+                  };
                   this.debugTraceData.push(debugTraceVal);
 
                   // grab all the values from this expression node evaluation ($this, $index and result)
@@ -1895,12 +1895,12 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
                       continue;
                     
                     }
-                      // get the trace value
-                      const traceValue = getValue(partValue);
-                      if (traceValue) {
-                        if (traceValue.length > 0)
+                    // get the trace value
+                    const traceValue = getValue(partValue);
+                    if (traceValue) {
+                      if (traceValue.length > 0)
                       debugTraceVal.values?.push({ value: JSON.stringify(traceValue[0].value, null, 4) });
-                      }
+                    }
                   
                   }
                 }
@@ -3045,7 +3045,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       this.debugExpressionSelectionMarker = [];
       this.debugTracePosition = undefined;
       this.debugTraceData = [];
-
+      
       // Validate the test fhir resource object
       let resourceJson = this.getResourceJson();
        if (resourceJson) {
@@ -3168,6 +3168,18 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
 
         (this as any).$appInsights?.trackEvent({ name: 'evaluate HAPI' });
       }
+      else if (this.selectedEngine == "java (HAPI-R6)") {
+        // https://github.com/jkiddo/fhirpath-tester/blob/main/src/main/java/org/example/Evaluator.java (brianpos fork of this)
+        // https://docs.microsoft.com/en-us/azure/devops/pipelines/ecosystems/java-function?view=azure-devops
+        url = settings.java_server_r6();
+
+        if (!this.getResourceJson() && this.resourceId) {
+          await this.downloadTestResource();
+          resourceJson = this.getResourceJson();        
+        }
+
+        (this as any).$appInsights?.trackEvent({ name: 'evaluate HAPI' });
+      }
       else if (this.selectedEngine == "java (IBM)") {
         url = settings.ibm_server_r4b();
         astTab2?.clearDisplay("AST not supported");
@@ -3210,10 +3222,10 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       }
 
       if (resourceJson) {
-        if (url === settings.java_server_r5())
+        if (url === settings.java_server_r5() || url === settings.java_server_r6())
           p.parameter?.push({ name: "resource", extension: [{ url: "http://fhir.forms-lab.com/StructureDefinition/json-value", valueString: resourceJson }] });
         else
-        p.parameter?.push({ name: "resource", resource: JSON.parse(resourceJson) });
+          p.parameter?.push({ name: "resource", resource: JSON.parse(resourceJson) });
       }
       else {
         if (!this.resourceId?.startsWith('http')) {
@@ -3284,11 +3296,11 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         this.debugExpressionSelectionMarker?.push(selectionMarker);
       }
       else {
-      const selectionMarker = editor.session.addMarker(range, "resultSelection", "text", true);
-      // after 1.5 seconds remove the highlight.
-      setTimeout(() => {
-        editor.session.removeMarker(selectionMarker);
-      }, 1500);
+        const selectionMarker = editor.session.addMarker(range, "resultSelection", "text", true);
+        // after 1.5 seconds remove the highlight.
+        setTimeout(() => {
+          editor.session.removeMarker(selectionMarker);
+        }, 1500);
       }
       this.updateNow();
     },
@@ -3403,11 +3415,11 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
                       this.debugTestResourceSelectionMarker?.push(selectionMarker);
                     }
                     else {
-                    const selectionMarker = this.resourceJsonEditor.session.addMarker(range, "resultSelection", "fullLine", true);
-                    // after 1.5 seconds remove the highlight.
-                    setTimeout(() => {
-                      this.resourceJsonEditor?.session.removeMarker(selectionMarker);
-                    }, 1500);
+                      const selectionMarker = this.resourceJsonEditor.session.addMarker(range, "resultSelection", "fullLine", true);
+                      // after 1.5 seconds remove the highlight.
+                      setTimeout(() => {
+                        this.resourceJsonEditor?.session.removeMarker(selectionMarker);
+                      }, 1500);
                     }                   
                   } else if (node.position.prop_stop_pos) {
                     // prop based stuff
@@ -3447,7 +3459,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
             const position = parseInt(parts[0]);
             const length = parseInt(parts[1]);
             this.highlightText(this.expressionEditor, position, length);
-            }
+          }
         }
       });
 
@@ -3479,6 +3491,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         ".NET (firely-R5)",
         "fhirpath.js (R5)",
         "java (HAPI-R5)",
+        "java (HAPI-R6)",
         "Aidbox (Health Samurai-R5)",
       ],
       externalExecutionEngines: [

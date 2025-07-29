@@ -3,6 +3,9 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+# 29 July 2025 (dev)
+* Preliminary support for R6 ballot3 (from JAVA engine only)
+
 # 2 July 2025 (dev)
 * Refinements to the debugger UI experience
 * inclusion of the first pass fhirpath engine test results matrix page

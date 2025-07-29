@@ -77,6 +77,9 @@ export namespace settings {
     export function java_server_r5(): string {
         return serverConnections.java_server_r5;
     }
+    export function java_server_r6(): string {
+        return serverConnections.java_server_r6;
+    }
     export function ibm_server_r4b(): string {
         return serverConnections.ibm_server_r4b;
     }

@@ -4,6 +4,7 @@
     "dotnet_server_r5": "http://localhost:7071/api/$fhirpath-r5",
     "java_server_r4b": "http://localhost:8080/fhir/$fhirpath",
     "java_server_r5": "http://localhost:8080/fhir5/$fhirpath-r5",
+    "java_server_r6": "http://localhost:8080/fhir5/$fhirpath-r6",
     "ibm_server_r4b": "http://localhost:8080/fhir/$fhirpath-ibm",
     "mapper_server": "https://localhost:7089/StructureMap/$transform?debug=true",
     "mapper_server_java": "http://localhost:8080/fhir/$transform?debug=true",
