@@ -131,8 +131,9 @@ export function findNodeByPath(node: IJsonNode, path: string): IJsonNode | undef
 
 function findChildNodeByPathSegments(node: IJsonNode, path: string): IJsonNode | undefined {
   // its this node exactly!
-  if (node.Path === path)
+  if (node.Path === path) {
     return node;
+  }
 
   if (!path.startsWith(node.Path + '.') && !path.startsWith(node.Path + '[')) {
     // not a child of this node
