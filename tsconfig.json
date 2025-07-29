@@ -37,6 +37,7 @@
   "exclude": [
     "node_modules",
     "fhirpath-ai",
+    "vue3-src",
     ".nuxt",
     "dist"
   ]
