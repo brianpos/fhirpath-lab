@@ -1,5 +1,5 @@
 <template>
-  <div class="resource-json-editor" style="display: flex; flex-direction: column; height: 100%;">
+  <div style="display: flex; flex-direction: column; height: 100%;">
     <v-text-field 
       v-if="label && label.length > 0" 
       :label="label" 
@@ -7,12 +7,14 @@
       v-model="internalResourceUrl" 
       :loading="downloadingInProgress"
       hide-details="auto" 
+      density="compact"
       autocomplete="off" 
       autocorrect="off" 
       autocapitalize="off" 
       spellcheck="false"
+      @keyup.enter="downloadResource"
     >
-      <template v-slot:prepend>
+      <template v-if="$slots.prepend" v-slot:prepend>
         <slot name="prepend"></slot>
       </template>
       <template v-slot:append-inner>
@@ -20,6 +22,8 @@
           icon 
           size="small" 
           variant="text"
+          density="comfortable"
+          rounded="0"
           v-show="internalResourceUrl && !readOnly" 
           @click="clearUrl" 
           :title="'Clear ' + label"
@@ -30,6 +34,8 @@
           icon 
           size="small" 
           variant="text"
+          density="comfortable"
+          rounded="0"
           v-show="!readOnly" 
           :disabled="!internalResourceUrl" 
           @click="downloadResource"
@@ -41,6 +47,8 @@
           icon 
           size="small" 
           variant="text"
+          density="comfortable"
+          rounded="0"
           @click="reformatResource"
         >
           <v-icon :title="'Re-format the ' + resourceType + ' below'">
