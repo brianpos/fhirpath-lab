@@ -132,7 +132,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import fhirpath from 'fhirpath'
+import { version as fhirpath_version } from 'fhirpath'
 
 // Set the page title
 useHead({
@@ -141,7 +141,7 @@ useHead({
 
 // Computed property for fhirpath version
 const fhirpathVersion = computed(() => {
-  return fhirpath.version
+  return fhirpath_version
 })
 </script>
 
