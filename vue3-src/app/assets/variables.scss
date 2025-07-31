@@ -1,5 +1,8 @@
 // assets/variables.scss
 
+// Import Vuetify 3 SASS variables and functions (must be first)
+@use 'vuetify/settings' as vuetify;
+
 // Variables you want to modify
 $btn-border-radius: 6px;
 
@@ -211,4 +214,60 @@ tr.v-data-table__expanded__content > td {
 /* We don't use the data footer in any of the lab's tables, so hide them (nav panes)*/
 .v-data-footer {
   display: none;
+}
+
+// --------------------------------------------------------------------------
+// Editor footer line (Material UI focus display)
+// --------------------------------------------------------------------------
+
+.ace_editor_footer {
+  position: relative;
+  margin-top: 1px;
+  height: 0;
+  padding-bottom: 4px;
+  border-bottom: thin solid white ;
+  color: rgba(var(--v-theme-on-surface), 0.6);
+}
+
+.ace_editor:hover+.ace_editor_footer {
+  color: rgba(var(--v-theme-on-surface), 0.87);
+  transition: vuetify.$standard-easing 0.3s;
+  // display: block;
+}
+
+.ace_editor:focus-within+.ace_editor_footer {
+  color: rgb(var(--v-theme-primary));
+  transition: vuetify.$standard-easing 0.3s;
+  // display: block;
+}
+
+
+.ace_editor+.ace_editor_footer::before,
+.ace_editor+.ace_editor_footer::after {
+  bottom: -1px; // Needed for browser autocomplete styles
+  content: '';
+  // left: 4px;
+  position: absolute;
+  transition: vuetify.$primary-transition;
+  width: 100%;
+  // display: none;
+}
+
+.ace_editor:focus-within+.ace_editor_footer::after {
+  display: block;
+  transform: scaleX(1);
+}
+
+.ace_editor+.ace_editor_footer::before {
+  border-color: inherit;
+  border-style: solid;
+  border-width: thin 0 0 0;
+}
+
+.ace_editor+.ace_editor_footer::after {
+  background-color: currentColor;
+  border-color: currentColor;
+  border-style: solid;
+  border-width: 1px 0 thin 1px;
+  transform: scaleX(0);
 }
