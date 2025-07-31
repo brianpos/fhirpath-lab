@@ -11,12 +11,18 @@
   },
   "dependencies": {
     "@mdi/font": "^7.4.47",
+    "@nuxt/fonts": "^0.11.4",
+    "@types/fhir": "^0.0.41",
+    "ace-builds": "^1.43.2",
+    "axios": "^1.11.0",
     "fhirpath": "^4.5.1",
-    "nuxt": "^4.0.0",
-    "vue": "^3.5.17",
+    "nuxt": "^4.0.2",
+    "vue": "^3.5.18",
     "vue-router": "^4.5.1",
-    "vuetify": "^3.9.0",
-    "vuetify-nuxt-module": "^0.18.7"
+    "vue3-ace-editor": "^2.2.4",
+    "vuetify": "^3.9.3",
+    "vuetify-nuxt-module": "^0.18.7",
+    "xml-formatter": "^3.6.6"
   },
   "devDependencies": {
     "sass": "^1.89.2"

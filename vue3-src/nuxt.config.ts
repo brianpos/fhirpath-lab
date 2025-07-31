@@ -4,7 +4,9 @@ export default defineNuxtConfig({
   pages: true,
   devtools: { enabled: true },
   modules: [
-    'vuetify-nuxt-module'
+    'vuetify-nuxt-module',
+    '@nuxt/fonts' /* https://fonts.nuxt.com/get-started/installation */
+                  // alternate: https://www.npmjs.com/package/@fontsource/roboto
   ],
   css: [
     '~/assets/vuetify/main.scss', // If customizing Vuetify global sass variables, ensure disableVuetifyStyles: true with Nuxt Vuetity module
@@ -31,6 +33,23 @@ export default defineNuxtConfig({
               error: '#ff5252'
             }
           }
+        }
+      },
+      defaults: {
+        VTextField: {
+          variant: 'underlined'
+        },
+        VTextarea: {
+          variant: 'underlined'
+        },
+        VSelect: {
+          variant: 'underlined'
+        },
+        VCombobox: {
+          variant: 'underlined'
+        },
+        VAutocomplete: {
+          variant: 'underlined'
         }
       }
     }
