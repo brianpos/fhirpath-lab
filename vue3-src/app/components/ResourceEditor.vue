@@ -12,7 +12,7 @@
       autocorrect="off" 
       autocapitalize="off" 
       spellcheck="false"
-      @keyup.enter="downloadResource"
+      @keyup.enter="handleEnterKey"
     >
       <template v-if="$slots.prepend" v-slot:prepend>
         <slot name="prepend"></slot>
@@ -148,6 +148,13 @@ const DownloadResource = async (url?: string) => {
     internalResourceUrl.value = url
   }
   await downloadResource()
+}
+
+const handleEnterKey = (event: KeyboardEvent) => {
+  // Only download if Ctrl key (Windows/Linux) or Cmd key (Mac) is not pressed
+  if (!event.ctrlKey && !event.metaKey) {
+    downloadResource()
+  }
 }
 
 const navigateToPosition = (position: IJsonNodePosition) => {
