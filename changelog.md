@@ -6,6 +6,7 @@
 # 1 August 2025 (dev)
 * Fix issue where json path walker was not correctly handling the `BackboneElement` and `Element` types in the json parser
 * Update the CSIRO renderer to 1.0.0-alpha.83
+* When launching the fhirpath page with a resourceId parameter automatically load the resource content
 
 # 29 July 2025 (dev)
 * Preliminary support for R6 ballot3 (from JAVA engine only)

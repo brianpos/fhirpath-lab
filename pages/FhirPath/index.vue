@@ -1502,6 +1502,13 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         else {
             if (p.resource) {
               this.resourceId = p.resource;
+              if (!p.resourceJson) {
+                // need to load this resource content
+                this.resourceJsonEditor?.setValue("");
+                this.resourceJsonChanged = false;
+                this.resourceJsonEditor?.clearSelection();
+                await this.downloadTestResource();
+              }
           }
         }
 
