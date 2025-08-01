@@ -298,7 +298,7 @@ const downloadResource = async () => {
     // Use combined accept headers to support both JSON and XML
     let headers = {
       "Cache-Control": "no-cache",
-      Accept: `${requestFhirAcceptHeaders}, ${requestFhirAcceptXmlHeaders}`,
+      Accept: `${requestFhirAcceptFmlHeaders}, ${requestFhirAcceptHeaders}, ${requestFhirAcceptXmlHeaders}`,
     }
     
     const response = await axios.get<Resource | string>(url, {
