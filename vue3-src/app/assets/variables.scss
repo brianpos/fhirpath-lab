@@ -248,7 +248,7 @@ tr.v-data-table__expanded__content > td {
   content: '';
   // left: 4px;
   position: absolute;
-  transition: vuetify.$primary-transition;
+  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1); // Vuetify standard easing
   width: 100%;
   // display: none;
 }

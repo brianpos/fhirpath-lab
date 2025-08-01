@@ -68,7 +68,27 @@
 <script setup lang="ts">
 import { ref, watch, onMounted, type Ref } from 'vue'
 import ace from 'ace-builds'
-import 'ace-builds/webpack-resolver' // Ensure the Ace editor assets are available
+
+// https://github.com/CarterLi/vue3-ace-editor/blob/gh-pages/demo-source/src/ace-config.ts
+import themeChromeUrl from 'ace-builds/src-noconflict/theme-chrome?url';
+ace.config.setModuleUrl('ace/theme/chrome', themeChromeUrl);
+
+import modeTextUrl from 'ace-builds/src-noconflict/mode-text?url';
+ace.config.setModuleUrl('ace/mode/text', modeTextUrl);
+
+import modeJsonUrl from 'ace-builds/src-noconflict/mode-json?url';
+ace.config.setModuleUrl('ace/mode/json', modeJsonUrl);
+import workerJsonUrl from 'ace-builds/src-noconflict/worker-json?url';
+ace.config.setModuleUrl('ace/mode/json_worker', workerJsonUrl);
+
+import modeXmlUrl from 'ace-builds/src-noconflict/mode-xml?url';
+ace.config.setModuleUrl('ace/mode/xml', modeXmlUrl);
+import workerXmlUrl from 'ace-builds/src-noconflict/worker-xml?url';
+ace.config.setModuleUrl('ace/mode/xml_worker', workerXmlUrl);
+
+import 'ace-builds/src-noconflict/ext-language_tools';
+ace.require("ace/ext/language_tools");
+
 import axios, { type AxiosError, type CancelTokenSource } from 'axios'
 import xmlFormat from 'xml-formatter'
 import type { IJsonNodePosition } from '~/types/json-parser'
@@ -76,8 +96,6 @@ import { requestFhirAcceptHeaders, requestFhirAcceptXmlHeaders, CreateOperationO
 import type { Resource, OperationOutcome } from 'fhir/r4'
 import "ace-builds/src-noconflict/mode-json"
 import "ace-builds/src-noconflict/mode-xml"
-// import { setAcePaths, Rules as FhirPathHightlighter_Rules, setCustomHighlightRules } from "~/helpers/fhirpath_highlighter"
-// import "~/assets/fhirpath_highlighter.scss"
 
 // Props interface
 interface Props {
