@@ -3,6 +3,14 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   pages: true,
   devtools: { enabled: true },
+
+  // Add alias configuration
+  alias: {
+    '~/legacy-helpers': '../helpers',
+    '~/legacy-types': '../types',
+    '~/legacy-models': '../models',
+  },
+  
   modules: [
     'vuetify-nuxt-module',
     '@nuxt/fonts' /* https://fonts.nuxt.com/get-started/installation */
@@ -31,6 +39,9 @@ export default defineNuxtConfig({
               primary: '#3F81AE',
               secondary: '#79B6E6',
               error: '#ff5252'
+            },
+            variables: {
+              //'theme-on-surface': '#1976d2'
             }
           }
         }

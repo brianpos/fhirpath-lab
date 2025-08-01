@@ -312,7 +312,7 @@ const forceSinglePanel = ref<boolean>(false)
 
 // Internal variables
 const lockedTab = ref<number>(0)
-const selectableTab = ref<number>(2)
+const selectableTab = ref<number>(1)
 const windowWidth = ref<number>(0)
 
 // Computed properties

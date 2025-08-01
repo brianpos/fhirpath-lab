@@ -86,13 +86,19 @@ ace.config.setModuleUrl('ace/mode/xml', modeXmlUrl);
 import workerXmlUrl from 'ace-builds/src-noconflict/worker-xml?url';
 ace.config.setModuleUrl('ace/mode/xml_worker', workerXmlUrl);
 
+import workerBaseUrl from 'ace-builds/src-noconflict/worker-base?url';
+ace.config.setModuleUrl('ace/mode/base', workerBaseUrl);
+
+import extSearchboxUrl from 'ace-builds/src-noconflict/ext-searchbox?url';
+ace.config.setModuleUrl('ace/ext/searchbox', extSearchboxUrl);
+
 import 'ace-builds/src-noconflict/ext-language_tools';
 ace.require("ace/ext/language_tools");
 
 import axios, { type AxiosError, type CancelTokenSource } from 'axios'
 import xmlFormat from 'xml-formatter'
 import type { IJsonNodePosition } from '~/types/json-parser'
-import { requestFhirAcceptHeaders, requestFhirAcceptXmlHeaders, CreateOperationOutcome } from '~/utils/fhir-rest'
+import { requestFhirAcceptHeaders, requestFhirAcceptXmlHeaders, requestFhirAcceptFmlHeaders, CreateOperationOutcome } from '~/utils/fhir-rest'
 import type { Resource, OperationOutcome } from 'fhir/r4'
 import "ace-builds/src-noconflict/mode-json"
 import "ace-builds/src-noconflict/mode-xml"

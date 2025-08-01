@@ -3,6 +3,7 @@ import type { OperationOutcome, OperationOutcomeIssue, Coding } from "fhir/r4";
 
 export const requestFhirAcceptHeaders = "application/fhir+json; fhirVersion=4.0, application/fhir+json";
 export const requestFhirAcceptXmlHeaders = "application/fhir+xml; fhirVersion=4.0, application/fhir+xml";
+export const requestFhirAcceptFmlHeaders = "text/fhir-mapping";
 
 export function CreateOperationOutcome(
   severity: "error" | "fatal" | "warning" | "information",
