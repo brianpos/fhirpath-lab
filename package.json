@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "private": true,
   "license": "BSD-3-Clause",
-  "type": "module",
   "scripts": {
     "dev": "nuxt",
     "build": "nuxt build",

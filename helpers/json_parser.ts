@@ -191,7 +191,7 @@ function getPropertyDataType(modelInfo: Model, dataType: string, path: string): 
   const definitionPath2Type = modelInfo.path2Type[definitionPath];
   let type: string[] = [];
   if (definitionPath2Type) {
-    if (definitionPath2Type === "BackboneElement")
+    if (definitionPath2Type === "BackboneElement" || definitionPath2Type === "Element")
       type.push(definitionPath); // backbone elements are their own type
   else
       type.push(definitionPath2Type);
