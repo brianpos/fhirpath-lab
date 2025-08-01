@@ -67,13 +67,6 @@ export default {
       if (ctx.isDev) {
         config.devtool = ctx.isClient ? 'source-map' : 'inline-source-map'
       }
-      
-      // Add support for .mjs files
-      config.module.rules.push({
-        test: /\.mjs$/,
-        include: /node_modules/,
-        type: 'javascript/auto'
-      });
     },
     // how to get 3rd party components working in Nuxt
     // https://www.youtube.com/watch?v=j7l5e2ID0aw&t=7s
