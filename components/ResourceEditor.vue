@@ -47,6 +47,7 @@ import xmlFormat from 'xml-formatter';
 import { IJsonNodePosition } from "~/helpers/json_parser";
 import "ace-builds/src-noconflict/mode-json";
 import "ace-builds/src-noconflict/mode-xml";
+import "ace-builds/src-noconflict/theme-chrome";
 import { setAcePaths, Rules as FhirPathHightlighter_Rules, setCustomHighlightRules } from "~/helpers/fhirpath_highlighter"
 import "~/assets/fhirpath_highlighter.scss"
 
@@ -137,6 +138,7 @@ export default class ResourceJsonEditor extends Vue {
   }
 
   initializeAceEditor() {
+    setAcePaths(ace.config);
     if (this.$refs.aceEditor) {
       var editorDiv: any = this.$refs.aceEditor as HTMLDivElement;
       this.aceEditor = ace.edit(editorDiv, {
