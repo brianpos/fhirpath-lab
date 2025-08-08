@@ -3,6 +3,9 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+# 8 August 2025 (dev)
+* fhirpath debug tracer shows primitive values for properties along with the full path
+
 # 1 August 2025 (dev)
 * Fix issue where json path walker was not correctly handling the `BackboneElement` and `Element` types in the json parser
 * Update the CSIRO renderer to 1.0.0-alpha.83

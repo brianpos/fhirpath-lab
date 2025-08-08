@@ -1868,6 +1868,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
 
                   // grab all the values from this expression node evaluation ($this, $index and result)
                   for (let partValue of part.part ?? []) {
+                    const resourcePath = getExtensionStringValue(partValue, "http://fhir.forms-lab.com/StructureDefinition/resource-path");
                     if (partValue.name == 'index') {
                       debugTraceVal.index = partValue.valueInteger;
                       continue;
@@ -1881,7 +1882,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
                     if (partValue.name.startsWith('this-')) {
                       const traceValue = getValue(partValue);
                       if (traceValue.length > 0)
-                        debugTraceVal.thisVar?.push({ value: JSON.stringify(traceValue[0].value, null, 4) });
+                        debugTraceVal.thisVar?.push({ value: JSON.stringify(traceValue[0].value, null, 4), resourcePath: resourcePath });
                       continue;
                     }
 
@@ -1893,7 +1894,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
                     if (partValue.name.startsWith('focus-')) {
                       const traceValue = getValue(partValue);
                       if (traceValue.length > 0)
-                        debugTraceVal.focusVar?.push({ value: JSON.stringify(traceValue[0].value, null, 4) });
+                        debugTraceVal.focusVar?.push({ value: JSON.stringify(traceValue[0].value, null, 4), resourcePath: resourcePath });
                       continue;
                     }
 
@@ -1906,7 +1907,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
                     const traceValue = getValue(partValue);
                     if (traceValue) {
                       if (traceValue.length > 0)
-                      debugTraceVal.values?.push({ value: JSON.stringify(traceValue[0].value, null, 4) });
+                      debugTraceVal.values?.push({ value: JSON.stringify(traceValue[0].value, null, 4), resourcePath: resourcePath });
                     }
                   
                   }
