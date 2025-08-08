@@ -320,7 +320,7 @@
           </template>
 
           <template v-slot:Debug>
-            <div class="debug" ref="aceEditorDebug"></div>
+            <resource-editor class="debug" textLabel="Debug" :readOnly="true" :resourceText="debugText" />
           </template>
 
           <template v-slot:Library>
@@ -773,7 +773,7 @@ interface FhirPathData {
   shareZulipToolTipMessage: string;
   expressionEditor?: ace.Ace.Editor;
   expressionContextEditor?: ace.Ace.Editor;
-  debugEditor?: ace.Ace.Editor;
+  debugText?: string;
   resourceJsonEditor?: ace.Ace.Editor;
   variables: Map<string, VariableData>;
   processedByEngine?: string;
@@ -971,7 +971,6 @@ interface IFhirPathProps
   $refs : {
     aceEditorExpression: HTMLDivElement,
     aceEditorContextExpression: HTMLDivElement,
-    aceEditorDebug: HTMLDivElement,
     aceEditorResourceJson: HTMLDivElement,
     chatComponent: Chat,
     // astTabComponent: ParseTreeTab,
@@ -1217,25 +1216,6 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       langTools.addCompleter(fhirpathCompleter);
     }
 
-    var editorDebugDiv: any = this.$refs.aceEditorDebug as Element;
-    if (editorDebugDiv) {
-      this.debugEditor = ace.edit(editorDebugDiv, {
-        wrap: "free",
-        readOnly: true,
-        minLines: 15,
-        // maxLines: 35,
-        highlightActiveLine: true,
-        tabSize: settings.getTabSpaces(),
-        showGutter: true,
-        fontSize: 14,
-        cursorStyle: "slim",
-        showPrintMargin: false,
-        theme: "ace/theme/chrome",
-        mode: "ace/mode/json",
-        wrapBehavioursEnabled: true
-      });
-    }
-
     const resourceEditorSettings: Partial<ace.Ace.EditorOptions> = {
       wrap: "free",
       minLines: 15,
@@ -1332,22 +1312,6 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
           if (this.resourceJsonEditor) {
             this.resourceJsonEditor.resize();
             this.updateNow();
-          }
-        });
-      }
-      if (index === 6)
-      {
-        setTimeout(() => {
-          if (this.debugEditor) {
-            var editorHtmlElement: any = this.$refs
-              .aceEditorDebug as Element;
-            if (editorHtmlElement) {
-              console.log("focusing editor");
-              editorHtmlElement.focus();
-            }
-            this.debugEditor.resize();
-            this.updateNow();
-            console.log("refreshing editor");
           }
         });
       }
@@ -1768,11 +1732,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     },
 
     setResultJson(result: string) {
-      if (this.debugEditor) {
-        this.debugEditor.setValue(result);
-        this.debugEditor.clearSelection();
-        this.debugEditor.renderer.updateFull(true);
-      }
+      this.debugText = result;
     },
     async executeRequest<T>(url: string, p: fhir4b.Parameters) {
       try {
@@ -3511,7 +3471,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       shareZulipToolTipMessage: shareZulipTooltipText,
       expressionEditor: undefined,
       expressionContextEditor: undefined,
-      debugEditor: undefined,
+      debugText: undefined,
       resourceJsonEditor: undefined,
       variables: new Map<string, VariableData>(),
       processedByEngine: undefined,

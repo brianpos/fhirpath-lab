@@ -5,6 +5,8 @@
 
 # 8 August 2025 (dev)
 * fhirpath debug tracer shows primitive values for properties along with the full path
+* refactor the debug pane in the fhirpath test page to use the standard resource editor/viewer
+* update the resource editor to use the <enter> key to download the resource, and also handle XML download better
 
 # 1 August 2025 (dev)
 * Fix issue where json path walker was not correctly handling the `BackboneElement` and `Element` types in the json parser
