@@ -9,7 +9,26 @@
         <v-toolbar flat color="primary">
           <v-toolbar-title>{{ tabTitle() }}</v-toolbar-title>
           <v-spacer />
-          <v-select dark class="engineselector" :items="executionEngines" v-model="selectedEngine" hide-details="auto"
+
+          <v-select dark style="max-width: 6ch; margin-right: 8px; margin-left: 8px;" :items="fhirVersions" v-model="selectedFhirVersion" hide-details="auto" @change="changeFhirVersion">
+            <template v-slot:item="{ item }">
+              <span>{{ item }}</span>
+            </template>
+          </v-select>
+          <v-select dark style="max-width: 13ch" :items="engines" item-text="name" return-object 
+          v-model="selectedEngine2" hide-details="auto" @change="evaluateFhirPathExpression2"
+            :title="engineTooltip(selectedEngine2)">
+            <template v-slot:item="{ item }">
+              <div style="padding-top: 2px; padding-bottom: 2px;" :title="engineTooltip(item)">
+                <span v-if="!item.external">{{ item.name }}</span>
+                <span class="externalExecutionEngine" title="Externally hosted FhirPath Engine" v-if="item.external"><v-icon small>mdi-web</v-icon> {{ item.name }} *</span>
+                <br/>
+                <span :class="'publisher' + (item.external ? ' externalExecutionEngine' : '')">{{ item.publisher }}</span>
+              </div>
+            </template>
+          </v-select>
+
+          <v-select dark class="engineselector" :items="executionEngines" v-model="selectedEngine" hide-details="auto" v-if="false"
             @change="evaluateFhirPathExpression">
             <template v-slot:item="{ item }">
               <span v-if="externalExecutionEngines.indexOf(item) == -1">{{ item }}</span>
@@ -359,7 +378,7 @@
 
 <style lang="scss">
 .externalExecutionEngine {
-  color: blueviolet;
+  color: blueviolet !important;
 }
 .resetButton {
   right: 20px;
@@ -423,6 +442,13 @@
 </style>
 
 <style lang="scss" scoped >
+.publisher {
+  font-style: italic;
+  font-size: small;
+  color: grey;
+  padding-left: 12px;
+}
+
 .debug-row {
   background-color: #ebebeb;
 }
@@ -540,9 +566,10 @@ import { addExtension, addExtensionStringValue, clearExtension, getExtensionCodi
 import { fpjsNode, getTraceValue, getValue, JsonNode, ResultData } from "~/models/FhirpathTesterData";
 import { GetExternalVariablesUsed, InvertTree, mapFunctionReferences } from "~/components/ParseTreeTab.vue";
 // import { getPreferredTerminologyServerFromSDC } from "fhir-sdc-helpers";
-import fhirpath, { AsyncOptions } from "fhirpath";
+import fhirpath, { AsyncOptions, Model } from "fhirpath";
 import fhirpath_r4_model from "fhirpath/fhir-context/r4";
 import fhirpath_r5_model from "fhirpath/fhir-context/r5";
+import fhirpath_r6_model from "~/models/r6";
 import { setAcePaths, Rules as FhirPathHightlighter_Rules, setCustomHighlightRules } from "~/helpers/fhirpath_highlighter"
 import "~/assets/fhirpath_highlighter.scss"
 import { IApplicationInsights } from '@microsoft/applicationinsights-web'
@@ -567,6 +594,7 @@ import { BaseResource_defaultValues } from "~/models/BaseResourceTableData";
 import { DomainResource, FhirResource, Resource } from "fhir/r4b";
 import { findNodeByPath, IJsonNode, IJsonNodePosition, parseJson } from "~/helpers/json_parser";
 import TwinPaneTab, { TabData } from "~/components/TwinPaneTab.vue";
+import { IFhirPathEngineDetails, registeredEngines } from "~/types/fhirpath_test_engine";
 
 const shareTooltipText = 'Copy a sharable link to this test expression';
 const shareZulipTooltipText = 'Copy a sharable link for Zulip to this test expression';
@@ -767,6 +795,9 @@ interface FhirPathData {
   cancelSource?: CancelTokenSource;
   results: ResultData[];
   selectedEngine: string;
+  fhirVersions: string[];
+  selectedFhirVersion: string;
+  selectedEngine2: IFhirPathEngineDetails|undefined;
   executionEngines: string[];
   externalExecutionEngines: string[];
   shareToolTipMessage: string;
@@ -906,6 +937,7 @@ export interface IFhirPathMethods
   fhirpathExpressionChangedEvent(): void;
   fhirpathContextExpressionChangedEvent(): void;
   resourceJsonChangedMessage(): string | undefined;
+  engineTooltip(engineDetails: IFhirPathEngineDetails|undefined): string|undefined;
   tabTitle(): void;
   settingsClosed(): void;
   updateNow():void;
@@ -932,19 +964,24 @@ export interface IFhirPathMethods
   reformatTestResource(): void;
   downloadTestResource(): void;
   downloadVariableResource(name: string): void;
+  evaluateExpressionUsingFhirpathJsRx(modelInfo: Model, fhirVersion: string): void;
   evaluateExpressionUsingFhirpathJs(): void;
   evaluateExpressionUsingFhirpathJsR5(): void;
+  evaluateExpressionUsingFhirpathJsR6(): void;
   prepareSharePackageData(): TestFhirpathData;
   showShareLink(): boolean;
   updateShareText(): void;
   updateZulipShareText(): void;
   copyShareLinkToClipboard(): void;
   copyZulipShareLinkToClipboard(): void;
+  changeFhirVersion(): void;
   evaluateFhirPathExpression(): void;
+  evaluateFhirPathExpression2(): void;
   checkFocus(event: any): void;
   saveLastUsedParameters(loadCompleted: boolean): void;
   createNewLibrary(): void;
   saveLibrary(): void;
+  getCurrentModelInfo(): Model;
   navigateToContext(elementPath: string, variableName?: string, debugMode?: boolean): void;
   navigateToExpressionNode(node: JsonNode): void;
   highlightText(editor?: ace.Ace.Editor, startPosition?: number, length?: number, debugMode?: boolean): void;
@@ -961,6 +998,7 @@ export interface IFhirPathMethods
 interface IFhirPathComputed
 {
   tabDetails: TabData[];
+  engines: IFhirPathEngineDetails[];
 
   enableSaveLibrary: boolean;
   enableCreateLibrary: boolean;
@@ -983,6 +1021,7 @@ interface IFhirPathProps
 export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFhirPathProps>({
   async mounted() {
     window.document.title = "FhirPath Tester";
+    this.selectedEngine2 = this.engines[0];
     this.showAdvancedSettings = settings.showAdvancedSettings();
     this.defaultProviderField = settings.getDefaultProviderField();
     this.openAIFeedbackEnabled = settings.getOpenAIFeedbackEnabled();
@@ -1072,6 +1111,11 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     enableCreateLibrary(): boolean {
       return this.library == undefined && this.showAdvancedSettings && ((this.defaultProviderField?.length ?? 0) > 0);
     },
+    engines(): IFhirPathEngineDetails[] {
+      // filter the registeredEngines to only those with the selectedFhirVersion
+      const filteredEngines = Object.values(registeredEngines).filter(engine => engine.fhirVersion === this.selectedFhirVersion);
+      return filteredEngines;
+    }
   },
   methods: {
     DebugFunctionKeyHandler(event: KeyboardEvent): void {
@@ -1496,6 +1540,12 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
 
           if (p.engine) {
             this.selectedEngine = p.engine ?? '';
+            // select the engine from the registeredEngines
+            const engine = Object.values(registeredEngines).find(e => e.legacyName === p.engine);
+            if (engine) {
+              this.selectedEngine2 = engine;
+              this.selectedFhirVersion = engine.fhirVersion;
+            }
           }
 
           if (p.terminologyServer) {
@@ -1686,6 +1736,23 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       if (this.getResourceJson() && this.resourceJsonChanged) return '(local resource JSON)';
       return this.resourceId;
     },
+    engineTooltip(engineDetails: IFhirPathEngineDetails | undefined): string | undefined {
+      if (!engineDetails){
+        return undefined;
+      }
+      let tooltip = engineDetails.name + " (" + engineDetails.fhirVersion + ")";
+      tooltip += "\nPublisher: " + engineDetails.publisher;
+      if (engineDetails.description) {
+        tooltip += "\n" + engineDetails.description;
+      }
+      if (engineDetails.external) {
+        tooltip += "\n(hosted externally to the fhirpath-lab)";
+      }
+      if (engineDetails.githubRepo) {
+        tooltip += "\nGitHub: " + engineDetails.githubRepo;
+      }
+      return tooltip;
+    },
     settingsClosed() {
       this.showAdvancedSettings = settings.showAdvancedSettings();
       this.defaultProviderField = settings.getDefaultProviderField();
@@ -1734,6 +1801,16 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     setResultJson(result: string) {
       this.debugText = result;
     },
+    getCurrentModelInfo(): Model
+    {
+      if (this.selectedFhirVersion === "R5") {
+        return fhirpath_r5_model;
+      }
+      if (this.selectedFhirVersion === "R6") {
+        return fhirpath_r6_model;
+      }
+      return fhirpath_r4_model;
+    },
     async executeRequest<T>(url: string, p: fhir4b.Parameters) {
       try {
         if (this.cancelSource) this.cancelSource.cancel("new search started");
@@ -1758,7 +1835,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         this.loadingData = false;
 
         const jsonValue = this.getResourceJson();
-        const astJson: IJsonNode | undefined = parseJson(jsonValue+'');
+        const astJson: IJsonNode | undefined = parseJson(jsonValue+'', this.getCurrentModelInfo());
         console.log("JSON fhir-paths: ", astJson);
 
         const results = response.data;
@@ -2352,7 +2429,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         }
       }
 
-      const astJson: IJsonNode | undefined = parseJson(resourceJson+'');
+      const astJson: IJsonNode | undefined = parseJson(resourceJson+'', this.getCurrentModelInfo());
 
       // debugger;
       var environment: Record<string, any> = { resource: fhirData, rootResource: fhirData };
@@ -2397,7 +2474,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
             async: true,
             terminologyUrl: this.terminologyServer
           };
-          let data = fhirpath.evaluate(fhirData, "select(" + contextExpression + ").trace('fhirpath-lab-context')", environment, fhirpath_r4_model, optionsContext);
+          let data = fhirpath.evaluate(fhirData, "select(" + contextExpression + "\n).trace('fhirpath-lab-context')", environment, fhirpath_r4_model, optionsContext);
           if (data instanceof Promise){
             await data;
           }
@@ -2484,7 +2561,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
           let useExpression = this.getFhirpathExpression() ?? '';
           let path = {
             base: resData.context??'', 
-            expression: "select(" + useExpression + ").trace('fhirpath-lab-result')"
+            expression: "select(\n" + useExpression + "\n).trace('fhirpath-lab-result')"
           }
           let options: AsyncOptions = {
             traceFn: tracefunction,
@@ -2522,6 +2599,14 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     },
 
     async evaluateExpressionUsingFhirpathJsR5() {
+      await this.evaluateExpressionUsingFhirpathJsRx(fhirpath_r5_model, 'r5');
+    },
+
+    async evaluateExpressionUsingFhirpathJsR6() {
+      await this.evaluateExpressionUsingFhirpathJsRx(fhirpath_r6_model, 'r6');
+    },
+
+    async evaluateExpressionUsingFhirpathJsRx(modelInfo: Model, fhirVersion: string) {
       if (!this.getResourceJson() && this.resourceId) {
         await this.downloadTestResource();
       }
@@ -2589,13 +2674,13 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       if (contextExpression) {
         // scan over each of the expressions
         try {
-          this.processedByEngine = `fhirpath.js-`+fhirpath.version+` (r5)`;
+          this.processedByEngine = `fhirpath.js-`+fhirpath.version+` (`+fhirVersion+`)`;
           let optionsContext: AsyncOptions = {
             traceFn: contextTraceOutputFunction,
             async: true,
             terminologyUrl: this.terminologyServer
           };
-          let data = fhirpath.evaluate(fhirData, "select(" + contextExpression + ").trace('fhirpath-lab-context')", environment, fhirpath_r5_model, optionsContext);
+          let data = fhirpath.evaluate(fhirData, "select(" + contextExpression + "\n).trace('fhirpath-lab-context')", environment, modelInfo, optionsContext);
           if (data instanceof Promise) {
             await data;
           }
@@ -2614,8 +2699,8 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       }
       else {
         try {
-          this.processedByEngine = `fhirpath.js-`+fhirpath.version+` (r5)`;
-          let data = fhirpath.evaluate(fhirData, "%resource", environment, fhirpath_r5_model);
+          this.processedByEngine = `fhirpath.js-`+fhirpath.version+` (`+fhirVersion+`)`;
+          let data = fhirpath.evaluate(fhirData, "%resource", environment, modelInfo);
           if (data instanceof Promise)
             contextNodes = await data;
           else
@@ -2682,14 +2767,14 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
           let useExpression = this.getFhirpathExpression() ?? '';
           let path = {
             base: resData.context??'', 
-            expression: "select(" + useExpression + ").trace('fhirpath-lab-result')"
+            expression: "select(\n" + useExpression + "\n).trace('fhirpath-lab-result')"
           }
           let options: AsyncOptions = {
             traceFn: tracefunction,
             async: true,
             terminologyUrl: this.terminologyServer
           };
-          let data = fhirpath.evaluate(contextNode, path, environment, fhirpath_r5_model, options);
+          let data = fhirpath.evaluate(contextNode, path, environment, modelInfo, options);
           let res: any[];
           if (data instanceof Promise)
             res = await data;
@@ -2997,6 +3082,34 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       settings.saveLastUsedParameters(data);
     },
 
+    changeFhirVersion() {
+      // update the selected fhir engine (based on freshly filtered content)
+      const lastSelectedEngine = this.selectedEngine2; 
+      if (lastSelectedEngine) {
+        const eqEngine = this.engines.find((e) => e.name === lastSelectedEngine?.name);
+        if (eqEngine) {
+          this.selectedEngine2 = eqEngine;
+        } else {
+          // if the engine is not found, then select the first one
+          this.selectedEngine2 = this.engines[0];
+        }
+      } else {
+        // if no engine was selected, then select the first one
+        this.selectedEngine2 = this.engines[0];
+      }
+      this.evaluateFhirPathExpression2();
+    },
+
+    async evaluateFhirPathExpression2() {
+      // set the selected engine (legacy)
+      if (this.selectedEngine2) {
+        this.selectedEngine = this.selectedEngine2.legacyName;
+      }
+
+      // then fire the evaluation
+      await this.evaluateFhirPathExpression();    
+    },
+
     // https://www.sitepoint.com/fetching-data-third-party-api-vue-axios/
     async evaluateFhirPathExpression() {
 
@@ -3054,6 +3167,16 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       if (this.selectedEngine == "fhirpath.js (R5)") {
         astTab2?.displayTreeForExpression(this.getContextExpression() ?? '', this.getFhirpathExpression() ?? '');
         await this.evaluateExpressionUsingFhirpathJsR5();
+        this.saveLastUsedParameters(true);
+        if (this.prevFocus){
+          this.prevFocus.focus();
+        }
+        return;
+      }
+
+      if (this.selectedEngine == "fhirpath.js (R6)") {
+        astTab2?.displayTreeForExpression(this.getContextExpression() ?? '', this.getFhirpathExpression() ?? '');
+        await this.evaluateExpressionUsingFhirpathJsR6();
         this.saveLastUsedParameters(true);
         if (this.prevFocus){
           this.prevFocus.focus();
@@ -3357,12 +3480,8 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         const jsonValue = this.getResourceJson();
         if (this.resourceJsonEditor && jsonValue) {
           // Select the model to use, r5 or r4b
-          let modelInfo = fhirpath_r4_model;
-          if (this.selectedEngine.indexOf("R5") > -1) {
-            modelInfo = fhirpath_r5_model;
-          }
           // console.log("Using "+modelInfo.version+" model for navigation");
-          var ast: IJsonNode | undefined = parseJson(jsonValue, modelInfo);
+          var ast: IJsonNode | undefined = parseJson(jsonValue, this.getCurrentModelInfo());
           console.log(ast);
           if (ast) {
               var node = findNodeByPath(ast, elementPath);
@@ -3458,6 +3577,9 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       terminologyServer: 'https://sqlonfhir-r4.azurewebsites.net/fhir',
       results: [],
       selectedEngine: "fhirpath.js",
+      selectedEngine2: undefined,
+      selectedFhirVersion: "R4",
+      fhirVersions: ["R4", "R5", "R6"],
       executionEngines: [
         ".NET (firely)",
         "fhirpath.js",
@@ -3469,6 +3591,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         "fhirpath.js (R5)",
         "java (HAPI-R5)",
         "java (HAPI-R6)",
+        "fhirpath.js (R6)",
         "fhirpath-py (Beda Software-R5)",
         "Aidbox (Health Samurai-R5)",
       ],
