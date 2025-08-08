@@ -9,7 +9,7 @@ import r4Model from "fhirpath/fhir-context/r4";
 // This model interface is internal to the fhirpath library, so cloning it here too
 export interface Model {
   // Model version, e.g. 'r5', 'r4', 'stu3', or 'dstu2'.
-  version: 'r5' | 'r4' | 'stu3' | 'dstu2',
+  version: string, // 'r5' | 'r4' | 'stu3' | 'dstu2',
 
   // This section contains setting for the `weight()` function.
   score?: {
