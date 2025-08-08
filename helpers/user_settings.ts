@@ -95,6 +95,9 @@ export namespace settings {
     export function python_server_r4b(): string {
         return serverConnections.python_server_r4b;
     }
+    export function python_server_r5(): string {
+        return serverConnections.python_server_r5;
+    }
     export function clojure_server_r4(): string {
         return serverConnections.clojure_server_r4;
     }
