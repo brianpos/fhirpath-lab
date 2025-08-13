@@ -3,6 +3,9 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+# 14 August 2025 (dev)
+* Update NLM LHC-Forms to 38.2.0
+
 # 8 August 2025 (dev)
 * fhirpath debug tracer shows primitive values for properties along with the full path
 * refactor the debug pane in the fhirpath test page to use the standard resource editor/viewer
