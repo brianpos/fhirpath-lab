@@ -103,15 +103,15 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         description: "A Java FHIRPath engine from HAPI FHIR for FHIR R6.",
         external: false
     },
-    "java (IBM)": {
-        name: "java-ibm",
-        legacyName: "java (IBM)",
-        fhirVersion: "R4",
-        publisher: "Linux for health (formerly IBM FHIR Server)",
-        githubRepo: "https://github.com/LinuxForHealth/FHIR",
-        description: "A Java FHIRPath engine from Linux for health (formerly IBM FHIR Server).",
-        external: false
-    },
+    // "java (IBM)": {
+    //     name: "java-ibm",
+    //     legacyName: "java (IBM)",
+    //     fhirVersion: "R4",
+    //     publisher: "Linux for health (formerly IBM FHIR Server)",
+    //     githubRepo: "https://github.com/LinuxForHealth/FHIR",
+    //     description: "A Java FHIRPath engine from Linux for health (formerly IBM FHIR Server).",
+    //     external: false
+    // },
     "fhirpath-py (Beda Software)": {
         name: "fhirpath-py",
         legacyName: "fhirpath-py (Beda Software)",

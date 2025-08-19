@@ -3,6 +3,9 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+# 19 August 2025 (dev)
+* Remove the IBM FHIRPath engine - is on an old version ( pre-move to Linux for health), so out of date already.
+
 # 14 August 2025 (dev)
 * Update NLM LHC-Forms to 38.2.0
 
