@@ -3,6 +3,11 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+# 20 August 2025 (dev)
+* refactor the engine selector to remove some of the old engine selector code that's no longer needed
+* move the debugger controls into the header nav bar from the tab header (moving the other buttons is bad user experience)
+* when debug stepping, don't auto swap tabs when in single pane mode
+
 # 19 August 2025 (dev)
 * Remove the IBM FHIRPath engine - is on an old version ( pre-move to Linux for health), so out of date already.
 

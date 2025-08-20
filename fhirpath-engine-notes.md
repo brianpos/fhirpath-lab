@@ -24,3 +24,12 @@ e.g. position information for the expression showing the boundary characters
 ```
 * Operators have their position information in the opStart/opEnd properties, and refer to the operator token itself, not the bounds of the operands too.
 * delimited identifiers positioning information is similar to a string, as shown above.
+
+
+### Firely .NET parser
+The Firely parser uses the sprache Parser combinator library, which captures the position information in a `Position` object.
+* The `Position` object has a start `Line` and `Column` property, both 1 based.
+* It also computes the RawPosition, which is a 0 based index into the original string.
+* And also has a `Length` property, which is the length of the token in characters.
+* It does not have a stop position information, but the `Length` can be used to compute the end position as row/col (and would need to consider any newlines in the token).
+

@@ -8,6 +8,7 @@ export interface IFhirPathEngineDetails {
     githubRepo?: string; // Optional GitHub repository URL
     description: string;
     external?: boolean;
+    supportsAST: boolean;
 }
 
 // All registered FHIRPath engines
@@ -20,7 +21,8 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         publisher: "HL7 FHIR Community",
         githubRepo: "https://github.com/HL7/fhirpath.js",
         description: "A JavaScript FHIRPath engine.",
-        external: false
+        external: false,
+        supportsAST: true
     },
     "fhirpath.js (R5)": {
         name: "fhirpath.js",
@@ -29,7 +31,8 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         publisher: "HL7 FHIR Community",
         githubRepo: "https://github.com/HL7/fhirpath.js",
         description: "A JavaScript FHIRPath engine for FHIR R5.",
-        external: false
+        external: false,
+        supportsAST: true
     },
     "fhirpath.js (R6)": {
         name: "fhirpath.js",
@@ -38,7 +41,8 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         publisher: "HL7 FHIR Community",
         githubRepo: "https://github.com/HL7/fhirpath.js",
         description: "A JavaScript FHIRPath engine for FHIR R5.",
-        external: false
+        external: false,
+        supportsAST: true
     },
     ".NET SDK": {
         name: ".NET SDK",
@@ -47,7 +51,8 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         publisher: "Firely",
         githubRepo: "https://github.com/FirelyTeam/firely-net-sdk",
         description: "A FHIRPath engine implemented in .NET by Firely Team.",
-        external: false
+        external: false,
+        supportsAST: true
     },
     ".NET R5": {
         name: ".NET SDK",
@@ -56,7 +61,8 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         publisher: "Firely",
         githubRepo: "https://github.com/FirelyTeam/firely-net-sdk",
         description: "A FHIRPath engine implemented in .NET by Firely Team for FHIR R5.",
-        external: false
+        external: false,
+        supportsAST: true
     },
     // "fhirpath.js(api)": {
     //     name: "fhirpath.js(api)",
@@ -83,7 +89,8 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         publisher: "HAPI FHIR",
         githubRepo: "https://github.com/hapifhir/hapi-fhir",
         description: "A Java FHIRPath engine from HAPI FHIR.",
-        external: false
+        external: false,
+        supportsAST: true
     },
     "java (HAPI-R5)": {
         name: "java-hapi",
@@ -92,7 +99,8 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         publisher: "HAPI FHIR",
         githubRepo: "https://github.com/hapifhir/hapi-fhir",
         description: "A Java FHIRPath engine from HAPI FHIR for FHIR R5.",
-        external: false
+        external: false,
+        supportsAST: true
     },
     "java (HAPI-R6)": {
         name: "java-hapi",
@@ -101,7 +109,8 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         publisher: "HAPI FHIR Team",
         githubRepo: "https://github.com/hapifhir/hapi-fhir",
         description: "A Java FHIRPath engine from HAPI FHIR for FHIR R6.",
-        external: false
+        external: false,
+        supportsAST: true
     },
     // "java (IBM)": {
     //     name: "java-ibm",
@@ -119,7 +128,8 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         publisher: "Beda Software",
         githubRepo: "https://github.com/beda-software/fhirpath-py",
         description: "A Python FHIRPath engine by Beda Software.",
-        external: true
+        external: true,
+        supportsAST: false
     },
     "fhirpath-py (Beda Software-R5)": {
         name: "fhirpath-py",
@@ -128,7 +138,8 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         publisher: "Beda Software",
         githubRepo: "https://github.com/beda-software/fhirpath-py",
         description: "A Python FHIRPath engine by Beda Software for FHIR R5.",
-        external: true
+        external: true,
+        supportsAST: false
     },
     "Aidbox (Health Samurai)": {
         name: "Aidbox",
@@ -136,7 +147,8 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         fhirVersion: "R4",
         publisher: "Health Samurai",
         description: "A Clojure-based FHIRPath engine from Aidbox by Health Samurai.",
-        external: true
+        external: true,
+        supportsAST: false
     },
     "Aidbox (Health Samurai-R5)": {
         name: "Aidbox",
@@ -144,6 +156,7 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         fhirVersion: "R5",
         publisher: "Health Samurai",
         description: "A Clojure-based FHIRPath engine from Aidbox by Health Samurai for FHIR R5.",
-        external: true
+        external: true,
+        supportsAST: false
     }
 };
