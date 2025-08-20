@@ -120,7 +120,7 @@
               <div class="results">Debug variables</div>
               <v-simple-table>
                 <template v-for="(resultValue, i1) in debugTraceData[debugTracePosition].values">
-                <tr :key="i1">
+                <tr :key="'val-' + i1">
                   <td class="result-type">
                     <span style="white-space:nowrap;" v-if="debugTraceData[debugTracePosition].exprName != undefined"> {{ debugTraceData[debugTracePosition].exprName }} <v-icon x-small>mdi-keyboard-return</v-icon></span>&nbsp;
                   </td>
@@ -141,7 +141,7 @@
                 </tr>
                 </template>
                 <template v-for="(focusValue, i1) in debugTraceData[debugTracePosition].focusVar">
-                <tr :key="i1">
+                <tr :key="'focus-' + i1">
                   <td title="Input Collection" class="result-type debug-row">
                     $focus
                   </td>
@@ -173,7 +173,7 @@
                   </td>
                 </tr>
                 <template v-for="(thisValue, i1) in debugTraceData[debugTracePosition].thisVar">
-                <tr :key="i1">
+                <tr :key="'this-' + i1">
                   <td class="result-type debug-row">
                     $this
                   </td>
