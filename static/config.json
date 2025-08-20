@@ -2,6 +2,7 @@
     "dotnet_server_downloader": "https://fhirpath-lab-dotnet2.azurewebsites.net/api/downloader",
     "dotnet_server_r4b": "https://fhirpath-lab-dotnet2.azurewebsites.net/api/$fhirpath",
     "dotnet_server_r5": "https://fhirpath-lab-dotnet2.azurewebsites.net/api/$fhirpath-r5",
+    "dotnet_server_r6": "https://fhirpath-lab-dotnet2.azurewebsites.net/api/$fhirpath-r6",
     "java_server_r4b": "https://fhirpath-lab-java-g5c4bfdrb8ejamar.australiaeast-01.azurewebsites.net/fhir/$fhirpath",
     "java_server_r5": "https://fhirpath-lab-java-g5c4bfdrb8ejamar.australiaeast-01.azurewebsites.net/fhir5/$fhirpath-r5",
     "java_server_r6": "https://fhirpath-lab-java-g5c4bfdrb8ejamar.australiaeast-01.azurewebsites.net/fhir5/$fhirpath-r6",

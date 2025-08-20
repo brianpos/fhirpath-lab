@@ -2,6 +2,7 @@
     "dotnet_server_downloader": "http://localhost:7071/api/downloader",
     "dotnet_server_r4b": "http://localhost:7071/api/$fhirpath",
     "dotnet_server_r5": "http://localhost:7071/api/$fhirpath-r5",
+    "dotnet_server_r6": "http://localhost:7071/api/$fhirpath-r6",
     "java_server_r4b": "http://localhost:8080/fhir/$fhirpath",
     "java_server_r5": "http://localhost:8080/fhir5/$fhirpath-r5",
     "java_server_r6": "http://localhost:8080/fhir5/$fhirpath-r6",
