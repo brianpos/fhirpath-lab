@@ -1012,7 +1012,9 @@ interface IFhirPathProps
 export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFhirPathProps>({
   async mounted() {
     window.document.title = "FhirPath Tester";
-    this.selectedEngine2 = this.engines[0];
+    if (!this.selectedEngine2) {
+      this.selectedEngine2 = this.engines[0];
+    }
     this.showAdvancedSettings = settings.showAdvancedSettings();
     this.defaultProviderField = settings.getDefaultProviderField();
     this.openAIFeedbackEnabled = settings.getOpenAIFeedbackEnabled();
