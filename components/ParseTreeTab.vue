@@ -318,6 +318,8 @@ export function InvertTree(ast: JsonNode): JsonNode[] {
     ReturnType: ast.ReturnType,
   };
   if (ast.Position != undefined) rootItem.Position = ast.Position;
+  if (ast.Line != undefined) rootItem.Line = ast.Line;
+  if (ast.Column != undefined) rootItem.Column = ast.Column;
   if (ast.Length != undefined) rootItem.Length = ast.Length;
 
   let result: JsonNode[] = [];
