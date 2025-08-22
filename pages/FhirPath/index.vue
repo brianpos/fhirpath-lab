@@ -3414,7 +3414,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         console.log("Highlighting node: ", node);
         if (node.Position == undefined && node.Line != undefined) {
           // Calculate the start Position based on the line in the text 
-          node.Length = node.Name.length;
+          node.Length = node.Length ?? node.Name.length;
           this.highlightTextByLine(this.expressionEditor, node.Line, node.Column, node.Length);
           return;
         }
