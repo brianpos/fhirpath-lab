@@ -1,18 +1,10 @@
 import { Model } from "fhirpath";
-import updateWithGeneratedData from 'fhirpath/fhir-context/general-additions.js';
+import { updateWithGeneratedData, arrToHash } from 'fhirpath/fhir-context/general-additions.js';
 import { choiceTypePaths} from './choiceTypePaths';
 import { path2Type } from './path2Type';
 import { type2Parent } from './type2Parent';
 import { resourcesWithUrlParam } from './resourcesWithUrlParam';
 import { pathsDefinedElsewhere } from './pathsDefinedElsewhere';
-
-// Simple utility to convert array to hash object
-function arrToHash(arr: string[]): Record<string, boolean> {
-  return arr.reduce((acc, item) => {
-    acc[item] = true;
-    return acc;
-  }, {} as Record<string, boolean>);
-}
 
 
 /**

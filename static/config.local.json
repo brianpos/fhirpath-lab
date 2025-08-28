@@ -12,5 +12,7 @@
     "python_server_r4b": "http://localhost:8081/fhir/$fhirpath",
     "python_server_r5": "http://localhost:8081/fhir/$fhirpath-r5",
     "clojure_server_r4": "https://fhir-validator.aidbox.app/r4",
-    "clojure_server_r5": "https://fhir-validator.aidbox.app/r5"
+    "clojure_server_r5": "https://fhir-validator.aidbox.app/r5",
+    "helios_server_r4b": "https://fhirpath.heliossoftware.com/r4b",
+    "helios_server_r5": "https://fhirpath.heliossoftware.com/r5"
 }
