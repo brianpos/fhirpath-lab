@@ -174,6 +174,7 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         legacyName: "Helios Software - R5",
         fhirVersion: "R5",
         publisher: "Helios Software",
+        githubRepo: "https://github.com/HeliosSoftware/hfs",
         description: "A Rust-based FHIRPath engine from Helios Software.",
         external: true,
         supportsAST: true
