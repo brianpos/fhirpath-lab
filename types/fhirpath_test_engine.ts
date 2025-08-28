@@ -158,5 +158,25 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         description: "A Clojure-based FHIRPath engine from Aidbox by Health Samurai for FHIR R5.",
         external: true,
         supportsAST: false
-    }
+    },
+    "Helios Software - R4B": {
+        name: "Helios Software",
+        legacyName: "Helios Software - R4B",
+        fhirVersion: "R4",
+        publisher: "Helios Software",
+        githubRepo: "https://github.com/HeliosSoftware/hfs",
+        description: "A Rust-based FHIRPath engine from Helios Software.",
+        external: true,
+        supportsAST: true
+    },
+    "Helios Software - R5": {
+        name: "Helios Software",
+        legacyName: "Helios Software - R5",
+        fhirVersion: "R5",
+        publisher: "Helios Software",
+        githubRepo: "https://github.com/HeliosSoftware/hfs",
+        description: "A Rust-based FHIRPath engine from Helios Software.",
+        external: true,
+        supportsAST: true
+    },
 };
