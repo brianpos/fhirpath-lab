@@ -233,7 +233,7 @@ h5 {
 <script lang="ts">
 import Vue from "vue";
 var firelyData = require('~/static/results/Firely-5.12.1 R5.json');
-var fhirPathJSData = require('~/static/results/fhirpath.js-4.5.1 R5.json');
+var fhirPathJSData = require('~/static/results/fhirpath.js-4.5.1 r5.json');
 var hapiData = require('~/static/results/Java 6.6.2 R5.json');
 var pythonData = require('~/static/results/fhirpath-py 1.0.3.json');
 var aidboxData = require('~/static/results/Aidbox FHIR R5.json');
