@@ -108,10 +108,10 @@ export namespace settings {
         return serverConnections.clojure_server_r5;
     }
     export function helios_software_r4b(): string {
-        return serverConnections.helios_software_r4b;
+        return serverConnections.helios_server_r4b;
     }
     export function helios_software_r5(): string {
-        return serverConnections.helios_software_r5;
+        return serverConnections.helios_server_r5;
     }
 
     export function getSearchData(type: string): ConformanceSearchData | undefined {

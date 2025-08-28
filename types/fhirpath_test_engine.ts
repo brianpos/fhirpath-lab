@@ -159,9 +159,9 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         external: true,
         supportsAST: false
     },
-    "Helios Software - R4B": {
-        name: "Helios Software",
-        legacyName: "Helios Software - R4B",
+    "Helios Software (R4B)": {
+        name: "Helios",
+        legacyName: "Helios Software (R4B)",
         fhirVersion: "R4",
         publisher: "Helios Software",
         githubRepo: "https://github.com/HeliosSoftware/hfs",
@@ -169,9 +169,9 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         external: true,
         supportsAST: true
     },
-    "Helios Software - R5": {
-        name: "Helios Software",
-        legacyName: "Helios Software - R5",
+    "Helios Software (R5)": {
+        name: "Helios",
+        legacyName: "Helios Software (R5)",
         fhirVersion: "R5",
         publisher: "Helios Software",
         githubRepo: "https://github.com/HeliosSoftware/hfs",
