@@ -549,6 +549,7 @@ import "vue-router";
 import { settings, ILastUsedParameters } from "~/helpers/user_settings";
 import {
   requestFhirAcceptHeaders,
+  requestFhirXmlAcceptHeaders,
   requestFhirContentTypeHeaders,
   fhirResourceTypes,
   saveFhirResource,
@@ -557,6 +558,7 @@ import {
 import axios, { AxiosRequestHeaders, AxiosResponse } from "axios";
 import { AxiosError } from "axios";
 import { CancelTokenSource } from "axios";
+import xmlFormat from 'xml-formatter';
 import { addExtension, addExtensionStringValue, clearExtension, getExtensionCodingValues, getExtensionReferenceValue, getExtensionStringValue, setExtension, setExtensionStringValue } from "fhir-extension-helpers";
 import { fpjsNode, getTraceValue, getValue, JsonNode, ResultData } from "~/models/FhirpathTesterData";
 import { GetExternalVariablesUsed, InvertTree, mapFunctionReferences } from "~/components/ParseTreeTab.vue";
@@ -588,6 +590,7 @@ import { LibraryData } from "~/models/LibraryTableData";
 import { BaseResource_defaultValues } from "~/models/BaseResourceTableData";
 import { DomainResource, FhirResource, Resource } from "fhir/r4b";
 import { findNodeByPath, IJsonNode, IJsonNodePosition, parseJson } from "~/helpers/json_parser";
+import { parseXml } from "~/helpers/xml_parser";
 import TwinPaneTab, { TabData } from "~/components/TwinPaneTab.vue";
 import { IFhirPathEngineDetails, registeredEngines } from "~/types/fhirpath_test_engine";
 
@@ -1525,7 +1528,11 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
 
           const resourceJson = p.resourceJson;
           if (resourceJson) {
-            this.resourceJsonEditor?.setValue(JSON.stringify(JSON.parse(resourceJson), null, settings.getTabSpaces()));
+            if (resourceJson.startsWith('<')){
+              this.resourceJsonEditor?.setValue(resourceJson);
+            } else {
+              this.resourceJsonEditor?.setValue(JSON.stringify(JSON.parse(resourceJson), null, settings.getTabSpaces()));
+            }
             this.resourceJsonChanged = true;
             this.resourceId = undefined;
             this.resourceJsonEditor?.clearSelection();
@@ -1605,10 +1612,24 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       }
       return false;
     },
-    resourceJsonChangedEvent(){
+    resourceJsonChangedEvent() {
       this.resourceJsonChanged = true;
       this.enableSave = true;
       console.log('enable save resourceJSON');
+
+      // if the resource mode (json/xml) is different to the content, switch it over
+      const session = this.resourceJsonEditor?.getSession();
+      if (session) {
+        let text = session.getValue();
+        const currentMode = (session as any).mode;
+
+        if (text.startsWith('<') && currentMode != 'ace/mode/xml') {
+          this.resourceJsonEditor?.getSession().setMode(`ace/mode/xml`);
+        }
+        else if (!text.startsWith('<') && currentMode != 'ace/mode/json') {
+          this.resourceJsonEditor?.getSession().setMode(`ace/mode/json`);
+        }
+      }
     },
     updateVariableValue(name: string): void{
       const ie: InputEvent = event as InputEvent;
@@ -1743,6 +1764,9 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       if (engineDetails.githubRepo) {
         tooltip += "\nGitHub: " + engineDetails.githubRepo;
       }
+      if (engineDetails.supportsXML){
+        tooltip += "\nSupports XML and Json";
+      }
       return tooltip;
     },
     settingsClosed() {
@@ -1861,6 +1885,11 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
                       // If this was from the JAVA engine, also dump out the data from 
                       // that debug parse tree
                       console.log("JAVA AST", part.valueString);
+                    }
+                    if (part.name === 'parseDebugTreeJs' && part.valueString) {
+                      // If this was from the fhirpathJS engine, also dump out the data from 
+                      // that debug parse tree
+                      console.log("fhirpath.js AST", part.valueString);
                     }
                     if (part.name === 'debugOutcome' && part.resource) {
                       this.expressionParseOutcome = part.resource as fhir4b.OperationOutcome;
@@ -2143,11 +2172,12 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         let token = this.cancelSource.token;
         let headers = {
             "Cache-Control": "no-cache",
-            "Accept": requestFhirAcceptHeaders
+            "Accept": requestFhirAcceptHeaders + ", " + requestFhirXmlAcceptHeaders,
           }
-        const response = await axios.get<fhir4b.Resource>(url, {
+        const response = await axios.get<fhir4b.Resource | string>(url, {
           cancelToken: token,
-          headers: headers
+          headers: headers,
+          responseType: 'text', // Get as text first to handle both JSON and XML
         });
         if (token.reason) {
           console.log(token.reason);
@@ -2158,11 +2188,37 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
 
         const results = response.data;
         if (results) {
-          this.resourceType = results.resourceType;
           if (this.resourceJsonEditor) {
-            const resourceJson = JSON.stringify(results, null, settings.getTabSpaces());
-            if (resourceJson) {
-              this.resourceJsonEditor.setValue(resourceJson);
+            let formattedContent = '';
+            const contentType = response.headers['content-type'] || '';
+            
+            // Detect if the response is XML or JSON based on content type
+            if (contentType.includes('xml') || (typeof results === 'string' && results.trim().startsWith('<'))) {
+              // Handle XML response
+              try {
+                formattedContent = xmlFormat(results as string, {
+                  indentation: ' '.repeat(settings.getTabSpaces()),
+                  collapseContent: true,
+                  lineSeparator: '\n'
+                });
+              } catch (e) {
+                // If XML formatting fails, use the raw content
+                formattedContent = results as string;
+              }
+            } else {
+              // Handle JSON response
+              try {
+                const parsedJson = typeof results === 'string' ? JSON.parse(results) : results;
+                formattedContent = JSON.stringify(parsedJson, null, settings.getTabSpaces());
+                this.resourceType = parsedJson.resourceType;
+              } catch (e) {
+                // If JSON parsing fails, treat as plain text
+                formattedContent = results as string;
+              }
+            }
+            
+            if (formattedContent) {
+              this.resourceJsonEditor.setValue(formattedContent);
               this.resourceJsonChanged = false;
             }
             this.resourceJsonEditor.clearSelection();
@@ -2882,7 +2938,13 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         const resourceJson = this.getResourceJson();
         if (resourceJson && this.resourceJsonChanged){
           try {
-          packageData.resourceJson = JSON.stringify(JSON.parse(resourceJson));
+            if (resourceJson.startsWith('<')){
+              // this is XML, so not much point in trying to parse it
+              packageData.resourceJson = resourceJson;
+            }
+            else {
+              packageData.resourceJson = JSON.stringify(JSON.parse(resourceJson));
+            }
           } catch {}
         }
         return packageData;
@@ -3111,7 +3173,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       
       // Validate the test fhir resource object
       let resourceJson = this.getResourceJson();
-       if (resourceJson) {
+       if (resourceJson && !resourceJson.startsWith('<')) {
          let rawObj: object;
          try {
            rawObj = JSON.parse(resourceJson)
@@ -3132,6 +3194,12 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
            this.loadingData = false;
           return;
         }
+      }
+      if (resourceJson && resourceJson.startsWith('<') && !this.selectedEngine2?.supportsXML) {
+        this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
+        this.saveOutcome?.issue.push({ code: 'not-supported', severity: 'error', details: { text: `${this.selectedEngine2?.legacyName} does not support testing on XML test resources` } });
+        this.showOutcome = true;
+        return;
       }
 
       if (!this.getResourceJson() && this.resourceId && this.selectedEngine2?.name === ".NET SDK") {
@@ -3271,7 +3339,11 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       }
 
       if (resourceJson) {
-        if (url === settings.java_server_r5() || url === settings.java_server_r6())
+        if (resourceJson.startsWith('<')) {
+          // this is XML content, so put it into the XML extension
+          p.parameter?.push({ name: "resource", extension: [{ url: "http://fhir.forms-lab.com/StructureDefinition/xml-value", valueString: resourceJson }] });
+        }
+        else if (url === settings.java_server_r5() || url === settings.java_server_r6())
           p.parameter?.push({ name: "resource", extension: [{ url: "http://fhir.forms-lab.com/StructureDefinition/json-value", valueString: resourceJson }] });
         else
           p.parameter?.push({ name: "resource", resource: JSON.parse(resourceJson) });
@@ -3433,7 +3505,13 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         if (this.resourceJsonEditor && jsonValue) {
           // Select the model to use, r5 or r4b
           // console.log("Using "+modelInfo.version+" model for navigation");
-          var ast: IJsonNode | undefined = parseJson(jsonValue, this.getCurrentModelInfo());
+          var ast: IJsonNode | undefined;
+          if (jsonValue.startsWith('<')) {
+            ast = parseXml(jsonValue, this.getCurrentModelInfo());
+
+          } else {
+            ast = parseJson(jsonValue, this.getCurrentModelInfo());
+          }
           console.log(ast);
           if (ast) {
               var node = findNodeByPath(ast, elementPath);
