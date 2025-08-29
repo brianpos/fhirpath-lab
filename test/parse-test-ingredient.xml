@@ -1,0 +1,65 @@
+<Ingredient xmlns="http://hl7.org/fhir">
+  <id value="example"/>
+  <text>
+    <status value="generated"/>
+    <div>Some content</div>
+  </text>
+  <identifier>
+    <extension>
+      <url value="demo"/>
+      <valueString>1234</valueString>
+    </extension>
+    <value>1234</value>
+  </identifier>
+  <status value="active"/>
+  <comment>markdown content</comment>
+  <substance>
+    <extension>
+      <url value="http://example.org/blah"/>
+      <valueString>string test</valueString>
+    </extension>
+    <strength>
+      <presentationRatio>
+        <numerator>
+          <code value="blah"/>
+        </numerator>
+        <country>
+          <text value="Aus"/>
+        </country>
+        <basis>
+          <text value="basis string"/>
+        </basis>
+      </presentationRatio>
+    </strength>
+    <strength>
+      <presentationRatio> {
+        <numerator>
+          <code value="glah"/>
+        </numerator>
+        <country>
+          <text value="Aus"/>
+        </country>
+        <basis>
+          <text value="basis string"/>
+        </basis>
+      </presentationRatio>
+    </strength>
+    <strength>
+      <presentationRatio>
+        <numerator>
+          <code value="blog">
+            <extension url="http://example.org/blah">
+              <valueString>string test</valueString>
+            </extension>
+          </code>
+        </numerator>
+        <country>
+          <text value="Aus"/>
+        </country>
+        <basis>
+          <text value="basis string"/>
+        </basis>
+      </presentationRatio>
+    </strength>
+  </substance>
+</Ingredient>

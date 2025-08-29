@@ -135,9 +135,18 @@ function findChildNodeByPathSegments(node: IJsonNode, path: string): IJsonNode |
     return node;
   }
 
+  // Check if we have a flexible match where the search path includes [0] but the node path doesn't
+  // This handles cases where XML parsing doesn't add [0] for single elements but search expects it
+  if (node.Path && pathsMatchWithFlexibleArrayIndex(node.Path, path)) {
+    return node;
+  }
+
   if (!path.startsWith(node.Path + '.') && !path.startsWith(node.Path + '[')) {
-    // not a child of this node
-    return undefined;
+    // Check if this might be a flexible match case
+    const flexibleNodePath = node.Path;
+    if (flexibleNodePath && !pathsAreRelated(flexibleNodePath, path)) {
+      return undefined;
+    }
   }
   
   if (node.children) {
@@ -154,6 +163,32 @@ function findChildNodeByPathSegments(node: IJsonNode, path: string): IJsonNode |
   }
 
   return undefined;
+}
+
+/**
+ * Checks if two paths match allowing for flexible array indexing.
+ * For example: "Patient.name.given.extension.value" matches "Patient.name[0].given[0].extension[0].value"
+ */
+export function pathsMatchWithFlexibleArrayIndex(nodePath: string, searchPath: string): boolean {
+  // Convert both paths to normalized forms by removing [0] indices
+  const normalizedNodePath = nodePath.replace(/\[0\]/g, '');
+  const normalizedSearchPath = searchPath.replace(/\[0\]/g, '');
+  
+  return normalizedNodePath === normalizedSearchPath;
+}
+
+/**
+ * Checks if two paths are related (one could be a parent/child of the other)
+ * taking into account flexible array indexing.
+ */
+function pathsAreRelated(nodePath: string, searchPath: string): boolean {
+  const normalizedNodePath = nodePath.replace(/\[0\]/g, '');
+  const normalizedSearchPath = searchPath.replace(/\[0\]/g, '');
+  
+  return normalizedSearchPath.startsWith(normalizedNodePath + '.') || 
+         normalizedNodePath.startsWith(normalizedSearchPath + '.') ||
+         normalizedSearchPath.startsWith(normalizedNodePath + '[') ||
+         normalizedNodePath.startsWith(normalizedSearchPath + '[');
 }
 
 export function parseJson(path: string, modelInfo?: Model) {
@@ -181,7 +216,7 @@ export function parseJson(path: string, modelInfo?: Model) {
   return printer.result();
 };
 
-function getPropertyDataType(modelInfo: Model, dataType: string, path: string): string[] {
+export function getPropertyDataType(modelInfo: Model, dataType: string, path: string): string[] {
   // lookup the definition path in the path2Type map
   let definitionPath = dataType + "." + path;
   const elsewherePath = modelInfo.pathsDefinedElsewhere[definitionPath];
