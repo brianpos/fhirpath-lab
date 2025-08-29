@@ -244,7 +244,7 @@
                 <v-btn small icon tile @click="reformatTestResource"><v-icon title="Format json" dark> mdi-format-indent-increase </v-icon></v-btn>
               </template>
             </v-text-field>
-            <label class="v-label theme--light bare-label">Test Resource JSON <i>{{ resourceJsonChangedMessage() }}</i></label>
+            <label class="v-label theme--light bare-label">Test Resource {{resourceFormat}} <i>{{ resourceJsonChangedMessage() }}</i></label>
             <div class="resource" width="100%" ref="aceEditorResourceJsonTab"></div>
             <!-- <div class="ace_editor_footer"></div> -->
           </template>
@@ -784,6 +784,7 @@ interface FhirPathData {
   resourceId?: string;
   resourceType?: string;
   resourceJsonChanged: boolean;
+  resourceFormat: string;
   loadingData: boolean;
   saveOutcome?: fhir4b.OperationOutcome;
   showOutcome?: boolean;
@@ -1643,9 +1644,11 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         const currentMode = (session as any).mode;
 
         if (text.startsWith('<') && currentMode != 'ace/mode/xml') {
+          this.resourceFormat = 'XML';
           this.resourceJsonEditor?.getSession().setMode(`ace/mode/xml`);
         }
         else if (!text.startsWith('<') && currentMode != 'ace/mode/json') {
+          this.resourceFormat = 'JSON';
           this.resourceJsonEditor?.getSession().setMode(`ace/mode/json`);
         }
       }
@@ -3618,6 +3621,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       resourceId: undefined,
       resourceType: 'Patient',
       resourceJsonChanged: false,
+      resourceFormat: 'JSON',
       loadingData: true,
       saveOutcome: undefined,
       showOutcome: false,
