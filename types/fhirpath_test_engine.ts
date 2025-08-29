@@ -9,6 +9,7 @@ export interface IFhirPathEngineDetails {
     description: string;
     external?: boolean;
     supportsAST: boolean;
+    supportsXML?: boolean;
 }
 
 // All registered FHIRPath engines
@@ -22,7 +23,8 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         githubRepo: "https://github.com/HL7/fhirpath.js",
         description: "A JavaScript FHIRPath engine.",
         external: false,
-        supportsAST: true
+        supportsAST: true,
+        supportsXML: false
     },
     "fhirpath.js (R5)": {
         name: "fhirpath.js",
@@ -32,7 +34,8 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         githubRepo: "https://github.com/HL7/fhirpath.js",
         description: "A JavaScript FHIRPath engine for FHIR R5.",
         external: false,
-        supportsAST: true
+        supportsAST: true,
+        supportsXML: false
     },
     "fhirpath.js (R6)": {
         name: "fhirpath.js",
@@ -42,7 +45,8 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         githubRepo: "https://github.com/HL7/fhirpath.js",
         description: "A JavaScript FHIRPath engine for FHIR R5.",
         external: false,
-        supportsAST: true
+        supportsAST: true,
+        supportsXML: false
     },
     ".NET SDK": {
         name: ".NET SDK",
@@ -52,7 +56,8 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         githubRepo: "https://github.com/FirelyTeam/firely-net-sdk",
         description: "A FHIRPath engine implemented in .NET by Firely Team.",
         external: false,
-        supportsAST: true
+        supportsAST: true,
+        supportsXML: true
     },
     ".NET R5": {
         name: ".NET SDK",
@@ -62,26 +67,20 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         githubRepo: "https://github.com/FirelyTeam/firely-net-sdk",
         description: "A FHIRPath engine implemented in .NET by Firely Team for FHIR R5.",
         external: false,
-        supportsAST: true
+        supportsAST: true,
+        supportsXML: true
     },
-    // "fhirpath.js(api)": {
-    //     name: "fhirpath.js(api)",
-    //     legacyName: "fhirpath.js (R5)",
-    //     fhirVersion: "5.0.0",
-    //     publisher: "HL7 FHIR Community",
-    //     url: "http://localhost:3001/$fhirpath-r5",
-    //     githubRepo: "https://github.com/HL7/fhirpath.js",
-    //     description: "A JavaScript FHIRPath engine accessed via API.",
-    //     external: false
-    // },
-    // "java (CQL)": {
-    //     name: "java (CQL)",
-    //     fhirVersion: "4.0.1",
-    //     publisher: "CQL Engine Team",
-    //     url: "http://localhost:8080/fhir/$fhirpath-cql",
-    //     description: "A Java-based CQL FHIRPath engine.",
-    //     external: false
-    // },
+    ".NET R6": {
+        name: ".NET SDK",
+        legacyName: ".NET (firely-R6)",
+        fhirVersion: "R6",
+        publisher: "Firely",
+        githubRepo: "https://github.com/FirelyTeam/firely-net-sdk",
+        description: "A FHIRPath engine implemented in .NET by Firely Team for FHIR R6.",
+        external: false,
+        supportsAST: true,
+        supportsXML: true
+    },
     "java (HAPI)": {
         name: "java-hapi",
         legacyName: "java (HAPI)",
@@ -90,7 +89,8 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         githubRepo: "https://github.com/hapifhir/hapi-fhir",
         description: "A Java FHIRPath engine from HAPI FHIR.",
         external: false,
-        supportsAST: true
+        supportsAST: true,
+        supportsXML: true
     },
     "java (HAPI-R5)": {
         name: "java-hapi",
@@ -100,7 +100,8 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         githubRepo: "https://github.com/hapifhir/hapi-fhir",
         description: "A Java FHIRPath engine from HAPI FHIR for FHIR R5.",
         external: false,
-        supportsAST: true
+        supportsAST: true,
+        supportsXML: true
     },
     "java (HAPI-R6)": {
         name: "java-hapi",
@@ -110,7 +111,8 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         githubRepo: "https://github.com/hapifhir/hapi-fhir",
         description: "A Java FHIRPath engine from HAPI FHIR for FHIR R6.",
         external: false,
-        supportsAST: true
+        supportsAST: true,
+        supportsXML: true
     },
     // "java (IBM)": {
     //     name: "java-ibm",
