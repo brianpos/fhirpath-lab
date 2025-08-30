@@ -3,6 +3,18 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+# 30 August 2025 (dev)
+* XML test resource support for fhirpath
+  * tooltip for engines indicates if they support xml and json
+  * test resource editor changes to XML mode if XML content is detected (checking first char is explicitly `<`)
+  * passes XML content via the extension `http://fhir.forms-lab.com/StructureDefinition/xml-value` instead of `part.resource`
+  * Download supports handling XML if returned by the server (use &_format=xml if needed)
+  * reports an error if the selected engine doesn't support xml
+  * test resource field label indicates which resource format was detected (default = json) 
+  * property highlight selection able to handle xml test resources
+* Download resource via ctrl+enter when in the test resource id field
+* Include support for Firely's R6-ballot3 engine
+
 # 28 August 2025 (dev)
 * Add Helios Software fhirpath engine for R4B/R6
 
