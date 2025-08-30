@@ -107,7 +107,13 @@ export namespace settings {
     export function clojure_server_r5(): string {
         return serverConnections.clojure_server_r5;
     }
-    
+    export function helios_software_r4b(): string {
+        return serverConnections.helios_server_r4b;
+    }
+    export function helios_software_r5(): string {
+        return serverConnections.helios_server_r5;
+    }
+
     export function getSearchData(type: string): ConformanceSearchData | undefined {
         const sdJson = localStorage.getItem(`search_${type}`);
         if (sdJson){
@@ -300,10 +306,10 @@ export namespace settings {
             else localStorage.removeItem("settings_defaultProviderField");
             if (settings.defaultNewCanonicalBase) localStorage.setItem("settings_defaultNewCanonicalBase", settings.defaultNewCanonicalBase);
             else localStorage.removeItem("settings_defaultNewCanonicalBase");
-            
+
             if (settings.openAIKey) localStorage.setItem("settings_openAIkey", settings.openAIKey);
             else localStorage.removeItem("settings_openAIkey");
-            
+
             if (settings.openAIBasePath) localStorage.setItem("settings_openAIBasePath", settings.openAIBasePath);
             else localStorage.removeItem("settings_openAIBasePath");
             if (settings.openAIApiVersion) localStorage.setItem("settings_openAIApiVersion", settings.openAIApiVersion);

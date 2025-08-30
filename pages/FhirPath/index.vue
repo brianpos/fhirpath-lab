@@ -3355,6 +3355,14 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         url = settings.clojure_server_r5();
         (this as any).$appInsights?.trackEvent({ name: 'evaluate Aidbox' });
       }
+      else if (this.selectedEngine2?.legacyName == "Helios Software (R4B)") {
+        url = settings.helios_software_r4b();
+        (this as any).$appInsights?.trackEvent({ name: 'evaluate Helios Software' });
+      }
+      else if (this.selectedEngine2?.legacyName == "Helios Software (R5)") {
+        url = settings.helios_software_r5();
+        (this as any).$appInsights?.trackEvent({ name: 'evaluate Helios Software' });
+      }
       else {
         url = settings.dotnet_server_r4b();
         (this as any).$appInsights?.trackEvent({ name: 'evaluate FirelySDK' });
