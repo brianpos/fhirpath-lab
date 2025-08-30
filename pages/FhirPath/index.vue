@@ -2185,6 +2185,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         // If this is trying to download a hl7 example, run it through the downloader proxy
         // as the HL7 servers don't have CORS for us
         if (url.startsWith("https://build.fhir.org/")
+            || url.startsWith("https://github.com/HL7/")
             || url.startsWith("https://hl7.org/fhir/"))
             url = settings.dotnet_server_downloader() + "?url=" + url;
 
@@ -2194,7 +2195,8 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         let token = this.cancelSource.token;
         let headers = {
             "Cache-Control": "no-cache",
-            "Accept": requestFhirAcceptHeaders + ", " + requestFhirXmlAcceptHeaders,
+            // use a simplified header here
+            "Accept": "application/fhir+json, application/json, application/fhir+xml, text/xml",
           }
         const response = await axios.get<fhir4b.Resource | string>(url, {
           cancelToken: token,
