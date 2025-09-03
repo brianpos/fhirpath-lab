@@ -62,12 +62,15 @@
             <v-list-item href="/StructureMap">
               <v-list-item-title>Structure Maps</v-list-item-title>
             </v-list-item>
-            <v-list-item href="/FhirMapper2">
-              <v-list-item-title>Test Structure Map</v-list-item-title>
-            </v-list-item>
-          </v-list-item-group>
-        </v-list>
-      </v-menu>
+          <v-list-item href="/FhirMapper2">
+            <v-list-item-title>Test Structure Map</v-list-item-title>
+          </v-list-item>
+          <v-list-item href="/invariant-tester">
+            <v-list-item-title>Invariant Tester</v-list-item-title>
+          </v-list-item>
+        </v-list-item-group>
+      </v-list>
+    </v-menu>
 
       <v-btn icon small @click="overlay = true" title="Settings">
         <v-icon small>mdi-cog</v-icon>
