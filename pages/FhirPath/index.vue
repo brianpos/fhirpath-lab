@@ -1181,29 +1181,31 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     },
 
     CtrlEnterHandler(event: KeyboardEvent): void {
-      // Ctrl + Enter to evaluate the expression
-      // Command + Enter to evaluate the expression on MacOS     
-      if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
-        // Check if the focus is in the Test Resource Id field
-        const activeElement = document.activeElement as HTMLElement;
-        
-        // Check if the active element is an input field and is likely the Test Resource Id field
-        // We check for input type and if it's part of a v-text-field with "Test Resource Id" label
-        if (activeElement && activeElement.tagName === 'INPUT') {
-          const parentElement = activeElement.closest('.v-text-field');
-          if (parentElement) {
-            const labelElement = parentElement.querySelector('label');
-            if (labelElement && labelElement.textContent?.includes('Test Resource Id')) {
-              // Focus is in the Test Resource Id field, download the test resource
+      // Check if the focus is in the Test Resource Id field
+      const activeElement = document.activeElement as HTMLElement;
+      
+      // Check if the active element is an input field and is likely the Test Resource Id field
+      // We check for input type and if it's part of a v-text-field with "Test Resource Id" label
+      if (activeElement && activeElement.tagName === 'INPUT') {
+        const parentElement = activeElement.closest('.v-text-field');
+        if (parentElement) {
+          const labelElement = parentElement.querySelector('label');
+          if (labelElement && labelElement.textContent?.includes('Test Resource Id')) {
+            // Focus is in the Test Resource Id field, use Enter to download the test resource
+            if (event.key === "Enter" && !event.ctrlKey && !event.metaKey) {
               this.downloadTestResource();
               event.preventDefault();
               return;
             }
           }
         }
-        
-        // Otherwise, evaluate the FHIRPath expression as usual
+      }
+      
+      // Ctrl + Enter to evaluate the expression
+      // Command + Enter to evaluate the expression on MacOS
+      if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
         this.evaluateFhirPathExpression();
+        event.preventDefault();
       }
     },
 
