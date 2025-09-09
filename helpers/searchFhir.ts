@@ -7,7 +7,8 @@ import { ConformanceResourceInterface } from "~/models/ConformanceResourceInterf
 import { BaseResourceData } from "~/models/BaseResourceTableData";
 import { settings } from "./user_settings";
 
-export const requestFhirAcceptHeaders = "application/fhir+json; fhirVersion=4.0, application/fhir+json";
+export const requestFhirAcceptHeaders = "application/fhir+json, application/json";
+export const requestFhirXmlAcceptHeaders = "application/fhir+xml, text/xml";
 export const requestFhirMapAcceptHeaders = "text/fhir-mapping";
 export const requestFhirContentTypeHeaders = "application/fhir+json";
 export const fhirResourceTypes = [

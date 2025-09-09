@@ -3,6 +3,66 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+# 9 September 2025
+* Milestone release to prod
+* Debugger trace support for HAPI/Firely engines
+* FHIR version selector separately selectable from the engine selector
+* partial XML support for fhirpath tests (if engine supports it)
+* FHIR R6-ballot 3 support 
+* Helios FHIRPath engine
+* Lots of minor functionality improvements and bug fixes
+
+# 30 August 2025 (dev)
+* XML test resource support for fhirpath
+  * tooltip for engines indicates if they support xml and json
+  * test resource editor changes to XML mode if XML content is detected (checking first char is explicitly `<`)
+  * passes XML content via the extension `http://fhir.forms-lab.com/StructureDefinition/xml-value` instead of `part.resource`
+  * Download supports handling XML if returned by the server (use &_format=xml if needed)
+  * reports an error if the selected engine doesn't support xml
+  * test resource field label indicates which resource format was detected (default = json) 
+  * property highlight selection able to handle xml test resources
+* Download resource via ctrl+enter when in the test resource id field
+* Include support for Firely's R6-ballot3 engine
+
+# 28 August 2025 (dev)
+* Add Helios Software fhirpath engine for R4B/R6
+
+# 20 August 2025 (dev)
+* refactor the engine selector to remove some of the old engine selector code that's no longer needed
+* move the debugger controls into the header nav bar from the tab header (moving the other buttons is bad user experience)
+* when debug stepping, don't auto swap tabs when in single pane mode
+
+# 19 August 2025 (dev)
+* Remove the IBM FHIRPath engine - is on an old version ( pre-move to Linux for health), so out of date already.
+
+# 14 August 2025 (dev)
+* Update NLM LHC-Forms to 38.2.0
+
+# 8 August 2025 (dev)
+* fhirpath debug tracer shows primitive values for properties along with the full path
+* refactor the debug pane in the fhirpath test page to use the standard resource editor/viewer
+* update the resource editor to use the <enter> key to download the resource, and also handle XML download better
+* add the Python R5 engine
+* split the fhirpath engine selector into 2 fields, one for the engine and one for the FHIR version
+* add interim version of the fhirpath.js running on R6
+
+# 1 August 2025 (dev)
+* Fix issue where json path walker was not correctly handling the `BackboneElement` and `Element` types in the json parser
+* Update the CSIRO renderer to 1.0.0-alpha.83
+* When launching the fhirpath page with a resourceId parameter automatically load the resource content
+
+# 29 July 2025 (dev)
+* Preliminary support for R6 ballot3 (from JAVA engine only)
+* fix target navigation to properties in contained resources
+
+# 2 July 2025 (dev)
+* Refinements to the debugger UI experience
+* inclusion of the first pass fhirpath engine test results matrix page
+
+# 12 June 2025 (dev)
+* Update fhirpath.js fullPropertyName to resolve a couple of issues
+* Update json parser to permit selection of root resource item
+
 # 24 May 2025 (dev)
 * Updated to fhirpath.js 4.3.0 (providing path information in the results and trace)
 * Update to the latest sqlonfhir-v2 engine (v0.1.0-alpha.3)

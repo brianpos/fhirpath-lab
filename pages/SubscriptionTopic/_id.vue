@@ -132,7 +132,7 @@
         <v-expansion-panel>
           <v-expansion-panel-header>Raw JSON</v-expansion-panel-header>
           <v-expansion-panel-content>
-            <code><pre v-text="JSON.stringify(raw, null, 2)" /></code>
+            <code><pre v-text="JSON.stringify(raw, null, tabSpaces())" /></code>
           </v-expansion-panel-content>
         </v-expansion-panel>
       </v-expansion-panels>
@@ -196,6 +196,9 @@ export default Vue.extend({
     this.searchFhirServer();
   },
   methods: {
+    tabSpaces: function() {
+      return settings.getTabSpaces();
+    },
     addResourceTrigger: function() {
       const newTrigger: fhir4b.SubscriptionTopicResourceTrigger = {
         resource: "",

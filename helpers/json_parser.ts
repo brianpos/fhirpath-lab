@@ -9,7 +9,7 @@ import r4Model from "fhirpath/fhir-context/r4";
 // This model interface is internal to the fhirpath library, so cloning it here too
 export interface Model {
   // Model version, e.g. 'r5', 'r4', 'stu3', or 'dstu2'.
-  version: 'r5' | 'r4' | 'stu3' | 'dstu2',
+  version: string, // 'r5' | 'r4' | 'stu3' | 'dstu2',
 
   // This section contains setting for the `weight()` function.
   score?: {
@@ -124,53 +124,71 @@ interface IJsonNodeInternal extends IJsonNode {
 export function findNodeByPath(node: IJsonNode, path: string): IJsonNode | undefined {
   // If node has a DataType and path doesn't start with it, prepend the DataType
   if (node.DataType && !path.startsWith(node.DataType)) {
-    return findChildNodeByPathSegments(node, (node.DataType + "." + path).split("."));
+    return findChildNodeByPathSegments(node, (node.DataType + "." + path));
   }
-  return findChildNodeByPathSegments(node, path.split("."));
+  return findChildNodeByPathSegments(node, path);
 }
 
-function findChildNodeByPathSegments(node: IJsonNode, pathSegments: string[]): IJsonNode | undefined {
-  if (pathSegments.length === 0) {
-    // Not expected to get here as implied not searching for a path
-    return undefined;
+function findChildNodeByPathSegments(node: IJsonNode, path: string): IJsonNode | undefined {
+  // its this node exactly!
+  if (node.Path === path) {
+    return node;
   }
 
-  const processingSegment = pathSegments[0];
-  const processingSegmentWithoutArray = processingSegment.split("[")[0];
-
-  if (node.text !== processingSegmentWithoutArray) {
-    // this is not the node we are looking for ...
-    return undefined;
+  // Check if we have a flexible match where the search path includes [0] but the node path doesn't
+  // This handles cases where XML parsing doesn't add [0] for single elements but search expects it
+  if (node.Path && pathsMatchWithFlexibleArrayIndex(node.Path, path)) {
+    return node;
   }
 
-  if (pathSegments.length === 1) {
-    // this IS the node we are looking for :)
-    if (!node.isArray || processingSegment === processingSegmentWithoutArray)
-      return node;
+  if (!path.startsWith(node.Path + '.') && !path.startsWith(node.Path + '[')) {
+    // Check if this might be a flexible match case
+    const flexibleNodePath = node.Path;
+    if (flexibleNodePath && !pathsAreRelated(flexibleNodePath, path)) {
+      return undefined;
+    }
   }
-
+  
   if (node.children) {
-    // this is one of our children!
-    const remainingSegments = node.isArray ? pathSegments : pathSegments.slice(1);
+    // Check for one of our children
     for (const child of node.children) {
       let found: IJsonNode | undefined = findChildNodeByPathSegments(
         child,
-        remainingSegments
+        path
       );
       if (found) {
-        if (node.isArray) {
-          if (node.children.length == 1 || child.text+'['+child.Index+']' === processingSegment) {
-            return found;
-          }
-        }
-        else {
-            return found;
-        }
+        return found;
       }
     }
   }
 
   return undefined;
+}
+
+/**
+ * Checks if two paths match allowing for flexible array indexing.
+ * For example: "Patient.name.given.extension.value" matches "Patient.name[0].given[0].extension[0].value"
+ */
+export function pathsMatchWithFlexibleArrayIndex(nodePath: string, searchPath: string): boolean {
+  // Convert both paths to normalized forms by removing [0] indices
+  const normalizedNodePath = nodePath.replace(/\[0\]/g, '');
+  const normalizedSearchPath = searchPath.replace(/\[0\]/g, '');
+  
+  return normalizedNodePath === normalizedSearchPath;
+}
+
+/**
+ * Checks if two paths are related (one could be a parent/child of the other)
+ * taking into account flexible array indexing.
+ */
+function pathsAreRelated(nodePath: string, searchPath: string): boolean {
+  const normalizedNodePath = nodePath.replace(/\[0\]/g, '');
+  const normalizedSearchPath = searchPath.replace(/\[0\]/g, '');
+  
+  return normalizedSearchPath.startsWith(normalizedNodePath + '.') || 
+         normalizedNodePath.startsWith(normalizedSearchPath + '.') ||
+         normalizedSearchPath.startsWith(normalizedNodePath + '[') ||
+         normalizedNodePath.startsWith(normalizedSearchPath + '[');
 }
 
 export function parseJson(path: string, modelInfo?: Model) {
@@ -198,7 +216,7 @@ export function parseJson(path: string, modelInfo?: Model) {
   return printer.result();
 };
 
-function getPropertyDataType(modelInfo: Model, dataType: string, path: string): string[] {
+export function getPropertyDataType(modelInfo: Model, dataType: string, path: string): string[] {
   // lookup the definition path in the path2Type map
   let definitionPath = dataType + "." + path;
   const elsewherePath = modelInfo.pathsDefinedElsewhere[definitionPath];
@@ -208,7 +226,7 @@ function getPropertyDataType(modelInfo: Model, dataType: string, path: string): 
   const definitionPath2Type = modelInfo.path2Type[definitionPath];
   let type: string[] = [];
   if (definitionPath2Type) {
-    if (definitionPath2Type === "BackboneElement")
+    if (definitionPath2Type === "BackboneElement" || definitionPath2Type === "Element")
       type.push(definitionPath); // backbone elements are their own type
   else
       type.push(definitionPath2Type);
@@ -295,12 +313,11 @@ class PathListener extends Listener {
         let primitiveProperties = currentChildren?.filter((child) => {
           return child.Path === extChild.Path && !child.text?.startsWith('_');
         });
-        if (primitiveProperties && primitiveProperties.length > 0){
+        if (primitiveProperties && primitiveProperties.length > 0) {
           // this is a primitive extension with a value, so we just need to move the
           // children over to it.
           let primitiveProperty = primitiveProperties[0];
-          if (primitiveProperty.children === undefined)
-            primitiveProperty.children = [];
+          primitiveProperty.children ??= [];
           primitiveProperty.children = extChild.children?.concat(primitiveProperty.children);
           extChild.deleteMe = true;
         }
@@ -314,6 +331,14 @@ class PathListener extends Listener {
       currentNode.children = currentChildren?.filter((child) => {
         return !child.deleteMe;
       });
+
+      // for root node set position information if not already set
+      currentNode.position ??= {
+          line: ctx.start.line,
+          column: ctx.start.column,
+          prop_start_pos: ctx.start.start,
+          prop_stop_pos: ctx.stop?.stop ?? ctx.start.stop,
+      };
 
       // remove the hasPrimitiveExtensions flag
       delete currentNode.hasPrimitiveExtensions;
@@ -338,8 +363,7 @@ class PathListener extends Listener {
       Path: '',
       position: { line: ctx.start.line, column: ctx.start.column, prop_start_pos: ctx.start.start, prop_stop_pos: ctx.start.stop },
     };
-    if (parentNode.children === undefined)
-      parentNode.children = [];
+    parentNode.children ??= [];
     parentNode.children.push(node);
     this.parentStack2.push(node);
   }

@@ -76,13 +76,14 @@
         These are the versions of each of the fhirpath engines in use:
       </p>
       <ul style="padding-left: 40px">
-        <li>Firely SDK FHIRPath Engine v5.11.4 <i>(server side)</i></li>
+        <li>Firely SDK FHIRPath Engine v5.12.1 <i>(server side)</i></li>
         <li>FHIRPath.js v{{ fhirpathVersion }}</li>
-        <li>HAPI FHIRPath v6.5.20 <i>(server side)</i></li>
-        <li>IBM FHIRPath v4.11.1 (LinuxForHealth)<i> (server side)</i></li>
-        <li>Dotnet FHIRMappingLanguage Engine v5.10.0<i> (server side)</i></li>
+        <li>HAPI FHIRPath v6.6.3 <i>(server side)</i></li>
+        <li>Dotnet FHIRMappingLanguage Engine v5.11.4<i> (server side)</i></li>
         <li>FHIRPath-py <i>(server side - externally hosted by Beda Software)</i></li>
         <li>Aidbox FHIRPath Engine (Health Samurai)<i> (server side - externally hosted by Health Samurai)</i></li>
+        <li>Helios Software<i> (server side - externally hosted by Helios Software)</i></li>
+        <li style="color: grey"><i>IBM FHIRPath (LinuxForHealth) (deprecated)</i></li>
       </ul>
       <br />
       <h5>Disclaimers:</h5>

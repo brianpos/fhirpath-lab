@@ -71,11 +71,17 @@ export namespace settings {
     export function dotnet_server_r5(): string {
         return serverConnections.dotnet_server_r5;
     }
+    export function dotnet_server_r6(): string {
+        return serverConnections.dotnet_server_r6;
+    }
     export function java_server_r4b(): string {
         return serverConnections.java_server_r4b;
     }
     export function java_server_r5(): string {
         return serverConnections.java_server_r5;
+    }
+    export function java_server_r6(): string {
+        return serverConnections.java_server_r6;
     }
     export function ibm_server_r4b(): string {
         return serverConnections.ibm_server_r4b;
@@ -92,13 +98,22 @@ export namespace settings {
     export function python_server_r4b(): string {
         return serverConnections.python_server_r4b;
     }
+    export function python_server_r5(): string {
+        return serverConnections.python_server_r5;
+    }
     export function clojure_server_r4(): string {
         return serverConnections.clojure_server_r4;
     }
     export function clojure_server_r5(): string {
         return serverConnections.clojure_server_r5;
     }
-    
+    export function helios_software_r4b(): string {
+        return serverConnections.helios_server_r4b;
+    }
+    export function helios_software_r5(): string {
+        return serverConnections.helios_server_r5;
+    }
+
     export function getSearchData(type: string): ConformanceSearchData | undefined {
         const sdJson = localStorage.getItem(`search_${type}`);
         if (sdJson){
@@ -118,11 +133,11 @@ export namespace settings {
 
     export function getFhirServerUrl(): string {
         try {
-            return localStorage.getItem("settings_fhirServerURL") ?? "https://sqlonfhir-r4.azurewebsites.net/fhir";
+            return localStorage.getItem("settings_fhirServerURL") ?? "https://fhir.forms-lab.com";
         }
         catch {
             console.log("error reading the FHIR Server URL configuration value");
-            return "https://sqlonfhir-r4.azurewebsites.net/fhir";
+            return "https://fhir.forms-lab.com";
         }
     }
 
@@ -248,7 +263,7 @@ export namespace settings {
 
     export function load(): UserSettingsData {
         return {
-            fhirServerUrl: localStorage.getItem("settings_fhirServerURL") ?? "https://sqlonfhir-r4.azurewebsites.net/fhir",
+            fhirServerUrl: localStorage.getItem("settings_fhirServerURL") ?? "https://fhir.forms-lab.com",
             fhirServerExamplesUrl: localStorage.getItem("settings_fhirServerExamplesURL") ?? "https://hapi.fhir.org/baseR4",
             OAuthClientId: localStorage.getItem("settings_OAuthClientId") ?? undefined,
             fhirTerminologyServerUrl: localStorage.getItem("settings_fhirTerminologyServerURL") ?? "https://sqlonfhir-r4.azurewebsites.net/fhir",
@@ -291,10 +306,10 @@ export namespace settings {
             else localStorage.removeItem("settings_defaultProviderField");
             if (settings.defaultNewCanonicalBase) localStorage.setItem("settings_defaultNewCanonicalBase", settings.defaultNewCanonicalBase);
             else localStorage.removeItem("settings_defaultNewCanonicalBase");
-            
+
             if (settings.openAIKey) localStorage.setItem("settings_openAIkey", settings.openAIKey);
             else localStorage.removeItem("settings_openAIkey");
-            
+
             if (settings.openAIBasePath) localStorage.setItem("settings_openAIBasePath", settings.openAIBasePath);
             else localStorage.removeItem("settings_openAIBasePath");
             if (settings.openAIApiVersion) localStorage.setItem("settings_openAIApiVersion", settings.openAIApiVersion);

@@ -1,6 +1,25 @@
 <template>
   <div>
     <HeaderNavbar @close-settings="settingsClosed" :extended="false">
+      <template v-slot:extraNavButtons>
+          <div v-if="debugTracePosition != undefined" style="border-radius: 8px; border: solid 1px white; padding: 4px; margin-left: 6px;">
+            <v-btn v-if="debugTracePosition != undefined" x-small dark icon @click="debugTracePosition = 1; debuggerStepBack()" title="Reset to first trace">
+              <v-icon>
+                mdi-bug-play-outline
+              </v-icon>
+            </v-btn>
+            <v-btn v-if="debugTracePosition != undefined" x-small dark icon @click="debuggerStepForward()" :disabled="debugTracePosition >= debugTraceData.length - 1" title="Step forward in trace">
+              <v-icon>
+                mdi-debug-step-into
+              </v-icon>
+            </v-btn>
+            <v-btn v-if="debugTracePosition != undefined" x-small dark icon @click="debuggerStepBack()" :disabled="debugTracePosition <= 0" title="Step back in trace">
+              <v-icon>
+                mdi-debug-step-out
+              </v-icon>
+            </v-btn>
+          </div>
+      </template>
     </HeaderNavbar>
     <table-loading v-if="loadingData" />
 
@@ -9,13 +28,25 @@
         <v-toolbar flat color="primary">
           <v-toolbar-title>{{ tabTitle() }}</v-toolbar-title>
           <v-spacer />
-          <v-select dark class="engineselector" :items="executionEngines" v-model="selectedEngine" hide-details="auto"
-            @change="evaluateFhirPathExpression">
+
+          <v-select dark style="max-width: 6ch; margin-right: 8px; margin-left: 8px;" :items="fhirVersions" v-model="selectedFhirVersion" hide-details="auto" @change="changeFhirVersion">
             <template v-slot:item="{ item }">
-              <span v-if="externalExecutionEngines.indexOf(item) == -1">{{ item }}</span>
-              <span class="externalExecutionEngine" title="Externally hosted FhirPath Engine" v-if="externalExecutionEngines.indexOf(item) >= 0"><v-icon small>mdi-web</v-icon> {{ item }} *</span>
+              <span>{{ item }}</span>
             </template>
           </v-select>
+          <v-select dark style="max-width: 13ch" :items="engines" item-text="name" return-object 
+          v-model="selectedEngine2" hide-details="auto" @change="evaluateFhirPathExpression"
+            :title="engineTooltip(selectedEngine2)">
+            <template v-slot:item="{ item }">
+              <div style="padding-top: 2px; padding-bottom: 2px;" :title="engineTooltip(item)">
+                <span v-if="!item.external">{{ item.name }}</span>
+                <span class="externalExecutionEngine" title="Externally hosted FhirPath Engine" v-if="item.external"><v-icon small>mdi-web</v-icon> {{ item.name }} *</span>
+                <br/>
+                <span :class="'publisher' + (item.external ? ' externalExecutionEngine' : '')">{{ item.publisher }}</span>
+              </div>
+            </template>
+          </v-select>
+
           <v-btn icon dark accesskey="g" title="press alt+g to go" @focus="checkFocus" @click="evaluateFhirPathExpression">
             <v-icon>
               mdi-play
@@ -85,6 +116,86 @@
             <div height="85px" width="100%" ref="aceEditorExpression"></div>
             <div class="ace_editor_footer"></div>
 
+            <template v-if="debugTracePosition != undefined && debugTraceData.length > 0 && debugTraceData[debugTracePosition].thisVar != undefined && debugTraceData[debugTracePosition].thisVar.length > 0">
+              <div class="results">Debug variables</div>
+              <v-simple-table>
+                <template v-for="(resultValue, i1) in debugTraceData[debugTracePosition].values">
+                <tr :key="'val-' + i1">
+                  <td class="result-type">
+                    <span style="white-space:nowrap;" v-if="debugTraceData[debugTracePosition].exprName != undefined"> {{ debugTraceData[debugTracePosition].exprName }} <v-icon x-small>mdi-keyboard-return</v-icon></span>&nbsp;
+                  </td>
+                  <td class="result-value">
+                    <div class="code-json" v-if="resultValue.value != null">{{ resultValue.value }}</div>
+                    <div class="code-json" v-if="resultValue.value == null && resultValue.valueType == 'empty-string'"><i>""</i></div>
+                  </td>
+                  <td class="result-type">
+                    <i v-if="resultValue.valueType">({{ resultValue.valueType }})</i>
+                    <span v-if="resultValue.resourcePath" class="result-path">{{ resultValue.resourcePath }}
+                      <v-btn v-if="resultValue.resourcePath" x-small class="result-path-target" icon title="Goto context" @click="navigateToContext(resultValue.resourcePath)">
+                      <v-icon>
+                        mdi-target
+                      </v-icon>
+                    </v-btn>
+                    </span>
+                  </td>
+                </tr>
+                </template>
+                <template v-for="(focusValue, i1) in debugTraceData[debugTracePosition].focusVar">
+                <tr :key="'focus-' + i1">
+                  <td title="Input Collection" class="result-type debug-row">
+                    $focus
+                  </td>
+                  <td class="result-value debug-row">
+                    <div class="code-json" v-if="focusValue.value != undefined">{{ focusValue.value }}</div>
+                    <div class="code-json" v-if="focusValue.value == undefined && focusValue.valueType == 'empty-string'"><i>""</i></div>
+                  </td>
+                  <td class="result-type debug-row">
+                    <i v-if="focusValue.valueType">({{ focusValue.valueType }})</i>
+                    <span v-if="focusValue.resourcePath" class="result-path">{{ focusValue.resourcePath }}
+                      <v-btn v-if="focusValue.resourcePath" x-small class="result-path-target" icon title="Goto context" @click="navigateToContext(focusValue.resourcePath)">
+                      <v-icon>
+                        mdi-target
+                      </v-icon>
+                    </v-btn>
+                    </span>
+                  </td>
+                </tr>
+                </template>
+                <tr v-if="debugTraceData[debugTracePosition].index != undefined">
+                  <td class="result-type debug-row">
+                    <span style="white-space:nowrap;">index</span>
+                  </td>
+                  <td class="result-value debug-row">
+                    <div class="code-json">{{ debugTraceData[debugTracePosition].index }}</div>
+                  </td>
+                  <td class="result-type debug-row">
+                    &nbsp;
+                  </td>
+                </tr>
+                <template v-for="(thisValue, i1) in debugTraceData[debugTracePosition].thisVar">
+                <tr :key="'this-' + i1">
+                  <td class="result-type debug-row">
+                    $this
+                  </td>
+                  <td class="result-value debug-row">
+                    <div class="code-json" v-if="thisValue.value != undefined">{{ thisValue.value }}</div>
+                    <div class="code-json" v-if="thisValue.value == undefined && thisValue.valueType == 'empty-string'"><i>""</i></div>
+                  </td>
+                  <td class="result-type debug-row">
+                    <i v-if="thisValue.valueType">({{ thisValue.valueType }})</i>
+                    <span v-if="thisValue.resourcePath" class="result-path">{{ thisValue.resourcePath }}
+                      <v-btn v-if="thisValue.resourcePath" x-small class="result-path-target" icon title="Goto context" @click="navigateToContext(thisValue.resourcePath)">
+                      <v-icon>
+                        mdi-target
+                      </v-icon>
+                    </v-btn>
+                    </span>
+                  </td>
+                </tr>
+                </template>
+              </v-simple-table>
+            </template>
+
             <div class="results">RESULTS <span class="processedBy">{{ processedByEngine }}</span></div>
             <OperationOutcomePanel :outcome="expressionParseOutcome" @close="expressionParseOutcome = undefined" />
             <template v-for="(r2, i1) in results">
@@ -133,7 +244,7 @@
                 <v-btn small icon tile @click="reformatTestResource"><v-icon title="Format json" dark> mdi-format-indent-increase </v-icon></v-btn>
               </template>
             </v-text-field>
-            <label class="v-label theme--light bare-label">Test Resource JSON <i>{{ resourceJsonChangedMessage() }}</i></label>
+            <label class="v-label theme--light bare-label">Test Resource {{resourceFormat}} <i>{{ resourceJsonChangedMessage() }}</i></label>
             <div class="resource" width="100%" ref="aceEditorResourceJsonTab"></div>
             <!-- <div class="ace_editor_footer"></div> -->
           </template>
@@ -185,7 +296,7 @@
                     <td class="result-type">
                       <i v-if="v1.type">({{ v1.type }})</i>
                       <span v-if="v1.path" class="result-path">{{ v1.path }}
-                        <v-btn v-if="v1.path" x-small class="result-path-target" icon title="Goto context" @click="navigateToContext(v1.path)">
+                        <v-btn v-if="v1.path" x-small class="result-path-target" icon title="Goto context" @click="navigateToContext(v1.path, v1.name)">
                         <v-icon>
                           mdi-target
                         </v-icon>
@@ -223,7 +334,7 @@
           </template>
 
           <template v-slot:Debug>
-            <div class="debug" ref="aceEditorDebug"></div>
+            <resource-editor class="debug" textLabel="Debug" :readOnly="true" :resourceText="debugText" />
           </template>
 
           <template v-slot:Library>
@@ -262,7 +373,7 @@
 
 <style lang="scss">
 .externalExecutionEngine {
-  color: blueviolet;
+  color: blueviolet !important;
 }
 .resetButton {
   right: 20px;
@@ -308,9 +419,14 @@
 .resultSelection {
   position: absolute;
   z-index: 20;
-  background-color: #9acd3220;
+  background-color: #5240ef65;
 }
 
+.debugSelection {
+  position: absolute;
+  z-index: 20;
+  background-color: #fbff82b1;
+}
 </style>
 
 <style lang="scss" scoped>
@@ -321,6 +437,17 @@
 </style>
 
 <style lang="scss" scoped >
+.publisher {
+  font-style: italic;
+  font-size: small;
+  color: grey;
+  padding-left: 12px;
+}
+
+.debug-row {
+  background-color: #ebebeb;
+}
+
 .result-type:has(.result-path) {
   padding-bottom: 12px;
 }
@@ -422,6 +549,7 @@ import "vue-router";
 import { settings, ILastUsedParameters } from "~/helpers/user_settings";
 import {
   requestFhirAcceptHeaders,
+  requestFhirXmlAcceptHeaders,
   requestFhirContentTypeHeaders,
   fhirResourceTypes,
   saveFhirResource,
@@ -430,13 +558,15 @@ import {
 import axios, { AxiosRequestHeaders, AxiosResponse } from "axios";
 import { AxiosError } from "axios";
 import { CancelTokenSource } from "axios";
+import xmlFormat from 'xml-formatter';
 import { addExtension, addExtensionStringValue, clearExtension, getExtensionCodingValues, getExtensionReferenceValue, getExtensionStringValue, setExtension, setExtensionStringValue } from "fhir-extension-helpers";
 import { fpjsNode, getTraceValue, getValue, JsonNode, ResultData } from "~/models/FhirpathTesterData";
 import { GetExternalVariablesUsed, InvertTree, mapFunctionReferences } from "~/components/ParseTreeTab.vue";
 // import { getPreferredTerminologyServerFromSDC } from "fhir-sdc-helpers";
-import fhirpath, { AsyncOptions } from "fhirpath";
+import fhirpath, { AsyncOptions, Model } from "fhirpath";
 import fhirpath_r4_model from "fhirpath/fhir-context/r4";
 import fhirpath_r5_model from "fhirpath/fhir-context/r5";
+import fhirpath_r6_model from "~/models/r6";
 import { setAcePaths, Rules as FhirPathHightlighter_Rules, setCustomHighlightRules } from "~/helpers/fhirpath_highlighter"
 import "~/assets/fhirpath_highlighter.scss"
 import { IApplicationInsights } from '@microsoft/applicationinsights-web'
@@ -460,7 +590,9 @@ import { LibraryData } from "~/models/LibraryTableData";
 import { BaseResource_defaultValues } from "~/models/BaseResourceTableData";
 import { DomainResource, FhirResource, Resource } from "fhir/r4b";
 import { findNodeByPath, IJsonNode, IJsonNodePosition, parseJson } from "~/helpers/json_parser";
+import { parseXml } from "~/helpers/xml_parser";
 import TwinPaneTab, { TabData } from "~/components/TwinPaneTab.vue";
+import { IFhirPathEngineDetails, registeredEngines } from "~/types/fhirpath_test_engine";
 
 const shareTooltipText = 'Copy a sharable link to this test expression';
 const shareZulipTooltipText = 'Copy a sharable link for Zulip to this test expression';
@@ -628,6 +760,23 @@ const examplePatient = `
   }
 }`;
 
+interface DebugTraceData {
+  context: string;
+  exprPosition?: number;
+  exprLength?: number;
+  exprName?: string;
+  values?: DebugTraceValue[];
+  index?: number;
+  focusVar?: DebugTraceValue[];
+  thisVar?: DebugTraceValue[];
+}
+
+interface DebugTraceValue {
+  resourcePath?: string;
+  value?: any;
+  valueType?: string;
+}
+
 interface FhirPathData {
   prevFocus?: any;
   raw?: fhir4b.Parameters;
@@ -635,6 +784,7 @@ interface FhirPathData {
   resourceId?: string;
   resourceType?: string;
   resourceJsonChanged: boolean;
+  resourceFormat: string;
   loadingData: boolean;
   saveOutcome?: fhir4b.OperationOutcome;
   showOutcome?: boolean;
@@ -643,14 +793,14 @@ interface FhirPathData {
   terminologyServer: string;
   cancelSource?: CancelTokenSource;
   results: ResultData[];
-  selectedEngine: string;
-  executionEngines: string[];
-  externalExecutionEngines: string[];
+  fhirVersions: string[];
+  selectedFhirVersion: string;
+  selectedEngine2: IFhirPathEngineDetails|undefined;
   shareToolTipMessage: string;
   shareZulipToolTipMessage: string;
   expressionEditor?: ace.Ace.Editor;
   expressionContextEditor?: ace.Ace.Editor;
-  debugEditor?: ace.Ace.Editor;
+  debugText?: string;
   resourceJsonEditor?: ace.Ace.Editor;
   variables: Map<string, VariableData>;
   processedByEngine?: string;
@@ -663,18 +813,33 @@ interface FhirPathData {
   expressionParseOutcome?: fhir4b.OperationOutcome;
   astInverted: boolean;
   enableSave: boolean;
+  debugTracePosition?: number;
+  debugTraceData: DebugTraceData[];
+  debugExpressionSelectionMarker?: number[];
+  debugTestResourceSelectionMarker?: number[];
+  debugThisSelectionMarker?: number[];
 }
 
 function fullPropertyName(node: ResourceNode) : string | undefined {
   if (node.propName === undefined) {
     return undefined;
   }
-  let result = node.parentResNode ? fullPropertyName(node.parentResNode) + '.' + node.propName : node.path ?? undefined;
-    if (node.index !== undefined && node.index !== null) {
-      result += '[' + node.index + ']';
+  // check if the property name is for a primitive extension in FHIR
+  let propName = (node.propName?.startsWith('_') && node.model) ? node.propName.substring(1) : node.propName;
+
+  // Now Check if this is a choice type
+  if (node.parentResNode && node.model && node.fhirNodeDataType && propName.endsWith(node.fhirNodeDataType.charAt(0).toUpperCase() + node.fhirNodeDataType.substring(1))) {
+    if (node.model && node.model.choiceTypePaths[node.parentResNode?.path + '.' + propName.substring(0, propName.length - node.fhirNodeDataType.length)]) {
+      propName = propName.substring(0, propName.length - node.fhirNodeDataType.length);
     }
-    return result;
   }
+
+  let result = node.parentResNode ? fullPropertyName(node.parentResNode) + '.' + propName : node.path ?? undefined;
+  if (node.index !== undefined && node.index !== null) {
+    result += '[' + node.index + ']';
+  }
+  return result;
+}
 
 interface ResourceNode {
   /**
@@ -715,6 +880,11 @@ interface ResourceNode {
    */
   convertData(): any;
  
+  /**
+   * The FHIR model used for this node
+   */
+  model : fhirpath.Model;
+
   /**
    * Retrieve any type information if available
    */
@@ -763,13 +933,19 @@ export interface IFhirPathMethods
   fhirpathExpressionChangedEvent(): void;
   fhirpathContextExpressionChangedEvent(): void;
   resourceJsonChangedMessage(): string | undefined;
+  engineTooltip(engineDetails: IFhirPathEngineDetails|undefined): string|undefined;
   tabTitle(): void;
   settingsClosed(): void;
   updateNow():void;
   updateNextTick():void;
   selectTab(selectTab: number): void;
-  tabChanged(index: Number): void;
+  tabChanged(index: number): void;
   getCompletions(editor: ace.Ace.Editor, session: ace.Ace.EditSession, pos: any, prefix: any, callback: any): void;
+  DebugFunctionKeyHandler(event: KeyboardEvent): void;
+  debuggerStepForward(): void;
+  debuggerStepBack(): void;
+  removeMarker(editor: ace.Ace.Editor | undefined, markerId: number): void;
+  removeMarkers(editor: ace.Ace.Editor | undefined, markerIds: number[] | undefined): void;
 
   getContextExpression(): string | undefined;
   getFhirpathExpression(): string | undefined;
@@ -784,22 +960,26 @@ export interface IFhirPathMethods
   reformatTestResource(): void;
   downloadTestResource(): void;
   downloadVariableResource(name: string): void;
+  evaluateExpressionUsingFhirpathJsRx(modelInfo: Model, fhirVersion: string): void;
   evaluateExpressionUsingFhirpathJs(): void;
   evaluateExpressionUsingFhirpathJsR5(): void;
+  evaluateExpressionUsingFhirpathJsR6(): void;
   prepareSharePackageData(): TestFhirpathData;
   showShareLink(): boolean;
   updateShareText(): void;
   updateZulipShareText(): void;
   copyShareLinkToClipboard(): void;
   copyZulipShareLinkToClipboard(): void;
+  changeFhirVersion(): void;
   evaluateFhirPathExpression(): void;
   checkFocus(event: any): void;
   saveLastUsedParameters(loadCompleted: boolean): void;
   createNewLibrary(): void;
   saveLibrary(): void;
-  navigateToContext(elementPath: string): void;
+  getCurrentModelInfo(): Model;
+  navigateToContext(elementPath: string, variableName?: string, debugMode?: boolean): void;
   navigateToExpressionNode(node: JsonNode): void;
-  highlightText(editor?: ace.Ace.Editor, startPosition?: number, length?: number): void;
+  highlightText(editor?: ace.Ace.Editor, startPosition?: number, length?: number, debugMode?: boolean): void;
   highlightTextByLine(editor?: ace.Ace.Editor, startLine?: number, startColumn?: number, length?: number): void;
 
   GetAISettings(): IOpenAISettings;
@@ -813,6 +993,7 @@ export interface IFhirPathMethods
 interface IFhirPathComputed
 {
   tabDetails: TabData[];
+  engines: IFhirPathEngineDetails[];
 
   enableSaveLibrary: boolean;
   enableCreateLibrary: boolean;
@@ -823,7 +1004,6 @@ interface IFhirPathProps
   $refs : {
     aceEditorExpression: HTMLDivElement,
     aceEditorContextExpression: HTMLDivElement,
-    aceEditorDebug: HTMLDivElement,
     aceEditorResourceJson: HTMLDivElement,
     chatComponent: Chat,
     // astTabComponent: ParseTreeTab,
@@ -836,6 +1016,9 @@ interface IFhirPathProps
 export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFhirPathProps>({
   async mounted() {
     window.document.title = "FhirPath Tester";
+    if (!this.selectedEngine2) {
+      this.selectedEngine2 = this.engines[0];
+    }
     this.showAdvancedSettings = settings.showAdvancedSettings();
     this.defaultProviderField = settings.getDefaultProviderField();
     this.openAIFeedbackEnabled = settings.getOpenAIFeedbackEnabled();
@@ -846,10 +1029,12 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     setAcePaths(ace.config);
 
     document.addEventListener('keydown', this.CtrlEnterHandler);
+    document.addEventListener('keydown', this.DebugFunctionKeyHandler);
   },
 
   beforeDestroy() {
     document.removeEventListener('keydown', this.CtrlEnterHandler);
+    document.removeEventListener('keydown', this.DebugFunctionKeyHandler);
   },
 
   computed: {
@@ -923,13 +1108,104 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     enableCreateLibrary(): boolean {
       return this.library == undefined && this.showAdvancedSettings && ((this.defaultProviderField?.length ?? 0) > 0);
     },
+    engines(): IFhirPathEngineDetails[] {
+      // filter the registeredEngines to only those with the selectedFhirVersion
+      const filteredEngines = Object.values(registeredEngines).filter(engine => engine.fhirVersion === this.selectedFhirVersion);
+      return filteredEngines;
+    }
   },
   methods: {
-    CtrlEnterHandler(event: KeyboardEvent): void {
+    DebugFunctionKeyHandler(event: KeyboardEvent): void {
+      if (!this.debugTracePosition)
+        return;
       // Ctrl + Enter to evaluate the expression
-      // Command + Enter to evaluate the expression on MacOS     
+      // Command + Enter to evaluate the expression on MacOS
+      if (!event.shiftKey && event.key === "F10") {
+        this.debuggerStepForward();
+        event.preventDefault();
+      }
+      if (event.shiftKey && event.key === "F10") {
+        this.debuggerStepBack();
+        event.preventDefault();
+      }
+    },
+
+    debuggerStepBack() {
+      if (!this.debugTracePosition)
+        return;
+      if (this.debugTracePosition > 0)
+        this.debugTracePosition--;
+
+      const traceData = this.debugTraceData[this.debugTracePosition];
+      console.log("debug trace", traceData);
+      if (traceData) {
+        setTimeout(() => {
+          this.highlightText(this.expressionEditor, traceData.exprPosition, traceData.exprLength, true);
+          this.removeMarkers(this.resourceJsonEditor, this.debugTestResourceSelectionMarker);
+          this.debugTestResourceSelectionMarker = [];
+          this.removeMarkers(this.resourceJsonEditor, this.debugThisSelectionMarker);
+          this.debugThisSelectionMarker = [];
+          for (const v of traceData.values ?? []) {
+            if (v.resourcePath) {
+              this.navigateToContext(v.resourcePath, undefined, true);
+            }
+          }
+        });
+      }
+    },
+
+    debuggerStepForward() {
+      if (this.debugTracePosition === undefined)
+        return;
+
+        // step forward to the next trace result
+      if (this.debugTracePosition < this.debugTraceData.length - 1)
+        this.debugTracePosition++;
+
+      const traceData = this.debugTraceData[this.debugTracePosition];
+      console.log("debug trace", traceData);
+      if (traceData) {
+        setTimeout(() => {
+          this.highlightText(this.expressionEditor, traceData.exprPosition, traceData.exprLength, true);
+          this.removeMarkers(this.resourceJsonEditor, this.debugTestResourceSelectionMarker);
+          this.debugTestResourceSelectionMarker = [];
+          this.removeMarkers(this.resourceJsonEditor, this.debugThisSelectionMarker);
+          this.debugThisSelectionMarker = [];
+          for (const v of traceData.values ?? []) {
+            if (v.resourcePath) {
+              this.navigateToContext(v.resourcePath, undefined, true);
+            }
+          }
+        });
+      }
+    },
+
+    CtrlEnterHandler(event: KeyboardEvent): void {
+      // Check if the focus is in the Test Resource Id field
+      const activeElement = document.activeElement as HTMLElement;
+      
+      // Check if the active element is an input field and is likely the Test Resource Id field
+      // We check for input type and if it's part of a v-text-field with "Test Resource Id" label
+      if (activeElement && activeElement.tagName === 'INPUT') {
+        const parentElement = activeElement.closest('.v-text-field');
+        if (parentElement) {
+          const labelElement = parentElement.querySelector('label');
+          if (labelElement && labelElement.textContent?.includes('Test Resource Id')) {
+            // Focus is in the Test Resource Id field, use Enter to download the test resource
+            if (event.key === "Enter" && !event.ctrlKey && !event.metaKey) {
+              this.downloadTestResource();
+              event.preventDefault();
+              return;
+            }
+          }
+        }
+      }
+      
+      // Ctrl + Enter to evaluate the expression
+      // Command + Enter to evaluate the expression on MacOS
       if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
         this.evaluateFhirPathExpression();
+        event.preventDefault();
       }
     },
 
@@ -1000,25 +1276,6 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       this.expressionEditor.on("change", this.fhirpathExpressionChangedEvent)
 
       langTools.addCompleter(fhirpathCompleter);
-    }
-
-    var editorDebugDiv: any = this.$refs.aceEditorDebug as Element;
-    if (editorDebugDiv) {
-      this.debugEditor = ace.edit(editorDebugDiv, {
-        wrap: "free",
-        readOnly: true,
-        minLines: 15,
-        // maxLines: 35,
-        highlightActiveLine: true,
-        tabSize: settings.getTabSpaces(),
-        showGutter: true,
-        fontSize: 14,
-        cursorStyle: "slim",
-        showPrintMargin: false,
-        theme: "ace/theme/chrome",
-        mode: "ace/mode/json",
-        wrapBehavioursEnabled: true
-      });
     }
 
     const resourceEditorSettings: Partial<ace.Ace.EditorOptions> = {
@@ -1095,7 +1352,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       });
     },
 
-    tabChanged(index: Number): void {
+    tabChanged(index: number): void {
       // Workaround to refresh the display in the response editor when it is updated while the form is not visible
       // https://github.com/ajaxorg/ace/issues/2497#issuecomment-102633605
       if (index === 0)
@@ -1117,22 +1374,6 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
           if (this.resourceJsonEditor) {
             this.resourceJsonEditor.resize();
             this.updateNow();
-          }
-        });
-      }
-      if (index === 6)
-      {
-        setTimeout(() => {
-          if (this.debugEditor) {
-            var editorHtmlElement: any = this.$refs
-              .aceEditorDebug as Element;
-            if (editorHtmlElement) {
-              console.log("focusing editor");
-              editorHtmlElement.focus();
-            }
-            this.debugEditor.resize();
-            this.updateNow();
-            console.log("refreshing editor");
           }
         });
       }
@@ -1223,8 +1464,8 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       let data: TestFhirpathData = {
         expression: this.$route.query.expression as string
       };
-      if (this.$route.query.libaryId as string) {
-          data.libraryId = this.$route.query.libaryId as string;
+      if (this.$route.query.libraryId as string) {
+          data.libraryId = this.$route.query.libraryId as string;
       }
       else {
         if (this.$route.query.context) {
@@ -1287,6 +1528,13 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         else {
             if (p.resource) {
               this.resourceId = p.resource;
+              if (!p.resourceJson) {
+                // need to load this resource content
+                this.resourceJsonEditor?.setValue("");
+                this.resourceJsonChanged = false;
+                this.resourceJsonEditor?.clearSelection();
+                await this.downloadTestResource();
+              }
           }
         }
 
@@ -1302,14 +1550,23 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
 
           const resourceJson = p.resourceJson;
           if (resourceJson) {
-            this.resourceJsonEditor?.setValue(JSON.stringify(JSON.parse(resourceJson), null, settings.getTabSpaces()));
+            if (resourceJson.startsWith('<')){
+              this.resourceJsonEditor?.setValue(resourceJson);
+            } else {
+              this.resourceJsonEditor?.setValue(JSON.stringify(JSON.parse(resourceJson), null, settings.getTabSpaces()));
+            }
             this.resourceJsonChanged = true;
             this.resourceId = undefined;
             this.resourceJsonEditor?.clearSelection();
         }
 
           if (p.engine) {
-            this.selectedEngine = p.engine ?? '';
+            // select the engine from the registeredEngines
+            const engine = Object.values(registeredEngines).find(e => e.legacyName === p.engine);
+            if (engine) {
+              this.selectedEngine2 = engine;
+              this.selectedFhirVersion = engine.fhirVersion;
+            }
           }
 
           if (p.terminologyServer) {
@@ -1327,6 +1584,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     }
         }
       }
+      this.fhirpathExpressionChangedEvent();
   },
   resetExpression():void {
     if (this.expressionEditor) {
@@ -1376,10 +1634,26 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       }
       return false;
     },
-    resourceJsonChangedEvent(){
+    resourceJsonChangedEvent() {
       this.resourceJsonChanged = true;
       this.enableSave = true;
       console.log('enable save resourceJSON');
+
+      // if the resource mode (json/xml) is different to the content, switch it over
+      const session = this.resourceJsonEditor?.getSession();
+      if (session) {
+        let text = session.getValue();
+        const currentMode = (session as any).mode;
+
+        if (text.startsWith('<') && currentMode != 'ace/mode/xml') {
+          this.resourceFormat = 'XML';
+          this.resourceJsonEditor?.getSession().setMode(`ace/mode/xml`);
+        }
+        else if (!text.startsWith('<') && currentMode != 'ace/mode/json') {
+          this.resourceFormat = 'JSON';
+          this.resourceJsonEditor?.getSession().setMode(`ace/mode/json`);
+        }
+      }
     },
     updateVariableValue(name: string): void{
       const ie: InputEvent = event as InputEvent;
@@ -1396,13 +1670,36 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       this.enableSave = true;
       console.log('enable save update var');
     },
-    fhirpathExpressionChangedEvent(){
+
+    removeMarker(editor: ace.Ace.Editor | undefined, markerId: number): void {
+      if (editor && markerId) {
+        editor.session.removeMarker(markerId);
+      }
+    },
+
+    removeMarkers(editor: ace.Ace.Editor | undefined, markerIds: number[]): void {
+      if (editor && markerIds && markerIds.length > 0) {
+        for (let markerId of markerIds) {
+          editor.session.removeMarker(markerId);
+        }
+      }
+    },
+
+    fhirpathExpressionChangedEvent() {
       // Check the expression to see if there are any variables in there
       const session = this.expressionEditor?.session;
       if (session){
+        this.removeMarkers(this.expressionEditor, this.debugExpressionSelectionMarker);
+        this.debugExpressionSelectionMarker = [];
+        this.debugTracePosition = undefined;
+        this.debugTraceData = [];
+        this.removeMarkers(this.resourceJsonEditor, this.debugTestResourceSelectionMarker);
+        this.debugTestResourceSelectionMarker = [];
+        this.removeMarkers(this.resourceJsonEditor, this.debugThisSelectionMarker);
+        this.debugThisSelectionMarker = [];
 
         let ast: fpjsNode | undefined = undefined;
-        if (this.selectedEngine.indexOf("fhirpath.js") != -1){
+        if (this.selectedEngine2?.legacyName?.indexOf("fhirpath.js") != -1){
           const astTab2 = this.$refs.astTabComponent2 as ParseTreeTab;
           ast = astTab2?.displayTreeForExpression(this.getContextExpression() ?? '', this.getFhirpathExpression() ?? '');
         }
@@ -1476,6 +1773,26 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       if (this.getResourceJson() && this.resourceJsonChanged) return '(local resource JSON)';
       return this.resourceId;
     },
+    engineTooltip(engineDetails: IFhirPathEngineDetails | undefined): string | undefined {
+      if (!engineDetails){
+        return undefined;
+      }
+      let tooltip = engineDetails.name + " (" + engineDetails.fhirVersion + ")";
+      tooltip += "\nPublisher: " + engineDetails.publisher;
+      if (engineDetails.description) {
+        tooltip += "\n" + engineDetails.description;
+      }
+      if (engineDetails.external) {
+        tooltip += "\n(hosted externally to the fhirpath-lab)";
+      }
+      if (engineDetails.githubRepo) {
+        tooltip += "\nGitHub: " + engineDetails.githubRepo;
+      }
+      if (engineDetails.supportsXML){
+        tooltip += "\nSupports XML and Json";
+      }
+      return tooltip;
+    },
     settingsClosed() {
       this.showAdvancedSettings = settings.showAdvancedSettings();
       this.defaultProviderField = settings.getDefaultProviderField();
@@ -1522,11 +1839,17 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     },
 
     setResultJson(result: string) {
-      if (this.debugEditor) {
-        this.debugEditor.setValue(result);
-        this.debugEditor.clearSelection();
-        this.debugEditor.renderer.updateFull(true);
+      this.debugText = result;
+    },
+    getCurrentModelInfo(): Model
+    {
+      if (this.selectedFhirVersion === "R5") {
+        return fhirpath_r5_model;
       }
+      if (this.selectedFhirVersion === "R6") {
+        return fhirpath_r6_model;
+      }
+      return fhirpath_r4_model;
     },
     async executeRequest<T>(url: string, p: fhir4b.Parameters) {
       try {
@@ -1552,7 +1875,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         this.loadingData = false;
 
         const jsonValue = this.getResourceJson();
-        const astJson: IJsonNode | undefined = parseJson(jsonValue+'');
+        const astJson: IJsonNode | undefined = parseJson(jsonValue+'', this.getCurrentModelInfo());
         console.log("JSON fhir-paths: ", astJson);
 
         const results = response.data;
@@ -1587,6 +1910,11 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
                       // that debug parse tree
                       console.log("JAVA AST", part.valueString);
                     }
+                    if (part.name === 'parseDebugTreeJs' && part.valueString) {
+                      // If this was from the fhirpathJS engine, also dump out the data from 
+                      // that debug parse tree
+                      console.log("fhirpath.js AST", part.valueString);
+                    }
                     if (part.name === 'debugOutcome' && part.resource) {
                       this.expressionParseOutcome = part.resource as fhir4b.OperationOutcome;
                     }
@@ -1595,25 +1923,101 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
                 continue; // skip over the configuration settings
               }
 
-              // Anything else is a result
-              // scan over the parts (values)
-              let resultItem: ResultData = { context: entry.valueString, result: [], trace: [] };
-              if (astJson && entry.valueString){
-                const node = findNodeByPath(astJson, entry.valueString);
-                if (node) resultItem.position = node.position;
-              }
-              if (entry.part) {
-                for (let part of entry.part) {
-                  if (part.name === 'trace') {
-                    resultItem.trace.push(...getTraceValue(part));
-                  }
-                  else {
-                    resultItem.result.push(...getValue(part));
+              if (entry.name == 'debug-trace') {
+                // Put the trace data into the array
+                // context first - so the context switch is visible
+                this.debugTraceData.push({ 
+                  context: entry.valueString ?? ''
+                });
+
+                // values for this context
+                for (let part of entry.part ?? []) {
+                  let posParts = part.name?.split(',');
+                  let exprPosition = posParts && posParts.length > 0 ? parseInt(posParts[0]) : undefined;
+                  let exprLength = posParts && posParts.length > 1 ? parseInt(posParts[1]) : undefined;
+                  let exprName = posParts && posParts.length > 2 ? posParts[2] : undefined;
+
+                  let debugTraceVal: DebugTraceData = {
+                    context: entry.valueString ?? '',
+                    exprName: exprName,
+                    exprPosition: exprPosition,
+                    exprLength: exprLength,
+                    values: [],
+                    thisVar: [],
+                    focusVar: [],
+                  };
+                  this.debugTraceData.push(debugTraceVal);
+
+                  // grab all the values from this expression node evaluation ($this, $index and result)
+                  for (let partValue of part.part ?? []) {
+                    const resourcePath = getExtensionStringValue(partValue, "http://fhir.forms-lab.com/StructureDefinition/resource-path");
+                    if (partValue.name == 'index') {
+                      debugTraceVal.index = partValue.valueInteger;
+                      continue;
+                    }
+
+                    if (partValue.name == 'this-resource-path') {
+                      debugTraceVal.thisVar?.push({ resourcePath: partValue.valueString });
+                      continue;
+                    }
+
+                    if (partValue.name.startsWith('this-')) {
+                      const traceValue = getValue(partValue);
+                      if (traceValue.length > 0)
+                        debugTraceVal.thisVar?.push({ value: JSON.stringify(traceValue[0].value, null, 4), resourcePath: resourcePath });
+                      continue;
+                    }
+
+                    if (partValue.name == 'focus-resource-path') {
+                      debugTraceVal.focusVar?.push({ resourcePath: partValue.valueString });
+                      continue;
+                    }
+
+                    if (partValue.name.startsWith('focus-')) {
+                      const traceValue = getValue(partValue);
+                      if (traceValue.length > 0)
+                        debugTraceVal.focusVar?.push({ value: JSON.stringify(traceValue[0].value, null, 4), resourcePath: resourcePath });
+                      continue;
+                    }
+
+                    if (partValue.name == 'resource-path') {
+                      debugTraceVal.values?.push({ resourcePath: partValue.valueString });
+                      continue;
+                    
+                    }
+                    // get the trace value
+                    const traceValue = getValue(partValue);
+                    if (traceValue) {
+                      if (traceValue.length > 0)
+                      debugTraceVal.values?.push({ value: JSON.stringify(traceValue[0].value, null, 4), resourcePath: resourcePath });
+                    }
+                  
                   }
                 }
+                continue; // skip over the debug trace
               }
-              this.results.push(resultItem);
-              this.saveLastUsedParameters(true);
+
+              // Anything else is a result
+              // scan over the parts (values)
+              if (entry.name == 'result') {
+                let resultItem: ResultData = { context: entry.valueString, result: [], trace: [] };
+                if (astJson && entry.valueString){
+                  const node = findNodeByPath(astJson, entry.valueString);
+                  if (node) resultItem.position = node.position;
+                }
+                if (entry.part) {
+                  for (let part of entry.part) {
+                    if (part.name === 'trace') {
+                      resultItem.trace.push(...getTraceValue(part));
+                    }
+                    else {
+                      resultItem.result.push(...getValue(part));
+                    }
+                  }
+                }
+                this.results.push(resultItem);
+                this.saveLastUsedParameters(true);
+              }
             }
           }
         }
@@ -1783,6 +2187,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         // If this is trying to download a hl7 example, run it through the downloader proxy
         // as the HL7 servers don't have CORS for us
         if (url.startsWith("https://build.fhir.org/")
+            || url.startsWith("https://github.com/HL7/")
             || url.startsWith("https://hl7.org/fhir/"))
             url = settings.dotnet_server_downloader() + "?url=" + url;
 
@@ -1792,11 +2197,13 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         let token = this.cancelSource.token;
         let headers = {
             "Cache-Control": "no-cache",
-            "Accept": requestFhirAcceptHeaders
+            // use a simplified header here
+            "Accept": "application/fhir+json, application/json, application/fhir+xml, text/xml",
           }
-        const response = await axios.get<fhir4b.Resource>(url, {
+        const response = await axios.get<fhir4b.Resource | string>(url, {
           cancelToken: token,
-          headers: headers
+          headers: headers,
+          responseType: 'text', // Get as text first to handle both JSON and XML
         });
         if (token.reason) {
           console.log(token.reason);
@@ -1807,11 +2214,37 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
 
         const results = response.data;
         if (results) {
-          this.resourceType = results.resourceType;
           if (this.resourceJsonEditor) {
-            const resourceJson = JSON.stringify(results, null, settings.getTabSpaces());
-            if (resourceJson) {
-              this.resourceJsonEditor.setValue(resourceJson);
+            let formattedContent = '';
+            const contentType = response.headers['content-type'] || '';
+            
+            // Detect if the response is XML or JSON based on content type
+            if (contentType.includes('xml') || (typeof results === 'string' && results.trim().startsWith('<'))) {
+              // Handle XML response
+              try {
+                formattedContent = xmlFormat(results as string, {
+                  indentation: ' '.repeat(settings.getTabSpaces()),
+                  collapseContent: true,
+                  lineSeparator: '\n'
+                });
+              } catch (e) {
+                // If XML formatting fails, use the raw content
+                formattedContent = results as string;
+              }
+            } else {
+              // Handle JSON response
+              try {
+                const parsedJson = typeof results === 'string' ? JSON.parse(results) : results;
+                formattedContent = JSON.stringify(parsedJson, null, settings.getTabSpaces());
+                this.resourceType = parsedJson.resourceType;
+              } catch (e) {
+                // If JSON parsing fails, treat as plain text
+                formattedContent = results as string;
+              }
+            }
+            
+            if (formattedContent) {
+              this.resourceJsonEditor.setValue(formattedContent);
               this.resourceJsonChanged = false;
             }
             this.resourceJsonEditor.clearSelection();
@@ -2070,7 +2503,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         }
       }
 
-      const astJson: IJsonNode | undefined = parseJson(resourceJson+'');
+      const astJson: IJsonNode | undefined = parseJson(resourceJson+'', this.getCurrentModelInfo());
 
       // debugger;
       var environment: Record<string, any> = { resource: fhirData, rootResource: fhirData };
@@ -2115,7 +2548,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
             async: true,
             terminologyUrl: this.terminologyServer
           };
-          let data = fhirpath.evaluate(fhirData, "select(" + contextExpression + ").trace('fhirpath-lab-context')", environment, fhirpath_r4_model, optionsContext);
+          let data = fhirpath.evaluate(fhirData, "select(" + contextExpression + "\n).trace('fhirpath-lab-context')", environment, fhirpath_r4_model, optionsContext);
           if (data instanceof Promise){
             await data;
           }
@@ -2157,7 +2590,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         let resData: ResultData;
         const index = contextNodes.indexOf(contextNode);
         if (contextExpression){
-          resData = { context: `${contextNode.fullPropertyName()}`, result: [], trace: [] };
+          resData = { context: `${fullPropertyName(contextNode)}`, result: [], trace: [] };
           if (astJson){
             const node = findNodeByPath(astJson, resData.context+'');
             if (node?.position) resData.position = node.position;
@@ -2202,7 +2635,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
           let useExpression = this.getFhirpathExpression() ?? '';
           let path = {
             base: resData.context??'', 
-            expression: "select(" + useExpression + ").trace('fhirpath-lab-result')"
+            expression: "select(\n" + useExpression + "\n).trace('fhirpath-lab-result')"
           }
           let options: AsyncOptions = {
             traceFn: tracefunction,
@@ -2240,6 +2673,14 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     },
 
     async evaluateExpressionUsingFhirpathJsR5() {
+      await this.evaluateExpressionUsingFhirpathJsRx(fhirpath_r5_model, 'r5');
+    },
+
+    async evaluateExpressionUsingFhirpathJsR6() {
+      await this.evaluateExpressionUsingFhirpathJsRx(fhirpath_r6_model, 'r6');
+    },
+
+    async evaluateExpressionUsingFhirpathJsRx(modelInfo: Model, fhirVersion: string) {
       if (!this.getResourceJson() && this.resourceId) {
         await this.downloadTestResource();
       }
@@ -2307,13 +2748,13 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       if (contextExpression) {
         // scan over each of the expressions
         try {
-          this.processedByEngine = `fhirpath.js-`+fhirpath.version+` (r5)`;
+          this.processedByEngine = `fhirpath.js-`+fhirpath.version+` (`+fhirVersion+`)`;
           let optionsContext: AsyncOptions = {
             traceFn: contextTraceOutputFunction,
             async: true,
             terminologyUrl: this.terminologyServer
           };
-          let data = fhirpath.evaluate(fhirData, "select(" + contextExpression + ").trace('fhirpath-lab-context')", environment, fhirpath_r5_model, optionsContext);
+          let data = fhirpath.evaluate(fhirData, "select(" + contextExpression + "\n).trace('fhirpath-lab-context')", environment, modelInfo, optionsContext);
           if (data instanceof Promise) {
             await data;
           }
@@ -2332,8 +2773,8 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       }
       else {
         try {
-          this.processedByEngine = `fhirpath.js-`+fhirpath.version+` (r5)`;
-          let data = fhirpath.evaluate(fhirData, "%resource", environment, fhirpath_r5_model);
+          this.processedByEngine = `fhirpath.js-`+fhirpath.version+` (`+fhirVersion+`)`;
+          let data = fhirpath.evaluate(fhirData, "%resource", environment, modelInfo);
           if (data instanceof Promise)
             contextNodes = await data;
           else
@@ -2355,7 +2796,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         let resData: ResultData;
         const index = contextNodes.indexOf(contextNode);
         if (contextExpression){
-          resData = { context: `${contextNode.fullPropertyName()}`, result: [], trace: [] };
+          resData = { context: `${fullPropertyName(contextNode)}`, result: [], trace: [] };
           // if (astJson){
           //   const node = findNodeByPath(astJson, resData.context+'');
           //   if (node?.position) resData.position = node.position;
@@ -2400,14 +2841,14 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
           let useExpression = this.getFhirpathExpression() ?? '';
           let path = {
             base: resData.context??'', 
-            expression: "select(" + useExpression + ").trace('fhirpath-lab-result')"
+            expression: "select(\n" + useExpression + "\n).trace('fhirpath-lab-result')"
           }
           let options: AsyncOptions = {
             traceFn: tracefunction,
             async: true,
             terminologyUrl: this.terminologyServer
           };
-          let data = fhirpath.evaluate(contextNode, path, environment, fhirpath_r5_model, options);
+          let data = fhirpath.evaluate(contextNode, path, environment, modelInfo, options);
           let res: any[];
           if (data instanceof Promise)
             res = await data;
@@ -2469,7 +2910,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       const url = new URL(window.location.href);
       // console.log(url);
       let shareUrl = `${url.origin}/FhirPath?expression=${encodeURIComponent(this.getFhirpathExpression() ?? '')}`;
-      shareUrl += `&engine=${encodeURIComponent(this.selectedEngine ?? '')}`;
+      shareUrl += `&engine=${encodeURIComponent(this.selectedEngine2?.legacyName ?? '')}`;
       const contextExpression = this.getContextExpression();
       if (contextExpression) {
         shareUrl += `&context=${encodeURIComponent(contextExpression ?? '')}`;
@@ -2509,7 +2950,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
           context: this.getContextExpression(),
           resource: this.resourceId,
           libraryId: this.library?.id,
-          engine: this.selectedEngine,
+          engine: this.selectedEngine2?.legacyName,
           terminologyServer: this.terminologyServer,
         };
         if (this.variables){
@@ -2523,7 +2964,13 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         const resourceJson = this.getResourceJson();
         if (resourceJson && this.resourceJsonChanged){
           try {
-          packageData.resourceJson = JSON.stringify(JSON.parse(resourceJson));
+            if (resourceJson.startsWith('<')){
+              // this is XML, so not much point in trying to parse it
+              packageData.resourceJson = resourceJson;
+            }
+            else {
+              packageData.resourceJson = JSON.stringify(JSON.parse(resourceJson));
+            }
           } catch {}
         }
         return packageData;
@@ -2702,17 +3149,35 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         context: this.getContextExpression(),
         expression: this.getFhirpathExpression() ?? '',
         resourceId: this.resourceId,
-        engine: this.selectedEngine,
+        engine: this.selectedEngine2?.legacyName ?? '',
         resourceJson: this.getResourceJson(),
         loadCompleted: loadCompleted,
       };
       if (this.variables){
         data.variables = [];
-        this.variables.forEach((v) => {
-          data.variables?.push(v);
-        });
+        for (const v of this.variables) {
+          data.variables?.push(v[1]);
+        }
       }
       settings.saveLastUsedParameters(data);
+    },
+
+    async changeFhirVersion() {
+      // update the selected fhir engine (based on freshly filtered content)
+      const lastSelectedEngine = this.selectedEngine2; 
+      if (lastSelectedEngine) {
+        const eqEngine = this.engines.find((e) => e.name === lastSelectedEngine?.name);
+        if (eqEngine) {
+          this.selectedEngine2 = eqEngine;
+        } else {
+          // if the engine is not found, then select the first one
+          this.selectedEngine2 = this.engines[0];
+        }
+      } else {
+        // if no engine was selected, then select the first one
+        this.selectedEngine2 = this.engines[0];
+      }
+      await this.evaluateFhirPathExpression();    
     },
 
     // https://www.sitepoint.com/fetching-data-third-party-api-vue-axios/
@@ -2723,13 +3188,18 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       const astTab2 = this.$refs.astTabComponent2 as ParseTreeTab;
       astTab2?.clearDisplay();
       this.expressionParseOutcome = undefined;
+      this.removeMarkers(this.resourceJsonEditor, this.debugTestResourceSelectionMarker);
+      this.debugTestResourceSelectionMarker = [];
+      this.removeMarkers(this.resourceJsonEditor, this.debugThisSelectionMarker);
+      this.debugThisSelectionMarker = [];
+      this.removeMarkers(this.expressionEditor, this.debugExpressionSelectionMarker);
+      this.debugExpressionSelectionMarker = [];
+      this.debugTracePosition = undefined;
+      this.debugTraceData = [];
       
-      // const astTab = this.$refs.astTabComponent as ParseTreeTab;
-      // astTab.displayTreeForExpression(this.getContextExpression() ?? '', this.getFhirpathExpression() ?? '');
-
       // Validate the test fhir resource object
       let resourceJson = this.getResourceJson();
-       if (resourceJson) {
+       if (resourceJson && !resourceJson.startsWith('<')) {
          let rawObj: object;
          try {
            rawObj = JSON.parse(resourceJson)
@@ -2751,10 +3221,22 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
           return;
         }
       }
+      if (resourceJson && resourceJson.startsWith('<') && !this.selectedEngine2?.supportsXML) {
+        this.saveOutcome = { resourceType: 'OperationOutcome', issue: [] }
+        this.saveOutcome?.issue.push({ code: 'not-supported', severity: 'error', details: { text: `${this.selectedEngine2?.legacyName} does not support testing on XML test resources` } });
+        this.showOutcome = true;
+        return;
+      }
+
+      if (!this.getResourceJson() && this.resourceId && this.selectedEngine2?.name === ".NET SDK") {
+        // The .net SDK is the only one that can download it's own resources
+        await this.downloadTestResource();
+        resourceJson = this.getResourceJson();        
+      }
 
       this.saveLastUsedParameters(false);
 
-      if (this.selectedEngine == "fhirpath.js") {
+      if (this.selectedEngine2?.legacyName == "fhirpath.js") {
         astTab2?.displayTreeForExpression(this.getContextExpression() ?? '', this.getFhirpathExpression() ?? '');
         await this.evaluateExpressionUsingFhirpathJs();
         this.saveLastUsedParameters(true);
@@ -2764,7 +3246,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         return;
       }
 
-      if (this.selectedEngine == "fhirpath.js (R5)") {
+      if (this.selectedEngine2?.legacyName == "fhirpath.js (R5)") {
         astTab2?.displayTreeForExpression(this.getContextExpression() ?? '', this.getFhirpathExpression() ?? '');
         await this.evaluateExpressionUsingFhirpathJsR5();
         this.saveLastUsedParameters(true);
@@ -2774,13 +3256,16 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         return;
       }
 
-      // brianpos hosted service
-      // Source code for this is at https://github.com/brianpos/fhirpath-lab-dotnet
-      let url = settings.dotnet_server_r4b();
-
-      if (this.selectedEngine == ".NET (firely-R5)") {
-        url = settings.dotnet_server_r5();
+      if (this.selectedEngine2?.legacyName == "fhirpath.js (R6)") {
+        astTab2?.displayTreeForExpression(this.getContextExpression() ?? '', this.getFhirpathExpression() ?? '');
+        await this.evaluateExpressionUsingFhirpathJsR6();
+        this.saveLastUsedParameters(true);
+        if (this.prevFocus){
+          this.prevFocus.focus();
+        }
+        return;
       }
+
       let p: fhir4b.Parameters = { resourceType: "Parameters", parameter: [{ name: "expression", valueString: this.getFhirpathExpression() ?? '' }] };
 
       const contextExpression = this.getContextExpression();
@@ -2825,73 +3310,77 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         }
       }
 
-      if (this.selectedEngine == "java (HAPI)") {
-        // https://github.com/jkiddo/fhirpath-tester/blob/main/src/main/java/org/example/Evaluator.java (brianpos fork of this)
-        // https://docs.microsoft.com/en-us/azure/devops/pipelines/ecosystems/java-function?view=azure-devops
-        url = settings.java_server_r4b();
-
-        if (!this.getResourceJson() && this.resourceId) {
-          await this.downloadTestResource();
-          resourceJson = this.getResourceJson();        
-        }
-
-        (this as any).$appInsights?.trackEvent({ name: 'evaluate HAPI' });
-      }
-      else if (this.selectedEngine == "java (HAPI-R5)") {
-        // https://github.com/jkiddo/fhirpath-tester/blob/main/src/main/java/org/example/Evaluator.java (brianpos fork of this)
-        // https://docs.microsoft.com/en-us/azure/devops/pipelines/ecosystems/java-function?view=azure-devops
-        url = settings.java_server_r5();
-
-        if (!this.getResourceJson() && this.resourceId) {
-          await this.downloadTestResource();
-          resourceJson = this.getResourceJson();        
-        }
-
-        (this as any).$appInsights?.trackEvent({ name: 'evaluate HAPI' });
-      }
-      else if (this.selectedEngine == "java (IBM)") {
-        url = settings.ibm_server_r4b();
+      if (!this.selectedEngine2?.supportsAST) {
         astTab2?.clearDisplay("AST not supported");
-        if (!this.getResourceJson() && this.resourceId) {
-          await this.downloadTestResource();
-          resourceJson = this.getResourceJson();        
-        }
+      }
 
+      // brianpos hosted service
+      // Source code for this is at https://github.com/brianpos/fhirpath-lab-dotnet
+      let url = settings.dotnet_server_r4b();
+
+      if (this.selectedEngine2?.legacyName == ".NET (firely-R5)") {
+        url = settings.dotnet_server_r5();
+      }
+      else if (this.selectedEngine2?.legacyName == ".NET (firely-R6)") {
+        url = settings.dotnet_server_r6();
+      }
+      // else if (this.selectedEngine2?.legacyName == "java (CQL)") {
+      //   url = 'http://localhost:8080/fhir/$fhirpath-cql';
+      // }
+      else if (this.selectedEngine2?.legacyName == "java (HAPI)") {
+        url = settings.java_server_r4b();
+        (this as any).$appInsights?.trackEvent({ name: 'evaluate HAPI' });
+      }
+      else if (this.selectedEngine2?.legacyName == "java (HAPI-R5)") {
+        url = settings.java_server_r5();
+        (this as any).$appInsights?.trackEvent({ name: 'evaluate HAPI' });
+      }
+      else if (this.selectedEngine2?.legacyName == "java (HAPI-R6)") {
+        url = settings.java_server_r6();
+        (this as any).$appInsights?.trackEvent({ name: 'evaluate HAPI' });
+      }
+      else if (this.selectedEngine2?.legacyName == "java (IBM)") {
+        url = settings.ibm_server_r4b();
         (this as any).$appInsights?.trackEvent({ name: 'evaluate IBM' });
       }
-      else if (this.selectedEngine == "fhirpath-py (Beda Software)") {
+      else if (this.selectedEngine2?.legacyName == "fhirpath-py (Beda Software)") {
         url = settings.python_server_r4b();
-        astTab2?.clearDisplay("AST not supported");
-        if (!this.getResourceJson() && this.resourceId) {
-          await this.downloadTestResource();
-          resourceJson = this.getResourceJson();
-        }
         (this as any).$appInsights?.trackEvent({ name: 'evaluate Python' });
       }
-      else if (this.selectedEngine == "Aidbox (Health Samurai)") {
+      else if (this.selectedEngine2?.legacyName == "fhirpath-py (Beda Software-R5)") {
+        url = settings.python_server_r5();
+        (this as any).$appInsights?.trackEvent({ name: 'evaluate Python' });
+      }
+      else if (this.selectedEngine2?.legacyName == "Aidbox (Health Samurai)") {
         url = settings.clojure_server_r4();
-        astTab2?.clearDisplay("AST not supported");
-        if (!this.getResourceJson() && this.resourceId) {
-          await this.downloadTestResource();
-          resourceJson = this.getResourceJson();
-        }
         (this as any).$appInsights?.trackEvent({ name: 'evaluate Aidbox' });
       }
-      else if (this.selectedEngine == "Aidbox (Health Samurai-R5)") {
+      else if (this.selectedEngine2?.legacyName == "Aidbox (Health Samurai-R5)") {
         url = settings.clojure_server_r5();
-        astTab2?.clearDisplay("AST not supported");
-        if (!this.getResourceJson() && this.resourceId) {
-          await this.downloadTestResource();
-          resourceJson = this.getResourceJson();
-        }
         (this as any).$appInsights?.trackEvent({ name: 'evaluate Aidbox' });
+      }
+      else if (this.selectedEngine2?.legacyName == "Helios Software (R4B)") {
+        url = settings.helios_software_r4b();
+        (this as any).$appInsights?.trackEvent({ name: 'evaluate Helios Software' });
+      }
+      else if (this.selectedEngine2?.legacyName == "Helios Software (R5)") {
+        url = settings.helios_software_r5();
+        (this as any).$appInsights?.trackEvent({ name: 'evaluate Helios Software' });
       }
       else {
+        url = settings.dotnet_server_r4b();
         (this as any).$appInsights?.trackEvent({ name: 'evaluate FirelySDK' });
       }
 
       if (resourceJson) {
-        p.parameter?.push({ name: "resource", resource: JSON.parse(resourceJson) });
+        if (resourceJson.startsWith('<')) {
+          // this is XML content, so put it into the XML extension
+          p.parameter?.push({ name: "resource", extension: [{ url: "http://fhir.forms-lab.com/StructureDefinition/xml-value", valueString: resourceJson }] });
+        }
+        else if (url === settings.java_server_r5() || url === settings.java_server_r6())
+          p.parameter?.push({ name: "resource", extension: [{ url: "http://fhir.forms-lab.com/StructureDefinition/json-value", valueString: resourceJson }] });
+        else
+          p.parameter?.push({ name: "resource", resource: JSON.parse(resourceJson) });
       }
       else {
         if (!this.resourceId?.startsWith('http')) {
@@ -2905,7 +3394,21 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       if (this.terminologyServer) {
         p.parameter?.push({ name: "terminologyserver", valueString: this.terminologyServer });
       }
+      if (this.showAdvancedSettings) {
+        // add the debug parameter to check the expression
+        // works well enough to always ask now.
+        p.parameter?.push({ name: "debug_trace", valueBoolean: true });
+      }
+      else {
+        // if not showing advanced settings, then don't ask for debug info
+        p.parameter = p.parameter?.filter(p => p.name !== 'debug');
+      }
       await this.executeRequest(url, p);
+
+      // if there are any results with a trace, then set the trace position at the start
+      if (this.debugTraceData.length > 0) {
+        this.debugTracePosition = 0;
+      }
 
       // Set focus to the control that previously had focus (if was known)
       if (this.prevFocus){
@@ -2913,7 +3416,12 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         }
     },
 
-    highlightText(editor?: ace.Ace.Editor, startPosition?: number, length?: number): void {
+    highlightText(editor?: ace.Ace.Editor, startPosition?: number, length?: number, debugMode?: boolean): void {
+      if (debugMode){
+        this.removeMarkers(editor, this.debugExpressionSelectionMarker);
+        this.debugExpressionSelectionMarker = [];
+      }
+
       if (!editor || startPosition == undefined || length == undefined) return;
       let value = editor.getValue();
 
@@ -2938,12 +3446,17 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       editor.gotoLine(startLine, startColumn, true);
       // editor.selection.setRange(range);
 
-      const selectionMarker = editor.session.addMarker(range, "resultSelection", "text", true);
-      // after 1.5 seconds remove the highlight.
-      setTimeout(() => {
-        // console.log("Removing marker", selectionMarker);
-        editor.session.removeMarker(selectionMarker);
-      }, 1500);
+      if (debugMode){
+        const selectionMarker = editor.session.addMarker(range, "debugSelection", "text", false);
+        this.debugExpressionSelectionMarker?.push(selectionMarker);
+      }
+      else {
+        const selectionMarker = editor.session.addMarker(range, "resultSelection", "text", true);
+        // after 1.5 seconds remove the highlight.
+        setTimeout(() => {
+          editor.session.removeMarker(selectionMarker);
+        }, 1500);
+      }
       this.updateNow();
     },
 
@@ -3007,7 +3520,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         console.log("Highlighting node: ", node);
         if (node.Position == undefined && node.Line != undefined) {
           // Calculate the start Position based on the line in the text 
-          node.Length = node.Name.length;
+          node.Length = node.Length ?? node.Name.length;
           this.highlightTextByLine(this.expressionEditor, node.Line, node.Column, node.Length);
           return;
         }
@@ -3015,19 +3528,24 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       });
     },
 
-    navigateToContext(elementPath: string) {
+    navigateToContext(elementPath: string, variableName?: string, debugMode?: boolean) {
       // Move the cursor in the test resource JSON editor to the element
-      this.selectTab(1);
+      let tabControl: TwinPaneTab = this.$refs.twinTabControl as TwinPaneTab;
+      if (!debugMode || (tabControl && !tabControl.singleTabMode())) {
+        this.selectTab(1);
+      }
       setTimeout(() => {
         const jsonValue = this.getResourceJson();
         if (this.resourceJsonEditor && jsonValue) {
           // Select the model to use, r5 or r4b
-          let modelInfo = fhirpath_r4_model;
-          if (this.selectedEngine.indexOf("R5") > -1) {
-            modelInfo = fhirpath_r5_model;
-          }
           // console.log("Using "+modelInfo.version+" model for navigation");
-          var ast: IJsonNode | undefined = parseJson(jsonValue, modelInfo);
+          var ast: IJsonNode | undefined;
+          if (jsonValue.startsWith('<')) {
+            ast = parseXml(jsonValue, this.getCurrentModelInfo());
+
+          } else {
+            ast = parseJson(jsonValue, this.getCurrentModelInfo());
+          }
           console.log(ast);
           if (ast) {
               var node = findNodeByPath(ast, elementPath);
@@ -3043,24 +3561,65 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
                     true
                   );
 
-                  if (node.position.value_stop_pos){
+                  if (node.position.value_stop_pos) {
                     let substr = jsonValue.substring(node.position.prop_start_pos, node.position.value_stop_pos+1);
                     const endRowOffset = substr.split(/\r\n|\r|\n/).length;
                     const endRow = node.position.line + endRowOffset - 1;
                     const endCollOffset = substr.split(/\r\n|\r|\n/)[endRowOffset - 1].length;
                     const endCol = node.position.column + (endCollOffset > 1 ? endCollOffset + 1 : endCollOffset);
                     const range = new ace.Range(node.position.line-1, node.position.column, endRow-1, endCol);
+                    console.log("context", range);
 
-                    const selectionMarker = this.resourceJsonEditor.session.addMarker(range, "resultSelection", "fullLine", true);
-                    // after 1.5 seconds remove the highlight.
-                    setTimeout(() => {
-                      this.resourceJsonEditor?.session.removeMarker(selectionMarker);
-                    }, 1500);
+                    if (debugMode) {
+                      const selectionMarker = this.resourceJsonEditor.session.addMarker(range, "debugSelection", "text", false);
+                      this.debugTestResourceSelectionMarker?.push(selectionMarker);
+                    }
+                    else {
+                      const selectionMarker = this.resourceJsonEditor.session.addMarker(range, "resultSelection", "fullLine", true);
+                      // after 1.5 seconds remove the highlight.
+                      setTimeout(() => {
+                        this.resourceJsonEditor?.session.removeMarker(selectionMarker);
+                      }, 1500);
+                    }                   
+                  } else if (node.position.prop_stop_pos) {
+                    // prop based stuff
+                    let substr = jsonValue.substring(node.position.prop_start_pos, node.position.prop_stop_pos+1);
+                    const endRowOffset = substr.split(/\r\n|\r|\n/).length;
+                    const endRow = node.position.line + endRowOffset - 1;
+                    const endCollOffset = substr.split(/\r\n|\r|\n/)[endRowOffset - 1].length;
+                    const endCol = node.position.column + (endCollOffset > 1 ? endCollOffset + 1 : endCollOffset);
+                    const range = new ace.Range(node.position.line-1, node.position.column, endRow-1, endCol);
+                    console.log("context prop", range);
+
+                    if (debugMode) {
+                      const selectionMarker = this.resourceJsonEditor.session.addMarker(range, "debugSelection", "text", false);
+                      this.debugTestResourceSelectionMarker?.push(selectionMarker);
+                    }
+                    else {
+                      const selectionMarker = this.resourceJsonEditor.session.addMarker(range, "resultSelection", "fullLine", true);
+                      // after 1.5 seconds remove the highlight.
+                      setTimeout(() => {
+                        this.resourceJsonEditor?.session.removeMarker(selectionMarker);
+                      }, 1500);
+                    }                   
                   }
                   this.updateNow();
                 }
               }
             }
+        }
+
+        // If this is a variable name, then also see if it is a debug based one that has
+        // the trailing expression position information (pos length)
+        if (variableName && variableName.startsWith("internal_debug_value:")) {
+          // this is a debug variable, so highlight the position "name: (pos length)" using a regex
+          variableName = variableName.replace('internal_debug_value: (', '').replace(')', '');
+          const parts = variableName.split(' ');
+          if (parts.length == 2) {
+            const position = parseInt(parts[0]);
+            const length = parseInt(parts[1]);
+            this.highlightText(this.expressionEditor, position, length);
+          }
         }
       });
 
@@ -3074,6 +3633,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       resourceId: undefined,
       resourceType: 'Patient',
       resourceJsonChanged: false,
+      resourceFormat: 'JSON',
       loadingData: true,
       saveOutcome: undefined,
       showOutcome: false,
@@ -3081,29 +3641,14 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       defaultProviderField: undefined,
       terminologyServer: 'https://sqlonfhir-r4.azurewebsites.net/fhir',
       results: [],
-      selectedEngine: "fhirpath.js",
-      executionEngines: [
-        ".NET (firely)",
-        "fhirpath.js",
-        "java (HAPI)",
-        "java (IBM)",
-        "fhirpath-py (Beda Software)",
-        "Aidbox (Health Samurai)",
-        ".NET (firely-R5)",
-        "fhirpath.js (R5)",
-        "java (HAPI-R5)",
-        "Aidbox (Health Samurai-R5)",
-      ],
-      externalExecutionEngines: [
-        "fhirpath-py (Beda Software)",
-        "Aidbox (Health Samurai)",
-        "Aidbox (Health Samurai-R5)",
-      ],
+      selectedEngine2: undefined,
+      selectedFhirVersion: "R4",
+      fhirVersions: ["R4", "R5", "R6"],
       shareToolTipMessage: shareTooltipText,
       shareZulipToolTipMessage: shareZulipTooltipText,
       expressionEditor: undefined,
       expressionContextEditor: undefined,
-      debugEditor: undefined,
+      debugText: undefined,
       resourceJsonEditor: undefined,
       variables: new Map<string, VariableData>(),
       processedByEngine: undefined,
@@ -3115,7 +3660,12 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       openAILastContext: "",
       expressionParseOutcome: undefined,
       astInverted: true,
-      enableSave: false
+      enableSave: false,
+      debugTracePosition: undefined,
+      debugTraceData: [],
+      debugExpressionSelectionMarker: [],
+      debugTestResourceSelectionMarker: [],
+      debugThisSelectionMarker: [],
     };
   },
 });

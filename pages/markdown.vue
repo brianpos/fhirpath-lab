@@ -37,7 +37,7 @@
       <br />
       <div>
         You can copy the XML or JSON fragment from your fhir resource and paste it into the corresponding field
-        to be able to quiclky edit it in the other fields, then use the copy button to put the result back into your
+        to be able to quickly edit it in the other fields, then use the copy button to put the result back into your
         resource (triggers on paste).
       </div>
     </div>

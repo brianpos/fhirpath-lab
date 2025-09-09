@@ -1,7 +1,8 @@
 <template>
   <div class="resource-json-editor" style="display: flex; flex-direction: column; height: 100%;">
     <v-text-field v-if="label && label.length > 0" :label="label" :readonly="readOnly" v-model="internalResourceUrl" :loading="downloadingInProgress"
-      hide-details="auto" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+      hide-details="auto" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+      @keyup.enter="handleEnterKey">
       <template v-slot:prepend>
         <slot name="prepend"></slot>
       </template>
@@ -36,6 +37,7 @@ import 'ace-builds/webpack-resolver'; // Ensure the Ace editor assets are availa
 import { settings } from "~/helpers/user_settings";
 import {
   requestFhirAcceptHeaders,
+  requestFhirXmlAcceptHeaders,
   CreateOperationOutcome,
 } from "~/helpers/searchFhir";
 import axios from "axios";
@@ -45,6 +47,7 @@ import xmlFormat from 'xml-formatter';
 import { IJsonNodePosition } from "~/helpers/json_parser";
 import "ace-builds/src-noconflict/mode-json";
 import "ace-builds/src-noconflict/mode-xml";
+import "ace-builds/src-noconflict/theme-chrome";
 import { setAcePaths, Rules as FhirPathHightlighter_Rules, setCustomHighlightRules } from "~/helpers/fhirpath_highlighter"
 import "~/assets/fhirpath_highlighter.scss"
 
@@ -61,6 +64,13 @@ export default class ResourceJsonEditor extends Vue {
     if (url)
       this.internalResourceUrl = url;
     await this.downloadResource();
+  }
+
+  public handleEnterKey(event: KeyboardEvent) {
+    // Only download if Ctrl key (Windows/Linux) or Cmd key (Mac) is not pressed
+    if (!event.ctrlKey && !event.metaKey) {
+      this.downloadResource();
+    }
   }
 
   public navigateToPosition(position: IJsonNodePosition) {
@@ -128,6 +138,7 @@ export default class ResourceJsonEditor extends Vue {
   }
 
   initializeAceEditor() {
+    setAcePaths(ace.config);
     if (this.$refs.aceEditor) {
       var editorDiv: any = this.$refs.aceEditor as HTMLDivElement;
       this.aceEditor = ace.edit(editorDiv, {
@@ -218,11 +229,12 @@ export default class ResourceJsonEditor extends Vue {
       let token = this.cancelSource.token;
       let headers = {
         "Cache-Control": "no-cache",
-        Accept: requestFhirAcceptHeaders,
+        Accept: requestFhirAcceptHeaders + ", " + requestFhirXmlAcceptHeaders,
       };
-      const response = await axios.get<fhir4b.Resource>(url, {
+      const response = await axios.get<fhir4b.Resource | string>(url, {
         cancelToken: token,
         headers: headers,
+        responseType: 'text', // Get as text first to handle both JSON and XML
       });
       if (token.reason) {
         console.log(token.reason);
@@ -234,11 +246,40 @@ export default class ResourceJsonEditor extends Vue {
       const results = response.data;
       if (results) {
         if (this.aceEditor) {
-          const resourceJson = JSON.stringify(results, null, settings.getTabSpaces());
-          this.resourceTextFromFile = resourceJson;
-          if (resourceJson) {
-            this.aceEditor.setValue(resourceJson);
-            // this.resourceJsonChanged = false;
+          let formattedContent = '';
+          const contentType = response.headers['content-type'] || '';
+          
+          // Detect if the response is XML or JSON based on content type
+          if (contentType.includes('xml') || (typeof results === 'string' && results.trim().startsWith('<'))) {
+            // Handle XML response
+            try {
+              formattedContent = xmlFormat(results as string, {
+                indentation: ' '.repeat(settings.getTabSpaces()),
+                collapseContent: true,
+                lineSeparator: '\n'
+              });
+            } catch (e) {
+              // If XML formatting fails, use the raw content
+              formattedContent = results as string;
+            }
+            this.resourceType = 'xml';
+            this.aceEditor.getSession().setMode('ace/mode/xml');
+          } else {
+            // Handle JSON response
+            try {
+              const parsedJson = typeof results === 'string' ? JSON.parse(results) : results;
+              formattedContent = JSON.stringify(parsedJson, null, settings.getTabSpaces());
+              this.resourceType = 'json';
+              this.aceEditor.getSession().setMode('ace/mode/json');
+            } catch (e) {
+              // If JSON parsing fails, treat as plain text
+              formattedContent = results as string;
+            }
+          }
+          
+          this.resourceTextFromFile = formattedContent;
+          if (formattedContent) {
+            this.aceEditor.setValue(formattedContent);
           }
           this.aceEditor.clearSelection();
         }
@@ -300,7 +341,7 @@ export default class ResourceJsonEditor extends Vue {
     if (this.resourceType === 'xml') {
       try {
         let formattedXml = xmlFormat(this.aceEditor.getValue(), {
-          indentation: '\t', // Tab for indentation
+          indentation: ' '.repeat(settings.getTabSpaces()), // Use spaces based on settings
           collapseContent: true, // Keep content in the same line as the element
           lineSeparator: '\n' // Use newline as line separator
         });

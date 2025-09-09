@@ -261,7 +261,7 @@ export function GetExternalVariablesUsed(node: fpjsNode, ignoreVar: string[] = [
   let result: string[] = [];
   if (node.type === 'Functn') {
     if (node.text.startsWith('defineVariable') && node.children?.length === 2 && node.children[1].children){
-      var varName = node.children[1].children[0].text;
+      let varName = node.children[1].children[0].text;
       varName = varName.substring(1, varName.length - 1);
       ignoreVar.push(varName);
     }
@@ -318,6 +318,8 @@ export function InvertTree(ast: JsonNode): JsonNode[] {
     ReturnType: ast.ReturnType,
   };
   if (ast.Position != undefined) rootItem.Position = ast.Position;
+  if (ast.Line != undefined) rootItem.Line = ast.Line;
+  if (ast.Column != undefined) rootItem.Column = ast.Column;
   if (ast.Length != undefined) rootItem.Length = ast.Length;
 
   let result: JsonNode[] = [];
@@ -346,6 +348,15 @@ function ConvertFhirPathJsToAst(ast: fpjsNode): JsonNode {
     Arguments: [],
     ReturnType: "",
   };
+
+  if (ast.length) {
+    result.Length = ast.length;
+  }
+
+  if (ast.start) {
+    result.Line = ast.start.line;
+    result.Column = ast.start.column;
+  }
 
   // convert all the child nodes
   if (ast.children) {
