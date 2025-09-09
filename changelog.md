@@ -3,6 +3,15 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+# 9 September 2025
+* Milestone release to prod
+* Debugger trace support for HAPI/Firely engines
+* FHIR version selector separately selectable from the engine selector
+* partial XML support for fhirpath tests (if engine supports it)
+* FHIR R6-ballot 3 support 
+* Helios FHIRPath engine
+* Lots of minor functionality improvements and bug fixes
+
 # 30 August 2025 (dev)
 * XML test resource support for fhirpath
   * tooltip for engines indicates if they support xml and json
