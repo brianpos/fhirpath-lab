@@ -17,5 +17,8 @@
 	"helios_server_r5": "https://fhirpath.heliossoftware.com/r5",
 	"octofhir_server_r4": "https://fhirpath.octofhir.tech/r4",
 	"octofhir_server_r5": "https://fhirpath.octofhir.tech/r5",
-	"octofhir_server_r6": "https://fhirpath.octofhir.tech/r6"
+	"octofhir_server_r6": "https://fhirpath.octofhir.tech/r6",
+  "atomic_server_r4": "https://fhirpath.atomic-ehr.org/r4",
+	"atomic_server_r5": "https://fhirpath.atomic-ehr.org/r5",
+	"atomic_server_r6": "https://fhirpath.atomic-ehr.org/r6"
 }

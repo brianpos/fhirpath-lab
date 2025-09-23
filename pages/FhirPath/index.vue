@@ -3379,6 +3379,18 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         url = settings.octofhir_server_r5();
         (this as any).$appInsights?.trackEvent({ name: 'evaluate OctoFHIR R6' });
       }
+      else if (this.selectedEngine2?.legacyName == "AtomicEHR (R4)") {
+        url = settings.atomic_server_r4();
+        (this as any).$appInsights?.trackEvent({ name: 'evaluate AtomicEHR R4' });
+      }
+      else if (this.selectedEngine2?.legacyName == "AtomicEHR (R5)") {
+        url = settings.atomic_server_r5();
+        (this as any).$appInsights?.trackEvent({ name: 'evaluate AtomicEHR R5' });
+      }
+       else if (this.selectedEngine2?.legacyName == "AtomicEHR (R6)") {
+        url = settings.atomic_server_r5();
+        (this as any).$appInsights?.trackEvent({ name: 'evaluate AtomicEHR R6' });
+      }
       else {
         url = settings.dotnet_server_r4b();
         (this as any).$appInsights?.trackEvent({ name: 'evaluate FirelySDK' });

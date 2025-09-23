@@ -211,4 +211,34 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         external: true,
         supportsAST: true
     },
+    "AtomicEHR (R4)": {
+        name: "AtomicEHR",
+        legacyName: "AtomicEHR (R4)",
+        fhirVersion: "R4",
+        publisher: "AtomicEHR ",
+        githubRepo: "https://github.com/atomic-ehr/fhirpath",
+        description: "A TypeScript implementation of FHIRPath from AtomicEHR team",
+        external: true,
+        supportsAST: true
+    },
+      "AtomicEHR (R5)": {
+        name: "AtomicEHR ",
+        legacyName: "AtomicEHR (R5)",
+        fhirVersion: "R5",
+        publisher: "AtomicEHR",
+        githubRepo: "https://github.com/atomic-ehr/fhirpath",
+        description:  "A TypeScript implementation of FHIRPath from AtomicEHR team",
+        external: true,
+        supportsAST: true
+    },
+      "AtomicEHR (R6)": {
+        name: "AtomicEHR ",
+        legacyName: "AtomicEHR  (R6)",
+        fhirVersion: "R6",
+        publisher: "AtomicEHR",
+        githubRepo: "https://github.com/atomic-ehr/fhirpath",
+        description:  "A TypeScript implementation of FHIRPath from AtomicEHR team",
+        external: true,
+        supportsAST: true
+    },
 };
