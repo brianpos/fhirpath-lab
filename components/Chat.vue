@@ -136,7 +136,7 @@ export default class Chat extends Vue {
       "like",
       undefined,
       messages,
-      settings.dotnet_server_r4b().replace("/$fhirpath", "")
+      settings.getServerEngineUrl("dotnet_server_r4b").replace("/$fhirpath", "")
     );
   }
 
@@ -148,7 +148,7 @@ export default class Chat extends Vue {
       "dislike",
       undefined,
       messages,
-      settings.dotnet_server_r4b().replace("/$fhirpath", "")
+      settings.getServerEngineUrl("dotnet_server_r4b").replace("/$fhirpath", "")
     );
   }
 
