@@ -13,7 +13,7 @@ export interface IFhirPathEngineDetails {
     /** The name used to identify the engine in Application Insights - engine name, excluding FHIR or product versions, e.g. HAPI, FirelySDK */
     appInsightsEngineName: string;
 
-    /** Name of the publisher of the Engine, and usually host of external engines */
+    /** Name of the publisher of the Engine, and usually host of external engines (Organization or Individual working on the engine) */
     publisher: string;
 
     /** configuration settings for the test engine's URL (comes from config.json - this file is used so that Devops can replace server URLs during deployment) */
