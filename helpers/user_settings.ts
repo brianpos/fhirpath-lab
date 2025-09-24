@@ -114,6 +114,29 @@ export namespace settings {
         return serverConnections.helios_server_r5;
     }
 
+    export function octofhir_server_r4(): string {
+        return serverConnections.octofhir_server_r4;
+    }
+    export function octofhir_server_r5(): string {
+        return serverConnections.octofhir_server_r5;
+    }
+
+    export function octofhir_server_r6(): string {
+        return serverConnections.octofhir_server_r5;
+    }
+
+    export function atomic_server_r4(): string {
+        return serverConnections.atomic_server_r4;
+    }
+    export function atomic_server_r5(): string {
+        return serverConnections.atomic_server_r5;
+    }
+
+    export function atomic_server_r6(): string {
+        return serverConnections.atomic_server_r5;
+    }
+
+
     export function getSearchData(type: string): ConformanceSearchData | undefined {
         const sdJson = localStorage.getItem(`search_${type}`);
         if (sdJson){
