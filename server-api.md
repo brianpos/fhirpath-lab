@@ -2,31 +2,26 @@
 ![](static/Square44x44Logo.scale-150.png "Fhirpath-lab logo")
 
 Some fhirpath engines supported in the fhirpath-lab require server processing
-to be able to evaluate expressions. This is typically for 2 reasons:
+to be able to evaluate expressions. This is typically for either:
 
 * Language/engine is not available in the browser (e.g. .NET/JAVA)
-* Hosting the service seperates the engine maintenance from the fhirpath-lab itself
+* Hosting the service separates the engine maintenance from the fhirpath-lab itself
 
-Currently the Firely SDK for .NET and the HAPI FHIR server/FHIR for Linux(IBM) for JAVA require a hosted service.
+Currently the Firely SDK for .NET and the HAPI FHIR server/FHIR are run by Brian as a part of the fhirpath-lab's infrastructure, and several other engines are provided by other companies *(marked as such in the UI)*
 
-These hosted services are available for use by anyone, but are not guaranteed to be available, and when called by the fhirpath-lab will come in through one of these callers:
+These hosted services are available for use by anyone, but are not always guaranteed to be available, and when called by the fhirpath-lab will come in through one of these callers:
 
 * https://fhirpath-lab.com
 * https://dev.fhirpath-lab.com
-* https://fhirpath-lab.azurewebsites.net
-* https://fhirpath-lab-dev.azurewebsites.net/
 * http://localhost:3000 - Which is where I test locally to the services
 
 As the fhirpath-lab is a web only client, you'll need to implement CORS for the above domains to be able to call your service.
 
 To add in another engine into the fhirpath-lab, the VueJS code will need to be updated to include the new engine:
+*(this has recently been significantly simplified)*
 * static/config.json - Add in the new service URL
 * static/config.local.json - Add in the new service URL (for local debugging only)
-* helpers/user_settings.ts - Provide the named form of the new service
-* pages/FhirPath/index.vue
-    - include the new engine in the `executionEngines` array (end of file)
-    - update `evaluateFhirPathExpression` to support the newly selected engine (easiest to copy the HAPI portion)
-    - ensure that your new engine name is included in the `trace` message that reports usage, and doesn't conflict with any other engine names<br/>*(i.e. don't report `HAPI` if you're not using the HAPI engine)*
+* types/fhirpath_test_engine.ts - Add in the new engine details (match the config.json key)
 
 ## API Definition
 The API takes a FHIR Parameters resource as the input, and returns a FHIR Parameters resource as the output.

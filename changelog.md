@@ -3,6 +3,12 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+# 24 September 2025
+* Refactor all the code to include new engines to make it easier to add new engines in future
+* New FHIRPath engines:
+  * OctoFHIR (Rust implementation - R4/R5/R6)
+  * AtomicEHR (Typescript implementation - R4/R5/R6) - Health Samurai
+
 # 9 September 2025
 * Milestone release to prod
 * Debugger trace support for HAPI/Firely engines
