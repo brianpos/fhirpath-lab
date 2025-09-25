@@ -347,4 +347,15 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         external: true,
         supportsAST: true
     },
+    "CQL (R4)": {
+        name: "CQL-Facade",
+        legacyName: "CQL (R4)",
+        fhirVersion: "R4",
+        appInsightsEngineName: "Local",
+        publisher: "Brian/Bryn CQL Facade",
+        configSetting: "cql_r4",
+        description: "Experimental CQL engine runner, VERY DRAFT",
+        external: true,
+        supportsAST: true
+    },
 };

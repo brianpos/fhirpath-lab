@@ -1116,7 +1116,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
 
       const filteredEngines = Object.values(registeredEngines)
         .filter(engine => engine.fhirVersion === this.selectedFhirVersion
-          && (engine.name !== "Localhost" || isLocalEngineSupported)
+          && (engine.name !== "Localhost" && engine.name !== "CQL-Facade" || isLocalEngineSupported)
         );
       return filteredEngines;
     }

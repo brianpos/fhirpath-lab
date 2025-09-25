@@ -1,5 +1,6 @@
 {
 	"dotnet_server_downloader": "https://fhirpath-lab-dotnet2.azurewebsites.net/api/downloader",
+	"cql_r4": "https://fhirpath-lab-java2.azurewebsites.net/fhir/$fhirpath-cql",
 
 	"dotnet_server_r4b": "https://fhirpath-lab-dotnet2.azurewebsites.net/api/$fhirpath",
 	"dotnet_server_r5": "https://fhirpath-lab-dotnet2.azurewebsites.net/api/$fhirpath-r5",

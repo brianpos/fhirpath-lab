@@ -1,5 +1,6 @@
 {
 	"dotnet_server_downloader": "http://localhost:7071/api/downloader",
+	"cql_r4": "https://fhirpath-lab-java2.azurewebsites.net/fhir/$fhirpath-cql",
 
 	"dotnet_server_r4b": "http://localhost:7071/api/$fhirpath",
 	"dotnet_server_r5": "http://localhost:7071/api/$fhirpath-r5",
