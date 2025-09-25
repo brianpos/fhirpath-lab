@@ -33,6 +33,11 @@ The server API is able to *(/expected to)* provide the following features in its
   * https://dev.fhirpath-lab.com
   * http://localhost:3000 - *where I test locally to the services*
 
+> **Note:** If you've got an implementation and want to see how others have already implemented the API, you can refer to the following github source for how the functionality was implemented in other engines:
+> * [Firely SDK implementation](https://github.com/brianpos/fhirpath-lab-dotnet/blob/7768a68604fbe24311be0edabbcf6ac6434bc42b/fhirpath-lab-dotnet/FunctionFhirPathTest.cs#L70)
+> * [HAPI FHIR implementation](https://github.com/brianpos/fhirpath-lab-java2/blob/main/src/main/java/com/fhirpathlab/FhirpathTestController.java#L86)
+> * [fhirpath.js implementation](https://github.com/brianpos/fhirpath-lab-fhirpath-js-api/blob/main/src/fhirpath-service.ts) *node js hosting - though in the live service is embedded in the page via npm package*
+
 ### Registering a new Engine
 To add in another engine into the fhirpath-lab, the VueJS code will need to be updated to include the new engine:
 *(this has recently been significantly simplified)*
