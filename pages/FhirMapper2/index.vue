@@ -945,7 +945,7 @@ group SetEntryData(source src: Patient, target entry)
       // brianpos hosted service
       // default the firely SDK/brianpos service
       // Source code for this is at https://github.com/brianpos/fhirpath-lab-dotnet
-      let url = settings.mapper_server();
+      let url = settings.getServerEngineUrl("mapper_server");
 
       let p: fhir4b.Parameters = {
         resourceType: "Parameters",
@@ -964,7 +964,7 @@ group SetEntryData(source src: Patient, target entry)
       }
 
       if (this.selectedEngine == "java (HAPI)") {
-        url = settings.mapper_server_java();
+        url = settings.getServerEngineUrl("mapper_server_java");
 
         if (!this.getResourceJson() && this.resourceId) {
           await this.downloadTestResource();

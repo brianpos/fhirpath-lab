@@ -65,53 +65,16 @@ export namespace settings {
     export function dotnet_server_downloader(): string {
         return serverConnections.dotnet_server_downloader;
     }
-    export function dotnet_server_r4b(): string {
-        return serverConnections.dotnet_server_r4b;
-    }
-    export function dotnet_server_r5(): string {
-        return serverConnections.dotnet_server_r5;
-    }
-    export function dotnet_server_r6(): string {
-        return serverConnections.dotnet_server_r6;
-    }
-    export function java_server_r4b(): string {
-        return serverConnections.java_server_r4b;
-    }
-    export function java_server_r5(): string {
-        return serverConnections.java_server_r5;
-    }
-    export function java_server_r6(): string {
-        return serverConnections.java_server_r6;
-    }
-    export function ibm_server_r4b(): string {
-        return serverConnections.ibm_server_r4b;
-    }
-    export function mapper_server(): string {
-        return serverConnections.mapper_server;
-    }
-    export function mapper_server_java(): string {
-        return serverConnections.mapper_server_java;
-    }
-    export function mapper_server_matchbox(): string {
-        return serverConnections.mapper_server_matchbox;
-    }
-    export function python_server_r4b(): string {
-        return serverConnections.python_server_r4b;
-    }
-    export function python_server_r5(): string {
-        return serverConnections.python_server_r5;
-    }
-    export function clojure_server_r4(): string {
-        return serverConnections.clojure_server_r4;
-    }
-    export function clojure_server_r5(): string {
-        return serverConnections.clojure_server_r5;
-    }
-    export function helios_software_r4b(): string {
-        return serverConnections.helios_server_r4b;
-    }
-    export function helios_software_r5(): string {
-        return serverConnections.helios_server_r5;
+    export function getServerEngineUrl(configName?: string): string {
+        if (!configName)
+            return serverConnections.dotnet_server_r4b;
+
+        if (!(configName in serverConnections)) {
+            console.warn(`No server connection configuration found for '${configName}', using default`);
+            return serverConnections.dotnet_server_r4b;
+        }
+
+        return serverConnections[configName];
     }
 
     export function getSearchData(type: string): ConformanceSearchData | undefined {

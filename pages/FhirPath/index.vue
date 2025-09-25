@@ -1110,7 +1110,14 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     },
     engines(): IFhirPathEngineDetails[] {
       // filter the registeredEngines to only those with the selectedFhirVersion
-      const filteredEngines = Object.values(registeredEngines).filter(engine => engine.fhirVersion === this.selectedFhirVersion);
+      const isLocalEngineSupported = this.showAdvancedSettings
+       && (window.location.hostname.startsWith("dev.") || window.location.hostname.startsWith("localhost"))
+       && (this.defaultProviderField?.length ?? 0) > 0;
+
+      const filteredEngines = Object.values(registeredEngines)
+        .filter(engine => engine.fhirVersion === this.selectedFhirVersion
+          && (engine.name !== "Localhost" && engine.name !== "CQL-Facade" || isLocalEngineSupported)
+        );
       return filteredEngines;
     }
   },
@@ -3236,6 +3243,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
 
       this.saveLastUsedParameters(false);
 
+      // Browser only fhirpath.js engines
       if (this.selectedEngine2?.legacyName == "fhirpath.js") {
         astTab2?.displayTreeForExpression(this.getContextExpression() ?? '', this.getFhirpathExpression() ?? '');
         await this.evaluateExpressionUsingFhirpathJs();
@@ -3314,70 +3322,16 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         astTab2?.clearDisplay("AST not supported");
       }
 
-      // brianpos hosted service
-      // Source code for this is at https://github.com/brianpos/fhirpath-lab-dotnet
-      let url = settings.dotnet_server_r4b();
-
-      if (this.selectedEngine2?.legacyName == ".NET (firely-R5)") {
-        url = settings.dotnet_server_r5();
-      }
-      else if (this.selectedEngine2?.legacyName == ".NET (firely-R6)") {
-        url = settings.dotnet_server_r6();
-      }
-      // else if (this.selectedEngine2?.legacyName == "java (CQL)") {
-      //   url = 'http://localhost:8080/fhir/$fhirpath-cql';
-      // }
-      else if (this.selectedEngine2?.legacyName == "java (HAPI)") {
-        url = settings.java_server_r4b();
-        (this as any).$appInsights?.trackEvent({ name: 'evaluate HAPI' });
-      }
-      else if (this.selectedEngine2?.legacyName == "java (HAPI-R5)") {
-        url = settings.java_server_r5();
-        (this as any).$appInsights?.trackEvent({ name: 'evaluate HAPI' });
-      }
-      else if (this.selectedEngine2?.legacyName == "java (HAPI-R6)") {
-        url = settings.java_server_r6();
-        (this as any).$appInsights?.trackEvent({ name: 'evaluate HAPI' });
-      }
-      else if (this.selectedEngine2?.legacyName == "java (IBM)") {
-        url = settings.ibm_server_r4b();
-        (this as any).$appInsights?.trackEvent({ name: 'evaluate IBM' });
-      }
-      else if (this.selectedEngine2?.legacyName == "fhirpath-py (Beda Software)") {
-        url = settings.python_server_r4b();
-        (this as any).$appInsights?.trackEvent({ name: 'evaluate Python' });
-      }
-      else if (this.selectedEngine2?.legacyName == "fhirpath-py (Beda Software-R5)") {
-        url = settings.python_server_r5();
-        (this as any).$appInsights?.trackEvent({ name: 'evaluate Python' });
-      }
-      else if (this.selectedEngine2?.legacyName == "Aidbox (Health Samurai)") {
-        url = settings.clojure_server_r4();
-        (this as any).$appInsights?.trackEvent({ name: 'evaluate Aidbox' });
-      }
-      else if (this.selectedEngine2?.legacyName == "Aidbox (Health Samurai-R5)") {
-        url = settings.clojure_server_r5();
-        (this as any).$appInsights?.trackEvent({ name: 'evaluate Aidbox' });
-      }
-      else if (this.selectedEngine2?.legacyName == "Helios Software (R4B)") {
-        url = settings.helios_software_r4b();
-        (this as any).$appInsights?.trackEvent({ name: 'evaluate Helios Software' });
-      }
-      else if (this.selectedEngine2?.legacyName == "Helios Software (R5)") {
-        url = settings.helios_software_r5();
-        (this as any).$appInsights?.trackEvent({ name: 'evaluate Helios Software' });
-      }
-      else {
-        url = settings.dotnet_server_r4b();
-        (this as any).$appInsights?.trackEvent({ name: 'evaluate FirelySDK' });
-      }
+      // Hosted services
+      let url = settings.getServerEngineUrl(this.selectedEngine2?.configSetting);
+      (this as any).$appInsights?.trackEvent({ name: 'evaluate ' + this.selectedEngine2?.appInsightsEngineName });
 
       if (resourceJson) {
         if (resourceJson.startsWith('<')) {
           // this is XML content, so put it into the XML extension
           p.parameter?.push({ name: "resource", extension: [{ url: "http://fhir.forms-lab.com/StructureDefinition/xml-value", valueString: resourceJson }] });
         }
-        else if (url === settings.java_server_r5() || url === settings.java_server_r6())
+        else if (this.selectedEngine2?.encodeResourceJsonAsExtension)
           p.parameter?.push({ name: "resource", extension: [{ url: "http://fhir.forms-lab.com/StructureDefinition/json-value", valueString: resourceJson }] });
         else
           p.parameter?.push({ name: "resource", resource: JSON.parse(resourceJson) });
