@@ -240,7 +240,7 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         external: true,
         supportsAST: true
     },
-     "OctoFHIR (R4)": {
+    "OctoFHIR (R4)": {
         name: "OctoFHIR",
         legacyName: "OctoFHIR (R4)",
         fhirVersion: "R4",
@@ -252,7 +252,7 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         external: true,
         supportsAST: true
     },
-      "OctoFHIR (R5)": {
+    "OctoFHIR (R5)": {
         name: "OctoFHIR",
         legacyName: "OctoFHIR (R5)",
         fhirVersion: "R5",
@@ -264,7 +264,7 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         external: true,
         supportsAST: true
     },
-      "OctoFHIR (R6)": {
+    "OctoFHIR (R6)": {
         name: "OctoFHIR",
         legacyName: "OctoFHIR (R6)",
         fhirVersion: "R6",
@@ -276,6 +276,7 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         external: true,
         supportsAST: true
     },
+
     "AtomicEHR (R4)": {
         name: "AtomicEHR",
         legacyName: "AtomicEHR (R4)",
@@ -288,7 +289,7 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         external: true,
         supportsAST: true
     },
-      "AtomicEHR (R5)": {
+    "AtomicEHR (R5)": {
         name: "AtomicEHR ",
         legacyName: "AtomicEHR (R5)",
         fhirVersion: "R5",
@@ -300,7 +301,7 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         external: true,
         supportsAST: true
     },
-      "AtomicEHR (R6)": {
+    "AtomicEHR (R6)": {
         name: "AtomicEHR ",
         legacyName: "AtomicEHR  (R6)",
         fhirVersion: "R6",
@@ -309,6 +310,40 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         configSetting: "atomic_server_r6",
         githubRepo: "https://github.com/atomic-ehr/fhirpath",
         description:  "A TypeScript implementation of FHIRPath from AtomicEHR team",
+        external: true,
+        supportsAST: true
+    },
+
+    "Local (R4)": {
+        name: "Localhost",
+        legacyName: "Local (R4)",
+        fhirVersion: "R4",
+        appInsightsEngineName: "Local",
+        publisher: "http://localhost:3001/fhir/$fhirpath",
+        configSetting: "local_r4",
+        description: "Your own locally hosted fhirpath engine.",
+        external: true,
+        supportsAST: true
+    },
+    "Local (R5)": {
+        name: "Localhost",
+        legacyName: "Local (R5)",
+        fhirVersion: "R5",
+        appInsightsEngineName: "Local",
+        publisher: "http://localhost:3001/fhir/$fhirpath-r5",
+        configSetting: "local_r5",
+        description: "Your own locally hosted fhirpath engine.",
+        external: true,
+        supportsAST: true
+    },
+    "Local (R6)": {
+        name: "Localhost",
+        legacyName: "Local (R6)",
+        fhirVersion: "R6",
+        appInsightsEngineName: "Local",
+        publisher: "http://localhost:3001/fhir/$fhirpath-r6",
+        configSetting: "local_r6",
+        description: "Your own locally hosted fhirpath engine.",
         external: true,
         supportsAST: true
     },

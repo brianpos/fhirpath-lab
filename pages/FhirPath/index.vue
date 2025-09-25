@@ -1110,7 +1110,14 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     },
     engines(): IFhirPathEngineDetails[] {
       // filter the registeredEngines to only those with the selectedFhirVersion
-      const filteredEngines = Object.values(registeredEngines).filter(engine => engine.fhirVersion === this.selectedFhirVersion);
+      const isLocalEngineSupported = this.showAdvancedSettings
+       && (window.location.hostname.startsWith("dev.") || window.location.hostname.startsWith("localhost"))
+       && (this.defaultProviderField?.length ?? 0) > 0;
+
+      const filteredEngines = Object.values(registeredEngines)
+        .filter(engine => engine.fhirVersion === this.selectedFhirVersion
+          && (engine.name !== "Localhost" || isLocalEngineSupported)
+        );
       return filteredEngines;
     }
   },
