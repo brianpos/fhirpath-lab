@@ -6,7 +6,9 @@
           <v-tab :key="index" :title="tabDetail.title" :class="tabIsActiveClass(index)" v-on:click="tabClicked"
             :disabled="!tabIsEnabled(index)" v-show="tabDetail.show">
             <v-icon left> {{ tabDetail.iconName }} </v-icon>
-            {{ tabDetail.tabName }}
+            <span style="text-align: left;">{{ tabDetail.tabName }}
+              <template v-if="tabDetail.tabSubName"><i style="font-size: x-small; text-transform: lowercase"><br/>{{ tabDetail.tabSubName }}</i></template>
+            </span>
           </v-tab>
         </template>
         <div class="lock-unlock-panel" style="margin-left: auto; padding: 8px 1px;">
@@ -38,8 +40,10 @@
               <div v-show="tabIsVisible(index)" :eager="true" v-bind:style="tabStyleForOrder(index)" class="tab-scroll-parent">
                 <v-card flat>
                   <v-card-text>
-                    <p class="fl-tab-header" :title="tabDetail.title">{{ (tabDetail.tabHeaderName ?
-    tabDetail.tabHeaderName : tabDetail.tabName) }}</p>
+                    <p class="fl-tab-header" :title="tabDetail.title">
+                      {{ (tabDetail.tabHeaderName ? tabDetail.tabHeaderName : tabDetail.tabName) }}
+                      <template v-if="tabDetail.tabSubName"><i style="font-size: x-small; text-transform: lowercase"> {{ tabDetail.tabSubName }}</i></template>
+                    </p>
                     <div class="tab-detail">
                       <slot :name="tabDetail.tabName.replace(' ', '_')"></slot>
                     </div>
@@ -320,11 +324,19 @@ export default class TwinPaneTab extends Vue {
 }
 
 export interface TabData {
-  iconName: string; // e.g. mdi-function-variant
+  /** The icon to display in the tab e.g. mdi-function-variant */
+  iconName: string;
+  /** The name of the tab - also used as the slot name (spaces => `_`) */
   tabName: string;
+  /** Display name for the tab */
   tabHeaderName?: string;
+  /** Sub-name for the tab (shown under the header, or next to it in collapsed case) */
+  tabSubName?: string;
+  /** tooltip text for the tab */
   title?: string;
+  /** Whether the tab is shown */
   show: boolean;
+  /** Whether the tab is enabled */
   enabled: boolean;
 }
 
