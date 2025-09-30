@@ -223,7 +223,12 @@ import fhirpath from "fhirpath";
 export default Vue.extend({
   computed: {
     fhirpathVersion() {
-      return fhirpath.version;
+      try {
+        return fhirpath?.version || 'unknown';
+      } catch (error) {
+        console.error('Error accessing fhirpath.version:', error);
+        return 'unknown';
+      }
     },
   },
 });
