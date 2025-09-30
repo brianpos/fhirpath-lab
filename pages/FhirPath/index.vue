@@ -590,7 +590,7 @@ import { LibraryData } from "~/models/LibraryTableData";
 import { BaseResource_defaultValues } from "~/models/BaseResourceTableData";
 import { DomainResource, FhirResource, Resource } from "fhir/r4b";
 import { findNodeByPath, IJsonNode, IJsonNodePosition, parseJson } from "~/helpers/json_parser";
-import { parseXml } from "~/helpers/xml_parser";
+import { parseXml, parseXmlAndObject } from "~/helpers/xml_parser";
 import TwinPaneTab, { TabData } from "~/components/TwinPaneTab.vue";
 import { IFhirPathEngineDetails, registeredEngines } from "~/types/fhirpath_test_engine";
 
@@ -1110,7 +1110,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     },
     engines(): IFhirPathEngineDetails[] {
       // filter the registeredEngines to only those with the selectedFhirVersion
-      const isLocalEngineSupported = this.showAdvancedSettings
+      let isLocalEngineSupported = this.showAdvancedSettings
        && (window.location.hostname.startsWith("dev.") || window.location.hostname.startsWith("localhost"))
        && (this.defaultProviderField?.length ?? 0) > 0;
 
@@ -2494,10 +2494,27 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       // run the actual fhirpath engine
       let fhirData = { resourceType: 'Patient' }; // some dummy data
       const resourceJson = this.getResourceJson();
+      let astJson: IJsonNode | undefined = undefined;
       if (resourceJson) {
         try
         {
+          // if this is XML content, we first need to convert it into json from the XML content
+          if (resourceJson.trim().startsWith('<')) {
+            const data = parseXmlAndObject(resourceJson, fhirpath_r4_model);
+            if (data?.object?.resourceType){
+              fhirData = data.object;
+              astJson = data.node;
+            }
+            else {
+              this.saveOutcome = CreateOperationOutcome('fatal', 'exception', 'The provided XML content does not appear to be a valid FHIR resource (missing resourceType)');
+              this.showOutcome = true;
+              return;
+            }
+          }
+          else {
         fhirData = JSON.parse(resourceJson);
+            astJson = parseJson(resourceJson+'', this.getCurrentModelInfo());
+          }
         this.resourceType = fhirData.resourceType;
       }
         catch (err: any) {
@@ -2510,7 +2527,6 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         }
       }
 
-      const astJson: IJsonNode | undefined = parseJson(resourceJson+'', this.getCurrentModelInfo());
 
       // debugger;
       var environment: Record<string, any> = { resource: fhirData, rootResource: fhirData };
@@ -2705,7 +2721,22 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       if (resourceJson) {
         try
         {
+          // if this is XML content, we first need to convert it into json from the XML content
+          if (resourceJson.trim().startsWith('<')){
+            const data = parseXmlAndObject(resourceJson, modelInfo);
+            if (data?.object?.resourceType){
+              fhirData = data.object;
+              this.resourceType = fhirData.resourceType;
+            }
+            else {
+              this.saveOutcome = CreateOperationOutcome('fatal', 'exception', 'The provided XML content does not appear to be a valid FHIR resource (missing resourceType)');
+              this.showOutcome = true;
+              return;
+            }
+          }
+          else {
         fhirData = JSON.parse(resourceJson);
+          }
       }
         catch (err: any) {
           console.log(err);

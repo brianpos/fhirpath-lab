@@ -3,6 +3,9 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+# 30 September 2025
+* POC support for XML in the fhirpath.js engine (when using actual FHIR content)
+
 # 24 September 2025
 * Refactor all the code to include new engines to make it easier to add new engines in future
 * New FHIRPath engines:

@@ -53,7 +53,7 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         description: "A JavaScript FHIRPath engine.",
         external: false,
         supportsAST: true,
-        supportsXML: false
+        supportsXML: true
     },
     "fhirpath.js (R5)": {
         name: "fhirpath.js",
@@ -65,7 +65,7 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         description: "A JavaScript FHIRPath engine for FHIR R5.",
         external: false,
         supportsAST: true,
-        supportsXML: false
+        supportsXML: true
     },
     "fhirpath.js (R6)": {
         name: "fhirpath.js",
@@ -77,7 +77,7 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         description: "A JavaScript FHIRPath engine for FHIR R6.",
         external: false,
         supportsAST: true,
-        supportsXML: false
+        supportsXML: true
     },
     ".NET SDK": {
         name: ".NET SDK",
@@ -180,7 +180,8 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         githubRepo: "https://github.com/beda-software/fhirpath-py",
         description: "A Python FHIRPath engine by Beda Software.",
         external: true,
-        supportsAST: false
+        supportsAST: false,
+        supportsXML: false
     },
     "fhirpath-py (Beda Software-R5)": {
         name: "fhirpath-py",
@@ -192,7 +193,8 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         githubRepo: "https://github.com/beda-software/fhirpath-py",
         description: "A Python FHIRPath engine by Beda Software for FHIR R5.",
         external: true,
-        supportsAST: false
+        supportsAST: false,
+        supportsXML: false
     },
     "Aidbox (Health Samurai)": {
         name: "Aidbox",
@@ -203,7 +205,8 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         configSetting: "clojure_server_r4",
         description: "A Clojure-based FHIRPath engine from Aidbox by Health Samurai.",
         external: true,
-        supportsAST: false
+        supportsAST: false,
+        supportsXML: false
     },
     "Aidbox (Health Samurai-R5)": {
         name: "Aidbox",
@@ -214,7 +217,8 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         configSetting: "clojure_server_r5",
         description: "A Clojure-based FHIRPath engine from Aidbox by Health Samurai for FHIR R5.",
         external: true,
-        supportsAST: false
+        supportsAST: false,
+        supportsXML: false
     },
     "Helios Software (R4B)": {
         name: "Helios",
@@ -226,7 +230,8 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         githubRepo: "https://github.com/HeliosSoftware/hfs",
         description: "A Rust-based FHIRPath engine from Helios Software.",
         external: true,
-        supportsAST: true
+        supportsAST: true,
+        supportsXML: false
     },
     "Helios Software (R5)": {
         name: "Helios",
@@ -238,7 +243,8 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         githubRepo: "https://github.com/HeliosSoftware/hfs",
         description: "A Rust-based FHIRPath engine from Helios Software.",
         external: true,
-        supportsAST: true
+        supportsAST: true,
+        supportsXML: false
     },
     "OctoFHIR (R4)": {
         name: "OctoFHIR",
@@ -250,7 +256,8 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         githubRepo: "https://github.com/octofhir/fhirpath-rs",
         description: "A Rust-based FHIRPath engine from OctoFHIR",
         external: true,
-        supportsAST: true
+        supportsAST: true,
+        supportsXML: false
     },
     "OctoFHIR (R5)": {
         name: "OctoFHIR",
@@ -262,7 +269,8 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         githubRepo: "https://github.com/octofhir/fhirpath-rs",
         description: "A Rust-based FHIRPath engine from OctoFHIR",
         external: true,
-        supportsAST: true
+        supportsAST: true,
+        supportsXML: false
     },
     "OctoFHIR (R6)": {
         name: "OctoFHIR",
@@ -274,7 +282,8 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         githubRepo: "https://github.com/octofhir/fhirpath-rs",
         description: "A Rust-based FHIRPath engine from OctoFHIR",
         external: true,
-        supportsAST: true
+        supportsAST: true,
+        supportsXML: false
     },
 
     "AtomicEHR (R4)": {
@@ -287,7 +296,8 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         githubRepo: "https://github.com/atomic-ehr/fhirpath",
         description: "A TypeScript implementation of FHIRPath from AtomicEHR team",
         external: true,
-        supportsAST: true
+        supportsAST: true,
+        supportsXML: false
     },
     "AtomicEHR (R5)": {
         name: "AtomicEHR ",
@@ -299,7 +309,8 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         githubRepo: "https://github.com/atomic-ehr/fhirpath",
         description:  "A TypeScript implementation of FHIRPath from AtomicEHR team",
         external: true,
-        supportsAST: true
+        supportsAST: true,
+        supportsXML: false
     },
     "AtomicEHR (R6)": {
         name: "AtomicEHR ",
@@ -311,7 +322,8 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         githubRepo: "https://github.com/atomic-ehr/fhirpath",
         description:  "A TypeScript implementation of FHIRPath from AtomicEHR team",
         external: true,
-        supportsAST: true
+        supportsAST: true,
+        supportsXML: false
     },
 
     "Local (R4)": {
@@ -323,7 +335,8 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         configSetting: "local_r4",
         description: "Your own locally hosted fhirpath engine.",
         external: true,
-        supportsAST: true
+        supportsAST: true,
+        supportsXML: false
     },
     "Local (R5)": {
         name: "Localhost",
@@ -334,7 +347,8 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         configSetting: "local_r5",
         description: "Your own locally hosted fhirpath engine.",
         external: true,
-        supportsAST: true
+        supportsAST: true,
+        supportsXML: false
     },
     "Local (R6)": {
         name: "Localhost",
@@ -345,7 +359,8 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         configSetting: "local_r6",
         description: "Your own locally hosted fhirpath engine.",
         external: true,
-        supportsAST: true
+        supportsAST: true,
+        supportsXML: false
     },
     "CQL (R4)": {
         name: "CQL-Facade",
@@ -356,6 +371,7 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         configSetting: "cql_r4",
         description: "Experimental CQL engine runner, VERY DRAFT",
         external: true,
-        supportsAST: true
+        supportsAST: true,
+        supportsXML: false
     },
 };
