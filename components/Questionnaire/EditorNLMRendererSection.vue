@@ -1,20 +1,22 @@
 <template>
-  <div>
-    <template v-if="questionnaire">
-      <v-btn style="position: absolute; right: 34px; z-index: 2; margin-top: 4px;" color="primary"
-        title="Show the QuestionnaireResponse based on the data in the LHC-Forms renderer" @click="logResponse()">Show
-        Response</v-btn>
-      <div class="q-host">
-        <div id="myFormContainer"></div>
-        <div class="errors" v-show="lforms_error != undefined">
-          <h5>Errors rendering questionnaire:</h5>
-          <div>{{ lforms_error }}</div>
+  <div style="display:grid; height:100%;">
+    <div style="overflow-y: auto;">
+      <template v-if="questionnaire">
+        <v-btn style="position: absolute; right: 34px; z-index: 2; margin-top: 4px;" color="primary"
+          title="Show the QuestionnaireResponse based on the data in the LHC-Forms renderer" @click="logResponse()">Show
+          Response</v-btn>
+        <div class="q-host">
+          <div id="myFormContainer"></div>
+          <div class="errors" v-show="lforms_error != undefined">
+            <h5>Errors rendering questionnaire:</h5>
+            <div>{{ lforms_error }}</div>
+          </div>
         </div>
-      </div>
-    </template>
-    <template v-else>
-      <p>No questionnaire provided</p>
-    </template>
+      </template>
+      <template v-else>
+        <p>No questionnaire provided</p>
+      </template>
+    </div>
   </div>
 </template>
 
@@ -27,7 +29,7 @@ pre {
   position: relative;
   overflow-y: auto;
   overflow-x: hidden;
-  height: calc(100vh - 200px);
+  height: 100%
 }
 </style>
 

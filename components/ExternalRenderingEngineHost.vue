@@ -223,6 +223,7 @@ export default class ExternalRenderingEngineHost extends Vue {
 .engine-slot {
   flex: 1;
   overflow: hidden;
+  display: grid;
 }
 
 .engine-footer {
