@@ -224,6 +224,27 @@ export namespace settings {
         return !localStorage.getItem("settings_showAdvancedSettings") ? false : true;
     }
 
+    export function getExternalFormsConsent(engineName: string, consentVersion: number): boolean {
+        try {
+            return localStorage.getItem(`settings_${engineName.replaceAll(" ","_")}FormsConsent`) === 'true';
+        }
+        catch {
+            return false;
+        }
+    }
+
+    export function setExternalFormsConsent(engineName: string, consentVersion: number, consent: boolean): void {
+        try {
+            if (!consent){
+                localStorage.removeItem(`settings_${engineName.replaceAll(" ","_")}FormsConsent`);
+                return;
+            }
+            localStorage.setItem(`settings_${engineName.replaceAll(" ","_")}FormsConsent`, consent.toString());
+        }
+        catch {
+        }
+    }
+
     export function load(): UserSettingsData {
         return {
             fhirServerUrl: localStorage.getItem("settings_fhirServerURL") ?? "https://fhir.forms-lab.com",

@@ -119,12 +119,26 @@
           </template>
 
           <template v-slot:Aidbox_Forms>
-            <EditorAidboxFormsSection
-              v-if="raw"
-              v-bind:questionnaire="raw"
-              v-bind:questionnaireResponse="questionnaireResponse"
-              @response="processUpdatedQuestionnaireResponse"
-            />
+            <ExternalRenderingEngineHost
+              engine-name="Aidbox Forms"
+              title="Aidbox Forms Renderer"
+              publisher="Health Samurai"
+              :consent="aidboxApproved"
+              @consent-changed="handleAidboxConsentChange"
+            >
+              <template v-slot:product-info>
+                <p class="mb-2">
+                  The Aidbox Forms Renderer is part of a commercial platform by Health Samurai. More information is available on their  <a
+                    href="https://www.health-samurai.io/docs/aidbox/modules/aidbox-forms" target="_blank" rel="noopener">website</a>.
+                </p>
+              </template>
+              <EditorAidboxFormsSection
+                v-if="raw"
+                v-bind:questionnaire="raw"
+                v-bind:questionnaireResponse="questionnaireResponse"
+                @response="processUpdatedQuestionnaireResponse"
+              />
+            </ExternalRenderingEngineHost>
           </template>
 
           <template v-slot:CSIRO_Renderer>
@@ -340,6 +354,7 @@ import Chat from "~/components/Chat.vue";
 import QuestionnaireExtractTest from "~/components/QuestionnaireExtractTest.vue";
 import EditorNLMRendererSection from "~/components/Questionnaire/EditorNLMRendererSection.vue";
 import EditorRendererSection from "~/components/Questionnaire/EditorRendererSection.vue";
+import EditorAidboxFormsSection from "~/components/Questionnaire/EditorAidboxFormsSection.vue";
 import ResourceEditor from "~/components/ResourceEditor.vue";
 import { structuredDataCaptureHelpers as sdc } from "~/helpers/structureddatacapture-helpers";
 import { ChatCompletionCreateParamsNonStreaming, ChatCompletionMessageParam } from "openai/resources/chat/completions";
@@ -386,6 +401,9 @@ interface IQuestionnaireTesterData extends QuestionnaireData {
   modelsText?: string;
   dataServerBaseUrl: string;
 
+  // External renderers enabled
+  aidboxApproved: boolean;
+
   // Populate/Extract properties
   contextData: ContextData;
 }
@@ -421,6 +439,8 @@ const resourceEditorSettings: Partial<ace.Ace.EditorOptions> = {
   wrapBehavioursEnabled: true,
 };
 
+const aidboxConsentVersion = 1;
+
 export default Vue.extend({
   //   components: { fhirqItem },
   mounted() {
@@ -429,6 +449,8 @@ export default Vue.extend({
     setAcePaths(ace.config);
     if (settings.getOpenAIKey() || settings.getOpenAIBasePath())
       this.chatEnabled = true;
+
+    this.aidboxApproved = settings.getExternalFormsConsent("Aidbox Forms", aidboxConsentVersion);
   },
 
   destroyed() {
@@ -578,21 +600,24 @@ export default Vue.extend({
         {
           iconName: "mdi-bug-play-outline",
           tabName: "CSIRO Renderer",
-          title: "CSIRO Renderer",
+          tabSubName: "(local)",
+          title: "CSIRO Renderer\nBy CSIRO Australia",
           show: true,
           enabled: true,
         },
         {
           iconName: "mdi-bug-play-outline",
           tabName: "LHC-Forms",
-          title: "NLM LHC-Forms Renderer",
+          tabSubName: "(local)",
+          title: "NLM LHC-Forms Renderer\nBy the USA National Library of Medicine",
           show: true,
           enabled: true,
         },
         {
-          iconName: "mdi-bug-play-outline",
+          iconName: this.aidboxApproved ? "mdi-bug-play-outline" : "mdi-bug-stop-outline",
           tabName: "Aidbox Forms",
-          title: "Aidbox Forms",
+          tabSubName: "(external)",
+          title: "Aidbox Forms Renderer\n(Rendered by external service)\nBy Health Samurai",
           show: true,
           enabled: true,
         },
@@ -798,6 +823,18 @@ export default Vue.extend({
         }
       }
     },
+
+    handleAidboxConsentChange(event: { engineName: string, consented: boolean, remember: boolean }) {
+      console.log('Aidbox Consent changed:', event);
+      this.aidboxApproved = event.consented;
+      
+      if (event.remember) {
+        // Save to user settings
+        console.log(`Saving preference for ${event.engineName}: ${event.consented}`);
+        settings.setExternalFormsConsent(event.engineName, aidboxConsentVersion, event.consented);
+      }
+    },
+
     tabChanged(index: number): void {
       if (index == 0) {
         setTimeout(() => {
@@ -2159,6 +2196,9 @@ export default Vue.extend({
       modelsSearch: '',
       modelsText: undefined,
       dataServerBaseUrl: settings.getFhirServerExamplesUrl(),
+
+      // External renderers
+      aidboxApproved: false,
 
       contextData: {
         subject: { reference: "Patient/example", display: "Peter James Chalmers" },

@@ -92,7 +92,7 @@
 import { rendererStylingStore } from '@aehrc/smart-forms-renderer';
 import Vue from 'vue';
 import Component from 'vue-class-component';
-import { Prop, Emit } from 'vue-property-decorator';
+import { Prop, Emit, Watch } from 'vue-property-decorator';
 
 @Component
 export default class ExternalRenderingEngineHost extends Vue {
@@ -100,24 +100,39 @@ export default class ExternalRenderingEngineHost extends Vue {
   @Prop() readonly title?: string;
   @Prop() readonly publisher?: string;
   @Prop({ default: false }) readonly consent?: boolean;
-  @Prop({ default: false }) readonly initialConsent?: boolean;
-  @Prop({ default: false }) readonly initialRememberChoice?: boolean;
 
-  // Internal state
+  // Internal state for form inputs in consent dialog
   private consentGiven: boolean = false;
   private rememberChoice: boolean = false;
-  private hasConsent: boolean = false;
+
+  // Computed property to reactively derive hasConsent from props
+  get hasConsent(): boolean {
+    return this.consent ?? false;
+  }
+
+  // Watch for changes to the consent prop directly
+  @Watch('consent', { immediate: false })
+  onConsentPropChanged(newValue: boolean | undefined, oldValue: boolean | undefined) {
+    console.log(`ExternalRenderingEngineHost (${this.engineName}): consent prop changed from ${oldValue} to ${newValue}`);
+    if (!newValue) {
+      // When consent is revoked, reset the form checkboxes
+      this.consentGiven = false;
+      this.rememberChoice = false;
+    } else {
+      // When consent is granted, check the consent checkbox
+      this.consentGiven = true;
+    }
+  }
 
   mounted() {
-    // Initialize from props (consent prop takes precedence over initialConsent)
-    this.consentGiven = this.consent ?? this.initialConsent ?? false;
-    this.rememberChoice = this.initialRememberChoice || false;
-    this.hasConsent = this.consent ?? this.initialConsent ?? false;
+    // Initialize checkbox state from props
+    this.consentGiven = this.hasConsent;
+    this.rememberChoice = false;
   }
 
   @Emit('consent-changed')
   grantConsent() {
-    this.hasConsent = true;
+    // Don't manage state locally - emit event and let parent control it
     return {
       engineName: this.engineName,
       consented: true,
@@ -127,20 +142,13 @@ export default class ExternalRenderingEngineHost extends Vue {
 
   @Emit('consent-changed')
   revokeConsent() {
-    this.hasConsent = false;
     this.consentGiven = false;
+    // Don't manage state locally - emit event and let parent control it
     return {
       engineName: this.engineName,
       consented: false,
-      remember: this.rememberChoice
+      remember: true // don't have visibility of the checkbox state here, so default to true
     };
-  }
-
-  // Public method to set consent state (for parent components)
-  public setConsent(consented: boolean, remember: boolean = false) {
-    this.hasConsent = consented;
-    this.consentGiven = consented;
-    this.rememberChoice = remember;
   }
 }
 </script>
