@@ -17,16 +17,21 @@
           <slot name="product-info" />
           <div class="data-warning">
             <v-icon color="info" small class="mr-1">mdi-information-outline</v-icon>
+            <div>
             <span class="text-caption">
               Enabling this external service will send the test questionnaire, context data and entered questionnaire response for rendering.<br/>
-              <br/>
-              This means that the "Show Response" button on each renderer will:<br/>
-              • Copy the current form data to the response tab<br/>
-              • Load the data (including context) to all <b>enabled</b> rendering engines<br/>
-              • Facilitate cross-engine compatibility verification<br/>
-              <br/>
+              This means that the "Show Response" button on each renderer will:
+            </span>
+            <ul class="text-caption">
+              <li>Copy the current form data to the response tab</li>
+              <li>Load the data (including context) to all <b>enabled</b> rendering engines</li>
+              <li>Facilitate cross-engine compatibility verification</li>
+            </ul>
+            <span class="text-caption" style="margin-bottom: unset;">
+              And pre-population will render to all enabled engines.<br/>
               Remember, this is a development testing tool - do not enter real patient data.
             </span>
+            </div>
           </div>
         </v-card-text>
       </v-card>
@@ -117,7 +122,6 @@ export default class ExternalRenderingEngineHost extends Vue {
     if (!newValue) {
       // When consent is revoked, reset the form checkboxes
       this.consentGiven = false;
-      this.rememberChoice = false;
     } else {
       // When consent is granted, check the consent checkbox
       this.consentGiven = true;

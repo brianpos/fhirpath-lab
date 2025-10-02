@@ -136,6 +136,17 @@ export default class EditorNLMRendererSection extends Vue {
       "R4",
       "myFormContainer"
     );
+
+    // remove the csiro tag if it was there.
+    if (response.meta?.tag?.find(t => t.code?.startsWith('csiro'))) {
+      response.meta.tag = response.meta.tag!.filter(t => !t.code?.startsWith('csiro'));
+    }
+
+    // remove the aidbox tag if it was there.
+    if (response.meta?.tag?.find(t => t.code?.startsWith('aidbox'))) {
+      response.meta.tag = response.meta.tag!.filter(t => !t.code?.startsWith('aidbox'));
+    }
+
     console.log(response);
     this.$emit("response", response);
   }

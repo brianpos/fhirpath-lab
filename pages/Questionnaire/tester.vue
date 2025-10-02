@@ -132,12 +132,9 @@
                     href="https://www.health-samurai.io/docs/aidbox/modules/aidbox-forms" target="_blank" rel="noopener">website</a>.
                 </p>
               </template>
-              <EditorAidboxFormsSection
-                v-if="raw"
-                v-bind:questionnaire="raw"
-                v-bind:questionnaireResponse="questionnaireResponse"
-                @response="processUpdatedQuestionnaireResponse"
-              />
+              <EditorAidboxFormsSection ref="aidboxFormsRenderer" v-if="raw" v-bind:questionnaire="raw" :context="contextData"
+              :dataServer="dataServerBaseUrl"
+                @response="processUpdatedQuestionnaireResponse" @highlight-path="highlightPath" />
             </ExternalRenderingEngineHost>
           </template>
 
@@ -1176,12 +1173,20 @@ export default Vue.extend({
         await lhcFormsRenderer.renderQuestionnaireResponse(value, this.raw);
       }
 
+      if (this.$refs.aidboxFormsRenderer && this.raw != null) {
+        let aidboxFormsRenderer = (this.$refs.aidboxFormsRenderer as EditorAidboxFormsSection)
+        await aidboxFormsRenderer.renderQuestionnaireResponse(value, this.raw);
+      }
+
       if (!this.runningPrePop) {
         if (renderer == "lforms pre-pop") {
           this.selectTab("LHC-Forms");
         }
         if (renderer == "CSIRO pre-pop") {
           this.selectTab("CSIRO Renderer");
+        }
+        if (renderer == "Aidbox Forms") {
+          this.selectTab("Aidbox Forms");
         }
       }
     },
@@ -1224,6 +1229,11 @@ export default Vue.extend({
         if (this.$refs.lhcFormsRenderer && this.raw != null) {
           let lhcFormsRenderer = (this.$refs.lhcFormsRenderer as EditorNLMRendererSection)
           await lhcFormsRenderer.renderQuestionnaireResponse(value, this.raw);
+        }
+
+        if (this.$refs.aidboxFormsRenderer && this.raw != null) {
+          let aidboxFormsRenderer = (this.$refs.aidboxFormsRenderer as EditorAidboxFormsSection)
+          await aidboxFormsRenderer.renderQuestionnaireResponse(value, this.raw);
         }
 
         if (this.$refs.extractTester as QuestionnaireExtractTest) {
@@ -1959,6 +1969,7 @@ export default Vue.extend({
                        | "Context" | "Pre-Population" | "Variables" | "PrePop" 
                        | "CSIRO Renderer"
                        | "LHC-Forms"
+                       | "Aidbox Forms"
                        | "Response" | "Extract" | "Models" | "AI Chat") {
       let tabControl: TwinPaneTab = this.$refs.twinTabControl as TwinPaneTab;
       if (tabControl) {
@@ -2186,7 +2197,7 @@ export default Vue.extend({
       cancelSource: undefined,
       resourceJsonChanged: false,
       resourceId:
-        "https://sqlonfhir-r4.azurewebsites.net/fhir/Questionnaire/bit-of-everything",
+        "https://fhir.forms-lab.com/Questionnaire/bit-of-everything",
       qrResourceId: undefined,
       openAILastContext: "",
       openAIexpressionExplanationLoading: false,
