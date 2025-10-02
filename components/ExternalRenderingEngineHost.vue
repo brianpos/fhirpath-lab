@@ -69,20 +69,18 @@
       
       <!-- Footer with revoke controls -->
       <div class="engine-footer">
-        <v-divider class="mb-2" />
         <div class="d-flex align-center justify-space-between">
-          <span class="text-caption text--secondary">
-            <v-icon small color="success" class="mr-1">mdi-check-circle</v-icon>
-            External {{ engineName }} is enabled
+          <span class="text-caption text--secondary" style="font-style: italic;">
+            (external rendering engine)
           </span>
           <v-btn
+            class="disable-btn"
             small
             text
-            color="error"
             @click="revokeConsent"
           >
             <v-icon small left>mdi-close</v-icon>
-            Disable
+            Disable {{ engineName }}
           </v-btn>
         </div>
       </div>
@@ -165,6 +163,10 @@ export default class ExternalRenderingEngineHost extends Vue {
 
 <style scoped lang="scss">
 
+.disable-btn {
+  text-transform: none; font-weight: normal;
+}
+
 .external-engine-host {
   height: 100%;
   display: flex;
@@ -228,7 +230,7 @@ export default class ExternalRenderingEngineHost extends Vue {
 
 .engine-footer {
   flex-shrink: 0;
-  padding: 8px 16px;
+  padding: 0 8px;
   background-color: #fafafa;
   border-top: 1px solid rgba(0, 0, 0, 0.12);
 }
