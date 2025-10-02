@@ -34,7 +34,7 @@
       <div class="consent-controls">
         <v-checkbox 
           v-model="consentGiven"
-          :label="`Enable sending data to ${publisher} for questionnaire rendering`"
+          :label="`Allow sending data to ${publisher} for questionnaire rendering`"
           color="primary"
           class="mb-2"
           hide-details="auto"
@@ -55,7 +55,7 @@
           color="primary"
           class="mt-3"
         >
-          Activate {{ engineName }}
+          Enable {{ engineName }}
         </v-btn>
       </div>
     </div>
