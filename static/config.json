@@ -32,6 +32,9 @@
 	"atomic_server_r5": "https://fhirpath.atomic-ehr.org/r5",
 	"atomic_server_r6": "https://fhirpath.atomic-ehr.org/r6",
 
+	"toolbox_go_r4": "https://fhirpath-lab-go.fly.dev/$fhirpath-r4",
+	"toolbox_go_r5": "https://fhirpath-lab-go.fly.dev/$fhirpath-r5",
+
 	"local_r4": "http://localhost:3001/fhir/$fhirpath",
 	"local_r5": "http://localhost:3001/fhir/$fhirpath-r5",
 	"local_r6": "http://localhost:3001/fhir/$fhirpath-r6"

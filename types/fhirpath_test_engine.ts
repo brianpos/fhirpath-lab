@@ -325,6 +325,35 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         supportsAST: true,
         supportsXML: false
     },
+    
+    "toolbox-go (R4)": {
+        name: "toolbox-go",
+        legacyName: "toolbox-go (R4)",
+        fhirVersion: "R4",
+        appInsightsEngineName: "toolbox-go",
+        publisher: "Damedic",
+        configSetting: "toolbox_go_r4",
+        githubRepo: "https://github.com/DAMEDIC/fhir-toolbox-go",
+        description: "A Go implementation of FHIRPath",
+        external: true,
+        supportsAST: false,
+        supportsXML: false,
+        encodeResourceJsonAsExtension: true
+    },
+    "toolbox-go (R5)": {
+        name: "toolbox-go",
+        legacyName: "toolbox-go (R5)",
+        fhirVersion: "R5",
+        appInsightsEngineName: "toolbox-go",
+        publisher: "Damedic",
+        configSetting: "toolbox_go_r5",
+        githubRepo: "https://github.com/DAMEDIC/fhir-toolbox-go",
+        description: "A Go implementation of FHIRPath",
+        external: true,
+        supportsAST: false,
+        supportsXML: false,
+        encodeResourceJsonAsExtension: true
+    },
 
     "Local (R4)": {
         name: "Localhost",
