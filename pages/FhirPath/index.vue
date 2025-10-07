@@ -2512,11 +2512,11 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
             }
           }
           else {
-        fhirData = JSON.parse(resourceJson);
+            fhirData = JSON.parse(resourceJson);
             astJson = parseJson(resourceJson+'', this.getCurrentModelInfo());
           }
-        this.resourceType = fhirData.resourceType;
-      }
+          this.resourceType = fhirData.resourceType;
+        }
         catch (err: any) {
           console.log(err);
           if (err.message) {
@@ -2558,7 +2558,9 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         return x;
       };
 
-      (this as any).$appInsights?.trackEvent({ name: 'evaluate fhirpath.js' });
+      if (this.defaultProviderField !== 'Brian Postlethwaite') {
+        (this as any).$appInsights?.trackEvent({ name: 'evaluate fhirpath.js' });
+      }
 
       const contextExpression = this.getContextExpression();
 
@@ -2735,9 +2737,9 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
             }
           }
           else {
-        fhirData = JSON.parse(resourceJson);
+            fhirData = JSON.parse(resourceJson);
           }
-      }
+        }
         catch (err: any) {
           console.log(err);
           if (err.message) {
@@ -2780,7 +2782,9 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         return x;
       };
 
-      (this as any).$appInsights?.trackEvent({ name: 'evaluate fhirpath.js' });
+      if (this.defaultProviderField !== 'Brian Postlethwaite') {
+        (this as any).$appInsights?.trackEvent({ name: 'evaluate fhirpath.js' });
+      }
 
       const contextExpression = this.getContextExpression();
       if (contextExpression) {
@@ -3355,7 +3359,9 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
 
       // Hosted services
       let url = settings.getServerEngineUrl(this.selectedEngine2?.configSetting);
-      (this as any).$appInsights?.trackEvent({ name: 'evaluate ' + this.selectedEngine2?.appInsightsEngineName });
+      if (this.defaultProviderField !== 'Brian Postlethwaite') {
+        (this as any).$appInsights?.trackEvent({ name: 'evaluate ' + this.selectedEngine2?.appInsightsEngineName });
+      }
 
       if (resourceJson) {
         if (resourceJson.startsWith('<')) {
