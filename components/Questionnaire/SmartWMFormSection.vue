@@ -161,7 +161,6 @@ export default class SmartWMFormSection extends Vue {
   @Prop(Object) readonly questionnaire!: Questionnaire;
   @Prop(Object) readonly context!: any;
 
-  popupWindow: Window | null = null;
   isWindowConnected: boolean = false;
   windowCheckInterval: number | null = null;
   fhirPathLabUrl: string = "http://localhost:3000/Questionnaire/tester";
@@ -178,6 +177,29 @@ export default class SmartWMFormSection extends Vue {
   // Reactive form data - now a component property instead of module-level
   formData: QuestionnaireResponse | undefined = undefined;
 
+  // Non-reactive properties - defined in created() to avoid Vue's reactivity system
+  // These store references to browser objects that cause cross-origin errors when made reactive
+  private popupWindow!: Window | null;
+  private messageHandler!: ((event: MessageEvent) => void) | null;
+
+  created() {
+    // Initialize non-reactive properties outside Vue's reactivity system
+    // Using Object.defineProperty to ensure they're truly non-reactive
+    Object.defineProperty(this, 'popupWindow', {
+      value: null,
+      writable: true,
+      enumerable: false,
+      configurable: true
+    });
+    
+    Object.defineProperty(this, 'messageHandler', {
+      value: null,
+      writable: true,
+      enumerable: false,
+      configurable: true
+    });
+  }
+
   async mounted() {
     // Generate messaging handle and origin
     this.messagingHandle = this.generateHandle();
@@ -187,8 +209,8 @@ export default class SmartWMFormSection extends Vue {
       this.messagingHandle
     );
 
-    // Listen for messages from the popup
-    window.addEventListener("message", (event) => {
+    // Create a bound message handler to avoid Vue reactivity issues with Window object
+    this.messageHandler = (event: MessageEvent) => {
       console.log("[SmartWM Test] RAW message event received:", {
         origin: event.origin,
         source: event.source,
@@ -198,10 +220,19 @@ export default class SmartWMFormSection extends Vue {
         sourceMatchesPopup: event.source === this.popupWindow,
       });
       this.handleMessage(event);
-    });
+    };
+
+    // Listen for messages from the popup
+    window.addEventListener("message", this.messageHandler);
   }
 
   beforeDestroy() {
+    // Remove message listener
+    if (this.messageHandler) {
+      window.removeEventListener("message", this.messageHandler);
+      this.messageHandler = null;
+    }
+
     // Clean up interval when component is destroyed
     if (this.windowCheckInterval) {
       clearInterval(this.windowCheckInterval);
@@ -436,14 +467,22 @@ export default class SmartWMFormSection extends Vue {
   }
 
   checkWindowConnection() {
-    if (this.popupWindow && !this.popupWindow.closed) {
-      this.isWindowConnected = true;
-    } else {
-      this.isWindowConnected = false;
-      this.popupWindow = null;
-      if (this.windowCheckInterval) {
-        clearInterval(this.windowCheckInterval);
-        this.windowCheckInterval = null;
+    try {
+      if (this.popupWindow && !this.popupWindow.closed) {
+        this.isWindowConnected = true;
+      } else {
+        this.isWindowConnected = false;
+        this.popupWindow = null;
+        if (this.windowCheckInterval) {
+          clearInterval(this.windowCheckInterval);
+          this.windowCheckInterval = null;
+        }
+      }
+    } catch (e) {
+      // Cross-origin access error - assume window is still open
+      // This happens when the popup is on a different origin
+      if (this.popupWindow) {
+        this.isWindowConnected = true;
       }
     }
   }
@@ -597,7 +636,7 @@ export default class SmartWMFormSection extends Vue {
     this.logMessage(
       "sent",
       "sdc.displayQuestionnaireResponse",
-      `Response: ${this.formData.id || "no-id"}`,
+      `Response: ${this.formData?.id || "no-id"}`,
       message
     );
     this.popupWindow.postMessage(message, this.fhirPathLabUrl);
