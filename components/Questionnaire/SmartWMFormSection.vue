@@ -11,7 +11,12 @@
       <v-card outlined class="mb-3">
         <v-card-title class="subtitle-1">Connection</v-card-title>
         <v-card-text>
-          <v-text-field hide-details="auto" v-model="fhirPathLabUrl" label="FHIRPath Lab URL" dense>
+          <v-text-field
+            hide-details="auto"
+            v-model="fhirPathLabUrl"
+            label="FHIRPath Lab URL"
+            dense
+          >
             <template v-slot:append>
               <v-btn small tile @click="openFhirPathLab">
                 <v-icon>mdi-window-open</v-icon> Launch
@@ -83,8 +88,8 @@
         </v-card-text>
       </v-card>
 
-      <MessageLog 
-        :messages="messageLog" 
+      <MessageLog
+        :messages="messageLog"
         title="Message Log"
         @clear="clearMessageLog"
       />
@@ -160,6 +165,7 @@ export default class SmartWMFormSection extends Vue {
   isWindowConnected: boolean = false;
   windowCheckInterval: number | null = null;
   fhirPathLabUrl: string = "http://localhost:3000/Questionnaire/tester";
+  requestCurrentResponseMessageIdQueue: string[] = [];
 
   // Generate unique handles for this session
   messagingHandle: string = "";
@@ -168,7 +174,7 @@ export default class SmartWMFormSection extends Vue {
   // UI testing
   testLinkId: string = "patient.name";
   messageLog: MessageLogEntry[] = [];
-  
+
   // Reactive form data - now a component property instead of module-level
   formData: QuestionnaireResponse | undefined = undefined;
 
@@ -189,7 +195,7 @@ export default class SmartWMFormSection extends Vue {
         data: event.data,
         expectedOrigin: this.fhirPathLabUrl,
         popupWindow: this.popupWindow,
-        sourceMatchesPopup: event.source === this.popupWindow
+        sourceMatchesPopup: event.source === this.popupWindow,
       });
       this.handleMessage(event);
     });
@@ -213,16 +219,23 @@ export default class SmartWMFormSection extends Vue {
   handleMessage(event: MessageEvent) {
     // First, check if this message is intended for us by checking the messagingHandle
     const msg = event.data;
-    
+
     // If the message doesn't have our messagingHandle, it's not for us - let other handlers deal with it
-    if (!msg || !msg.messagingHandle || msg.messagingHandle !== this.messagingHandle) {
+    if (
+      !msg ||
+      !msg.messagingHandle ||
+      msg.messagingHandle !== this.messagingHandle
+    ) {
       // Not our message, ignore silently (could be for Aidbox or other components)
       return;
     }
-    
+
     // Now we know it's for us, validate the origin
     if (!this.fhirPathLabUrl.startsWith(event.origin)) {
-      console.log("[SmartWM Test] Ignoring message from unexpected origin:", event.origin);
+      console.log(
+        "[SmartWM Test] Ignoring message from unexpected origin:",
+        event.origin
+      );
       return;
     }
 
@@ -233,6 +246,67 @@ export default class SmartWMFormSection extends Vue {
     }
 
     console.log("[SmartWM Test] Received message from popup:", msg);
+
+    if (msg.messageType) {
+      // this is an un-solicited message
+        this.logMessage(
+          "received",
+          msg.messageType || (msg.responseToMessageId ? "response" : "unknown"),
+          "unsolicited - ",
+          msg
+        );
+      return;
+    }
+
+    if (this.requestCurrentResponseMessageIdQueue.indexOf(msg.responseToMessageId) >= 0) {
+      // this is a changed the handler for the request current response
+      // Handle extracted response
+      if (msg.payload.questionnaireResponse) {
+        const qr = msg.payload.questionnaireResponse;
+
+        const response: QuestionnaireResponse = qr;
+        this.formData = response;
+        console.log("QuestionnaireResponse updated", response);
+
+        // ensure there is a tag for the smartwm renderer in place
+        if (!response.meta?.tag?.find((t) => t.code?.startsWith("smartwm"))) {
+          if (!response.meta) response.meta = { tag: [] };
+          if (!response.meta.tag) response.meta.tag = [];
+          response.meta.tag!.push({ code: "smartwm:generated" });
+        }
+
+        // remove the lforms tag if it was there.
+        if (response.meta?.tag?.find((t) => t.code?.startsWith("lforms"))) {
+          response.meta.tag = response.meta.tag!.filter(
+            (t) => !t.code?.startsWith("lforms")
+          );
+        }
+
+        // remove the CSIRO tag if it was there.
+        if (response.meta?.tag?.find((t) => t.code?.startsWith("csiro"))) {
+          response.meta.tag = response.meta.tag!.filter(
+            (t) => !t.code?.startsWith("csiro")
+          );
+        }
+
+        // remove the aidbox tag if it was there.
+        if (response.meta?.tag?.find((t) => t.code?.startsWith("aidbox"))) {
+          response.meta.tag = response.meta.tag!.filter(
+            (t) => !t.code?.startsWith("aidbox")
+          );
+        }
+
+        this.$emit("response", response);
+
+        this.logMessage(
+          "received",
+          msg.messageType || (msg.responseToMessageId ? "response" : "unknown"),
+          "QuestionnaireResponse that requested - " + response.id,
+          msg
+        );
+        return;
+      }
+    }
 
     // Log the message
     this.logMessage(
@@ -278,22 +352,28 @@ export default class SmartWMFormSection extends Vue {
     }
 
     // Check status first (common in responses)
-    if (msg.payload.status === 'ready') {
-      return `Ready - Protocol: ${msg.payload.protocolVersion || 'unknown'}`;
+    if (msg.payload.status === "ready") {
+      return `Ready - Protocol: ${msg.payload.protocolVersion || "unknown"}`;
     }
-    if (msg.payload.status === 'success') {
-      return 'Success';
+    if (msg.payload.status === "success") {
+      return "Success";
     }
-    if (msg.payload.status === 'error') {
-      return `Error: ${msg.payload.outcome?.issue?.[0]?.diagnostics || 'Unknown error'}`;
+    if (msg.payload.status === "error") {
+      return `Error: ${
+        msg.payload.outcome?.issue?.[0]?.diagnostics || "Unknown error"
+      }`;
     }
-    
+
     // Handle handshake response
     if (msg.payload.application) {
-      const caps = msg.payload.capabilities ? ` (${Object.keys(msg.payload.capabilities).filter(k => msg.payload.capabilities[k]).join(', ')})` : '';
+      const caps = msg.payload.capabilities
+        ? ` (${Object.keys(msg.payload.capabilities)
+            .filter((k) => msg.payload.capabilities[k])
+            .join(", ")})`
+        : "";
       return `App: ${msg.payload.application.name} v${msg.payload.application.version}${caps}`;
     }
-    
+
     // Handle extracted response
     if (msg.payload.questionnaireResponse) {
       const qr = msg.payload.questionnaireResponse;
@@ -303,42 +383,53 @@ export default class SmartWMFormSection extends Vue {
       console.log("QuestionnaireResponse updated", response);
 
       // ensure there is a tag for the smartwm renderer in place
-      if (!response.meta?.tag?.find(t => t.code?.startsWith('smartwm'))) {
+      if (!response.meta?.tag?.find((t) => t.code?.startsWith("smartwm"))) {
         if (!response.meta) response.meta = { tag: [] };
         if (!response.meta.tag) response.meta.tag = [];
-        response.meta.tag!.push({ code: 'smartwm:generated' });
+        response.meta.tag!.push({ code: "smartwm:generated" });
       }
 
       // remove the lforms tag if it was there.
-      if (response.meta?.tag?.find(t => t.code?.startsWith('lforms'))) {
-        response.meta.tag = response.meta.tag!.filter(t => !t.code?.startsWith('lforms'));
+      if (response.meta?.tag?.find((t) => t.code?.startsWith("lforms"))) {
+        response.meta.tag = response.meta.tag!.filter(
+          (t) => !t.code?.startsWith("lforms")
+        );
       }
 
       // remove the CSIRO tag if it was there.
-      if (response.meta?.tag?.find(t => t.code?.startsWith('csiro'))) {
-        response.meta.tag = response.meta.tag!.filter(t => !t.code?.startsWith('csiro'));
+      if (response.meta?.tag?.find((t) => t.code?.startsWith("csiro"))) {
+        response.meta.tag = response.meta.tag!.filter(
+          (t) => !t.code?.startsWith("csiro")
+        );
       }
 
       // remove the aidbox tag if it was there.
-      if (response.meta?.tag?.find(t => t.code?.startsWith('aidbox'))) {
-        response.meta.tag = response.meta.tag!.filter(t => !t.code?.startsWith('aidbox'));
+      if (response.meta?.tag?.find((t) => t.code?.startsWith("aidbox"))) {
+        response.meta.tag = response.meta.tag!.filter(
+          (t) => !t.code?.startsWith("aidbox")
+        );
       }
 
       this.$emit("response", response);
 
-      return `Response: ${qr.id || 'no-id'}, Status: ${qr.status}`;
+      return `Response: ${qr.id || "no-id"}, Status: ${qr.status}`;
     }
-    
+
     // Handle validation outcome
     if (msg.payload.outcome) {
       const issues = msg.payload.outcome.issue?.length || 0;
-      const valid = msg.payload.valid !== undefined ? (msg.payload.valid ? ' ✓' : ' ✗') : '';
+      const valid =
+        msg.payload.valid !== undefined
+          ? msg.payload.valid
+            ? " ✓"
+            : " ✗"
+          : "";
       return `${issues} issue(s)${valid}`;
     }
-    
+
     // Handle response update events
-    if (msg.messageType === 'sdc.ui.changedQuestionnaireResponse') {
-      return 'Response updated';
+    if (msg.messageType === "sdc.ui.changedQuestionnaireResponse") {
+      return "Response updated";
     }
 
     return JSON.stringify(msg.payload).substring(0, 100);
@@ -439,7 +530,7 @@ export default class SmartWMFormSection extends Vue {
       "Protocol v1.0, FHIR R4",
       message
     );
-    
+
     try {
       this.popupWindow.postMessage(message, this.fhirPathLabUrl);
       console.log("[SmartWM Test] ✅ postMessage called successfully");
@@ -526,6 +617,7 @@ export default class SmartWMFormSection extends Vue {
       messageType: "sdc.requestCurrentQuestionnaireResponse",
       payload: {},
     };
+    this.requestCurrentResponseMessageIdQueue.push(message.messageId);
 
     console.log("[SmartWM Test] Sending extract request:", message);
     this.logMessage(
@@ -635,13 +727,17 @@ export default class SmartWMFormSection extends Vue {
     }
     // read the source from the response meta tags (join all the tag codes)
     const source = response.meta?.tag?.map((t) => t.code).join(", ");
-    console.log('WM:', response);
+    console.log("WM:", response);
 
     const applyQr: QuestionnaireResponse = JSON.parse(JSON.stringify(response));
     delete applyQr.meta;
     applyQr.status = "in-progress"; // as the Aidbox renderer will disable all controls in a `completed` state
     this.formData = applyQr;
-    this.logMessage("local", "show response", "Show Response: " + source + ' authored: ' + this.formData?.authored);
+    this.logMessage(
+      "local",
+      "show response",
+      "Show Response: " + source + " authored: " + this.formData?.authored
+    );
   }
 }
 </script>
