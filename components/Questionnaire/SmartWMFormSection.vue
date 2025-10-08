@@ -460,7 +460,7 @@ export default class SmartWMFormSection extends Vue {
         messageType: "sdc.displayQuestionnaire",
         payload: {
           questionnaire: this.questionnaire,
-          questionnaireResponse: this.formData || undefined,
+          // questionnaireResponse: this.formData || undefined, // intentionally not sending the data
         },
       };
 
