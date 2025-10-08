@@ -221,7 +221,7 @@ export default class SmartWMFormSection extends Vue {
     }
     
     // Now we know it's for us, validate the origin
-    if (event.origin !== this.fhirPathLabUrl) {
+    if (!this.fhirPathLabUrl.startsWith(event.origin)) {
       console.log("[SmartWM Test] Ignoring message from unexpected origin:", event.origin);
       return;
     }
@@ -337,7 +337,7 @@ export default class SmartWMFormSection extends Vue {
     }
     
     // Handle response update events
-    if (msg.messageType === 'questionnaire.event.responseUpdated') {
+    if (msg.messageType === 'sdc.ui.changedQuestionnaireResponse') {
       return 'Response updated';
     }
 
@@ -425,7 +425,7 @@ export default class SmartWMFormSection extends Vue {
     const message = {
       messagingHandle: this.messagingHandle,
       messageId: this.generateMessageId(),
-      messageType: "questionnaire.handshake",
+      messageType: "status.handshake",
       payload: {
         protocolVersion: "1.0",
         fhirVersion: "R4",
@@ -435,7 +435,7 @@ export default class SmartWMFormSection extends Vue {
     console.log("[SmartWM Test] Sending handshake:", message);
     this.logMessage(
       "sent",
-      "questionnaire.handshake",
+      "status.handshake",
       "Protocol v1.0, FHIR R4",
       message
     );
@@ -457,7 +457,7 @@ export default class SmartWMFormSection extends Vue {
       const message = {
         messagingHandle: this.messagingHandle,
         messageId: this.generateMessageId(),
-        messageType: "questionnaire.render",
+        messageType: "sdc.displayQuestionnaire",
         payload: {
           questionnaire: this.questionnaire,
           questionnaireResponse: this.formData || undefined,
@@ -467,7 +467,7 @@ export default class SmartWMFormSection extends Vue {
       console.log("[SmartWM Test] Sending questionnaire:", message);
       this.logMessage(
         "sent",
-        "questionnaire.render",
+        "sdc.displayQuestionnaire",
         `Q: ${this.questionnaire.title || this.questionnaire.id}`,
         message
       );
@@ -496,7 +496,7 @@ export default class SmartWMFormSection extends Vue {
     const message = {
       messagingHandle: this.messagingHandle,
       messageId: this.generateMessageId(),
-      messageType: "questionnaire.loadResponse",
+      messageType: "sdc.displayQuestionnaireResponse",
       payload: {
         questionnaireResponse: this.formData,
       },
@@ -505,7 +505,7 @@ export default class SmartWMFormSection extends Vue {
     console.log("[SmartWM Test] Sending loadResponse:", message);
     this.logMessage(
       "sent",
-      "questionnaire.loadResponse",
+      "sdc.displayQuestionnaireResponse",
       `Response: ${this.formData.id || "no-id"}`,
       message
     );
@@ -523,14 +523,14 @@ export default class SmartWMFormSection extends Vue {
     const message = {
       messagingHandle: this.messagingHandle,
       messageId: this.generateMessageId(),
-      messageType: "questionnaire.extract",
+      messageType: "sdc.requestCurrentQuestionnaireResponse",
       payload: {},
     };
 
     console.log("[SmartWM Test] Sending extract request:", message);
     this.logMessage(
       "sent",
-      "questionnaire.extract",
+      "sdc.requestCurrentQuestionnaireResponse",
       "Request current response",
       message
     );

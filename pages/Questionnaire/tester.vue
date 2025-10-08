@@ -814,17 +814,17 @@ export default Vue.extend({
 
       // Route to appropriate handler
       switch (message.messageType) {
-        case 'questionnaire.handshake':
-          this.handleHandshake(message);
+        case 'status.handshake':
+          this.handleStatusHandshake(message);
           break;
-        case 'questionnaire.render':
-          this.handleRenderQuestionnaire(message);
+        case 'sdc.displayQuestionnaire':
+          this.handleSdcDisplayQuestionnaire(message);
           break;
-        case 'questionnaire.loadResponse':
-          this.handleLoadResponse(message);
+        case 'sdc.displayQuestionnaireResponse':
+          this.handleSdcDisplayQuestionnaireResponse(message);
           break;
-        case 'questionnaire.extract':
-          this.handleExtractResponse(message);
+        case 'sdc.requestCurrentQuestionnaireResponse':
+          this.handleSdcRequestCurrentQuestionnaireResponse(message);
           break;
         case 'questionnaire.validate':
           this.handleValidate(message);
@@ -841,7 +841,7 @@ export default Vue.extend({
       }
     },
 
-    handleHandshake(message: any) {
+    handleStatusHandshake(message: any) {
       console.log('[Embedded Mode] Handling handshake');
       
       this.sendMessageToParent({
@@ -870,7 +870,7 @@ export default Vue.extend({
       });
     },
 
-    async handleRenderQuestionnaire(message: any) {
+    async handleSdcDisplayQuestionnaire(message: any) {
       try {
         console.log('[Embedded Mode] Rendering questionnaire');
         const { questionnaire, questionnaireResponse, context } = message.payload;
@@ -944,7 +944,7 @@ export default Vue.extend({
       }
     },
 
-    async handleLoadResponse(message: any) {
+    async handleSdcDisplayQuestionnaireResponse(message: any) {
       try {
         console.log('[Embedded Mode] Loading response');
         const { questionnaireResponse, context } = message.payload;
@@ -997,7 +997,7 @@ export default Vue.extend({
       }
     },
 
-    async handleExtractResponse(message: any) {
+    async handleSdcRequestCurrentQuestionnaireResponse(message: any) {
       try {
         console.log('[Embedded Mode] Extracting response');
         
@@ -1144,7 +1144,7 @@ export default Vue.extend({
         const issues = msg.payload.outcome.issue?.length || 0;
         return `Validation: ${issues} issue(s)`;
       }
-      if (msg.messageType === 'questionnaire.event.responseUpdated') {
+      if (msg.messageType === 'sdc.ui.changedQuestionnaireResponse') {
         return 'Response updated event';
       }
       return JSON.stringify(msg.payload).substring(0, 100);
@@ -1206,8 +1206,8 @@ export default Vue.extend({
 
       this.sendMessageToParent({
         messageId: this.generateMessageId(),
+        messageType: 'sdc.ui.changedQuestionnaireResponse',
         payload: {
-          messageType: 'questionnaire.event.responseUpdated',
           questionnaireResponse: response,
           context: {
             subject: this.contextData.subject,
