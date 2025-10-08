@@ -80,16 +80,6 @@
             <v-icon left>mdi-file-download</v-icon>
             Request Response
           </v-btn>
-
-          <v-btn
-            color="primary"
-            @click="sendValidateRequest"
-            :disabled="!isWindowConnected"
-            class="mr-2 mb-2"
-          >
-            <v-icon left>mdi-check-decagram</v-icon>
-            Validate
-          </v-btn>
         </v-card-text>
       </v-card>
 
@@ -99,7 +89,7 @@
         @clear="clearMessageLog"
       />
 
-      <v-card outlined class="mb-3">
+      <v-card outlined class="mb-3" v-if="false">
         <v-card-title class="subtitle-1">UI Control Messages</v-card-title>
         <v-card-text>
           <v-text-field
@@ -542,31 +532,6 @@ export default class SmartWMFormSection extends Vue {
       "sent",
       "questionnaire.extract",
       "Request current response",
-      message
-    );
-    this.popupWindow.postMessage(message, this.fhirPathLabUrl);
-  }
-
-  sendValidateRequest() {
-    if (!this.popupWindow || this.popupWindow.closed) {
-      alert("The popup window is closed. Please open fhirpath-lab first.");
-      return;
-    }
-
-    this.popupWindow.focus();
-
-    const message = {
-      messagingHandle: this.messagingHandle,
-      messageId: this.generateMessageId(),
-      messageType: "questionnaire.validate",
-      payload: {},
-    };
-
-    console.log("[SmartWM Test] Sending validate request:", message);
-    this.logMessage(
-      "sent",
-      "questionnaire.validate",
-      "Request validation",
       message
     );
     this.popupWindow.postMessage(message, this.fhirPathLabUrl);
