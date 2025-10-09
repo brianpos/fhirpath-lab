@@ -97,6 +97,13 @@
     </div>
     
     <div class="controls">
+      <h3>Renderer URL</h3>
+      <input type="text" id="popupUrl" value="http://localhost:3000/swm-csiro-smart-forms" style="width: 400px; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+      <button onclick="openPopup()" style="background: #28a745;">🗗 Launch Popup</button>
+      <button onclick="changeIframeUrl()">📄 Update Iframe</button>
+    </div>
+    
+    <div class="controls">
       <h3>Controls</h3>
       <button id="btnHandshake" onclick="sendHandshake()">1. Send Handshake</button>
       <button id="btnConfigure" onclick="sendConfigure()" disabled>2. Configure</button>
@@ -116,6 +123,8 @@
   <script>
     let handshakeComplete = false;
     let messageCounter = 0;
+    let renderMode = 'iframe'; // 'iframe' or 'popup'
+    let popupWindow = null;
 
     // Get iframe reference
     const iframe = document.getElementById('renderer');
@@ -163,7 +172,17 @@
       };
       
       logMessage('OUTGOING', message);
-      iframe.contentWindow.postMessage(message, '*'); // In production, use specific origin
+      
+      if (renderMode === 'popup') {
+        if (!popupWindow || popupWindow.closed) {
+          logMessage('ERROR', 'Cannot send - popup window not available');
+          return null;
+        }
+        popupWindow.postMessage(message, '*'); // In production, use specific origin
+      } else {
+        iframe.contentWindow.postMessage(message, '*'); // In production, use specific origin
+      }
+      
       return messageId;
     }
 
@@ -253,6 +272,55 @@
       document.getElementById('btnContext').disabled = false;
       document.getElementById('btnDisplayQ').disabled = false;
       document.getElementById('btnGetResponse').disabled = false;
+    }
+
+    function openPopup() {
+      const url = document.getElementById('popupUrl').value;
+      
+      // Switch to popup mode
+      renderMode = 'popup';
+      iframe.style.display = 'none';
+      
+      // Open popup
+      popupWindow = window.open(url, 'csiro-smart-forms', 'width=1200,height=900,menubar=no,toolbar=no,location=yes,scrollbars=yes');
+      
+      if (popupWindow) {
+        popupWindow.focus();
+        handshakeComplete = false;
+        updateStatus('pending', 'Waiting for popup renderer to load...');
+        document.getElementById('btnConfigure').disabled = true;
+        document.getElementById('btnContext').disabled = true;
+        document.getElementById('btnDisplayQ').disabled = true;
+        document.getElementById('btnGetResponse').disabled = true;
+        logMessage('INFO', 'Opened popup window: ' + url);
+      } else {
+        renderMode = 'iframe';
+        iframe.style.display = 'block';
+        alert('Pop-up blocked! Please allow popups for this site.');
+      }
+    }
+
+    function changeIframeUrl() {
+      const url = document.getElementById('popupUrl').value;
+      
+      // Close popup if open
+      if (popupWindow && !popupWindow.closed) {
+        popupWindow.close();
+      }
+      popupWindow = null;
+      
+      // Switch to iframe mode
+      renderMode = 'iframe';
+      iframe.style.display = 'block';
+      iframe.src = url;
+      
+      handshakeComplete = false;
+      updateStatus('pending', 'Waiting for iframe renderer to load...');
+      document.getElementById('btnConfigure').disabled = true;
+      document.getElementById('btnContext').disabled = true;
+      document.getElementById('btnDisplayQ').disabled = true;
+      document.getElementById('btnGetResponse').disabled = true;
+      logMessage('INFO', 'Changed iframe URL to: ' + url);
     }
 
     // Log page load
