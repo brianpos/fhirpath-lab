@@ -52,24 +52,22 @@ import type {
   SmartWebMessagingRequest,
   SmartWebMessagingResponse,
   QuestionnaireContext,
-  StatusHandshakeRequestPayload,
+  StatusHandshakeRequest,
   StatusHandshakeResponsePayload,
+  SdcConfigureRequest,
   SdcConfigureRequestPayload,
   SdcConfigureResponsePayload,
-  SdcConfigureContextRequestPayload,
+  SdcConfigureContextRequest,
   SdcConfigureContextResponsePayload,
-  SdcDisplayQuestionnaireRequestPayload,
+  SdcDisplayQuestionnaireRequest,
   SdcDisplayQuestionnaireResponsePayload,
-  SdcDisplayQuestionnaireResponseRequestPayload,
+  SdcDisplayQuestionnaireResponseRequest,
   SdcDisplayQuestionnaireResponseResponsePayload,
-  SdcRequestCurrentQuestionnaireResponseRequestPayload,
+  SdcRequestCurrentQuestionnaireResponseRequest,
   SdcRequestCurrentQuestionnaireResponseResponsePayload,
   SdcUiChangedFocusPayload,
   SdcUiChangedQuestionnaireResponsePayload,
-  isRequest,
-  isResponse,
-  SdcRequestPayload,
-  SdcEventPayload
+  SdcRendererMessageHandlers
 } from '~/types/sdc-swm-types';
 
 /**
@@ -99,23 +97,41 @@ import type {
   },
   layout: 'empty' // Use empty layout to remove all chrome
 })
-export default class SwmCsiroSmartForms extends Vue {
+export default class SwmCsiroSmartForms extends Vue implements SdcRendererMessageHandlers {
   questionnaire: Questionnaire | null = null;
   questionnaireResponse: QuestionnaireResponse | null = null;
   context: QuestionnaireContext = {};
   config: SdcConfigureRequestPayload = {};
   handshakeComplete: boolean = false;
-  messageHandlers: Map<string, (payload: any) => any> = new Map();
   currentLinkId: string | null = null;
-  messageSource: WindowProxy | null = null; // Store the source window to reply to
   messagingHandle: string | null = null; // Store the messaging handle from the host
   allowedOrigin: string | null = null; // Store the allowed origin for security
+
+  // Non-reactive property to avoid cross-origin security errors with WindowProxy
+  // Stored outside Vue's reactivity system to prevent __v_isRef access across origins
+  declare messageSource: WindowProxy | null;
+    
+  /**
+   * Message type to handler method mapping
+   * This is the ONLY place that maps message types to handler methods
+   */
+  private readonly messageHandlerMap: Record<string, keyof SdcRendererMessageHandlers> = {
+    'status.handshake': 'handleStatusHandshake',
+    'sdc.configure': 'handleSdcConfigure',
+    'sdc.configureContext': 'handleSdcConfigureContext',
+    'sdc.displayQuestionnaire': 'handleSdcDisplayQuestionnaire',
+    'sdc.displayQuestionnaireResponse': 'handleSdcDisplayQuestionnaireResponse',
+    'sdc.requestCurrentQuestionnaireResponse': 'handleSdcRequestCurrentQuestionnaireResponse'
+  };
 
   get onFocusChanged() {
     return (linkId: string) => { this.handleFocusChange(linkId); }
   }
 
   mounted() {
+    // Initialize non-reactive property
+    this.messageSource = null;
+    
     // Register message listener
     window.addEventListener('message', this.handleMessage);
     
@@ -183,40 +199,42 @@ export default class SwmCsiroSmartForms extends Vue {
     // Store the source of the message so we can reply to the correct window
     this.messageSource = event.source as WindowProxy;
 
-    let response: any = {};
-    
     try {
-      switch (message.messageType) {
-        case 'status.handshake':
-          response = await this.handleHandshake(message.payload);
-          break;
-        case 'sdc.configure':
-          response = await this.handleConfigure(message.payload);
-          break;
-        case 'sdc.configureContext':
-          response = await this.handleConfigureContext(message.payload);
-          break;
-        case 'sdc.displayQuestionnaire':
-          response = await this.handleDisplayQuestionnaire(message.payload);
-          break;
-        case 'sdc.displayQuestionnaireResponse':
-          response = await this.handleDisplayQuestionnaireResponse(message.payload);
-          break;
-        case 'sdc.requestCurrentQuestionnaireResponse':
-          response = await this.handleRequestCurrentQuestionnaireResponse(message.payload);
-          break;
-        default:
-          console.warn('Unknown message type:', message.messageType);
-          response = {
-            status: 'error',
-            outcome: this.createOperationOutcome('error', `Unknown message type: ${message.messageType}`)
-          };
+      // Look up the handler method name from the map
+      const handlerMethodName = this.messageHandlerMap[message.messageType];
+      
+      if (!handlerMethodName) {
+        // Unknown message type
+        console.warn('[SDC-SWM Renderer] Unknown message type:', message.messageType);
+        this.sendResponse(message.messageId, {
+          status: 'error',
+          outcome: this.createOperationOutcome('error', `Unknown message type: ${message.messageType}`)
+        });
+        return;
       }
-
+      
+      // Get the handler function
+      // Use type assertion since we're accessing methods dynamically
+      const handler = (this as any)[handlerMethodName] as Function | undefined;
+      
+      if (!handler || typeof handler !== 'function') {
+        // Handler not implemented (optional handler)
+        console.warn('[SDC-SWM Renderer] Handler not implemented:', message.messageType);
+        this.sendResponse(message.messageId, {
+          status: 'error',
+          outcome: this.createOperationOutcome('error', `Handler not implemented: ${message.messageType}`)
+        });
+        return;
+      }
+      
+      // Call the handler with the full message (no manual casting needed!)
+      const response = await handler.call(this, message);
+      
       // Send response back to parent
       this.sendResponse(message.messageId, response);
+      
     } catch (error: any) {
-      console.error('Error handling message:', message.messageType, error);
+      console.error('[SDC-SWM Renderer] Error handling message:', message.messageType, error);
       this.sendResponse(message.messageId, {
         status: 'error',
         outcome: this.createOperationOutcome('error', error.message || 'Unknown error')
@@ -227,7 +245,7 @@ export default class SwmCsiroSmartForms extends Vue {
   /**
    * Handle handshake message
    */
-  async handleHandshake(payload: StatusHandshakeRequestPayload): Promise<StatusHandshakeResponsePayload> {
+  async handleStatusHandshake(message: StatusHandshakeRequest): Promise<StatusHandshakeResponsePayload> {
     console.log('[SDC-SWM Renderer] Handling handshake');
     this.handshakeComplete = true;
     
@@ -248,9 +266,9 @@ export default class SwmCsiroSmartForms extends Vue {
   /**
    * Handle configure message
    */
-  async handleConfigure(payload: SdcConfigureRequestPayload): Promise<SdcConfigureResponsePayload> {
-    console.log('Handling configure', payload);
-    this.config = { ...this.config, ...payload };
+  async handleSdcConfigure(message: SdcConfigureRequest): Promise<SdcConfigureResponsePayload> {
+    console.log('Handling configure', message.payload);
+    this.config = { ...this.config, ...message.payload };
     
     return {
       status: 'success'
@@ -260,12 +278,12 @@ export default class SwmCsiroSmartForms extends Vue {
   /**
    * Handle configure context message
    */
-  async handleConfigureContext(payload: SdcConfigureContextRequestPayload): Promise<SdcConfigureContextResponsePayload> {
-    console.log('Handling configure context', payload);
+  async handleSdcConfigureContext(message: SdcConfigureContextRequest): Promise<SdcConfigureContextResponsePayload> {
+    console.log('Handling configure context', message.payload);
     
     // Replace all context per protocol specification (context REPLACES all existing)
-    if (payload.context) {
-      this.context = payload.context;
+    if (message.payload.context) {
+      this.context = message.payload.context;
     } else {
       // If no context provided, clear it
       this.context = {};
@@ -279,32 +297,32 @@ export default class SwmCsiroSmartForms extends Vue {
   /**
    * Handle display questionnaire message
    */
-  async handleDisplayQuestionnaire(payload: SdcDisplayQuestionnaireRequestPayload): Promise<SdcDisplayQuestionnaireResponsePayload> {
-    console.log('Handling display questionnaire', payload);
+  async handleSdcDisplayQuestionnaire(message: SdcDisplayQuestionnaireRequest): Promise<SdcDisplayQuestionnaireResponsePayload> {
+    console.log('Handling display questionnaire', message.payload);
     
-    if (!payload.questionnaire) {
+    if (!message.payload.questionnaire) {
       return {
         status: 'error',
-        outcome: this.createOperationOutcome('error', 'No questionnaire provided')
+        outcome: this.createOperationOutcome('error', 'No questionnaire provided') as any
       };
     }
 
-    this.questionnaire = payload.questionnaire as Questionnaire;
+    this.questionnaire = message.payload.questionnaire as Questionnaire;
     
     // Merge context if provided (per protocol: sdc.displayQuestionnaire merges context)
-    if (payload.context) {
+    if (message.payload.context) {
       // Merge simple properties - overwrite only if provided
-      if (payload.context.subject) this.context.subject = payload.context.subject;
-      if (payload.context.author) this.context.author = payload.context.author;
-      if (payload.context.encounter) this.context.encounter = payload.context.encounter;
+      if (message.payload.context.subject) this.context.subject = message.payload.context.subject;
+      if (message.payload.context.author) this.context.author = message.payload.context.author;
+      if (message.payload.context.encounter) this.context.encounter = message.payload.context.encounter;
       
       // Merge launchContext array by name
-      if (payload.context.launchContext) {
+      if (message.payload.context.launchContext) {
         if (!this.context.launchContext) {
           this.context.launchContext = [];
         }
         
-        payload.context.launchContext.forEach(newItem => {
+        message.payload.context.launchContext.forEach(newItem => {
           const existingIndex = this.context.launchContext!.findIndex(item => item.name === newItem.name);
           if (existingIndex >= 0) {
             // Overwrite existing item with same name
@@ -321,7 +339,7 @@ export default class SwmCsiroSmartForms extends Vue {
     try {
       await buildForm(
         this.questionnaire as QuestionnaireR4,
-        payload.questionnaireResponse as QuestionnaireResponseR4 | undefined
+        message.payload.questionnaireResponse as QuestionnaireResponseR4 | undefined
       );
       
       // Start watching for changes
@@ -333,7 +351,7 @@ export default class SwmCsiroSmartForms extends Vue {
     } catch (error: any) {
       return {
         status: 'error',
-        outcome: this.createOperationOutcome('error', `Failed to build form: ${error.message}`)
+        outcome: this.createOperationOutcome('error', `Failed to build form: ${error.message}`) as any
       };
     }
   }
@@ -341,28 +359,28 @@ export default class SwmCsiroSmartForms extends Vue {
   /**
    * Handle display questionnaire response message
    */
-  async handleDisplayQuestionnaireResponse(payload: SdcDisplayQuestionnaireResponseRequestPayload): Promise<SdcDisplayQuestionnaireResponseResponsePayload> {
-    console.log('Handling display questionnaire response', payload);
+  async handleSdcDisplayQuestionnaireResponse(message: SdcDisplayQuestionnaireResponseRequest): Promise<SdcDisplayQuestionnaireResponseResponsePayload> {
+    console.log('Handling display questionnaire response', message.payload);
     
-    if (!payload.questionnaireResponse) {
+    if (!message.payload.questionnaireResponse) {
       return {
         status: 'error',
         outcome: this.createOperationOutcome('error', 'No questionnaire response provided') as any
       };
     }
 
-    this.questionnaireResponse = payload.questionnaireResponse as QuestionnaireResponse;
+    this.questionnaireResponse = message.payload.questionnaireResponse as QuestionnaireResponse;
     
     // If questionnaire is provided, use it
-    if (payload.questionnaire) {
-      this.questionnaire = payload.questionnaire as Questionnaire;
+    if (message.payload.questionnaire) {
+      this.questionnaire = message.payload.questionnaire as Questionnaire;
     }
     
     // TODO: Resolve questionnaire from reference if not provided
     if (!this.questionnaire) {
       return {
         status: 'error',
-        outcome: this.createOperationOutcome('error', 'Questionnaire must be provided or contained in response')
+        outcome: this.createOperationOutcome('error', 'Questionnaire must be provided or contained in response') as any
       };
     }
 
@@ -382,7 +400,7 @@ export default class SwmCsiroSmartForms extends Vue {
     } catch (error: any) {
       return {
         status: 'error',
-        outcome: this.createOperationOutcome('error', `Failed to build form: ${error.message}`)
+        outcome: this.createOperationOutcome('error', `Failed to build form: ${error.message}`) as any
       };
     }
   }
@@ -390,7 +408,7 @@ export default class SwmCsiroSmartForms extends Vue {
   /**
    * Handle request current questionnaire response message
    */
-  async handleRequestCurrentQuestionnaireResponse(payload: SdcRequestCurrentQuestionnaireResponseRequestPayload): Promise<SdcRequestCurrentQuestionnaireResponseResponsePayload> {
+  async handleSdcRequestCurrentQuestionnaireResponse(message: SdcRequestCurrentQuestionnaireResponseRequest): Promise<SdcRequestCurrentQuestionnaireResponseResponsePayload> {
     console.log('Handling request current questionnaire response');
     
     try {
@@ -503,7 +521,7 @@ export default class SwmCsiroSmartForms extends Vue {
    * Send a message to the parent window or opener (unsolicited REQUEST messages from renderer)
    * These are REQUEST messages initiated by the renderer, so they include messagingHandle
    */
-  sendMessage(messageType: SdcMessageType, payload: SdcRequestPayload | SdcEventPayload) {
+  sendMessage(messageType: SdcMessageType, payload: any) {
     const messageId = this.generateMessageId();
     const message: SmartWebMessagingRequest = {
       messagingHandle: this.messagingHandle || '',
