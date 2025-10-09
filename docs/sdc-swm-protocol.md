@@ -118,12 +118,12 @@ interface SdcConfigureRequest {
 
 | Name | Type | Cardinality | Notes |
 | ---- | ---- | ----------- | ----- |
-| `status` | `string` | 1..1 | Configuration acceptance status |
+| `status` | `string` | 1..1 | Configuration acceptance status, either 'success' or 'error' |
 | `outcome` | `r4.OperationOutcome` | 0..1 | Operation outcome with details |
 
 ```typescript
 interface SdcConfigureResponse {
-  status: string;
+  status: 'success' | 'error';
   outcome?: r4.OperationOutcome;
 }
 ```
@@ -169,12 +169,12 @@ interface SdcConfigureContextRequest {
 
 | Name | Type | Cardinality | Notes |
 | ---- | ---- | ----------- | ----- |
-| `status` | `string` | 1..1 | Context acceptance status |
+| `status` | `string` | 1..1 | Context acceptance status, either 'success' or 'error' |
 | `outcome` | `r4.OperationOutcome` | 0..1 | Operation outcome with details |
 
 ```typescript
 interface SdcConfigureContextResponse {
-  status: string;
+  status: 'success' | 'error';
   outcome?: r4.OperationOutcome;
 }
 ```
@@ -226,12 +226,12 @@ interface SdcDisplayQuestionnaireRequest {
 
 | Name | Type | Cardinality | Notes |
 | ---- | ---- | ----------- | ----- |
-| `status` | `string` | 1..1 | Questionnaire rendering status |
+| `status` | `string` | 1..1 | Questionnaire rendering status, either 'success' or 'error' |
 | `outcome` | `r4.OperationOutcome` | 0..1 | Operation outcome with details |
 
 ```typescript
 interface SdcDisplayQuestionnaireResponse {
-  status: string;
+  status: 'success' | 'error';
   outcome?: r4.OperationOutcome;
 }
 ```
@@ -266,12 +266,12 @@ interface SdcDisplayQuestionnaireResponseRequest {
 
 | Name | Type | Cardinality | Notes |
 | ---- | ---- | ----------- | ----- |
-| `status` | `string` | 1..1 | QuestionnaireResponse rendering status |
+| `status` | `string` | 1..1 | QuestionnaireResponse rendering status, either 'success' or 'error' |
 | `outcome` | `r4.OperationOutcome` | 0..1 | Operation outcome with details |
 
 ```typescript
 interface SdcDisplayQuestionnaireResponseResponse {
-  status: string;
+  status: 'success' | 'error';
   outcome?: r4.OperationOutcome;
 }
 ```
@@ -376,12 +376,12 @@ Same as `ui.done` response. For implementer convenience, the structure is:
 
 | Name | Type | Cardinality | Notes |
 | ---- | ---- | ----------- | ----- |
-| `status` | `string` | 1..1 | Status of the interaction (e.g., "success") |
+| `status` | `string` | 1..1 | Status of the interaction, either 'success' or 'error' |
 | `statusDetail` | `r4.CodeableConcept` | 0..1 | Optional detail about the status |
 
 ```typescript
 interface SdcUiChangedQuestionnaireResponseResponse {
-  status: string;
+  status: 'success' | 'error';
   statusDetail?: r4.CodeableConcept;
 }
 ```
@@ -414,12 +414,12 @@ Same as `ui.done` response. For implementer convenience, the structure is:
 
 | Name | Type | Cardinality | Notes |
 | ---- | ---- | ----------- | ----- |
-| `status` | `string` | 1..1 | Status of the interaction (e.g., "success") |
+| `status` | `string` | 1..1 | Status of the interaction, either 'success' or 'error' |
 | `statusDetail` | `r4.CodeableConcept` | 0..1 | Optional detail about the status |
 
 ```typescript
 interface SdcUiChangedFocusResponse {
-  status: string;
+  status: 'success' | 'error';
   statusDetail?: r4.CodeableConcept;
 }
 ```
@@ -439,12 +439,12 @@ Empty object `{}`
 
 | Name | Type | Cardinality | Notes |
 | ---- | ---- | ----------- | ----- |
-| `status` | `string` | 1..1 | Status of the interaction |
+| `status` | `string` | 1..1 | Status of the interaction, either 'success' or 'error' |
 | `statusDetail` | `r4.CodeableConcept` | 0..1 | Optional detail about the status |
 
 ```typescript
 interface UiDoneResponse {
-  status: "done";
+  status: 'success' | 'error';
   statusDetail?: r4.CodeableConcept;
 }
 ```
