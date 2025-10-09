@@ -712,6 +712,9 @@ export interface SdcRendererMessageHandlers {
   
   /** Handle extract request from host */
   handleSdcRequestExtract?: (message: SdcRequestExtractRequest) => Promise<SdcRequestExtractResponsePayload>;
+  
+  /** Handle UI done request from host (bidirectional support) */
+  handleUiDone?: (event: UiDoneEvent) => Promise<UiDoneResponsePayload>;
 }
 
 // ============================================================================

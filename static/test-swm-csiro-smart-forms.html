@@ -125,6 +125,14 @@
       // In production, validate event.origin
       const message = event.data;
       
+      // filter out some noisy messages from devtools
+      if (event.data?.source?.startsWith("react-devtools-")) {
+        return;
+      }
+      if (message?.key === "__VUE_DEVTOOLS_VUE_DETECTED_EVENT__") {
+        return;
+      }
+
       logMessage('INCOMING', message);
       
       // Handle specific message types

@@ -17,6 +17,7 @@
   overflow-x: hidden;
   margin: 0;
   padding: 0;
+  border: 6px solid lightgreen;
 }
 
 .q-host {
@@ -67,6 +68,8 @@ import type {
   SdcRequestCurrentQuestionnaireResponseResponsePayload,
   SdcUiChangedFocusPayload,
   SdcUiChangedQuestionnaireResponsePayload,
+  UiDoneEvent,
+  UiDoneResponsePayload,
   SdcRendererMessageHandlers
 } from '~/types/sdc-swm-types';
 
@@ -83,6 +86,7 @@ import type {
  * - sdc.displayQuestionnaire: Display a questionnaire with optional context
  * - sdc.displayQuestionnaireResponse: Display a questionnaire response
  * - sdc.requestCurrentQuestionnaireResponse: Return current form data
+ * - ui.done: Handle user completion with confirmation dialog
  * 
  * Sends the following messages to host (Renderer → Host):
  * - status.handshake: Initial handshake when renderer loads
@@ -121,7 +125,8 @@ export default class SwmCsiroSmartForms extends Vue implements SdcRendererMessag
     'sdc.configureContext': 'handleSdcConfigureContext',
     'sdc.displayQuestionnaire': 'handleSdcDisplayQuestionnaire',
     'sdc.displayQuestionnaireResponse': 'handleSdcDisplayQuestionnaireResponse',
-    'sdc.requestCurrentQuestionnaireResponse': 'handleSdcRequestCurrentQuestionnaireResponse'
+    'sdc.requestCurrentQuestionnaireResponse': 'handleSdcRequestCurrentQuestionnaireResponse',
+    'ui.done': 'handleUiDone'
   };
 
   get onFocusChanged() {
@@ -257,7 +262,7 @@ export default class SwmCsiroSmartForms extends Vue implements SdcRendererMessag
         publisher: 'CSIRO Australian e-Health Research Centre'
       },
       capabilities: {
-        extraction: true,
+        extraction: false,
         focusChangeNotifications: true
       }
     };
@@ -303,7 +308,7 @@ export default class SwmCsiroSmartForms extends Vue implements SdcRendererMessag
     if (!message.payload.questionnaire) {
       return {
         status: 'error',
-        outcome: this.createOperationOutcome('error', 'No questionnaire provided') as any
+        outcome: this.createOperationOutcome('error', 'No questionnaire provided')
       };
     }
 
@@ -351,7 +356,7 @@ export default class SwmCsiroSmartForms extends Vue implements SdcRendererMessag
     } catch (error: any) {
       return {
         status: 'error',
-        outcome: this.createOperationOutcome('error', `Failed to build form: ${error.message}`) as any
+        outcome: this.createOperationOutcome('error', `Failed to build form: ${error.message}`)
       };
     }
   }
@@ -365,7 +370,7 @@ export default class SwmCsiroSmartForms extends Vue implements SdcRendererMessag
     if (!message.payload.questionnaireResponse) {
       return {
         status: 'error',
-        outcome: this.createOperationOutcome('error', 'No questionnaire response provided') as any
+        outcome: this.createOperationOutcome('error', 'No questionnaire response provided')
       };
     }
 
@@ -376,11 +381,11 @@ export default class SwmCsiroSmartForms extends Vue implements SdcRendererMessag
       this.questionnaire = message.payload.questionnaire as Questionnaire;
     }
     
-    // TODO: Resolve questionnaire from reference if not provided
+    // Just report the issue, this wrapper is not intending to deal with fetching referenced questionnaires
     if (!this.questionnaire) {
       return {
         status: 'error',
-        outcome: this.createOperationOutcome('error', 'Questionnaire must be provided or contained in response') as any
+        outcome: this.createOperationOutcome('error', 'Questionnaire must be provided or contained in response')
       };
     }
 
@@ -400,7 +405,7 @@ export default class SwmCsiroSmartForms extends Vue implements SdcRendererMessag
     } catch (error: any) {
       return {
         status: 'error',
-        outcome: this.createOperationOutcome('error', `Failed to build form: ${error.message}`) as any
+        outcome: this.createOperationOutcome('error', `Failed to build form: ${error.message}`)
       };
     }
   }
@@ -433,10 +438,39 @@ export default class SwmCsiroSmartForms extends Vue implements SdcRendererMessag
   }
 
   /**
+   * Handle ui.done message - user wants to complete/close the form
+   * Shows confirmation dialog and returns success if confirmed, error if cancelled
+   */
+  async handleUiDone(message: UiDoneEvent): Promise<UiDoneResponsePayload> {
+    console.log('[SDC-SWM Renderer] Handling ui.done - user wants to close');
+    
+    // Ask user for confirmation
+    const confirmed = window.confirm('Are you sure you want to close the form? Any unsaved changes may be lost.');
+    
+    if (confirmed) {
+      console.log('[SDC-SWM Renderer] User confirmed closure');
+      return {
+        status: 'success'
+      };
+    } else {
+      console.log('[SDC-SWM Renderer] User cancelled closure');
+      return {
+        status: 'error',
+        statusDetail: {
+          text: 'User cancelled the close operation'
+        }
+      };
+    }
+  }
+
+  /**
    * Send handshake to parent window
    */
   sendHandshake() {
-    this.sendMessage('status.handshake', {});
+    this.sendMessage('status.handshake', {
+      protocolVersion: '1.0',
+      fhirVersion: 'R4'
+    });
   }
 
   /**
@@ -474,7 +508,6 @@ export default class SwmCsiroSmartForms extends Vue implements SdcRendererMessag
   /**
    * Watch for changes in the questionnaire response
    */
-  private previousResponseJson: string = '';
   private changeWatchInterval: any = null;
 
   startWatchingForChanges() {
@@ -483,10 +516,15 @@ export default class SwmCsiroSmartForms extends Vue implements SdcRendererMessag
       clearInterval(this.changeWatchInterval);
     }
 
+    // Local variables to track previous response state (scoped to this watcher)
+    let previousResponseJson: string = '';
+    let previousResponse: QuestionnaireResponse | null = null;
+
     // Initialize previous response
     try {
       const response = getResponse();
-      this.previousResponseJson = JSON.stringify(response);
+      previousResponseJson = JSON.stringify(response);
+      previousResponse = JSON.parse(previousResponseJson);
     } catch (error) {
       console.warn('Could not initialize response watcher', error);
     }
@@ -497,8 +535,14 @@ export default class SwmCsiroSmartForms extends Vue implements SdcRendererMessag
         const response = getResponse();
         const currentResponseJson = JSON.stringify(response);
         
-        if (currentResponseJson !== this.previousResponseJson) {
-          this.previousResponseJson = currentResponseJson;
+        if (currentResponseJson !== previousResponseJson) {
+          // Calculate changed linkIds
+          const changedLinkIds = previousResponse 
+            ? this.calculateChangedLinkIds(previousResponse, response)
+            : undefined;
+          
+          previousResponseJson = currentResponseJson;
+          previousResponse = JSON.parse(currentResponseJson);
           
           // Tag the response
           if (!response.meta?.tag?.find(t => t.code?.startsWith('csiro'))) {
@@ -507,14 +551,90 @@ export default class SwmCsiroSmartForms extends Vue implements SdcRendererMessag
             response.meta.tag!.push({ code: 'csiro:generated' });
           }
           
-          // Send change notification
-          // TODO: Calculate changed linkIds by comparing responses
-          this.sendChangedQuestionnaireResponse(response);
+          // Send change notification with changed linkIds
+          this.sendChangedQuestionnaireResponse(response, changedLinkIds);
         }
       } catch (error) {
         console.warn('Error watching for changes', error);
       }
     }, 500);
+  }
+
+  /**
+   * Calculate which linkIds have changed between two QuestionnaireResponses
+   * Recursively compares items and their answers
+   */
+  private calculateChangedLinkIds(
+    oldResponse: QuestionnaireResponse, 
+    newResponse: QuestionnaireResponse
+  ): string[] {
+    const changedLinkIds = new Set<string>();
+
+    // Helper to recursively compare items
+    const compareItems = (oldItems: any[] | undefined, newItems: any[] | undefined) => {
+      if (!oldItems && !newItems) return;
+      if (!oldItems || !newItems) {
+        // If one is undefined, all items in the defined one have changed
+        (newItems || oldItems || []).forEach((item: any) => {
+          if (item.linkId) changedLinkIds.add(item.linkId);
+          if (item.item) compareItems(undefined, item.item);
+        });
+        return;
+      }
+
+      // Create maps by linkId for efficient lookup
+      const oldItemMap = new Map<string, any>();
+      const newItemMap = new Map<string, any>();
+      
+      oldItems.forEach(item => {
+        if (item.linkId) oldItemMap.set(item.linkId, item);
+      });
+      
+      newItems.forEach(item => {
+        if (item.linkId) newItemMap.set(item.linkId, item);
+      });
+
+      // Check all linkIds (both old and new)
+      const allLinkIds = new Set([...oldItemMap.keys(), ...newItemMap.keys()]);
+      
+      allLinkIds.forEach(linkId => {
+        const oldItem = oldItemMap.get(linkId);
+        const newItem = newItemMap.get(linkId);
+
+        if (!oldItem || !newItem) {
+          // Item was added or removed
+          changedLinkIds.add(linkId);
+          return;
+        }
+
+        // Compare answers
+        const oldAnswerJson = JSON.stringify(oldItem.answer || []);
+        const newAnswerJson = JSON.stringify(newItem.answer || []);
+        
+        if (oldAnswerJson !== newAnswerJson) {
+          changedLinkIds.add(linkId);
+        }
+
+        // Recursively compare nested items
+        if (oldItem.item || newItem.item) {
+          const nestedChanges = new Set<string>();
+          const tempChangedLinkIds = changedLinkIds;
+          
+          // Temporarily capture nested changes
+          compareItems(oldItem.item, newItem.item);
+          
+          // If any nested items changed, mark parent as changed too
+          if (nestedChanges.size > 0) {
+            changedLinkIds.add(linkId);
+          }
+        }
+      });
+    };
+
+    // Start comparison at the root level
+    compareItems(oldResponse.item, newResponse.item);
+
+    return Array.from(changedLinkIds);
   }
 
   /**
