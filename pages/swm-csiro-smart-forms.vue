@@ -120,10 +120,12 @@ import type {
 @Component({
   components: {
     Renderer: applyReactInVue(SmartFormsRendererWithFocus)
-  },
-  layout: 'empty' // Use empty layout to remove all chrome
+  }
 })
 export default class SwmCsiroSmartForms extends Vue implements SdcRendererMessageHandlers {
+  // Use empty layout to remove all chrome
+  layout = 'empty';
+  
   questionnaire: Questionnaire | null = null;
   questionnaireResponse: QuestionnaireResponse | null = null;
   context: QuestionnaireContext = {};
