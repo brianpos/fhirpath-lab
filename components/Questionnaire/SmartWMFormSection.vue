@@ -40,7 +40,7 @@
         <v-card-text>
           <v-btn
             color="primary"
-            @click="sendHandshake"
+            @click="sendStatusHandshake"
             :disabled="!isWindowConnected"
             class="mr-2 mb-2"
           >
@@ -50,7 +50,7 @@
 
           <v-btn
             color="primary"
-            @click="sendCurrentQuestionnaire"
+            @click="sendDisplayQuestionnaire"
             :disabled="!isWindowConnected"
             class="mr-2 mb-2"
           >
@@ -60,7 +60,7 @@
 
           <v-btn
             color="primary"
-            @click="sendLoadResponse"
+            @click="sendDisplayQuestionnaireResponse"
             :disabled="!isWindowConnected || !formData"
             class="mr-2 mb-2"
             :title="
@@ -78,13 +78,20 @@
 
           <v-btn
             color="primary"
-            @click="sendExtractRequest"
+            @click="sendRequestCurrentQuestionnaireResponse"
             :disabled="!isWindowConnected"
             class="mr-2 mb-2"
           >
             <v-icon left>mdi-file-download</v-icon>
             Request Response
           </v-btn>
+
+          <v-checkbox
+            v-model="propagateChangesToLabOnChangeQREvents"
+            label="Propagate changes to lab on 'changedQuestionnaireResponse' events"
+            dense
+            class="mt-2"
+          />
         </v-card-text>
       </v-card>
 
@@ -152,6 +159,40 @@ import { Questionnaire, QuestionnaireResponse } from "fhir/r4b";
 import MessageLog from "./MessageLog.vue";
 import { MessageLogEntry } from "~/helpers/message-logger";
 
+// Import SDC-SWM Protocol Types
+import type {
+  SmartWebMessagingRequest,
+  SmartWebMessagingResponse,
+  StatusHandshakeRequest,
+  StatusHandshakeResponse,
+  StatusHandshakeResponsePayload,
+  SdcDisplayQuestionnaireRequest,
+  SdcDisplayQuestionnaireResponseRequest,
+  SdcRequestCurrentQuestionnaireResponseRequest,
+  SdcRequestCurrentQuestionnaireResponseResponsePayload,
+  SdcUiChangedFocusPayload,
+  SdcUiChangedQuestionnaireResponsePayload,
+} from "~/types/sdc-swm-types";
+
+/**
+ * SDC-SWM Host Component
+ * 
+ * This component implements the SMART Web Messaging for Structured Data Capture (SDC-SWM) protocol
+ * as a host that communicates with a renderer running in a popup window.
+ * 
+ * Sends the following messages to renderer (Host → Renderer):
+ * - status.handshake: Initial handshake to establish communication
+ * - sdc.displayQuestionnaire: Send questionnaire to renderer
+ * - sdc.displayQuestionnaireResponse: Send questionnaire response to renderer
+ * - sdc.requestCurrentQuestionnaireResponse: Request current form data
+ * 
+ * Handles the following incoming messages from renderer (Renderer → Host):
+ * - status.handshake: Handshake response from renderer
+ * - sdc.ui.changedFocus: Notification when renderer focus changes
+ * - sdc.ui.changedQuestionnaireResponse: Notification when form data changes
+ * 
+ * @see docs/sdc-swm-protocol.md for complete protocol specification
+ */
 @Component({
   components: {
     MessageLog,
@@ -165,6 +206,7 @@ export default class SmartWMFormSection extends Vue {
   windowCheckInterval: number | null = null;
   fhirPathLabUrl: string = "http://localhost:3000/Questionnaire/tester";
   requestCurrentResponseMessageIdQueue: string[] = [];
+  propagateChangesToLabOnChangeQREvents: boolean = false;
 
   // Generate unique handles for this session
   messagingHandle: string = "";
@@ -177,30 +219,14 @@ export default class SmartWMFormSection extends Vue {
   // Reactive form data - now a component property instead of module-level
   formData: QuestionnaireResponse | undefined = undefined;
 
-  // Non-reactive properties - defined in created() to avoid Vue's reactivity system
-  // These store references to browser objects that cause cross-origin errors when made reactive
-  private popupWindow!: Window | null;
-  private messageHandler!: ((event: MessageEvent) => void) | null;
-
-  created() {
-    // Initialize non-reactive properties outside Vue's reactivity system
-    // Using Object.defineProperty to ensure they're truly non-reactive
-    Object.defineProperty(this, 'popupWindow', {
-      value: null,
-      writable: true,
-      enumerable: false,
-      configurable: true
-    });
-    
-    Object.defineProperty(this, 'messageHandler', {
-      value: null,
-      writable: true,
-      enumerable: false,
-      configurable: true
-    });
-  }
+  // Non-reactive property to avoid cross-origin security errors with WindowProxy
+  // Initialized in mounted() to prevent Vue's reactivity system from wrapping it
+  declare private popupWindow: WindowProxy | null;
 
   async mounted() {
+    // Initialize non-reactive properties
+    this.popupWindow = null;
+    
     // Generate messaging handle and origin
     this.messagingHandle = this.generateHandle();
     this.messagingOrigin = window.location.origin;
@@ -209,29 +235,13 @@ export default class SmartWMFormSection extends Vue {
       this.messagingHandle
     );
 
-    // Create a bound message handler to avoid Vue reactivity issues with Window object
-    this.messageHandler = (event: MessageEvent) => {
-      console.log("[SDC-SWM Host] RAW message event received:", {
-        origin: event.origin,
-        source: event.source,
-        data: event.data,
-        expectedOrigin: this.fhirPathLabUrl,
-        popupWindow: this.popupWindow,
-        sourceMatchesPopup: event.source === this.popupWindow,
-      });
-      this.handleMessage(event);
-    };
-
     // Listen for messages from the popup
-    window.addEventListener("message", this.messageHandler);
+    window.addEventListener("message", this.handleMessage);
   }
 
   beforeDestroy() {
     // Remove message listener
-    if (this.messageHandler) {
-      window.removeEventListener("message", this.messageHandler);
-      this.messageHandler = null;
-    }
+    window.removeEventListener("message", this.handleMessage);
 
     // Clean up interval when component is destroyed
     if (this.windowCheckInterval) {
@@ -239,27 +249,50 @@ export default class SmartWMFormSection extends Vue {
     }
   }
 
+  /**
+   * Generate a unique messaging handle for this session
+   */
   generateHandle(): string {
     return "test-" + Date.now() + "-" + Math.random().toString(36).substr(2, 9);
   }
 
+  /**
+   * Generate a unique message ID
+   */
   generateMessageId(): string {
     return "msg-" + Date.now() + "-" + Math.random().toString(36).substr(2, 9);
   }
 
+  /**
+   * Handle incoming messages from renderer window
+   */
   handleMessage(event: MessageEvent) {
-    // First, check if this message is intended for us by checking the messagingHandle
-    const msg = event.data;
+    // console.log("[SDC-SWM Host] RAW message event received:", {
+    //   origin: event.origin,
+    //   hasSource: !!event.source,
+    //   messageType: event.data?.messageType,
+    //   expectedOrigin: this.fhirPathLabUrl,
+    //   hasPopupWindow: !!this.popupWindow,
+    //   sourceMatchesPopup: event.source === this.popupWindow,
+    // });
+    
+    const msg = event.data as SmartWebMessagingRequest | SmartWebMessagingResponse;
 
-    // If the message doesn't have our messagingHandle, it's not for us - let other handlers deal with it
-    if (
-      msg?.messagingHandle !== this.messagingHandle && !msg?.responseToMessageId
-    ) {
+    // Filter out React DevTools messages
+    if (event.data?.source?.startsWith("react-devtools-")) {
+      return;
+    }
+
+    // If the message doesn't have our messagingHandle or responseToMessageId, it's not for us
+    const isRequest = 'messageType' in msg && msg.messagingHandle === this.messagingHandle;
+    const isResponse = 'responseToMessageId' in msg;
+    
+    if (!isRequest && !isResponse) {
       // Not our message, ignore silently (could be for Aidbox or other components)
       return;
     }
 
-    // Now we know it's for us, validate the origin
+    // Validate origin
     if (!this.fhirPathLabUrl.startsWith(event.origin)) {
       console.log(
         "[SDC-SWM Host] Ignoring message from unexpected origin:",
@@ -276,76 +309,201 @@ export default class SmartWMFormSection extends Vue {
 
     console.log("[SDC-SWM Host] Received message from renderer:", msg);
 
-    if (msg.messageType) {
-      // this is an un-solicited message
-        this.logMessage(
-          "received",
-          msg.messageType || (msg.responseToMessageId ? "response" : "unknown"),
-          "unsolicited - ",
-          msg
-        );
+    // Handle unsolicited messages from renderer (events)
+    if (isRequest && 'messageType' in msg) {
+      this.handleUnsolicitedRequestEvent(msg as SmartWebMessagingRequest);
       return;
     }
 
-    if (this.requestCurrentResponseMessageIdQueue.indexOf(msg.responseToMessageId) >= 0) {
-      // this is the response to the sdc.requestCurrentQuestionnaireResponse request
-      // Handle extracted response
-      if (msg.payload.questionnaireResponse) {
-        const qr = msg.payload.questionnaireResponse;
-
-        const response: QuestionnaireResponse = qr;
-        this.formData = response;
-        console.log("[SDC-SWM Host] QuestionnaireResponse received from renderer:", response);
-
-        // ensure there is a tag for the smartwm renderer in place
-        if (!response.meta?.tag?.find((t) => t.code?.startsWith("smartwm"))) {
-          if (!response.meta) response.meta = { tag: [] };
-          if (!response.meta.tag) response.meta.tag = [];
-          response.meta.tag!.push({ code: "smartwm:generated" });
-        }
-
-        // remove the lforms tag if it was there.
-        if (response.meta?.tag?.find((t) => t.code?.startsWith("lforms"))) {
-          response.meta.tag = response.meta.tag!.filter(
-            (t) => !t.code?.startsWith("lforms")
-          );
-        }
-
-        // remove the CSIRO tag if it was there.
-        if (response.meta?.tag?.find((t) => t.code?.startsWith("csiro"))) {
-          response.meta.tag = response.meta.tag!.filter(
-            (t) => !t.code?.startsWith("csiro")
-          );
-        }
-
-        // remove the aidbox tag if it was there.
-        if (response.meta?.tag?.find((t) => t.code?.startsWith("aidbox"))) {
-          response.meta.tag = response.meta.tag!.filter(
-            (t) => !t.code?.startsWith("aidbox")
-          );
-        }
-
-        this.$emit("response", response);
-
-        this.logMessage(
-          "received",
-          msg.messageType || (msg.responseToMessageId ? "response" : "unknown"),
-          "sdc.requestCurrentQuestionnaireResponse response - " + response.id,
-          msg
-        );
-        return;
-      }
+    // Handle responses to our requests
+    if (isResponse && 'responseToMessageId' in msg) {
+      this.handleRendererResponse(msg as SmartWebMessagingResponse);
     }
+  }
 
-    // Log the message
+  /**
+   * Handle unsolicited event messages from renderer
+   */
+  handleUnsolicitedRequestEvent(msg: SmartWebMessagingRequest) {
+    console.log("[SDC-SWM Host] Handling renderer event:", msg.messageType);
+    
+    switch (msg.messageType) {
+      case 'status.handshake':
+        this.handleHandshakeEvent(msg as StatusHandshakeRequest);
+        break;
+      case 'sdc.ui.changedFocus':
+        this.handleChangedFocusEvent(msg);
+        break;
+      case 'sdc.ui.changedQuestionnaireResponse':
+        this.handleChangedQuestionnaireResponseEvent(msg);
+        break;
+      case 'ui.done':
+        this.handleUiDoneEvent(msg);
+        break;
+      default:
+        console.warn("[SDC-SWM Host] Unhandled event type:", msg.messageType);
+    }
+    
     this.logMessage(
       "received",
-      msg.messageType || (msg.responseToMessageId ? "response" : "unknown"),
+      msg.messageType || "unknown",
+      "unsolicited - " + this.summarizeMessage(msg),
+      msg
+    );
+  }
+
+  /**
+   * Handle handshake event from renderer
+   */
+  handleHandshakeEvent(msg: StatusHandshakeRequest) {
+    console.log("[SDC-SWM Host] Renderer handshake received:", msg.payload);
+    
+    // Send acknowledgment response (required by protocol)
+    this.sendEventResponse(msg.messageId, {
+      status: 'success'
+    });
+  }
+
+  /**
+   * Handle changed focus event from renderer
+   */
+  handleChangedFocusEvent(msg: SmartWebMessagingRequest<SdcUiChangedFocusPayload>) {
+    console.log("[SDC-SWM Host] Focus changed to:", msg.payload.linkId);
+    
+    // Send acknowledgment response (required by protocol)
+    this.sendEventResponse(msg.messageId, {
+      status: 'success'
+    });
+
+    if (msg.payload.linkId){
+      this.$emit('highlight-path', msg.payload.linkId);
+    }
+  }
+
+  /**
+   * Handle changed questionnaire response event from renderer
+   */
+  handleChangedQuestionnaireResponseEvent(msg: SmartWebMessagingRequest<SdcUiChangedQuestionnaireResponsePayload>) {
+    console.log("[SDC-SWM Host] Questionnaire response changed");
+    if (msg.payload.questionnaireResponse && this.propagateChangesToLabOnChangeQREvents) {
+      this.formData = msg.payload.questionnaireResponse as QuestionnaireResponse;
+      this.$emit("response", this.formData);
+    }
+    
+    // Send acknowledgment response (required by protocol)
+    this.sendEventResponse(msg.messageId, {
+      status: 'success'
+    });
+  }
+
+  /**
+   * Handle ui.done event from renderer
+   * Per protocol: user has completed interaction and wants to close the renderer
+   */
+  handleUiDoneEvent(msg: SmartWebMessagingRequest) {
+    console.log("[SDC-SWM Host] User wants to close renderer (ui.done)");
+    
+    // Optionally retrieve final form data before closing
+    // This is commented out but shows the recommended pattern:
+    // this.sendRequestCurrentQuestionnaireResponse();
+    
+    // Send acknowledgment that we will close the renderer
+    this.sendEventResponse(msg.messageId, {
+      status: 'success'
+    });
+    
+    // Close the popup window
+    if (this.popupWindow && !this.popupWindow.closed) {
+      this.popupWindow.close();
+      this.popupWindow = null;
+      this.isWindowConnected = false;
+    }
+  }
+
+  /**
+   * Send response to renderer-initiated event (acknowledgment)
+   * Per protocol: renderer-initiated messages are REQUEST messages that require acknowledgment
+   */
+  sendEventResponse(responseToMessageId: string, payload: { status: 'success' | 'error'; statusDetail?: any }) {
+    if (!this.popupWindow || this.popupWindow.closed) {
+      console.warn("[SDC-SWM Host] Cannot send event response - window closed");
+      return;
+    }
+
+    const response: SmartWebMessagingResponse = {
+      messageId: this.generateMessageId(),
+      responseToMessageId,
+      payload
+    };
+
+    console.log("[SDC-SWM Host] Sending event acknowledgment:", response);
+    this.popupWindow.postMessage(response, this.fhirPathLabUrl);
+  }
+
+  /**
+   * Handle responses from renderer to our requests
+   */
+  handleRendererResponse(msg: SmartWebMessagingResponse) {
+    console.log("[SDC-SWM Host] Handling renderer response to:", msg.responseToMessageId);
+
+    // Check if this is a response to sdc.requestCurrentQuestionnaireResponse
+    const queueIndex = this.requestCurrentResponseMessageIdQueue.indexOf(msg.responseToMessageId);
+    if (queueIndex >= 0) {
+      this.requestCurrentResponseMessageIdQueue.splice(queueIndex, 1);
+      this.handleRequestCurrentQuestionnaireResponseResponse(msg);
+      return;
+    }
+
+    // Log the response
+    this.logMessage(
+      "received",
+      "response",
       this.summarizeMessage(msg),
       msg
     );
   }
 
+  /**
+   * Handle response to sdc.requestCurrentQuestionnaireResponse
+   * (Renderer returns the current QuestionnaireResponse data)
+   */
+  handleRequestCurrentQuestionnaireResponseResponse(msg: SmartWebMessagingResponse<SdcRequestCurrentQuestionnaireResponseResponsePayload>) {
+    if (msg.payload.questionnaireResponse) {
+      const response: QuestionnaireResponse = msg.payload.questionnaireResponse as QuestionnaireResponse;
+      this.formData = response;
+      console.log("[SDC-SWM Host] QuestionnaireResponse received from renderer:", response);
+
+      // Ensure there is a tag for the smartwm renderer in place
+      if (!response.meta?.tag?.find((t) => t.code?.startsWith("smartwm"))) {
+        if (!response.meta) response.meta = { tag: [] };
+        if (!response.meta.tag) response.meta.tag = [];
+        response.meta.tag!.push({ code: "smartwm:generated" });
+      }
+
+      // Remove other renderer tags
+      const tagsToRemove = ["lforms", "csiro", "aidbox"];
+      tagsToRemove.forEach(tagPrefix => {
+        if (response.meta?.tag?.find((t) => t.code?.startsWith(tagPrefix))) {
+          response.meta!.tag = response.meta!.tag!.filter(
+            (t) => !t.code?.startsWith(tagPrefix)
+          );
+        }
+      });
+
+      this.$emit("response", response);
+
+      this.logMessage(
+        "received",
+        "response",
+        "sdc.requestCurrentQuestionnaireResponse response - " + response.id,
+        msg
+      );
+    }
+  }
+
+  /**
+   * Log a message to the message log
+   */
   logMessage(
     direction: "sent" | "received" | "local",
     type: string,
@@ -367,14 +525,20 @@ export default class SmartWMFormSection extends Vue {
     }
   }
 
+  /**
+   * Clear the message log
+   */
   clearMessageLog() {
     this.messageLog = [];
   }
 
-  summarizeMessage(msg: any): string {
+  /**
+   * Summarize a message for display in the log
+   */
+  summarizeMessage(msg: SmartWebMessagingRequest | SmartWebMessagingResponse): string {
     if (!msg.payload) {
-      // Handle responses without payload (might have responseToMessageId)
-      if (msg.responseToMessageId) {
+      // Handle responses without payload
+      if ('responseToMessageId' in msg) {
         return "Response (no payload)";
       }
       return "No payload";
@@ -406,41 +570,6 @@ export default class SmartWMFormSection extends Vue {
     // Handle extracted response
     if (msg.payload.questionnaireResponse) {
       const qr = msg.payload.questionnaireResponse;
-
-      const response: QuestionnaireResponse = qr;
-      this.formData = response;
-      console.log("[SDC-SWM Host] QuestionnaireResponse extracted:", response);
-
-      // ensure there is a tag for the smartwm renderer in place
-      if (!response.meta?.tag?.find((t) => t.code?.startsWith("smartwm"))) {
-        if (!response.meta) response.meta = { tag: [] };
-        if (!response.meta.tag) response.meta.tag = [];
-        response.meta.tag!.push({ code: "smartwm:generated" });
-      }
-
-      // remove the lforms tag if it was there.
-      if (response.meta?.tag?.find((t) => t.code?.startsWith("lforms"))) {
-        response.meta.tag = response.meta.tag!.filter(
-          (t) => !t.code?.startsWith("lforms")
-        );
-      }
-
-      // remove the CSIRO tag if it was there.
-      if (response.meta?.tag?.find((t) => t.code?.startsWith("csiro"))) {
-        response.meta.tag = response.meta.tag!.filter(
-          (t) => !t.code?.startsWith("csiro")
-        );
-      }
-
-      // remove the aidbox tag if it was there.
-      if (response.meta?.tag?.find((t) => t.code?.startsWith("aidbox"))) {
-        response.meta.tag = response.meta.tag!.filter(
-          (t) => !t.code?.startsWith("aidbox")
-        );
-      }
-
-      this.$emit("response", response);
-
       return `Response: ${qr.id || "no-id"}, Status: ${qr.status}`;
     }
 
@@ -457,13 +586,16 @@ export default class SmartWMFormSection extends Vue {
     }
 
     // Handle response update events
-    if (msg.messageType === "sdc.ui.changedQuestionnaireResponse") {
+    if ('messageType' in msg && msg.messageType === "sdc.ui.changedQuestionnaireResponse") {
       return "Response updated";
     }
 
     return JSON.stringify(msg.payload).substring(0, 100);
   }
 
+  /**
+   * Check if popup window is still connected
+   */
   checkWindowConnection() {
     try {
       if (this.popupWindow && !this.popupWindow.closed) {
@@ -485,6 +617,9 @@ export default class SmartWMFormSection extends Vue {
     }
   }
 
+  /**
+   * Open FHIRPath Lab in a popup window
+   */
   openFhirPathLab() {
     // If there's already an open window, focus it instead of opening a new one
     if (this.popupWindow && !this.popupWindow.closed) {
@@ -531,7 +666,7 @@ export default class SmartWMFormSection extends Vue {
       // Wait a moment to ensure the new window is fully loaded and initialized
       setTimeout(() => {
         console.log("[SDC-SWM Host] Sending initial status.handshake");
-        this.sendHandshake();
+        this.sendStatusHandshake();
       }, 1500);
     } else {
       // Provide more helpful instructions
@@ -542,7 +677,10 @@ export default class SmartWMFormSection extends Vue {
     }
   }
 
-  sendHandshake() {
+  /**
+   * Send status.handshake message to renderer
+   */
+  sendStatusHandshake() {
     if (!this.popupWindow || this.popupWindow.closed) {
       console.warn(
         "[SDC-SWM Host] Cannot send status.handshake - renderer window not available"
@@ -550,7 +688,7 @@ export default class SmartWMFormSection extends Vue {
       return;
     }
 
-    const message = {
+    const message: StatusHandshakeRequest = {
       messagingHandle: this.messagingHandle,
       messageId: this.generateMessageId(),
       messageType: "status.handshake",
@@ -576,18 +714,21 @@ export default class SmartWMFormSection extends Vue {
     }
   }
 
-  sendCurrentQuestionnaire() {
+  /**
+   * Send sdc.displayQuestionnaire to renderer
+   */
+  sendDisplayQuestionnaire() {
     // Use the existing popup window instead of opening a new one
     if (this.popupWindow && !this.popupWindow.closed) {
       this.popupWindow.focus();
 
       // Send the questionnaire using SMART Web Messaging format
-      const message = {
+      const message: SdcDisplayQuestionnaireRequest = {
         messagingHandle: this.messagingHandle,
         messageId: this.generateMessageId(),
         messageType: "sdc.displayQuestionnaire",
         payload: {
-          questionnaire: this.questionnaire,
+          questionnaire: this.questionnaire as any, // R4B to R4 conversion
           // questionnaireResponse: this.formData || undefined, // intentionally not sending the data
         },
       };
@@ -608,7 +749,10 @@ export default class SmartWMFormSection extends Vue {
     }
   }
 
-  sendLoadResponse() {
+  /**
+   * Send sdc.displayQuestionnaireResponse to renderer
+   */
+  sendDisplayQuestionnaireResponse() {
     if (!this.popupWindow || this.popupWindow.closed) {
       alert("The popup window is closed. Please open fhirpath-lab first.");
       return;
@@ -621,12 +765,12 @@ export default class SmartWMFormSection extends Vue {
 
     this.popupWindow.focus();
 
-    const message = {
+    const message: SdcDisplayQuestionnaireResponseRequest = {
       messagingHandle: this.messagingHandle,
       messageId: this.generateMessageId(),
       messageType: "sdc.displayQuestionnaireResponse",
       payload: {
-        questionnaireResponse: this.formData,
+        questionnaireResponse: this.formData as any, // R4B to R4 conversion
       },
     };
 
@@ -640,7 +784,11 @@ export default class SmartWMFormSection extends Vue {
     this.popupWindow.postMessage(message, this.fhirPathLabUrl);
   }
 
-  sendExtractRequest() {
+  /**
+   * Send sdc.requestCurrentQuestionnaireResponse to renderer
+   * (Request the current QuestionnaireResponse data from the renderer)
+   */
+  sendRequestCurrentQuestionnaireResponse() {
     if (!this.popupWindow || this.popupWindow.closed) {
       alert("The popup window is closed. Please open fhirpath-lab first.");
       return;
@@ -648,7 +796,7 @@ export default class SmartWMFormSection extends Vue {
 
     this.popupWindow.focus();
 
-    const message = {
+    const message: SdcRequestCurrentQuestionnaireResponseRequest = {
       messagingHandle: this.messagingHandle,
       messageId: this.generateMessageId(),
       messageType: "sdc.requestCurrentQuestionnaireResponse",
@@ -666,6 +814,9 @@ export default class SmartWMFormSection extends Vue {
     this.popupWindow.postMessage(message, this.fhirPathLabUrl);
   }
 
+  /**
+   * Send focus request to renderer (UI control message)
+   */
   sendFocusRequest() {
     if (!this.popupWindow || this.popupWindow.closed) {
       alert("The popup window is closed. Please open fhirpath-lab first.");
@@ -679,7 +830,7 @@ export default class SmartWMFormSection extends Vue {
 
     this.popupWindow.focus();
 
-    const message = {
+    const message: SmartWebMessagingRequest = {
       messagingHandle: this.messagingHandle,
       messageId: this.generateMessageId(),
       messageType: "questionnaire.ui.focus",
@@ -698,6 +849,9 @@ export default class SmartWMFormSection extends Vue {
     this.popupWindow.postMessage(message, this.fhirPathLabUrl);
   }
 
+  /**
+   * Send highlight request to renderer (UI control message)
+   */
   sendHighlightRequest() {
     if (!this.popupWindow || this.popupWindow.closed) {
       alert("The popup window is closed. Please open fhirpath-lab first.");
@@ -711,7 +865,7 @@ export default class SmartWMFormSection extends Vue {
 
     this.popupWindow.focus();
 
-    const message = {
+    const message: SmartWebMessagingRequest = {
       messagingHandle: this.messagingHandle,
       messageId: this.generateMessageId(),
       messageType: "questionnaire.ui.highlight",
@@ -734,6 +888,9 @@ export default class SmartWMFormSection extends Vue {
     this.popupWindow.postMessage(message, this.fhirPathLabUrl);
   }
 
+  /**
+   * Send reset request to renderer (UI control message)
+   */
   sendResetRequest() {
     if (!this.popupWindow || this.popupWindow.closed) {
       alert("The popup window is closed. Please open fhirpath-lab first.");
@@ -742,7 +899,7 @@ export default class SmartWMFormSection extends Vue {
 
     this.popupWindow.focus();
 
-    const message = {
+    const message: SmartWebMessagingRequest = {
       messagingHandle: this.messagingHandle,
       messageId: this.generateMessageId(),
       messageType: "questionnaire.ui.reset",
@@ -754,7 +911,10 @@ export default class SmartWMFormSection extends Vue {
     this.popupWindow.postMessage(message, this.fhirPathLabUrl);
   }
 
-  /** Show this QR in the display (if it wasn't generated by itself) */
+  /**
+   * Render a QuestionnaireResponse in the display
+   * (if it wasn't generated by this component)
+   */
   async renderQuestionnaireResponse(
     response: QuestionnaireResponse,
     questionnaire: Questionnaire
@@ -762,7 +922,7 @@ export default class SmartWMFormSection extends Vue {
     if (response.meta?.tag?.find((t) => t.code?.startsWith("smartWM"))) {
       return;
     }
-    // read the source from the response meta tags (join all the tag codes)
+    // Read the source from the response meta tags (join all the tag codes)
     const source = response.meta?.tag?.map((t) => t.code).join(", ");
     console.log("[SDC-SWM Host] Rendering QuestionnaireResponse:", response);
 

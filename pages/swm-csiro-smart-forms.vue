@@ -112,7 +112,7 @@ export default class SwmCsiroSmartForms extends Vue implements SdcRendererMessag
   allowedOrigin: string | null = null; // Store the allowed origin for security
 
   // Non-reactive property to avoid cross-origin security errors with WindowProxy
-  // Stored outside Vue's reactivity system to prevent __v_isRef access across origins
+  // Initialized in mounted() to prevent Vue's reactivity system from wrapping it
   declare messageSource: WindowProxy | null;
     
   /**
@@ -161,9 +161,7 @@ export default class SwmCsiroSmartForms extends Vue implements SdcRendererMessag
     const message = event.data as SmartWebMessagingRequest;
     
     // Filter out React DevTools messages
-    if (event.data?.source?.startsWith("react-devtools-")
-    //  || event.data?.startsWith("setImmediate")
-    ) {
+    if (event.data?.source?.startsWith("react-devtools-")) {
       return;
     }
 
