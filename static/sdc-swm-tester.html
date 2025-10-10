@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SDC-SWM CSIRO Smart Forms Test Page</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #333;
+      margin-top: 0;
+    }
+    .controls {
+      margin-bottom: 20px;
+      padding: 15px;
+      background: #f9f9f9;
+      border-radius: 4px;
+    }
+    button {
+      padding: 8px 16px;
+      margin: 5px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    .log {
+      margin-top: 20px;
+      padding: 15px;
+      background: #f1f1f1;
+      border-radius: 4px;
+      max-height: 200px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 12px;
+    }
+    .log-entry {
+      margin: 5px 0;
+      padding: 5px;
+      background: white;
+      border-left: 3px solid #007bff;
+    }
+    .log-entry.incoming {
+      border-left-color: #28a745;
+    }
+    .log-entry.outgoing {
+      border-left-color: #ffc107;
+    }
+    iframe {
+      width: 100%;
+      height: 600px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    .status {
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 4px;
+    }
+    .status.pending {
+      background: #fff3cd;
+      color: #856404;
+    }
+    .status.ready {
+      background: #d4edda;
+      color: #155724;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>SDC-SWM CSIRO Smart Forms Test Page</h1>
+    
+    <div id="status" class="status pending">
+      Status: Waiting for renderer to load...
+    </div>
+    
+    <div class="controls">
+      <h3>Renderer URL</h3>
+      <input type="text" id="rendererBaseUrl" value="http://localhost:3000/swm-csiro-smart-forms" style="width: 500px; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+      <button onclick="openPopup()" style="background: #28a745;">🗗 Launch Popup</button>
+      <button onclick="changeIframeUrl()">📄 Update Iframe</button>
+      <div style="margin-top: 10px; font-size: 12px; color: #666;">
+        <strong>Launch URL with parameters:</strong><br>
+        <span id="fullUrl" style="font-family: monospace; word-break: break-all;"></span>
+      </div>
+    </div>
+    
+    <div class="controls">
+      <h3>Controls</h3>
+      <button id="btnHandshake" onclick="sendHandshake()">1. Send Handshake</button>
+      <button id="btnConfigure" onclick="sendConfigure()" disabled>2. Configure</button>
+      <button id="btnContext" onclick="sendContext()" disabled>3. Set Context</button>
+      <button id="btnDisplayQ" onclick="displayQuestionnaire()" disabled>4. Display Questionnaire</button>
+      <button id="btnGetResponse" onclick="getCurrentResponse()" disabled>5. Get Response</button>
+      <button onclick="clearLog()">Clear Log</button>
+    </div>
+    
+    <iframe id="renderer" src=""></iframe>
+    
+    <div class="log" id="log">
+      <div>Message log will appear here...</div>
+    </div>
+  </div>
+
+  <script>
+    let handshakeComplete = false;
+    let messageCounter = 0;
+    let renderMode = 'iframe'; // 'iframe' or 'popup'
+    let popupWindow = null;
+    const messagingHandle = 'sdc-swm-tester-' + Date.now(); // Unique handle for this session
+    const messagingOrigin = window.location.origin; // Origin for message validation
+
+    // Get iframe reference
+    const iframe = document.getElementById('renderer');
+    
+    // Function to build full URL with parameters
+    function buildRendererUrl(baseUrl) {
+      const url = new URL(baseUrl, window.location.origin);
+      url.searchParams.set('messaging_handle', messagingHandle);
+      url.searchParams.set('messaging_origin', messagingOrigin);
+      return url.toString();
+    }
+    
+    // Function to update the displayed full URL
+    function updateDisplayedUrl() {
+      const baseUrl = document.getElementById('rendererBaseUrl').value;
+      const fullUrl = buildRendererUrl(baseUrl);
+      document.getElementById('fullUrl').textContent = fullUrl;
+    }
+    
+    // Initialize iframe with parameters
+    window.addEventListener('DOMContentLoaded', () => {
+      updateDisplayedUrl();
+      const baseUrl = document.getElementById('rendererBaseUrl').value;
+      iframe.src = buildRendererUrl(baseUrl);
+    });
+    
+    // Update display when input changes
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('rendererBaseUrl').addEventListener('input', updateDisplayedUrl);
+    });
+    
+    // Listen for messages from renderer
+    window.addEventListener('message', (event) => {
+      // Validate event origin (in production, be more specific)
+      // For local testing, we allow localhost with any port
+      const isLocalhost = event.origin.startsWith('http://localhost:') || event.origin.startsWith('http://127.0.0.1:');
+      const isSameOrigin = event.origin === window.location.origin;
+      
+      if (!isLocalhost && !isSameOrigin) {
+        console.warn('Ignoring message from unauthorized origin:', event.origin);
+        return;
+      }
+
+      // Validate that we have a valid message object
+      if (!event.data || typeof event.data !== 'object') {
+        return;
+      }
+
+      const message = event.data;
+      
+      // filter out some noisy messages from devtools
+      if (event.data?.source?.startsWith("react-devtools-")) {
+        return;
+      }
+      if (message?.key === "__VUE_DEVTOOLS_VUE_DETECTED_EVENT__") {
+        return;
+      }
+
+      logMessage('INCOMING', message);
+      
+      // Check if this is a response message (responses don't have messageType)
+      if (message.responseToMessageId) {
+        // This is a response to one of our requests
+        console.log('Received response to:', message.responseToMessageId);
+        
+        // If it's a response to our handshake, enable buttons
+        if (message.responseToMessageId.startsWith('msg-')) {
+          // Check if we got capabilities in the response (indicates successful handshake)
+          if (message.payload?.capabilities !== undefined || message.payload?.application !== undefined) {
+            handshakeComplete = true;
+            const caps = message.payload?.capabilities || {};
+            const capList = Object.entries(caps)
+              .filter(([_, v]) => v === true)
+              .map(([k]) => k);
+            const appName = message.payload?.application?.name || 'Unknown';
+            updateStatus('ready', `Renderer ready (${appName})! Capabilities: ` + capList.join(', '));
+            enableButtons();
+          }
+        }
+        return; // Don't process further, it's a response
+      }
+      
+      // Handle request messages (these have messageType)
+      if (message.messageType === 'status.handshake') {
+        // This is a handshake request from the renderer - we need to respond
+        handshakeComplete = true;
+        const caps = message.payload?.capabilities || {};
+        const capList = Object.entries(caps)
+          .filter(([_, v]) => v === true)
+          .map(([k]) => k);
+        const appName = message.payload?.application?.name || 'Unknown';
+        updateStatus('ready', `Renderer ready (${appName})! Capabilities: ` + capList.join(', '));
+        enableButtons();
+        
+        // Send our handshake response with application info and capabilities
+        sendResponse(message.messageId, {
+          application: {
+            name: 'SDC-SWM Test Page',
+            version: '1.0',
+            publisher: 'FHIRPath Lab'
+          },
+          capabilities: {
+            extraction: false,
+            focusChangeNotifications: false
+          }
+        });
+      } else if (message.messageType === 'sdc.ui.changedFocus') {
+        console.log('Focus changed to:', message.payload.linkId);
+        // Send acknowledgment response
+        sendResponse(message.messageId, { status: 'success' });
+      } else if (message.messageType === 'sdc.ui.changedQuestionnaireResponse') {
+        console.log('Response updated:', message.payload.questionnaireResponse);
+        // Send acknowledgment response
+        sendResponse(message.messageId, { status: 'success' });
+      } else if (message.messageType === 'ui.done') {
+        console.log('User completed interaction');
+        // Send acknowledgment response
+        sendResponse(message.messageId, { status: 'success' });
+      }
+    });
+
+    // Wait for iframe to load, then automatically send handshake
+    iframe.addEventListener('load', () => {
+      setTimeout(() => {
+        logMessage('INFO', 'Iframe loaded, initiating handshake with renderer...');
+        // Don't proactively send handshake to renderer
+        // sendHandshake();
+      }, 500);
+    });
+
+    function sendMessage(messageType, payload) {
+      const messageId = `msg-${++messageCounter}`;
+      const message = {
+        messagingHandle: messagingHandle,
+        messageId,
+        messageType,
+        payload
+      };
+      
+      logMessage('OUTGOING', message);
+      
+      // Determine target origin from iframe/popup URL
+      const targetOrigin = getTargetOrigin();
+      
+      if (renderMode === 'popup') {
+        if (!popupWindow || popupWindow.closed) {
+          logMessage('ERROR', 'Cannot send - popup window not available');
+          return null;
+        }
+        popupWindow.postMessage(message, targetOrigin);
+      } else {
+        if (!iframe.contentWindow) {
+          logMessage('ERROR', 'Cannot send - iframe not ready');
+          return null;
+        }
+        iframe.contentWindow.postMessage(message, targetOrigin);
+      }
+      
+      return messageId;
+    }
+
+    function sendResponse(responseToMessageId, payload) {
+      const messageId = `msg-${++messageCounter}`;
+      const message = {
+        messageId,
+        responseToMessageId,
+        payload
+      };
+      
+      logMessage('OUTGOING', message);
+      
+      // Determine target origin from iframe/popup URL
+      const targetOrigin = getTargetOrigin();
+      
+      if (renderMode === 'popup') {
+        if (!popupWindow || popupWindow.closed) {
+          logMessage('ERROR', 'Cannot send response - popup window not available');
+          return null;
+        }
+        popupWindow.postMessage(message, targetOrigin);
+      } else {
+        if (!iframe.contentWindow) {
+          logMessage('ERROR', 'Cannot send response - iframe not ready');
+          return null;
+        }
+        iframe.contentWindow.postMessage(message, targetOrigin);
+      }
+      
+      return messageId;
+    }
+    
+    function getTargetOrigin() {
+      // For local development, use localhost origin
+      // In production, parse from the renderer URL
+      const baseUrl = document.getElementById('rendererBaseUrl').value;
+      try {
+        const url = new URL(baseUrl, window.location.origin);
+        return url.origin;
+      } catch (e) {
+        // Fallback to same origin
+        return window.location.origin;
+      }
+    }
+
+    function sendHandshake() {
+      sendMessage('status.handshake', {});
+    }
+
+    function sendConfigure() {
+      sendMessage('sdc.configure', {
+        terminologyServer: 'https://tx.fhir.org/r4',
+        dataServer: 'https://hapi.fhir.org/baseR4',
+        formsServer: 'https://hapi.fhir.org/baseR4'
+      });
+    }
+
+    function sendContext() {
+      sendMessage('sdc.configureContext', {
+        context: {
+          subject: { reference: 'Patient/example', display: 'Example Patient' },
+          author: { reference: 'Practitioner/example', display: 'Example Practitioner' },
+          encounter: { reference: 'Encounter/example', display: 'Example Encounter' },
+          launchContext: [
+            {
+              name: 'source',
+              contentReference: { reference: 'Practitioner/example', display: 'Example Practitioner' }
+            }
+          ]
+        }
+      });
+    }
+
+    function displayQuestionnaire() {
+      // Simple example questionnaire
+      sendMessage('sdc.displayQuestionnaire', {
+        questionnaire: {
+          resourceType: 'Questionnaire',
+          id: 'example',
+          status: 'active',
+          title: 'Example Questionnaire',
+          item: [
+            {
+              linkId: '1',
+              text: 'What is your name?',
+              type: 'string'
+            },
+            {
+              linkId: '2',
+              text: 'What is your age?',
+              type: 'integer'
+            },
+            {
+              linkId: '3',
+              text: 'Do you have any allergies?',
+              type: 'boolean'
+            }
+          ]
+        }
+      });
+    }
+
+    function getCurrentResponse() {
+      sendMessage('sdc.requestCurrentQuestionnaireResponse', {});
+    }
+
+    function logMessage(type, message) {
+      const log = document.getElementById('log');
+      const entry = document.createElement('div');
+      entry.className = 'log-entry ' + type.toLowerCase();
+      
+      const timestamp = new Date().toLocaleTimeString();
+      const msgStr = typeof message === 'string' ? message : JSON.stringify(message, null, 2);
+      
+      entry.innerHTML = `<strong>[${timestamp}] ${type}:</strong><br><pre style="margin:5px 0;white-space:pre-wrap;">${msgStr}</pre>`;
+      log.appendChild(entry);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    function clearLog() {
+      document.getElementById('log').innerHTML = '<div>Message log cleared.</div>';
+    }
+
+    function updateStatus(statusClass, message) {
+      const statusEl = document.getElementById('status');
+      statusEl.className = 'status ' + statusClass;
+      statusEl.textContent = 'Status: ' + message;
+    }
+
+    function enableButtons() {
+      document.getElementById('btnConfigure').disabled = false;
+      document.getElementById('btnContext').disabled = false;
+      document.getElementById('btnDisplayQ').disabled = false;
+      document.getElementById('btnGetResponse').disabled = false;
+    }
+
+    function openPopup() {
+      const baseUrl = document.getElementById('rendererBaseUrl').value;
+      const fullUrl = buildRendererUrl(baseUrl);
+      
+      // Switch to popup mode
+      renderMode = 'popup';
+      iframe.style.display = 'none';
+      
+      // Open popup
+      popupWindow = window.open(fullUrl, 'csiro-smart-forms', 'width=1200,height=900,menubar=no,toolbar=no,location=yes,scrollbars=yes');
+      
+      if (popupWindow) {
+        popupWindow.focus();
+        handshakeComplete = false;
+        updateStatus('pending', 'Waiting for popup renderer to load...');
+        document.getElementById('btnConfigure').disabled = true;
+        document.getElementById('btnContext').disabled = true;
+        document.getElementById('btnDisplayQ').disabled = true;
+        document.getElementById('btnGetResponse').disabled = true;
+        logMessage('INFO', 'Opened popup window: ' + fullUrl);
+      } else {
+        renderMode = 'iframe';
+        iframe.style.display = 'block';
+        alert('Pop-up blocked! Please allow popups for this site.');
+      }
+    }
+
+    function changeIframeUrl() {
+      const baseUrl = document.getElementById('rendererBaseUrl').value;
+      const fullUrl = buildRendererUrl(baseUrl);
+      
+      // Close popup if open
+      if (popupWindow && !popupWindow.closed) {
+        popupWindow.close();
+      }
+      popupWindow = null;
+      
+      // Switch to iframe mode
+      renderMode = 'iframe';
+      iframe.style.display = 'block';
+      iframe.src = fullUrl;
+      
+      handshakeComplete = false;
+      updateStatus('pending', 'Waiting for iframe renderer to load...');
+      document.getElementById('btnConfigure').disabled = true;
+      document.getElementById('btnContext').disabled = true;
+      document.getElementById('btnDisplayQ').disabled = true;
+      document.getElementById('btnGetResponse').disabled = true;
+      logMessage('INFO', 'Changed iframe URL to: ' + fullUrl);
+    }
+
+    // Log page load
+    logMessage('INFO', 'Test page loaded. Loading renderer iframe...');
+  </script>
+</body>
+</html>

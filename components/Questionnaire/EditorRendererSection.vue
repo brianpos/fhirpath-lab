@@ -82,6 +82,11 @@ export default class EditorRendererSection extends Vue {
       response.meta.tag = response.meta.tag!.filter(t => !t.code?.startsWith('lforms'));
     }
 
+    // remove the aidbox tag if it was there.
+    if (response.meta?.tag?.find(t => t.code?.startsWith('aidbox'))) {
+      response.meta.tag = response.meta.tag!.filter(t => !t.code?.startsWith('aidbox'));
+    }
+
     // this.response = response;
     console.log(response)
     this.$emit('response', response);
