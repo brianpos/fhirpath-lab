@@ -79,6 +79,13 @@ import type {
  * This page implements the SMART Web Messaging for Structured Data Capture (SDC-SWM) protocol
  * as a renderer that runs inside an iframe.
  * 
+ * Protocol Flow:
+ * 1. Host initiates handshake with messagingHandle (Host → Renderer)
+ * 2. Renderer responds to handshake with capabilities (Renderer → Host)
+ * 3. Host sends configuration and context (Host → Renderer)
+ * 4. Host sends questionnaire to display (Host → Renderer)
+ * 5. Renderer sends unsolicited events as user interacts (Renderer → Host)
+ * 
  * Implements the following incoming message handlers (Host → Renderer):
  * - status.handshake: Initial handshake to establish communication
  * - sdc.configure: Receive configuration (terminology server, data server, etc.)
@@ -88,8 +95,7 @@ import type {
  * - sdc.requestCurrentQuestionnaireResponse: Return current form data
  * - ui.done: Handle user completion with confirmation dialog
  * 
- * Sends the following messages to host (Renderer → Host):
- * - status.handshake: Initial handshake when renderer loads
+ * Sends the following unsolicited messages to host (Renderer → Host):
  * - sdc.ui.changedFocus: Notify when user focus changes
  * - sdc.ui.changedQuestionnaireResponse: Notify when form data changes
  * 
@@ -140,8 +146,8 @@ export default class SwmCsiroSmartForms extends Vue implements SdcRendererMessag
     // Register message listener
     window.addEventListener('message', this.handleMessage);
     
-    // Send initial handshake to parent
-    this.sendHandshake();
+    // Per SDC-SWM protocol: Host initiates the handshake, renderer waits and responds
+    // Do NOT send initial handshake - wait for host to send it first
   }
 
   beforeDestroy() {
@@ -462,16 +468,6 @@ export default class SwmCsiroSmartForms extends Vue implements SdcRendererMessag
   }
 
   /**
-   * Send handshake to parent window
-   */
-  sendHandshake() {
-    this.sendMessage('status.handshake', {
-      protocolVersion: '1.0',
-      fhirVersion: 'R4'
-    });
-  }
-
-  /**
    * Send changed focus event to parent window
    */
   sendChangedFocus(linkId: string, focus_field?: string) {
@@ -636,8 +632,10 @@ export default class SwmCsiroSmartForms extends Vue implements SdcRendererMessag
   }
 
   /**
-   * Send a message to the parent window or opener (unsolicited REQUEST messages from renderer)
-   * These are REQUEST messages initiated by the renderer, so they include messagingHandle
+   * Send an unsolicited message to the parent window (renderer-initiated events)
+   * Used for event notifications like focus changes and response updates
+   * NOTE: Per protocol, host initiates handshake, so this is NOT used for initial handshake
+   * These messages require an established messagingHandle from the host
    */
   sendMessage(messageType: SdcMessageType, payload: any) {
     const messageId = this.generateMessageId();
@@ -648,7 +646,13 @@ export default class SwmCsiroSmartForms extends Vue implements SdcRendererMessag
       payload
     };
     
-    console.log('[SDC-SWM Renderer] Sending renderer-initiated request:', messageType, message);
+    // Validate we have a messagingHandle (should be set by host's handshake)
+    if (!this.messagingHandle) {
+      console.error('[SDC-SWM Renderer] Cannot send message - no messagingHandle established. Host must send handshake first.', messageType);
+      return;
+    }
+    
+    console.log('[SDC-SWM Renderer] Sending renderer-initiated event:', messageType, message);
     
     // Determine the target window: use stored message source, opener, or parent
     const targetWindow = this.messageSource || window.opener || window.parent;
