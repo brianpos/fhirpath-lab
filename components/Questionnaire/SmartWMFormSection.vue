@@ -180,6 +180,7 @@ import type {
   UiDoneEvent,
   UiDoneResponsePayload,
 } from "~/types/sdc-swm-types";
+import { ContextData } from "../QuestionnaireContext.vue";
 
 /**
  * SDC-SWM Host Component
@@ -207,7 +208,8 @@ import type {
 })
 export default class SmartWMFormSection extends Vue implements SdcHostMessageHandlers {
   @Prop(Object) readonly questionnaire!: Questionnaire;
-  @Prop(Object) readonly context!: any;
+  @Prop(Object) readonly context!: ContextData;
+  @Prop(String) readonly dataServer!: string;
 
   isWindowConnected: boolean = false;
   windowCheckInterval: number | null = null;

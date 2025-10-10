@@ -388,6 +388,10 @@ import { ChatCompletionCreateParamsNonStreaming, ChatCompletionMessageParam } fr
 import type {
   StatusHandshakeRequest,
   StatusHandshakeResponsePayload,
+  SdcConfigureRequest,
+  SdcConfigureResponsePayload,
+  SdcConfigureContextRequest,
+  SdcConfigureContextResponsePayload,
   SdcDisplayQuestionnaireRequest,
   SdcDisplayQuestionnaireResponsePayload,
   SdcDisplayQuestionnaireResponseRequest,
@@ -396,6 +400,8 @@ import type {
   SdcRequestCurrentQuestionnaireResponseResponsePayload,
   SmartWebMessagingRequest,
   SmartWebMessagingResponse,
+  SmartWebMessagingEvent,
+  SdcUiChangedQuestionnaireResponsePayload,
 } from "~/types/sdc-swm-types";
 import {
   EvaluateChatPrompt,
@@ -748,11 +754,10 @@ export default Vue.extend({
     
     initializeEmbeddedMode() {
       const params = new URLSearchParams(window.location.search);
-      const embeddedMode = params.get('embedded_mode') === 'true';
       const messagingHandle = params.get('messaging_handle');
       const messagingOrigin = params.get('messaging_origin');
 
-      if (embeddedMode && messagingHandle && messagingOrigin) {
+      if (messagingHandle && messagingOrigin) {
         this.embeddedMode = true;
         this.messagingHandle = messagingHandle;
         this.messagingOrigin = messagingOrigin;
@@ -780,7 +785,6 @@ export default Vue.extend({
         console.log('[Embedded Mode] ✅ Ready notification sent to parent');
       } else {
         console.log('[Embedded Mode] ❌ Not initializing - missing parameters:', {
-          embeddedMode,
           hasMessagingHandle: !!messagingHandle,
           hasMessagingOrigin: !!messagingOrigin
         });
@@ -843,6 +847,12 @@ export default Vue.extend({
           case 'status.handshake':
             payload = await this.handleStatusHandshake(message);
             break;
+          case 'sdc.configure':
+            payload = await this.handleSdcConfigure(message);
+            break;
+          case 'sdc.configureContext':
+            payload = await this.handleSdcConfigureContext(message);
+            break;
           case 'sdc.displayQuestionnaire':
             payload = await this.handleSdcDisplayQuestionnaire(message);
             break;
@@ -890,6 +900,126 @@ export default Vue.extend({
           { id: 'lhc-forms', name: 'NLM LHC-Forms' }
         ]
       };
+    },
+
+    async handleSdcConfigure(message: SdcConfigureRequest): Promise<SdcConfigureResponsePayload> {
+      try {
+        console.log('[Embedded Mode] Handling configure:', message.payload);
+        
+        // Update terminology server if provided
+        if (message.payload.terminologyServer) {
+          // Store terminology server setting
+          // Note: FHIRPath Lab doesn't currently use a separate terminology server in the tester
+          console.log('[Embedded Mode] Terminology server configured:', message.payload.terminologyServer);
+        }
+        
+        // Update data server if provided
+        if (message.payload.dataServer) {
+          this.dataServerBaseUrl = message.payload.dataServer;
+          console.log('[Embedded Mode] Data server configured:', message.payload.dataServer);
+        }
+        
+        // Handle additional configuration if provided
+        if (message.payload.configuration) {
+          console.log('[Embedded Mode] Additional configuration:', message.payload.configuration);
+          // Could extend this to handle renderer-specific configuration
+        }
+        
+        return {
+          status: 'success'
+        };
+      } catch (error: any) {
+        console.error('[Embedded Mode] Error in configure:', error);
+        return {
+          status: 'error',
+          outcome: {
+            resourceType: 'OperationOutcome',
+            issue: [{
+              severity: 'error',
+              code: 'processing',
+              diagnostics: error.message
+            }]
+          }
+        };
+      }
+    },
+
+    async handleSdcConfigureContext(message: SdcConfigureContextRequest): Promise<SdcConfigureContextResponsePayload> {
+      try {
+        console.log('[Embedded Mode] Handling configureContext:', message.payload);
+        
+        // Per protocol: This message REPLACES all context data
+        // Clear existing context first
+        this.contextData = {
+          subject: undefined,
+          author: undefined,
+          encounter: undefined,
+          source: undefined
+        };
+        
+        // Set new context if provided
+        if (message.payload.context) {
+          const ctx = message.payload.context;
+          
+          if (ctx.subject) {
+            this.contextData.subject = ctx.subject;
+          }
+          
+          if (ctx.author) {
+            this.contextData.author = ctx.author;
+          }
+          
+          if (ctx.encounter) {
+            this.contextData.encounter = ctx.encounter;
+          }
+          
+          // Handle launchContext - extract known context items
+          if (ctx.launchContext && ctx.launchContext.length > 0) {
+            ctx.launchContext.forEach(item => {
+              // Map common launchContext items to ContextData fields
+              switch (item.name) {
+                case 'source':
+                  // Extract source from launchContext
+                  if (item.contentReference) {
+                    this.contextData.source = item.contentReference;
+                  } else if (item.contentResource) {
+                    // Create a reference from the inline resource
+                    const resource = item.contentResource;
+                    this.contextData.source = {
+                      reference: `${resource.resourceType}/${resource.id}`,
+                      display: (resource as any).name || undefined
+                    };
+                  }
+                  break;
+                
+                default:
+                  // Log other launchContext items for future enhancement
+                  console.log('[Embedded Mode] Unhandled launchContext item:', item.name);
+                  break;
+              }
+            });
+          }
+        }
+        
+        console.log('[Embedded Mode] Context configured:', this.contextData);
+        
+        return {
+          status: 'success'
+        };
+      } catch (error: any) {
+        console.error('[Embedded Mode] Error in configureContext:', error);
+        return {
+          status: 'error',
+          outcome: {
+            resourceType: 'OperationOutcome',
+            issue: [{
+              severity: 'error',
+              code: 'processing',
+              diagnostics: error.message
+            }]
+          }
+        };
+      }
     },
 
     async handleSdcDisplayQuestionnaire(message: SdcDisplayQuestionnaireRequest): Promise<SdcDisplayQuestionnaireResponsePayload> {
@@ -1216,7 +1346,7 @@ export default Vue.extend({
     },
 
     sendResponseUpdateEvent(response: QuestionnaireResponse) {
-      if (!this.embeddedMode) return;
+      if (!this.embeddedMode || !this.messagingHandle) return;
 
       this.sendMessageToParent({
         messageId: this.generateMessageId(),
