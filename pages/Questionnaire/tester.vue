@@ -385,6 +385,18 @@ import MessageLog from "~/components/Questionnaire/MessageLog.vue";
 import ResourceEditor from "~/components/ResourceEditor.vue";
 import { structuredDataCaptureHelpers as sdc } from "~/helpers/structureddatacapture-helpers";
 import { ChatCompletionCreateParamsNonStreaming, ChatCompletionMessageParam } from "openai/resources/chat/completions";
+import type {
+  StatusHandshakeRequest,
+  StatusHandshakeResponsePayload,
+  SdcDisplayQuestionnaireRequest,
+  SdcDisplayQuestionnaireResponsePayload,
+  SdcDisplayQuestionnaireResponseRequest,
+  SdcDisplayQuestionnaireResponseResponsePayload,
+  SdcRequestCurrentQuestionnaireResponseRequest,
+  SdcRequestCurrentQuestionnaireResponseResponsePayload,
+  SmartWebMessagingRequest,
+  SmartWebMessagingResponse,
+} from "~/types/sdc-swm-types";
 import {
   EvaluateChatPrompt,
   GetSystemPrompt,
@@ -775,7 +787,18 @@ export default Vue.extend({
       }
     },
 
-    handleParentMessage(event: MessageEvent) {
+    async handleParentMessage(event: MessageEvent) {
+
+      // If the message doesn't have our messagingHandle or responseToMessageId, it's not for us
+      const msg = event.data as SmartWebMessagingRequest | SmartWebMessagingResponse;
+      const isRequest = 'messageType' in msg && msg.messagingHandle === this.messagingHandle;
+      const isResponse = 'responseToMessageId' in msg;
+      
+      if (!isRequest && !isResponse) {
+        // Not our message, ignore silently (could be for Aidbox or other components)
+        return;
+      }
+
       // Debug: Log ALL incoming messages first
       console.log('[Embedded Mode] RAW incoming message:', {
         origin: event.origin,
@@ -812,76 +835,84 @@ export default Vue.extend({
         data: message,
       });
 
-      // Route to appropriate handler
-      switch (message.messageType) {
-        case 'status.handshake':
-          this.handleStatusHandshake(message);
-          break;
-        case 'sdc.displayQuestionnaire':
-          this.handleSdcDisplayQuestionnaire(message);
-          break;
-        case 'sdc.displayQuestionnaireResponse':
-          this.handleSdcDisplayQuestionnaireResponse(message);
-          break;
-        case 'sdc.requestCurrentQuestionnaireResponse':
-          this.handleSdcRequestCurrentQuestionnaireResponse(message);
-          break;
-        case 'questionnaire.validate':
-          this.handleValidate(message);
-          break;
-        case 'questionnaire.ui.focus':
-          this.handleUIFocus(message);
-          break;
-        case 'questionnaire.ui.highlight':
-          this.handleUIHighlight(message);
-          break;
-        default:
-          console.warn('[Embedded Mode] Unknown message type:', message.messageType);
-          this.sendErrorResponse(message.messageId, `Unknown message type: ${message.messageType}`);
+      // Route to appropriate handler and send response automatically
+      try {
+        let payload: any;
+        
+        switch (message.messageType) {
+          case 'status.handshake':
+            payload = await this.handleStatusHandshake(message);
+            break;
+          case 'sdc.displayQuestionnaire':
+            payload = await this.handleSdcDisplayQuestionnaire(message);
+            break;
+          case 'sdc.displayQuestionnaireResponse':
+            payload = await this.handleSdcDisplayQuestionnaireResponse(message);
+            break;
+          case 'sdc.requestCurrentQuestionnaireResponse':
+            payload = await this.handleSdcRequestCurrentQuestionnaireResponse(message);
+            break;
+          default:
+            console.warn('[Embedded Mode] Unknown message type:', message.messageType);
+            this.sendErrorResponse(message.messageId, `Unknown message type: ${message.messageType}`);
+            return;
+        }
+
+        // Send response with the payload returned by handler
+        if (payload) {
+          this.sendMessageToParent({
+            messageId: this.generateMessageId(),
+            responseToMessageId: message.messageId,
+            payload: payload
+          });
+        }
+      } catch (error: any) {
+        console.error('[Embedded Mode] Error handling message:', error);
+        this.sendErrorResponse(message.messageId, error.message);
       }
     },
 
-    handleStatusHandshake(message: any) {
+    async handleStatusHandshake(message: StatusHandshakeRequest): Promise<StatusHandshakeResponsePayload> {
       console.log('[Embedded Mode] Handling handshake');
       
-      this.sendMessageToParent({
-        messageId: this.generateMessageId(),
-        responseToMessageId: message.messageId,
-        payload: {
-          application: {
-            name: 'FHIRPath Lab',
-            version: '2.5.0',
-            publisher: 'FHIRPath Lab Team'
-          },
-          capabilities: {
-            rendering: true,
-            extraction: true,
-            validation: true,
-            highlighting: true,
-            prepopulation: true,
-            multipleEngines: true,
-            engineSwitching: false // Not yet implemented
-          },
-          availableEngines: [
-            { id: 'csiro', name: 'CSIRO Smart Forms', type: 'built-in', fhirVersions: ['R4', 'R4B', 'R5'] },
-            { id: 'lhc-forms', name: 'NLM LHC-Forms', type: 'built-in', fhirVersions: ['R4'] }
-          ]
-        }
-      });
+      return {
+        application: {
+          name: 'FHIRPath Lab',
+          version: '2.5.0',
+          publisher: 'FHIRPath Lab Team'
+        },
+        capabilities: {
+          extraction: true,
+          focusChangeNotifications: true
+        },
+        availableEngines: [
+          { id: 'csiro', name: 'CSIRO Smart Forms' },
+          { id: 'lhc-forms', name: 'NLM LHC-Forms' }
+        ]
+      };
     },
 
-    async handleSdcDisplayQuestionnaire(message: any) {
+    async handleSdcDisplayQuestionnaire(message: SdcDisplayQuestionnaireRequest): Promise<SdcDisplayQuestionnaireResponsePayload> {
       try {
         console.log('[Embedded Mode] Rendering questionnaire');
         const { questionnaire, questionnaireResponse, context } = message.payload;
 
         if (!questionnaire) {
-          this.sendErrorResponse(message.messageId, 'Missing questionnaire in payload');
-          return;
+          return {
+            status: 'error',
+            outcome: {
+              resourceType: 'OperationOutcome',
+              issue: [{
+                severity: 'error',
+                code: 'required',
+                diagnostics: 'Missing questionnaire in payload'
+              }]
+            }
+          };
         }
 
-        // Load the questionnaire
-        this.raw = questionnaire;
+        // Load the questionnaire (cast to fhir4b which is used internally)
+        this.raw = questionnaire as any as fhir4b.Questionnaire;
         if (this.raw) {
           this.flatModel = FlattenedQuestionnaireItems(this.raw);
           
@@ -908,57 +939,67 @@ export default Vue.extend({
             this.questionnaireResponseJsonEditor.clearSelection();
           }
 
-          // Render the response in all available renderers
+          // Render the response in all available renderers (cast to fhir4b)
+          const qr = questionnaireResponse as any as fhir4b.QuestionnaireResponse;
+          
           if (this.$refs.csiroFormsRenderer && this.raw != null) {
             let csiroFormsRenderer = (this.$refs.csiroFormsRenderer as EditorRendererSection)
-            await csiroFormsRenderer.renderQuestionnaireResponse(questionnaireResponse, this.raw);
+            await csiroFormsRenderer.renderQuestionnaireResponse(qr, this.raw);
           }
 
           if (this.$refs.lhcFormsRenderer && this.raw != null) {
             let lhcFormsRenderer = (this.$refs.lhcFormsRenderer as EditorNLMRendererSection)
-            await lhcFormsRenderer.renderQuestionnaireResponse(questionnaireResponse, this.raw);
+            await lhcFormsRenderer.renderQuestionnaireResponse(qr, this.raw);
           }
 
           if (this.$refs.aidboxFormsRenderer && this.raw != null) {
             let aidboxFormsRenderer = (this.$refs.aidboxFormsRenderer as EditorAidboxFormsSection)
-            await aidboxFormsRenderer.renderQuestionnaireResponse(questionnaireResponse, this.raw);
+            await aidboxFormsRenderer.renderQuestionnaireResponse(qr, this.raw);
           }
         }
 
-        // Send success response
-        this.sendMessageToParent({
-          messageId: this.generateMessageId(),
-          responseToMessageId: message.messageId,
-          payload: {
-            status: 'success',
-            outcome: {
-              resourceType: 'OperationOutcome',
-              issue: []
-            }
+        // Return success response
+        return {
+          status: 'success',
+          outcome: {
+            resourceType: 'OperationOutcome',
+            issue: []
           }
-        });
+        };
 
       } catch (error: any) {
         console.error('[Embedded Mode] Error rendering questionnaire:', error);
-        this.sendErrorResponse(message.messageId, error.message);
+        return {
+          status: 'error',
+          outcome: {
+            resourceType: 'OperationOutcome',
+            issue: [{
+              severity: 'error',
+              code: 'processing',
+              diagnostics: error.message
+            }]
+          }
+        };
       }
     },
 
-    async handleSdcDisplayQuestionnaireResponse(message: any) {
+    async handleSdcDisplayQuestionnaireResponse(message: SdcDisplayQuestionnaireResponseRequest): Promise<SdcDisplayQuestionnaireResponseResponsePayload> {
       try {
         console.log('[Embedded Mode] Loading response');
-        const { questionnaireResponse, context } = message.payload;
+        const { questionnaireResponse } = message.payload;
 
         if (!questionnaireResponse) {
-          this.sendErrorResponse(message.messageId, 'Missing questionnaireResponse in payload');
-          return;
-        }
-
-        // Set context if provided
-        if (context) {
-          if (context.subject) this.contextData.subject = context.subject;
-          if (context.author) this.contextData.author = context.author;
-          if (context.encounter) this.contextData.encounter = context.encounter;
+          return {
+            status: 'error',
+            outcome: {
+              resourceType: 'OperationOutcome',
+              issue: [{
+                severity: 'error',
+                code: 'required',
+                diagnostics: 'Missing questionnaireResponse in payload'
+              }]
+            }
+          };
         }
 
         // Load the response
@@ -969,35 +1010,43 @@ export default Vue.extend({
           this.questionnaireResponseJsonEditor.clearSelection();
         }
 
-        // Render the response in all available renderers
+        // Render the response in all available renderers (cast to fhir4b)
+        const qr = questionnaireResponse as any as fhir4b.QuestionnaireResponse;
+        
         if (this.$refs.csiroFormsRenderer && this.raw != null) {
           let csiroFormsRenderer = (this.$refs.csiroFormsRenderer as EditorRendererSection)
-          await csiroFormsRenderer.renderQuestionnaireResponse(questionnaireResponse, this.raw);
+          await csiroFormsRenderer.renderQuestionnaireResponse(qr, this.raw);
         }
 
         if (this.$refs.lhcFormsRenderer && this.raw != null) {
           let lhcFormsRenderer = (this.$refs.lhcFormsRenderer as EditorNLMRendererSection)
-          await lhcFormsRenderer.renderQuestionnaireResponse(questionnaireResponse, this.raw);
+          await lhcFormsRenderer.renderQuestionnaireResponse(qr, this.raw);
         }
 
         if (this.$refs.aidboxFormsRenderer && this.raw != null) {
           let aidboxFormsRenderer = (this.$refs.aidboxFormsRenderer as EditorAidboxFormsSection)
-          await aidboxFormsRenderer.renderQuestionnaireResponse(questionnaireResponse, this.raw);
+          await aidboxFormsRenderer.renderQuestionnaireResponse(qr, this.raw);
         }
 
-        this.sendMessageToParent({
-          messageId: this.generateMessageId(),
-          responseToMessageId: message.messageId,
-          payload: { status: 'success' }
-        });
+        return { status: 'success' };
 
       } catch (error: any) {
         console.error('[Embedded Mode] Error loading response:', error);
-        this.sendErrorResponse(message.messageId, error.message);
+        return {
+          status: 'error',
+          outcome: {
+            resourceType: 'OperationOutcome',
+            issue: [{
+              severity: 'error',
+              code: 'processing',
+              diagnostics: error.message
+            }]
+          }
+        };
       }
     },
 
-    async handleSdcRequestCurrentQuestionnaireResponse(message: any) {
+    async handleSdcRequestCurrentQuestionnaireResponse(message: SdcRequestCurrentQuestionnaireResponseRequest): Promise<SdcRequestCurrentQuestionnaireResponseResponsePayload> {
       try {
         console.log('[Embedded Mode] Extracting response');
         
@@ -1008,95 +1057,60 @@ export default Vue.extend({
           try {
             questionnaireResponse = JSON.parse(this.questionnaireResponseJson);
           } catch (parseError) {
-            this.sendErrorResponse(message.messageId, 'Invalid QuestionnaireResponse JSON');
-            return;
+            return {
+              outcome: {
+                resourceType: 'OperationOutcome',
+                issue: [{
+                  severity: 'error',
+                  code: 'invalid',
+                  diagnostics: 'Invalid QuestionnaireResponse JSON'
+                }]
+              }
+            };
           }
         }
 
         if (!questionnaireResponse) {
-          this.sendErrorResponse(message.messageId, 'No QuestionnaireResponse available');
-          return;
+          return {
+            outcome: {
+              resourceType: 'OperationOutcome',
+              issue: [{
+                severity: 'error',
+                code: 'not-found',
+                diagnostics: 'No QuestionnaireResponse available'
+              }]
+            }
+          };
         }
 
-        // Send response with context
-        this.sendMessageToParent({
-          messageId: this.generateMessageId(),
-          responseToMessageId: message.messageId,
-          payload: {
-            questionnaireResponse: questionnaireResponse,
-            context: {
-              subject: this.contextData.subject,
-              author: this.contextData.author,
-              encounter: this.contextData.encounter
-            }
-          }
-        });
+        // Ensure context data is embedded in the QuestionnaireResponse
+        if (this.contextData.subject) {
+          questionnaireResponse.subject = this.contextData.subject;
+        }
+        if (this.contextData.author) {
+          questionnaireResponse.author = this.contextData.author;
+        }
+        if (this.contextData.encounter) {
+          questionnaireResponse.encounter = this.contextData.encounter;
+        }
+
+        // Return response (cast to fhir4 for protocol)
+        return {
+          questionnaireResponse: questionnaireResponse as any as fhir4.QuestionnaireResponse
+        };
 
       } catch (error: any) {
         console.error('[Embedded Mode] Error extracting response:', error);
-        this.sendErrorResponse(message.messageId, error.message);
-      }
-    },
-
-    async handleValidate(message: any) {
-      try {
-        console.log('[Embedded Mode] Validating');
-        
-        // For now, return a basic validation response
-        // TODO: Implement actual validation logic
-        
-        this.sendMessageToParent({
-          messageId: this.generateMessageId(),
-          responseToMessageId: message.messageId,
-          payload: {
-            outcome: {
-              resourceType: 'OperationOutcome',
-              issue: []
-            },
-            valid: true,
-            fieldErrors: []
+        return {
+          outcome: {
+            resourceType: 'OperationOutcome',
+            issue: [{
+              severity: 'error',
+              code: 'exception',
+              diagnostics: error.message
+            }]
           }
-        });
-
-      } catch (error: any) {
-        console.error('[Embedded Mode] Error validating:', error);
-        this.sendErrorResponse(message.messageId, error.message);
-      }
-    },
-
-    async handleUIFocus(message: any) {
-      try {
-        console.log('[Embedded Mode] Setting focus to:', message.payload.linkId);
-        
-        // TODO: Implement focus logic
-        
-        this.sendMessageToParent({
-          messageId: this.generateMessageId(),
-          responseToMessageId: message.messageId,
-          payload: { status: 'success' }
-        });
-
-      } catch (error: any) {
-        console.error('[Embedded Mode] Error setting focus:', error);
-        this.sendErrorResponse(message.messageId, error.message);
-      }
-    },
-
-    async handleUIHighlight(message: any) {
-      try {
-        console.log('[Embedded Mode] Highlighting field:', message.payload.linkId);
-        
-        // TODO: Implement highlight logic
-        
-        this.sendMessageToParent({
-          messageId: this.generateMessageId(),
-          responseToMessageId: message.messageId,
-          payload: { status: 'success' }
-        });
-
-      } catch (error: any) {
-        console.error('[Embedded Mode] Error highlighting:', error);
-        this.sendErrorResponse(message.messageId, error.message);
+        };
       }
     },
 

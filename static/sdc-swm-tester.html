@@ -98,9 +98,13 @@
     
     <div class="controls">
       <h3>Renderer URL</h3>
-      <input type="text" id="popupUrl" value="http://localhost:3000/swm-csiro-smart-forms" style="width: 400px; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+      <input type="text" id="rendererBaseUrl" value="http://localhost:3000/swm-csiro-smart-forms" style="width: 500px; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
       <button onclick="openPopup()" style="background: #28a745;">🗗 Launch Popup</button>
       <button onclick="changeIframeUrl()">📄 Update Iframe</button>
+      <div style="margin-top: 10px; font-size: 12px; color: #666;">
+        <strong>Launch URL with parameters:</strong><br>
+        <span id="fullUrl" style="font-family: monospace; word-break: break-all;"></span>
+      </div>
     </div>
     
     <div class="controls">
@@ -113,7 +117,7 @@
       <button onclick="clearLog()">Clear Log</button>
     </div>
     
-    <iframe id="renderer" src="http://localhost:3000/swm-csiro-smart-forms"></iframe>
+    <iframe id="renderer" src=""></iframe>
     
     <div class="log" id="log">
       <div>Message log will appear here...</div>
@@ -125,13 +129,51 @@
     let messageCounter = 0;
     let renderMode = 'iframe'; // 'iframe' or 'popup'
     let popupWindow = null;
+    const messagingHandle = 'sdc-swm-tester-' + Date.now(); // Unique handle for this session
+    const messagingOrigin = window.location.origin; // Origin for message validation
 
     // Get iframe reference
     const iframe = document.getElementById('renderer');
     
+    // Function to build full URL with parameters
+    function buildRendererUrl(baseUrl) {
+      const url = new URL(baseUrl, window.location.origin);
+      url.searchParams.set('messaging_handle', messagingHandle);
+      url.searchParams.set('messaging_origin', messagingOrigin);
+      return url.toString();
+    }
+    
+    // Function to update the displayed full URL
+    function updateDisplayedUrl() {
+      const baseUrl = document.getElementById('rendererBaseUrl').value;
+      const fullUrl = buildRendererUrl(baseUrl);
+      document.getElementById('fullUrl').textContent = fullUrl;
+    }
+    
+    // Initialize iframe with parameters
+    window.addEventListener('DOMContentLoaded', () => {
+      updateDisplayedUrl();
+      const baseUrl = document.getElementById('rendererBaseUrl').value;
+      iframe.src = buildRendererUrl(baseUrl);
+    });
+    
+    // Update display when input changes
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('rendererBaseUrl').addEventListener('input', updateDisplayedUrl);
+    });
+    
     // Listen for messages from renderer
     window.addEventListener('message', (event) => {
-      // In production, validate event.origin
+      // Validate event origin (in production, be more specific)
+      // For local testing, we allow localhost with any port
+      const isLocalhost = event.origin.startsWith('http://localhost:') || event.origin.startsWith('http://127.0.0.1:');
+      const isSameOrigin = event.origin === window.location.origin;
+      
+      if (!isLocalhost && !isSameOrigin) {
+        console.warn('Ignoring message from unauthorized origin:', event.origin);
+        return;
+      }
+      
       const message = event.data;
       
       // filter out some noisy messages from devtools
@@ -144,28 +186,80 @@
 
       logMessage('INCOMING', message);
       
-      // Handle specific message types
+      // Check if this is a response message (responses don't have messageType)
+      if (message.responseToMessageId) {
+        // This is a response to one of our requests
+        console.log('Received response to:', message.responseToMessageId);
+        
+        // If it's a response to our handshake, enable buttons
+        if (message.responseToMessageId.startsWith('msg-')) {
+          // Check if we got capabilities in the response (indicates successful handshake)
+          if (message.payload?.capabilities !== undefined || message.payload?.application !== undefined) {
+            handshakeComplete = true;
+            const caps = message.payload?.capabilities || {};
+            const capList = Object.entries(caps)
+              .filter(([_, v]) => v === true)
+              .map(([k]) => k);
+            const appName = message.payload?.application?.name || 'Unknown';
+            updateStatus('ready', `Renderer ready (${appName})! Capabilities: ` + capList.join(', '));
+            enableButtons();
+          }
+        }
+        return; // Don't process further, it's a response
+      }
+      
+      // Handle request messages (these have messageType)
       if (message.messageType === 'status.handshake') {
+        // This is a handshake request from the renderer - we need to respond
         handshakeComplete = true;
-        updateStatus('ready', 'Renderer ready! Capabilities: ' + (message.payload.capabilities || []).join(', '));
+        const caps = message.payload?.capabilities || {};
+        const capList = Object.entries(caps)
+          .filter(([_, v]) => v === true)
+          .map(([k]) => k);
+        const appName = message.payload?.application?.name || 'Unknown';
+        updateStatus('ready', `Renderer ready (${appName})! Capabilities: ` + capList.join(', '));
         enableButtons();
+        
+        // Send our handshake response with application info and capabilities
+        sendResponse(message.messageId, {
+          application: {
+            name: 'SDC-SWM Test Page',
+            version: '1.0',
+            publisher: 'FHIRPath Lab'
+          },
+          capabilities: {
+            extraction: false,
+            focusChangeNotifications: false
+          }
+        });
       } else if (message.messageType === 'sdc.ui.changedFocus') {
         console.log('Focus changed to:', message.payload.linkId);
+        // Send acknowledgment response
+        sendResponse(message.messageId, { status: 'success' });
       } else if (message.messageType === 'sdc.ui.changedQuestionnaireResponse') {
         console.log('Response updated:', message.payload.questionnaireResponse);
+        // Send acknowledgment response
+        sendResponse(message.messageId, { status: 'success' });
+      } else if (message.messageType === 'ui.done') {
+        console.log('User completed interaction');
+        // Send acknowledgment response
+        sendResponse(message.messageId, { status: 'success' });
       }
     });
 
     // Wait for iframe to load, then automatically send handshake
     iframe.addEventListener('load', () => {
       setTimeout(() => {
-        logMessage('INFO', 'Iframe loaded, waiting for initial handshake from renderer...');
+        logMessage('INFO', 'Iframe loaded, initiating handshake with renderer...');
+        // Proactively send handshake to renderer
+        sendHandshake();
       }, 500);
     });
 
     function sendMessage(messageType, payload) {
       const messageId = `msg-${++messageCounter}`;
       const message = {
+        messagingHandle: messagingHandle,
         messageId,
         messageType,
         payload
@@ -173,17 +267,67 @@
       
       logMessage('OUTGOING', message);
       
+      // Determine target origin from iframe/popup URL
+      const targetOrigin = getTargetOrigin();
+      
       if (renderMode === 'popup') {
         if (!popupWindow || popupWindow.closed) {
           logMessage('ERROR', 'Cannot send - popup window not available');
           return null;
         }
-        popupWindow.postMessage(message, '*'); // In production, use specific origin
+        popupWindow.postMessage(message, targetOrigin);
       } else {
-        iframe.contentWindow.postMessage(message, '*'); // In production, use specific origin
+        if (!iframe.contentWindow) {
+          logMessage('ERROR', 'Cannot send - iframe not ready');
+          return null;
+        }
+        iframe.contentWindow.postMessage(message, targetOrigin);
       }
       
       return messageId;
+    }
+
+    function sendResponse(responseToMessageId, payload) {
+      const messageId = `msg-${++messageCounter}`;
+      const message = {
+        messageId,
+        responseToMessageId,
+        payload
+      };
+      
+      logMessage('OUTGOING', message);
+      
+      // Determine target origin from iframe/popup URL
+      const targetOrigin = getTargetOrigin();
+      
+      if (renderMode === 'popup') {
+        if (!popupWindow || popupWindow.closed) {
+          logMessage('ERROR', 'Cannot send response - popup window not available');
+          return null;
+        }
+        popupWindow.postMessage(message, targetOrigin);
+      } else {
+        if (!iframe.contentWindow) {
+          logMessage('ERROR', 'Cannot send response - iframe not ready');
+          return null;
+        }
+        iframe.contentWindow.postMessage(message, targetOrigin);
+      }
+      
+      return messageId;
+    }
+    
+    function getTargetOrigin() {
+      // For local development, use localhost origin
+      // In production, parse from the renderer URL
+      const baseUrl = document.getElementById('rendererBaseUrl').value;
+      try {
+        const url = new URL(baseUrl, window.location.origin);
+        return url.origin;
+      } catch (e) {
+        // Fallback to same origin
+        return window.location.origin;
+      }
     }
 
     function sendHandshake() {
@@ -200,14 +344,17 @@
 
     function sendContext() {
       sendMessage('sdc.configureContext', {
-        subject: { reference: 'Patient/example' },
-        author: { reference: 'Practitioner/example' },
-        launchContext: [
-          {
-            name: 'patient',
-            contentReference: { reference: 'Patient/example' }
-          }
-        ]
+        context: {
+          subject: { reference: 'Patient/example', display: 'Example Patient' },
+          author: { reference: 'Practitioner/example', display: 'Example Practitioner' },
+          encounter: { reference: 'Encounter/example', display: 'Example Encounter' },
+          launchContext: [
+            {
+              name: 'source',
+              contentReference: { reference: 'Practitioner/example', display: 'Example Practitioner' }
+            }
+          ]
+        }
       });
     }
 
@@ -275,14 +422,15 @@
     }
 
     function openPopup() {
-      const url = document.getElementById('popupUrl').value;
+      const baseUrl = document.getElementById('rendererBaseUrl').value;
+      const fullUrl = buildRendererUrl(baseUrl);
       
       // Switch to popup mode
       renderMode = 'popup';
       iframe.style.display = 'none';
       
       // Open popup
-      popupWindow = window.open(url, 'csiro-smart-forms', 'width=1200,height=900,menubar=no,toolbar=no,location=yes,scrollbars=yes');
+      popupWindow = window.open(fullUrl, 'csiro-smart-forms', 'width=1200,height=900,menubar=no,toolbar=no,location=yes,scrollbars=yes');
       
       if (popupWindow) {
         popupWindow.focus();
@@ -292,7 +440,7 @@
         document.getElementById('btnContext').disabled = true;
         document.getElementById('btnDisplayQ').disabled = true;
         document.getElementById('btnGetResponse').disabled = true;
-        logMessage('INFO', 'Opened popup window: ' + url);
+        logMessage('INFO', 'Opened popup window: ' + fullUrl);
       } else {
         renderMode = 'iframe';
         iframe.style.display = 'block';
@@ -301,7 +449,8 @@
     }
 
     function changeIframeUrl() {
-      const url = document.getElementById('popupUrl').value;
+      const baseUrl = document.getElementById('rendererBaseUrl').value;
+      const fullUrl = buildRendererUrl(baseUrl);
       
       // Close popup if open
       if (popupWindow && !popupWindow.closed) {
@@ -312,7 +461,7 @@
       // Switch to iframe mode
       renderMode = 'iframe';
       iframe.style.display = 'block';
-      iframe.src = url;
+      iframe.src = fullUrl;
       
       handshakeComplete = false;
       updateStatus('pending', 'Waiting for iframe renderer to load...');
@@ -320,7 +469,7 @@
       document.getElementById('btnContext').disabled = true;
       document.getElementById('btnDisplayQ').disabled = true;
       document.getElementById('btnGetResponse').disabled = true;
-      logMessage('INFO', 'Changed iframe URL to: ' + url);
+      logMessage('INFO', 'Changed iframe URL to: ' + fullUrl);
     }
 
     // Log page load
