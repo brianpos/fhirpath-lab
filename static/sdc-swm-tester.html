@@ -98,7 +98,7 @@
     
     <div class="controls">
       <h3>Renderer URL</h3>
-      <input type="text" id="rendererBaseUrl" value="http://localhost:3000/swm-csiro-smart-forms" style="width: 500px; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+      <input type="text" id="rendererBaseUrl" value="https://dev.fhirpath-lab.com/swm-csiro-smart-forms" style="width: 500px; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
       <button onclick="openPopup()" style="background: #28a745;">🗗 Launch Popup</button>
       <button onclick="changeIframeUrl()">📄 Update Iframe</button>
       <div style="margin-top: 10px; font-size: 12px; color: #666;">
@@ -169,10 +169,10 @@
       const isLocalhost = event.origin.startsWith('http://localhost:') || event.origin.startsWith('http://127.0.0.1:');
       const isSameOrigin = event.origin === window.location.origin;
       
-      if (!isLocalhost && !isSameOrigin) {
-        console.warn('Ignoring message from unauthorized origin:', event.origin);
-        return;
-      }
+      // if (!isLocalhost && !isSameOrigin) {
+      //   console.warn('Ignoring message from unauthorized origin:', event.origin);
+      //   return;
+      // }
 
       // Validate that we have a valid message object
       if (!event.data || typeof event.data !== 'object') {
