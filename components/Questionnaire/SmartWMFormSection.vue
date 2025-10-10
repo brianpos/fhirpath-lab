@@ -172,6 +172,13 @@ import type {
   SdcRequestCurrentQuestionnaireResponseResponsePayload,
   SdcUiChangedFocusPayload,
   SdcUiChangedQuestionnaireResponsePayload,
+  SdcHostMessageHandlers,
+  SdcUiChangedFocusEvent,
+  SdcUiChangedFocusResponsePayload,
+  SdcUiChangedQuestionnaireResponseEvent,
+  SdcUiChangedQuestionnaireResponseResponsePayload,
+  UiDoneEvent,
+  UiDoneResponsePayload,
 } from "~/types/sdc-swm-types";
 
 /**
@@ -198,7 +205,7 @@ import type {
     MessageLog,
   },
 })
-export default class SmartWMFormSection extends Vue {
+export default class SmartWMFormSection extends Vue implements SdcHostMessageHandlers {
   @Prop(Object) readonly questionnaire!: Questionnaire;
   @Prop(Object) readonly context!: any;
 
@@ -222,6 +229,17 @@ export default class SmartWMFormSection extends Vue {
   // Non-reactive property to avoid cross-origin security errors with WindowProxy
   // Initialized in mounted() to prevent Vue's reactivity system from wrapping it
   declare private popupWindow: WindowProxy | null;
+
+  /**
+   * Message type to handler method mapping
+   * This is the ONLY place that maps message types to handler methods for renderer-initiated events
+   */
+  private readonly messageHandlerMap: Record<string, keyof SdcHostMessageHandlers> = {
+    'status.handshake': 'handleStatusHandshake',
+    'sdc.ui.changedFocus': 'handleChangedFocus',
+    'sdc.ui.changedQuestionnaireResponse': 'handleChangedQuestionnaireResponse',
+    'ui.done': 'handleUiDone'
+  };
 
   async mounted() {
     // Initialize non-reactive properties
@@ -311,7 +329,7 @@ export default class SmartWMFormSection extends Vue {
 
     // Handle unsolicited messages from renderer (events)
     if (isRequest && 'messageType' in msg) {
-      this.handleUnsolicitedRequestEvent(msg as SmartWebMessagingRequest);
+      this.handleRendererEvent(msg as SmartWebMessagingRequest);
       return;
     }
 
@@ -322,95 +340,129 @@ export default class SmartWMFormSection extends Vue {
   }
 
   /**
-   * Handle unsolicited event messages from renderer
+   * Handle unsolicited event messages from renderer using central dispatch pattern
+   * Similar to the renderer's message handling - each handler returns just the payload
    */
-  handleUnsolicitedRequestEvent(msg: SmartWebMessagingRequest) {
+  async handleRendererEvent(msg: SmartWebMessagingRequest) {
     console.log("[SDC-SWM Host] Handling renderer event:", msg.messageType);
     
-    switch (msg.messageType) {
-      case 'status.handshake':
-        this.handleHandshakeEvent(msg as StatusHandshakeRequest);
-        break;
-      case 'sdc.ui.changedFocus':
-        this.handleChangedFocusEvent(msg);
-        break;
-      case 'sdc.ui.changedQuestionnaireResponse':
-        this.handleChangedQuestionnaireResponseEvent(msg);
-        break;
-      case 'ui.done':
-        this.handleUiDoneEvent(msg);
-        break;
-      default:
-        console.warn("[SDC-SWM Host] Unhandled event type:", msg.messageType);
+    try {
+      // Look up the handler method name from the map
+      const handlerMethodName = this.messageHandlerMap[msg.messageType];
+      
+      if (!handlerMethodName) {
+        // Unknown message type
+        console.warn('[SDC-SWM Host] Unknown message type:', msg.messageType);
+        this.sendEventResponse(msg.messageId, {
+          status: 'error',
+          statusDetail: { message: `Unknown message type: ${msg.messageType}` }
+        });
+        return;
+      }
+      
+      // Get the handler function
+      const handler = (this as any)[handlerMethodName] as Function | undefined;
+      
+      if (!handler || typeof handler !== 'function') {
+        // Handler not implemented
+        console.warn('[SDC-SWM Host] Handler not implemented:', msg.messageType);
+        this.sendEventResponse(msg.messageId, {
+          status: 'error',
+          statusDetail: { message: `Handler not implemented: ${msg.messageType}` }
+        });
+        return;
+      }
+      
+      // Call the handler with the full message - it returns just the payload
+      const responsePayload = await handler.call(this, msg);
+      
+      // Wrap the payload in a proper response message and send it
+      const response: SmartWebMessagingResponse = {
+        messageId: this.generateMessageId(),
+        responseToMessageId: msg.messageId,
+        payload: responsePayload
+      };
+      
+      if (this.popupWindow && !this.popupWindow.closed) {
+        console.log("[SDC-SWM Host] Sending event response:", response);
+        this.popupWindow.postMessage(response, this.fhirPathLabUrl);
+      }
+      
+      // Log the message
+      this.logMessage(
+        "received",
+        msg.messageType || "unknown",
+        "unsolicited - " + this.summarizeMessage(msg),
+        msg
+      );
+      
+    } catch (error: any) {
+      console.error('[SDC-SWM Host] Error handling renderer event:', msg.messageType, error);
+      this.sendEventResponse(msg.messageId, {
+        status: 'error',
+        statusDetail: { message: error.message || 'Unknown error' }
+      });
     }
-    
-    this.logMessage(
-      "received",
-      msg.messageType || "unknown",
-      "unsolicited - " + this.summarizeMessage(msg),
-      msg
-    );
   }
 
   /**
    * Handle handshake event from renderer
+   * Per protocol: Renderer initiates handshake as REQUEST, host responds with capabilities
    */
-  handleHandshakeEvent(msg: StatusHandshakeRequest) {
-    console.log("[SDC-SWM Host] Renderer handshake received:", msg.payload);
+  async handleStatusHandshake(message: StatusHandshakeRequest): Promise<StatusHandshakeResponsePayload> {
+    console.log("[SDC-SWM Host] Renderer handshake received:", message.payload);
     
-    // Send acknowledgment response (required by protocol)
-    this.sendEventResponse(msg.messageId, {
-      status: 'success'
-    });
+    // Return protocol-compliant handshake response payload
+    return {
+      application: {
+        name: 'FHIRPath Lab',
+        version: '2.0',
+        publisher: 'Brian Postlethwaite'
+      },
+      capabilities: {
+        extraction: false,
+        focusChangeNotifications: false
+      }
+    };
   }
 
   /**
    * Handle changed focus event from renderer
    */
-  handleChangedFocusEvent(msg: SmartWebMessagingRequest<SdcUiChangedFocusPayload>) {
-    console.log("[SDC-SWM Host] Focus changed to:", msg.payload.linkId);
+  async handleChangedFocus(event: SdcUiChangedFocusEvent): Promise<SdcUiChangedFocusResponsePayload> {
+    console.log("[SDC-SWM Host] Focus changed to:", event.payload.linkId);
     
-    // Send acknowledgment response (required by protocol)
-    this.sendEventResponse(msg.messageId, {
-      status: 'success'
-    });
-
-    if (msg.payload.linkId){
-      this.$emit('highlight-path', msg.payload.linkId);
+    if (event.payload.linkId) {
+      this.$emit('highlight-path', event.payload.linkId);
     }
+    
+    return { status: 'success' };
   }
 
   /**
    * Handle changed questionnaire response event from renderer
    */
-  handleChangedQuestionnaireResponseEvent(msg: SmartWebMessagingRequest<SdcUiChangedQuestionnaireResponsePayload>) {
+  async handleChangedQuestionnaireResponse(event: SdcUiChangedQuestionnaireResponseEvent): Promise<SdcUiChangedQuestionnaireResponseResponsePayload> {
     console.log("[SDC-SWM Host] Questionnaire response changed");
-    if (msg.payload.questionnaireResponse && this.propagateChangesToLabOnChangeQREvents) {
-      this.formData = msg.payload.questionnaireResponse as QuestionnaireResponse;
+    
+    if (event.payload.questionnaireResponse && this.propagateChangesToLabOnChangeQREvents) {
+      this.formData = event.payload.questionnaireResponse as QuestionnaireResponse;
       this.$emit("response", this.formData);
     }
     
-    // Send acknowledgment response (required by protocol)
-    this.sendEventResponse(msg.messageId, {
-      status: 'success'
-    });
+    return { status: 'success' };
   }
 
   /**
    * Handle ui.done event from renderer
    * Per protocol: user has completed interaction and wants to close the renderer
    */
-  handleUiDoneEvent(msg: SmartWebMessagingRequest) {
+  async handleUiDone(event: UiDoneEvent): Promise<UiDoneResponsePayload> {
     console.log("[SDC-SWM Host] User wants to close renderer (ui.done)");
     
     // Optionally retrieve final form data before closing
     // This is commented out but shows the recommended pattern:
     // this.sendRequestCurrentQuestionnaireResponse();
-    
-    // Send acknowledgment that we will close the renderer
-    this.sendEventResponse(msg.messageId, {
-      status: 'success'
-    });
     
     // Close the popup window
     if (this.popupWindow && !this.popupWindow.closed) {
@@ -418,11 +470,14 @@ export default class SmartWMFormSection extends Vue {
       this.popupWindow = null;
       this.isWindowConnected = false;
     }
+    
+    return { status: 'success' };
   }
 
   /**
    * Send response to renderer-initiated event (acknowledgment)
    * Per protocol: renderer-initiated messages are REQUEST messages that require acknowledgment
+   * Note: This is now primarily used for error responses; success responses go through handleRendererEvent
    */
   sendEventResponse(responseToMessageId: string, payload: { status: 'success' | 'error'; statusDetail?: any }) {
     if (!this.popupWindow || this.popupWindow.closed) {
