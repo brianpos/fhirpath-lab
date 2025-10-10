@@ -696,7 +696,7 @@ export default Vue.extend({
           iconName: this.smartWMFormApproved ? "mdi-bug-play-outline" : "mdi-bug-stop-outline",
           tabName: !this.embeddedMode ? "SmartWM Forms" : "Smart WM",
           tabSubName: "(external)",
-          title: "SmartWM Forms Renderer\n(Rendered by external service)\nBy ???",
+          title: "SmartWM Forms Renderer\n(Rendered by external service)\nPrototype testing SDC SMART Web Messaging",
           show: (this.showAdvancedSettings ?? false),
           enabled: true,
         },
