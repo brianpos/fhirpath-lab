@@ -77,14 +77,30 @@ import type {
  * SDC-SWM CSIRO Smart Forms Renderer Page
  * 
  * This page implements the SMART Web Messaging for Structured Data Capture (SDC-SWM) protocol
- * as a renderer that runs inside an iframe.
+ * as a renderer that runs inside an iframe or popup window.
+ * 
+ * ⚠️ STRICT LAUNCH REQUIREMENTS:
+ * The host MUST provide these URL parameters when launching the renderer.
+ * The renderer will NOT function without them.
+ * 
+ * Required URL Parameters:
+ * - `messaging_handle` - Unique session identifier for this messaging session
+ * - `messaging_origin` - Expected origin of the host (for security validation)
+ * 
+ * Example iframe launch:
+ *   <iframe src="https://renderer.example.com/swm-csiro-smart-forms?messaging_handle=abc123&messaging_origin=https://host.example.com"></iframe>
+ * 
+ * Example popup launch:
+ *   window.open('https://renderer.example.com/swm-csiro-smart-forms?messaging_handle=abc123&messaging_origin=https://host.example.com')
  * 
  * Protocol Flow:
- * 1. Host initiates handshake with messagingHandle (Host → Renderer)
- * 2. Renderer responds to handshake with capabilities (Renderer → Host)
- * 3. Host sends configuration and context (Host → Renderer)
- * 4. Host sends questionnaire to display (Host → Renderer)
- * 5. Renderer sends unsolicited events as user interacts (Renderer → Host)
+ * 1. Host generates unique messagingHandle and launches renderer with URL parameters
+ * 2. Renderer initializes, validates URL parameters, waits for host handshake
+ * 3. Host initiates handshake with messagingHandle (Host → Renderer)
+ * 4. Renderer validates handshake matches URL params, responds with capabilities (Renderer → Host)
+ * 5. Host sends configuration and context (Host → Renderer)
+ * 6. Host sends questionnaire to display (Host → Renderer)
+ * 7. Renderer sends unsolicited events as user interacts (Renderer → Host)
  * 
  * Implements the following incoming message handlers (Host → Renderer):
  * - status.handshake: Initial handshake to establish communication
@@ -143,11 +159,39 @@ export default class SwmCsiroSmartForms extends Vue implements SdcRendererMessag
     // Initialize non-reactive property
     this.messageSource = null;
     
+    // Check for URL parameters (popup/window launch mode)
+    this.checkUrlParameters();
+    
     // Register message listener
     window.addEventListener('message', this.handleMessage);
     
     // Per SDC-SWM protocol: Host initiates the handshake, renderer waits and responds
     // Do NOT send initial handshake - wait for host to send it first
+  }
+
+  /**
+   * Check if renderer was launched with required URL parameters
+   * Per SDC-SWM protocol: Host MUST provide these parameters when launching the renderer
+   */
+  checkUrlParameters() {
+    const params = new URLSearchParams(window.location.search);
+    const messagingHandle = params.get('messaging_handle');
+    const messagingOrigin = params.get('messaging_origin');
+    
+    if (!messagingHandle || !messagingOrigin) {
+      console.error('[SDC-SWM Renderer] ❌ REQUIRED URL parameters missing!');
+      console.error('[SDC-SWM Renderer] Host must provide: ?messaging_handle=xxx&messaging_origin=https://host.example.com');
+      console.error('[SDC-SWM Renderer] Renderer cannot function without these parameters.');
+      return;
+    }
+    
+    this.messagingHandle = messagingHandle;
+    this.allowedOrigin = messagingOrigin;
+    
+    console.log('[SDC-SWM Renderer] ✅ Initialized with required parameters:', {
+      messagingHandle: messagingHandle,
+      allowedOrigin: messagingOrigin
+    });
   }
 
   beforeDestroy() {
@@ -165,7 +209,12 @@ export default class SwmCsiroSmartForms extends Vue implements SdcRendererMessag
    */
   async handleMessage(event: MessageEvent) {
     const message = event.data as SmartWebMessagingRequest;
-    
+
+    // Validate that we have a valid message object
+    if (!event.data || typeof event.data !== 'object') {
+      return;
+    }
+
     // Filter out React DevTools messages
     if (event.data?.source?.startsWith("react-devtools-")) {
       return;
@@ -177,28 +226,21 @@ export default class SwmCsiroSmartForms extends Vue implements SdcRendererMessag
       return;
     }
 
+    // STRICT: Reject all messages if renderer not properly initialized with URL parameters
+    if (!this.messagingHandle || !this.allowedOrigin) {
+      console.error('[SDC-SWM Renderer] ❌ Cannot process messages - renderer not initialized with required URL parameters');
+      console.error('[SDC-SWM Renderer] Host must provide: ?messaging_handle=xxx&messaging_origin=https://host.example.com');
+      return;
+    }
+
     // Origin validation (SECURITY REQUIREMENT)
-    // On first handshake, store the origin; on subsequent messages, validate against it
-    if (message.messageType === 'status.handshake' && !this.allowedOrigin) {
-      // First handshake - establish the allowed origin
-      this.allowedOrigin = event.origin;
-      console.log('[SDC-SWM Renderer] Establishing allowed origin:', this.allowedOrigin);
-    } else if (this.allowedOrigin && event.origin !== this.allowedOrigin) {
-      console.warn('[SDC-SWM Renderer] Ignoring message from unauthorized origin:', event.origin, 'expected:', this.allowedOrigin);
+    if (event.origin !== this.allowedOrigin) {
+      console.warn('[SDC-SWM Renderer] ❌ Rejecting message from unauthorized origin:', event.origin, 'expected:', this.allowedOrigin);
       return;
     }
 
     // MessagingHandle validation (REQUIRED by protocol)
-    // On first handshake, store the handle; on subsequent messages, validate against it
-    if (message.messageType === 'status.handshake' && !this.messagingHandle) {
-      // First handshake - store the messaging handle
-      if (!message.messagingHandle) {
-        console.warn('[SDC-SWM Renderer] Handshake missing messagingHandle');
-        return;
-      }
-      this.messagingHandle = message.messagingHandle;
-      console.log('[SDC-SWM Renderer] Establishing messaging handle:', this.messagingHandle);
-    } else if (this.messagingHandle && message.messagingHandle !== this.messagingHandle) {
+    if (message.messagingHandle !== this.messagingHandle) {
       // Not our message - ignore silently (could be for another renderer)
       return;
     }

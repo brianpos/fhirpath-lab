@@ -173,7 +173,12 @@
         console.warn('Ignoring message from unauthorized origin:', event.origin);
         return;
       }
-      
+
+      // Validate that we have a valid message object
+      if (!event.data || typeof event.data !== 'object') {
+        return;
+      }
+
       const message = event.data;
       
       // filter out some noisy messages from devtools
@@ -251,8 +256,8 @@
     iframe.addEventListener('load', () => {
       setTimeout(() => {
         logMessage('INFO', 'Iframe loaded, initiating handshake with renderer...');
-        // Proactively send handshake to renderer
-        sendHandshake();
+        // Don't proactively send handshake to renderer
+        // sendHandshake();
       }, 500);
     });
 

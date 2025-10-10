@@ -402,6 +402,7 @@ import type {
   SmartWebMessagingResponse,
   SmartWebMessagingEvent,
   SdcUiChangedQuestionnaireResponsePayload,
+  SdcMessage,
 } from "~/types/sdc-swm-types";
 import {
   EvaluateChatPrompt,
@@ -457,6 +458,8 @@ interface IQuestionnaireTesterData extends QuestionnaireData {
   messagingOrigin?: string;
   parentMessageListener?: (event: MessageEvent) => void;
   embeddedMessageLog: MessageLogEntry[];
+  /** Tracks sent messages awaiting responses: messageId -> { messageType, timestamp } */
+  pendingMessages: Map<string, { messageType: string; timestamp: number }>;
 
   // Populate/Extract properties
   contextData: ContextData;
@@ -506,6 +509,10 @@ export default Vue.extend({
 
     this.aidboxApproved = settings.getExternalFormsConsent("Aidbox Forms", aidboxConsentVersion);
     this.smartWMFormApproved = settings.getExternalFormsConsent("SmartWM Forms", aidboxConsentVersion);
+    
+    // Initialize non-reactive messageSource property to avoid cross-origin errors with WindowProxy
+    // Vue's reactivity system would try to observe WindowProxy properties, causing cross-origin violations
+    (this as any).messageSource = null;
     
     // Check if we're running in embedded mode (reverse integration)
     this.initializeEmbeddedMode();
@@ -773,16 +780,9 @@ export default Vue.extend({
         window.addEventListener('message', this.parentMessageListener);
         console.log('[Embedded Mode] ✅ Message listener registered');
 
-        // Send ready notification
-        this.sendMessageToParent({
-          messageId: this.generateMessageId(),
-          payload: {
-            status: 'ready',
-            protocolVersion: '1.0',
-            fhirVersion: 'R4'
-          }
-        });
-        console.log('[Embedded Mode] ✅ Ready notification sent to parent');
+        // Per SDC-SWM protocol: Host initiates handshake, renderer waits and responds
+        // Do NOT send initial handshake - wait for host to send it first
+        console.log('[Embedded Mode] ⏳ Waiting for host to initiate handshake...');
       } else {
         console.log('[Embedded Mode] ❌ Not initializing - missing parameters:', {
           hasMessagingHandle: !!messagingHandle,
@@ -793,6 +793,11 @@ export default Vue.extend({
 
     async handleParentMessage(event: MessageEvent) {
 
+      // Validate that we have a valid message object
+      if (!event.data || typeof event.data !== 'object') {
+        return;
+      }
+
       // If the message doesn't have our messagingHandle or responseToMessageId, it's not for us
       const msg = event.data as SmartWebMessagingRequest | SmartWebMessagingResponse;
       const isRequest = 'messageType' in msg && msg.messagingHandle === this.messagingHandle;
@@ -802,6 +807,21 @@ export default Vue.extend({
         // Not our message, ignore silently (could be for Aidbox or other components)
         return;
       }
+
+      // Check for expired pending messages (30 seconds timeout)
+      const now = Date.now();
+      const expiredMessages: string[] = [];
+      
+      this.pendingMessages.forEach((info, messageId) => {
+        const age = now - info.timestamp;
+        if (age > 30000) { // 30 seconds
+          console.warn(`[Embedded Mode] ⚠️ No response received for ${info.messageType} (messageId: ${messageId}) after ${Math.round(age / 1000)}s`);
+          expiredMessages.push(messageId);
+        }
+      });
+      
+      // Remove expired messages
+      expiredMessages.forEach(messageId => this.pendingMessages.delete(messageId));
 
       // Debug: Log ALL incoming messages first
       console.log('[Embedded Mode] RAW incoming message:', {
@@ -823,12 +843,40 @@ export default Vue.extend({
       const message = event.data;
 
       // Validate messaging handle
-      if (message.messagingHandle !== this.messagingHandle) {
-        console.warn('[Embedded Mode] ❌ Ignoring message with invalid messaging handle:', message.messagingHandle, 'expected:', this.messagingHandle);
+      if (message.messagingHandle !== this.messagingHandle && !isResponse) {
+        console.warn('[Embedded Mode] ❌ Ignoring request message with invalid messaging handle:', message.messagingHandle, 'expected:', this.messagingHandle);
         return;
       }
 
-      console.log('[Embedded Mode] ✅ Received valid message:', message.messageType);
+      // Store the source of the message so we can reply to the correct window
+      (this as any).messageSource = event.source as WindowProxy;
+
+      // Check if this is a response to one of our sent messages
+      if (isResponse) {
+        const originalMessage = this.pendingMessages.get(message.responseToMessageId);
+        if (originalMessage) {
+          console.log(`[Embedded Mode] ✅ Received response for ${originalMessage.messageType} (messageId: ${message.responseToMessageId})`);
+          this.pendingMessages.delete(message.responseToMessageId);
+          
+          // Log the received response with context about the original message
+          this.embeddedMessageLog.push({
+            direction: 'received',
+            timestamp: new Date().toLocaleTimeString(),
+            type: `response to ${originalMessage.messageType}`,
+            summary: this.summarizeParentMessage(message),
+            data: message,
+          });
+          
+          // Process response and return early
+          console.log('[Embedded Mode] Response processed');
+          return;
+        }
+
+        console.log('[Embedded Mode] Response processed - no matching pending message found');
+        return;
+      }
+
+      console.log('[Embedded Mode] ✅ Received valid message:', message.messageType ?? 'Response to: ' + message.responseToMessageId ?? '');
 
       // Log the received message
       this.embeddedMessageLog.push({
@@ -841,6 +889,7 @@ export default Vue.extend({
 
       // Route to appropriate handler and send response automatically
       try {
+        // This is a request from the parent - handle it and send a response
         let payload: any;
         
         switch (message.messageType) {
@@ -864,13 +913,13 @@ export default Vue.extend({
             break;
           default:
             console.warn('[Embedded Mode] Unknown message type:', message.messageType);
-            this.sendErrorResponse(message.messageId, `Unknown message type: ${message.messageType}`);
+            this.sendErrorResponse(message.messageType, message.messageId, `Unknown message type: ${message.messageType}`);
             return;
         }
 
         // Send response with the payload returned by handler
         if (payload) {
-          this.sendMessageToParent({
+          this.sendResponseToParent(message.messageType, {
             messageId: this.generateMessageId(),
             responseToMessageId: message.messageId,
             payload: payload
@@ -878,7 +927,7 @@ export default Vue.extend({
         }
       } catch (error: any) {
         console.error('[Embedded Mode] Error handling message:', error);
-        this.sendErrorResponse(message.messageId, error.message);
+        this.sendErrorResponse(message.messageType, message.messageId, error.message);
       }
     },
 
@@ -1265,70 +1314,130 @@ export default Vue.extend({
       return JSON.stringify(msg.payload).substring(0, 100);
     },
 
-    summarizeSentMessage(msg: any): string {
+    summarizeSentMessage(msg: SdcMessage): string {
       if (!msg.payload) return 'No payload';
 
-      if (msg.payload.status === 'ready') {
-        return `Ready - Protocol: ${msg.payload.protocolVersion}`;
+      if ('messageType' in msg) {
+        return `Type: ${msg.messageType}`;
       }
-      if (msg.payload.status === 'success') {
-        return 'Success';
-      }
-      if (msg.payload.status === 'error') {
-        return `Error: ${msg.payload.outcome?.issue?.[0]?.diagnostics || 'Unknown error'}`;
-      }
-      if (msg.payload.application) {
+
+      // Check for handshake response (has 'application' property)
+      if ('application' in msg.payload && msg.payload.application) {
         return `Handshake: ${msg.payload.application.name} v${msg.payload.application.version}`;
       }
-      if (msg.payload.questionnaireResponse) {
+
+      // Check for status field (present in most responses)
+      if ('status' in msg.payload) {
+        if (msg.payload.status === 'success') {
+          return 'Success';
+        }
+        if (msg.payload.status === 'error') {
+          const outcome = 'outcome' in msg.payload ? msg.payload.outcome : undefined;
+          return `Error: ${outcome?.issue?.[0]?.diagnostics || 'Unknown error'}`;
+        }
+      }
+
+      // Check for QuestionnaireResponse payload
+      if ('questionnaireResponse' in msg.payload && msg.payload.questionnaireResponse) {
         const qr = msg.payload.questionnaireResponse;
         return `Extracted: ${qr.id || 'no-id'}, Status: ${qr.status}`;
       }
-      if (msg.payload.outcome) {
+
+      // Check for OperationOutcome payload
+      if ('outcome' in msg.payload && msg.payload.outcome) {
         const issues = msg.payload.outcome.issue?.length || 0;
         return `Validation: ${issues} issue(s)`;
       }
-      if (msg.messageType === 'sdc.ui.changedQuestionnaireResponse') {
+      
+      // Check messageType for request/event specific patterns (only present on requests/events, not responses)
+      if ('messageType' in msg && msg.messageType === 'sdc.ui.changedQuestionnaireResponse') {
         return 'Response updated event';
       }
+      
       return JSON.stringify(msg.payload).substring(0, 100);
     },
 
-    sendMessageToParent(message: any) {
+    sendRequestToParent(message: SmartWebMessagingRequest<any>) {
       if (!this.embeddedMode || !this.messagingOrigin) return;
 
       try {
-        // CRITICAL: Add messagingHandle to every message sent to parent
-        const messageWithHandle = {
-          messagingHandle: this.messagingHandle,
-          ...message
-        };
+        // Validate that messagingHandle exists before sending
+        if (!this.messagingHandle) {
+          console.error('[Embedded Mode] ❌ Cannot send request: messagingHandle is not set');
+          return;
+        }
+
+        // Requests already have messagingHandle in their type definition
+        console.log('[Embedded Mode] Sending request/event to parent:', message);
         
-        console.log('[Embedded Mode] Sending message to parent:', messageWithHandle);
+        // Track this message to detect missing responses
+        this.pendingMessages.set(message.messageId, {
+          messageType: message.messageType,
+          timestamp: Date.now()
+        });
         
         // Log the sent message
         this.embeddedMessageLog.push({
           direction: 'sent',
           timestamp: new Date().toLocaleTimeString(),
-          type: messageWithHandle.messageType || (messageWithHandle.responseToMessageId ? 'response' : 'event'),
-          summary: this.summarizeSentMessage(messageWithHandle),
-          data: messageWithHandle,
+          type: message.messageType,
+          summary: this.summarizeSentMessage(message),
+          data: message,
         });
         
-        // Use window.opener for popup windows (not window.parent which is for iframes)
-        if (window.opener && !window.opener.closed) {
-          window.opener.postMessage(messageWithHandle, this.messagingOrigin);
-          console.log('[Embedded Mode] ✅ Message sent to opener window');
+        // Support both popup windows (window.opener) and iframes (window.parent)
+        // Prefer the stored messageSource from the last received message
+        const targetWindow = (this as any).messageSource || window.opener || window.parent;
+        
+        if (targetWindow) {
+          targetWindow.postMessage(message, this.messagingOrigin);
+          console.log('[Embedded Mode] ✅ Request/event sent to host window');
         } else {
-          console.error('[Embedded Mode] ❌ No opener window available');
+          console.error('[Embedded Mode] ❌ No host window available');
         }
       } catch (error) {
-        console.error('[Embedded Mode] Failed to send message to parent:', error);
+        console.error('[Embedded Mode] Failed to send request to parent:', error);
       }
     },
 
-    sendErrorResponse(responseToMessageId: string, errorMessage: string) {
-      this.sendMessageToParent({
+    sendResponseToParent(responseToMessageType: string, message: SmartWebMessagingResponse<any>) {
+      if (!this.embeddedMode || !this.messagingOrigin) return;
+
+      try {
+        // Per SDC-SWM protocol: Responses do NOT include messagingHandle
+        // Only requests/events require messagingHandle
+        console.log('[Embedded Mode] Sending response to parent:', message);
+        
+        // Log the sent message
+        this.embeddedMessageLog.push({
+          direction: 'sent',
+          timestamp: new Date().toLocaleTimeString(),
+          type: 'response to ' + responseToMessageType,
+          summary: this.summarizeSentMessage(message),
+          data: message,
+        });
+        
+        // Support both popup windows (window.opener) and iframes (window.parent)
+        // Prefer the stored messageSource from the last received message
+        const targetWindow = (this as any).messageSource || window.opener || window.parent;
+        
+        if (targetWindow) {
+          targetWindow.postMessage(message, this.messagingOrigin);
+          console.log('[Embedded Mode] ✅ Response sent to host window');
+        } else {
+          console.error('[Embedded Mode] ❌ No host window available');
+        }
+      } catch (error) {
+        console.error('[Embedded Mode] Failed to send response to parent:', error);
+      }
+    },
+
+    sendErrorResponse(responseToMessageType: string, responseToMessageId: string, errorMessage: string) {
+      // Generic error response - status and outcome structure is common across all SDC-SWM response types
+      const errorResponse: SmartWebMessagingResponse<{
+        status: 'error';
+        outcome: fhir4.OperationOutcome;
+      }> = {
         messageId: this.generateMessageId(),
         responseToMessageId: responseToMessageId,
         payload: {
@@ -1342,25 +1451,27 @@ export default Vue.extend({
             }]
           }
         }
-      });
+      };
+      
+      this.sendResponseToParent(responseToMessageType, errorResponse);
     },
 
     sendResponseUpdateEvent(response: QuestionnaireResponse) {
       if (!this.embeddedMode || !this.messagingHandle) return;
 
-      this.sendMessageToParent({
+      // Per SDC-SWM protocol: This is an unsolicited event from renderer to host
+      // Events use the SmartWebMessagingRequest structure (same as requests)
+      const event: SmartWebMessagingRequest<SdcUiChangedQuestionnaireResponsePayload> = {
+        messagingHandle: this.messagingHandle,
         messageId: this.generateMessageId(),
         messageType: 'sdc.ui.changedQuestionnaireResponse',
         payload: {
-          questionnaireResponse: response,
-          context: {
-            subject: this.contextData.subject,
-            author: this.contextData.author,
-            encounter: this.contextData.encounter
-          },
-          timestamp: new Date().toISOString()
+          questionnaireResponse: response as fhir4.QuestionnaireResponse,
+          // Optional: could include changedLinkIds or changedPaths here
         }
-      });
+      };
+
+      this.sendRequestToParent(event);
     },
 
     // ======================================================================
@@ -2938,6 +3049,7 @@ export default Vue.extend({
       messagingOrigin: undefined,
       parentMessageListener: undefined,
       embeddedMessageLog: [],
+      pendingMessages: new Map(),
 
       contextData: {
         subject: { reference: "Patient/example", display: "Peter James Chalmers" },

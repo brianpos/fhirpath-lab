@@ -503,6 +503,13 @@ export default class SmartWMFormSection extends Vue implements SdcHostMessageHan
   handleRendererResponse(msg: SmartWebMessagingResponse) {
     console.log("[SDC-SWM Host] Handling renderer response to:", msg.responseToMessageId);
 
+    // Check if this is a response to status.handshake
+    // Note: We could track handshake message IDs if we need to process capabilities
+    if (msg.payload?.application) {
+      console.log("[SDC-SWM Host] Renderer capabilities:", msg.payload);
+      // Could store renderer capabilities here for future use
+    }
+
     // Check if this is a response to sdc.requestCurrentQuestionnaireResponse
     const queueIndex = this.requestCurrentResponseMessageIdQueue.indexOf(msg.responseToMessageId);
     if (queueIndex >= 0) {
