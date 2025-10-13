@@ -19,110 +19,112 @@ interface OpenAiErrorDetail {
 }
 
 class MyOpenAIClient extends OpenAI {
-    constructor(options: ClientOptions) {
-        super(options);
+  constructor(options: ClientOptions) {
+    super(options);
+  }
+  // https://github.com/openai/openai-node/blob/4c041e03013dbd7de5bfeb02db42c5e657217167/src/core.ts#L206
+  protected async authHeaders(opts: FinalRequestOptions): Promise<any> {
+    let headers = await super.authHeaders(opts);
+    // If there is no authorization header then don't need the other settings too,
+    // as this is not the actual OpenAI endpoints.
+    if (headers && headers.values && headers.values.get('Authorization') === 'Bearer ') {
+      headers.values.delete('X-Stainless-Arch');
+      headers.values.delete('X-Stainless-OS');
+      headers.values.delete('X-Stainless-Lang');
+      headers.values.delete('X-Stainless-Package-Version');
+      headers.values.delete('X-Stainless-Runtime');
+      headers.values.delete('X-Stainless-Runtime-Version');
+      headers.values.delete('Authorization');
     }
-    // https://github.com/openai/openai-node/blob/4c041e03013dbd7de5bfeb02db42c5e657217167/src/core.ts#L206
-    protected async authHeaders(opts: FinalRequestOptions): Promise<any> {
-        let headers = await super.authHeaders(opts);
-        // If there is no authorization header then don't need the other settings too,
-        // as this is not the actual OpenAI endpoints.
-        if (headers && headers.values && headers.values.get('Authorization') === 'Bearer ') {
-            headers.values.delete('X-Stainless-Arch');
-            headers.values.delete('X-Stainless-OS');
-            headers.values.delete('X-Stainless-Lang');
-            headers.values.delete('X-Stainless-Package-Version');
-            headers.values.delete('X-Stainless-Runtime');
-            headers.values.delete('X-Stainless-Runtime-Version');
-            headers.values.delete('Authorization');
-        }
-        return headers;
-    }
+    return headers;
+  }
 }
 
 export async function EvaluateChatPrompt(
-    messages: Array<ChatCompletionMessageParam>,
-    settings: IOpenAISettings,
-    temperature: number,
-    max_tokens?: number,
-    tools?: Array<ChatCompletionTool>,
-    EvaluateTools? :(tool_calls: OpenAI.Chat.Completions.ChatCompletionMessageToolCall[]) => Array<ChatCompletionMessageParam>): Promise<Array<ChatCompletionMessageParam> | undefined> {
+  messages: Array<ChatCompletionMessageParam>,
+  settings: IOpenAISettings,
+  temperature: number,
+  max_tokens?: number,
+  tools?: Array<ChatCompletionTool>,
+  EvaluateTools?: (tool_calls: OpenAI.Chat.Completions.ChatCompletionMessageToolCall[]) => Array<ChatCompletionMessageParam>): Promise<Array<ChatCompletionMessageParam> | undefined> {
 
-    try {
-        let client = null;
-        // this is all in browser with client side use of client's own keys, so we can allow browser
-        let clientOptions: ClientOptions = { dangerouslyAllowBrowser: true };
-        if (settings.openAIKey)
-            clientOptions.apiKey = settings.openAIKey;
-        else
-            clientOptions.apiKey = '';
-        if (settings.openAIBasePath) {
-            clientOptions.baseURL = settings.openAIBasePath;
-            if (settings.openAIApiVersion) {
-                clientOptions.defaultQuery = { 'api-version': settings.openAIApiVersion };
-                clientOptions.defaultHeaders = { 'api-key': settings.openAIKey };
-                clientOptions.baseURL = settings.openAIBasePath + settings.openAIModel;
-            }
-        }
-
-        client = new MyOpenAIClient(clientOptions);
-
-        let reqBody: ChatCompletionCreateParamsNonStreaming = {
-            model: settings.openAIModel ?? "",
-            messages: messages,
-            temperature: temperature,
-            store: false,
-            tools: tools,
-        };
-        if (settings.openAIModel === "gpt-5") {
-            reqBody.temperature = 1;
-        }
-        if (settings.openAIModel === "gpt-5" || settings.openAIModel?.endsWith("o")) {
-            reqBody.max_completion_tokens = max_tokens;
-        } else {
-            reqBody.max_tokens = max_tokens;
-        }
-        const result = await client.chat.completions.create(reqBody);
-        let replyMessage = result.choices[0].message;
-
-        // Check if the result was a completion, or timed out/token limit reached
-        if (result.choices[0].finish_reason === "length") {
-            console.log("Warning: The response was cut off due to length. Consider increasing max_tokens.");
-            replyMessage = {
-                role: "assistant",
-                refusal: null,
-                content: (replyMessage?.content ?? '') + "\n\n*The response was cut off due to length.*"
-            };
-        }
-
-        if (replyMessage?.tool_calls && EvaluateTools){
-                let toolCallMessagesContinue: Array<ChatCompletionMessageParam> = [];
-                toolCallMessagesContinue.push(... messages)
-                const toolCalls = replyMessage?.tool_calls;
-                toolCallMessagesContinue.push(result.choices[0].message);
-                const toolCallResults = EvaluateTools(toolCalls);
-                toolCallMessagesContinue.push(...toolCallResults);
-                if (toolCallMessagesContinue.length > messages.length) {
-                        const resultOfToolCall = await EvaluateChatPrompt(toolCallMessagesContinue, settings, temperature, max_tokens);
-                        let returnValue: Array<ChatCompletionMessageParam> = [replyMessage];
-                        if (resultOfToolCall)
-                                returnValue.push(... resultOfToolCall);
-                        return returnValue;
-                }
-        }
-
-        return replyMessage ? [replyMessage] : [];
-    } catch (err: any) {
-        console.log(err);
-        return [{
-                role: "assistant",
-                content: err.message ?? err.error?.message
-        }];
+  try {
+    let client = null;
+    // this is all in browser with client side use of client's own keys, so we can allow browser
+    let clientOptions: ClientOptions = { dangerouslyAllowBrowser: true };
+    if (settings.openAIKey)
+      clientOptions.apiKey = settings.openAIKey;
+    else
+      clientOptions.apiKey = '';
+    if (settings.openAIBasePath) {
+      clientOptions.baseURL = settings.openAIBasePath;
+      if (settings.openAIApiVersion) {
+        clientOptions.defaultQuery = { 'api-version': settings.openAIApiVersion };
+        clientOptions.defaultHeaders = { 'api-key': settings.openAIKey };
+        clientOptions.baseURL = settings.openAIBasePath + settings.openAIModel;
+      }
     }
+
+    client = new MyOpenAIClient(clientOptions);
+
+    let reqBody: ChatCompletionCreateParamsNonStreaming = {
+      model: settings.openAIModel ?? "",
+      messages: messages,
+      temperature: temperature,
+      store: false,
+      tools: tools,
+    };
+    if (settings.openAIModel === "gpt-5") {
+      reqBody.temperature = 1;
+    }
+    if (settings.openAIModel === "gpt-5" || settings.openAIModel?.endsWith("o")) {
+      reqBody.max_completion_tokens = max_tokens;
+    } else {
+      reqBody.max_tokens = max_tokens;
+    }
+    const result = await client.chat.completions.create(reqBody);
+    let replyMessage = result.choices[0].message;
+
+    // Check if the result was a completion, or timed out/token limit reached
+    if (result.choices[0].finish_reason === "length") {
+      console.log("Warning: The response was cut off due to length. Consider increasing max_tokens.");
+      replyMessage = {
+        role: "assistant",
+        refusal: null,
+        content: (replyMessage?.content ?? '') + "\n\n*The response was cut off due to length.*"
+      };
+    }
+
+    console.log("Result: ", result);
+
+    if (replyMessage?.tool_calls && EvaluateTools) {
+      let toolCallMessagesContinue: Array<ChatCompletionMessageParam> = [];
+      toolCallMessagesContinue.push(...messages)
+      const toolCalls = replyMessage?.tool_calls;
+      toolCallMessagesContinue.push(result.choices[0].message);
+      const toolCallResults = EvaluateTools(toolCalls);
+      toolCallMessagesContinue.push(...toolCallResults);
+      if (toolCallMessagesContinue.length > messages.length) {
+        const resultOfToolCall = await EvaluateChatPrompt(toolCallMessagesContinue, settings, temperature, max_tokens);
+        let returnValue: Array<ChatCompletionMessageParam> = [replyMessage];
+        if (resultOfToolCall)
+          returnValue.push(...resultOfToolCall);
+        return returnValue;
+      }
+    }
+
+    return replyMessage ? [replyMessage] : [];
+  } catch (err: any) {
+    console.log(err);
+    return [{
+      role: "assistant",
+      content: err.message ?? err.error?.message
+    }];
+  }
 };
 
 export function CreatePrompt(): Array<ChatCompletionMessageParam> {
-    let prompt: Array<ChatCompletionMessageParam> = [];
+  let prompt: Array<ChatCompletionMessageParam> = [];
 
   prompt.push({ role: "system", content: GetSystemPrompt() });
 
