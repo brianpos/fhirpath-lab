@@ -1,6 +1,6 @@
 import { OpenAI, ClientOptions } from "openai";
-import { FinalRequestOptions, Headers } from "openai/core";
-import { ChatCompletionCreateParamsNonStreaming, ChatCompletionMessageParam } from "openai/resources/chat/completions";
+import { FinalRequestOptions, RequestOptions } from "openai/internal/request-options.js";
+import { ChatCompletionCreateParamsNonStreaming, ChatCompletionMessageParam, ChatCompletionTool } from "openai/resources/chat/completions";
 
 export interface IOpenAISettings {
   openAIKey: string;
@@ -23,18 +23,18 @@ class MyOpenAIClient extends OpenAI {
         super(options);
     }
     // https://github.com/openai/openai-node/blob/4c041e03013dbd7de5bfeb02db42c5e657217167/src/core.ts#L206
-    protected defaultHeaders(opts: FinalRequestOptions<unknown>): Headers {
-        let headers = super.defaultHeaders(opts);
+    protected async authHeaders(opts: FinalRequestOptions): Promise<any> {
+        let headers = await super.authHeaders(opts);
         // If there is no authorization header then don't need the other settings too,
         // as this is not the actual OpenAI endpoints.
-        if (headers['Authorization'] === 'Bearer ') {
-            delete headers['X-Stainless-Arch'];
-            delete headers['X-Stainless-OS'];
-            delete headers['X-Stainless-Lang'];
-            delete headers['X-Stainless-Package-Version'];
-            delete headers['X-Stainless-Runtime'];
-            delete headers['X-Stainless-Runtime-Version'];
-            delete headers['Authorization'];
+        if (headers && headers.values && headers.values.get('Authorization') === 'Bearer ') {
+            headers.values.delete('X-Stainless-Arch');
+            headers.values.delete('X-Stainless-OS');
+            headers.values.delete('X-Stainless-Lang');
+            headers.values.delete('X-Stainless-Package-Version');
+            headers.values.delete('X-Stainless-Runtime');
+            headers.values.delete('X-Stainless-Runtime-Version');
+            headers.values.delete('Authorization');
         }
         return headers;
     }
@@ -44,7 +44,8 @@ export async function EvaluateChatPrompt(
     messages: Array<ChatCompletionMessageParam>,
     settings: IOpenAISettings,
     temperature: number,
-    max_tokens?: number): Promise<string | undefined> {
+    max_tokens?: number,
+    tools?: Array<ChatCompletionTool>): Promise<string | undefined> {
 
     try {
         let client = null;
@@ -69,8 +70,17 @@ export async function EvaluateChatPrompt(
             model: settings.openAIModel ?? "",
             messages: messages,
             temperature: temperature,
-            max_tokens: max_tokens
+            store: false,
+            tools: tools,
         };
+        if (settings.openAIModel === "gpt-5") {
+            reqBody.temperature = 1;
+        }
+        if (settings.openAIModel === "gpt-5" || settings.openAIModel?.endsWith("o")) {
+            reqBody.max_completion_tokens = max_tokens;
+        } else {
+            reqBody.max_tokens = max_tokens;
+        }
         const result = await client.chat.completions.create(reqBody);
         return result.choices[0].message?.content ?? undefined;
 

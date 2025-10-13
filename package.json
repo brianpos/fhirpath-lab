@@ -40,7 +40,7 @@
     "minimist": ">=1.2.6",
     "notistack": "^3.0.1",
     "nuxt": "^2.18.1",
-    "openai": "^4.101.0",
+    "openai": "^6.3.0",
     "sql-on-fhir-v2": "github:FHIR/sql-on-fhir-v2#master:sof-js",
     "vue-application-insights": "^1.0.7",
     "vue-property-decorator": "^9.1.2",
