@@ -45,7 +45,8 @@ export async function EvaluateChatPrompt(
     settings: IOpenAISettings,
     temperature: number,
     max_tokens?: number,
-    tools?: Array<ChatCompletionTool>): Promise<Array<ChatCompletionMessageParam> | undefined> {
+    tools?: Array<ChatCompletionTool>,
+    EvaluateTools? :(tool_calls: OpenAI.Chat.Completions.ChatCompletionMessageToolCall[]) => Array<ChatCompletionMessageParam>): Promise<Array<ChatCompletionMessageParam> | undefined> {
 
     try {
         let client = null;
@@ -93,6 +94,23 @@ export async function EvaluateChatPrompt(
                 content: (replyMessage?.content ?? '') + "\n\n*The response was cut off due to length.*"
             };
         }
+
+        if (replyMessage?.tool_calls && EvaluateTools){
+                let toolCallMessagesContinue: Array<ChatCompletionMessageParam> = [];
+                toolCallMessagesContinue.push(... messages)
+                const toolCalls = replyMessage?.tool_calls;
+                toolCallMessagesContinue.push(result.choices[0].message);
+                const toolCallResults = EvaluateTools(toolCalls);
+                toolCallMessagesContinue.push(...toolCallResults);
+                if (toolCallMessagesContinue.length > messages.length) {
+                        const resultOfToolCall = await EvaluateChatPrompt(toolCallMessagesContinue, settings, temperature, max_tokens);
+                        let returnValue: Array<ChatCompletionMessageParam> = [replyMessage];
+                        if (resultOfToolCall)
+                                returnValue.push(... resultOfToolCall);
+                        return returnValue;
+                }
+        }
+
         return replyMessage ? [replyMessage] : [];
     } catch (err: any) {
         console.log(err);
