@@ -45,7 +45,7 @@ export async function EvaluateChatPrompt(
     settings: IOpenAISettings,
     temperature: number,
     max_tokens?: number,
-    tools?: Array<ChatCompletionTool>): Promise<string | undefined> {
+    tools?: Array<ChatCompletionTool>): Promise<Array<ChatCompletionMessageParam> | undefined> {
 
     try {
         let client = null;
@@ -82,11 +82,24 @@ export async function EvaluateChatPrompt(
             reqBody.max_tokens = max_tokens;
         }
         const result = await client.chat.completions.create(reqBody);
-        return result.choices[0].message?.content ?? undefined;
+        let replyMessage = result.choices[0].message;
 
+        // Check if the result was a completion, or timed out/token limit reached
+        if (result.choices[0].finish_reason === "length") {
+            console.log("Warning: The response was cut off due to length. Consider increasing max_tokens.");
+            replyMessage = {
+                role: "assistant",
+                refusal: null,
+                content: (replyMessage?.content ?? '') + "\n\n*The response was cut off due to length.*"
+            };
+        }
+        return replyMessage ? [replyMessage] : [];
     } catch (err: any) {
         console.log(err);
-        return err.message ?? err.error?.message;
+        return [{
+                role: "assistant",
+                content: err.message ?? err.error?.message
+        }];
     }
 };
 
