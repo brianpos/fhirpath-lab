@@ -10,18 +10,18 @@
             mdi-play
           </v-icon>
         </v-btn>
-        <div v-if="debugTracePosition != undefined" style="border-radius: 8px; border: solid 1px white; padding: 4px; margin-left: 6px;">
+        <div v-if="trace.length > 0" style="border-radius: 8px; border: solid 1px white; padding: 4px; margin-left: 6px;">
           <v-btn v-if="debugTracePosition != undefined" x-small dark icon @click="debugTracePosition = 1; debuggerStepBack()" title="Reset to first trace">
             <v-icon>
               mdi-bug-play-outline
             </v-icon>
           </v-btn>
-          <v-btn v-if="trace.length > 0" x-small dark icon @click="debuggerStepForward()">
+          <v-btn v-if="trace.length > 0" x-small dark icon @click="debuggerStepForward()" :disabled="debugTracePosition >= trace.length - 1" title="Step forward in trace">
             <v-icon>
               mdi-debug-step-into
             </v-icon>
           </v-btn>
-          <v-btn v-if="trace.length > 0" x-small dark icon @click="debuggerStepBack()">
+          <v-btn v-if="trace.length > 0" x-small dark icon @click="debuggerStepBack()" :disabled="debugTracePosition <= 0" title="Step back in trace">
             <v-icon>
               mdi-debug-step-out
             </v-icon>
