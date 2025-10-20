@@ -688,12 +688,11 @@ group SetEntryData(source src: Patient, target entry)
     validateMap(){
       if (this.expressionEditor) {
         const fmlText = this.expressionEditor.getValue();
-        let tree = parseFML(fmlText);
-        const errOutcome = tree as fhir4b.OperationOutcome;
-        if (errOutcome && errOutcome.resourceType === "OperationOutcome") {
-          this.saveOutcome = errOutcome;
+        const result = parseFML(fmlText);
+        if ('resourceType' in result && result.resourceType === "OperationOutcome") {
+          this.saveOutcome = result;
           this.showOutcome = true;
-          this.setResultJson(JSON.stringify(errOutcome, null, 4));
+          this.setResultJson(JSON.stringify(result, null, 4));
         }
       }
     },
