@@ -33,7 +33,7 @@ conceptMapTarget
 
 code
   : ID
-  | SINGLE_QUOTED_STRING
+  | STRING
   | DOUBLE_QUOTED_STRING
   ;
 
@@ -50,14 +50,14 @@ markdownLiteral
   ;
 
 url
-  : SINGLE_QUOTED_STRING
+  : STRING
   | DOUBLE_QUOTED_STRING
   ;
 
 identifier
   : ID
   | IDENTIFIER
-  | DELIMITED_IDENTIFIER
+  | DELIMITEDIDENTIFIER
   ;
 
 structureDeclaration
@@ -69,7 +69,7 @@ constantDeclaration
   ;
 
 groupDeclaration
-  : 'group' ID parameters extends? typeMode? groupExpressions
+  : 'group' ID parameters extends? typeMode? mapRules
   ;
 
 parameters
@@ -80,8 +80,8 @@ parameter
   : ('source' | 'target') ID typeIdentifier?
   ;
 
-groupExpressions
-  : '{' expression* '}'
+mapRules
+  : '{' mapRule* '}'
   ;
 
 typeMode
@@ -96,20 +96,20 @@ typeIdentifier
   : ':' identifier
   ;
 
-expression
-  : qualifiedIdentifier '->' qualifiedIdentifier mapExpressionName? ';'  #mapSimpleCopy
-  | mapExpression ';'                                 #mapFhirMarkup
+mapRule
+  : qualifiedIdentifier '->' qualifiedIdentifier ruleName? ';'  #mapSimpleCopy
+  | mapTransformationRule ';'                                 #mapFhirMarkup
  	;
 
-mapExpression
-  : mapExpressionSource (',' mapExpressionSource)* ('->' mapExpressionTarget)? dependentExpression? mapExpressionName?
+mapTransformationRule
+  : ruleSource (',' ruleSource)* ('->' ruleTarget)? dependentExpression? ruleName?
   ;
 
-mapExpressionName
+ruleName
   : DOUBLE_QUOTED_STRING
   ;
 
-mapExpressionSource
+ruleSource
   : qualifiedIdentifier 
     typeIdentifier? 
     sourceCardinality? 
@@ -121,7 +121,7 @@ mapExpressionSource
     log?
   ;
 
-mapExpressionTarget
+ruleTarget
   : mapLineTarget (',' mapLineTarget)*
   ;
 
@@ -135,8 +135,8 @@ upperBound
   ;
 
 qualifiedIdentifier
-  : (ID | IDENTIFIER | 'imports' | 'source' | 'target' | 'group' | 'prefix' | 'map' | 'uses' | 'let' | 'types' | 'extends' | 'where' | 'check' | 'alias' | 'div' | 'contains' | 'as' | 'is' | 'first' | 'last' ) 
-    ('.' (ID | IDENTIFIER | 'imports' | 'source' | 'target' | 'group' | 'prefix' | 'map' | 'uses' | 'let' | 'types' | 'extends' | 'where' | 'check' | 'alias' | 'div' | 'contains' | 'as' | 'is' | 'first' | 'last'))*
+  : (ID | IDENTIFIER | 'imports' | 'source' | 'target' | 'group' | 'prefix' | 'map' | 'uses' | 'let' | 'types' | 'extends' | 'where' | 'check' | 'alias' | 'div' | 'contains' | 'as' | 'is' | 'asc' | 'desc' | 'first' | 'last' ) 
+    ('.' (ID | IDENTIFIER | 'imports' | 'source' | 'target' | 'group' | 'prefix' | 'map' | 'uses' | 'let' | 'types' | 'extends' | 'where' | 'check' | 'alias' | 'div' | 'contains' | 'as' | 'is' | 'asc' | 'desc' | 'first' | 'last'))*
   // : identifier ('.' identifier '[x]'?)*
   ;
 
@@ -162,7 +162,7 @@ log
   ;
 
 dependentExpression
-  : 'then' (invocation (',' invocation)* groupExpressions? | groupExpressions)
+  : 'then' (groupInvocation (',' groupInvocation)* mapRules? | mapRules)
   ;
 
 importDeclaration
@@ -172,25 +172,25 @@ importDeclaration
 mapLineTarget
   : qualifiedIdentifier ('=' transform)? alias? ('first' | 'share' | 'last' | 'single')?
   | '(' fpExpression ')' alias? ('first' | 'share' | 'last' | 'single')?     // pure fhirpath based variables
-  | invocation alias?     // alias is not required when simply invoking a group
+  | groupInvocation alias?     // alias is not required when simply invoking a group
   ;
 
 transform
   : literal           // trivial constant transform
   | qualifiedIdentifier       // 'copy' transform
-  | invocation        // other named transforms
+  | groupInvocation        // other named transforms
   | '(' fpExpression ')'      // fhirpath based expressions
   ;
 
-invocation
-  : identifier '(' paramList? ')'
+groupInvocation
+  : identifier '(' groupParamList? ')'
   ;
 
-paramList
-  : param (',' param)*
+groupParamList
+  : groupParam (',' groupParam)*
   ;
 
-param
+groupParam
   : literal
   | ID
   ;
@@ -229,12 +229,16 @@ fpInvocation                          // Terms that can be used after the functi
         ;
 
 fpExternalConstant
-        : '%' ( identifier | SINGLE_QUOTED_STRING )
+        : '%' ( identifier | STRING )
         ;
 
 fpFunction
-        // : identifier '(' fpParamList? ')'
-        : qualifiedIdentifier '(' fpParamList? ')'
+        : 'sort' '(' (fpSortArgument (',' fpSortArgument)*)? ')'
+        | qualifiedIdentifier '(' fpParamList? ')'
+        ;
+
+fpSortArgument
+        : fpExpression ('asc' | 'desc')?                          #sortDirectionArgument
         ;
 
 fpParamList
@@ -254,12 +258,12 @@ literal
   : NULL_LITERAL                                          #nullLiteral
   | BOOL                                                  #booleanLiteral
   | fpQuantity                                            #quantityLiteral
-  | LONG_INTEGER                                          #longNumberLiteral
+  | LONGNUMBER                                            #longNumberLiteral
   | (INTEGER | DECIMAL)                                   #numberLiteral
   | DATE                                                  #dateLiteral
-  | DATE_TIME                                             #dateTimeLiteral
+  | DATETIME                                              #dateTimeLiteral
   | TIME                                                  #timeLiteral
-  | SINGLE_QUOTED_STRING                                  #stringLiteral
+  | STRING                                                #stringLiteral
   | DOUBLE_QUOTED_STRING                                  #quotedStringLiteral
   ;
 
@@ -278,7 +282,7 @@ literal
 fpQuantity
     : (INTEGER | DECIMAL) ('year' | 'month' | 'week' | 'day' | 'hour' | 'minute' | 'second' | 'millisecond')          #quantityWithDate
     | (INTEGER | DECIMAL) ('years' | 'months' | 'weeks' | 'days' | 'hours' | 'minutes' | 'seconds' | 'milliseconds')  #quantityWithDatePlural
-    | (INTEGER | DECIMAL) SINGLE_QUOTED_STRING                                                                        #quantityWithUcum // UCUM syntax for units of measure
+    | (INTEGER | DECIMAL) STRING                                                                                      #quantityWithUcum // UCUM syntax for units of measure
     ;
 
     /*
@@ -318,30 +322,30 @@ BOOL
     ;
 
 DATE
-    : '@' DATE_FORMAT
+    : '@' DATEFORMAT
     ;
 
-DATE_TIME
-    : '@' DATE_FORMAT 'T' (TIME_FORMAT TIMEZONE_OFFSET_FORMAT?)?
+DATETIME
+    : '@' DATEFORMAT 'T' (TIMEFORMAT TIMEZONEOFFSETFORMAT?)?
     ;
 
 TIME
-    : '@' 'T' TIME_FORMAT
+    : '@' 'T' TIMEFORMAT
     ;
 
-fragment DATE_FORMAT
+fragment DATEFORMAT
     : [0-9][0-9][0-9][0-9] ('-'[0-9][0-9] ('-'[0-9][0-9])?)?
     ;
 
-fragment TIME_FORMAT
+fragment TIMEFORMAT
     : [0-9][0-9] (':'[0-9][0-9] (':'[0-9][0-9] ('.'[0-9]+)?)?)?
     ;
 
-fragment TIMEZONE_OFFSET_FORMAT
+fragment TIMEZONEOFFSETFORMAT
     : ('Z' | ('+' | '-') [0-9][0-9]':'[0-9][0-9])
     ;
 
-LONG_INTEGER
+LONGNUMBER
     : [0-9]+ 'L'
     ;
 
@@ -371,18 +375,15 @@ IDENTIFIER
     : ([A-Za-z] | '_')([A-Za-z0-9] | '_')*            // Added _ to support CQL (FHIR could constrain it out)
     ;
 
-DELIMITED_IDENTIFIER
+DELIMITEDIDENTIFIER
     : '`' (ESC | .)*? '`'
     ;
 
-SINGLE_QUOTED_STRING
+STRING
     : '\'' (ESC | .)*? '\''
     ;
 
-// SINGLE_QUOTED_STRING
-//   : '\'' ( ~["\r\n] )* '\'' 
-//   ;
-
+// Kept for FML-specific syntax (metadata, rule names, etc.)
 DOUBLE_QUOTED_STRING
   : '"' (ESC | .)*? '"'
   // : '"' ( ~["\r\n] )* '"' 
@@ -398,7 +399,7 @@ WS
     : [ \r\n\t]+ -> channel(HIDDEN)
     ;
 
-BLOCK_COMMENT
+COMMENT
         : '/*' .*? '*/' -> channel(HIDDEN)
         ;
 
@@ -416,7 +417,7 @@ LINE_COMMENT
 //   ;
 
 fragment ESC
-        : '\\' (["'\\/fnrt] | UNICODE)    // allow \", \', \\, \/, \f, etc. and \uXXX
+        : '\\' ([`"'\\/fnrt] | UNICODE)    // allow \", \', \\, \/, \f, etc. and \uXXX
         ;
 
 fragment UNICODE

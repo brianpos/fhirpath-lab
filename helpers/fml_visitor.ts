@@ -12,13 +12,13 @@ import type {
   ConstantDeclarationContext,
   GroupDeclarationContext,
   ParameterContext,
-  ExpressionContext,
-  MapExpressionContext,
-  MapExpressionSourceContext,
-  MapExpressionTargetContext,
+  MapRuleContext,
+  MapTransformationRuleContext,
+  RuleSourceContext,
+  RuleTargetContext,
   MapLineTargetContext,
   TransformContext,
-  InvocationContext,
+  GroupInvocationContext,
   DependentExpressionContext,
   QualifiedIdentifierContext,
   IdentifierContext,
@@ -354,11 +354,11 @@ export class FmlModelBuilder {
     
     // Process rules
     const rules: Rule[] = [];
-    const groupExprsNode = ctx.groupExpressions();
-    if (groupExprsNode) {
-      const exprNodes = groupExprsNode.expression_list();
-      for (const exprNode of exprNodes) {
-        const rule = this.visitExpression(exprNode);
+    const mapRulesNode = ctx.mapRules();
+    if (mapRulesNode) {
+      const ruleNodes = mapRulesNode.mapRule_list();
+      for (const ruleNode of ruleNodes) {
+        const rule = this.visitMapRule(ruleNode);
         if (rule) rules.push(rule);
       }
     }
@@ -398,18 +398,18 @@ export class FmlModelBuilder {
   /**
    * Visit expression node (rule)
    */
-  visitExpression(ctx: ExpressionContext): Rule | null {
-    // ExpressionContext can be MapFhirMarkupContext or MapSimpleCopyContext
-    // Check if it has a mapExpression (MapFhirMarkupContext)
-    const mapExprCtx = (ctx as any).mapExpression?.();
-    if (mapExprCtx) {
-      // This is a MapFhirMarkupContext - process the full map expression
-      return this.visitMapExpression(mapExprCtx);
+  visitMapRule(ctx: MapRuleContext): Rule | null {
+    // MapRuleContext can be MapFhirMarkupContext or MapSimpleCopyContext
+    // Check if it has a mapTransformationRule (MapFhirMarkupContext)
+    const mapTransformCtx = (ctx as any).mapTransformationRule?.();
+    if (mapTransformCtx) {
+      // This is a MapFhirMarkupContext - process the full map transformation rule
+      return this.visitMapTransformationRule(mapTransformCtx);
     }
     
     // Check if it's a MapSimpleCopyContext
     const qualIdNodes = (ctx as any).qualifiedIdentifier_list?.();
-    const nameNode = (ctx as any).mapExpressionName?.();
+    const nameNode = (ctx as any).ruleName?.();
     
     if (qualIdNodes) {
       // This is a MapSimpleCopyContext - simple copy rule
@@ -439,21 +439,21 @@ export class FmlModelBuilder {
   /**
    * Visit map expression node
    */
-  visitMapExpression(ctx: MapExpressionContext): Rule | null {
+  visitMapTransformationRule(ctx: MapTransformationRuleContext): Rule | null {
     const sources: RuleSource[] = [];
     const targets: RuleTarget[] = [];
     
     // Process sources
-    const sourceNodes = ctx.mapExpressionSource_list();
+    const sourceNodes = ctx.ruleSource_list();
     for (const sourceNode of sourceNodes) {
-      const source = this.visitMapExpressionSource(sourceNode);
+      const source = this.visitRuleSource(sourceNode);
       if (source) sources.push(source);
     }
     
     // Process targets
-    const targetNode = ctx.mapExpressionTarget();
+    const targetNode = ctx.ruleTarget();
     if (targetNode) {
-      const targetResults = this.visitMapExpressionTarget(targetNode);
+      const targetResults = this.visitRuleTarget(targetNode);
       targets.push(...targetResults);
     }
     
@@ -462,7 +462,7 @@ export class FmlModelBuilder {
     const dependent = depNode ? this.visitDependentExpression(depNode) : undefined;
     
     // Get rule name if present
-    const nameNode = ctx.mapExpressionName();
+    const nameNode = ctx.ruleName();
     const name = nameNode ? this.removeQuotes(nameNode.getText()) : undefined;
     
     return {
@@ -477,7 +477,7 @@ export class FmlModelBuilder {
   /**
    * Visit map expression source node
    */
-  visitMapExpressionSource(ctx: MapExpressionSourceContext): RuleSource | null {
+  visitRuleSource(ctx: RuleSourceContext): RuleSource | null {
     const qualIdNode = ctx.qualifiedIdentifier();
     if (!qualIdNode) return null;
     
@@ -551,7 +551,7 @@ export class FmlModelBuilder {
   /**
    * Visit map expression target node
    */
-  visitMapExpressionTarget(ctx: MapExpressionTargetContext): RuleTarget[] {
+  visitRuleTarget(ctx: RuleTargetContext): RuleTarget[] {
     const targets: RuleTarget[] = [];
     
     const targetNodes = ctx.mapLineTarget_list();
@@ -632,7 +632,7 @@ export class FmlModelBuilder {
     }
     
     // Check if it's an invocation (named transform)
-    const invocationNode = ctx.invocation();
+    const invocationNode = ctx.groupInvocation();
     if (invocationNode) {
       return this.visitInvocationAsTransform(invocationNode);
     }
@@ -656,16 +656,16 @@ export class FmlModelBuilder {
   /**
    * Visit invocation node as transform
    */
-  visitInvocationAsTransform(ctx: InvocationContext): Transform | null {
+  visitInvocationAsTransform(ctx: GroupInvocationContext): Transform | null {
     const idNode = ctx.identifier();
     if (!idNode) return null;
     
     const type = this.visitIdentifier(idNode);
     const parameters: TransformParameter[] = [];
     
-    const paramListNode = ctx.paramList();
+    const paramListNode = ctx.groupParamList();
     if (paramListNode) {
-      const paramNodes = paramListNode.param_list();
+      const paramNodes = paramListNode.groupParam_list();
       for (const paramNode of paramNodes) {
         const literalNode = paramNode.literal();
         const idNode = paramNode.ID();
@@ -707,18 +707,18 @@ export class FmlModelBuilder {
     const rules: Rule[] = [];
     
     // Process invocations
-    const invocationNodes = ctx.invocation_list();
+    const invocationNodes = ctx.groupInvocation_list();
     for (const invNode of invocationNodes) {
       const invocation = this.visitInvocationAsGroupInvocation(invNode);
       if (invocation) invocations.push(invocation);
     }
     
     // Process nested rules
-    const groupExprsNode = ctx.groupExpressions();
-    if (groupExprsNode) {
-      const exprNodes = groupExprsNode.expression_list();
-      for (const exprNode of exprNodes) {
-        const rule = this.visitExpression(exprNode);
+    const mapRulesNode = ctx.mapRules();
+    if (mapRulesNode) {
+      const ruleNodes = mapRulesNode.mapRule_list();
+      for (const ruleNode of ruleNodes) {
+        const rule = this.visitMapRule(ruleNode);
         if (rule) rules.push(rule);
       }
     }
@@ -733,16 +733,16 @@ export class FmlModelBuilder {
   /**
    * Visit invocation node as group invocation
    */
-  visitInvocationAsGroupInvocation(ctx: InvocationContext): GroupInvocation | null {
+  visitInvocationAsGroupInvocation(ctx: GroupInvocationContext): GroupInvocation | null {
     const idNode = ctx.identifier();
     if (!idNode) return null;
     
     const name = this.visitIdentifier(idNode);
     const parameters: InvocationParameter[] = [];
     
-    const paramListNode = ctx.paramList();
+    const paramListNode = ctx.groupParamList();
     if (paramListNode) {
-      const paramNodes = paramListNode.param_list();
+      const paramNodes = paramListNode.groupParam_list();
       for (const paramNode of paramNodes) {
         const literalNode = paramNode.literal();
         const idNode = paramNode.ID();
