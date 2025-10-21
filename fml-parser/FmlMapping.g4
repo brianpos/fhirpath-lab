@@ -1,7 +1,7 @@
 /**
  * Define a grammar called FhirMapper
  */
- grammar FmlMapping;
+grammar FmlMapping;
 
 // starting point for parsing a mapping file
 // in case we need nested ConceptMaps, we need to have this rule:
