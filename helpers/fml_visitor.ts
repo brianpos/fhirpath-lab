@@ -508,13 +508,8 @@ export class FmlModelBuilder {
     const defaultValue = defaultNode?.fpExpression()?.getText();
     
     // Get list mode if present
-    let listMode: 'first' | 'last' | 'not_first' | 'not_last' | 'only_one' | undefined;
-    const text = ctx.getText();
-    if (text.includes('first')) listMode = 'first';
-    else if (text.includes('not_first')) listMode = 'not_first';
-    else if (text.includes('last')) listMode = 'last';
-    else if (text.includes('not_last')) listMode = 'not_last';
-    else if (text.includes('only_one')) listMode = 'only_one';
+    const listModeNode = ctx.sourceListMode();
+    const listMode = listModeNode?.getText() as 'first' | 'last' | 'not_first' | 'not_last' | 'only_one' | undefined;
     
     // Get variable name if present
     const aliasNode = ctx.alias();
@@ -584,12 +579,8 @@ export class FmlModelBuilder {
     const variable = aliasNode?.identifier()?.getText();
     
     // Get list mode if present
-    let listMode: 'first' | 'share' | 'last' | 'single' | undefined;
-    const text = ctx.getText();
-    if (text.includes('first')) listMode = 'first';
-    else if (text.includes('share')) listMode = 'share';
-    else if (text.includes('last')) listMode = 'last';
-    else if (text.includes('single')) listMode = 'single';
+    const listModeNode = ctx.targetListMode();
+    const listMode = listModeNode?.getText() as 'first' | 'share' | 'last' | 'single' | undefined;
     
     return {
       position: this.getPosition(ctx),

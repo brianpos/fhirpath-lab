@@ -61,7 +61,7 @@ identifier
   ;
 
 structureDeclaration
-  : 'uses' url ('alias' identifier)? 'as' ('source' | 'queried' | 'target' | 'produced') 
+  : 'uses' url ('alias' identifier)? 'as' modelMode
   ;
 
 constantDeclaration 
@@ -77,7 +77,7 @@ parameters
   ;
 
 parameter
-  : ('source' | 'target') ID typeIdentifier?
+  : parameterMode ID typeIdentifier?
   ;
 
 mapRules
@@ -85,7 +85,7 @@ mapRules
   ;
 
 typeMode
-  : '<<' ('types' | 'type+') '>>'
+  : '<<' groupTypeMode '>>'
   ;
 
 extends
@@ -114,7 +114,7 @@ ruleSource
     typeIdentifier? 
     sourceCardinality? 
     sourceDefault? 
-    ('first' | 'not_first' | 'last' | 'not_last' | 'only_one')? 
+    sourceListMode? 
     alias? 
     whereClause? 
     checkClause? 
@@ -170,8 +170,8 @@ importDeclaration
 	;
 
 mapLineTarget
-  : qualifiedIdentifier ('=' transform)? alias? ('first' | 'share' | 'last' | 'single')?
-  | '(' fpExpression ')' alias? ('first' | 'share' | 'last' | 'single')?     // pure fhirpath based variables
+  : qualifiedIdentifier ('=' transform)? alias? targetListMode?
+  | '(' fpExpression ')' alias? targetListMode?     // pure fhirpath based variables
   | groupInvocation alias?     // alias is not required when simply invoking a group
   ;
 
@@ -253,6 +253,26 @@ constant
   : ID
   ;
 
+// Enum rules for FHIR ValueSet bindings
+sourceListMode
+    : 'first' | 'not_first' | 'last' | 'not_last' | 'only_one'
+    ;
+
+targetListMode
+    : 'first' | 'share' | 'last' | 'single'
+    ;
+
+groupTypeMode
+    : 'types' | 'type+'
+    ;
+
+modelMode
+    : 'source' | 'queried' | 'target' | 'produced'
+    ;
+
+parameterMode
+    : 'source' | 'target'
+    ;
 
 literal
   : NULL_LITERAL                                          #nullLiteral

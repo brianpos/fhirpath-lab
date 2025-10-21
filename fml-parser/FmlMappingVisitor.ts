@@ -74,6 +74,11 @@ import { SortDirectionArgumentContext } from "./FmlMappingParser.js";
 import { FpParamListContext } from "./FmlMappingParser.js";
 import { FpTypeSpecifierContext } from "./FmlMappingParser.js";
 import { ConstantContext } from "./FmlMappingParser.js";
+import { SourceListModeContext } from "./FmlMappingParser.js";
+import { TargetListModeContext } from "./FmlMappingParser.js";
+import { GroupTypeModeContext } from "./FmlMappingParser.js";
+import { ModelModeContext } from "./FmlMappingParser.js";
+import { ParameterModeContext } from "./FmlMappingParser.js";
 import { NullLiteralContext } from "./FmlMappingParser.js";
 import { BooleanLiteralContext } from "./FmlMappingParser.js";
 import { QuantityLiteralContext } from "./FmlMappingParser.js";
@@ -549,6 +554,36 @@ export default class FmlMappingVisitor<Result> extends ParseTreeVisitor<Result> 
 	 * @return the visitor result
 	 */
 	visitConstant?: (ctx: ConstantContext) => Result;
+	/**
+	 * Visit a parse tree produced by `FmlMappingParser.sourceListMode`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitSourceListMode?: (ctx: SourceListModeContext) => Result;
+	/**
+	 * Visit a parse tree produced by `FmlMappingParser.targetListMode`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitTargetListMode?: (ctx: TargetListModeContext) => Result;
+	/**
+	 * Visit a parse tree produced by `FmlMappingParser.groupTypeMode`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitGroupTypeMode?: (ctx: GroupTypeModeContext) => Result;
+	/**
+	 * Visit a parse tree produced by `FmlMappingParser.modelMode`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitModelMode?: (ctx: ModelModeContext) => Result;
+	/**
+	 * Visit a parse tree produced by `FmlMappingParser.parameterMode`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitParameterMode?: (ctx: ParameterModeContext) => Result;
 	/**
 	 * Visit a parse tree produced by the `nullLiteral`
 	 * labeled alternative in `FmlMappingParser.literal`.

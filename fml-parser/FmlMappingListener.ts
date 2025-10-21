@@ -74,6 +74,11 @@ import { SortDirectionArgumentContext } from "./FmlMappingParser.js";
 import { FpParamListContext } from "./FmlMappingParser.js";
 import { FpTypeSpecifierContext } from "./FmlMappingParser.js";
 import { ConstantContext } from "./FmlMappingParser.js";
+import { SourceListModeContext } from "./FmlMappingParser.js";
+import { TargetListModeContext } from "./FmlMappingParser.js";
+import { GroupTypeModeContext } from "./FmlMappingParser.js";
+import { ModelModeContext } from "./FmlMappingParser.js";
+import { ParameterModeContext } from "./FmlMappingParser.js";
 import { NullLiteralContext } from "./FmlMappingParser.js";
 import { BooleanLiteralContext } from "./FmlMappingParser.js";
 import { QuantityLiteralContext } from "./FmlMappingParser.js";
@@ -856,6 +861,56 @@ export default class FmlMappingListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	exitConstant?: (ctx: ConstantContext) => void;
+	/**
+	 * Enter a parse tree produced by `FmlMappingParser.sourceListMode`.
+	 * @param ctx the parse tree
+	 */
+	enterSourceListMode?: (ctx: SourceListModeContext) => void;
+	/**
+	 * Exit a parse tree produced by `FmlMappingParser.sourceListMode`.
+	 * @param ctx the parse tree
+	 */
+	exitSourceListMode?: (ctx: SourceListModeContext) => void;
+	/**
+	 * Enter a parse tree produced by `FmlMappingParser.targetListMode`.
+	 * @param ctx the parse tree
+	 */
+	enterTargetListMode?: (ctx: TargetListModeContext) => void;
+	/**
+	 * Exit a parse tree produced by `FmlMappingParser.targetListMode`.
+	 * @param ctx the parse tree
+	 */
+	exitTargetListMode?: (ctx: TargetListModeContext) => void;
+	/**
+	 * Enter a parse tree produced by `FmlMappingParser.groupTypeMode`.
+	 * @param ctx the parse tree
+	 */
+	enterGroupTypeMode?: (ctx: GroupTypeModeContext) => void;
+	/**
+	 * Exit a parse tree produced by `FmlMappingParser.groupTypeMode`.
+	 * @param ctx the parse tree
+	 */
+	exitGroupTypeMode?: (ctx: GroupTypeModeContext) => void;
+	/**
+	 * Enter a parse tree produced by `FmlMappingParser.modelMode`.
+	 * @param ctx the parse tree
+	 */
+	enterModelMode?: (ctx: ModelModeContext) => void;
+	/**
+	 * Exit a parse tree produced by `FmlMappingParser.modelMode`.
+	 * @param ctx the parse tree
+	 */
+	exitModelMode?: (ctx: ModelModeContext) => void;
+	/**
+	 * Enter a parse tree produced by `FmlMappingParser.parameterMode`.
+	 * @param ctx the parse tree
+	 */
+	enterParameterMode?: (ctx: ParameterModeContext) => void;
+	/**
+	 * Exit a parse tree produced by `FmlMappingParser.parameterMode`.
+	 * @param ctx the parse tree
+	 */
+	exitParameterMode?: (ctx: ParameterModeContext) => void;
 	/**
 	 * Enter a parse tree produced by the `nullLiteral`
 	 * labeled alternative in `FmlMappingParser.literal`.
