@@ -856,7 +856,7 @@ group SetEntryData(source src: Patient, target entry)
       this.$forceUpdate();
     },
 
-    debuggerStepBack() {
+    clearDebuggerSelectionMarkers() {
       let inputResourceEditor = this.$refs.inputResourceEditor as ResourceEditor;
       let outputResourceEditor = this.$refs.outputResourceEditor as ResourceEditor;
       this.removeMarkers(this.expressionEditor!, this.debugMapSelectionMarker ?? []);
@@ -865,6 +865,60 @@ group SetEntryData(source src: Patient, target entry)
       this.debugMapSelectionMarker = [];
       this.debugInputResourceSelectionMarker = [];
       this.debugOutputResourceSelectionMarker = [];
+    },
+
+    highlightDebuggerVariables() {
+      let inputResourceEditor = this.$refs.inputResourceEditor as ResourceEditor;
+      let outputResourceEditor = this.$refs.outputResourceEditor as ResourceEditor;
+      let inputPaths: string[] = [];
+      let outputPaths: string[] = [];
+      for (let n = this.variables.length - 1; n >= 0; n--) {
+        const variable = this.variables[n];
+        if (variable.mode === 'INPUT' && variable.path) {
+          let skip = false;
+          for (let p of inputPaths) {
+            if (p.length > variable.path.length && p.startsWith(variable.path)) {
+              // already highlighted
+              skip = true;
+              break;
+            }
+          }
+          if (skip) {
+            console.log("Skipping input variable highlight for ", variable.path);
+            continue;
+          }
+          inputPaths.push(variable.path);
+          const marker = inputResourceEditor.navigateToContext(fhirpath_r4_model, variable.path, variable.name, true);
+          console.log("Input Variable Marker: ", marker);
+          if (marker) {
+            this.debugInputResourceSelectionMarker?.push(marker);
+          }
+        } else if (variable.mode === 'OUTPUT' && variable.path) {
+          let skip = false;
+          for (let p of outputPaths) {
+            if (p.length > variable.path.length && p.startsWith(variable.path)) {
+              // already highlighted
+              skip = true;
+              break;
+            }
+          }
+          if (skip) {
+            console.log("Skipping output variable highlight for ", variable.path);
+            continue;
+          }
+          console.log('Highlighting output variable: ', variable.path);
+          outputPaths.push(variable.path);
+          const marker = outputResourceEditor.navigateToContext(fhirpath_r4_model, variable.path, variable.name, true);
+          if (marker) {
+            this.debugOutputResourceSelectionMarker?.push(marker);
+          }
+          console.log("Output Variable Marker: ", marker, this.debugOutputResourceSelectionMarker);
+        }
+      }
+    },
+
+    debuggerStepBack() {
+      this.clearDebuggerSelectionMarkers();
 
       if (this.debugTracePosition > 0)
         this.debugTracePosition--;
@@ -874,17 +928,13 @@ group SetEntryData(source src: Patient, target entry)
       }
       this.variables = trace.variables ?? [];
       this.scrollIntoView(this.debugTracePosition);
+
+      // also highlight any variables
+      this.highlightDebuggerVariables();
     },
 
     debuggerStepForward() {
-      let inputResourceEditor = this.$refs.inputResourceEditor as ResourceEditor;
-      let outputResourceEditor = this.$refs.outputResourceEditor as ResourceEditor;
-      this.removeMarkers(this.expressionEditor!, this.debugMapSelectionMarker ?? []);
-      inputResourceEditor.removeMarkers(this.debugInputResourceSelectionMarker ?? []);
-      outputResourceEditor.removeMarkers(this.debugOutputResourceSelectionMarker ?? []);
-      this.debugMapSelectionMarker = [];
-      this.debugInputResourceSelectionMarker = [];
-      this.debugOutputResourceSelectionMarker = [];
+      this.clearDebuggerSelectionMarkers();
 
       if (this.debugTracePosition < this.trace.length-1)
       {
@@ -898,6 +948,9 @@ group SetEntryData(source src: Patient, target entry)
       }
       this.variables = trace.variables ?? [];
       this.scrollIntoView(this.debugTracePosition);
+
+      // also highlight any variables
+      this.highlightDebuggerVariables();
     },
 
     highlightText(editor?: ace.Ace.Editor, startPosition?: number, length?: number, debugMode?: boolean): void {

@@ -1178,9 +1178,9 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       if (traceData) {
         setTimeout(() => {
           this.highlightText(this.expressionEditor, traceData.exprPosition, traceData.exprLength, true);
-          this.removeMarkers(this.resourceJsonEditor, this.debugTestResourceSelectionMarker);
+          this.removeMarkers(this.resourceJsonEditor, this.debugTestResourceSelectionMarker ?? []);
           this.debugTestResourceSelectionMarker = [];
-          this.removeMarkers(this.resourceJsonEditor, this.debugThisSelectionMarker);
+          this.removeMarkers(this.resourceJsonEditor, this.debugThisSelectionMarker ?? []);
           this.debugThisSelectionMarker = [];
           for (const v of traceData.values ?? []) {
             if (v.resourcePath) {
@@ -3428,7 +3428,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
 
     highlightText(editor?: ace.Ace.Editor, startPosition?: number, length?: number, debugMode?: boolean): void {
       if (debugMode){
-        this.removeMarkers(editor, this.debugExpressionSelectionMarker);
+        this.removeMarkers(editor, this.debugExpressionSelectionMarker ?? []);
         this.debugExpressionSelectionMarker = [];
       }
 

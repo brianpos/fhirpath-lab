@@ -102,82 +102,80 @@ export default class ResourceJsonEditor extends Vue {
     // this.updateNow();
   }
 
-  public navigateToContext(model: Model, elementPath: string, variableName?: string, debugMode?: boolean): Number | void {
+  public navigateToContext(model: Model, elementPath: string, variableName?: string, debugMode?: boolean): number | void {
     // Move the cursor in the test resource JSON editor to the element
-    setTimeout(() => {
-      if (this.resourceText) {
-        // Select the model to use, r5 or r4b
-        // console.log("Using "+modelInfo.version+" model for navigation");
-        var ast: IJsonNode | undefined;
-        if (this.resourceText.startsWith('<')) {
-          ast = parseXml(this.resourceText, model);
+    if (this.resourceText) {
+      // Select the model to use, r5 or r4b
+      // console.log("Using "+modelInfo.version+" model for navigation");
+      var ast: IJsonNode | undefined;
+      if (this.resourceText.startsWith('<')) {
+        ast = parseXml(this.resourceText, model);
 
-        } else {
-          ast = parseJson(this.resourceText, model);
-        }
-        console.log(ast);
-        if (ast) {
-            var node = findNodeByPath(ast, elementPath);
-            if (node) {
-              // inject the position information onto the issue
-              // so that UI can use it
-              this.aceEditor.clearSelection();
-              if (node.position) {
-                this.aceEditor.focus();
-                this.aceEditor.gotoLine(
-                  node.position.line,
-                  node.position.column,
-                  true
-                );
+      } else {
+        ast = parseJson(this.resourceText, model);
+      }
+      console.log(ast);
+      if (ast) {
+          var node = findNodeByPath(ast, elementPath);
+          if (node) {
+            // inject the position information onto the issue
+            // so that UI can use it
+            this.aceEditor.clearSelection();
+            if (node.position) {
+              this.aceEditor.focus();
+              this.aceEditor.gotoLine(
+                node.position.line,
+                node.position.column,
+                true
+              );
 
-                if (node.position.value_stop_pos) {
-                  let substr = this.resourceText.substring(node.position.prop_start_pos, node.position.value_stop_pos+1);
-                  const endRowOffset = substr.split(/\r\n|\r|\n/).length;
-                  const endRow = node.position.line + endRowOffset - 1;
-                  const endCollOffset = substr.split(/\r\n|\r|\n/)[endRowOffset - 1].length;
-                  const endCol = node.position.column + (endCollOffset > 1 ? endCollOffset + 1 : endCollOffset);
-                  const range = new ace.Range(node.position.line-1, node.position.column, endRow-1, endCol);
-                  console.log("context", range);
+              if (node.position.value_stop_pos) {
+                let substr = this.resourceText.substring(node.position.prop_start_pos, node.position.value_stop_pos+1);
+                const endRowOffset = substr.split(/\r\n|\r|\n/).length;
+                const endRow = node.position.line + endRowOffset - 1;
+                const endCollOffset = substr.split(/\r\n|\r|\n/)[endRowOffset - 1].length;
+                const endCol = node.position.column + (endCollOffset > 1 ? endCollOffset + 1 : endCollOffset);
+                const range = new ace.Range(node.position.line-1, node.position.column, endRow-1, endCol);
+                console.log("context", range);
 
-                  if (debugMode) {
-                    const selectionMarker = this.aceEditor.session.addMarker(range, "debugSelection", "text", false);
-                    return selectionMarker;
-                  }
-                  else {
-                    const selectionMarker = this.aceEditor.session.addMarker(range, "resultSelection", "fullLine", true);
-                    // after 1.5 seconds remove the highlight.
-                    setTimeout(() => {
-                      this.aceEditor?.session.removeMarker(selectionMarker);
-                    }, 1500);
-                  }                   
-                } else if (node.position.prop_stop_pos) {
-                  // prop based stuff
-                  let substr = this.resourceText.substring(node.position.prop_start_pos, node.position.prop_stop_pos+1);
-                  const endRowOffset = substr.split(/\r\n|\r|\n/).length;
-                  const endRow = node.position.line + endRowOffset - 1;
-                  const endCollOffset = substr.split(/\r\n|\r|\n/)[endRowOffset - 1].length;
-                  const endCol = node.position.column + (endCollOffset > 1 ? endCollOffset + 1 : endCollOffset);
-                  const range = new ace.Range(node.position.line-1, node.position.column, endRow-1, endCol);
-                  console.log("context prop", range);
-
-                  if (debugMode) {
-                    const selectionMarker = this.aceEditor.session.addMarker(range, "debugSelection", "text", false);
-                    return selectionMarker;
-                  }
-                  else {
-                    const selectionMarker = this.aceEditor.session.addMarker(range, "resultSelection", "fullLine", true);
-                    // after 1.5 seconds remove the highlight.
-                    setTimeout(() => {
-                      this.aceEditor?.session.removeMarker(selectionMarker);
-                    }, 1500);
-                  }                   
+                if (debugMode) {
+                  const selectionMarker = this.aceEditor.session.addMarker(range, "debugSelection", "text", false);
+                  return selectionMarker;
                 }
-                this.$forceUpdate();
+                else {
+                  const selectionMarker = this.aceEditor.session.addMarker(range, "resultSelection", "fullLine", true);
+                  // after 1.5 seconds remove the highlight.
+                  setTimeout(() => {
+                    this.aceEditor?.session.removeMarker(selectionMarker);
+                  }, 1500);
+                }                   
+              } else if (node.position.prop_stop_pos) {
+                // prop based stuff
+                let substr = this.resourceText.substring(node.position.prop_start_pos, node.position.prop_stop_pos+1);
+                const endRowOffset = substr.split(/\r\n|\r|\n/).length;
+                const endRow = node.position.line + endRowOffset - 1;
+                const endCollOffset = substr.split(/\r\n|\r|\n/)[endRowOffset - 1].length;
+                const endCol = node.position.column + (endCollOffset > 1 ? endCollOffset + 1 : endCollOffset);
+                const range = new ace.Range(node.position.line-1, node.position.column, endRow-1, endCol);
+                console.log("context prop", range);
+
+                if (debugMode) {
+                  const selectionMarker = this.aceEditor.session.addMarker(range, "debugSelection", "text", false);
+                  return selectionMarker;
+                }
+                else {
+                  const selectionMarker = this.aceEditor.session.addMarker(range, "resultSelection", "fullLine", true);
+                  // after 1.5 seconds remove the highlight.
+                  setTimeout(() => {
+                    this.aceEditor?.session.removeMarker(selectionMarker);
+                  }, 1500);
+                }                   
               }
+              this.$forceUpdate();
             }
           }
-      }
-    });
+        }
+    }
   }
 
   public removeMarker(markerId: number): void {
