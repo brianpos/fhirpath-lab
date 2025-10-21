@@ -204,8 +204,8 @@ export default class FmlMappingParser extends Parser {
                                                             "'contains'", 
                                                             "'is'", "'asc'", 
                                                             "'desc'", "'first'", 
-                                                            "'last'", "'.'", 
-                                                            "'default'", 
+                                                            "'last'", "'sort'", 
+                                                            "'.'", "'default'", 
                                                             "'log'", "'then'", 
                                                             "'['", "']'", 
                                                             "'+'", "'/'", 
@@ -219,8 +219,7 @@ export default class FmlMappingParser extends Parser {
                                                             "'implies'", 
                                                             "'$this'", "'$index'", 
                                                             "'$total'", 
-                                                            "'%'", "'sort'", 
-                                                            "'not_first'", 
+                                                            "'%'", "'not_first'", 
                                                             "'not_last'", 
                                                             "'only_one'", 
                                                             "'share'", "'single'", 
@@ -1085,7 +1084,7 @@ export default class FmlMappingParser extends Parser {
 			this.state = 253;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			while ((((_la) & ~0x1F) === 0 && ((1 << _la) & 4279262992) !== 0) || ((((_la - 32)) & ~0x1F) === 0 && ((1 << (_la - 32)) & 31) !== 0) || _la===97 || _la===98) {
+			while ((((_la) & ~0x1F) === 0 && ((1 << _la) & 4279262992) !== 0) || ((((_la - 32)) & ~0x1F) === 0 && ((1 << (_la - 32)) & 63) !== 0) || _la===97 || _la===98) {
 				{
 				{
 				this.state = 250;
@@ -1281,7 +1280,7 @@ export default class FmlMappingParser extends Parser {
 			this.state = 287;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la===40) {
+			if (_la===41) {
 				{
 				this.state = 286;
 				this.dependentExpression();
@@ -1414,7 +1413,7 @@ export default class FmlMappingParser extends Parser {
 			this.state = 310;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la===38) {
+			if (_la===39) {
 				{
 				this.state = 309;
 				this.sourceDefault();
@@ -1464,7 +1463,7 @@ export default class FmlMappingParser extends Parser {
 			this.state = 325;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la===39) {
+			if (_la===40) {
 				{
 				this.state = 324;
 				this.log();
@@ -1714,7 +1713,7 @@ export default class FmlMappingParser extends Parser {
 			{
 			this.state = 367;
 			_la = this._input.LA(1);
-			if(!((((_la) & ~0x1F) === 0 && ((1 << _la) & 4279262992) !== 0) || ((((_la - 32)) & ~0x1F) === 0 && ((1 << (_la - 32)) & 31) !== 0) || _la===97 || _la===98)) {
+			if(!((((_la) & ~0x1F) === 0 && ((1 << _la) & 4279262992) !== 0) || ((((_la - 32)) & ~0x1F) === 0 && ((1 << (_la - 32)) & 63) !== 0) || _la===97 || _la===98)) {
 			this._errHandler.recoverInline(this);
 			}
 			else {
@@ -1729,10 +1728,10 @@ export default class FmlMappingParser extends Parser {
 					{
 					{
 					this.state = 368;
-					this.match(FmlMappingParser.T__36);
+					this.match(FmlMappingParser.T__37);
 					this.state = 369;
 					_la = this._input.LA(1);
-					if(!((((_la) & ~0x1F) === 0 && ((1 << _la) & 4279262992) !== 0) || ((((_la - 32)) & ~0x1F) === 0 && ((1 << (_la - 32)) & 31) !== 0) || _la===97 || _la===98)) {
+					if(!((((_la) & ~0x1F) === 0 && ((1 << _la) & 4279262992) !== 0) || ((((_la - 32)) & ~0x1F) === 0 && ((1 << (_la - 32)) & 63) !== 0) || _la===97 || _la===98)) {
 					this._errHandler.recoverInline(this);
 					}
 					else {
@@ -1774,7 +1773,7 @@ export default class FmlMappingParser extends Parser {
 				this.enterOuterAlt(localctx, 1);
 				{
 				this.state = 375;
-				this.match(FmlMappingParser.T__37);
+				this.match(FmlMappingParser.T__38);
 				this.state = 376;
 				this.match(FmlMappingParser.T__14);
 				this.state = 377;
@@ -1787,7 +1786,7 @@ export default class FmlMappingParser extends Parser {
 				this.enterOuterAlt(localctx, 2);
 				{
 				this.state = 380;
-				this.match(FmlMappingParser.T__37);
+				this.match(FmlMappingParser.T__38);
 				this.state = 381;
 				this.match(FmlMappingParser.DOUBLE_QUOTED_STRING);
 				}
@@ -1905,7 +1904,7 @@ export default class FmlMappingParser extends Parser {
 			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 397;
-			this.match(FmlMappingParser.T__38);
+			this.match(FmlMappingParser.T__39);
 			this.state = 398;
 			this.match(FmlMappingParser.T__14);
 			this.state = 399;
@@ -1937,7 +1936,7 @@ export default class FmlMappingParser extends Parser {
 			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 402;
-			this.match(FmlMappingParser.T__39);
+			this.match(FmlMappingParser.T__40);
 			this.state = 415;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
@@ -2259,7 +2258,7 @@ export default class FmlMappingParser extends Parser {
 			case 34:
 			case 35:
 			case 36:
-			case 60:
+			case 37:
 			case 61:
 			case 62:
 			case 63:
@@ -2287,14 +2286,14 @@ export default class FmlMappingParser extends Parser {
 				}
 				break;
 			case 6:
-			case 43:
+			case 44:
 				{
 				localctx = new PolarityExpressionContext(this, localctx);
 				this._ctx = localctx;
 				_prevctx = localctx;
 				this.state = 450;
 				_la = this._input.LA(1);
-				if(!(_la===6 || _la===43)) {
+				if(!(_la===6 || _la===44)) {
 				this._errHandler.recoverInline(this);
 				}
 				else {
@@ -2332,7 +2331,7 @@ export default class FmlMappingParser extends Parser {
 						}
 						this.state = 455;
 						_la = this._input.LA(1);
-						if(!(((((_la - 23)) & ~0x1F) === 0 && ((1 << (_la - 23)) & 6291585) !== 0))) {
+						if(!(((((_la - 23)) & ~0x1F) === 0 && ((1 << (_la - 23)) & 12583041) !== 0))) {
 						this._errHandler.recoverInline(this);
 						}
 						else {
@@ -2353,7 +2352,7 @@ export default class FmlMappingParser extends Parser {
 						}
 						this.state = 458;
 						_la = this._input.LA(1);
-						if(!(_la===6 || _la===43 || _la===46)) {
+						if(!(_la===6 || _la===44 || _la===47)) {
 						this._errHandler.recoverInline(this);
 						}
 						else {
@@ -2374,7 +2373,7 @@ export default class FmlMappingParser extends Parser {
 						}
 						{
 						this.state = 461;
-						this.match(FmlMappingParser.T__46);
+						this.match(FmlMappingParser.T__47);
 						}
 						this.state = 462;
 						this.fpExpression(8);
@@ -2390,7 +2389,7 @@ export default class FmlMappingParser extends Parser {
 						}
 						this.state = 464;
 						_la = this._input.LA(1);
-						if(!(((((_la - 48)) & ~0x1F) === 0 && ((1 << (_la - 48)) & 15) !== 0))) {
+						if(!(((((_la - 49)) & ~0x1F) === 0 && ((1 << (_la - 49)) & 15) !== 0))) {
 						this._errHandler.recoverInline(this);
 						}
 						else {
@@ -2411,7 +2410,7 @@ export default class FmlMappingParser extends Parser {
 						}
 						this.state = 467;
 						_la = this._input.LA(1);
-						if(!(_la===5 || ((((_la - 52)) & ~0x1F) === 0 && ((1 << (_la - 52)) & 7) !== 0))) {
+						if(!(_la===5 || ((((_la - 53)) & ~0x1F) === 0 && ((1 << (_la - 53)) & 7) !== 0))) {
 						this._errHandler.recoverInline(this);
 						}
 						else {
@@ -2432,7 +2431,7 @@ export default class FmlMappingParser extends Parser {
 						}
 						this.state = 470;
 						_la = this._input.LA(1);
-						if(!(_la===31 || _la===55)) {
+						if(!(_la===31 || _la===56)) {
 						this._errHandler.recoverInline(this);
 						}
 						else {
@@ -2453,7 +2452,7 @@ export default class FmlMappingParser extends Parser {
 						}
 						{
 						this.state = 473;
-						this.match(FmlMappingParser.T__55);
+						this.match(FmlMappingParser.T__56);
 						}
 						this.state = 474;
 						this.fpExpression(4);
@@ -2469,7 +2468,7 @@ export default class FmlMappingParser extends Parser {
 						}
 						this.state = 476;
 						_la = this._input.LA(1);
-						if(!(_la===57 || _la===58)) {
+						if(!(_la===58 || _la===59)) {
 						this._errHandler.recoverInline(this);
 						}
 						else {
@@ -2490,7 +2489,7 @@ export default class FmlMappingParser extends Parser {
 						}
 						{
 						this.state = 479;
-						this.match(FmlMappingParser.T__58);
+						this.match(FmlMappingParser.T__59);
 						}
 						this.state = 480;
 						this.fpExpression(2);
@@ -2505,7 +2504,7 @@ export default class FmlMappingParser extends Parser {
 							throw this.createFailedPredicateException("this.precpred(this._ctx, 13)");
 						}
 						this.state = 482;
-						this.match(FmlMappingParser.T__36);
+						this.match(FmlMappingParser.T__37);
 						this.state = 483;
 						this.fpInvocation();
 						}
@@ -2519,11 +2518,11 @@ export default class FmlMappingParser extends Parser {
 							throw this.createFailedPredicateException("this.precpred(this._ctx, 12)");
 						}
 						this.state = 485;
-						this.match(FmlMappingParser.T__40);
+						this.match(FmlMappingParser.T__41);
 						this.state = 486;
 						this.fpExpression(0);
 						this.state = 487;
-						this.match(FmlMappingParser.T__41);
+						this.match(FmlMappingParser.T__42);
 						}
 						break;
 					case 12:
@@ -2599,10 +2598,10 @@ export default class FmlMappingParser extends Parser {
 			case 34:
 			case 35:
 			case 36:
-			case 60:
+			case 37:
 			case 61:
 			case 62:
-			case 64:
+			case 63:
 			case 97:
 			case 98:
 			case 99:
@@ -2630,7 +2629,7 @@ export default class FmlMappingParser extends Parser {
 				this.literal();
 				}
 				break;
-			case 63:
+			case 64:
 				localctx = new ExternalConstantTermContext(this, localctx);
 				this.enterOuterAlt(localctx, 3);
 				{
@@ -2697,7 +2696,7 @@ export default class FmlMappingParser extends Parser {
 				this.enterOuterAlt(localctx, 3);
 				{
 				this.state = 508;
-				this.match(FmlMappingParser.T__59);
+				this.match(FmlMappingParser.T__60);
 				}
 				break;
 			case 4:
@@ -2705,7 +2704,7 @@ export default class FmlMappingParser extends Parser {
 				this.enterOuterAlt(localctx, 4);
 				{
 				this.state = 509;
-				this.match(FmlMappingParser.T__60);
+				this.match(FmlMappingParser.T__61);
 				}
 				break;
 			case 5:
@@ -2713,7 +2712,7 @@ export default class FmlMappingParser extends Parser {
 				this.enterOuterAlt(localctx, 5);
 				{
 				this.state = 510;
-				this.match(FmlMappingParser.T__61);
+				this.match(FmlMappingParser.T__62);
 				}
 				break;
 			}
@@ -2740,7 +2739,7 @@ export default class FmlMappingParser extends Parser {
 			this.enterOuterAlt(localctx, 1);
 			{
 			this.state = 513;
-			this.match(FmlMappingParser.T__62);
+			this.match(FmlMappingParser.T__63);
 			this.state = 516;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
@@ -2785,18 +2784,18 @@ export default class FmlMappingParser extends Parser {
 		try {
 			this.state = 538;
 			this._errHandler.sync(this);
-			switch (this._input.LA(1)) {
-			case 64:
+			switch ( this._interp.adaptivePredict(this._input, 56, this._ctx) ) {
+			case 1:
 				this.enterOuterAlt(localctx, 1);
 				{
 				this.state = 518;
-				this.match(FmlMappingParser.T__63);
+				this.match(FmlMappingParser.T__36);
 				this.state = 519;
 				this.match(FmlMappingParser.T__14);
 				this.state = 528;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
-				if (((((_la - 4)) & ~0x1F) === 0 && ((1 << (_la - 4)) & 4293987829) !== 0) || ((((_la - 36)) & ~0x1F) === 0 && ((1 << (_la - 36)) & 520093825) !== 0) || ((((_la - 89)) & ~0x1F) === 0 && ((1 << (_la - 89)) & 8191) !== 0)) {
+				if (((((_la - 4)) & ~0x1F) === 0 && ((1 << (_la - 4)) & 4293987829) !== 0) || ((((_la - 36)) & ~0x1F) === 0 && ((1 << (_la - 36)) & 503316739) !== 0) || ((((_la - 89)) & ~0x1F) === 0 && ((1 << (_la - 89)) & 8191) !== 0)) {
 					{
 					this.state = 520;
 					this.fpSortArgument();
@@ -2823,29 +2822,7 @@ export default class FmlMappingParser extends Parser {
 				this.match(FmlMappingParser.T__16);
 				}
 				break;
-			case 4:
-			case 8:
-			case 9:
-			case 10:
-			case 11:
-			case 12:
-			case 14:
-			case 20:
-			case 24:
-			case 25:
-			case 26:
-			case 27:
-			case 28:
-			case 29:
-			case 30:
-			case 31:
-			case 32:
-			case 33:
-			case 34:
-			case 35:
-			case 36:
-			case 97:
-			case 98:
+			case 2:
 				this.enterOuterAlt(localctx, 2);
 				{
 				this.state = 531;
@@ -2855,7 +2832,7 @@ export default class FmlMappingParser extends Parser {
 				this.state = 534;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
-				if (((((_la - 4)) & ~0x1F) === 0 && ((1 << (_la - 4)) & 4293987829) !== 0) || ((((_la - 36)) & ~0x1F) === 0 && ((1 << (_la - 36)) & 520093825) !== 0) || ((((_la - 89)) & ~0x1F) === 0 && ((1 << (_la - 89)) & 8191) !== 0)) {
+				if (((((_la - 4)) & ~0x1F) === 0 && ((1 << (_la - 4)) & 4293987829) !== 0) || ((((_la - 36)) & ~0x1F) === 0 && ((1 << (_la - 36)) & 503316739) !== 0) || ((((_la - 89)) & ~0x1F) === 0 && ((1 << (_la - 89)) & 8191) !== 0)) {
 					{
 					this.state = 533;
 					this.fpParamList();
@@ -2866,8 +2843,6 @@ export default class FmlMappingParser extends Parser {
 				this.match(FmlMappingParser.T__16);
 				}
 				break;
-			default:
-				throw new NoViableAltException(this);
 			}
 		}
 		catch (re) {
@@ -3474,8 +3449,8 @@ export default class FmlMappingParser extends Parser {
 	36,38,40,42,44,46,48,50,52,54,56,58,60,62,64,66,68,70,72,74,76,78,80,82,
 	84,86,88,90,92,94,96,98,100,102,104,106,108,110,112,114,0,22,2,0,97,97,
 	100,101,1,0,100,101,1,0,97,99,2,0,23,23,96,96,6,0,4,4,8,12,14,14,20,20,
-	24,36,97,98,2,0,6,6,43,43,3,0,23,23,30,30,44,45,3,0,6,6,43,43,46,46,1,0,
-	48,51,2,0,5,5,52,54,2,0,31,31,55,55,1,0,57,58,2,0,11,11,32,32,1,0,33,34,
+	24,37,97,98,2,0,6,6,44,44,3,0,23,23,30,30,45,46,3,0,6,6,44,44,47,47,1,0,
+	49,52,2,0,5,5,53,55,2,0,31,31,56,56,1,0,58,59,2,0,11,11,32,32,1,0,33,34,
 	2,0,35,36,65,67,2,0,35,36,68,69,2,0,27,27,70,70,2,0,25,26,71,72,1,0,25,
 	26,1,0,95,96,1,0,73,80,1,0,81,88,617,0,119,1,0,0,0,2,156,1,0,0,0,4,171,
 	1,0,0,0,6,176,1,0,0,0,8,180,1,0,0,0,10,184,1,0,0,0,12,188,1,0,0,0,14,190,
@@ -3556,15 +3531,15 @@ export default class FmlMappingParser extends Parser {
 	357,356,1,0,0,0,357,358,1,0,0,0,358,360,1,0,0,0,359,335,1,0,0,0,359,346,
 	1,0,0,0,359,355,1,0,0,0,360,55,1,0,0,0,361,362,5,96,0,0,362,363,5,22,0,
 	0,363,364,3,58,29,0,364,57,1,0,0,0,365,366,7,3,0,0,366,59,1,0,0,0,367,372,
-	7,4,0,0,368,369,5,37,0,0,369,371,7,4,0,0,370,368,1,0,0,0,371,374,1,0,0,
+	7,4,0,0,368,369,5,38,0,0,369,371,7,4,0,0,370,368,1,0,0,0,371,374,1,0,0,
 	0,372,370,1,0,0,0,372,373,1,0,0,0,373,61,1,0,0,0,374,372,1,0,0,0,375,376,
-	5,38,0,0,376,377,5,15,0,0,377,378,3,84,42,0,378,379,5,17,0,0,379,383,1,
-	0,0,0,380,381,5,38,0,0,381,383,5,101,0,0,382,375,1,0,0,0,382,380,1,0,0,
+	5,39,0,0,376,377,5,15,0,0,377,378,3,84,42,0,378,379,5,17,0,0,379,383,1,
+	0,0,0,380,381,5,39,0,0,381,383,5,101,0,0,382,375,1,0,0,0,382,380,1,0,0,
 	0,383,63,1,0,0,0,384,385,5,11,0,0,385,386,3,22,11,0,386,65,1,0,0,0,387,
 	388,5,28,0,0,388,389,5,15,0,0,389,390,3,84,42,0,390,391,5,17,0,0,391,67,
 	1,0,0,0,392,393,5,29,0,0,393,394,5,15,0,0,394,395,3,84,42,0,395,396,5,17,
-	0,0,396,69,1,0,0,0,397,398,5,39,0,0,398,399,5,15,0,0,399,400,3,84,42,0,
-	400,401,5,17,0,0,401,71,1,0,0,0,402,415,5,40,0,0,403,408,3,78,39,0,404,
+	0,0,396,69,1,0,0,0,397,398,5,40,0,0,398,399,5,15,0,0,399,400,3,84,42,0,
+	400,401,5,17,0,0,401,71,1,0,0,0,402,415,5,41,0,0,403,408,3,78,39,0,404,
 	405,5,16,0,0,405,407,3,78,39,0,406,404,1,0,0,0,407,410,1,0,0,0,408,406,
 	1,0,0,0,408,409,1,0,0,0,409,412,1,0,0,0,410,408,1,0,0,0,411,413,3,34,17,
 	0,412,411,1,0,0,0,412,413,1,0,0,0,413,416,1,0,0,0,414,416,3,34,17,0,415,
@@ -3580,13 +3555,13 @@ export default class FmlMappingParser extends Parser {
 	1,0,0,0,448,449,6,42,-1,0,449,453,3,86,43,0,450,451,7,5,0,0,451,453,3,84,
 	42,11,452,448,1,0,0,0,452,450,1,0,0,0,453,494,1,0,0,0,454,455,10,10,0,0,
 	455,456,7,6,0,0,456,493,3,84,42,11,457,458,10,9,0,0,458,459,7,7,0,0,459,
-	493,3,84,42,10,460,461,10,7,0,0,461,462,5,47,0,0,462,493,3,84,42,8,463,
+	493,3,84,42,10,460,461,10,7,0,0,461,462,5,48,0,0,462,493,3,84,42,8,463,
 	464,10,6,0,0,464,465,7,8,0,0,465,493,3,84,42,7,466,467,10,5,0,0,467,468,
 	7,9,0,0,468,493,3,84,42,6,469,470,10,4,0,0,470,471,7,10,0,0,471,493,3,84,
-	42,5,472,473,10,3,0,0,473,474,5,56,0,0,474,493,3,84,42,4,475,476,10,2,0,
-	0,476,477,7,11,0,0,477,493,3,84,42,3,478,479,10,1,0,0,479,480,5,59,0,0,
-	480,493,3,84,42,2,481,482,10,13,0,0,482,483,5,37,0,0,483,493,3,88,44,0,
-	484,485,10,12,0,0,485,486,5,41,0,0,486,487,3,84,42,0,487,488,5,42,0,0,488,
+	42,5,472,473,10,3,0,0,473,474,5,57,0,0,474,493,3,84,42,4,475,476,10,2,0,
+	0,476,477,7,11,0,0,477,493,3,84,42,3,478,479,10,1,0,0,479,480,5,60,0,0,
+	480,493,3,84,42,2,481,482,10,13,0,0,482,483,5,38,0,0,483,493,3,88,44,0,
+	484,485,10,12,0,0,485,486,5,42,0,0,486,487,3,84,42,0,487,488,5,43,0,0,488,
 	493,1,0,0,0,489,490,10,8,0,0,490,491,7,12,0,0,491,493,3,98,49,0,492,454,
 	1,0,0,0,492,457,1,0,0,0,492,460,1,0,0,0,492,463,1,0,0,0,492,466,1,0,0,0,
 	492,469,1,0,0,0,492,472,1,0,0,0,492,475,1,0,0,0,492,478,1,0,0,0,492,481,
@@ -3595,10 +3570,10 @@ export default class FmlMappingParser extends Parser {
 	3,112,56,0,499,505,3,90,45,0,500,501,5,15,0,0,501,502,3,84,42,0,502,503,
 	5,17,0,0,503,505,1,0,0,0,504,497,1,0,0,0,504,498,1,0,0,0,504,499,1,0,0,
 	0,504,500,1,0,0,0,505,87,1,0,0,0,506,512,3,92,46,0,507,512,3,22,11,0,508,
-	512,5,60,0,0,509,512,5,61,0,0,510,512,5,62,0,0,511,506,1,0,0,0,511,507,
+	512,5,61,0,0,509,512,5,62,0,0,510,512,5,63,0,0,511,506,1,0,0,0,511,507,
 	1,0,0,0,511,508,1,0,0,0,511,509,1,0,0,0,511,510,1,0,0,0,512,89,1,0,0,0,
-	513,516,5,63,0,0,514,517,3,22,11,0,515,517,5,100,0,0,516,514,1,0,0,0,516,
-	515,1,0,0,0,517,91,1,0,0,0,518,519,5,64,0,0,519,528,5,15,0,0,520,525,3,
+	513,516,5,64,0,0,514,517,3,22,11,0,515,517,5,100,0,0,516,514,1,0,0,0,516,
+	515,1,0,0,0,517,91,1,0,0,0,518,519,5,37,0,0,519,528,5,15,0,0,520,525,3,
 	94,47,0,521,522,5,16,0,0,522,524,3,94,47,0,523,521,1,0,0,0,524,527,1,0,
 	0,0,525,523,1,0,0,0,525,526,1,0,0,0,526,529,1,0,0,0,527,525,1,0,0,0,528,
 	520,1,0,0,0,528,529,1,0,0,0,529,530,1,0,0,0,530,539,5,17,0,0,531,532,3,
