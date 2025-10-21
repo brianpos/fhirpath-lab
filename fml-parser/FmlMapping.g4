@@ -58,6 +58,13 @@ identifier
   : ID
   | IDENTIFIER
   | DELIMITEDIDENTIFIER
+  | 'as'
+  | 'contains'
+  | 'in'
+  | 'is'
+  | 'asc'
+  | 'desc'
+  | 'sort'
   ;
 
 structureDeclaration

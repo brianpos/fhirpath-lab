@@ -107,6 +107,7 @@ identifier
         | 'is'
         | 'asc'
         | 'desc'
+        | 'sort'
         ;
 
 
