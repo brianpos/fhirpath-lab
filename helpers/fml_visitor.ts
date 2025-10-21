@@ -16,7 +16,6 @@ import type {
   MapTransformationRuleContext,
   RuleSourceContext,
   RuleTargetContext,
-  MapLineTargetContext,
   TransformContext,
   GroupInvocationContext,
   DependentExpressionContext,
@@ -444,16 +443,17 @@ export class FmlModelBuilder {
     const targets: RuleTarget[] = [];
     
     // Process sources
-    const sourceNodes = ctx.ruleSource_list();
+    const sourcesNode = ctx.ruleSources();
+    const sourceNodes = sourcesNode?.ruleSource_list() || [];
     for (const sourceNode of sourceNodes) {
       const source = this.visitRuleSource(sourceNode);
       if (source) sources.push(source);
     }
     
     // Process targets
-    const targetNode = ctx.ruleTarget();
-    if (targetNode) {
-      const targetResults = this.visitRuleTarget(targetNode);
+    const targetsNode = ctx.ruleTargets();
+    if (targetsNode) {
+      const targetResults = this.visitRuleTargets(targetsNode);
       targets.push(...targetResults);
     }
     
@@ -544,14 +544,15 @@ export class FmlModelBuilder {
   }
   
   /**
-   * Visit map expression target node
+   * Visit rule targets wrapper (contains multiple ruleTarget elements)
    */
-  visitRuleTarget(ctx: RuleTargetContext): RuleTarget[] {
+  visitRuleTargets(ctx: any): RuleTarget[] {
     const targets: RuleTarget[] = [];
     
-    const targetNodes = ctx.mapLineTarget_list();
+    // The new structure: RuleTargetsContext has ruleTarget_list() method
+    const targetNodes = ctx.ruleTarget_list();
     for (const targetNode of targetNodes) {
-      const target = this.visitMapLineTarget(targetNode);
+      const target = this.visitSingleRuleTarget(targetNode);
       if (target) targets.push(target);
     }
     
@@ -559,9 +560,9 @@ export class FmlModelBuilder {
   }
   
   /**
-   * Visit map line target node
+   * Visit individual rule target element
    */
-  visitMapLineTarget(ctx: MapLineTargetContext): RuleTarget | null {
+  visitSingleRuleTarget(ctx: any): RuleTarget | null {
     const qualIdNode = ctx.qualifiedIdentifier();
     if (!qualIdNode) return null;
     

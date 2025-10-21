@@ -28,7 +28,9 @@ import { MapSimpleCopyContext } from "./FmlMappingParser.js";
 import { MapFhirMarkupContext } from "./FmlMappingParser.js";
 import { MapTransformationRuleContext } from "./FmlMappingParser.js";
 import { RuleNameContext } from "./FmlMappingParser.js";
+import { RuleSourcesContext } from "./FmlMappingParser.js";
 import { RuleSourceContext } from "./FmlMappingParser.js";
+import { RuleTargetsContext } from "./FmlMappingParser.js";
 import { RuleTargetContext } from "./FmlMappingParser.js";
 import { SourceCardinalityContext } from "./FmlMappingParser.js";
 import { UpperBoundContext } from "./FmlMappingParser.js";
@@ -40,7 +42,6 @@ import { CheckClauseContext } from "./FmlMappingParser.js";
 import { LogContext } from "./FmlMappingParser.js";
 import { DependentExpressionContext } from "./FmlMappingParser.js";
 import { ImportDeclarationContext } from "./FmlMappingParser.js";
-import { MapLineTargetContext } from "./FmlMappingParser.js";
 import { TransformContext } from "./FmlMappingParser.js";
 import { GroupInvocationContext } from "./FmlMappingParser.js";
 import { GroupParamListContext } from "./FmlMappingParser.js";
@@ -354,6 +355,16 @@ export default class FmlMappingListener extends ParseTreeListener {
 	 */
 	exitRuleName?: (ctx: RuleNameContext) => void;
 	/**
+	 * Enter a parse tree produced by `FmlMappingParser.ruleSources`.
+	 * @param ctx the parse tree
+	 */
+	enterRuleSources?: (ctx: RuleSourcesContext) => void;
+	/**
+	 * Exit a parse tree produced by `FmlMappingParser.ruleSources`.
+	 * @param ctx the parse tree
+	 */
+	exitRuleSources?: (ctx: RuleSourcesContext) => void;
+	/**
 	 * Enter a parse tree produced by `FmlMappingParser.ruleSource`.
 	 * @param ctx the parse tree
 	 */
@@ -363,6 +374,16 @@ export default class FmlMappingListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	exitRuleSource?: (ctx: RuleSourceContext) => void;
+	/**
+	 * Enter a parse tree produced by `FmlMappingParser.ruleTargets`.
+	 * @param ctx the parse tree
+	 */
+	enterRuleTargets?: (ctx: RuleTargetsContext) => void;
+	/**
+	 * Exit a parse tree produced by `FmlMappingParser.ruleTargets`.
+	 * @param ctx the parse tree
+	 */
+	exitRuleTargets?: (ctx: RuleTargetsContext) => void;
 	/**
 	 * Enter a parse tree produced by `FmlMappingParser.ruleTarget`.
 	 * @param ctx the parse tree
@@ -473,16 +494,6 @@ export default class FmlMappingListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	exitImportDeclaration?: (ctx: ImportDeclarationContext) => void;
-	/**
-	 * Enter a parse tree produced by `FmlMappingParser.mapLineTarget`.
-	 * @param ctx the parse tree
-	 */
-	enterMapLineTarget?: (ctx: MapLineTargetContext) => void;
-	/**
-	 * Exit a parse tree produced by `FmlMappingParser.mapLineTarget`.
-	 * @param ctx the parse tree
-	 */
-	exitMapLineTarget?: (ctx: MapLineTargetContext) => void;
 	/**
 	 * Enter a parse tree produced by `FmlMappingParser.transform`.
 	 * @param ctx the parse tree

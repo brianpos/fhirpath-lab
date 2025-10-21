@@ -28,7 +28,9 @@ import { MapSimpleCopyContext } from "./FmlMappingParser.js";
 import { MapFhirMarkupContext } from "./FmlMappingParser.js";
 import { MapTransformationRuleContext } from "./FmlMappingParser.js";
 import { RuleNameContext } from "./FmlMappingParser.js";
+import { RuleSourcesContext } from "./FmlMappingParser.js";
 import { RuleSourceContext } from "./FmlMappingParser.js";
+import { RuleTargetsContext } from "./FmlMappingParser.js";
 import { RuleTargetContext } from "./FmlMappingParser.js";
 import { SourceCardinalityContext } from "./FmlMappingParser.js";
 import { UpperBoundContext } from "./FmlMappingParser.js";
@@ -40,7 +42,6 @@ import { CheckClauseContext } from "./FmlMappingParser.js";
 import { LogContext } from "./FmlMappingParser.js";
 import { DependentExpressionContext } from "./FmlMappingParser.js";
 import { ImportDeclarationContext } from "./FmlMappingParser.js";
-import { MapLineTargetContext } from "./FmlMappingParser.js";
 import { TransformContext } from "./FmlMappingParser.js";
 import { GroupInvocationContext } from "./FmlMappingParser.js";
 import { GroupParamListContext } from "./FmlMappingParser.js";
@@ -255,11 +256,23 @@ export default class FmlMappingVisitor<Result> extends ParseTreeVisitor<Result> 
 	 */
 	visitRuleName?: (ctx: RuleNameContext) => Result;
 	/**
+	 * Visit a parse tree produced by `FmlMappingParser.ruleSources`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitRuleSources?: (ctx: RuleSourcesContext) => Result;
+	/**
 	 * Visit a parse tree produced by `FmlMappingParser.ruleSource`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitRuleSource?: (ctx: RuleSourceContext) => Result;
+	/**
+	 * Visit a parse tree produced by `FmlMappingParser.ruleTargets`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitRuleTargets?: (ctx: RuleTargetsContext) => Result;
 	/**
 	 * Visit a parse tree produced by `FmlMappingParser.ruleTarget`.
 	 * @param ctx the parse tree
@@ -326,12 +339,6 @@ export default class FmlMappingVisitor<Result> extends ParseTreeVisitor<Result> 
 	 * @return the visitor result
 	 */
 	visitImportDeclaration?: (ctx: ImportDeclarationContext) => Result;
-	/**
-	 * Visit a parse tree produced by `FmlMappingParser.mapLineTarget`.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	visitMapLineTarget?: (ctx: MapLineTargetContext) => Result;
 	/**
 	 * Visit a parse tree produced by `FmlMappingParser.transform`.
 	 * @param ctx the parse tree

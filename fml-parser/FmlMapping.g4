@@ -102,11 +102,15 @@ mapRule
  	;
 
 mapTransformationRule
-  : ruleSource (',' ruleSource)* ('->' ruleTarget)? dependentExpression? ruleName?
+  : ruleSources ('->' ruleTargets)? dependentExpression? ruleName?
   ;
 
 ruleName
   : DOUBLE_QUOTED_STRING
+  ;
+
+ruleSources
+  : ruleSource (',' ruleSource)*
   ;
 
 ruleSource
@@ -121,8 +125,14 @@ ruleSource
     log?
   ;
 
+ruleTargets
+  : ruleTarget (',' ruleTarget)*
+  ;
+
 ruleTarget
-  : mapLineTarget (',' mapLineTarget)*
+  : qualifiedIdentifier ('=' transform)? alias? targetListMode?
+  | '(' fpExpression ')' alias? targetListMode?     // pure fhirpath based variables
+  | groupInvocation alias?     // alias is not required when simply invoking a group
   ;
 
 sourceCardinality
@@ -168,12 +178,6 @@ dependentExpression
 importDeclaration
 	: 'imports' url
 	;
-
-mapLineTarget
-  : qualifiedIdentifier ('=' transform)? alias? targetListMode?
-  | '(' fpExpression ')' alias? targetListMode?     // pure fhirpath based variables
-  | groupInvocation alias?     // alias is not required when simply invoking a group
-  ;
 
 transform
   : literal           // trivial constant transform
