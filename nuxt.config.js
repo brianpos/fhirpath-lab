@@ -79,7 +79,8 @@ export default {
       "marked",
       "antlr4",
       "sql-on-fhir-v2",
-      /* Below are dependencies of CSIRO renderer */
+      /* Need to transpile CSIRO renderer and dependencies containing modern ES syntax (`?.`, `??`, etc.) */
+      "@aehrc/smart-forms-renderer",
       "@mui",
       "@emotion",
       "@tanstack",
