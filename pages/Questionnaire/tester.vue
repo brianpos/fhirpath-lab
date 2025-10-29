@@ -1115,7 +1115,8 @@ export default Vue.extend({
 
       if (this.$refs.csiroFormsRenderer && this.raw != null) {
         let csiroFormsRenderer = (this.$refs.csiroFormsRenderer as EditorRendererSection)
-        await csiroFormsRenderer.renderQuestionnaireResponse(value, this.raw);
+        // Destructure to regular JS object before passing to renderer (Vue2). See https://vuejs.org/api/reactivity-advanced.html#toraw for Vue3 convention
+        await csiroFormsRenderer.renderQuestionnaireResponse(value, { ...this.raw });
       }
 
       if (this.$refs.lhcFormsRenderer && this.raw != null) {
@@ -1165,7 +1166,8 @@ export default Vue.extend({
 
         if (this.$refs.csiroFormsRenderer && this.raw != null) {
           let csiroFormsRenderer = (this.$refs.csiroFormsRenderer as EditorRendererSection)
-          await csiroFormsRenderer.renderQuestionnaireResponse(value, this.raw);
+          // Destructure to regular JS object before passing to renderer (Vue2). See https://vuejs.org/api/reactivity-advanced.html#toraw for Vue3 convention
+          await csiroFormsRenderer.renderQuestionnaireResponse(value, { ...this.raw });
         }
 
         if (this.$refs.lhcFormsRenderer && this.raw != null) {
