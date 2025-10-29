@@ -64,7 +64,10 @@ export default class EditorRendererSection extends Vue {
       return;
     }
     console.log("Rendering response in CSIRO renderer", response);
-    await buildForm(questionnaire as QuestionnaireR4, response as QuestionnaireResponseR4);
+    await buildForm({
+      questionnaire: questionnaire as QuestionnaireR4,
+      questionnaireResponse: response as QuestionnaireResponseR4
+    });
   }
 
   public logResponse() {
