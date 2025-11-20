@@ -94,7 +94,7 @@ import { mapFunctionReferences, mapOperatorReferences, ISpecFunctionDetails } fr
 export function GetExternalVariablesUsed(node: fpjsNode, ignoreVar: string[] = []) : string[] {
   let result: string[] = [];
   if (node.type === 'Functn') {
-    if (node.text.startsWith('defineVariable') && node.children?.length === 2 && node.children[1].children){
+    if (node.text?.startsWith('defineVariable') && node.children?.length === 2 && node.children[1].children){
       let varName = node.children[1].children[0].text;
       varName = varName.substring(1, varName.length - 1);
       ignoreVar.push(varName);
