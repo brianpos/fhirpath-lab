@@ -966,8 +966,6 @@ export interface IFhirPathMethods
   downloadVariableResource(name: string): void;
   evaluateExpressionUsingFhirpathJsRx(modelInfo: Model, fhirVersion: string): void;
   evaluateExpressionUsingFhirpathJs(): void;
-  evaluateExpressionUsingFhirpathJsR5(): void;
-  evaluateExpressionUsingFhirpathJsR6(): void;
   prepareSharePackageData(): TestFhirpathData;
   showShareLink(): boolean;
   updateShareText(): void;
@@ -2714,14 +2712,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         }
       }
       // console.log(this.results);
-    },
 
-    async evaluateExpressionUsingFhirpathJsR5() {
-      await this.evaluateExpressionUsingFhirpathJsRx(fhirpath_r5_model, 'r5');
-    },
-
-    async evaluateExpressionUsingFhirpathJsR6() {
-      await this.evaluateExpressionUsingFhirpathJsRx(fhirpath_r6_model, 'r6');
     },
 
     async evaluateExpressionUsingFhirpathJsRx(modelInfo: Model, fhirVersion: string) {
@@ -2739,6 +2730,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       // run the actual fhirpath engine
       let fhirData = { resourceType: 'Patient' }; // some dummy data
       const resourceJson = this.getResourceJson();
+      let astJson: IJsonNode | undefined = undefined;
       if (resourceJson) {
         try
         {
@@ -2747,7 +2739,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
             const data = parseXmlAndObject(resourceJson, modelInfo);
             if (data?.object?.resourceType){
               fhirData = data.object;
-              this.resourceType = fhirData.resourceType;
+              astJson = data.node;
             }
             else {
               this.saveOutcome = CreateOperationOutcome('fatal', 'exception', 'The provided XML content does not appear to be a valid FHIR resource (missing resourceType)');
@@ -2757,7 +2749,9 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
           }
           else {
             fhirData = JSON.parse(resourceJson);
+            astJson = parseJson(resourceJson+'', modelInfo);
           }
+          this.resourceType = fhirData.resourceType;
         }
         catch (err: any) {
           console.log(err);
@@ -2769,8 +2763,10 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
             this.saveOutcome = CreateOperationOutcome('fatal', 'exception', err);
             this.showOutcome = true;
           }
+          return;
         }
       }
+
       // debugger;
       var environment: Record<string, any> = { resource: fhirData, rootResource: fhirData };
       for (let v of this.variables) {
@@ -2839,7 +2835,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
           if (data instanceof Promise)
             contextNodes = await data;
           else
-            contextNodes = data;
+            contextNodes = data as any[];
         }
         catch (err: any) {
           console.log(err);
@@ -2858,13 +2854,18 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         const index = contextNodes.indexOf(contextNode);
         if (contextExpression){
           resData = { context: `${fullPropertyName(contextNode)}`, result: [], trace: [] };
-          // if (astJson){
-          //   const node = findNodeByPath(astJson, resData.context+'');
-          //   if (node?.position) resData.position = node.position;
-          // }
+          if (astJson){
+            const node = findNodeByPath(astJson, resData.context+'');
+            if (node?.position) resData.position = node.position;
+          }
         }
         else
           resData = { result: [], trace: [] };
+
+        // add context to the trace data
+        this.debugTraceData.push({ 
+          context: resData.context ?? ''
+        });
 
         let outputNodes: ResourceNode[] = [];
         let tracefunction = function (x: ResourceNode | ResourceNode[], label: string): ResourceNode | ResourceNode[] {
@@ -2900,14 +2901,112 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
 
         try {
           let useExpression = this.getFhirpathExpression() ?? '';
+          let exprLineOffsets: number[] = [];
+          exprLineOffsets.push(0);
+          for (const line of useExpression.split('\n')){
+            exprLineOffsets.push(line.length + 1 + exprLineOffsets[exprLineOffsets.length - 1 ]); // +1 for the \n
+          }
+
           let path = {
             base: resData.context??'', 
             expression: "select(\n" + useExpression + "\n).trace('fhirpath-lab-result')"
           }
+          let completedTracing = false;
           let options: AsyncOptions = {
             traceFn: tracefunction,
             async: true,
-            terminologyUrl: this.terminologyServer
+            terminologyUrl: this.terminologyServer,
+            debugger: (ctx: any, focus: any, result: any, node: any) => {
+              if (completedTracing) 
+                return;
+              if (node.type === 'Functn') {
+                // is this the hack surrounding select that does the result capture via custom trace?
+                if (node.text == "trace('fhirpath-lab-result')") {
+                  completedTracing = true;
+                  this.debugTraceData.pop();
+                  return;
+                }
+              }
+              if (node.type !== 'LiteralTerm'
+                && node.type !== 'ExternalConstantTerm'
+                && node.type !== 'MemberInvocation'
+                && node.type !== 'FunctionInvocation'
+                && node.type !== 'ThisInvocation'
+                && node.type !== 'IndexInvocation'
+                && node.type !== 'TotalInvocation'
+                
+                && node.type !== 'IndexerExpression'
+                && node.type !== 'PolarityExpression'
+                && node.type !== 'MultiplicativeExpression'
+                && node.type !== 'AdditiveExpression'
+                && node.type !== 'TypeExpression'
+                && node.type !== 'UnionExpression'
+                && node.type !== 'InequalityExpression'
+                && node.type !== 'EqualityExpression'
+                && node.type !== 'MembershipExpression'
+                && node.type !== 'AndExpression'
+                && node.type !== 'OrExpression'
+                && node.type !== 'ImpliesExpression'
+              ) {
+                // console.log("skipping " + node.type);
+                return;
+              }
+              console.log(ctx, node, focus, result);
+              let debugTraceVal: DebugTraceData = {
+                context: fullPropertyName(contextNode) ?? '',
+                exprName: node.text,
+                exprPosition: exprLineOffsets[node.start.line-2] + node.start.column - 1,
+                exprLength: node.length,
+                values: [],
+                thisVar: [],
+                focusVar: [],
+              };
+
+              if (node.type === 'LiteralTerm')
+                debugTraceVal.exprName = 'constant';
+
+              for (let item of focus) {
+                let typeName = Object.prototype.toString.call(item ?? '').substring(8).replace(']', '')
+                if (typeof item.getTypeInfo === "function")
+                  typeName = item.getTypeInfo().name;
+                let val: DebugTraceValue = { 
+                  valueType: typeName, resourcePath: fullPropertyName(item) 
+                };
+                if (!val.resourcePath)
+                  val.value = item.data ? JSON.stringify(item.data, null, settings.getTabSpaces()) : JSON.stringify(item, null, settings.getTabSpaces());
+                debugTraceVal.focusVar?.push(val);
+              }
+
+              if (ctx.$index != undefined) {
+                debugTraceVal.index = ctx.$index;
+              }
+              if (ctx.$this) {
+                for (let item of ctx.$this) {
+                  let typeName = Object.prototype.toString.call(item ?? '').substring(8).replace(']', '')
+                    if (typeof item.getTypeInfo === "function")
+                      typeName = item.getTypeInfo().name;
+                  let val: DebugTraceValue = { 
+                    valueType: typeName, resourcePath: fullPropertyName(item) 
+                  };
+                  if (!val.resourcePath)
+                    val.value = item.data ? JSON.stringify(item.data, null, settings.getTabSpaces()) : JSON.stringify(item, null, settings.getTabSpaces());
+                  debugTraceVal.thisVar?.push(val);
+                }
+              }
+              for (let item of result) {
+                let typeName = Object.prototype.toString.call(item ?? '').substring(8).replace(']', '')
+                  if (typeof item.getTypeInfo === "function")
+                    typeName = item.getTypeInfo().name;
+                let val: DebugTraceValue = { 
+                  valueType: typeName, resourcePath: fullPropertyName(item) 
+                };
+                if (!val.resourcePath)
+                  val.value = item.data ? JSON.stringify(item.data, null, settings.getTabSpaces()) : JSON.stringify(item, null, settings.getTabSpaces());
+                debugTraceVal.values?.push(val);
+              }
+
+              this.debugTraceData.push(debugTraceVal);
+            }
           };
           let data = fhirpath.evaluate(contextNode, path, environment, modelInfo, options);
           let res: any[];
@@ -2937,6 +3036,15 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         }
       }
       // console.log(this.results);
+      // if there are any results with a trace, then set the trace position at the start
+      if (this.debugTraceData.length > 0) {
+        this.debugTracePosition = 0;
+      }
+
+      // Set focus to the control that previously had focus (if was known)
+      if (this.prevFocus){
+        this.prevFocus.focus();
+      }
     },
 
     showShareLink(): boolean {
@@ -3300,7 +3408,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       // Browser only fhirpath.js engines
       if (this.selectedEngine2?.legacyName == "fhirpath.js") {
         astTab2?.displayTreeForExpression(this.getContextExpression() ?? '', this.getFhirpathExpression() ?? '');
-        await this.evaluateExpressionUsingFhirpathJs();
+        await this.evaluateExpressionUsingFhirpathJsRx(fhirpath_r4_model, 'r4');
         this.saveLastUsedParameters(true);
         if (this.prevFocus){
           this.prevFocus.focus();
@@ -3310,7 +3418,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
 
       if (this.selectedEngine2?.legacyName == "fhirpath.js (R5)") {
         astTab2?.displayTreeForExpression(this.getContextExpression() ?? '', this.getFhirpathExpression() ?? '');
-        await this.evaluateExpressionUsingFhirpathJsR5();
+        await this.evaluateExpressionUsingFhirpathJsRx(fhirpath_r5_model, 'r5');
         this.saveLastUsedParameters(true);
         if (this.prevFocus){
           this.prevFocus.focus();
@@ -3320,7 +3428,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
 
       if (this.selectedEngine2?.legacyName == "fhirpath.js (R6)") {
         astTab2?.displayTreeForExpression(this.getContextExpression() ?? '', this.getFhirpathExpression() ?? '');
-        await this.evaluateExpressionUsingFhirpathJsR6();
+        await this.evaluateExpressionUsingFhirpathJsRx(fhirpath_r6_model, 'r6');
         this.saveLastUsedParameters(true);
         if (this.prevFocus){
           this.prevFocus.focus();

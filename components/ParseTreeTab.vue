@@ -178,7 +178,7 @@ export function InvertTree(ast: JsonNode): JsonNode[] {
 function ConvertFhirPathJsToAst(ast: fpjsNode): JsonNode {
   let result: JsonNode = {
     ExpressionType: ast.type,
-    Name: ast.terminalNodeText ? ast.terminalNodeText[0] : "", //text,
+    Name: ast.terminalNodeText ? ast.terminalNodeText[0] : ast.text ?? "", //text,
     Arguments: [],
     ReturnType: "",
   };
@@ -400,7 +400,7 @@ export default class ParseTreeTab extends Vue {
     this.parseErrorMessage = undefined;
 
     this.astTree = [node];
-    console.log("AST:", JSON.stringify(this.astTree, null, settings.getTabSpaces()));
+    // console.log("AST:", JSON.stringify(this.astTree, null, settings.getTabSpaces()));
     var lastId = AllocateNodeCollectionIds(this.astTree);
     for (let i = 0; i < lastId; i++) {
       this.astOpen.push(i.toString());
@@ -439,7 +439,7 @@ export default class ParseTreeTab extends Vue {
           this.astOpenInverted.push(i.toString());
         }
         // console.log("raw:", JSON.stringify(ast, null, settings.getTabSpaces()));
-        console.log("AST:", JSON.stringify(this.astTree, null, settings.getTabSpaces()));
+        // console.log("AST:", JSON.stringify(this.astTree, null, settings.getTabSpaces()));
         // console.log("Inv AST:", JSON.stringify(this.astInvertedTree, null, settings.getTabSpaces()));
 
         for (let i = 0; i < lastId; i++) {
