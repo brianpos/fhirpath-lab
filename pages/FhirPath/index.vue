@@ -3377,6 +3377,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       }
 
       // Hosted services
+      // don't trace usage by me as that distorts the usage data
       let url = settings.getServerEngineUrl(this.selectedEngine2?.configSetting);
       if (this.defaultProviderField !== 'Brian Postlethwaite') {
         (this as any).$appInsights?.trackEvent({ name: 'evaluate ' + this.selectedEngine2?.appInsightsEngineName });
