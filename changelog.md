@@ -3,6 +3,13 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+# 21 November 2025
+* Update to fhirpath.js version 4.7.0 (which has debugger support, and position information in the AST)
+* Add initial support for the debugger in the fhirpath.js engine!
+* Refactor the fhirpath.js to use the same code for all versions
+* FML validator update with latest tweaks to the antlr grammar that has support for the latest fhirpath and fml engines.
+* FML debug POC work (walking the trace lines)
+
 # 30 September 2025
 * POC support for XML in the fhirpath.js engine (when using actual FHIR content)
 
