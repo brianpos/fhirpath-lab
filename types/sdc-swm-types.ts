@@ -753,6 +753,9 @@ export interface SdcRendererMessageHandlers {
   /** Handle request for current questionnaire response from host */
   handleSdcRequestCurrentQuestionnaireResponse?: (message: SdcRequestCurrentQuestionnaireResponseRequest) => Promise<SdcRequestCurrentQuestionnaireResponseResponsePayload>;
   
+  /** Handle prepopulate request from host */
+  handleSdcRequestPrepopulate?: (message: SdcRequestPrepopulateRequest) => Promise<SdcRequestPrepopulateResponsePayload>;
+
   /** Handle extract request from host */
   handleSdcRequestExtract?: (message: SdcRequestExtractRequest) => Promise<SdcRequestExtractResponsePayload>;
   

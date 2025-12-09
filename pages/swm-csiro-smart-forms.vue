@@ -523,8 +523,8 @@ export default class SwmCsiroSmartForms extends Vue implements SdcRendererMessag
       }
     } else if (this.context.launchContext) {
       const patientContext = this.context.launchContext.find(lc => lc.name === 'patient');
-      if (patientContext?.content) {
-        patientResource = patientContext.content as PatientR4;
+      if (patientContext?.contentResource) {
+        patientResource = patientContext.contentResource as PatientR4;
       }
     }
 
@@ -536,8 +536,8 @@ export default class SwmCsiroSmartForms extends Vue implements SdcRendererMessag
       }
     } else if (this.context.launchContext) {
       const userContext = this.context.launchContext.find(lc => lc.name === 'user');
-      if (userContext?.content) {
-        userResource = userContext.content as PractitionerR4;
+      if (userContext?.contentResource) {
+        userResource = userContext.contentResource as PractitionerR4;
       }
     }
 
@@ -549,8 +549,8 @@ export default class SwmCsiroSmartForms extends Vue implements SdcRendererMessag
       }
     } else if (this.context.launchContext) {
       const encounterContext = this.context.launchContext.find(lc => lc.name === 'encounter');
-      if (encounterContext?.content) {
-        encounterResource = encounterContext.content as EncounterR4;
+      if (encounterContext?.contentResource) {
+        encounterResource = encounterContext.contentResource as EncounterR4;
       }
     }
 
