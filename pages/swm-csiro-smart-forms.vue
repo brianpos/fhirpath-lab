@@ -66,6 +66,8 @@ import type {
   SdcDisplayQuestionnaireResponseResponsePayload,
   SdcRequestCurrentQuestionnaireResponseRequest,
   SdcRequestCurrentQuestionnaireResponseResponsePayload,
+  SdcRequestExtractRequest,
+  SdcRequestExtractResponsePayload,
   SdcUiChangedFocusPayload,
   SdcUiChangedQuestionnaireResponsePayload,
   UiDoneEvent,
@@ -109,6 +111,7 @@ import type {
  * - sdc.displayQuestionnaire: Display a questionnaire with optional context
  * - sdc.displayQuestionnaireResponse: Display a questionnaire response
  * - sdc.requestCurrentQuestionnaireResponse: Return current form data
+ * - sdc.requestExtract: Extract FHIR resources from questionnaire response
  * - ui.done: Handle user completion with confirmation dialog
  * 
  * Sends the following unsolicited messages to host (Renderer → Host):
@@ -135,6 +138,8 @@ export default class SwmCsiroSmartForms extends Vue implements SdcRendererMessag
   messagingHandle: string | null = null; // Store the messaging handle from the host
   allowedOrigin: string | null = null; // Store the allowed origin for security
 
+  extractServiceUrl: string = 'https://fhir.forms-lab.com/QuestionnaireResponse/$extract'; // the extract service URL (using mine for a start)
+
   // Non-reactive property to avoid cross-origin security errors with WindowProxy
   // Initialized in mounted() to prevent Vue's reactivity system from wrapping it
   declare messageSource: WindowProxy | null;
@@ -150,6 +155,7 @@ export default class SwmCsiroSmartForms extends Vue implements SdcRendererMessag
     'sdc.displayQuestionnaire': 'handleSdcDisplayQuestionnaire',
     'sdc.displayQuestionnaireResponse': 'handleSdcDisplayQuestionnaireResponse',
     'sdc.requestCurrentQuestionnaireResponse': 'handleSdcRequestCurrentQuestionnaireResponse',
+    'sdc.requestExtract': 'handleSdcRequestExtract',
     'ui.done': 'handleUiDone'
   };
 
@@ -310,7 +316,7 @@ export default class SwmCsiroSmartForms extends Vue implements SdcRendererMessag
         publisher: 'CSIRO Australian e-Health Research Centre'
       },
       capabilities: {
-        extraction: false,
+        extraction: true,
         focusChangeNotifications: true
       }
     };
@@ -483,6 +489,78 @@ export default class SwmCsiroSmartForms extends Vue implements SdcRendererMessag
         outcome: this.createOperationOutcome('error', `Failed to get response: ${error.message}`)
       };
     }
+  }
+
+  /**
+   * Handle request extract message
+   * TODO: Implement extraction logic using FHIR Mapping Language or StructureMap
+   */
+  async handleSdcRequestExtract(message: SdcRequestExtractRequest): Promise<SdcRequestExtractResponsePayload> {
+    console.log('[SDC-SWM Renderer] Handling request extract', message.payload);
+      let result: SdcRequestExtractResponsePayload = {
+      };
+    
+      console.log('extract questionnaire', this.questionnaire);
+      console.log('extract data', this.questionnaireResponse);
+
+    // If message.payload.questionnaireResponse is provided, use it
+    // Otherwise, use the currently displayed questionnaire response
+    // If message.payload.questionnaire is provided, use it instead of the current one
+     try {
+      let extractParameters : fhir4.Parameters = {
+        resourceType: "Parameters",
+        parameter: []
+      };
+      extractParameters.parameter = [
+        {
+          name: "questionnaire-response",
+          resource: message.payload.questionnaireResponse ?? getResponse()
+        }
+      ];
+
+      extractParameters.parameter.push({
+        name: "questionnaire",
+        resource: message.payload.questionnaire ?? this.questionnaire ?? undefined
+      });
+
+      const response = await fetch(this.extractServiceUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        body: JSON.stringify(extractParameters)
+      });
+      if (response.ok) {
+        const extractResponse = await response.json();
+        console.log("Extracted response", extractResponse);
+
+        // if this is a Parameters object and has return and issues, then split them apart...
+        if (extractResponse.resourceType === "Parameters") {
+          const resultParameters = extractResponse as fhir4.Parameters;
+          const returnParameter = resultParameters.parameter?.find(p => p.name === "return");
+          if (returnParameter) {
+            result.extractedResources = returnParameter.resource as fhir4.Bundle;
+          }
+          const issuesParameter = resultParameters.parameter?.find(p => p.name === "issues");
+          if (issuesParameter) {
+            result.outcome = issuesParameter.resource as fhir4.OperationOutcome;
+            this.$emit('outcome', issuesParameter.resource);
+          }
+        }
+        else {
+          result.extractedResources = extractResponse as fhir4.Bundle;
+        }
+      }
+      else {
+        console.error("Failed to extract the questionnaire", response);
+      }
+    }
+    catch (error) {
+      console.error("Error extracting the questionnaire", error);
+    }
+
+    return result;
   }
 
   /**

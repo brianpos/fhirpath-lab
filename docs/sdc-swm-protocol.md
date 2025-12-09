@@ -330,13 +330,13 @@ interface SdcRequestExtractRequest {
 
 | Name | Type | Cardinality | Notes |
 | ---- | ---- | ----------- | ----- |
-| `outcome` | `r4.OperationOutcome` | 1..1 | Extraction outcome |
-| `extractedResources` | `Array<r4.Resource>` | 0..1 | Array of extracted FHIR resources |
+| `outcome` | `r4.OperationOutcome` | 0..1 | Extraction outcome |
+| `extractedResources` | `r4.Bundle` | 0..1 | Bundle of extracted FHIR resources |
 
 ```typescript
 interface SdcRequestExtractResponse {
-  outcome: r4.OperationOutcome;
-  extractedResources?: Array<r4.Resource>;
+  outcome?: r4.OperationOutcome;
+  extractedResources?: r4.Bundle;
 }
 ```
 

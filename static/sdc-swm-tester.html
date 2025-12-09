@@ -114,6 +114,7 @@
       <button id="btnContext" onclick="sendContext()" disabled>3. Set Context</button>
       <button id="btnDisplayQ" onclick="displayQuestionnaire()" disabled>4. Display Questionnaire</button>
       <button id="btnGetResponse" onclick="getCurrentResponse()" disabled>5. Get Response</button>
+      <button id="btnGetExtractBundle" onclick="getExtractBundle()" disabled>6. Get Extract Bundle</button>
       <button onclick="clearLog()">Clear Log</button>
     </div>
     
@@ -369,23 +370,47 @@
         questionnaire: {
           resourceType: 'Questionnaire',
           id: 'example',
+          extension: [
+                  {
+                      "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-observationExtract",
+                      "valueBoolean": true
+                  }
+              ],
           status: 'active',
           title: 'Example Questionnaire',
           item: [
             {
               linkId: '1',
               text: 'What is your name?',
-              type: 'string'
+              type: 'string',
+              code: [
+                  {
+                      system: "http://example.org/sdh/demo/CodeSystem/cc-demo",
+                      code: "name"
+                  }
+              ]  
             },
             {
               linkId: '2',
               text: 'What is your age?',
-              type: 'integer'
+              type: 'integer',
+              code: [
+                  {
+                      system: "http://example.org/sdh/demo/CodeSystem/cc-demo",
+                      code: "age"
+                  }
+              ]  
             },
             {
               linkId: '3',
               text: 'Do you have any allergies?',
-              type: 'boolean'
+              type: 'boolean',
+              code: [
+                  {
+                      system: "http://example.org/sdh/demo/CodeSystem/cc-demo",
+                      code: "has-allergy"
+                  }
+              ]  
             }
           ]
         }
@@ -394,6 +419,10 @@
 
     function getCurrentResponse() {
       sendMessage('sdc.requestCurrentQuestionnaireResponse', {});
+    }
+
+    function getExtractBundle() {
+      sendMessage('sdc.requestExtract', {});
     }
 
     function logMessage(type, message) {
@@ -424,6 +453,7 @@
       document.getElementById('btnContext').disabled = false;
       document.getElementById('btnDisplayQ').disabled = false;
       document.getElementById('btnGetResponse').disabled = false;
+      document.getElementById('btnGetExtractBundle').disabled = false;
     }
 
     function openPopup() {
@@ -445,6 +475,7 @@
         document.getElementById('btnContext').disabled = true;
         document.getElementById('btnDisplayQ').disabled = true;
         document.getElementById('btnGetResponse').disabled = true;
+        document.getElementById('btnGetExtractBundle').disabled = true;
         logMessage('INFO', 'Opened popup window: ' + fullUrl);
       } else {
         renderMode = 'iframe';
@@ -474,6 +505,7 @@
       document.getElementById('btnContext').disabled = true;
       document.getElementById('btnDisplayQ').disabled = true;
       document.getElementById('btnGetResponse').disabled = true;
+      document.getElementById('btnGetExtractBundle').disabled = true;
       logMessage('INFO', 'Changed iframe URL to: ' + fullUrl);
     }
 
