@@ -119,6 +119,9 @@ export interface SdcCapabilities {
   /** Supports $extract operation */
   extraction?: boolean;
   
+  /** Supports $prepopulate operation */
+  prepopulate?: boolean;
+
   /** Supports focus change notifications */
   focusChangeNotifications?: boolean;
 }
@@ -148,6 +151,7 @@ export type SdcMessageType =
   | 'sdc.displayQuestionnaire'
   | 'sdc.displayQuestionnaireResponse'
   | 'sdc.requestCurrentQuestionnaireResponse'
+  | 'sdc.requestPrepopulate'
   | 'sdc.requestExtract'
   | 'sdc.ui.changedQuestionnaireResponse'
   | 'sdc.ui.changedFocus'
@@ -393,6 +397,45 @@ export type SdcRequestCurrentQuestionnaireResponseRequest = SmartWebMessagingReq
 export type SdcRequestCurrentQuestionnaireResponseResponse = SmartWebMessagingResponse<SdcRequestCurrentQuestionnaireResponseResponsePayload>;
 
 // ============================================================================
+// sdc.requestPrepopulate
+// ============================================================================
+
+/**
+ * Request prepopulate request payload
+ * Host → Renderer
+ * 
+ * Request the renderer to use the information it has in the questionnaire
+ * and context to prepopulate the QuestionnaireResponse using data from the 
+ * configured data server.
+ */
+export interface SdcRequestPrepopulateRequestPayload {
+  // No specific fields defined yet
+}
+
+/**
+ * Request prepopulate response payload
+ */
+export interface SdcRequestPrepopulateResponsePayload {
+  /** Status of the prepopulate operation */
+  status: 'success' | 'error';
+  
+  /** Operation outcome with details */
+  outcome?: fhir4.OperationOutcome;
+}
+
+/**
+ * Complete request prepopulate request message
+ */
+export type SdcRequestPrepopulateRequest = SmartWebMessagingRequest<SdcRequestPrepopulateRequestPayload>;
+
+/**
+ * Complete request prepopulate response message
+ */
+export type SdcRequestPrepopulateResponse = SmartWebMessagingResponse<SdcRequestPrepopulateResponsePayload>;
+
+
+
+// ============================================================================
 // sdc.requestExtract
 // ============================================================================
 
@@ -415,7 +458,7 @@ export interface SdcRequestExtractRequestPayload {
  * Request extract response payload
  */
 export interface SdcRequestExtractResponsePayload {
-  /** Extraction outcome (always required) */
+  /** Extraction outcome */
   outcome?: fhir4.OperationOutcome;
   
   /** Bundle of extracted FHIR resources */

@@ -113,8 +113,9 @@
       <button id="btnConfigure" onclick="sendConfigure()" disabled>2. Configure</button>
       <button id="btnContext" onclick="sendContext()" disabled>3. Set Context</button>
       <button id="btnDisplayQ" onclick="displayQuestionnaire()" disabled>4. Display Questionnaire</button>
-      <button id="btnGetResponse" onclick="getCurrentResponse()" disabled>5. Get Response</button>
-      <button id="btnGetExtractBundle" onclick="getExtractBundle()" disabled>6. Get Extract Bundle</button>
+      <button id="btnPrepopulate" onclick="requestPrepopulate()" disabled>5. Pre-populate</button>
+      <button id="btnGetResponse" onclick="getCurrentResponse()" disabled>6. Get Response</button>
+      <button id="btnGetExtractBundle" onclick="getExtractBundle()" disabled>7. Get Extract Bundle</button>
       <button onclick="clearLog()">Clear Log</button>
     </div>
     
@@ -374,7 +375,26 @@
                   {
                       "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-observationExtract",
                       "valueBoolean": true
-                  }
+                  },
+                  {
+                    extension: [
+                        {
+                            url: "name",
+                            valueCoding: {
+                                code: "patient"
+                            }
+                        },
+                        {
+                            url: "type",
+                            valueCode: "Patient"
+                        },
+                        {
+                            url: "description",
+                            valueString: "The patient that is to be used to pre-populate the form"
+                        }
+                    ],
+                    url: "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-launchContext"
+                }
               ],
           status: 'active',
           title: 'Example Questionnaire',
@@ -383,6 +403,15 @@
               linkId: '1',
               text: 'What is your name?',
               type: 'string',
+              extension: [
+                  {
+                      url: "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-initialExpression",
+                      valueExpression: {
+                          language: "text/fhirpath",
+                          expression: "%patient.name.first().given.first()"
+                      }
+                  }
+              ],
               code: [
                   {
                       system: "http://example.org/sdh/demo/CodeSystem/cc-demo",
@@ -421,6 +450,10 @@
       sendMessage('sdc.requestCurrentQuestionnaireResponse', {});
     }
 
+    function requestPrepopulate() {
+      sendMessage('sdc.requestPrepopulate', {});
+    }
+
     function getExtractBundle() {
       sendMessage('sdc.requestExtract', {});
     }
@@ -452,6 +485,7 @@
       document.getElementById('btnConfigure').disabled = false;
       document.getElementById('btnContext').disabled = false;
       document.getElementById('btnDisplayQ').disabled = false;
+      document.getElementById('btnPrepopulate').disabled = false;
       document.getElementById('btnGetResponse').disabled = false;
       document.getElementById('btnGetExtractBundle').disabled = false;
     }
@@ -474,6 +508,7 @@
         document.getElementById('btnConfigure').disabled = true;
         document.getElementById('btnContext').disabled = true;
         document.getElementById('btnDisplayQ').disabled = true;
+        document.getElementById('btnPrepopulate').disabled = true;
         document.getElementById('btnGetResponse').disabled = true;
         document.getElementById('btnGetExtractBundle').disabled = true;
         logMessage('INFO', 'Opened popup window: ' + fullUrl);
@@ -504,6 +539,7 @@
       document.getElementById('btnConfigure').disabled = true;
       document.getElementById('btnContext').disabled = true;
       document.getElementById('btnDisplayQ').disabled = true;
+      document.getElementById('btnPrepopulate').disabled = true;
       document.getElementById('btnGetResponse').disabled = true;
       document.getElementById('btnGetExtractBundle').disabled = true;
       logMessage('INFO', 'Changed iframe URL to: ' + fullUrl);

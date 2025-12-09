@@ -44,8 +44,10 @@ import Component from 'vue-class-component';
 import { applyReactInVue } from "vuereact-combined";
 import { getResponse, buildForm } from "@aehrc/smart-forms-renderer";
 import { Questionnaire, QuestionnaireResponse, Reference, Resource, OperationOutcome } from "fhir/r4";
-import { Questionnaire as QuestionnaireR4, QuestionnaireResponse as QuestionnaireResponseR4 } from "fhir/r4";
+import { Questionnaire as QuestionnaireR4, QuestionnaireResponse as QuestionnaireResponseR4, Patient as PatientR4, Practitioner as PractitionerR4, Encounter as EncounterR4 } from "fhir/r4";
 import SmartFormsRendererWithFocus from "~/components/Questionnaire/ReactRenderer";
+import { FetchResourceCallback, FetchResourceRequestConfig, populateQuestionnaire } from "@aehrc/sdc-populate";
+import axios from "axios";
 
 // Import SDC-SWM Protocol Types
 import type {
@@ -66,6 +68,8 @@ import type {
   SdcDisplayQuestionnaireResponseResponsePayload,
   SdcRequestCurrentQuestionnaireResponseRequest,
   SdcRequestCurrentQuestionnaireResponseResponsePayload,
+  SdcRequestPrepopulateRequest,
+  SdcRequestPrepopulateResponsePayload,
   SdcRequestExtractRequest,
   SdcRequestExtractResponsePayload,
   SdcUiChangedFocusPayload,
@@ -155,6 +159,7 @@ export default class SwmCsiroSmartForms extends Vue implements SdcRendererMessag
     'sdc.displayQuestionnaire': 'handleSdcDisplayQuestionnaire',
     'sdc.displayQuestionnaireResponse': 'handleSdcDisplayQuestionnaireResponse',
     'sdc.requestCurrentQuestionnaireResponse': 'handleSdcRequestCurrentQuestionnaireResponse',
+    'sdc.requestPrepopulate': 'handleSdcRequestPrepopulate',
     'sdc.requestExtract': 'handleSdcRequestExtract',
     'ui.done': 'handleUiDone'
   };
@@ -317,6 +322,7 @@ export default class SwmCsiroSmartForms extends Vue implements SdcRendererMessag
       },
       capabilities: {
         extraction: true,
+        prepopulate: true,
         focusChangeNotifications: true
       }
     };
@@ -488,6 +494,178 @@ export default class SwmCsiroSmartForms extends Vue implements SdcRendererMessag
       return {
         outcome: this.createOperationOutcome('error', `Failed to get response: ${error.message}`)
       };
+    }
+  }
+
+  /** 
+   * Handle request prepopulate message
+   */
+  async handleSdcRequestPrepopulate(message: SdcRequestPrepopulateRequest): Promise<SdcRequestPrepopulateResponsePayload> {
+    console.log('[SDC-SWM Renderer] Handling request prepopulate', message.payload);
+    
+    if (!this.questionnaire) {
+      return {
+        status: 'error',
+        outcome: this.createOperationOutcome('error', 'No questionnaire available to prepopulate')
+      };
+    }
+
+    // Extract patient, user, and encounter from context
+    let patientResource: PatientR4 | undefined = undefined;
+    let userResource: PractitionerR4 | undefined = undefined;
+    let encounterResource: EncounterR4 | undefined = undefined;
+
+    // Get patient from context (either subject or launchContext)
+    if (this.context.subject?.reference) {
+      const patientRef = this.context.subject.reference;
+      if (this.config.dataServer) {
+        patientResource = await this.fetchResource(this.config.dataServer, patientRef) as PatientR4;
+      }
+    } else if (this.context.launchContext) {
+      const patientContext = this.context.launchContext.find(lc => lc.name === 'patient');
+      if (patientContext?.content) {
+        patientResource = patientContext.content as PatientR4;
+      }
+    }
+
+    // Get user/practitioner from context
+    if (this.context.author?.reference) {
+      const userRef = this.context.author.reference;
+      if (this.config.dataServer) {
+        userResource = await this.fetchResource(this.config.dataServer, userRef) as PractitionerR4;
+      }
+    } else if (this.context.launchContext) {
+      const userContext = this.context.launchContext.find(lc => lc.name === 'user');
+      if (userContext?.content) {
+        userResource = userContext.content as PractitionerR4;
+      }
+    }
+
+    // Get encounter from context
+    if (this.context.encounter?.reference) {
+      const encounterRef = this.context.encounter.reference;
+      if (this.config.dataServer) {
+        encounterResource = await this.fetchResource(this.config.dataServer, encounterRef) as EncounterR4;
+      }
+    } else if (this.context.launchContext) {
+      const encounterContext = this.context.launchContext.find(lc => lc.name === 'encounter');
+      if (encounterContext?.content) {
+        encounterResource = encounterContext.content as EncounterR4;
+      }
+    }
+
+    if (!patientResource) {
+      return {
+        status: 'error',
+        outcome: this.createOperationOutcome('error', 'No patient resource available for prepopulation')
+      };
+    }
+
+    if (!this.config.dataServer) {
+      return {
+        status: 'error',
+        outcome: this.createOperationOutcome('error', 'No data server configured for prepopulation')
+      };
+    }
+
+    try {
+      // Call the CSIRO prepopulation library
+      const { populateSuccess, populateResult } = await populateQuestionnaire({
+        questionnaire: this.questionnaire as QuestionnaireR4,
+        fetchResourceCallback: this.fetchResourceCallback,
+        fetchResourceRequestConfig: {
+          sourceServerUrl: this.config.dataServer,
+        },
+        patient: patientResource,
+        user: userResource,
+        encounter: encounterResource,
+      });
+
+      if (!populateSuccess || !populateResult) {
+        return {
+          status: 'error',
+          outcome: this.createOperationOutcome('error', 'Failed to populate the questionnaire')
+        };
+      }
+
+      console.log("Populated response from CSIRO", populateResult.populatedResponse);
+
+      // Set and display the prepopulated response
+      this.questionnaireResponse = populateResult.populatedResponse;
+
+      // Build form with questionnaire and prepopulated response
+      await buildForm(
+        this.questionnaire as QuestionnaireR4,
+        this.questionnaireResponse as QuestionnaireResponseR4
+      );
+      
+      // Start watching for changes
+      this.startWatchingForChanges();
+
+      return {
+        status: 'success',
+        outcome: this.createOperationOutcome('information', 'Questionnaire prepopulated successfully')
+      };
+    } catch (error: any) {
+      console.error('[SDC-SWM Renderer] Error during prepopulation:', error);
+      return {
+        status: 'error',
+        outcome: this.createOperationOutcome('error', `Prepopulation failed: ${error.message}`)
+      };
+    }
+  }
+
+  /**
+   * Fetch resource callback for CSIRO prepopulation
+   * This is called by the prepopulation library to fetch resources needed for prepopulation
+   */
+  private fetchResourceCallback: FetchResourceCallback = async (
+    query: string, 
+    requestConfig: FetchResourceRequestConfig
+  ) => {
+    let { sourceServerUrl } = requestConfig;
+
+    const headers = {
+      Accept: "application/json;charset=utf-8",
+    };
+
+    if (!sourceServerUrl.endsWith("/")) {
+      sourceServerUrl += "/";
+    }
+
+    // When query is an absolute URL, use it as is
+    if (/^(https?|ftp):\/\/[^\s/$.?#].[^\s]*$/.test(query)) {
+      return axios.get(query, {
+        headers: headers,
+      });
+    }
+
+    // When query is a relative URL, append it to the source server URL
+    return axios.get(sourceServerUrl + query, {
+      headers: headers,
+    });
+  };
+
+  /**
+   * Helper function to fetch a FHIR resource from a server
+   */
+  private async fetchResource(serverUrl: string, reference: string): Promise<Resource | undefined> {
+    try {
+      let url = reference;
+      if (!reference.startsWith('http')) {
+        url = serverUrl.endsWith('/') ? serverUrl + reference : serverUrl + '/' + reference;
+      }
+
+      const response = await axios.get(url, {
+        headers: {
+          Accept: "application/json;charset=utf-8",
+        }
+      });
+
+      return response.data;
+    } catch (error) {
+      console.error('[SDC-SWM Renderer] Error fetching resource:', reference, error);
+      return undefined;
     }
   }
 
