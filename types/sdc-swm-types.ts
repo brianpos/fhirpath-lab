@@ -416,10 +416,10 @@ export interface SdcRequestExtractRequestPayload {
  */
 export interface SdcRequestExtractResponsePayload {
   /** Extraction outcome (always required) */
-  outcome: fhir4.OperationOutcome;
+  outcome?: fhir4.OperationOutcome;
   
-  /** Array of extracted FHIR resources */
-  extractedResources?: fhir4.Resource[];
+  /** Bundle of extracted FHIR resources */
+  extractedResources?: fhir4.Bundle;
 }
 
 /**
