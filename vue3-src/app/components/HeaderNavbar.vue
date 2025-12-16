@@ -37,29 +37,38 @@
           </v-btn>
         </template>
         <v-list theme="light">
-          <v-list-item @click="navigateTo('/Library')">
+          <v-list-item @click="navigateTo('/Library')" :active="isActive('/Library')">
             <template v-slot:prepend>
               <v-icon> mdi-library-outline </v-icon>
             </template>
             <v-list-item-title>Expression Library</v-list-item-title>
           </v-list-item>
-          <v-list-item @click="navigateTo('/StructureDefinition')">
+          <v-list-item @click="navigateTo('/FhirPath')" :active="isActive('/FhirPath')">
+            <template v-slot:prepend>
+              <v-icon> mdi-bug-outline </v-icon>
+            </template>
+            <v-list-item-title>Test FhirPath</v-list-item-title>
+          </v-list-item>
+          <v-list-item @click="navigateTo('/StructureDefinition')" :active="isActive('/StructureDefinition')">
             <v-list-item-title>Structure Definitions</v-list-item-title>
           </v-list-item>
-          <v-list-item @click="navigateTo('/SearchParameter')">
+          <v-list-item @click="navigateTo('/SearchParameter')" :active="isActive('/SearchParameter')">
             <v-list-item-title>Search Parameters</v-list-item-title>
           </v-list-item>
-          <v-list-item @click="navigateTo('/Questionnaire')">
+          <v-list-item @click="navigateTo('/Questionnaire')" :active="isActive('/Questionnaire')">
             <v-list-item-title>Questionnaires</v-list-item-title>
           </v-list-item>
-          <v-list-item @click="navigateTo('/SubscriptionTopic')">
+          <v-list-item @click="navigateTo('/SubscriptionTopic')" :active="isActive('/SubscriptionTopic')">
             <v-list-item-title>Subscription Topics</v-list-item-title>
           </v-list-item>
           <v-divider></v-divider>
-          <v-list-item @click="navigateTo('/StructureMap')">
+          <v-list-item @click="navigateTo('/StructureMap')" :active="isActive('/StructureMap')">
             <v-list-item-title>Structure Maps</v-list-item-title>
           </v-list-item>
-          <v-list-item @click="navigateTo('/FhirMapper2')">
+          <v-list-item @click="navigateTo('/fml')" :active="isActive('/fml')">
+            <template v-slot:prepend>
+              <v-icon> mdi-chart-gantt </v-icon>
+            </template>
             <v-list-item-title>Test Structure Map</v-list-item-title>
           </v-list-item>
         </v-list>
@@ -137,8 +146,8 @@
 </style>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 // TODO: Import UserSettings component when available in Vue 3 version
 // import UserSettings from './UserSettings.vue'
 
@@ -163,9 +172,18 @@ const emit = defineEmits<{
 
 // Vue Router
 const router = useRouter()
+const route = useRoute()
 
 // TypeScript reactive data
 const overlay = ref(false)
+
+// Computed property to check if a path is active
+const isActive = (path: string) => {
+  // Case-insensitive comparison and handle trailing slashes
+  const currentPath = route.path.toLowerCase().replace(/\/$/, '')
+  const checkPath = path.toLowerCase().replace(/\/$/, '')
+  return currentPath === checkPath
+}
 
 // Methods
 const clickToggleFavourite = () => {

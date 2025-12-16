@@ -1,4 +1,9 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+import { fileURLToPath } from 'node:url'
+import { dirname, resolve } from 'node:path'
+
+const currentDir = dirname(fileURLToPath(import.meta.url))
+
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   pages: true,
@@ -6,9 +11,9 @@ export default defineNuxtConfig({
 
   // Add alias configuration
   alias: {
-    '~/legacy-helpers': '../helpers',
-    '~/legacy-types': '../types',
-    '~/legacy-models': '../models',
+    '@legacy/helpers': resolve(currentDir, '../helpers'),
+    '@legacy/types': resolve(currentDir, '../types'),
+    '@legacy/models': resolve(currentDir, '../models'),
   },
   
   modules: [

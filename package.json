@@ -30,7 +30,7 @@
     "fhir-extension-helpers": "^0.3.0",
     "fhir-sdc-helpers": "^0.1.0",
     "fhirclient": "^2.6.0",
-    "fhirpath": "^4.7.0",
+    "fhirpath": "^4.8.2",
     "fhirpath-lab": "file:",
     "htmldiff-js": "^1.0.5",
     "lforms-loader": "^3.1.2",

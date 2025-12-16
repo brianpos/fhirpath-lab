@@ -3,6 +3,11 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+# 16 December 2025
+* Fhirpath tester page now reports when CORS issues are encountered
+* Update to the fhirpath.js 4.8.2 engine
+* Lots of progress with the Vue3 project, specifically the fhirpath page - trying out a multi-server results tab to run all in parallel.
+
 # 21 November 2025
 * Update to fhirpath.js version 4.7.0 (which has debugger support, and position information in the AST)
 * Add initial support for the debugger in the fhirpath.js engine!

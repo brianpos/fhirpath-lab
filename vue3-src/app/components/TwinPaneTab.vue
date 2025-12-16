@@ -16,7 +16,7 @@
             style="justify-content: start;"
           >
             <v-icon :start="!showIconsOnly"> {{ tabDetail.iconName }} </v-icon>
-            <span v-if="!showIconsOnly" style="text-align: left;">{{ tabDetail.tabName }}
+            <span v-if="!showIconsOnly" style="text-align: left; font-size: 14px;">{{ tabDetail.tabName }}
               <template v-if="tabDetail.tabSubName"><i style="font-size: x-small; text-transform: lowercase"><br/>{{ tabDetail.tabSubName }}</i></template>
             </span>
           </v-btn>

@@ -2034,13 +2034,33 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         if (axios.isAxiosError(err)) {
           const serverError = err as AxiosError<fhir4b.OperationOutcome>;
           if (serverError && serverError.response) {
+            // Server returned an error response (4xx, 5xx)
             this.setResultJson(JSON.stringify(serverError.response.data, null, settings.getTabSpaces()));
             this.saveOutcome = serverError.response.data;
             this.showOutcome = true;
             return serverError.response.data;
+          } else {
+            // Network error, CORS error, or request setup error (no response received)
+            const errorMessage = serverError.message || 'Network error occurred';
+            const isCorsError = errorMessage.includes('CORS') || errorMessage.includes('Network Error');
+            
+            this.saveOutcome = CreateOperationOutcome(
+              'error',
+              'exception',
+              isCorsError 
+                ? `CORS or network error: ${errorMessage}. The external engine may not allow requests from this origin.`
+                : `Network request failed: ${errorMessage}`
+            );
+            this.showOutcome = true;
+            return this.saveOutcome;
           }
         } else {
+          // Non-axios error
           console.log("Client Error:", err);
+          const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+          this.saveOutcome = CreateOperationOutcome('error', 'exception', `Client error: ${errorMessage}`);
+          this.showOutcome = true;
+          return this.saveOutcome;
         }
       }
     },
