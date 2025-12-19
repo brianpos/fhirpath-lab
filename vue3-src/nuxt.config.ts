@@ -8,6 +8,10 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   pages: true,
   devtools: { enabled: true },
+  // https://github.com/nuxt/devtools/issues/868
+  ignoreOptions: {
+    allowRelativePaths: true
+  },
 
   vite: {
     resolve: {
