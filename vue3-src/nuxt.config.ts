@@ -9,6 +9,13 @@ export default defineNuxtConfig({
   pages: true,
   devtools: { enabled: true },
 
+  vite: {
+    resolve: {
+      // Ensure consistent path resolution
+      preserveSymlinks: true
+    }
+  },
+
   // Add alias configuration
   alias: {
     '@legacy/helpers': resolve(currentDir, '../helpers'),
