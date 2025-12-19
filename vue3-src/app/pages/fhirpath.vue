@@ -142,35 +142,38 @@
           <!-- Results Tab (All Engines) -->
           <template v-slot:Results>
             <div class="tab-content">
-              <h4>All Engine Results</h4>
+              <h4 class="mb-2">All Engine Results</h4>
               <template v-if="allEngineResults.size > 0">
-                <v-card v-for="[engineName, result] in allEngineResults" :key="engineName" variant="outlined" class="pa-3 mt-2">
-                  <div class="font-weight-bold mb-2">
-                    Engine: {{ engineName }} 
-                    <v-icon style="float:right;" v-if="result.parseDebugTree" title="Has Abstract Syntax Tree Data">mdi-file-tree</v-icon>
+                <div v-for="[engineName, result] in allEngineResults" :key="engineName" variant="outlined" class="all-result-item">
+                  <v-icon style="float:right;" color="grey" v-if="result.parseDebugTree" title="Has Abstract Syntax Tree Data">mdi-file-tree</v-icon>
+                  <div class="all-result">
+                    <div class="all-result-engine">
+                      {{ engineName }} 
+                    </div>
+                    <div>
+                      <template v-if="result.saveOutcome && result.showOutcome">
+                        <v-alert type="error" variant="outlined" density="compact">
+                          {{ result.saveOutcome.issue?.map(i => i.details?.text || i.diagnostics || 'Error').join(', ') }}
+                        </v-alert>
+                      </template>
+                      <template v-else-if="result.results">
+                        <template v-for="(resultItem, idx) in result.results" :key="idx">
+                          <div v-if="resultItem.context" style="font-style: italic;">
+                            Context: {{ resultItem.context }}
+                          </div>
+                          <div v-if="resultItem.result.length > 0">
+                            <div v-for="(item, itemIdx) in resultItem.result" :key="itemIdx">
+                              <span v-if="item.type" class="text-caption text-grey">{{ item.type }}: </span>
+                              <code>{{ item.value }}</code>
+                              <!-- <div v-if="item.path" class="text-caption text-grey">Path: {{ item.path }}</div> -->
+                            </div>
+                          </div>
+                          <div v-else class="text-grey">Empty result</div>
+                        </template>
+                      </template>
+                    </div>
                   </div>
-                  <v-divider class="mb-2" />
-                  <template v-if="result.saveOutcome && result.showOutcome">
-                    <v-alert type="error" variant="outlined" density="compact">
-                      {{ result.saveOutcome.issue?.map(i => i.details?.text || i.diagnostics || 'Error').join(', ') }}
-                    </v-alert>
-                  </template>
-                  <template v-else-if="result.results">
-                    <template v-for="(resultItem, idx) in result.results" :key="idx">
-                      <div v-if="resultItem.context" class="font-weight-bold mb-1">
-                        Context: {{ resultItem.context }}
-                      </div>
-                      <div v-if="resultItem.result.length > 0">
-                        <div v-for="(item, itemIdx) in resultItem.result" :key="itemIdx" class="mb-2">
-                          <span v-if="item.type" class="text-caption text-grey">{{ item.type }}: </span>
-                          <code>{{ item.value }}</code>
-                          <div v-if="item.path" class="text-caption text-grey">Path: {{ item.path }}</div>
-                        </div>
-                      </div>
-                      <div v-else class="text-grey">Empty result</div>
-                    </template>
-                  </template>
-                </v-card>
+                </div>
               </template>
             </div>
           </template>
@@ -602,5 +605,19 @@ const evaluateExpression = async () => {
 .tab-content {
   overflow-y: auto;
   max-height: calc(100vh - 250px);
+}
+
+.all-result {
+  display: flex;
+  flex-direction: row;
+}
+.all-result .all-result-engine {
+  margin-right: 8px;
+  min-width: 72px;
+}
+.all-result-item + .all-result-item {
+  border-top: thin solid lightgray;
+  margin-top: 4px;
+  padding-top: 4px;
 }
 </style>

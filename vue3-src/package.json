@@ -20,7 +20,7 @@
     "vue": "^3.5.25",
     "vue-router": "^4.6.4",
     "vue3-ace-editor": "^2.2.4",
-    "vuetify": "^3.11.3",
+    "vuetify": "^3.11.4",
     "vuetify-nuxt-module": "^0.19.0",
     "xml-formatter": "^3.6.7"
   },
