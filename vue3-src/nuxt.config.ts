@@ -79,6 +79,9 @@ export default defineNuxtConfig({
   nitro: {
     experimental: {
       wasm: true
+    },
+    prerender: {
+      routes: ['/config.json']
     }
   },
   app: {
