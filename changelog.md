@@ -3,6 +3,9 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+# 19 December 2025
+* Update NLM Form renderer to 38.7.2
+
 # 16 December 2025
 * Fhirpath tester page now reports when CORS issues are encountered
 * Update to the fhirpath.js 4.8.2 engine
