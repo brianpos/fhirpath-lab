@@ -13,18 +13,18 @@ export default defineNuxtConfig({
     allowRelativePaths: true
   },
 
-  vite: {
-    resolve: {
-      // Ensure consistent path resolution
-      preserveSymlinks: true
-    },
-    build: {
-      // Disable modulepreload polyfill if it's causing issues
-      modulePreload: {
-        polyfill: false
-      }
-    }
-  },
+  // vite: {
+  //   resolve: {
+  //     // Ensure consistent path resolution
+  //     preserveSymlinks: true
+  //   },
+  //   build: {
+  //     // Disable modulepreload polyfill if it's causing issues
+  //     modulePreload: {
+  //       polyfill: false
+  //     }
+  //   }
+  // },
 
   // Add alias configuration
   alias: {
