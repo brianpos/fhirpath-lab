@@ -13,6 +13,12 @@ export default defineNuxtConfig({
     resolve: {
       // Ensure consistent path resolution
       preserveSymlinks: true
+    },
+    build: {
+      // Disable modulepreload polyfill if it's causing issues
+      modulePreload: {
+        polyfill: false
+      }
     }
   },
 
