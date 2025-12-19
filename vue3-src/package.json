@@ -15,6 +15,7 @@
     "@types/fhir": "^0.0.41",
     "ace-builds": "^1.43.5",
     "axios": "^1.13.2",
+    "fhir-extension-helpers": "^0.3.0",
     "fhirpath": "^4.8.2",
     "nuxt": "^4.2.2",
     "vue": "^3.5.25",
