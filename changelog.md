@@ -3,6 +3,10 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+# 26 December 2025
+* Updated the static config loading code to use async/await to ensure that the settings are fully loaded before being used.
+(which helps support the migration over to Vue3/Nuxt3)
+
 # 19 December 2025
 * Update NLM Form renderer to 38.7.2
 

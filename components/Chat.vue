@@ -128,7 +128,7 @@ export default class Chat extends Vue {
     this.scrollToBottom();
   }
 
-  public logHappy(index: number) {
+  public async logHappy(index: number) {
     const messages = this.messages.slice(0, index + 1);
     LogConversation(
       settings.getDefaultProviderField()!,
@@ -136,11 +136,11 @@ export default class Chat extends Vue {
       "like",
       undefined,
       messages,
-      settings.getServerEngineUrl("dotnet_server_r4b").replace("/$fhirpath", "")
+      (await settings.getServerEngineUrl("dotnet_server_r4b")).replace("/$fhirpath", "")
     );
   }
 
-  public logSad(index: number) {
+  public async logSad(index: number) {
     const messages = this.messages.slice(0, index + 1);
     LogConversation(
       settings.getDefaultProviderField()!,
@@ -148,7 +148,7 @@ export default class Chat extends Vue {
       "dislike",
       undefined,
       messages,
-      settings.getServerEngineUrl("dotnet_server_r4b").replace("/$fhirpath", "")
+      (await settings.getServerEngineUrl("dotnet_server_r4b")).replace("/$fhirpath", "")
     );
   }
 

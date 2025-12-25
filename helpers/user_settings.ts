@@ -1,6 +1,6 @@
 
-import {ConformanceSearchData} from "models/ConformanceSearchData";
-import { VariableData } from "~/models/testenginemodel";
+import { ConformanceSearchData } from "../models/ConformanceSearchData";
+import { VariableData } from "../models/testenginemodel";
 
 export declare interface UserSettingsData {
     fhirServerUrl?: string;
@@ -34,9 +34,26 @@ export declare interface ILastUsedParameters {
     loadCompleted?: boolean;
 }
 
-var serverConnections = require('~/static/config.json');
-
 export namespace settings {
+
+    // the cached version of the configuration data
+    let serverConnectionsData: any = {};
+
+    export async function getServerConnectionData(): Promise<any> {
+        if (Object.keys(serverConnectionsData).length > 0) {
+            // return the cached data
+            return serverConnectionsData;
+        }
+        
+        try {
+            let configResponse = await fetch('/config.json');
+            serverConnectionsData = await configResponse.json();
+            console.log("loaded config", serverConnectionsData);
+        } catch(err) {
+            console.error('Failed to load config.json:', err);
+        };
+        return serverConnectionsData;
+    }
 
     export function saveLastUsedParameters(data: ILastUsedParameters | undefined):void {
         if (data){
@@ -62,19 +79,20 @@ export namespace settings {
     export function getTabSpaces(): number {
         return 2;
     }
-    export function dotnet_server_downloader(): string {
-        return serverConnections.dotnet_server_downloader;
+    export async function dotnet_server_downloader(): Promise<string> {
+        return (await getServerConnectionData()).dotnet_server_downloader;
     }
-    export function getServerEngineUrl(configName?: string): string {
+    export async function getServerEngineUrl(configName?: string): Promise<string> {
+        let serverData = await getServerConnectionData();
         if (!configName)
-            return serverConnections.dotnet_server_r4b;
+            return serverData.dotnet_server_r4b;
 
-        if (!(configName in serverConnections)) {
+        if (!(configName in serverData)) {
             console.warn(`No server connection configuration found for '${configName}', using default`);
-            return serverConnections.dotnet_server_r4b;
+            return serverData.dotnet_server_r4b;
         }
 
-        return serverConnections[configName];
+        return serverData[configName];
     }
 
     export function getSearchData(type: string): ConformanceSearchData | undefined {

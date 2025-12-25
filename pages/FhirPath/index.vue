@@ -2217,7 +2217,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         if (url.startsWith("https://build.fhir.org/")
             || url.startsWith("https://github.com/HL7/")
             || url.startsWith("https://hl7.org/fhir/"))
-            url = settings.dotnet_server_downloader() + "?url=" + url;
+            url = (await settings.dotnet_server_downloader()) + "?url=" + url;
 
         if (this.cancelSource) this.cancelSource.cancel("new download started");
         this.cancelSource = axios.CancelToken.source();
@@ -2318,7 +2318,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         
         if (url.startsWith("https://build.fhir.org/")
           || url.startsWith("https://hl7.org/fhir/"))
-          url = settings.dotnet_server_downloader() + "?url=" + url;
+          url = (await settings.dotnet_server_downloader()) + "?url=" + url;
 
         if (this.cancelSource) this.cancelSource.cancel("new download started");
         this.cancelSource = axios.CancelToken.source();
@@ -3285,7 +3285,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
 
       // Hosted services
       // don't trace usage by me as that distorts the usage data
-      let url = settings.getServerEngineUrl(this.selectedEngine2?.configSetting);
+      let url =(await settings.getServerEngineUrl(this.selectedEngine2?.configSetting));
       if (this.defaultProviderField !== 'Brian Postlethwaite') {
         (this as any).$appInsights?.trackEvent({ name: 'evaluate ' + this.selectedEngine2?.appInsightsEngineName });
       }

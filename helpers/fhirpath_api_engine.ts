@@ -967,12 +967,12 @@ export function convertOptionsToParametersJavaR5R6(
 /**
  * Get engine URL and determine if it's a local (non-RESTful) engine
  */
-export function getEngineInfo(selectedEngine: IFhirPathEngineDetails): {
+export async function getEngineInfo(selectedEngine: IFhirPathEngineDetails): Promise<{
   url?: string;
   isLocal: boolean;
   requiresSpecialParameterHandling: boolean;
   astSupported: boolean;
-} {
+}> {
   const engineName = selectedEngine.name.toLowerCase();
   const fhirVersion = selectedEngine.fhirVersion.toLowerCase();
   
@@ -984,7 +984,7 @@ export function getEngineInfo(selectedEngine: IFhirPathEngineDetails): {
   }
   
   // RESTful engines - use the URL from the engine details if available
-  let url: string | undefined = settings.getServerEngineUrl(selectedEngine.configSetting);
+  let url: string | undefined = await settings.getServerEngineUrl(selectedEngine.configSetting);
   let requiresSpecialParameterHandling = false;
   let astSupported = true;
   
@@ -1011,7 +1011,7 @@ export async function evaluateFhirPathExpression(
   resourceId?: string,
   cancelSource?: CancelTokenSource
 ): Promise<FhirPathEvaluationResult> {
-  const engineInfo = getEngineInfo(selectedEngine);
+  const engineInfo = await getEngineInfo(selectedEngine);
   
   if (engineInfo.isLocal) {
     // Use local fhirpath.js engine
