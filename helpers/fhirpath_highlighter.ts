@@ -48,6 +48,9 @@ export const Rules: Record<string, TextHighlightToken[]> = {
       token: "constant.numeric", // float
       regex: /\b\d+(?:(?:\.\d*)?(?:[eE][+-]?\d+)?)?\b/
     }, {
+      token: "constant.numeric", // long number
+      regex: /\b\d+L\b/
+    }, {
       token: "constant.fhir_time", // time only
       regex: /@T[0-9][0-9]:[0-9][0-9](:[0-9][0-9])?(\.[0-9]+)?/
     }, {

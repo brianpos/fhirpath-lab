@@ -1,0 +1,273 @@
+// assets/variables.scss
+
+// Import Vuetify 3 SASS variables and functions (must be first)
+@use 'vuetify/settings' as vuetify;
+
+// Variables you want to modify
+$btn-border-radius: 6px;
+
+// Modifying a SASS map variable
+// $material-light: ( cards: blue );
+$label-margin-bottom: 0;
+
+// https://mycolor.space/?hex=%233F81AE&sub=1
+$card-header-color: #79B6E6;
+
+$tab-backcolor: #D2F5FF;
+$tab-color: rgba(0, 0, 0, 0.87);
+
+// Theme overloads
+
+
+// Global link styling to match Vuetify 2 behavior
+.v-application a {
+  text-decoration: none;
+  color: #1976d2; // Default Vuetify primary color for links
+  
+  &:hover {
+    text-decoration: underline;
+  }
+  
+  &:visited {
+    color: #1976d2;
+  }
+}
+
+// Specific styling for plain text links in content areas
+.link-plain-text {
+  text-decoration: none !important;
+  color: inherit !important;
+  
+  &:hover {
+    text-decoration: none !important;
+    color: inherit !important;
+  }
+}
+
+.v-text-field .v-label--active {
+  transform-origin: left;
+}
+
+.v-label {
+  margin-bottom: 0;
+}
+
+.v-application--wrap:has(div.retired-page-background) {
+  background-color: thistle;
+}
+
+.v-application--wrap:has(div.draft-page-background) {
+  background-color: lightgray;
+}
+
+.active-page-background,
+.draft-page-background,
+.retired-page-background {
+  padding-bottom: 0;
+}
+
+@media (max-width: 596px) {
+  .status-col {
+    max-width: unset;
+  }
+}
+
+.status-col {
+  max-width: 20ch;
+}
+
+/* Header coloring */
+.v-app-bar > .v-toolbar__content {
+  background-color: #3F81AE;
+}
+
+/* Ensure dark app bar has proper styling */
+.v-app-bar.v-app-bar--dark {
+  background-color: #3F81AE !important;
+  color: white !important;
+}
+
+.v-app-bar.v-app-bar--dark .v-toolbar-title {
+  color: white !important;
+}
+
+.v-app-bar.v-app-bar--dark .v-btn {
+  color: white !important;
+}
+
+.v-app-bar.v-app-bar--dark .v-icon {
+  color: white !important;
+}
+/* Search toolbar (header row2) */
+.v-toolbar__extension {
+  background-color: $card-header-color;
+}
+
+/* Edit properties card header row */
+.v-card> .v-toolbar > .v-toolbar__content {
+  color: white;
+  background-color: $card-header-color;
+}
+
+/* Tab coloring */
+.v-tab {
+  justify-content: initial;
+}
+.v-tab.v-tab.v-tab--active{
+  color: $tab-color;
+}
+
+.v-tab--active {
+  background-color: $tab-backcolor;
+  color: $tab-color;
+}
+.theme--light.v-toolbar.v-sheet {
+  background-color: $tab-backcolor;
+  color: $tab-color;
+}
+.field-label {
+  margin-right: 8px;
+  color: grey;
+}
+
+/* Publishing tab properties */
+.version {
+  max-width: 15ch;
+}
+
+.date {
+  max-width: 20ch;
+}
+
+.fl-tab-header {
+  display: none;
+}
+@media (max-width: 596px) {
+  /* for phone display only show the icons */
+  .v-tab {
+    max-width: 48px;
+    min-width: 48px;
+  }
+
+  .fl-tab-header {
+    display: block;
+    background-color: $tab-backcolor;
+    color: $tab-color;
+    justify-content: stretch;
+    text-transform: uppercase;
+    font-size: 0.875em;
+    font-weight: 700;
+    padding: 13px 16px;
+    margin-top: -16px;
+    margin-left: -16px;
+    margin-right: -16px;
+  }
+}
+
+/* Markdown field preview styles */
+span.markdown p {
+  margin-bottom: 0.1rem;
+}
+span.markdown {
+  border-left: solid lightgrey 4px;
+  padding-left: 12px;
+  margin-top: 6px;
+  margin-bottom: 6px;
+  display: block;
+}
+
+/* Easy Table (search tables)*/
+.v-data-table table {
+  border: thin solid #eee;
+}
+
+.theme--light.v-data-table.v-data-table--fixed-header thead th,
+.v-data-table table th {
+  background-color: #fafafa;
+  font-weight: 500 !important;
+}
+
+tr.v-data-table__expanded__content {
+  box-shadow: none !important;
+}
+
+.v-data-table > .v-data-table__wrapper .v-data-table__mobile-row {
+  min-height: 38px;
+}
+
+.empty-data {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: min(200px, 80vh);
+  width: 100%;
+  color: #666;
+  font-size: 16px;
+  border-top: 0;
+}
+
+tr.v-data-table__expanded__content > td {
+  border-bottom: thin solid #eee;
+  padding: 10px !important;
+}
+
+/* We don't use the data footer in any of the lab's tables, so hide them (nav panes)*/
+.v-data-footer {
+  display: none;
+}
+
+// --------------------------------------------------------------------------
+// Editor footer line (Material UI focus display)
+// --------------------------------------------------------------------------
+
+.ace_editor_footer {
+  position: relative;
+  margin-top: 1px;
+  height: 0;
+  padding-bottom: 4px;
+  border-bottom: thin solid white ;
+  color: rgba(var(--v-theme-on-surface), 0.6);
+}
+
+.ace_editor:hover+.ace_editor_footer {
+  color: rgba(var(--v-theme-on-surface), 0.87);
+  transition: vuetify.$standard-easing 0.3s;
+  // display: block;
+}
+
+.ace_editor:focus-within+.ace_editor_footer {
+  color: rgb(var(--v-theme-primary));
+  transition: vuetify.$standard-easing 0.3s;
+  // display: block;
+}
+
+
+.ace_editor+.ace_editor_footer::before,
+.ace_editor+.ace_editor_footer::after {
+  bottom: -1px; // Needed for browser autocomplete styles
+  content: '';
+  // left: 4px;
+  position: absolute;
+  transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1); // Vuetify standard easing
+  width: 100%;
+  // display: none;
+}
+
+.ace_editor:focus-within+.ace_editor_footer::after {
+  display: block;
+  transform: scaleX(1);
+}
+
+.ace_editor+.ace_editor_footer::before {
+  border-color: inherit;
+  border-style: solid;
+  border-width: thin 0 0 0;
+}
+
+.ace_editor+.ace_editor_footer::after {
+  background-color: currentColor;
+  border-color: currentColor;
+  border-style: solid;
+  border-width: 1px 0 thin 1px;
+  transform: scaleX(0);
+}

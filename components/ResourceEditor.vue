@@ -1,7 +1,8 @@
 <template>
   <div class="resource-json-editor" style="display: flex; flex-direction: column; height: 100%;">
     <v-text-field v-if="label && label.length > 0" :label="label" :readonly="readOnly" v-model="internalResourceUrl" :loading="downloadingInProgress"
-      hide-details="auto" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+      hide-details="auto" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+      @keyup.enter="handleEnterKey">
       <template v-slot:prepend>
         <slot name="prepend"></slot>
       </template>
@@ -36,16 +37,20 @@ import 'ace-builds/webpack-resolver'; // Ensure the Ace editor assets are availa
 import { settings } from "~/helpers/user_settings";
 import {
   requestFhirAcceptHeaders,
+  requestFhirXmlAcceptHeaders,
   CreateOperationOutcome,
 } from "~/helpers/searchFhir";
 import axios from "axios";
 import { AxiosError } from "axios";
 import { CancelTokenSource } from "axios";
 import xmlFormat from 'xml-formatter';
-import { IJsonNodePosition } from "~/helpers/json_parser";
+import { findNodeByPath, IJsonNode, IJsonNodePosition, parseJson } from "~/helpers/json_parser";
 import "ace-builds/src-noconflict/mode-json";
 import "ace-builds/src-noconflict/mode-xml";
+import "ace-builds/src-noconflict/theme-chrome";
 import { setAcePaths, Rules as FhirPathHightlighter_Rules, setCustomHighlightRules } from "~/helpers/fhirpath_highlighter"
+import { Model } from "fhirpath";
+import { parseXml, parseXmlAndObject } from "~/helpers/xml_parser";
 import "~/assets/fhirpath_highlighter.scss"
 
 @Component
@@ -61,6 +66,13 @@ export default class ResourceJsonEditor extends Vue {
     if (url)
       this.internalResourceUrl = url;
     await this.downloadResource();
+  }
+
+  public handleEnterKey(event: KeyboardEvent) {
+    // Only download if Ctrl key (Windows/Linux) or Cmd key (Mac) is not pressed
+    if (!event.ctrlKey && !event.metaKey) {
+      this.downloadResource();
+    }
   }
 
   public navigateToPosition(position: IJsonNodePosition) {
@@ -88,6 +100,96 @@ export default class ResourceJsonEditor extends Vue {
       }, 1500);
     }
     // this.updateNow();
+  }
+
+  public navigateToContext(model: Model, elementPath: string, variableName?: string, debugMode?: boolean): number | void {
+    // Move the cursor in the test resource JSON editor to the element
+    if (this.resourceText) {
+      // Select the model to use, r5 or r4b
+      // console.log("Using "+modelInfo.version+" model for navigation");
+      var ast: IJsonNode | undefined;
+      if (this.resourceText.startsWith('<')) {
+        ast = parseXml(this.resourceText, model);
+
+      } else {
+        ast = parseJson(this.resourceText, model);
+      }
+      console.log(ast);
+      if (ast) {
+          var node = findNodeByPath(ast, elementPath);
+          if (node) {
+            // inject the position information onto the issue
+            // so that UI can use it
+            this.aceEditor.clearSelection();
+            if (node.position) {
+              this.aceEditor.focus();
+              this.aceEditor.gotoLine(
+                node.position.line,
+                node.position.column,
+                true
+              );
+
+              if (node.position.value_stop_pos) {
+                let substr = this.resourceText.substring(node.position.prop_start_pos, node.position.value_stop_pos+1);
+                const endRowOffset = substr.split(/\r\n|\r|\n/).length;
+                const endRow = node.position.line + endRowOffset - 1;
+                const endCollOffset = substr.split(/\r\n|\r|\n/)[endRowOffset - 1].length;
+                const endCol = node.position.column + (endCollOffset > 1 ? endCollOffset + 1 : endCollOffset);
+                const range = new ace.Range(node.position.line-1, node.position.column, endRow-1, endCol);
+                console.log("context", range);
+
+                if (debugMode) {
+                  const selectionMarker = this.aceEditor.session.addMarker(range, "debugSelection", "text", false);
+                  return selectionMarker;
+                }
+                else {
+                  const selectionMarker = this.aceEditor.session.addMarker(range, "resultSelection", "fullLine", true);
+                  // after 1.5 seconds remove the highlight.
+                  setTimeout(() => {
+                    this.aceEditor?.session.removeMarker(selectionMarker);
+                  }, 1500);
+                }                   
+              } else if (node.position.prop_stop_pos) {
+                // prop based stuff
+                let substr = this.resourceText.substring(node.position.prop_start_pos, node.position.prop_stop_pos+1);
+                const endRowOffset = substr.split(/\r\n|\r|\n/).length;
+                const endRow = node.position.line + endRowOffset - 1;
+                const endCollOffset = substr.split(/\r\n|\r|\n/)[endRowOffset - 1].length;
+                const endCol = node.position.column + (endCollOffset > 1 ? endCollOffset + 1 : endCollOffset);
+                const range = new ace.Range(node.position.line-1, node.position.column, endRow-1, endCol);
+                console.log("context prop", range);
+
+                if (debugMode) {
+                  const selectionMarker = this.aceEditor.session.addMarker(range, "debugSelection", "text", false);
+                  return selectionMarker;
+                }
+                else {
+                  const selectionMarker = this.aceEditor.session.addMarker(range, "resultSelection", "fullLine", true);
+                  // after 1.5 seconds remove the highlight.
+                  setTimeout(() => {
+                    this.aceEditor?.session.removeMarker(selectionMarker);
+                  }, 1500);
+                }                   
+              }
+              this.$forceUpdate();
+            }
+          }
+        }
+    }
+  }
+
+  public removeMarker(markerId: number): void {
+    if (this.aceEditor && markerId) {
+      this.aceEditor.session.removeMarker(markerId);
+    }
+  }
+
+  public removeMarkers(markerIds: number[]): void {
+    if (this.aceEditor && markerIds && markerIds.length > 0) {
+      for (let markerId of markerIds) {
+        this.aceEditor.session.removeMarker(markerId);
+      }
+    }
   }
 
   internalResourceUrl: string = this.resourceUrl ?? '';
@@ -128,6 +230,7 @@ export default class ResourceJsonEditor extends Vue {
   }
 
   initializeAceEditor() {
+    setAcePaths(ace.config);
     if (this.$refs.aceEditor) {
       var editorDiv: any = this.$refs.aceEditor as HTMLDivElement;
       this.aceEditor = ace.edit(editorDiv, {
@@ -218,11 +321,12 @@ export default class ResourceJsonEditor extends Vue {
       let token = this.cancelSource.token;
       let headers = {
         "Cache-Control": "no-cache",
-        Accept: requestFhirAcceptHeaders,
+        Accept: requestFhirAcceptHeaders + ", " + requestFhirXmlAcceptHeaders,
       };
-      const response = await axios.get<fhir4b.Resource>(url, {
+      const response = await axios.get<fhir4b.Resource | string>(url, {
         cancelToken: token,
         headers: headers,
+        responseType: 'text', // Get as text first to handle both JSON and XML
       });
       if (token.reason) {
         console.log(token.reason);
@@ -234,11 +338,40 @@ export default class ResourceJsonEditor extends Vue {
       const results = response.data;
       if (results) {
         if (this.aceEditor) {
-          const resourceJson = JSON.stringify(results, null, settings.getTabSpaces());
-          this.resourceTextFromFile = resourceJson;
-          if (resourceJson) {
-            this.aceEditor.setValue(resourceJson);
-            // this.resourceJsonChanged = false;
+          let formattedContent = '';
+          const contentType = response.headers['content-type'] || '';
+          
+          // Detect if the response is XML or JSON based on content type
+          if (contentType.includes('xml') || (typeof results === 'string' && results.trim().startsWith('<'))) {
+            // Handle XML response
+            try {
+              formattedContent = xmlFormat(results as string, {
+                indentation: ' '.repeat(settings.getTabSpaces()),
+                collapseContent: true,
+                lineSeparator: '\n'
+              });
+            } catch (e) {
+              // If XML formatting fails, use the raw content
+              formattedContent = results as string;
+            }
+            this.resourceType = 'xml';
+            this.aceEditor.getSession().setMode('ace/mode/xml');
+          } else {
+            // Handle JSON response
+            try {
+              const parsedJson = typeof results === 'string' ? JSON.parse(results) : results;
+              formattedContent = JSON.stringify(parsedJson, null, settings.getTabSpaces());
+              this.resourceType = 'json';
+              this.aceEditor.getSession().setMode('ace/mode/json');
+            } catch (e) {
+              // If JSON parsing fails, treat as plain text
+              formattedContent = results as string;
+            }
+          }
+          
+          this.resourceTextFromFile = formattedContent;
+          if (formattedContent) {
+            this.aceEditor.setValue(formattedContent);
           }
           this.aceEditor.clearSelection();
         }
@@ -300,7 +433,7 @@ export default class ResourceJsonEditor extends Vue {
     if (this.resourceType === 'xml') {
       try {
         let formattedXml = xmlFormat(this.aceEditor.getValue(), {
-          indentation: '\t', // Tab for indentation
+          indentation: ' '.repeat(settings.getTabSpaces()), // Use spaces based on settings
           collapseContent: true, // Keep content in the same line as the element
           lineSeparator: '\n' // Use newline as line separator
         });
@@ -336,5 +469,17 @@ export default class ResourceJsonEditor extends Vue {
 .ace_editor:focus-within+.ace_editor_footer {
   color: #1976d2;
   transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);
+}
+
+.debugSelection {
+  position: absolute;
+  z-index: 20;
+  background-color: #fbff82b1;
+}
+
+.resultSelection {
+  position: absolute;
+  z-index: 20;
+  background-color: #5240ef65;
 }
 </style>

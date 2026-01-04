@@ -1,91 +1,98 @@
-// Generated from FmlMapping.g4 by ANTLR 4.13.1
+// Generated from FmlMapping.g4 by ANTLR 4.13.2
 
 import {ParseTreeVisitor} from 'antlr4';
 
 
-import { StructureMapContext } from "./FmlMappingParser";
-import { ConceptMapDeclarationContext } from "./FmlMappingParser";
-import { ConceptMapPrefixContext } from "./FmlMappingParser";
-import { ConceptMapCodeMapContext } from "./FmlMappingParser";
-import { ConceptMapSourceContext } from "./FmlMappingParser";
-import { ConceptMapTargetContext } from "./FmlMappingParser";
-import { CodeContext } from "./FmlMappingParser";
-import { MapDeclarationContext } from "./FmlMappingParser";
-import { MetadataDeclarationContext } from "./FmlMappingParser";
-import { MarkdownLiteralContext } from "./FmlMappingParser";
-import { UrlContext } from "./FmlMappingParser";
-import { IdentifierContext } from "./FmlMappingParser";
-import { StructureDeclarationContext } from "./FmlMappingParser";
-import { ConstantDeclarationContext } from "./FmlMappingParser";
-import { GroupDeclarationContext } from "./FmlMappingParser";
-import { ParametersContext } from "./FmlMappingParser";
-import { ParameterContext } from "./FmlMappingParser";
-import { GroupExpressionsContext } from "./FmlMappingParser";
-import { TypeModeContext } from "./FmlMappingParser";
-import { ExtendsContext } from "./FmlMappingParser";
-import { TypeIdentifierContext } from "./FmlMappingParser";
-import { MapSimpleCopyContext } from "./FmlMappingParser";
-import { MapFhirMarkupContext } from "./FmlMappingParser";
-import { MapExpressionContext } from "./FmlMappingParser";
-import { MapExpressionNameContext } from "./FmlMappingParser";
-import { MapExpressionSourceContext } from "./FmlMappingParser";
-import { MapExpressionTargetContext } from "./FmlMappingParser";
-import { SourceCardinalityContext } from "./FmlMappingParser";
-import { UpperBoundContext } from "./FmlMappingParser";
-import { QualifiedIdentifierContext } from "./FmlMappingParser";
-import { SourceDefaultContext } from "./FmlMappingParser";
-import { AliasContext } from "./FmlMappingParser";
-import { WhereClauseContext } from "./FmlMappingParser";
-import { CheckClauseContext } from "./FmlMappingParser";
-import { LogContext } from "./FmlMappingParser";
-import { DependentExpressionContext } from "./FmlMappingParser";
-import { ImportDeclarationContext } from "./FmlMappingParser";
-import { MapLineTargetContext } from "./FmlMappingParser";
-import { TransformContext } from "./FmlMappingParser";
-import { InvocationContext } from "./FmlMappingParser";
-import { ParamListContext } from "./FmlMappingParser";
-import { ParamContext } from "./FmlMappingParser";
-import { IndexerExpressionContext } from "./FmlMappingParser";
-import { PolarityExpressionContext } from "./FmlMappingParser";
-import { AdditiveExpressionContext } from "./FmlMappingParser";
-import { MultiplicativeExpressionContext } from "./FmlMappingParser";
-import { UnionExpressionContext } from "./FmlMappingParser";
-import { OrExpressionContext } from "./FmlMappingParser";
-import { AndExpressionContext } from "./FmlMappingParser";
-import { MembershipExpressionContext } from "./FmlMappingParser";
-import { InequalityExpressionContext } from "./FmlMappingParser";
-import { InvocationExpressionContext } from "./FmlMappingParser";
-import { EqualityExpressionContext } from "./FmlMappingParser";
-import { ImpliesExpressionContext } from "./FmlMappingParser";
-import { TermExpressionContext } from "./FmlMappingParser";
-import { TypeExpressionContext } from "./FmlMappingParser";
-import { InvocationTermContext } from "./FmlMappingParser";
-import { LiteralTermContext } from "./FmlMappingParser";
-import { ExternalConstantTermContext } from "./FmlMappingParser";
-import { ParenthesizedTermContext } from "./FmlMappingParser";
-import { FunctionInvocationContext } from "./FmlMappingParser";
-import { MemberInvocationContext } from "./FmlMappingParser";
-import { ThisInvocationContext } from "./FmlMappingParser";
-import { IndexInvocationContext } from "./FmlMappingParser";
-import { TotalInvocationContext } from "./FmlMappingParser";
-import { FpExternalConstantContext } from "./FmlMappingParser";
-import { FpFunctionContext } from "./FmlMappingParser";
-import { FpParamListContext } from "./FmlMappingParser";
-import { FpTypeSpecifierContext } from "./FmlMappingParser";
-import { ConstantContext } from "./FmlMappingParser";
-import { NullLiteralContext } from "./FmlMappingParser";
-import { BooleanLiteralContext } from "./FmlMappingParser";
-import { QuantityLiteralContext } from "./FmlMappingParser";
-import { LongNumberLiteralContext } from "./FmlMappingParser";
-import { NumberLiteralContext } from "./FmlMappingParser";
-import { DateLiteralContext } from "./FmlMappingParser";
-import { DateTimeLiteralContext } from "./FmlMappingParser";
-import { TimeLiteralContext } from "./FmlMappingParser";
-import { StringLiteralContext } from "./FmlMappingParser";
-import { QuotedStringLiteralContext } from "./FmlMappingParser";
-import { QuantityWithDateContext } from "./FmlMappingParser";
-import { QuantityWithDatePluralContext } from "./FmlMappingParser";
-import { QuantityWithUcumContext } from "./FmlMappingParser";
+import { StructureMapContext } from "./FmlMappingParser.js";
+import { ConceptMapDeclarationContext } from "./FmlMappingParser.js";
+import { ConceptMapPrefixContext } from "./FmlMappingParser.js";
+import { ConceptMapCodeMapContext } from "./FmlMappingParser.js";
+import { ConceptMapSourceContext } from "./FmlMappingParser.js";
+import { ConceptMapTargetContext } from "./FmlMappingParser.js";
+import { CodeContext } from "./FmlMappingParser.js";
+import { MapDeclarationContext } from "./FmlMappingParser.js";
+import { MetadataDeclarationContext } from "./FmlMappingParser.js";
+import { MarkdownLiteralContext } from "./FmlMappingParser.js";
+import { UrlContext } from "./FmlMappingParser.js";
+import { IdentifierContext } from "./FmlMappingParser.js";
+import { StructureDeclarationContext } from "./FmlMappingParser.js";
+import { ConstantDeclarationContext } from "./FmlMappingParser.js";
+import { GroupDeclarationContext } from "./FmlMappingParser.js";
+import { ParametersContext } from "./FmlMappingParser.js";
+import { ParameterContext } from "./FmlMappingParser.js";
+import { MapRulesContext } from "./FmlMappingParser.js";
+import { TypeModeContext } from "./FmlMappingParser.js";
+import { ExtendsContext } from "./FmlMappingParser.js";
+import { TypeIdentifierContext } from "./FmlMappingParser.js";
+import { MapSimpleCopyContext } from "./FmlMappingParser.js";
+import { MapFhirMarkupContext } from "./FmlMappingParser.js";
+import { MapTransformationRuleContext } from "./FmlMappingParser.js";
+import { RuleNameContext } from "./FmlMappingParser.js";
+import { RuleSourcesContext } from "./FmlMappingParser.js";
+import { RuleSourceContext } from "./FmlMappingParser.js";
+import { RuleTargetsContext } from "./FmlMappingParser.js";
+import { RuleTargetContext } from "./FmlMappingParser.js";
+import { SourceCardinalityContext } from "./FmlMappingParser.js";
+import { UpperBoundContext } from "./FmlMappingParser.js";
+import { QualifiedIdentifierContext } from "./FmlMappingParser.js";
+import { SourceDefaultContext } from "./FmlMappingParser.js";
+import { AliasContext } from "./FmlMappingParser.js";
+import { WhereClauseContext } from "./FmlMappingParser.js";
+import { CheckClauseContext } from "./FmlMappingParser.js";
+import { LogContext } from "./FmlMappingParser.js";
+import { DependentExpressionContext } from "./FmlMappingParser.js";
+import { ImportDeclarationContext } from "./FmlMappingParser.js";
+import { TransformContext } from "./FmlMappingParser.js";
+import { GroupInvocationContext } from "./FmlMappingParser.js";
+import { GroupParamListContext } from "./FmlMappingParser.js";
+import { GroupParamContext } from "./FmlMappingParser.js";
+import { IndexerExpressionContext } from "./FmlMappingParser.js";
+import { PolarityExpressionContext } from "./FmlMappingParser.js";
+import { AdditiveExpressionContext } from "./FmlMappingParser.js";
+import { MultiplicativeExpressionContext } from "./FmlMappingParser.js";
+import { UnionExpressionContext } from "./FmlMappingParser.js";
+import { OrExpressionContext } from "./FmlMappingParser.js";
+import { AndExpressionContext } from "./FmlMappingParser.js";
+import { MembershipExpressionContext } from "./FmlMappingParser.js";
+import { InequalityExpressionContext } from "./FmlMappingParser.js";
+import { InvocationExpressionContext } from "./FmlMappingParser.js";
+import { EqualityExpressionContext } from "./FmlMappingParser.js";
+import { ImpliesExpressionContext } from "./FmlMappingParser.js";
+import { TermExpressionContext } from "./FmlMappingParser.js";
+import { TypeExpressionContext } from "./FmlMappingParser.js";
+import { InvocationTermContext } from "./FmlMappingParser.js";
+import { LiteralTermContext } from "./FmlMappingParser.js";
+import { ExternalConstantTermContext } from "./FmlMappingParser.js";
+import { ParenthesizedTermContext } from "./FmlMappingParser.js";
+import { FunctionInvocationContext } from "./FmlMappingParser.js";
+import { MemberInvocationContext } from "./FmlMappingParser.js";
+import { ThisInvocationContext } from "./FmlMappingParser.js";
+import { IndexInvocationContext } from "./FmlMappingParser.js";
+import { TotalInvocationContext } from "./FmlMappingParser.js";
+import { FpExternalConstantContext } from "./FmlMappingParser.js";
+import { FpFunctionContext } from "./FmlMappingParser.js";
+import { SortDirectionArgumentContext } from "./FmlMappingParser.js";
+import { FpParamListContext } from "./FmlMappingParser.js";
+import { FpTypeSpecifierContext } from "./FmlMappingParser.js";
+import { ConstantContext } from "./FmlMappingParser.js";
+import { SourceListModeContext } from "./FmlMappingParser.js";
+import { TargetListModeContext } from "./FmlMappingParser.js";
+import { GroupTypeModeContext } from "./FmlMappingParser.js";
+import { ModelModeContext } from "./FmlMappingParser.js";
+import { ParameterModeContext } from "./FmlMappingParser.js";
+import { NullLiteralContext } from "./FmlMappingParser.js";
+import { BooleanLiteralContext } from "./FmlMappingParser.js";
+import { QuantityLiteralContext } from "./FmlMappingParser.js";
+import { LongNumberLiteralContext } from "./FmlMappingParser.js";
+import { NumberLiteralContext } from "./FmlMappingParser.js";
+import { DateLiteralContext } from "./FmlMappingParser.js";
+import { DateTimeLiteralContext } from "./FmlMappingParser.js";
+import { TimeLiteralContext } from "./FmlMappingParser.js";
+import { StringLiteralContext } from "./FmlMappingParser.js";
+import { QuotedStringLiteralContext } from "./FmlMappingParser.js";
+import { QuantityWithDateContext } from "./FmlMappingParser.js";
+import { QuantityWithDatePluralContext } from "./FmlMappingParser.js";
+import { QuantityWithUcumContext } from "./FmlMappingParser.js";
 
 
 /**
@@ -199,11 +206,11 @@ export default class FmlMappingVisitor<Result> extends ParseTreeVisitor<Result> 
 	 */
 	visitParameter?: (ctx: ParameterContext) => Result;
 	/**
-	 * Visit a parse tree produced by `FmlMappingParser.groupExpressions`.
+	 * Visit a parse tree produced by `FmlMappingParser.mapRules`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitGroupExpressions?: (ctx: GroupExpressionsContext) => Result;
+	visitMapRules?: (ctx: MapRulesContext) => Result;
 	/**
 	 * Visit a parse tree produced by `FmlMappingParser.typeMode`.
 	 * @param ctx the parse tree
@@ -224,42 +231,54 @@ export default class FmlMappingVisitor<Result> extends ParseTreeVisitor<Result> 
 	visitTypeIdentifier?: (ctx: TypeIdentifierContext) => Result;
 	/**
 	 * Visit a parse tree produced by the `mapSimpleCopy`
-	 * labeled alternative in `FmlMappingParser.expression`.
+	 * labeled alternative in `FmlMappingParser.mapRule`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitMapSimpleCopy?: (ctx: MapSimpleCopyContext) => Result;
 	/**
 	 * Visit a parse tree produced by the `mapFhirMarkup`
-	 * labeled alternative in `FmlMappingParser.expression`.
+	 * labeled alternative in `FmlMappingParser.mapRule`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitMapFhirMarkup?: (ctx: MapFhirMarkupContext) => Result;
 	/**
-	 * Visit a parse tree produced by `FmlMappingParser.mapExpression`.
+	 * Visit a parse tree produced by `FmlMappingParser.mapTransformationRule`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitMapExpression?: (ctx: MapExpressionContext) => Result;
+	visitMapTransformationRule?: (ctx: MapTransformationRuleContext) => Result;
 	/**
-	 * Visit a parse tree produced by `FmlMappingParser.mapExpressionName`.
+	 * Visit a parse tree produced by `FmlMappingParser.ruleName`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitMapExpressionName?: (ctx: MapExpressionNameContext) => Result;
+	visitRuleName?: (ctx: RuleNameContext) => Result;
 	/**
-	 * Visit a parse tree produced by `FmlMappingParser.mapExpressionSource`.
+	 * Visit a parse tree produced by `FmlMappingParser.ruleSources`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitMapExpressionSource?: (ctx: MapExpressionSourceContext) => Result;
+	visitRuleSources?: (ctx: RuleSourcesContext) => Result;
 	/**
-	 * Visit a parse tree produced by `FmlMappingParser.mapExpressionTarget`.
+	 * Visit a parse tree produced by `FmlMappingParser.ruleSource`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitMapExpressionTarget?: (ctx: MapExpressionTargetContext) => Result;
+	visitRuleSource?: (ctx: RuleSourceContext) => Result;
+	/**
+	 * Visit a parse tree produced by `FmlMappingParser.ruleTargets`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitRuleTargets?: (ctx: RuleTargetsContext) => Result;
+	/**
+	 * Visit a parse tree produced by `FmlMappingParser.ruleTarget`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitRuleTarget?: (ctx: RuleTargetContext) => Result;
 	/**
 	 * Visit a parse tree produced by `FmlMappingParser.sourceCardinality`.
 	 * @param ctx the parse tree
@@ -321,35 +340,29 @@ export default class FmlMappingVisitor<Result> extends ParseTreeVisitor<Result> 
 	 */
 	visitImportDeclaration?: (ctx: ImportDeclarationContext) => Result;
 	/**
-	 * Visit a parse tree produced by `FmlMappingParser.mapLineTarget`.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	visitMapLineTarget?: (ctx: MapLineTargetContext) => Result;
-	/**
 	 * Visit a parse tree produced by `FmlMappingParser.transform`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	visitTransform?: (ctx: TransformContext) => Result;
 	/**
-	 * Visit a parse tree produced by `FmlMappingParser.invocation`.
+	 * Visit a parse tree produced by `FmlMappingParser.groupInvocation`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitInvocation?: (ctx: InvocationContext) => Result;
+	visitGroupInvocation?: (ctx: GroupInvocationContext) => Result;
 	/**
-	 * Visit a parse tree produced by `FmlMappingParser.paramList`.
+	 * Visit a parse tree produced by `FmlMappingParser.groupParamList`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitParamList?: (ctx: ParamListContext) => Result;
+	visitGroupParamList?: (ctx: GroupParamListContext) => Result;
 	/**
-	 * Visit a parse tree produced by `FmlMappingParser.param`.
+	 * Visit a parse tree produced by `FmlMappingParser.groupParam`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitParam?: (ctx: ParamContext) => Result;
+	visitGroupParam?: (ctx: GroupParamContext) => Result;
 	/**
 	 * Visit a parse tree produced by the `indexerExpression`
 	 * labeled alternative in `FmlMappingParser.fpExpression`.
@@ -524,6 +537,13 @@ export default class FmlMappingVisitor<Result> extends ParseTreeVisitor<Result> 
 	 */
 	visitFpFunction?: (ctx: FpFunctionContext) => Result;
 	/**
+	 * Visit a parse tree produced by the `sortDirectionArgument`
+	 * labeled alternative in `FmlMappingParser.fpSortArgument`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitSortDirectionArgument?: (ctx: SortDirectionArgumentContext) => Result;
+	/**
 	 * Visit a parse tree produced by `FmlMappingParser.fpParamList`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -541,6 +561,36 @@ export default class FmlMappingVisitor<Result> extends ParseTreeVisitor<Result> 
 	 * @return the visitor result
 	 */
 	visitConstant?: (ctx: ConstantContext) => Result;
+	/**
+	 * Visit a parse tree produced by `FmlMappingParser.sourceListMode`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitSourceListMode?: (ctx: SourceListModeContext) => Result;
+	/**
+	 * Visit a parse tree produced by `FmlMappingParser.targetListMode`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitTargetListMode?: (ctx: TargetListModeContext) => Result;
+	/**
+	 * Visit a parse tree produced by `FmlMappingParser.groupTypeMode`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitGroupTypeMode?: (ctx: GroupTypeModeContext) => Result;
+	/**
+	 * Visit a parse tree produced by `FmlMappingParser.modelMode`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitModelMode?: (ctx: ModelModeContext) => Result;
+	/**
+	 * Visit a parse tree produced by `FmlMappingParser.parameterMode`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitParameterMode?: (ctx: ParameterModeContext) => Result;
 	/**
 	 * Visit a parse tree produced by the `nullLiteral`
 	 * labeled alternative in `FmlMappingParser.literal`.

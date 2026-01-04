@@ -3,6 +3,12 @@ export default {
   target: 'static',
   ssr: false,
 
+  vue: {
+    config: {
+      ignoredElements: ['aidbox-form-renderer']
+    }
+  },
+
   // Global page headers: https://go.nuxtjs.dev/config-head
   head: {
     title: 'fhirpath-lab',
@@ -40,6 +46,10 @@ export default {
     '~/components/Questionnaire/',
   ],
 
+  loadingIndicator: {
+    name: '~/assets/loading.html'
+  },
+
   // Modules for dev and build (recommended): https://go.nuxtjs.dev/config-modules
   buildModules: [
     // https://go.nuxtjs.dev/typescript
@@ -71,12 +81,13 @@ export default {
     // how to get 3rd party components working in Nuxt
     // https://www.youtube.com/watch?v=j7l5e2ID0aw&t=7s
     transpile: [
-      "@fhir-typescript/r4b-core",
+      // "@fhir-typescript/r4b-core",
       "fhirpath",
       "ucum-lhc",
       "lforms-loader",
       "openai",
       "marked",
+      "antlr4",
       "sql-on-fhir-v2",
       /* Below are dependencies of CSIRO renderer */
       "@mui",

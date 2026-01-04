@@ -1,6 +1,6 @@
 
-import {ConformanceSearchData} from "models/ConformanceSearchData";
-import { VariableData } from "~/models/testenginemodel";
+import { ConformanceSearchData } from "../models/ConformanceSearchData";
+import { VariableData } from "../models/testenginemodel";
 
 export declare interface UserSettingsData {
     fhirServerUrl?: string;
@@ -34,9 +34,26 @@ export declare interface ILastUsedParameters {
     loadCompleted?: boolean;
 }
 
-var serverConnections = require('~/static/config.json');
-
 export namespace settings {
+
+    // the cached version of the configuration data
+    let serverConnectionsData: any = {};
+
+    export async function getServerConnectionData(): Promise<any> {
+        if (Object.keys(serverConnectionsData).length > 0) {
+            // return the cached data
+            return serverConnectionsData;
+        }
+        
+        try {
+            let configResponse = await fetch('/config.json');
+            serverConnectionsData = await configResponse.json();
+            console.log("loaded config", serverConnectionsData);
+        } catch(err) {
+            console.error('Failed to load config.json:', err);
+        };
+        return serverConnectionsData;
+    }
 
     export function saveLastUsedParameters(data: ILastUsedParameters | undefined):void {
         if (data){
@@ -62,43 +79,22 @@ export namespace settings {
     export function getTabSpaces(): number {
         return 2;
     }
-    export function dotnet_server_downloader(): string {
-        return serverConnections.dotnet_server_downloader;
+    export async function dotnet_server_downloader(): Promise<string> {
+        return (await getServerConnectionData()).dotnet_server_downloader;
     }
-    export function dotnet_server_r4b(): string {
-        return serverConnections.dotnet_server_r4b;
+    export async function getServerEngineUrl(configName?: string): Promise<string> {
+        let serverData = await getServerConnectionData();
+        if (!configName)
+            return serverData.dotnet_server_r4b;
+
+        if (!(configName in serverData)) {
+            console.warn(`No server connection configuration found for '${configName}', using default`);
+            return serverData.dotnet_server_r4b;
+        }
+
+        return serverData[configName];
     }
-    export function dotnet_server_r5(): string {
-        return serverConnections.dotnet_server_r5;
-    }
-    export function java_server_r4b(): string {
-        return serverConnections.java_server_r4b;
-    }
-    export function java_server_r5(): string {
-        return serverConnections.java_server_r5;
-    }
-    export function ibm_server_r4b(): string {
-        return serverConnections.ibm_server_r4b;
-    }
-    export function mapper_server(): string {
-        return serverConnections.mapper_server;
-    }
-    export function mapper_server_java(): string {
-        return serverConnections.mapper_server_java;
-    }
-    export function mapper_server_matchbox(): string {
-        return serverConnections.mapper_server_matchbox;
-    }
-    export function python_server_r4b(): string {
-        return serverConnections.python_server_r4b;
-    }
-    export function clojure_server_r4(): string {
-        return serverConnections.clojure_server_r4;
-    }
-    export function clojure_server_r5(): string {
-        return serverConnections.clojure_server_r5;
-    }
-    
+
     export function getSearchData(type: string): ConformanceSearchData | undefined {
         const sdJson = localStorage.getItem(`search_${type}`);
         if (sdJson){
@@ -246,6 +242,27 @@ export namespace settings {
         return !localStorage.getItem("settings_showAdvancedSettings") ? false : true;
     }
 
+    export function getExternalFormsConsent(engineName: string, consentVersion: number): boolean {
+        try {
+            return localStorage.getItem(`settings_${engineName.replaceAll(" ","_")}FormsConsent`) === 'true';
+        }
+        catch {
+            return false;
+        }
+    }
+
+    export function setExternalFormsConsent(engineName: string, consentVersion: number, consent: boolean): void {
+        try {
+            if (!consent){
+                localStorage.removeItem(`settings_${engineName.replaceAll(" ","_")}FormsConsent`);
+                return;
+            }
+            localStorage.setItem(`settings_${engineName.replaceAll(" ","_")}FormsConsent`, consent.toString());
+        }
+        catch {
+        }
+    }
+
     export function load(): UserSettingsData {
         return {
             fhirServerUrl: localStorage.getItem("settings_fhirServerURL") ?? "https://fhir.forms-lab.com",
@@ -291,10 +308,10 @@ export namespace settings {
             else localStorage.removeItem("settings_defaultProviderField");
             if (settings.defaultNewCanonicalBase) localStorage.setItem("settings_defaultNewCanonicalBase", settings.defaultNewCanonicalBase);
             else localStorage.removeItem("settings_defaultNewCanonicalBase");
-            
+
             if (settings.openAIKey) localStorage.setItem("settings_openAIkey", settings.openAIKey);
             else localStorage.removeItem("settings_openAIkey");
-            
+
             if (settings.openAIBasePath) localStorage.setItem("settings_openAIBasePath", settings.openAIBasePath);
             else localStorage.removeItem("settings_openAIBasePath");
             if (settings.openAIApiVersion) localStorage.setItem("settings_openAIApiVersion", settings.openAIApiVersion);

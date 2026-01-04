@@ -1,0 +1,34 @@
+<Patient xmlns="http://hl7.org/fhir">
+    <id value="example"/>
+    <contained>
+        <RelatedPerson>
+            <id value="rp1"/>
+        </RelatedPerson>
+    </contained>
+    <active value="true"/>
+    <birthDate value="2016-042-02"/>
+    <deceasedDateTime>
+        <id value="d1"/>
+        <extension>
+            <url value="http://hl7.org/fhir/StructureDefinition/patient-deceased"/>
+            <valueBoolean value="false"/>
+        </extension>
+        <extension>
+            <url value="http://hl7.org/fhir/StructureDefinition/patient-year"/>
+            <valueString value="1917"/>
+        </extension>
+    </deceasedDateTime>
+    <name>
+        <use value="official"/>
+        <family id="f1" value="Chalmers"/>
+        <given value="Peter"/>
+        <given value="James"/>
+    </name>
+    <name>
+        <family value="Chalmers"/>
+        <given value="James"/>
+    </name>
+    <managingOrganization>
+        <reference value="Organization/1"/>
+    </managingOrganization>
+</Patient>

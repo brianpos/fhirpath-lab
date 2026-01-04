@@ -2,7 +2,11 @@
 
 ## Overview
 The fhirpath-lab is a dedicated tool for testing out fhirpath expressions against the various
-fhirpath execution engines available - dotnet (Firely), java (HAPI) and javascript (nlm)
+fhirpath execution engines available - dotnet (Firely), java (HAPI), javascript (nlm) and many more now!
+
+Consult the walkthrough documentation for more details:
+* [Walkthrough - Debugging FHIRPath expression](docs/debugging-fhirpath-expressions.md)
+
 
 It also has support for browsing StructureDefinitions, SearchParameters and Questionnaires to be able to test out the various expressions in those contexts.
 
@@ -19,7 +23,16 @@ to test resource data to evaluate with them
 | SubscriptionTopic | Source resource for subscription topic expressions used to detect changes in resources |
 | List | favorites data (future use) |
 
-### Open AI
+### Common Use Cases
+* Creating/testing Invariants in Structure Definitions
+* Testing out SearchParameter expressions
+* Testing out Questionnaire expressions
+* Testing out StructureMap expressions
+* locating contents of a resource based on a fhirpath location returned in an OperationOutcome issue
+* extracting data from random JSON content!
+* Using an LLM to get assistance with FHIRPath expressions or Questionnaires (BYO LLM)
+
+### Open AI (BYO)
 What can I do with it:
 * Are there any issues with this expression?
 * update the expression to fix the issue
@@ -27,6 +40,8 @@ What can I do with it:
 * create a new expression to return the patient's name
 * correct the coding where clause to handle the presence of multiple types
 * help me with this OperationOutcome against this resource (will provide ability to copy the resource into the test resource page, and the outcome expressions into the context)
+
+FhirPath expressions are littered all throughout FHIR and can sometimes be hard to know if you've got it right. Come learn about the Fhirpath Lab where you can build and test and debug FhirPath expressions and also Questionnaires with extensive SDC support with ease.
 
 #### Using OpenAI Direct
 | Field | Value | Description |
@@ -67,6 +82,21 @@ https://github.com/ollama/ollama/blob/main/docs/faq.md#how-can-i-allow-additiona
 
 > Note: You can replace the model name(s) with any you have access to and want to try out.
 
+#### Using the Google Gemini AI Model
+As Gemini also has compatibility with this API, you can use it here too!
+https://ai.google.dev/gemini-api/docs/openai#:~:text=Gemini%20models%20are%20accessible%20using%20the%20OpenAI%20libraries,recommend%20that%20you%20call%20the%20Gemini%20API%20directly.
+
+| Field | Value | Description |
+| - | - | - |
+| API Key | - | *Provide your GEMINI_API_KEY* |
+| Base Path | `https://generativelanguage.googleapis.com/v1beta/openai/` | The base path to the GeminiAPIs |
+| API Version | - | *Leave this field blank - only used by Azure deployments*
+| Model | `gemini-2.0-flash-exp` | The model to use for the AI responses |
+| Fast Model | `gemini-2.0-flash-exp` | The model to use for the fast responses |
+
+List of models can be found here:
+https://ai.google.dev/gemini-api/docs/models/gemini
+
 ## Test Launch API
 Direct access to launch the test page can be done and pass through test data as parameters:
 > https://fhirpath-lab.com/FhirPath?expression=today() ...
@@ -77,7 +107,7 @@ Direct access to launch the test page can be done and pass through test data as 
 | context | *(optional fhirpath expression)* A start point within the resource to execute the expression.<br/>If this expression returns multiple elements, the expression will be evaluated against each line individually |
 | resource | *(optional)* The resource id of a test resource to evaluate the expression against.<br/>If a relative id is provided then it will use the FHIR server selected in your settings.<br/>Must contain the resource type e.g. `Patient/example` |
 | resourceJson | *(optional)* A compressed/encoded test resource JSON |
-| libaryId | *(optional)* A specific fhirpath library instance to load which has all the data|
+| libraryId | *(optional)* A specific fhirpath library instance to load which has all the data|
 | exampletype | *(optional)* The resource type that the expression will be evaluated against (used to select an example resource if the resource or resourceJson is not provided)<br/>This is usually used when trying to test a StructureDefinition or other instance where you don't have a specific instance to test with, but you do know what the resource type the expression should be run against<br/>The tester will select a resource with the id `example` on the fhir server selected in your settings |
 | engine | *(optional)* Which fhirpath engine to select (`.NET (firely)` , `fhirpath.js` , `java (HAPI)`, `java (IBM)`) |
 | terminologyServer | *(optional)* Only used by the .net engine for the experimental terminology functionality |
@@ -149,6 +179,10 @@ $ pip install antlr4-tools
 $ antlr4 -Dlanguage=TypeScript JSON5.g4
 ```
 
+### `xml-parser`
+``` bash
+java -cp ../antlr-4.13.2-complete.jar  org.antlr.v4.Tool -Dlanguage=TypeScript XMLParser.g4 XMLLexer.g4 -visitor
+```
 
 ## Fhirpath Lab Special Features/Notes
 

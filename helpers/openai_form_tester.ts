@@ -60,7 +60,7 @@ What data would be required to answer the following question:
   try {
     if (result) {
         console.log(result);
-        const parsedResponse : IDataRequired = JSON.parse(result);
+        const parsedResponse : IDataRequired = JSON.parse(result[0].content?.toString() ?? '');
       console.log(parsedResponse);
       return parsedResponse;
     }

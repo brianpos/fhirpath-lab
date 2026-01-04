@@ -1,6 +1,6 @@
 import { OpenAI, ClientOptions } from "openai";
-import { FinalRequestOptions, Headers } from "openai/core";
-import { ChatCompletionCreateParamsNonStreaming, ChatCompletionMessageParam } from "openai/resources/chat/completions";
+import { FinalRequestOptions, RequestOptions } from "openai/internal/request-options.js";
+import { ChatCompletionCreateParamsNonStreaming, ChatCompletionMessageParam, ChatCompletionTool } from "openai/resources/chat/completions";
 
 export interface IOpenAISettings {
   openAIKey: string;
@@ -19,69 +19,112 @@ interface OpenAiErrorDetail {
 }
 
 class MyOpenAIClient extends OpenAI {
-    constructor(options: ClientOptions) {
-        super(options);
+  constructor(options: ClientOptions) {
+    super(options);
+  }
+  // https://github.com/openai/openai-node/blob/4c041e03013dbd7de5bfeb02db42c5e657217167/src/core.ts#L206
+  protected async authHeaders(opts: FinalRequestOptions): Promise<any> {
+    let headers = await super.authHeaders(opts);
+    // If there is no authorization header then don't need the other settings too,
+    // as this is not the actual OpenAI endpoints.
+    if (headers && headers.values && headers.values.get('Authorization') === 'Bearer ') {
+      headers.values.delete('X-Stainless-Arch');
+      headers.values.delete('X-Stainless-OS');
+      headers.values.delete('X-Stainless-Lang');
+      headers.values.delete('X-Stainless-Package-Version');
+      headers.values.delete('X-Stainless-Runtime');
+      headers.values.delete('X-Stainless-Runtime-Version');
+      headers.values.delete('Authorization');
     }
-    // https://github.com/openai/openai-node/blob/4c041e03013dbd7de5bfeb02db42c5e657217167/src/core.ts#L206
-    protected defaultHeaders(opts: FinalRequestOptions<unknown>): Headers {
-        let headers = super.defaultHeaders(opts);
-        // If there is no authorization header then don't need the other settings too,
-        // as this is not the actual OpenAI endpoints.
-        if (headers['Authorization'] === 'Bearer ') {
-            delete headers['X-Stainless-Arch'];
-            delete headers['X-Stainless-OS'];
-            delete headers['X-Stainless-Lang'];
-            delete headers['X-Stainless-Package-Version'];
-            delete headers['X-Stainless-Runtime'];
-            delete headers['X-Stainless-Runtime-Version'];
-            delete headers['Authorization'];
-        }
-        return headers;
-    }
+    return headers;
+  }
 }
 
 export async function EvaluateChatPrompt(
-    messages: Array<ChatCompletionMessageParam>,
-    settings: IOpenAISettings,
-    temperature: number,
-    max_tokens?: number): Promise<string | undefined> {
+  messages: Array<ChatCompletionMessageParam>,
+  settings: IOpenAISettings,
+  temperature: number,
+  max_tokens?: number,
+  tools?: Array<ChatCompletionTool>,
+  EvaluateTools?: (tool_calls: OpenAI.Chat.Completions.ChatCompletionMessageToolCall[]) => Array<ChatCompletionMessageParam>): Promise<Array<ChatCompletionMessageParam> | undefined> {
 
-    try {
-        let client = null;
-        // this is all in browser with client side use of client's own keys, so we can allow browser
-        let clientOptions: ClientOptions = { dangerouslyAllowBrowser: true };
-        if (settings.openAIKey)
-            clientOptions.apiKey = settings.openAIKey;
-        else
-            clientOptions.apiKey = '';
-        if (settings.openAIBasePath) {
-            clientOptions.baseURL = settings.openAIBasePath;
-            if (settings.openAIApiVersion) {
-                clientOptions.defaultQuery = { 'api-version': settings.openAIApiVersion };
-                clientOptions.defaultHeaders = { 'api-key': settings.openAIKey };
-                clientOptions.baseURL = settings.openAIBasePath + settings.openAIModel;
-            }
-        }
-
-        client = new MyOpenAIClient(clientOptions);
-
-        let reqBody: ChatCompletionCreateParamsNonStreaming = {
-            model: settings.openAIModel ?? "",
-            messages: messages,
-            temperature: temperature,
-            max_tokens: max_tokens
-        };
-        const result = await client.chat.completions.create(reqBody);
-        return result.choices[0].message?.content ?? undefined;
-
-    } catch (err: any) {
-        console.log(err);
-        return err.message ?? err.error?.message;
+  try {
+    let client = null;
+    // this is all in browser with client side use of client's own keys, so we can allow browser
+    let clientOptions: ClientOptions = { dangerouslyAllowBrowser: true };
+    if (settings.openAIKey)
+      clientOptions.apiKey = settings.openAIKey;
+    else
+      clientOptions.apiKey = '';
+    if (settings.openAIBasePath) {
+      clientOptions.baseURL = settings.openAIBasePath;
+      if (settings.openAIApiVersion) {
+        clientOptions.defaultQuery = { 'api-version': settings.openAIApiVersion };
+        clientOptions.defaultHeaders = { 'api-key': settings.openAIKey };
+        clientOptions.baseURL = settings.openAIBasePath + settings.openAIModel;
+      }
     }
+
+    client = new MyOpenAIClient(clientOptions);
+
+    let reqBody: ChatCompletionCreateParamsNonStreaming = {
+      model: settings.openAIModel ?? "",
+      messages: messages,
+      temperature: temperature,
+      store: false,
+      tools: tools,
+    };
+    if (settings.openAIModel === "gpt-5") {
+      reqBody.temperature = 1;
+    }
+    if (settings.openAIModel === "gpt-5" || settings.openAIModel?.endsWith("o")) {
+      reqBody.max_completion_tokens = max_tokens;
+    } else {
+      reqBody.max_tokens = max_tokens;
+    }
+    const result = await client.chat.completions.create(reqBody);
+    let replyMessage = result.choices[0].message;
+
+    // Check if the result was a completion, or timed out/token limit reached
+    if (result.choices[0].finish_reason === "length") {
+      console.log("Warning: The response was cut off due to length. Consider increasing max_tokens.");
+      replyMessage = {
+        role: "assistant",
+        refusal: null,
+        content: (replyMessage?.content ?? '') + "\n\n*The response was cut off due to length.*"
+      };
+    }
+
+    console.log("Result: ", result);
+
+    if (replyMessage?.tool_calls && EvaluateTools) {
+      let toolCallMessagesContinue: Array<ChatCompletionMessageParam> = [];
+      toolCallMessagesContinue.push(...messages)
+      const toolCalls = replyMessage?.tool_calls;
+      toolCallMessagesContinue.push(result.choices[0].message);
+      const toolCallResults = EvaluateTools(toolCalls);
+      toolCallMessagesContinue.push(...toolCallResults);
+      if (toolCallMessagesContinue.length > messages.length) {
+        const resultOfToolCall = await EvaluateChatPrompt(toolCallMessagesContinue, settings, temperature, max_tokens);
+        let returnValue: Array<ChatCompletionMessageParam> = [replyMessage];
+        if (resultOfToolCall)
+          returnValue.push(...resultOfToolCall);
+        return returnValue;
+      }
+    }
+
+    return replyMessage ? [replyMessage] : [];
+  } catch (err: any) {
+    console.log(err);
+    return [{
+      role: "assistant",
+      content: err.message ?? err.error?.message
+    }];
+  }
 };
 
 export function CreatePrompt(): Array<ChatCompletionMessageParam> {
-    let prompt: Array<ChatCompletionMessageParam> = [];
+  let prompt: Array<ChatCompletionMessageParam> = [];
 
   prompt.push({ role: "system", content: GetSystemPrompt() });
 
@@ -349,17 +392,15 @@ export function GetSystemPrompt(): string {
   // ---
   const systemPrompt = `
     * You are a casual, helpful assistant with a detailed understanding of both FHIR structures and the FHIRPath language that provides concise responses with suggested follow-up questions.
-    * only use this subset of FHIRPath functions: ${fhirpathFunctions.split('\n').join(', ')}.
-    * 'concat' and '$join' are not valid fhirpath functions.
     * provide FHIRPath expressions using a markdown block with the language \`fhirpath\`.
     * all replies will be interpreted as markdown content, so you can use that for emphasis.
+    * Where a tool exists, it should be used, specifically to validate a fhirpath expression, or check specific details of FHIRPath functions, including references to the appropriate specification.
+    * When providing details of FHIRPath functions, include the URL to the relevant section of the FHIRPath specification.
     * If you don't know the answer, just say 'I don't know'.
-    * Do not answer questions that are not about FHIR or FHIRPath.
+    * Do not answer questions that are not about FHIR, FHIRPath, FHIR Mapping Language or SDC.
     * If a FHIRPath context is provided, do not include that at the start of the expression.
-    * If no FHIRPath expression is provided, then assume the expression provided is the context.
     * Any fhir context for a fhirpath expression should be provided in a markdown block with the language \`fhircontext\`.
     * You may also provide guidance on working with FHIR Questionnaires and HL7 Structured Data Capture (SDC).
-    * Questionnaire validations should use the SDC constraint extension.
     * When providing code blocks in markdown you can use the following languages: \`json\`, \`jsonpatch\`, \`log\`, \`fhirpath\`, \`fhircontext\`, \`questionnaire\`, \`item\`, \`fhir\`, and \`fsh\` where needed - the application will be able to leverage these tagged markdown blocks.
     * Reflect on your answer to check for accuracy and clarity, and report any possible issues with the answer.
     
