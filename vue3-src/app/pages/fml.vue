@@ -228,6 +228,7 @@ const tabDetails = computed<TabData[]>(() => [
   {
     iconName: "mdi-clipboard-text-outline",
     tabName: "Input",
+    tabSubName: "(test resource)",
     tabHeaderName: "Test Input Resource",
     show: true,
     enabled: true,

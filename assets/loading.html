@@ -1,0 +1,225 @@
+<style type="text/css">
+  .v-app-bar>.v-toolbar__content {
+    background-color: #3F81AE;
+  }
+
+  img {
+    vertical-align: middle;
+    border-style: none;
+
+  }
+
+  .v-application {
+    font-family: "Roboto", sans-serif;
+    line-height: 1.5;
+  }
+
+  .theme--dark.v-sheet {
+    background-color: #1E1E1E;
+    border-color: #1E1E1E;
+    color: #FFFFFF;
+  }
+
+  .v-toolbar__content,
+  .v-toolbar__extension {
+    align-items: center;
+    display: flex;
+    position: relative;
+    z-index: 0;
+  }
+
+  .v-toolbar {
+    contain: layout;
+    display: block;
+    flex: 1 1 auto;
+    max-width: 100%;
+    transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1) transform, 0.2s cubic-bezier(0.4, 0, 0.2, 1) background-color, 0.2s cubic-bezier(0.4, 0, 0.2, 1) left, 0.2s cubic-bezier(0.4, 0, 0.2, 1) right, 280ms cubic-bezier(0.4, 0, 0.2, 1) box-shadow, 0.25s cubic-bezier(0.4, 0, 0.2, 1) max-width, 0.25s cubic-bezier(0.4, 0, 0.2, 1) width;
+    position: relative;
+    box-shadow: 0px 2px 4px -1px rgba(0, 0, 0, 0.2), 0px 4px 5px 0px rgba(0, 0, 0, 0.14), 0px 1px 10px 0px rgba(0, 0, 0, 0.12);
+  }
+
+  .v-toolbar__content>.v-btn.v-btn--icon:first-child+.v-toolbar__title,
+  .v-application--is-ltr .v-toolbar__extension>.v-btn.v-btn--icon:first-child+.v-toolbar__title {
+    padding-left: 20px;
+  }
+
+  .v-app-bar.v-app-bar--fixed {
+    position: fixed;
+    top: 0;
+    z-index: 5;
+  }
+
+  .v-toolbar__title {
+    font-size: 1.25rem;
+    line-height: 1.5;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding-left: 20px;
+
+  }
+
+  .v-btn__content {
+    align-items: center;
+    color: inherit;
+    display: flex;
+    flex: 1 0 auto;
+    justify-content: inherit;
+    line-height: normal;
+    position: relative;
+    transition: inherit;
+    transition-property: opacity;
+  }
+
+  .loader-text {
+    position: fixed;
+    top: calc(50% + 36px);
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-family: "Roboto", sans-serif;
+  }
+
+  /* Vuetify Progress Circular Styles */
+  .v-progress-circular {
+    position: relative;
+    display: inline-flex;
+    vertical-align: middle;
+    justify-content: center;
+    align-items: center;
+    --progress-circular-size: 50px;
+    --progress-circular-width: 4px;
+  }
+
+  .v-progress-circular>svg {
+    width: 100%;
+    height: 100%;
+    margin: auto;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 0;
+  }
+
+  .v-progress-circular--indeterminate>svg {
+    -webkit-animation: progress-circular-rotate 1.4s linear infinite;
+    animation: progress-circular-rotate 1.4s linear infinite;
+    transform-origin: center center;
+    transition: all 0.2s ease-in-out;
+  }
+
+  .v-progress-circular--indeterminate .v-progress-circular__overlay {
+    -webkit-animation: progress-circular-dash 1.4s ease-in-out infinite;
+    animation: progress-circular-dash 1.4s ease-in-out infinite;
+    stroke-linecap: round;
+    stroke-dasharray: 80, 200;
+    stroke-dashoffset: 0px;
+  }
+
+  .v-progress-circular--indeterminate:not(.v-progress-circular--visible)>svg,
+  .v-progress-circular--indeterminate:not(.v-progress-circular--visible) .v-progress-circular__overlay {
+    -webkit-animation-play-state: paused !important;
+    animation-play-state: paused !important;
+  }
+
+  .v-progress-circular__info {
+    align-items: center;
+    display: flex;
+    justify-content: center;
+  }
+
+  .v-progress-circular__underlay {
+    stroke: rgba(158, 158, 158, 0.4);
+    z-index: 1;
+  }
+
+  .v-progress-circular__overlay {
+    stroke: currentColor;
+    z-index: 2;
+    transition: all 0.6s ease-in-out;
+  }
+
+  /* Primary text color */
+  .primary--text {
+    color: #3F81AE !important;
+    caret-color: #3F81AE !important;
+  }
+
+  /* Keyframes for animations */
+  @-webkit-keyframes progress-circular-dash {
+    0% {
+      stroke-dasharray: 1, 200;
+      stroke-dashoffset: 0px;
+    }
+
+    50% {
+      stroke-dasharray: 100, 200;
+      stroke-dashoffset: -15px;
+    }
+
+    100% {
+      stroke-dasharray: 100, 200;
+      stroke-dashoffset: -124px;
+    }
+  }
+
+  @keyframes progress-circular-dash {
+    0% {
+      stroke-dasharray: 1, 200;
+      stroke-dashoffset: 0px;
+    }
+
+    50% {
+      stroke-dasharray: 100, 200;
+      stroke-dashoffset: -15px;
+    }
+
+    100% {
+      stroke-dasharray: 100, 200;
+      stroke-dashoffset: -124px;
+    }
+  }
+
+  @-webkit-keyframes progress-circular-rotate {
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes progress-circular-rotate {
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+</style>
+<style>
+
+  .loader2 {
+    display: block;
+    position: fixed;
+    z-index: 1031;
+    top: calc(50% - 36px);
+    left: calc(50% - 36px);
+  }
+</style>
+<div class="v-application v-sheet theme--dark v-toolbar v-app-bar v-app-bar--fixed "
+  style="height: 56px; margin-top: 0px; transform: translateY(0px); left: 0px; right: 0px;">
+  <div class="v-toolbar__content" style="height: 56px; margin-left: -4px">
+    <!-- <img alt="" src="/Square44x44Logo.scale-150.png" style="margin-top: -15px; margin-bottom: -10px;"> -->
+    <img alt=""
+      src="data:image/png;base64,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"
+      style="margin-top: -15px; margin-bottom: -10px;" />
+    <div class="v-toolbar__title">Fhirpath Lab</div>
+  </div>
+</div>
+<div role="progressbar" aria-valuemin="0" aria-valuemax="100"
+  class="loader2 v-progress-circular v-progress-circular--visible v-progress-circular--indeterminate primary--text"
+  style="height: 80px; width: 80px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="15 15 56 56"
+    style="transform: rotate(0deg);">
+    <circle fill="transparent" cx="43" cy="43" r="20" stroke-width="6" stroke-dasharray="125.664"
+      stroke-dashoffset="125.66370614359172px" class="v-progress-circular__overlay"></circle>
+  </svg>
+  <div class="v-progress-circular__info"></div>
+</div>

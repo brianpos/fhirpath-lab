@@ -128,7 +128,7 @@ export default class Chat extends Vue {
     this.scrollToBottom();
   }
 
-  public logHappy(index: number) {
+  public async logHappy(index: number) {
     const messages = this.messages.slice(0, index + 1);
     LogConversation(
       settings.getDefaultProviderField()!,
@@ -136,11 +136,11 @@ export default class Chat extends Vue {
       "like",
       undefined,
       messages,
-      settings.dotnet_server_r4b().replace("/$fhirpath", "")
+      (await settings.getServerEngineUrl("dotnet_server_r4b")).replace("/$fhirpath", "")
     );
   }
 
-  public logSad(index: number) {
+  public async logSad(index: number) {
     const messages = this.messages.slice(0, index + 1);
     LogConversation(
       settings.getDefaultProviderField()!,
@@ -148,7 +148,7 @@ export default class Chat extends Vue {
       "dislike",
       undefined,
       messages,
-      settings.dotnet_server_r4b().replace("/$fhirpath", "")
+      (await settings.getServerEngineUrl("dotnet_server_r4b")).replace("/$fhirpath", "")
     );
   }
 
@@ -217,7 +217,13 @@ export default class Chat extends Vue {
   /** Convert the parameter data into a HTML from markdown format */
   convertHtml(field: string | undefined): string {
     if (!field) return "";
-    return marked(field);
+    const result = marked(field);
+    // Update any links in the HTML to have the target="_blank" attribute
+    const linkRegex = /<a href="([^"]+)"/g;
+    const resultWithLinks = result.replace(linkRegex, (match: any, url: any) => {
+      return `<a href="${url}" target="_blank"`;
+    });
+    return resultWithLinks;
   }
 
   getConversation(): string {
@@ -294,6 +300,11 @@ export default class Chat extends Vue {
 
 .message pre code {
   padding-left: 0;
+}
+
+// Re-enable mouse events for the link
+.message a {
+  pointer-events: auto;
 }
 
 .language-fhirpath::after,

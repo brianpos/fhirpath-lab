@@ -1,5 +1,5 @@
 // Test the custom JSON Parser that tracks position in the input string
-import { findNodeByPath, parseJson } from "../helpers/json_parser";
+import { findNodeByPath, parseJson, pathsMatchWithFlexibleArrayIndex } from "../helpers/json_parser";
 import { describe, expect, test } from "@jest/globals";
 import * as fs from 'fs';
 import r5Model from "fhirpath/fhir-context/r5";
@@ -114,6 +114,24 @@ test("findNodeByPath_PrimitiveArrayItem", () => {
   expect(result?.DataType).toBe('string');
 });
 
+test("findNodeByPath_PrimitiveArrayItem0", () => {
+  // const jsonData = fs.readFileSync('test/parse-test-patient.json','utf8');
+  const jsonData: fhir4.Patient = {
+     resourceType: 'Patient',
+      id: '123',
+       name: [{
+         family: 'Doe', 
+         given: ['John', 'Smith'] 
+        }] 
+      };
+  let jsonTree = parseJson(JSON.stringify(jsonData, null, 2));
+  let result = findNodeByPath(jsonTree!, 'Patient.name[0].given[0]');
+  expect(result).toBeDefined();
+  expect(result?.Path).toBe('Patient.name[0].given[0]');
+  expect(result?.DefinitionPath).toBe('Patient.name.given');
+  expect(result?.DataType).toBe('string');
+});
+
 test("findNodeByPath_PrimitiveArrayItemExtension", () => {
   // const jsonData = fs.readFileSync('test/parse-test-patient.json','utf8');
   const jsonData: fhir4.Patient = {
@@ -160,7 +178,6 @@ test("findNodeByPath_BundleEntryResource", () => {
 });
 
 test("pathsMatchWithFlexibleArrayIndex", () => {
-  const { pathsMatchWithFlexibleArrayIndex } = require("../helpers/json_parser");
 
   // Test Case 1: Exact match without any array indices
   expect(pathsMatchWithFlexibleArrayIndex('Patient.name.given', 'Patient.name.given')).toBe(true);

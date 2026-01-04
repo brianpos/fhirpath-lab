@@ -3,6 +3,34 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+# 26 December 2025
+* Updated the static config loading code to use async/await to ensure that the settings are fully loaded before being used.
+(which helps support the migration over to Vue3/Nuxt3)
+
+# 19 December 2025
+* Update NLM Form renderer to 38.7.2
+
+# 16 December 2025
+* Fhirpath tester page now reports when CORS issues are encountered
+* Update to the fhirpath.js 4.8.2 engine
+* Lots of progress with the Vue3 project, specifically the fhirpath page - trying out a multi-server results tab to run all in parallel.
+
+# 21 November 2025
+* Update to fhirpath.js version 4.7.0 (which has debugger support, and position information in the AST)
+* Add initial support for the debugger in the fhirpath.js engine!
+* Refactor the fhirpath.js to use the same code for all versions
+* FML validator update with latest tweaks to the antlr grammar that has support for the latest fhirpath and fml engines.
+* FML debug POC work (walking the trace lines)
+
+# 30 September 2025
+* POC support for XML in the fhirpath.js engine (when using actual FHIR content)
+
+# 24 September 2025
+* Refactor all the code to include new engines to make it easier to add new engines in future
+* New FHIRPath engines:
+  * OctoFHIR (Rust implementation - R4/R5/R6)
+  * AtomicEHR (Typescript implementation - R4/R5/R6) - Health Samurai
+
 # 9 September 2025
 * Milestone release to prod
 * Debugger trace support for HAPI/Firely engines

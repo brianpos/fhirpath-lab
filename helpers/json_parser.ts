@@ -137,8 +137,13 @@ function findChildNodeByPathSegments(node: IJsonNode, path: string): IJsonNode |
 
   // Check if we have a flexible match where the search path includes [0] but the node path doesn't
   // This handles cases where XML parsing doesn't add [0] for single elements but search expects it
+  // BUT only match if the search path doesn't go deeper (e.g., don't match "given" to "given[0]")
   if (node.Path && pathsMatchWithFlexibleArrayIndex(node.Path, path)) {
-    return node;
+    // Don't match if the search path is looking for an array index on this node
+    // e.g., node is "Patient.name[0].given" and search is "Patient.name[0].given[0]"
+    if (!path.startsWith(node.Path + '[')) {
+      return node;
+    }
   }
 
   if (!path.startsWith(node.Path + '.') && !path.startsWith(node.Path + '[')) {

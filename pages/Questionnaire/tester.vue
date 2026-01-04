@@ -118,6 +118,26 @@
               @highlight-path="highlightPath" />
           </template>
 
+          <template v-slot:Aidbox_Forms>
+            <ExternalRenderingEngineHost
+              engine-name="Aidbox Forms"
+              title="Aidbox Forms Renderer"
+              publisher="Health Samurai"
+              :consent="aidboxApproved"
+              @consent-changed="handleAidboxConsentChange"
+            >
+              <template v-slot:product-info>
+                <p class="mb-2">
+                  The Aidbox Forms Renderer is part of a commercial platform by Health Samurai. More information is available on their  <a
+                    href="https://www.health-samurai.io/docs/aidbox/modules/aidbox-forms" target="_blank" rel="noopener">website</a>.
+                </p>
+              </template>
+              <EditorAidboxFormsSection ref="aidboxFormsRenderer" v-if="raw" v-bind:questionnaire="raw" :context="contextData"
+              :dataServer="dataServerBaseUrl"
+                @response="processUpdatedQuestionnaireResponse" @highlight-path="highlightPath" />
+            </ExternalRenderingEngineHost>
+          </template>
+
           <template v-slot:CSIRO_Renderer>
             <EditorRendererSection ref="csiroFormsRenderer" v-if="raw" v-bind:questionnaire="raw" :context="contextData"
               :dataServer="dataServerBaseUrl"
@@ -128,6 +148,34 @@
             <EditorNLMRendererSection ref="lhcFormsRenderer" v-if="raw" v-bind:questionnaire="raw" :context="contextData"
               :dataServer="dataServerBaseUrl"
               @response="processUpdatedQuestionnaireResponse" @highlight-path="highlightPath" />
+          </template>
+
+          <template v-slot:SmartWM_Forms>
+            <ExternalRenderingEngineHost
+              engine-name="SmartWM Forms"
+              title="SmartWM Forms Renderer"
+              publisher="FhirPath Lab"
+              :consent="smartWMFormApproved"
+              @consent-changed="handleSmartWMFormChange"
+            >
+              <template v-slot:product-info>
+                <p class="mb-2">
+                  Simple tester to try out the Smart Web Messaging spec
+                </p>
+              </template>
+              <SmartWMFormSection ref="smartWMFormsRenderer" v-if="raw" v-bind:questionnaire="raw" :context="contextData"
+              :dataServer="dataServerBaseUrl"
+                @response="processUpdatedQuestionnaireResponse" @highlight-path="highlightPath" />
+            </ExternalRenderingEngineHost>
+          </template>
+
+          <template v-slot:Smart_WM>
+            <MessageLog 
+              v-if="embeddedMode"
+              :messages="embeddedMessageLog" 
+              title="Embedded Mode Messages"
+              @clear="embeddedMessageLog = []"
+            />
           </template>
 
           <template v-slot:Response>
@@ -331,9 +379,31 @@ import Chat from "~/components/Chat.vue";
 import QuestionnaireExtractTest from "~/components/QuestionnaireExtractTest.vue";
 import EditorNLMRendererSection from "~/components/Questionnaire/EditorNLMRendererSection.vue";
 import EditorRendererSection from "~/components/Questionnaire/EditorRendererSection.vue";
+import EditorAidboxFormsSection from "~/components/Questionnaire/EditorAidboxFormsSection.vue";
+import SmartWMFormsSection from "~/components/Questionnaire/SmartWMFormSection.vue";
+import MessageLog from "~/components/Questionnaire/MessageLog.vue";
 import ResourceEditor from "~/components/ResourceEditor.vue";
 import { structuredDataCaptureHelpers as sdc } from "~/helpers/structureddatacapture-helpers";
 import { ChatCompletionCreateParamsNonStreaming, ChatCompletionMessageParam } from "openai/resources/chat/completions";
+import type {
+  StatusHandshakeRequest,
+  StatusHandshakeResponsePayload,
+  SdcConfigureRequest,
+  SdcConfigureResponsePayload,
+  SdcConfigureContextRequest,
+  SdcConfigureContextResponsePayload,
+  SdcDisplayQuestionnaireRequest,
+  SdcDisplayQuestionnaireResponsePayload,
+  SdcDisplayQuestionnaireResponseRequest,
+  SdcDisplayQuestionnaireResponseResponsePayload,
+  SdcRequestCurrentQuestionnaireResponseRequest,
+  SdcRequestCurrentQuestionnaireResponseResponsePayload,
+  SmartWebMessagingRequest,
+  SmartWebMessagingResponse,
+  SmartWebMessagingEvent,
+  SdcUiChangedQuestionnaireResponsePayload,
+  SdcMessage,
+} from "~/types/sdc-swm-types";
 import {
   EvaluateChatPrompt,
   GetSystemPrompt,
@@ -347,6 +417,7 @@ import TwinPaneTab, { TabData } from "~/components/TwinPaneTab.vue";
 import * as jsonpatch from "fast-json-patch";
 import { ContextData } from "~/components/QuestionnaireContext.vue";
 import QuestionnairePrepopulateTest from "~/components/QuestionnairePrepopTest.vue";
+import { MessageLogEntry } from "~/helpers/message-logger";
 
 // import "fhirclient";
 // import { FHIR } from "fhirclient";
@@ -376,6 +447,19 @@ interface IQuestionnaireTesterData extends QuestionnaireData {
   modelsSearch: string;
   modelsText?: string;
   dataServerBaseUrl: string;
+
+  // External renderers enabled
+  aidboxApproved: boolean;
+  smartWMFormApproved: boolean;
+
+  // Reverse integration (embedded mode)
+  embeddedMode: boolean;
+  messagingHandle?: string;
+  messagingOrigin?: string;
+  parentMessageListener?: (event: MessageEvent) => void;
+  embeddedMessageLog: MessageLogEntry[];
+  /** Tracks sent messages awaiting responses: messageId -> { messageType, timestamp } */
+  pendingMessages: Map<string, { messageType: string; timestamp: number }>;
 
   // Populate/Extract properties
   contextData: ContextData;
@@ -412,6 +496,8 @@ const resourceEditorSettings: Partial<ace.Ace.EditorOptions> = {
   wrapBehavioursEnabled: true,
 };
 
+const aidboxConsentVersion = 1;
+
 export default Vue.extend({
   //   components: { fhirqItem },
   mounted() {
@@ -420,6 +506,16 @@ export default Vue.extend({
     setAcePaths(ace.config);
     if (settings.getOpenAIKey() || settings.getOpenAIBasePath())
       this.chatEnabled = true;
+
+    this.aidboxApproved = settings.getExternalFormsConsent("Aidbox Forms", aidboxConsentVersion);
+    this.smartWMFormApproved = settings.getExternalFormsConsent("SmartWM Forms", aidboxConsentVersion);
+    
+    // Initialize non-reactive messageSource property to avoid cross-origin errors with WindowProxy
+    // Vue's reactivity system would try to observe WindowProxy properties, causing cross-origin violations
+    (this as any).messageSource = null;
+    
+    // Check if we're running in embedded mode (reverse integration)
+    this.initializeEmbeddedMode();
   },
 
   destroyed() {
@@ -431,6 +527,12 @@ export default Vue.extend({
     if (this.questionnaireResponseJsonEditor) {
       this.questionnaireResponseJsonEditor.destroy();
       this.questionnaireResponseJsonEditor = undefined;
+    }
+    
+    // Clean up message listener for embedded mode
+    if (this.parentMessageListener) {
+      window.removeEventListener('message', this.parentMessageListener);
+      this.parentMessageListener = undefined;
     }
   },
   computed: {
@@ -569,15 +671,33 @@ export default Vue.extend({
         {
           iconName: "mdi-bug-play-outline",
           tabName: "CSIRO Renderer",
-          title: "CSIRO Renderer",
+          tabSubName: "(local)",
+          title: "CSIRO Renderer\nBy CSIRO Australia",
           show: true,
           enabled: true,
         },
         {
           iconName: "mdi-bug-play-outline",
           tabName: "LHC-Forms",
-          title: "NLM LHC-Forms Renderer",
+          tabSubName: "(local)",
+          title: "NLM LHC-Forms Renderer\nBy the USA National Library of Medicine",
           show: true,
+          enabled: true,
+        },
+        {
+          iconName: this.aidboxApproved ? "mdi-bug-play-outline" : "mdi-bug-stop-outline",
+          tabName: "Aidbox Forms",
+          tabSubName: "(external)",
+          title: "Aidbox Forms Renderer\n(Rendered by external service)\nBy Health Samurai",
+          show: true,
+          enabled: true,
+        },
+        {
+          iconName: this.smartWMFormApproved ? "mdi-bug-play-outline" : "mdi-bug-stop-outline",
+          tabName: !this.embeddedMode ? "SmartWM Forms" : "Smart WM",
+          tabSubName: "(external)",
+          title: "SmartWM Forms Renderer\n(Rendered by external service)\nPrototype testing SDC SMART Web Messaging",
+          show: (this.showAdvancedSettings ?? false),
           enabled: true,
         },
         {
@@ -635,6 +755,729 @@ export default Vue.extend({
     },
   },
   methods: {
+    // ======================================================================
+    // Reverse Integration (Embedded Mode) Methods
+    // ======================================================================
+    
+    initializeEmbeddedMode() {
+      const params = new URLSearchParams(window.location.search);
+      const messagingHandle = params.get('messaging_handle');
+      const messagingOrigin = params.get('messaging_origin');
+
+      if (messagingHandle && messagingOrigin) {
+        this.embeddedMode = true;
+        this.messagingHandle = messagingHandle;
+        this.messagingOrigin = messagingOrigin;
+
+        console.log('[Embedded Mode] ✅ Initialized successfully:', {
+          handle: messagingHandle,
+          origin: messagingOrigin,
+          currentWindowOrigin: window.location.origin
+        });
+
+        // Set up message listener
+        this.parentMessageListener = this.handleParentMessage.bind(this);
+        window.addEventListener('message', this.parentMessageListener);
+        console.log('[Embedded Mode] ✅ Message listener registered');
+
+        // Per SDC-SWM protocol: Host initiates handshake, renderer waits and responds
+        // Do NOT send initial handshake - wait for host to send it first
+        console.log('[Embedded Mode] ⏳ Waiting for host to initiate handshake...');
+      } else {
+        console.log('[Embedded Mode] ❌ Not initializing - missing parameters:', {
+          hasMessagingHandle: !!messagingHandle,
+          hasMessagingOrigin: !!messagingOrigin
+        });
+      }
+    },
+
+    async handleParentMessage(event: MessageEvent) {
+
+      // Validate that we have a valid message object
+      if (!event.data || typeof event.data !== 'object') {
+        return;
+      }
+
+      // If the message doesn't have our messagingHandle or responseToMessageId, it's not for us
+      const msg = event.data as SmartWebMessagingRequest | SmartWebMessagingResponse;
+      const isRequest = 'messageType' in msg && msg.messagingHandle === this.messagingHandle;
+      const isResponse = 'responseToMessageId' in msg;
+      
+      if (!isRequest && !isResponse) {
+        // Not our message, ignore silently (could be for Aidbox or other components)
+        return;
+      }
+
+      // Check for expired pending messages (30 seconds timeout)
+      const now = Date.now();
+      const expiredMessages: string[] = [];
+      
+      this.pendingMessages.forEach((info, messageId) => {
+        const age = now - info.timestamp;
+        if (age > 30000) { // 30 seconds
+          console.warn(`[Embedded Mode] ⚠️ No response received for ${info.messageType} (messageId: ${messageId}) after ${Math.round(age / 1000)}s`);
+          expiredMessages.push(messageId);
+        }
+      });
+      
+      // Remove expired messages
+      expiredMessages.forEach(messageId => this.pendingMessages.delete(messageId));
+
+      // Debug: Log ALL incoming messages first
+      console.log('[Embedded Mode] RAW incoming message:', {
+        origin: event.origin,
+        expectedOrigin: this.messagingOrigin,
+        originMatches: event.origin === this.messagingOrigin,
+        data: event.data,
+        hasMessagingHandle: !!event.data?.messagingHandle,
+        expectedHandle: this.messagingHandle,
+        handleMatches: event.data?.messagingHandle === this.messagingHandle
+      });
+
+      // Validate origin
+      if (event.origin !== this.messagingOrigin) {
+        console.warn('[Embedded Mode] ❌ Ignoring message from unauthorized origin:', event.origin, 'expected:', this.messagingOrigin);
+        return;
+      }
+
+      const message = event.data;
+
+      // Validate messaging handle
+      if (message.messagingHandle !== this.messagingHandle && !isResponse) {
+        console.warn('[Embedded Mode] ❌ Ignoring request message with invalid messaging handle:', message.messagingHandle, 'expected:', this.messagingHandle);
+        return;
+      }
+
+      // Store the source of the message so we can reply to the correct window
+      (this as any).messageSource = event.source as WindowProxy;
+
+      // Check if this is a response to one of our sent messages
+      if (isResponse) {
+        const originalMessage = this.pendingMessages.get(message.responseToMessageId);
+        if (originalMessage) {
+          console.log(`[Embedded Mode] ✅ Received response for ${originalMessage.messageType} (messageId: ${message.responseToMessageId})`);
+          this.pendingMessages.delete(message.responseToMessageId);
+          
+          // Log the received response with context about the original message
+          this.embeddedMessageLog.push({
+            direction: 'received',
+            timestamp: new Date().toLocaleTimeString(),
+            type: `response to ${originalMessage.messageType}`,
+            summary: this.summarizeParentMessage(message),
+            data: message,
+          });
+          
+          // Process response and return early
+          console.log('[Embedded Mode] Response processed');
+          return;
+        }
+
+        console.log('[Embedded Mode] Response processed - no matching pending message found');
+        return;
+      }
+
+      console.log('[Embedded Mode] ✅ Received valid message:', message.messageType ?? 'Response to: ' + message.responseToMessageId ?? '');
+
+      // Log the received message
+      this.embeddedMessageLog.push({
+        direction: 'received',
+        timestamp: new Date().toLocaleTimeString(),
+        type: message.messageType || 'unknown',
+        summary: this.summarizeParentMessage(message),
+        data: message,
+      });
+
+      // Route to appropriate handler and send response automatically
+      try {
+        // This is a request from the parent - handle it and send a response
+        let payload: any;
+        
+        switch (message.messageType) {
+          case 'status.handshake':
+            payload = await this.handleStatusHandshake(message);
+            break;
+          case 'sdc.configure':
+            payload = await this.handleSdcConfigure(message);
+            break;
+          case 'sdc.configureContext':
+            payload = await this.handleSdcConfigureContext(message);
+            break;
+          case 'sdc.displayQuestionnaire':
+            payload = await this.handleSdcDisplayQuestionnaire(message);
+            break;
+          case 'sdc.displayQuestionnaireResponse':
+            payload = await this.handleSdcDisplayQuestionnaireResponse(message);
+            break;
+          case 'sdc.requestCurrentQuestionnaireResponse':
+            payload = await this.handleSdcRequestCurrentQuestionnaireResponse(message);
+            break;
+          default:
+            console.warn('[Embedded Mode] Unknown message type:', message.messageType);
+            this.sendErrorResponse(message.messageType, message.messageId, `Unknown message type: ${message.messageType}`);
+            return;
+        }
+
+        // Send response with the payload returned by handler
+        if (payload) {
+          this.sendResponseToParent(message.messageType, {
+            messageId: this.generateMessageId(),
+            responseToMessageId: message.messageId,
+            payload: payload
+          });
+        }
+      } catch (error: any) {
+        console.error('[Embedded Mode] Error handling message:', error);
+        this.sendErrorResponse(message.messageType, message.messageId, error.message);
+      }
+    },
+
+    async handleStatusHandshake(message: StatusHandshakeRequest): Promise<StatusHandshakeResponsePayload> {
+      console.log('[Embedded Mode] Handling handshake');
+      
+      return {
+        application: {
+          name: 'FHIRPath Lab',
+          version: '2.5.0',
+          publisher: 'FHIRPath Lab Team'
+        },
+        capabilities: {
+          extraction: true,
+          focusChangeNotifications: true
+        },
+        availableEngines: [
+          { id: 'csiro', name: 'CSIRO Smart Forms' },
+          { id: 'lhc-forms', name: 'NLM LHC-Forms' }
+        ]
+      };
+    },
+
+    async handleSdcConfigure(message: SdcConfigureRequest): Promise<SdcConfigureResponsePayload> {
+      try {
+        console.log('[Embedded Mode] Handling configure:', message.payload);
+        
+        // Update terminology server if provided
+        if (message.payload.terminologyServer) {
+          // Store terminology server setting
+          // Note: FHIRPath Lab doesn't currently use a separate terminology server in the tester
+          console.log('[Embedded Mode] Terminology server configured:', message.payload.terminologyServer);
+        }
+        
+        // Update data server if provided
+        if (message.payload.dataServer) {
+          this.dataServerBaseUrl = message.payload.dataServer;
+          console.log('[Embedded Mode] Data server configured:', message.payload.dataServer);
+        }
+        
+        // Handle additional configuration if provided
+        if (message.payload.configuration) {
+          console.log('[Embedded Mode] Additional configuration:', message.payload.configuration);
+          // Could extend this to handle renderer-specific configuration
+        }
+        
+        return {
+          status: 'success'
+        };
+      } catch (error: any) {
+        console.error('[Embedded Mode] Error in configure:', error);
+        return {
+          status: 'error',
+          outcome: {
+            resourceType: 'OperationOutcome',
+            issue: [{
+              severity: 'error',
+              code: 'processing',
+              diagnostics: error.message
+            }]
+          }
+        };
+      }
+    },
+
+    async handleSdcConfigureContext(message: SdcConfigureContextRequest): Promise<SdcConfigureContextResponsePayload> {
+      try {
+        console.log('[Embedded Mode] Handling configureContext:', message.payload);
+        
+        // Per protocol: This message REPLACES all context data
+        // Clear existing context first
+        this.contextData = {
+          subject: undefined,
+          author: undefined,
+          encounter: undefined,
+          source: undefined
+        };
+        
+        // Set new context if provided
+        if (message.payload.context) {
+          const ctx = message.payload.context;
+          
+          if (ctx.subject) {
+            this.contextData.subject = ctx.subject;
+          }
+          
+          if (ctx.author) {
+            this.contextData.author = ctx.author;
+          }
+          
+          if (ctx.encounter) {
+            this.contextData.encounter = ctx.encounter;
+          }
+          
+          // Handle launchContext - extract known context items
+          if (ctx.launchContext && ctx.launchContext.length > 0) {
+            ctx.launchContext.forEach(item => {
+              // Map common launchContext items to ContextData fields
+              switch (item.name) {
+                case 'source':
+                  // Extract source from launchContext
+                  if (item.contentReference) {
+                    this.contextData.source = item.contentReference;
+                  } else if (item.contentResource) {
+                    // Create a reference from the inline resource
+                    const resource = item.contentResource;
+                    this.contextData.source = {
+                      reference: `${resource.resourceType}/${resource.id}`,
+                      display: (resource as any).name || undefined
+                    };
+                  }
+                  break;
+                
+                default:
+                  // Log other launchContext items for future enhancement
+                  console.log('[Embedded Mode] Unhandled launchContext item:', item.name);
+                  break;
+              }
+            });
+          }
+        }
+        
+        console.log('[Embedded Mode] Context configured:', this.contextData);
+        
+        return {
+          status: 'success'
+        };
+      } catch (error: any) {
+        console.error('[Embedded Mode] Error in configureContext:', error);
+        return {
+          status: 'error',
+          outcome: {
+            resourceType: 'OperationOutcome',
+            issue: [{
+              severity: 'error',
+              code: 'processing',
+              diagnostics: error.message
+            }]
+          }
+        };
+      }
+    },
+
+    async handleSdcDisplayQuestionnaire(message: SdcDisplayQuestionnaireRequest): Promise<SdcDisplayQuestionnaireResponsePayload> {
+      try {
+        console.log('[Embedded Mode] Rendering questionnaire');
+        const { questionnaire, questionnaireResponse, context } = message.payload;
+
+        if (!questionnaire) {
+          return {
+            status: 'error',
+            outcome: {
+              resourceType: 'OperationOutcome',
+              issue: [{
+                severity: 'error',
+                code: 'required',
+                diagnostics: 'Missing questionnaire in payload'
+              }]
+            }
+          };
+        }
+
+        // Load the questionnaire (cast to fhir4b which is used internally)
+        this.raw = questionnaire as any as fhir4b.Questionnaire;
+        if (this.raw) {
+          this.flatModel = FlattenedQuestionnaireItems(this.raw);
+          
+          // Update editor if it exists
+          if (this.resourceJsonEditor) {
+            this.resourceJsonEditor.setValue(JSON.stringify(this.raw, null, settings.getTabSpaces()));
+            this.resourceJsonEditor.clearSelection();
+          }
+        }
+
+        // Set context if provided
+        if (context) {
+          if (context.subject) this.contextData.subject = context.subject;
+          if (context.author) this.contextData.author = context.author;
+          if (context.encounter) this.contextData.encounter = context.encounter;
+        }
+
+        // Load response if provided
+        if (questionnaireResponse) {
+          this.questionnaireResponseJson = JSON.stringify(questionnaireResponse, null, settings.getTabSpaces());
+          
+          if (this.questionnaireResponseJsonEditor) {
+            this.questionnaireResponseJsonEditor.setValue(this.questionnaireResponseJson);
+            this.questionnaireResponseJsonEditor.clearSelection();
+          }
+
+          // Render the response in all available renderers (cast to fhir4b)
+          const qr = questionnaireResponse as any as fhir4b.QuestionnaireResponse;
+          
+          if (this.$refs.csiroFormsRenderer && this.raw != null) {
+            let csiroFormsRenderer = (this.$refs.csiroFormsRenderer as EditorRendererSection)
+            await csiroFormsRenderer.renderQuestionnaireResponse(qr, this.raw);
+          }
+
+          if (this.$refs.lhcFormsRenderer && this.raw != null) {
+            let lhcFormsRenderer = (this.$refs.lhcFormsRenderer as EditorNLMRendererSection)
+            await lhcFormsRenderer.renderQuestionnaireResponse(qr, this.raw);
+          }
+
+          if (this.$refs.aidboxFormsRenderer && this.raw != null) {
+            let aidboxFormsRenderer = (this.$refs.aidboxFormsRenderer as EditorAidboxFormsSection)
+            await aidboxFormsRenderer.renderQuestionnaireResponse(qr, this.raw);
+          }
+        }
+
+        // Return success response
+        return {
+          status: 'success',
+          outcome: {
+            resourceType: 'OperationOutcome',
+            issue: []
+          }
+        };
+
+      } catch (error: any) {
+        console.error('[Embedded Mode] Error rendering questionnaire:', error);
+        return {
+          status: 'error',
+          outcome: {
+            resourceType: 'OperationOutcome',
+            issue: [{
+              severity: 'error',
+              code: 'processing',
+              diagnostics: error.message
+            }]
+          }
+        };
+      }
+    },
+
+    async handleSdcDisplayQuestionnaireResponse(message: SdcDisplayQuestionnaireResponseRequest): Promise<SdcDisplayQuestionnaireResponseResponsePayload> {
+      try {
+        console.log('[Embedded Mode] Loading response');
+        const { questionnaireResponse } = message.payload;
+
+        if (!questionnaireResponse) {
+          return {
+            status: 'error',
+            outcome: {
+              resourceType: 'OperationOutcome',
+              issue: [{
+                severity: 'error',
+                code: 'required',
+                diagnostics: 'Missing questionnaireResponse in payload'
+              }]
+            }
+          };
+        }
+
+        // Load the response
+        this.questionnaireResponseJson = JSON.stringify(questionnaireResponse, null, settings.getTabSpaces());
+        
+        if (this.questionnaireResponseJsonEditor) {
+          this.questionnaireResponseJsonEditor.setValue(this.questionnaireResponseJson);
+          this.questionnaireResponseJsonEditor.clearSelection();
+        }
+
+        // Render the response in all available renderers (cast to fhir4b)
+        const qr = questionnaireResponse as any as fhir4b.QuestionnaireResponse;
+        
+        if (this.$refs.csiroFormsRenderer && this.raw != null) {
+          let csiroFormsRenderer = (this.$refs.csiroFormsRenderer as EditorRendererSection)
+          await csiroFormsRenderer.renderQuestionnaireResponse(qr, this.raw);
+        }
+
+        if (this.$refs.lhcFormsRenderer && this.raw != null) {
+          let lhcFormsRenderer = (this.$refs.lhcFormsRenderer as EditorNLMRendererSection)
+          await lhcFormsRenderer.renderQuestionnaireResponse(qr, this.raw);
+        }
+
+        if (this.$refs.aidboxFormsRenderer && this.raw != null) {
+          let aidboxFormsRenderer = (this.$refs.aidboxFormsRenderer as EditorAidboxFormsSection)
+          await aidboxFormsRenderer.renderQuestionnaireResponse(qr, this.raw);
+        }
+
+        return { status: 'success' };
+
+      } catch (error: any) {
+        console.error('[Embedded Mode] Error loading response:', error);
+        return {
+          status: 'error',
+          outcome: {
+            resourceType: 'OperationOutcome',
+            issue: [{
+              severity: 'error',
+              code: 'processing',
+              diagnostics: error.message
+            }]
+          }
+        };
+      }
+    },
+
+    async handleSdcRequestCurrentQuestionnaireResponse(message: SdcRequestCurrentQuestionnaireResponseRequest): Promise<SdcRequestCurrentQuestionnaireResponseResponsePayload> {
+      try {
+        console.log('[Embedded Mode] Extracting response');
+        
+        // Get current QuestionnaireResponse from editor
+        let questionnaireResponse: QuestionnaireResponse | undefined;
+        
+        if (this.questionnaireResponseJson) {
+          try {
+            questionnaireResponse = JSON.parse(this.questionnaireResponseJson);
+          } catch (parseError) {
+            return {
+              outcome: {
+                resourceType: 'OperationOutcome',
+                issue: [{
+                  severity: 'error',
+                  code: 'invalid',
+                  diagnostics: 'Invalid QuestionnaireResponse JSON'
+                }]
+              }
+            };
+          }
+        }
+
+        if (!questionnaireResponse) {
+          return {
+            outcome: {
+              resourceType: 'OperationOutcome',
+              issue: [{
+                severity: 'error',
+                code: 'not-found',
+                diagnostics: 'No QuestionnaireResponse available'
+              }]
+            }
+          };
+        }
+
+        // Ensure context data is embedded in the QuestionnaireResponse
+        if (this.contextData.subject) {
+          questionnaireResponse.subject = this.contextData.subject;
+        }
+        if (this.contextData.author) {
+          questionnaireResponse.author = this.contextData.author;
+        }
+        if (this.contextData.encounter) {
+          questionnaireResponse.encounter = this.contextData.encounter;
+        }
+
+        // Return response (cast to fhir4 for protocol)
+        return {
+          questionnaireResponse: questionnaireResponse as any as fhir4.QuestionnaireResponse
+        };
+
+      } catch (error: any) {
+        console.error('[Embedded Mode] Error extracting response:', error);
+        return {
+          outcome: {
+            resourceType: 'OperationOutcome',
+            issue: [{
+              severity: 'error',
+              code: 'exception',
+              diagnostics: error.message
+            }]
+          }
+        };
+      }
+    },
+
+    generateMessageId(): string {
+      return `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    },
+
+    summarizeParentMessage(msg: any): string {
+      if (!msg.payload) return 'No payload';
+
+      if (msg.payload.questionnaire) {
+        const q = msg.payload.questionnaire;
+        return `Q: ${q.title || q.name || q.id || 'Untitled'}`;
+      }
+      if (msg.payload.questionnaireResponse) {
+        const qr = msg.payload.questionnaireResponse;
+        return `Response: ${qr.id || 'no-id'}, Status: ${qr.status}`;
+      }
+      if (msg.payload.protocolVersion) {
+        return `Protocol: ${msg.payload.protocolVersion}, FHIR: ${msg.payload.fhirVersion}`;
+      }
+      return JSON.stringify(msg.payload).substring(0, 100);
+    },
+
+    summarizeSentMessage(msg: SdcMessage): string {
+      if (!msg.payload) return 'No payload';
+
+      if ('messageType' in msg) {
+        return `Type: ${msg.messageType}`;
+      }
+
+      // Check for handshake response (has 'application' property)
+      if ('application' in msg.payload && msg.payload.application) {
+        return `Handshake: ${msg.payload.application.name} v${msg.payload.application.version}`;
+      }
+
+      // Check for status field (present in most responses)
+      if ('status' in msg.payload) {
+        if (msg.payload.status === 'success') {
+          return 'Success';
+        }
+        if (msg.payload.status === 'error') {
+          const outcome = 'outcome' in msg.payload ? msg.payload.outcome : undefined;
+          return `Error: ${outcome?.issue?.[0]?.diagnostics || 'Unknown error'}`;
+        }
+      }
+
+      // Check for QuestionnaireResponse payload
+      if ('questionnaireResponse' in msg.payload && msg.payload.questionnaireResponse) {
+        const qr = msg.payload.questionnaireResponse;
+        return `Extracted: ${qr.id || 'no-id'}, Status: ${qr.status}`;
+      }
+
+      // Check for OperationOutcome payload
+      if ('outcome' in msg.payload && msg.payload.outcome) {
+        const issues = msg.payload.outcome.issue?.length || 0;
+        return `Validation: ${issues} issue(s)`;
+      }
+      
+      // Check messageType for request/event specific patterns (only present on requests/events, not responses)
+      if ('messageType' in msg && msg.messageType === 'sdc.ui.changedQuestionnaireResponse') {
+        return 'Response updated event';
+      }
+      
+      return JSON.stringify(msg.payload).substring(0, 100);
+    },
+
+    sendRequestToParent(message: SmartWebMessagingRequest<any>) {
+      if (!this.embeddedMode || !this.messagingOrigin) return;
+
+      try {
+        // Validate that messagingHandle exists before sending
+        if (!this.messagingHandle) {
+          console.error('[Embedded Mode] ❌ Cannot send request: messagingHandle is not set');
+          return;
+        }
+
+        // Requests already have messagingHandle in their type definition
+        console.log('[Embedded Mode] Sending request/event to parent:', message);
+        
+        // Track this message to detect missing responses
+        this.pendingMessages.set(message.messageId, {
+          messageType: message.messageType,
+          timestamp: Date.now()
+        });
+        
+        // Log the sent message
+        this.embeddedMessageLog.push({
+          direction: 'sent',
+          timestamp: new Date().toLocaleTimeString(),
+          type: message.messageType,
+          summary: this.summarizeSentMessage(message),
+          data: message,
+        });
+        
+        // Support both popup windows (window.opener) and iframes (window.parent)
+        // Prefer the stored messageSource from the last received message
+        const targetWindow = (this as any).messageSource || window.opener || window.parent;
+        
+        if (targetWindow) {
+          targetWindow.postMessage(message, this.messagingOrigin);
+          console.log('[Embedded Mode] ✅ Request/event sent to host window');
+        } else {
+          console.error('[Embedded Mode] ❌ No host window available');
+        }
+      } catch (error) {
+        console.error('[Embedded Mode] Failed to send request to parent:', error);
+      }
+    },
+
+    sendResponseToParent(responseToMessageType: string, message: SmartWebMessagingResponse<any>) {
+      if (!this.embeddedMode || !this.messagingOrigin) return;
+
+      try {
+        // Per SDC-SWM protocol: Responses do NOT include messagingHandle
+        // Only requests/events require messagingHandle
+        console.log('[Embedded Mode] Sending response to parent:', message);
+        
+        // Log the sent message
+        this.embeddedMessageLog.push({
+          direction: 'sent',
+          timestamp: new Date().toLocaleTimeString(),
+          type: 'response to ' + responseToMessageType,
+          summary: this.summarizeSentMessage(message),
+          data: message,
+        });
+        
+        // Support both popup windows (window.opener) and iframes (window.parent)
+        // Prefer the stored messageSource from the last received message
+        const targetWindow = (this as any).messageSource || window.opener || window.parent;
+        
+        if (targetWindow) {
+          targetWindow.postMessage(message, this.messagingOrigin);
+          console.log('[Embedded Mode] ✅ Response sent to host window');
+        } else {
+          console.error('[Embedded Mode] ❌ No host window available');
+        }
+      } catch (error) {
+        console.error('[Embedded Mode] Failed to send response to parent:', error);
+      }
+    },
+
+    sendErrorResponse(responseToMessageType: string, responseToMessageId: string, errorMessage: string) {
+      // Generic error response - status and outcome structure is common across all SDC-SWM response types
+      const errorResponse: SmartWebMessagingResponse<{
+        status: 'error';
+        outcome: fhir4.OperationOutcome;
+      }> = {
+        messageId: this.generateMessageId(),
+        responseToMessageId: responseToMessageId,
+        payload: {
+          status: 'error',
+          outcome: {
+            resourceType: 'OperationOutcome',
+            issue: [{
+              severity: 'error',
+              code: 'processing',
+              diagnostics: errorMessage
+            }]
+          }
+        }
+      };
+      
+      this.sendResponseToParent(responseToMessageType, errorResponse);
+    },
+
+    sendResponseUpdateEvent(response: QuestionnaireResponse) {
+      if (!this.embeddedMode || !this.messagingHandle) return;
+
+      // Per SDC-SWM protocol: This is an unsolicited event from renderer to host
+      // Events use the SmartWebMessagingRequest structure (same as requests)
+      const event: SmartWebMessagingRequest<SdcUiChangedQuestionnaireResponsePayload> = {
+        messagingHandle: this.messagingHandle,
+        messageId: this.generateMessageId(),
+        messageType: 'sdc.ui.changedQuestionnaireResponse',
+        payload: {
+          questionnaireResponse: response as fhir4.QuestionnaireResponse,
+          // Optional: could include changedLinkIds or changedPaths here
+        }
+      };
+
+      this.sendRequestToParent(event);
+    },
+
+    // ======================================================================
+    // End Reverse Integration Methods
+    // ======================================================================
+
     ensureEditorIsCreated(){
       if (this.resourceJsonEditor === undefined){
         console.log("Creating Q Json editor");
@@ -782,6 +1625,29 @@ export default Vue.extend({
         }
       }
     },
+
+    handleAidboxConsentChange(event: { engineName: string, consented: boolean, remember: boolean }) {
+      console.log('Aidbox Consent changed:', event);
+      this.aidboxApproved = event.consented;
+      
+      if (event.remember) {
+        // Save to user settings
+        console.log(`Saving preference for ${event.engineName}: ${event.consented}`);
+        settings.setExternalFormsConsent(event.engineName, aidboxConsentVersion, event.consented);
+      }
+    },
+
+    handleSmartWMFormChange(event: { engineName: string, consented: boolean, remember: boolean }) {
+      console.log('SmartWM Form Consent changed:', event);
+      this.smartWMFormApproved = event.consented;
+
+      if (event.remember) {
+        // Save to user settings
+        console.log(`Saving preference for ${event.engineName}: ${event.consented}`);
+        settings.setExternalFormsConsent(event.engineName, aidboxConsentVersion, event.consented);
+      }
+    },
+
     tabChanged(index: number): void {
       if (index == 0) {
         setTimeout(() => {
@@ -1124,12 +1990,25 @@ export default Vue.extend({
         await lhcFormsRenderer.renderQuestionnaireResponse(value, this.raw);
       }
 
+      if (this.$refs.aidboxFormsRenderer && this.raw != null) {
+        let aidboxFormsRenderer = (this.$refs.aidboxFormsRenderer as EditorAidboxFormsSection)
+        await aidboxFormsRenderer.renderQuestionnaireResponse(value, this.raw);
+      }
+
+      if (this.$refs.smartWMFormsRenderer && this.raw != null) {
+        let smartWMFormsRenderer = (this.$refs.smartWMFormsRenderer as SmartWMFormsSection);
+        await smartWMFormsRenderer.renderQuestionnaireResponse(value, this.raw);
+      }
+
       if (!this.runningPrePop) {
         if (renderer == "lforms pre-pop") {
           this.selectTab("LHC-Forms");
         }
         if (renderer == "CSIRO pre-pop") {
           this.selectTab("CSIRO Renderer");
+        }
+        if (renderer == "Aidbox Forms") {
+          this.selectTab("Aidbox Forms");
         }
       }
     },
@@ -1175,11 +2054,26 @@ export default Vue.extend({
           await lhcFormsRenderer.renderQuestionnaireResponse(value, this.raw);
         }
 
+        if (this.$refs.aidboxFormsRenderer && this.raw != null) {
+          let aidboxFormsRenderer = (this.$refs.aidboxFormsRenderer as EditorAidboxFormsSection)
+          await aidboxFormsRenderer.renderQuestionnaireResponse(value, this.raw);
+        }
+
+        if (this.$refs.smartWMFormsRenderer && this.raw != null) {
+          let smartWMFormsRenderer = (this.$refs.smartWMFormsRenderer as SmartWMFormsSection);
+          await smartWMFormsRenderer.renderQuestionnaireResponse(value, this.raw);
+        }
+
         if (this.$refs.extractTester as QuestionnaireExtractTest) {
           (this.$refs.extractTester as QuestionnaireExtractTest).setValue(
             this.questionnaireResponseJson
           );
         }
+      }
+      
+      // Send real-time update to parent window if in embedded mode
+      if (this.embeddedMode) {
+        this.sendResponseUpdateEvent(value);
       }
     },
 
@@ -1665,7 +2559,7 @@ export default Vue.extend({
           url.startsWith("https://build.fhir.org/") ||
           url.startsWith("https://hl7.org/fhir/")
         )
-          url = settings.dotnet_server_downloader() + "?url=" + url;
+          url = (await settings.dotnet_server_downloader()) + "?url=" + url;
 
         if (this.cancelSource) this.cancelSource.cancel("new download started");
         this.cancelSource = axios.CancelToken.source();
@@ -1775,7 +2669,7 @@ export default Vue.extend({
           url.startsWith("https://build.fhir.org/") ||
           url.startsWith("https://hl7.org/fhir/")
         )
-          url = settings.dotnet_server_downloader() + "?url=" + url;
+          url = (await settings.dotnet_server_downloader()) + "?url=" + url;
 
         if (this.cancelSource) this.cancelSource.cancel("new download started");
         this.cancelSource = axios.CancelToken.source();
@@ -1908,6 +2802,7 @@ export default Vue.extend({
                        | "Context" | "Pre-Population" | "Variables" | "PrePop" 
                        | "CSIRO Renderer"
                        | "LHC-Forms"
+                       | "Aidbox Forms"
                        | "Response" | "Extract" | "Models" | "AI Chat") {
       let tabControl: TwinPaneTab = this.$refs.twinTabControl as TwinPaneTab;
       if (tabControl) {
@@ -1972,12 +2867,13 @@ export default Vue.extend({
       );
       // this.openAIexpressionExplanationMessage = "(Generated by OpenAI " + settings.getOpenAIModel() + ")";
       this.openAIexpressionExplanationLoading = false;
-      chat.addMessage(
-        "FhirPath AI",
-        resultOfQuestion ?? "",
-        true,
-        settings.getOpenAIModel()
-      );
+      for (let answer of resultOfQuestion ?? [])
+      {
+        if (answer.role === "tool"){
+          chat.addMessage("Tool", answer.content?.toString() ?? '', true, answer.tool_call_id);
+        }
+        chat.addMessage("FhirPath AI", answer.content?.toString() ?? '', true, settings.getOpenAIModel());
+      }
       chat.setThinking(false);
     },
 
@@ -2135,7 +3031,7 @@ export default Vue.extend({
       cancelSource: undefined,
       resourceJsonChanged: false,
       resourceId:
-        "https://sqlonfhir-r4.azurewebsites.net/fhir/Questionnaire/bit-of-everything",
+        "https://fhir.forms-lab.com/Questionnaire/bit-of-everything",
       qrResourceId: undefined,
       openAILastContext: "",
       openAIexpressionExplanationLoading: false,
@@ -2145,6 +3041,18 @@ export default Vue.extend({
       modelsSearch: '',
       modelsText: undefined,
       dataServerBaseUrl: settings.getFhirServerExamplesUrl(),
+
+      // External renderers
+      aidboxApproved: false,
+      smartWMFormApproved: false,
+
+      // Reverse integration (embedded mode)
+      embeddedMode: false,
+      messagingHandle: undefined,
+      messagingOrigin: undefined,
+      parentMessageListener: undefined,
+      embeddedMessageLog: [],
+      pendingMessages: new Map(),
 
       contextData: {
         subject: { reference: "Patient/example", display: "Peter James Chalmers" },

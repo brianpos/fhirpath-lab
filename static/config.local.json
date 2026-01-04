@@ -1,18 +1,38 @@
 {
-    "dotnet_server_downloader": "http://localhost:7071/api/downloader",
-    "dotnet_server_r4b": "http://localhost:7071/api/$fhirpath",
-    "dotnet_server_r5": "http://localhost:7071/api/$fhirpath-r5",
-    "dotnet_server_r6": "http://localhost:7071/api/$fhirpath-r6",
-    "java_server_r4b": "http://localhost:8080/fhir/$fhirpath",
-    "java_server_r5": "http://localhost:8080/fhir5/$fhirpath-r5",
-    "java_server_r6": "http://localhost:8080/fhir5/$fhirpath-r6",
-    "ibm_server_r4b": "http://localhost:8080/fhir/$fhirpath-ibm",
-    "mapper_server": "https://localhost:7089/StructureMap/$transform?debug=true",
-    "mapper_server_java": "http://localhost:8080/fhir/$transform?debug=true",
-    "python_server_r4b": "http://localhost:8081/fhir/$fhirpath",
-    "python_server_r5": "http://localhost:8081/fhir/$fhirpath-r5",
-    "clojure_server_r4": "https://fhir-validator.aidbox.app/r4",
-    "clojure_server_r5": "https://fhir-validator.aidbox.app/r5",
-    "helios_server_r4b": "https://fhirpath.heliossoftware.com/r4b",
-    "helios_server_r5": "https://fhirpath.heliossoftware.com/r5"
+	"dotnet_server_downloader": "http://localhost:7071/api/downloader",
+	"cql_r4": "https://fhirpath-lab-java2.azurewebsites.net/fhir/$fhirpath-cql",
+
+	"dotnet_server_r4b": "http://localhost:7071/api/$fhirpath",
+	"dotnet_server_r5": "http://localhost:7071/api/$fhirpath-r5",
+	"dotnet_server_r6": "http://localhost:7071/api/$fhirpath-r6",
+
+	"java_server_r4b": "http://localhost:8080/fhir/$fhirpath",
+	"java_server_r5": "http://localhost:8080/fhir5/$fhirpath-r5",
+	"java_server_r6": "http://localhost:8080/fhir5/$fhirpath-r6",
+
+	"ibm_server_r4b": "http://localhost:8080/fhir/$fhirpath-ibm",
+	"mapper_server": "https://localhost:7089/StructureMap/$transform?debug=true",
+	"mapper_server_java": "http://localhost:8080/fhir/$transform?debug=true",
+	"mapper_server_matchbox": "https://test.ahdis.ch/matchbox/fhir/StructureMap/$transform?debug=true",
+
+	"python_server_r4b": "http://localhost:8081/fhir/$fhirpath",
+	"python_server_r5": "http://localhost:8081/fhir/$fhirpath-r5",
+
+	"clojure_server_r4": "https://fhir-validator.aidbox.app/r4",
+	"clojure_server_r5": "https://fhir-validator.aidbox.app/r5",
+
+	"helios_server_r4b": "https://fhirpath.heliossoftware.com/r4b",
+	"helios_server_r5": "https://fhirpath.heliossoftware.com/r5",
+
+	"octofhir_server_r4": "https://fhirpath.octofhir.tech/r4",
+	"octofhir_server_r5": "https://fhirpath.octofhir.tech/r5",
+	"octofhir_server_r6": "https://fhirpath.octofhir.tech/r6",
+
+	"atomic_server_r4": "https://fhirpath.atomic-ehr.org/r4",
+	"atomic_server_r5": "https://fhirpath.atomic-ehr.org/r5",
+	"atomic_server_r6": "https://fhirpath.atomic-ehr.org/r6",
+
+	"local_r4": "http://localhost:3001/fhir/$fhirpath",
+	"local_r5": "http://localhost:3001/fhir/$fhirpath-r5",
+	"local_r6": "http://localhost:3001/fhir/$fhirpath-r6"
 }

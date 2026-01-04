@@ -3,6 +3,12 @@ export default {
   target: 'static',
   ssr: false,
 
+  vue: {
+    config: {
+      ignoredElements: ['aidbox-form-renderer']
+    }
+  },
+
   // Global page headers: https://go.nuxtjs.dev/config-head
   head: {
     title: 'fhirpath-lab',
@@ -39,6 +45,10 @@ export default {
     '~/components',
     '~/components/Questionnaire/',
   ],
+
+  loadingIndicator: {
+    name: '~/assets/loading.html'
+  },
 
   // Modules for dev and build (recommended): https://go.nuxtjs.dev/config-modules
   buildModules: [
@@ -84,7 +94,8 @@ export default {
       "@mui",
       "@emotion",
       "@tanstack",
-      "uuid",
+      /* Below are dependencies of CSIRO sdc-template-extract */
+      'uuid',
     ],
   }
 }

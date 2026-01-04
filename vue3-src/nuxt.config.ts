@@ -1,14 +1,23 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+import { fileURLToPath } from 'node:url'
+import { dirname, resolve } from 'node:path'
+
+const currentDir = dirname(fileURLToPath(import.meta.url))
+
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   pages: true,
   devtools: { enabled: true },
+  // https://github.com/nuxt/devtools/issues/868
+  ignoreOptions: {
+    allowRelativePaths: true
+  },
 
   // Add alias configuration
   alias: {
-    '~/legacy-helpers': '../helpers',
-    '~/legacy-types': '../types',
-    '~/legacy-models': '../models',
+    '@legacy/helpers': resolve(currentDir, '../helpers'),
+    '@legacy/types': resolve(currentDir, '../types'),
+    '@legacy/models': resolve(currentDir, '../models'),
   },
   
   modules: [
@@ -70,6 +79,9 @@ export default defineNuxtConfig({
   nitro: {
     experimental: {
       wasm: true
+    },
+    prerender: {
+      routes: ['/config.json']
     }
   },
   app: {

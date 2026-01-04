@@ -1,16 +1,18 @@
 <template>
-  <div>
-    <template v-if="questionnaire">
-      <v-btn style="position: absolute; right:34px; z-index: 2; margin-top: 4px;" color="primary"
-        title="Show the QuestionnaireResponse based on the data in the CSIRO renderer" @click="logResponse()">Show
-        Response</v-btn>
-      <div class="q-host">
-        <Renderer :questionnaire="questionnaire" :onFocus="onFocus" />
-      </div>
-    </template>
-    <template v-else>
-      <p>No questionnaire provided</p>
-    </template>
+  <div style="display:grid; height:100%;">
+    <div style="overflow-y: auto;">
+      <template v-if="questionnaire">
+        <v-btn style="position: absolute; right:34px; z-index: 2; margin-top: 4px;" color="primary"
+          title="Show the QuestionnaireResponse based on the data in the CSIRO renderer" @click="logResponse()">Show
+          Response</v-btn>
+        <div class="q-host">
+          <Renderer :questionnaire="questionnaire" :onFocus="onFocus" />
+        </div>
+      </template>
+      <template v-else>
+        <p>No questionnaire provided</p>
+      </template>
+    </div>
   </div>
 </template>
 
@@ -23,7 +25,6 @@ pre {
   position: relative;
   overflow-y: auto;
   overflow-x: hidden;
-  height: calc(100vh - 200px);
 }
 </style>
 
@@ -82,6 +83,11 @@ export default class EditorRendererSection extends Vue {
     // remove the lforms tag if it was there.
     if (response.meta?.tag?.find(t => t.code?.startsWith('lforms'))) {
       response.meta.tag = response.meta.tag!.filter(t => !t.code?.startsWith('lforms'));
+    }
+
+    // remove the aidbox tag if it was there.
+    if (response.meta?.tag?.find(t => t.code?.startsWith('aidbox'))) {
+      response.meta.tag = response.meta.tag!.filter(t => !t.code?.startsWith('aidbox'));
     }
 
     // this.response = response;
