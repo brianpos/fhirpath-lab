@@ -1,82 +1,76 @@
 {
-    "resourceType": "Ingredient",
-    "id": "example",
-    "text": {
-      "status": "generated",
-      "div": "<div>Some content</div>"
-    },
-    "identifier": {
-      "extension": [
-        {
-          "url": "demo",
-          "valueString": "1234"
-        }
-      ],
-      "value": "1234"
-    },
-    "status": "active",
-    "comment": "markdown content",
-    "substance": {
-      "extension": [
-        {
-          "url": "http://example.org/blah",
-          "valueString": "string test"
-        }
-      ],
-      "strength": [
-        {
-          "presentationRatio": {
-            "numerator": {
-              "code": "blah"
-            }
+  "resourceType": "Ingredient",
+  "id": "example",
+  "text": {
+    "status": "generated",
+    "div": "<div>Some content</div>"
+  },
+  "identifier": {
+    "extension": [
+      {
+        "url": "demo",
+        "valueString": "1234"
+      }
+    ],
+    "value": "1234"
+  },
+  "status": "active",
+  "comment": "markdown content",
+  "substance": {
+    "extension": [
+      {
+        "url": "http://example.org/blah",
+        "valueString": "string test"
+      }
+    ],
+    "strength": [
+      {
+        "presentationRatio": {
+          "numerator": {
+            "code": "blah"
           },
-          "country": [
-            {
-              "text": "Aus"
-            }
-          ],
-          "basis": {
-            "text": "basis string"
-          }
-        },
-        {
-          "presentationRatio": {
-            "numerator": {
-              "code": "glah"
-            }
+          "country": {
+            "text": "Aus"
           },
-          "country": [
-            {
-              "text": "Aus"
-            }
-          ],
-          "basis": {
-            "text": "basis string"
-          }
-        },
-        {
-          "presentationRatio": {
-            "numerator": {
-              "_code": {
-                "extension": [
-                  {
-                    "url": "http://example.org/blah",
-                    "valueString": "string test"
-                  }
-                ]
-              },
-              "code": "blog"
-            }
-          },
-          "country": [
-            {
-              "text": "Aus"
-            }
-          ],
           "basis": {
             "text": "basis string"
           }
         }
-      ]
-    }
+      },
+      {
+        "presentationRatio": {
+          "numerator": {
+            "code": "glah"
+          },
+          "country": {
+            "text": "Aus"
+          },
+          "basis": {
+            "text": "basis string"
+          }
+        }
+      },
+      {
+        "presentationRatio": {
+          "numerator": {
+            "_code": {
+              "extension": [
+                {
+                  "url": "http://example.org/blah",
+                  "valueString": "string test"
+                }
+              ]
+            },
+            "code": "blog"
+          },
+          "country": {
+            "text": "Aus"
+          },
+          "basis": {
+            "text": "basis string"
+          }
+        }
+      }
+    ]
   }
+}

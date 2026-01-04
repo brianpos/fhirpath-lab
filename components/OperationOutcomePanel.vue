@@ -107,7 +107,6 @@
 
 <script lang="ts">
 import Vue, { PropType } from "vue";
-import { BaseResourceNoData } from "~/models/BaseResourceTableData";
 
 export default Vue.extend({
   props: {

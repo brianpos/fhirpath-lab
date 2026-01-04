@@ -1,17 +1,22 @@
 <template>
   <div style="display: flex; flex-direction: column; height: 100%;">
-    <v-text-field label="Extract Service URL" v-model="extractServiceUrl" :loading="extractingInProgress">
-      <template v-slot:append>
+    <v-select label="Extraction Engine" class="engineSelector" :items="executionEngines" v-model="selectedEngine"
+              hide-details="auto" :loading="extractingInProgress">
+      <template v-slot:append-outer>
+        <div style="display: flex; margin-top: -8px;">
         <v-btn @click="performExtractOperation">
           <v-icon> mdi-tray-arrow-up </v-icon>
           &nbsp;Extract
         </v-btn>
-      </template>
-      <template v-slot:append-outer>
         <v-btn icon v-if="showShareLink()" @click="shareToClipboard()"
-          title="Copy Bundle to clipboard"><v-icon>mdi-content-copy</v-icon></v-btn>
+               title="Copy Bundle to clipboard"><v-icon>mdi-content-copy</v-icon></v-btn></div>
       </template>
-    </v-text-field>
+    </v-select>
+
+    <div style="margin-bottom: 8px;" v-if="selectedEngine !== 'Other $extract'"/>
+
+    <v-text-field label="Extract Service URL" v-model="extractServiceUrl" v-if="selectedEngine == 'Other $extract'"/>
+
     <resource-editor style="flex-grow: 1; width: 100%; height: 100%;" :readOnly="true" :resourceText="extractResult" />
 
     <v-expansion-panels accordion expanded>
@@ -33,8 +38,10 @@
 
 <script lang="ts">
 import { Parameters, Questionnaire } from "fhir/r4b";
+import { Questionnaire as QuestionnaireR4 } from "fhir/r4";
 import { Component, Prop, Vue, Watch } from "vue-property-decorator";
 import { settings } from "~/helpers/user_settings";
+import { createInputParameters, extractResultIsOperationOutcome, inAppExtract } from "@aehrc/sdc-template-extract";
 
 @Component
 export default class QuestionnaireExtractTest extends Vue {
@@ -48,6 +55,12 @@ export default class QuestionnaireExtractTest extends Vue {
   public selectedTabValue: number = 2;
   public tabSpaces: number = settings.getTabSpaces();
   public extractParameters: Parameters = { resourceType: "Parameters", parameter: [] };
+  public executionEngines: string[] = [
+    "forms-lab",
+    "CSIRO template-based extract",
+    "Other $extract"
+  ];
+  public selectedEngine: string = "forms-lab";
   public extractServiceUrl: string = "https://fhir.forms-lab.com/QuestionnaireResponse/$extract";
   public extractingInProgress: boolean = false;
 
@@ -72,6 +85,71 @@ export default class QuestionnaireExtractTest extends Vue {
     // Now pass this to the extract service
     this.extractingInProgress = true;
 
+    if (this.selectedEngine === 'forms-lab') {
+      await this.runFormsLabExtractOperation();
+    } else if (this.selectedEngine === 'CSIRO template-based extract') {
+      await this.runCSIROTemplateBasedInAppExtraction();
+    } else if (this.selectedEngine === 'Other $extract') {
+      await this.runOtherExtractOperation();
+    } else {
+      console.error('Unknown engine selected');
+    }
+    this.extractingInProgress = false;
+  }
+
+  async runFormsLabExtractOperation(): Promise<void> {
+    console.log('Running Forms Lab $extract');
+    await this.evaluateExtractOperation("https://fhir.forms-lab.com/QuestionnaireResponse/$extract");
+  }
+
+  async runCSIROTemplateBasedInAppExtraction(): Promise<void> {
+    console.log('Running CSIRO template-based in-app extract');
+    if (!this.questionnaireResponseJson) {
+      return;
+    }
+
+    try {
+      // inAppExtract() does not require $extract input parameters, it handles them internally - but we can still create it for debuqging purposes
+      this.extractParameters = createInputParameters(JSON.parse(this.questionnaireResponseJson),
+        this.questionnaire as QuestionnaireR4,
+        undefined
+      ) as Parameters;
+
+      const inAppExtractOutput = await inAppExtract(
+        JSON.parse(this.questionnaireResponseJson),
+        this.questionnaire as QuestionnaireR4,
+        null
+      );
+
+      const { extractResult } = inAppExtractOutput;
+
+      // Extract result is an OperationOutcome
+      if (extractResultIsOperationOutcome(extractResult)) {
+        this.extractResult = JSON.stringify(extractResult, null, this.tabSpaces);
+        console.error("Failed to extract the questionnaire", extractResult);
+        return;
+      }
+
+      // At this point, extractResult should be a transaction Bundle
+      this.extractResult = JSON.stringify(extractResult.extractedBundle, null, this.tabSpaces);
+
+      if (extractResult.issues) {
+        this.$emit('outcome', extractResult.issues);
+      }
+    } catch (error) {
+      console.error("Error extracting the questionnaire", error);
+    }
+  }
+
+  async runOtherExtractOperation(): Promise<void> {
+    console.log('Running Other pre-pop: ' + this.extractServiceUrl);
+     await this.evaluateExtractOperation(this.extractServiceUrl);
+  }
+
+  async evaluateExtractOperation(extractServiceUrl: string): Promise<void> {
+    if (!this.questionnaireResponseJson)
+      return;
+
     // Send the extract request
     try {
       this.extractParameters.parameter = [
@@ -90,7 +168,7 @@ export default class QuestionnaireExtractTest extends Vue {
       }
 
       this.$emit('outcome', undefined); // reset the outcome to clear any previous issues
-      const response = await fetch(this.extractServiceUrl, {
+      const response = await fetch(extractServiceUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -125,7 +203,6 @@ export default class QuestionnaireExtractTest extends Vue {
     catch (error) {
       console.error("Error extracting the questionnaire", error);
     }
-    this.extractingInProgress = false;
   }
 
   @Watch('questionnaireResponse', { immediate: true, deep: false })

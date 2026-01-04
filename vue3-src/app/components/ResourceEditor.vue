@@ -100,6 +100,9 @@ import xmlFormat from 'xml-formatter'
 import type { IJsonNodePosition } from '~/types/json-parser'
 import { requestFhirAcceptHeaders, requestFhirAcceptXmlHeaders, requestFhirAcceptFmlHeaders, CreateOperationOutcome } from '~/utils/fhir-rest'
 import type { Resource, OperationOutcome } from 'fhir/r4'
+import { findNodeByPath, type IJsonNode, parseJson } from '@legacy/helpers/json_parser'
+import { parseXml } from '@legacy/helpers/xml_parser'
+import type { Model } from 'fhirpath'
 import "ace-builds/src-noconflict/mode-json"
 import "ace-builds/src-noconflict/mode-xml"
 
@@ -188,6 +191,92 @@ const navigateToPosition = (position: IJsonNodePosition) => {
     setTimeout(() => {
       aceEditor.value?.session.removeMarker(selectionMarker)
     }, 1500)
+  }
+}
+
+const navigateToContext = (model: Model, elementPath: string, variableName?: string, debugMode?: boolean): number | void => {
+  // Move the cursor in the test resource JSON editor to the element
+  if (internalResourceText.value) {
+    // Select the model to use, r5 or r4b
+    // console.log("Using "+modelInfo.version+" model for navigation");
+    let ast: IJsonNode | undefined
+    if (internalResourceText.value.startsWith('<')) {
+      ast = parseXml(internalResourceText.value, model)
+    } else {
+      ast = parseJson(internalResourceText.value, model)
+    }
+    console.log(ast)
+    if (ast) {
+      const node = findNodeByPath(ast, elementPath)
+      if (node) {
+        // inject the position information onto the issue
+        // so that UI can use it
+        aceEditor.value.clearSelection()
+        if (node.position) {
+          aceEditor.value.focus()
+          aceEditor.value.gotoLine(
+            node.position.line,
+            node.position.column,
+            true
+          )
+
+          if (node.position.value_stop_pos) {
+            let substr = internalResourceText.value.substring(node.position.prop_start_pos, node.position.value_stop_pos + 1)
+            const endRowOffset = substr.split(/\r\n|\r|\n/).length
+            const endRow = node.position.line + endRowOffset - 1
+            const endCollOffset = substr.split(/\r\n|\r|\n/)[endRowOffset - 1].length
+            const endCol = node.position.column + (endCollOffset > 1 ? endCollOffset + 1 : endCollOffset)
+            const range = new ace.Range(node.position.line - 1, node.position.column, endRow - 1, endCol)
+            console.log("context", range)
+
+            if (debugMode) {
+              const selectionMarker = aceEditor.value.session.addMarker(range, "debugSelection", "text", false)
+              return selectionMarker
+            } else {
+              const selectionMarker = aceEditor.value.session.addMarker(range, "resultSelection", "fullLine", true)
+              // after 1.5 seconds remove the highlight.
+              setTimeout(() => {
+                aceEditor.value?.session.removeMarker(selectionMarker)
+              }, 1500)
+            }
+          } else if (node.position.prop_stop_pos) {
+            // prop based stuff
+            let substr = internalResourceText.value.substring(node.position.prop_start_pos, node.position.prop_stop_pos + 1)
+            const endRowOffset = substr.split(/\r\n|\r|\n/).length
+            const endRow = node.position.line + endRowOffset - 1
+            const endCollOffset = substr.split(/\r\n|\r|\n/)[endRowOffset - 1].length
+            const endCol = node.position.column + (endCollOffset > 1 ? endCollOffset + 1 : endCollOffset)
+            const range = new ace.Range(node.position.line - 1, node.position.column, endRow - 1, endCol)
+            console.log("context prop", range)
+
+            if (debugMode) {
+              const selectionMarker = aceEditor.value.session.addMarker(range, "debugSelection", "text", false)
+              return selectionMarker
+            } else {
+              const selectionMarker = aceEditor.value.session.addMarker(range, "resultSelection", "fullLine", true)
+              // after 1.5 seconds remove the highlight.
+              setTimeout(() => {
+                aceEditor.value?.session.removeMarker(selectionMarker)
+              }, 1500)
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+const removeMarker = (markerId: number): void => {
+  if (aceEditor.value && markerId) {
+    aceEditor.value.session.removeMarker(markerId)
+  }
+}
+
+const removeMarkers = (markerIds: number[]): void => {
+  if (aceEditor.value && markerIds && markerIds.length > 0) {
+    for (const markerId of markerIds) {
+      aceEditor.value.session.removeMarker(markerId)
+    }
   }
 }
 
@@ -439,7 +528,10 @@ const clearUrl = () => {
 // Expose public methods
 defineExpose({
   DownloadResource,
-  navigateToPosition
+  navigateToPosition,
+  navigateToContext,
+  removeMarker,
+  removeMarkers
 })
 
 // Lifecycle
@@ -459,5 +551,17 @@ onMounted(() => {
 .ace_editor:focus-within+.ace_editor_footer {
   color: #1976d2;
   transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);
+}
+
+.debugSelection {
+  position: absolute;
+  z-index: 20;
+  background-color: #fbff82b1;
+}
+
+.resultSelection {
+  position: absolute;
+  z-index: 20;
+  background-color: #5240ef65;
 }
 </style>

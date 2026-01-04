@@ -2,7 +2,11 @@
 
 ## Overview
 The fhirpath-lab is a dedicated tool for testing out fhirpath expressions against the various
-fhirpath execution engines available - dotnet (Firely), java (HAPI) and javascript (nlm)
+fhirpath execution engines available - dotnet (Firely), java (HAPI), javascript (nlm) and many more now!
+
+Consult the walkthrough documentation for more details:
+* [Walkthrough - Debugging FHIRPath expression](docs/debugging-fhirpath-expressions.md)
+
 
 It also has support for browsing StructureDefinitions, SearchParameters and Questionnaires to be able to test out the various expressions in those contexts.
 

@@ -16,7 +16,9 @@
             style="justify-content: start;"
           >
             <v-icon :start="!showIconsOnly"> {{ tabDetail.iconName }} </v-icon>
-            <span v-if="!showIconsOnly">{{ tabDetail.tabName }}</span>
+            <span v-if="!showIconsOnly" style="text-align: left; font-size: 14px;">{{ tabDetail.tabName }}
+              <template v-if="tabDetail.tabSubName"><i style="font-size: x-small; text-transform: lowercase"><br/>{{ tabDetail.tabSubName }}</i></template>
+            </span>
           </v-btn>
         </template>
         
@@ -98,6 +100,7 @@
               <v-card-text>
                 <p class="fl-tab-header" :title="tabDetail.title">
                   {{ (tabDetail.tabHeaderName ? tabDetail.tabHeaderName : tabDetail.tabName) }}
+                  <template v-if="tabDetail.tabSubName"><i style="font-size: x-small; text-transform: lowercase"> {{ tabDetail.tabSubName }}</i></template>
                 </p>
                 <div class="tab-detail">
                   <slot :name="tabDetail.tabName.replace(' ', '_')"></slot>
@@ -283,11 +286,19 @@ import { ref, onMounted, computed } from 'vue'
 
 // Interface for tab data
 export interface TabData {
-  iconName: string; // e.g. mdi-function-variant
+  /** The icon to display in the tab e.g. mdi-function-variant */
+  iconName: string;
+  /** The name of the tab - also used as the slot name (spaces => `_`) */
   tabName: string;
+  /** Display name for the tab */
   tabHeaderName?: string;
+  /** Sub-name for the tab (shown under the header, or next to it in collapsed case) */
+  tabSubName?: string;
+  /** tooltip text for the tab */
   title?: string;
+  /** Whether the tab is shown */
   show: boolean;
+  /** Whether the tab is enabled */
   enabled: boolean;
 }
 
