@@ -3,6 +3,9 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+# 5 January 2026
+* Update CSIRO renderer (1.2.11) and template extraction (1.0.14) engines
+
 # 26 December 2025
 * Updated the static config loading code to use async/await to ensure that the settings are fully loaded before being used.
 (which helps support the migration over to Vue3/Nuxt3)
