@@ -5,6 +5,7 @@
 
 # 5 January 2026
 * Update CSIRO renderer (1.2.11) and template extraction (1.0.14) engines
+* Update CSIRO renderer to use the terminology server URL from the settings page
 
 # 26 December 2025
 * Updated the static config loading code to use async/await to ensure that the settings are fully loaded before being used.

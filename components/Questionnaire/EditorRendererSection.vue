@@ -6,7 +6,7 @@
           title="Show the QuestionnaireResponse based on the data in the CSIRO renderer" @click="logResponse()">Show
           Response</v-btn>
         <div class="q-host">
-          <Renderer :questionnaire="questionnaire" :onFocus="onFocus" />
+          <Renderer :questionnaire="questionnaire" :onFocus="onFocus" :terminologyServerUrl="terminologyServerUrl" />
         </div>
       </template>
       <template v-else>
@@ -54,6 +54,10 @@ export default class EditorRendererSection extends Vue {
     return (linkId: string) => { this.highlightPath(linkId); }
   }
 
+  get terminologyServerUrl() {
+    return settings.getFhirTerminologyServerUrl();
+  }
+
   highlightPath(linkId: string) {
     // console.log('Field focused: ', linkId);
     this.$emit('highlight-path', linkId);
@@ -64,10 +68,11 @@ export default class EditorRendererSection extends Vue {
     if (response.meta?.tag?.find(t => t.code?.startsWith('csiro'))) {
       return;
     }
-    console.log("Rendering response in CSIRO renderer", response);
+    console.log("Rendering response in CSIRO renderer", response, settings.getFhirTerminologyServerUrl());
     await buildForm({
       questionnaire: questionnaire as QuestionnaireR4,
-      questionnaireResponse: response as QuestionnaireResponseR4
+      questionnaireResponse: response as QuestionnaireResponseR4,
+      terminologyServerUrl: settings.getFhirTerminologyServerUrl()
     });
   }
 
