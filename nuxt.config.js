@@ -88,11 +88,13 @@ export default {
       "openai",
       "marked",
       "antlr4",
+      "sql-on-fhir-v2",
       /* Below are dependencies of CSIRO renderer */
       "@mui",
       "@emotion",
       "@tanstack",
-      "sql-on-fhir-v2",
+      /* Below are dependencies of CSIRO sdc-template-extract */
+      'uuid',
     ],
   }
 }

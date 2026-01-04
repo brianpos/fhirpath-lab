@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@aehrc/sdc-populate": "^4.6.0",
+    "@aehrc/sdc-template-extract": "^1.0.1",
     "@aehrc/smart-forms-renderer": "^1.0.0-alpha.83",
     "@nuxtjs/applicationinsights": "^1.2.2",
     "@types/ace": "^0.0.52",
