@@ -402,10 +402,10 @@ export default class SwmCsiroSmartForms extends Vue implements SdcRendererMessag
 
     // Build form with questionnaire
     try {
-      await buildForm(
-        this.questionnaire as QuestionnaireR4,
-        message.payload.questionnaireResponse as QuestionnaireResponseR4 | undefined
-      );
+      await buildForm({
+        questionnaire: this.questionnaire as QuestionnaireR4,
+        questionnaireResponse: message.payload.questionnaireResponse as QuestionnaireResponseR4 | undefined
+      });
       
       // Start watching for changes
       this.startWatchingForChanges();
@@ -451,10 +451,10 @@ export default class SwmCsiroSmartForms extends Vue implements SdcRendererMessag
 
     // Build form with questionnaire and response
     try {
-      await buildForm(
-        this.questionnaire as QuestionnaireR4,
-        this.questionnaireResponse as QuestionnaireResponseR4
-      );
+      await buildForm({
+        questionnaire: this.questionnaire as QuestionnaireR4,
+        questionnaireResponse: this.questionnaireResponse as QuestionnaireResponseR4
+      });
       
       // Start watching for changes
       this.startWatchingForChanges();
@@ -594,10 +594,10 @@ export default class SwmCsiroSmartForms extends Vue implements SdcRendererMessag
       this.questionnaireResponse = populateResult.populatedResponse;
 
       // Build form with questionnaire and prepopulated response
-      await buildForm(
-        this.questionnaire as QuestionnaireR4,
-        this.questionnaireResponse as QuestionnaireResponseR4
-      );
+      await buildForm({
+        questionnaire: this.questionnaire as QuestionnaireR4,
+        questionnaireResponse: this.questionnaireResponse as QuestionnaireResponseR4
+      });
       
       // Start watching for changes
       this.startWatchingForChanges();
