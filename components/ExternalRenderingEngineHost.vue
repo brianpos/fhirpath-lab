@@ -94,7 +94,6 @@
 </template>
 
 <script lang="ts">
-import { rendererStylingStore } from '@aehrc/smart-forms-renderer';
 import Vue from 'vue';
 import Component from 'vue-class-component';
 import { Prop, Emit, Watch } from 'vue-property-decorator';
