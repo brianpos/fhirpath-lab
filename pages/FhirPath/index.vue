@@ -926,6 +926,7 @@ export interface IFhirPathMethods
 {
   twinPaneMounted(): Promise<void>;
   CtrlEnterHandler(event: KeyboardEvent): void;
+  handleHashChange(): void;
   readParametersFromQuery(): TestFhirpathData;
   applyParameters(p: TestFhirpathData): void;
   variableMessages(variable: VariableData): string | undefined;
@@ -1031,11 +1032,13 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
 
     document.addEventListener('keydown', this.CtrlEnterHandler);
     document.addEventListener('keydown', this.DebugFunctionKeyHandler);
+    window.addEventListener('hashchange', this.handleHashChange);
   },
 
   beforeDestroy() {
     document.removeEventListener('keydown', this.CtrlEnterHandler);
     document.removeEventListener('keydown', this.DebugFunctionKeyHandler);
+    window.removeEventListener('hashchange', this.handleHashChange);
   },
 
   computed: {
@@ -1217,6 +1220,22 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       }
     },
 
+    async handleHashChange(): Promise<void> {
+      // Called when the URL hash changes (e.g., when pasting a new URL with different hash)
+      const hash = window.location.hash ? window.location.hash.substring(1) : undefined;
+      if (hash) {
+        try {
+          const data = DecodeTestFhirpathData(hash);
+          console.log('Hash changed, loading new parameters:', data);
+          await this.applyParameters(data);
+          this.fhirpathExpressionChangedEvent();
+          await this.evaluateFhirPathExpression();
+        } catch (e) {
+          console.error('Failed to decode hash parameters:', e);
+        }
+      }
+    },
+
     async twinPaneMounted(): Promise<void> {
 
       let vars = this.variables;
@@ -1323,8 +1342,11 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       };
       // await this.applyParameters(p);
     }
-    // Check for the encoded parameters first
-    const parameters = this.$route.query.parameters as string;
+    // Check for the encoded parameters first - try hash/fragment (bookmark) first, then query
+    let parameters = window.location.hash ? window.location.hash.substring(1) : undefined;
+    if (!parameters) {
+      parameters = this.$route.query.parameters as string;
+    }
     let data: TestFhirpathData;
     if (parameters) {
       // special parameter that encodes all the stuff inside
@@ -2906,7 +2928,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       if (this.showAdvancedSettings){
         let packageData: TestFhirpathData = this.prepareSharePackageData();
         const compressedData = EncodeTestFhirpathData(packageData);
-        shareUrl = `${url.origin}/FhirPath?parameters=${compressedData}`;
+        shareUrl = `${url.origin}/FhirPath#${compressedData}`;
         navigator.clipboard.writeText(shareUrl);
         console.log(DecodeTestFhirpathData(compressedData));
       }
@@ -2947,7 +2969,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       const url = new URL(window.location.href);
       let packageData: TestFhirpathData = this.prepareSharePackageData();
       const compressedData = EncodeTestFhirpathData(packageData);
-      const shareUrl = `\`\`\`fhirpath\n${packageData.expression}\n\`\`\`\n:test_tube: [Test with FHIRPath-Lab](${url.origin}/FhirPath?parameters=${compressedData})`;
+      const shareUrl = `\`\`\`fhirpath\n${packageData.expression}\n\`\`\`\n:test_tube: [Test with FHIRPath-Lab](${url.origin}/FhirPath#${compressedData})`;
       navigator.clipboard.writeText(shareUrl);
       console.log(DecodeTestFhirpathData(compressedData));
     },
