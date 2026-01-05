@@ -355,42 +355,42 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         encodeResourceJsonAsExtension: true
     },
 
-    "Local (R4)": {
-        name: "Localhost",
-        legacyName: "Local (R4)",
-        fhirVersion: "R4",
-        appInsightsEngineName: "Local",
-        publisher: "http://localhost:3001/fhir/$fhirpath",
-        configSetting: "local_r4",
-        description: "Your own locally hosted fhirpath engine.",
-        external: true,
-        supportsAST: true,
-        supportsXML: false
-    },
-    "Local (R5)": {
-        name: "Localhost",
-        legacyName: "Local (R5)",
-        fhirVersion: "R5",
-        appInsightsEngineName: "Local",
-        publisher: "http://localhost:3001/fhir/$fhirpath-r5",
-        configSetting: "local_r5",
-        description: "Your own locally hosted fhirpath engine.",
-        external: true,
-        supportsAST: true,
-        supportsXML: false
-    },
-    "Local (R6)": {
-        name: "Localhost",
-        legacyName: "Local (R6)",
-        fhirVersion: "R6",
-        appInsightsEngineName: "Local",
-        publisher: "http://localhost:3001/fhir/$fhirpath-r6",
-        configSetting: "local_r6",
-        description: "Your own locally hosted fhirpath engine.",
-        external: true,
-        supportsAST: true,
-        supportsXML: false
-    },
+    // "Local (R4)": {
+    //     name: "Localhost",
+    //     legacyName: "Local (R4)",
+    //     fhirVersion: "R4",
+    //     appInsightsEngineName: "Local",
+    //     publisher: "http://localhost:3001/fhir/$fhirpath",
+    //     configSetting: "local_r4",
+    //     description: "Your own locally hosted fhirpath engine.",
+    //     external: true,
+    //     supportsAST: true,
+    //     supportsXML: false
+    // },
+    // "Local (R5)": {
+    //     name: "Localhost",
+    //     legacyName: "Local (R5)",
+    //     fhirVersion: "R5",
+    //     appInsightsEngineName: "Local",
+    //     publisher: "http://localhost:3001/fhir/$fhirpath-r5",
+    //     configSetting: "local_r5",
+    //     description: "Your own locally hosted fhirpath engine.",
+    //     external: true,
+    //     supportsAST: true,
+    //     supportsXML: false
+    // },
+    // "Local (R6)": {
+    //     name: "Localhost",
+    //     legacyName: "Local (R6)",
+    //     fhirVersion: "R6",
+    //     appInsightsEngineName: "Local",
+    //     publisher: "http://localhost:3001/fhir/$fhirpath-r6",
+    //     configSetting: "local_r6",
+    //     description: "Your own locally hosted fhirpath engine.",
+    //     external: true,
+    //     supportsAST: true,
+    //     supportsXML: false
+    // },
     "CQL (R4)": {
         name: "CQL-Facade",
         legacyName: "CQL (R4)",
