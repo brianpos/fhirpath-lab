@@ -435,6 +435,11 @@ const evaluateWithAllEngines = async () => {
   error.value = ''
   singleEngineResult.value = null
   
+  // Switch to the all engines results tab (index 2)
+  if (twinTabControl.value) {
+    twinTabControl.value.selectTab(2)
+  }
+  
   // Pre-populate with empty loading results for each engine
   allEngineResults.value.clear()
   engines.value.forEach(engine => {
