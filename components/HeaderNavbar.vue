@@ -38,6 +38,19 @@
           </v-btn>
         </template>
         <v-list>
+          <v-list-item href="/FhirPath">
+            <v-icon left> mdi-bug-outline </v-icon>
+            <v-list-item-title>Test FhirPath</v-list-item-title>
+          </v-list-item>
+          <v-list-item href="/fml">
+            <v-icon left> mdi-chart-gantt </v-icon>
+            <v-list-item-title>Test Structure Map</v-list-item-title>
+          </v-list-item>
+          <v-list-item href="/Questionnaire/tester">
+            <v-icon left> mdi-clipboard-text-outline </v-icon>
+            <v-list-item-title title="Test a Questionnaire">Test Form</v-list-item-title>
+          </v-list-item>
+          <v-divider style="margin: 0;"></v-divider>
           <v-list-item-group>
             <v-list-item href="/Library">
               <v-list-item-icon>
@@ -58,12 +71,10 @@
               <v-list-item-title>Subscription Topics</v-list-item-title>
             </v-list-item>
           </v-list-item-group>
+          <v-divider style="margin: 0;"></v-divider>
           <v-list-item-group>
             <v-list-item href="/StructureMap">
               <v-list-item-title>Structure Maps</v-list-item-title>
-            </v-list-item>
-            <v-list-item href="/fml">
-              <v-list-item-title>Test Structure Map</v-list-item-title>
             </v-list-item>
           </v-list-item-group>
         </v-list>

@@ -8,6 +8,7 @@
 * Update CSIRO renderer to use the terminology server URL from the settings page
 * fhirpath tester page share link can now support using bookmarks to support much longer links
 * Update axios dependency to 1.13.2
+* Update Nav bar links to have all the testers at the top
 
 # 26 December 2025
 * Updated the static config loading code to use async/await to ensure that the settings are fully loaded before being used.

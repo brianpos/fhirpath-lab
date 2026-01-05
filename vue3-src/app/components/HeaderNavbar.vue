@@ -37,18 +37,26 @@
           </v-btn>
         </template>
         <v-list theme="light">
-          <v-list-item @click="navigateTo('/Library')" :active="isActive('/Library')">
-            <template v-slot:prepend>
-              <v-icon> mdi-library-outline </v-icon>
-            </template>
-            <v-list-item-title>Expression Library</v-list-item-title>
-          </v-list-item>
           <v-list-item @click="navigateTo('/FhirPath')" :active="isActive('/FhirPath')">
             <template v-slot:prepend>
               <v-icon> mdi-bug-outline </v-icon>
             </template>
             <v-list-item-title>Test FhirPath</v-list-item-title>
           </v-list-item>
+          <v-list-item @click="navigateTo('/fml')" :active="isActive('/fml')">
+            <template v-slot:prepend>
+              <v-icon> mdi-chart-gantt </v-icon>
+            </template>
+            <v-list-item-title>Test Structure Map</v-list-item-title>
+          </v-list-item>
+          <v-divider></v-divider>
+          <v-list-item @click="navigateTo('/Library')" :active="isActive('/Library')">
+            <template v-slot:prepend>
+              <v-icon> mdi-library-outline </v-icon>
+            </template>
+            <v-list-item-title>Expression Library</v-list-item-title>
+          </v-list-item>
+          <v-divider></v-divider>
           <v-list-item @click="navigateTo('/StructureDefinition')" :active="isActive('/StructureDefinition')">
             <v-list-item-title>Structure Definitions</v-list-item-title>
           </v-list-item>
@@ -61,15 +69,8 @@
           <v-list-item @click="navigateTo('/SubscriptionTopic')" :active="isActive('/SubscriptionTopic')">
             <v-list-item-title>Subscription Topics</v-list-item-title>
           </v-list-item>
-          <v-divider></v-divider>
           <v-list-item @click="navigateTo('/StructureMap')" :active="isActive('/StructureMap')">
             <v-list-item-title>Structure Maps</v-list-item-title>
-          </v-list-item>
-          <v-list-item @click="navigateTo('/fml')" :active="isActive('/fml')">
-            <template v-slot:prepend>
-              <v-icon> mdi-chart-gantt </v-icon>
-            </template>
-            <v-list-item-title>Test Structure Map</v-list-item-title>
           </v-list-item>
         </v-list>
       </v-menu>
