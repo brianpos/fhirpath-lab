@@ -48,7 +48,7 @@
           </v-list-item>
           <v-list-item href="/Questionnaire/tester">
             <v-icon left> mdi-clipboard-text-outline </v-icon>
-            <v-list-item-title title="Test a Questionnaire">Test Form</v-list-item-title>
+            <v-list-item-title>Test Questionnaire</v-list-item-title>
           </v-list-item>
           <v-divider style="margin: 0;"></v-divider>
           <v-list-item-group>
