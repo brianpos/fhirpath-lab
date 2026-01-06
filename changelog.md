@@ -3,6 +3,9 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+# 6 January 2026
+* Problem with shareable links to tests that uses defineVariable() - Fixes #55
+
 # 5 January 2026
 * Update CSIRO renderer (1.2.11) and template extraction (1.0.14) engines
 * Update CSIRO renderer to use the terminology server URL from the settings page

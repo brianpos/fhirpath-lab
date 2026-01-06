@@ -561,7 +561,7 @@ import { CancelTokenSource } from "axios";
 import xmlFormat from 'xml-formatter';
 import { addExtension, addExtensionStringValue, clearExtension, getExtensionCodingValues, getExtensionReferenceValue, getExtensionStringValue, setExtension, setExtensionStringValue } from "fhir-extension-helpers";
 import { fpjsNode, getTraceValue, getValue, JsonNode, ResultData } from "~/models/FhirpathTesterData";
-import { GetExternalVariablesUsed, InvertTree } from "~/components/ParseTreeTab.vue";
+import { GetExternalVariablesUsed, GetExpressionDefinedVariables, InvertTree } from "~/components/ParseTreeTab.vue";
 import { mapFunctionReferences } from "~/helpers/fhirpath_references";
 
 // import { getPreferredTerminologyServerFromSDC } from "fhir-sdc-helpers";
@@ -597,6 +597,7 @@ import TwinPaneTab, { TabData } from "~/components/TwinPaneTab.vue";
 import { IFhirPathEngineDetails, registeredEngines } from "~/types/fhirpath_test_engine";
 
 import { FhirPathTools, createFhirPathEvaluateTools } from "~/helpers/openai_tools";
+import { Console } from "console";
 
 const shareTooltipText = 'Copy a sharable link to this test expression';
 const shareZulipTooltipText = 'Copy a sharable link for Zulip to this test expression';
@@ -919,6 +920,8 @@ function isSystemVariableName(name: string): boolean {
   if (name === "rootResource") return true;
   if (name === "context") return true;
   if (name === "terminologies") return true;
+  if (name === "factory") return true;
+  if (name === "server") return true;
   return false;
 }
 
@@ -1738,8 +1741,9 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         let updatedVariables = new Map<string, any>();
 
         // check if there are any variables in the AST
-        if (ast){
-          let varsUsed = GetExternalVariablesUsed(ast);
+        if (ast) {
+          let dvVars = GetExpressionDefinedVariables(ast);
+          let varsUsed = GetExternalVariablesUsed(ast, dvVars);
           for (const varName of varsUsed){
             if (isSystemVariableName(varName)) continue;
 
@@ -1757,15 +1761,30 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
           }
         }
         else {
+          console.log('No AST - scanning text for variables via tokens in expression editor');
+          let dvVars = new Set<string>();
           const count = session.doc.getLength();
           for (let row = 0; row<= count; row++){
             if (session.doc.getLine(row).includes("%")){
               const tkns = this.expressionEditor?.session.getTokens(row);
               if (tkns){
                 for (const tkn of tkns){
+                  if (tkn.type === "fhir_identifier" && tkn.value == "defineVariable") {
+                    // check that there is a token for the identifier, which is 2 tokens ahead
+                    const tknIndex = tkns.indexOf(tkn);
+                    if (tknIndex + 2 < tkns.length){
+                      const varTkn = tkns[tknIndex + 2];
+                      if (varTkn.type === "fhir_string"){
+                        const dvName = varTkn.value.substring(1, varTkn.value.length - 1); // remove quotes
+                        dvVars.add(dvName);
+                      }
+                    }
+                  }
+
                   if (tkn.type === "fhir_variable"){
                     const varName = canonicalVariableName(tkn.value);
                     if (isSystemVariableName(varName)) continue;
+                    if (dvVars.has(varName)) continue; // was a defined variable
 
                     if (!this.variables.has(varName)){
                       // console.log(tkn.value + ' ' + varName);

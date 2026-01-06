@@ -90,18 +90,39 @@ import fhirpath_r5_model from "fhirpath/fhir-context/r5";
 import { settings } from "~/helpers/user_settings";
 import { mapFunctionReferences, mapOperatorReferences, ISpecFunctionDetails } from "~/helpers/fhirpath_references";
 
+/** Scan the expression tree and report all the names of any variables defined using `defineVariable`
+ * (Note: this only scans for `defineVariable` calls, other variable definition mechanisms are not detected, 
+ * and is not sensitive to scope - that is a separate concern)
+ * The Lab uses this to identify variables that are defined in the expression so that they can be excluded
+ * from the list of external variables that are reported as "used" in the expression, and must be set for evaluation.
+ * @param node The root node to scan
+ * @returns An array of variable names defined in the expression (including this node, or any of its children)
+ */
+export function GetExpressionDefinedVariables(node: fpjsNode): string[] {
+  let result: string[] = [];
+  if (node.type === 'Functn') {
+    if (node.children?.length === 2 && node.children[1].children){
+      if (node.children[0].text === 'defineVariable' && node.children[0].type === 'Identifier'){
+        let varName = node.children[1].children[0].text;
+        varName = varName.substring(1, varName.length - 1);
+        result.push(varName);
+      }
+    }
+  }
+  if (node.children) {
+    node.children.forEach((element) => {
+      let childResult = GetExpressionDefinedVariables(element);
+      // merge the childResult into the overall result removing duplicates
+      result = result.concat(childResult.filter((item) => !result.includes(item)));
+    });
+  }
+  return result;
+}
 
 export function GetExternalVariablesUsed(node: fpjsNode, ignoreVar: string[] = []) : string[] {
   let result: string[] = [];
-  if (node.type === 'Functn') {
-    if (node.text?.startsWith('defineVariable') && node.children?.length === 2 && node.children[1].children){
-      let varName = node.children[1].children[0].text;
-      varName = varName.substring(1, varName.length - 1);
-      ignoreVar.push(varName);
-    }
-  }
-  if (node.type === 'TermExpression' && node.text?.startsWith('%')){
-    let varName = node.text.substring(1);
+  if (node.type === 'ExternalConstantTerm' && node.text){
+    let varName = node.text;
     if (!ignoreVar.includes(varName) && !result.includes(varName)){
       result.push(varName);
     }
