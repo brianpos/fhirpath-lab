@@ -5,6 +5,8 @@
 
 # 6 January 2026
 * Problem with shareable links to tests that uses defineVariable() - Fixes #55
+* Add a copy button to the Response tab to copy to the clipboard the raw QR value
+Fixes #45
 
 # 5 January 2026
 * Update CSIRO renderer (1.2.11) and template extraction (1.0.14) engines

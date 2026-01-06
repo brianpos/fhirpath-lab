@@ -200,6 +200,11 @@
                     mdi-note-check-outline
                   </v-icon>
                 </v-btn>
+                <v-btn small icon tile @click="copyQuestionnaireResponse"><v-icon
+                    title="Copy the below QuestionnaireResponse json to the clipboard" dark>
+                    mdi-content-copy
+                  </v-icon>
+                </v-btn>
                 <v-btn small icon tile @click="allocateNewQuestionnaireResponseId">
                   <v-icon
                     title="Allocate a new ID" dark>
@@ -2382,6 +2387,18 @@ export default Vue.extend({
       }
     },
 
+    async copyQuestionnaireResponse() {
+      // Copy the current contents to the clipboard
+      if (this.questionnaireResponseJsonEditor) {
+        const jsonValue = this.questionnaireResponseJsonEditor.getValue();
+        try {
+          await navigator.clipboard.writeText(jsonValue);
+        } catch (err) {
+          alert("Failed to copy to clipboard: " + err);
+        }
+      }
+    },
+    
     async validateQuestionnaireResponse() {
       if (this.resourceJsonEditor && this.questionnaireResponseJsonEditor) {
         this.loadingData = true;
