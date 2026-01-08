@@ -666,7 +666,7 @@ const showShareLink = (): boolean => {
   return false
 }
 
-const pleaseNoShareMessage = '\r\n________\r\nPLEASE don\'t share this insiders hackweek\n site outside those already known to use it.';
+const pleaseNoShareMessage = '\r\n________\r\nPLEASE don\'t share this insiders hackweek\n site outside those already known to use it.\nThe share URL has been swapped to the dev site.';
 
 const updateShareText = () => {
   shareToolTipMessage.value = 'Copy a sharable link to this test expression'
@@ -717,9 +717,13 @@ const prepareSharePackageData = (): TestFhirpathData => {
 
 const copyShareLinkToClipboard = () => {
   const url = new URL(window.location.href)
+  let useUrl = url.origin;
+  if (useUrl.toLowerCase() === 'https://hackweek.fhirpath-lab.com') {
+    useUrl = 'https://fhirpath-lab.com';
+  }
   const packageData = prepareSharePackageData()
   const compressedData = EncodeTestFhirpathData(packageData)
-  const shareUrl = `${url.origin}/fhirpath#${compressedData}`
+  const shareUrl = `${useUrl}/FhirPath#${compressedData}`
   
   if (navigator.clipboard) {
     navigator.clipboard.writeText(shareUrl)
@@ -730,9 +734,13 @@ const copyShareLinkToClipboard = () => {
 
 const copyZulipShareLinkToClipboard = () => {
   const url = new URL(window.location.href)
+  let useUrl = url.origin;
+  if (useUrl.toLowerCase() === 'https://hackweek.fhirpath-lab.com') {
+    useUrl = 'https://fhirpath-lab.com';
+  }
   const packageData = prepareSharePackageData()
   const compressedData = EncodeTestFhirpathData(packageData)
-  const shareUrl = `\`\`\`fhirpath\n${packageData.expression}\n\`\`\`\n:test_tube: [Test with FHIRPath-Lab](${url.origin}/fhirpath#${compressedData})`
+  const shareUrl = `\`\`\`fhirpath\n${packageData.expression}\n\`\`\`\n:test_tube: [Test with FHIRPath-Lab](${useUrl}/fhirpath#${compressedData})`
   
   if (navigator.clipboard) {
     navigator.clipboard.writeText(shareUrl)
