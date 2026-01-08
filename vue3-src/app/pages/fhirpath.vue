@@ -760,7 +760,7 @@ const copyShareLinkToClipboard = () => {
   const url = new URL(window.location.href)
   let useUrl = url.origin;
   if (useUrl.toLowerCase() === 'https://hackweek.fhirpath-lab.com') {
-    useUrl = 'https://fhirpath-lab.com';
+    useUrl = 'https://dev.fhirpath-lab.com';
   }
   const packageData = prepareSharePackageData()
   const compressedData = EncodeTestFhirpathData(packageData)
@@ -777,7 +777,7 @@ const copyZulipShareLinkToClipboard = () => {
   const url = new URL(window.location.href)
   let useUrl = url.origin;
   if (useUrl.toLowerCase() === 'https://hackweek.fhirpath-lab.com') {
-    useUrl = 'https://fhirpath-lab.com';
+    useUrl = 'https://dev.fhirpath-lab.com';
   }
   const packageData = prepareSharePackageData()
   const compressedData = EncodeTestFhirpathData(packageData)
