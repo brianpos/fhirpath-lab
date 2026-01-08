@@ -128,7 +128,7 @@
                   <template v-slot:activator="{ props }">
                     <v-btn
                       icon flat
-                      density="comfortable"
+                      density="compact"
                       v-bind="props"
                       @click="resetExpression"
                       class="ml-2"
@@ -1028,7 +1028,7 @@ const evaluateExpression = async () => {
   padding-top: 4px;
 }
 .resetButton {
-  right: 20px;
+  right: 30px;
   position: absolute;
   top: 20px;
   z-index: 2;
