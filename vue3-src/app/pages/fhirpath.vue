@@ -366,7 +366,7 @@ const selectedEngine = ref<IFhirPathEngineDetails | undefined>()
 // Track engine menu state to hide tooltip when menu is open (prevents tooltip from staying visible behind the dropdown)
 const isEngineMenuOpen = ref<boolean>(false)
 
-const resourceUrl = ref<string>('Patient/example')
+const resourceUrl = ref<string>('Patient/example/_history/3')
 const resourceId = ref<string>('example')
 const testResource = ref<string>(`{
   "resourceType": "Patient",
@@ -375,6 +375,10 @@ const testResource = ref<string>(`{
     {
       "given": ["John"],
       "family": "Doe"
+    },
+    {
+      "use": "usual",
+      "given": ["Johnny"]
     }
   ],
   "gender": "male",
