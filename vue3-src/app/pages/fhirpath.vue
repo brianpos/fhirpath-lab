@@ -100,7 +100,23 @@
           <!-- Expression Tab -->
           <template v-slot:Expression>
             <div class="tab-content">
-              <h4>FHIRPath Expression</h4>
+              <div class="d-flex align-center">
+                <h4 class="flex-grow-1">FHIRPath Expression</h4>
+                <v-tooltip location="bottom" dark>
+                  <template v-slot:activator="{ props }">
+                    <v-btn
+                      icon flat
+                      density="comfortable"
+                      v-bind="props"
+                      @click="resetExpression"
+                      class="ml-2"
+                    >
+                      <v-icon color="rgba(0, 0, 0, 0.54)">mdi-broom</v-icon>
+                    </v-btn>
+                  </template>
+                  <span>Reset Expression and context</span>
+                </v-tooltip>
+              </div>
               <v-textarea
                 v-model="fhirpathContextExpression"
                 label="Context Expression (optional)"
@@ -110,7 +126,7 @@
               />
               <v-textarea
                 v-model="fhirpathExpression"
-                label="Enter your FHIRPath expression"
+                label="FHIRPath Expression"
                 rows="3"
                 outlined
                 hide-details="auto"
@@ -461,6 +477,11 @@ const addVariable = () => {
 
 const removeVariable = (index: number) => {
   variables.value.splice(index, 1)
+}
+
+const resetExpression = () => {
+  fhirpathExpression.value = ''
+  fhirpathContextExpression.value = ''
 }
 
 // Navigate to expression node from AST

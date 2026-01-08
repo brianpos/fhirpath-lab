@@ -5,6 +5,7 @@
 
 # 8 January 2026
 * Port the URL handling code to Nuxt3/Vue3 (for fhirpath tester page) - share links, processing and loading from URL parameters
+* Port the reset expression and context button to Nuxt3/Vue3 (for fhirpath tester page)
 
 # 6 January 2026
 * Problem with shareable links to tests that uses defineVariable() - Fixes #55
