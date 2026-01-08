@@ -100,8 +100,7 @@
           <!-- Expression Tab -->
           <template v-slot:Expression>
             <div class="tab-content">
-              <div class="d-flex align-center">
-                <h4 class="flex-grow-1">FHIRPath Expression</h4>
+              <span class="resetButton">
                 <v-tooltip location="bottom" dark>
                   <template v-slot:activator="{ props }">
                     <v-btn
@@ -116,13 +115,14 @@
                   </template>
                   <span>Reset Expression and context</span>
                 </v-tooltip>
-              </div>
-              <v-textarea
+              </span>
+              <v-textarea 
                 v-model="fhirpathContextExpression"
                 label="Context Expression (optional)"
                 rows="1"
                 outlined
                 hide-details="auto"
+                persistent-placeholder
               />
               <v-textarea
                 v-model="fhirpathExpression"
@@ -903,5 +903,11 @@ const evaluateExpression = async () => {
   border-top: thin solid lightgray;
   margin-top: 4px;
   padding-top: 4px;
+}
+.resetButton {
+  right: 20px;
+  position: absolute;
+  top: 20px;
+  z-index: 2;
 }
 </style>
