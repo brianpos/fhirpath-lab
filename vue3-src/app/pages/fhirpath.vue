@@ -51,6 +51,44 @@
           <v-btn icon dark tile density="comfortable" title="Run All Engines" @click="evaluateWithAllEngines" :loading="loadingAll" :disabled="loading">
             <v-icon>mdi-script-text-play-outline</v-icon>
           </v-btn>
+
+          <v-divider style="margin: 16px 8px;" vertical></v-divider>
+
+          <v-tooltip location="bottom" v-if="showShareLink()">
+            <template v-slot:activator="{ props }">
+              <v-btn 
+                icon 
+                dark 
+                tile 
+                density="comfortable" 
+                @click="copyShareLinkToClipboard" 
+                @mouseenter="updateShareText"
+                v-bind="props"
+              >
+                <v-icon>mdi-share-variant-outline</v-icon>
+              </v-btn>
+            </template>
+            <span>{{ shareToolTipMessage }}</span>
+          </v-tooltip>
+
+          <v-tooltip location="bottom" v-if="showShareLink()">
+            <template v-slot:activator="{ props }">
+              <v-btn 
+                icon 
+                dark 
+                tile 
+                density="comfortable" 
+                @click="copyZulipShareLinkToClipboard"
+                @mouseenter="updateZulipShareText"
+                v-bind="props"
+              >
+                <svg class="brand-logo" role="img" aria-label="Zulip" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" height="20">
+                  <path fill="hsl(0, 0%, 100%)" d="M 473.09 122.97 c 0 22.69 -10.19 42.85 -25.72 55.08 L 296.61 312.69 c -2.8 2.4 -6.44 -1.47 -4.42 -4.7 l 55.3 -110.72 c 1.55 -3.1 -0.46 -6.91 -3.64 -6.91 H 129.36 c -33.22 0 -60.4 -30.32 -60.4 -67.37 c 0 -37.06 27.18 -67.37 60.4 -67.37 h 283.33 c 33.22 -0.02 60.4 30.3 60.4 67.35 z M 129.36 506.05 h 283.33 c 33.22 0 60.4 -30.32 60.4 -67.37 c 0 -37.06 -27.18 -67.37 -60.4 -67.37 H 198.2 c -3.18 0 -5.19 -3.81 -3.64 -6.91 l 55.3 -110.72 c 2.02 -3.23 -1.62 -7.1 -4.42 -4.7 L 94.68 383.6 c -15.53 12.22 -25.72 32.39 -25.72 55.08 c 0 37.05 27.18 67.37 60.4 67.37 z"></path>
+                </svg>
+              </v-btn>
+            </template>
+            <span>{{ shareZulipToolTipMessage }}</span>
+          </v-tooltip>
         </v-toolbar>
         
         <TwinPaneTab 
@@ -252,7 +290,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { useRoute } from 'vue-router'
 import type { TabData } from '~/components/TwinPaneTab.vue'
 import ResourceEditor from '~/components/ResourceEditor.vue'
 import { type IFhirPathEngineDetails, registeredEngines } from '@legacy/types/fhirpath_test_engine'
@@ -262,6 +301,9 @@ import type { ParseTreeNode } from '@legacy/models/FhirpathTesterData'
 import fhirpath_r4_model from 'fhirpath/fhir-context/r4'
 import fhirpath_r5_model from 'fhirpath/fhir-context/r5'
 import AbstractSyntaxTreeTab from '~/components/AbstractSyntaxTreeTab.vue'
+import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from 'lz-string'
+import { EncodeTestFhirpathData, DecodeTestFhirpathData, type TestFhirpathData } from '@legacy/models/testenginemodel'
+import { settings } from '@legacy/helpers/user_settings'
 
 // Set the page title
 useHead({
@@ -312,11 +354,17 @@ const onResourceUrlUpdate = (newUrl: string) => {
 
 const onResourceTextUpdate = (newText: string) => {
   resourceText.value = newText
+  resourceJsonChanged.value = true
 }
 
 const ast = ref<string>('')
 
 const variables = ref<Array<{name: string, value: string}>>([]) // Start with no variables
+
+// Share link state
+const shareToolTipMessage = ref<string>('Copy a sharable link to this test expression')
+const shareZulipToolTipMessage = ref<string>('Copy a sharable link for Zulip to this test expression')
+const resourceJsonChanged = ref<boolean>(false)
 
 // Computed property for filtered engines based on selected FHIR version
 const engines = computed<IFhirPathEngineDetails[]>(() => {
@@ -329,6 +377,27 @@ const engines = computed<IFhirPathEngineDetails[]>(() => {
 if (!selectedEngine.value && engines.value.length > 0) {
   selectedEngine.value = engines.value[0]
 }
+
+// Lifecycle hooks
+onMounted(() => {
+  window.addEventListener('hashchange', handleHashChange)
+  
+  // Check if there's a hash on initial load
+  const hash = window.location.hash ? window.location.hash.substring(1) : undefined
+  if (hash) {
+    handleHashChange()
+  } else {
+    // Check for query parameters
+    const params = readParametersFromQuery()
+    if (params.expression) {
+      applyParameters(params)
+    }
+  }
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('hashchange', handleHashChange)
+})
 
 // Tab configuration
 const tabDetails = computed<TabData[]>(() => [
@@ -399,6 +468,192 @@ const navigateToExpressionNode = (node: ParseTreeNode) => {
   console.log('Navigate to expression node:', node)
   // TODO: Highlight the expression text in the editor
   // This would need the expression editor to support highlighting
+}
+
+// URL hash handling
+const handleHashChange = async () => {
+  const hash = window.location.hash ? window.location.hash.substring(1) : undefined
+  if (hash) {
+    try {
+      const data = DecodeTestFhirpathData(hash)
+      console.log('Hash changed, loading new parameters:', data)
+      await applyParameters(data)
+      await evaluateExpression()
+    } catch (e) {
+      console.error('Failed to decode hash parameters:', e)
+    }
+  }
+}
+
+// Read parameters from URL query
+const readParametersFromQuery = (): TestFhirpathData => {
+  const route = useRoute()
+  let data: TestFhirpathData = {
+    expression: route.query.expression as string
+  }
+  
+  if (route.query.libraryId) {
+    data.libraryId = route.query.libraryId as string
+  } else {
+    if (route.query.context) {
+      data.context = route.query.context as string
+    }
+    
+    if (route.query.resource) {
+      data.resource = route.query.resource as string
+    }
+    
+    const resourceJson = route.query.resourceJson as string
+    if (resourceJson) {
+      data.resourceJson = decompressFromEncodedURIComponent(resourceJson) ?? ''
+    }
+    
+    if (route.query.exampletype) {
+      data.exampletype = route.query.exampletype as string
+    }
+    
+    if (route.query.engine) {
+      data.engine = route.query.engine as string ?? ''
+    }
+    
+    if (route.query) {
+      // Iterate all query parameters looking for variables identified by prefix "var-"
+      for (const [key, value] of Object.entries(route.query)) {
+        if (key.startsWith('var-')) {
+          const varName = key.substring(4)
+          const varValue = value as string
+          data.variables = data.variables ?? []
+          data.variables.push({ name: varName, data: varValue })
+        }
+      }
+    }
+    
+    if (route.query.terminologyServer) {
+      data.terminologyServer = route.query.terminologyServer as string ?? ''
+    }
+  }
+  return data
+}
+
+// Apply parameters from URL
+const applyParameters = async (p: TestFhirpathData) => {
+  if (p.expression) {
+    fhirpathExpression.value = p.expression
+  }
+  
+  // Always set context, clearing it if not present
+  fhirpathContextExpression.value = p.context || ''
+  
+  if (p.resource) {
+    resourceUrl.value = p.resource
+  }
+  
+  const resourceJson = p.resourceJson
+  if (resourceJson) {
+    if (resourceJson.startsWith('<')) {
+      resourceText.value = resourceJson
+    } else {
+      try {
+        resourceText.value = JSON.stringify(JSON.parse(resourceJson), null, tabSpaces.value)
+      } catch (e) {
+        resourceText.value = resourceJson
+      }
+    }
+    resourceJsonChanged.value = true
+    resourceUrl.value = ''
+  }
+  
+  if (p.engine) {
+    const engine = Object.values(registeredEngines).find(e => e.legacyName === p.engine)
+    if (engine) {
+      selectedEngine.value = engine
+      selectedFhirVersion.value = engine.fhirVersion
+    }
+  }
+  
+  // Always set variables, clearing them if not present
+  if (p.variables && p.variables.length > 0) {
+    variables.value = p.variables.map(v => ({ name: v.name, value: v.data }))
+  } else {
+    variables.value = []
+  }
+}
+
+// Share link functionality
+const showShareLink = (): boolean => {
+  if (navigator?.clipboard) {
+    return true
+  }
+  return false
+}
+
+const updateShareText = () => {
+  shareToolTipMessage.value = 'Copy a sharable link to this test expression'
+  if (resourceText.value && resourceJsonChanged.value) {
+    shareToolTipMessage.value += '\r\n(without example resource JSON)'
+  }
+}
+
+const updateZulipShareText = () => {
+  const data = prepareSharePackageData()
+  shareZulipToolTipMessage.value = `Copy a sharable link for Zulip to this test expression (${EncodeTestFhirpathData(data).length} bytes)`
+}
+
+const prepareSharePackageData = (): TestFhirpathData => {
+  let packageData: TestFhirpathData = {
+    expression: fhirpathExpression.value ?? '',
+    context: fhirpathContextExpression.value || undefined,
+    resource: resourceUrl.value || undefined,
+    engine: selectedEngine.value?.legacyName,
+  }
+  
+  if (variables.value.length > 0) {
+    packageData.variables = variables.value.map(v => ({
+      name: v.name,
+      data: v.value
+    }))
+  }
+  
+  const resourceJson = resourceText.value
+  if (resourceJson && resourceJsonChanged.value) {
+    try {
+      if (resourceJson.startsWith('<')) {
+        packageData.resourceJson = resourceJson
+      } else {
+        packageData.resourceJson = JSON.stringify(JSON.parse(resourceJson))
+      }
+    } catch {
+      // Ignore parse errors
+    }
+  }
+  
+  return packageData
+}
+
+const copyShareLinkToClipboard = () => {
+  const url = new URL(window.location.href)
+  const packageData = prepareSharePackageData()
+  const compressedData = EncodeTestFhirpathData(packageData)
+  const shareUrl = `${url.origin}/fhirpath#${compressedData}`
+  
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(shareUrl)
+    shareToolTipMessage.value = 'Copied'
+    console.log('Copied share link:', shareUrl)
+  }
+}
+
+const copyZulipShareLinkToClipboard = () => {
+  const url = new URL(window.location.href)
+  const packageData = prepareSharePackageData()
+  const compressedData = EncodeTestFhirpathData(packageData)
+  const shareUrl = `\`\`\`fhirpath\n${packageData.expression}\n\`\`\`\n:test_tube: [Test with FHIRPath-Lab](${url.origin}/fhirpath#${compressedData})`
+  
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(shareUrl)
+    shareZulipToolTipMessage.value = 'Copied'
+    console.log('Copied Zulip share link')
+  }
 }
 
 // Helper to get engine tooltip
@@ -497,6 +752,7 @@ const evaluateWithAllEngines = async () => {
         // Update with error result
         const errorResult = {
           saveOutcome: {
+            resourceType: 'OperationOutcome',
             issue: [{
               severity: 'error',
               code: 'exception',
@@ -547,7 +803,7 @@ const evaluateExpression = async () => {
     const variablesMap = new Map<string, VariableData>()
     variables.value.forEach(v => {
       if (v.name) {
-        variablesMap.set(v.name, { data: v.value })
+        variablesMap.set(v.name, { name: v.name, data: v.value })
       }
     })
 

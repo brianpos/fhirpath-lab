@@ -3,6 +3,9 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+# 8 January 2026
+* Port the URL handling code to Nuxt3/Vue3 (for fhirpath tester page) - share links, processing and loading from URL parameters
+
 # 6 January 2026
 * Problem with shareable links to tests that uses defineVariable() - Fixes #55
 * Add a copy button to the Response tab to copy to the clipboard the raw QR value
