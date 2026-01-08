@@ -302,7 +302,7 @@ const initializeAceEditor = () => {
   if (aceEditorRef.value) {
     aceEditor.value = ace.edit(aceEditorRef.value, {
       wrap: "free",
-      highlightActiveLine: false,
+      highlightActiveLine: true,
       showGutter: true,
       tabSize: props.tabSpaces,
       showPrintMargin: false,
@@ -552,7 +552,10 @@ onMounted(() => {
   color: #1976d2;
   transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);
 }
+</style>
 
+<style>
+/* Unscoped styles for Ace editor markers (dynamically added to Ace DOM) */
 .debugSelection {
   position: absolute;
   z-index: 20;

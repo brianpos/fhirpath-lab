@@ -17,7 +17,7 @@ export default defineNuxtConfig({
   alias: {
     '@legacy/helpers': resolve(currentDir, '../helpers'),
     '@legacy/types': resolve(currentDir, '../types'),
-    '@legacy/models': resolve(currentDir, '../models'),
+    'models': resolve(currentDir, '../models'),
   },
   
   modules: [

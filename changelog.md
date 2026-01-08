@@ -9,6 +9,7 @@
 * Vue3: fhirpath tester page - when opening a page with launch parameters, run the engine
 * Port Ctrl+Enter keyboard shortcut to run expression evaluation in Vue3/Nuxt3 (for fhirpath tester page)
 * Add Ctrl+Shift+Enter keyboard shortcut to evaluate expression with all engines in Vue3/Nuxt3 (for fhirpath tester page)
+* Vue3: fhirpath tester page: results rendering, resource target context navigation
 
 # 6 January 2026
 * Problem with shareable links to tests that uses defineVariable() - Fixes #55

@@ -178,6 +178,9 @@
                       <table class="v-table v-table--density-default" style="flex-shrink: 1; border: solid thin #eee; border-spacing: 0;">
                         <tr v-if="resultItem.context">
                           <td class="context" colspan="2">
+                            <v-btn v-if="resultItem.position" color="transparent" density="compact" size="small" style="float:right;" icon flat title="Goto context" @click="navigateToResourcePath(resultItem.context)">
+                              <v-icon color="rgba(0, 0, 0, 0.54)">mdi-target</v-icon>
+                            </v-btn>
                             <div>Context: <b>{{ resultItem.context }}</b></div>
                           </td>
                         </tr>
@@ -188,7 +191,11 @@
                             </td>
                             <td class="result-type">
                               <i v-if="item.type">({{ item.type }})</i>
-                              <span v-if="item.path" class="result-path">{{ item.path }}</span>
+                              <span v-if="item.path" class="result-path">{{ item.path }}
+                                <v-btn v-if="item.path" color="transparent" density="compact" size="small" class="result-path-target" icon flat title="Goto context" @click="navigateToResourcePath(item.path)">
+                                  <v-icon color="rgba(0, 0, 0, 0.54)">mdi-target</v-icon>
+                                </v-btn>
+                              </span>
                             </td>
                           </tr>
                         </template>
@@ -341,13 +348,16 @@ import type { TabData } from '~/components/TwinPaneTab.vue'
 import ResourceEditor from '~/components/ResourceEditor.vue'
 import { type IFhirPathEngineDetails, registeredEngines } from '@legacy/types/fhirpath_test_engine'
 import { evaluateFhirPathExpression, type FhirPathEvaluationOptions, type FhirPathEvaluationResult } from '@legacy/helpers/fhirpath_api_engine'
-import type { VariableData } from '@legacy/models/testenginemodel'
-import type { ParseTreeNode } from '@legacy/models/FhirpathTesterData'
+import type { VariableData } from 'models/testenginemodel'
+import type { ParseTreeNode } from 'models/FhirpathTesterData'
+import { Model } from "fhirpath";
 import fhirpath_r4_model from 'fhirpath/fhir-context/r4'
 import fhirpath_r5_model from 'fhirpath/fhir-context/r5'
+// Note: R6 is not yet available in fhirpath.js package
+import fhirpath_r6_model from "models/r6";
 import AbstractSyntaxTreeTab from '~/components/AbstractSyntaxTreeTab.vue'
 import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from 'lz-string'
-import { EncodeTestFhirpathData, DecodeTestFhirpathData, type TestFhirpathData } from '@legacy/models/testenginemodel'
+import { EncodeTestFhirpathData, DecodeTestFhirpathData, type TestFhirpathData } from 'models/testenginemodel'
 import { settings } from '@legacy/helpers/user_settings'
 
 // Set the page title
@@ -533,6 +543,32 @@ const navigateToExpressionNode = (node: ParseTreeNode) => {
   console.log('Navigate to expression node:', node)
   // TODO: Highlight the expression text in the editor
   // This would need the expression editor to support highlighting
+}
+
+// Navigate to a resource path in the test resource editor
+const navigateToResourcePath = (elementPath: string) => {
+  // Switch to the Resource tab (index 1)
+  if (twinTabControl.value) {
+    twinTabControl.value.selectTab(1)
+  }
+  
+  // Get the appropriate FHIR model based on selected version
+  let model: Model
+  if (selectedFhirVersion.value === 'R5') {
+    model = fhirpath_r5_model
+  } else if (selectedFhirVersion.value === 'R6') {
+    model = fhirpath_r6_model
+  } else {
+    model = fhirpath_r4_model
+  }
+  
+  // Call the ResourceEditor's navigateToContext method after switching tabs
+  // Use setTimeout to ensure tab switch completes before navigation
+  setTimeout(() => {
+    if (resourceEditor.value && elementPath) {
+      resourceEditor.value.navigateToContext(model, elementPath)
+    }
+  }, 0)
 }
 
 // Keyboard event handler for Ctrl+Enter to run expression
@@ -1061,7 +1097,7 @@ td {
 
 .result-path-target {
   right: 0px;
-  bottom: 2px;
+  bottom: -1px;
 }
 
 </style>
