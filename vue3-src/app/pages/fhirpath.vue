@@ -91,7 +91,7 @@
                 <v-icon>mdi-share-variant-outline</v-icon>
               </v-btn>
             </template>
-            <span>{{ shareToolTipMessage }}</span>
+            <span style="white-space: pre-line;">{{ shareToolTipMessage }}</span>
           </v-tooltip>
 
           <v-tooltip location="bottom" v-if="showShareLink()">
@@ -110,7 +110,7 @@
                 </svg>
               </v-btn>
             </template>
-            <span>{{ shareZulipToolTipMessage }}</span>
+            <span style="white-space: pre-line;">{{ shareZulipToolTipMessage }}</span>
           </v-tooltip>
         </v-toolbar>
         
@@ -656,16 +656,22 @@ const showShareLink = (): boolean => {
   return false
 }
 
+const pleaseNoShareMessage = '\r\n________\r\nPLEASE don\'t share this insiders hackweek\n site outside those already known to use it.';
+
 const updateShareText = () => {
   shareToolTipMessage.value = 'Copy a sharable link to this test expression'
   if (resourceText.value && resourceJsonChanged.value) {
     shareToolTipMessage.value += '\r\n(without example resource JSON)'
   }
+
+  shareToolTipMessage.value += pleaseNoShareMessage;
 }
 
 const updateZulipShareText = () => {
   const data = prepareSharePackageData()
   shareZulipToolTipMessage.value = `Copy a sharable link for Zulip to this test expression (${EncodeTestFhirpathData(data).length} bytes)`
+
+  shareZulipToolTipMessage.value += pleaseNoShareMessage;
 }
 
 const prepareSharePackageData = (): TestFhirpathData => {
