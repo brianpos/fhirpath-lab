@@ -8,49 +8,72 @@
           <v-toolbar-title>FHIRPath Tester</v-toolbar-title>
           <v-spacer />
           
-          <v-select 
-            dark 
-            style="max-width: 6ch; margin-right: 8px; margin-left: 8px;" 
-            :items="fhirVersions" 
-            v-model="selectedFhirVersion" 
-            hide-details="auto" 
-            @update:modelValue="changeFhirVersion"
-            density="compact"
-          />
-          
-          <v-select 
-            dark 
-            style="max-width: 13ch" 
-            :items="engines" 
-            item-title="name"
-            return-object 
-            v-model="selectedEngine" 
-            hide-details="auto" 
-            @update:modelValue="evaluateExpression"
-            :title="engineTooltip(selectedEngine)"
-            density="compact"
-          >
-            <template v-slot:item="{ item, props }">
-              <v-list-item v-bind="props" :title="engineTooltip(item.raw)">
-                <template v-slot:title>
-                  <span v-if="!item.raw.external">{{ item.raw.name }}</span>
-                  <span v-else class="external-engine">
-                    <v-icon size="small">mdi-web</v-icon> {{ item.raw.name }} *
-                  </span>
-                </template>
-                <template v-slot:subtitle>
-                  <span :class="item.raw.external ? 'external-engine' : ''">{{ item.raw.publisher }}</span>
-                </template>
-              </v-list-item>
+          <v-tooltip location="bottom">
+            <template v-slot:activator="{ props }">
+              <v-select 
+                dark 
+                style="max-width: 6ch; margin-right: 8px; margin-left: 8px;" 
+                :items="fhirVersions" 
+                v-model="selectedFhirVersion" 
+                hide-details="auto" 
+                @update:modelValue="changeFhirVersion"
+                density="compact"
+                v-bind="props"
+              />
             </template>
-          </v-select>
+            <span>Evaluate using FHIR Version</span>
+          </v-tooltip>
+          
+          <v-tooltip location="bottom" :disabled="isEngineMenuOpen">
+            <template v-slot:activator="{ props }">
+              <v-select 
+                dark 
+                style="max-width: 13ch" 
+                :items="engines" 
+                item-title="name"
+                return-object 
+                v-model="selectedEngine" 
+                hide-details="auto" 
+                @update:modelValue="evaluateExpression"
+                @update:menu="isEngineMenuOpen = $event"
+                density="compact"
+                v-bind="props"
+              >
+                <template v-slot:item="{ item, props }">
+                  <v-list-item v-bind="props" :title="engineTooltip(item.raw)">
+                    <template v-slot:title>
+                      <span v-if="!item.raw.external">{{ item.raw.name }}</span>
+                      <span v-else class="external-engine">
+                        <v-icon size="small">mdi-web</v-icon> {{ item.raw.name }} *
+                      </span>
+                    </template>
+                    <template v-slot:subtitle>
+                      <span :class="item.raw.external ? 'external-engine' : ''">{{ item.raw.publisher }}</span>
+                    </template>
+                  </v-list-item>
+                </template>
+              </v-select>
+            </template>
+            <span style="white-space: pre-line;">{{ engineTooltip(selectedEngine) }}</span>
+          </v-tooltip>
 
-          <v-btn icon dark tile density="comfortable" title="Run Expression (Alt+G)" @click="evaluateExpression" :loading="loading" :disabled="loadingAll">
-            <v-icon>mdi-play</v-icon>
-          </v-btn>
-          <v-btn icon dark tile density="comfortable" title="Run All Engines" @click="evaluateWithAllEngines" :loading="loadingAll" :disabled="loading">
-            <v-icon>mdi-script-text-play-outline</v-icon>
-          </v-btn>
+          <v-tooltip location="bottom">
+            <template v-slot:activator="{ props }">
+              <v-btn icon dark tile density="comfortable" @click="evaluateExpression" :loading="loading" :disabled="loadingAll" v-bind="props">
+                <v-icon>mdi-play</v-icon>
+              </v-btn>
+            </template>
+            <span>Run Expression (Ctrl+Enter)</span>
+          </v-tooltip>
+          
+          <v-tooltip location="bottom">
+            <template v-slot:activator="{ props }">
+              <v-btn icon dark tile density="comfortable" @click="evaluateWithAllEngines" :loading="loadingAll" :disabled="loading" v-bind="props">
+                <v-icon>mdi-script-text-play-outline</v-icon>
+              </v-btn>
+            </template>
+            <span>Run All Engines (Ctrl+Shift+Enter)</span>
+          </v-tooltip>
 
           <v-divider style="margin: 16px 8px;" vertical></v-divider>
 
@@ -340,6 +363,8 @@ const astData = ref<ParseTreeNode | null>(null)
 const fhirVersions = ['R4', 'R5', 'R6']
 const selectedFhirVersion = ref<string>('R4')
 const selectedEngine = ref<IFhirPathEngineDetails | undefined>()
+// Track engine menu state to hide tooltip when menu is open (prevents tooltip from staying visible behind the dropdown)
+const isEngineMenuOpen = ref<boolean>(false)
 
 const resourceUrl = ref<string>('Patient/example')
 const resourceId = ref<string>('example')
@@ -703,11 +728,21 @@ const copyZulipShareLinkToClipboard = () => {
 // Helper to get engine tooltip
 const engineTooltip = (engine?: IFhirPathEngineDetails): string => {
   if (!engine) return ''
-  const parts = [engine.name]
-  if (engine.publisher) parts.push(`Publisher: ${engine.publisher}`)
-  if (engine.description) parts.push(engine.description)
-  if (engine.external) parts.push('(External service)')
-  return parts.join(' - ')
+  let tooltip = `${engine.name} (${engine.fhirVersion})`
+  tooltip += `\nPublisher: ${engine.publisher}`
+  if (engine.description) {
+    tooltip += `\n${engine.description}`
+  }
+  if (engine.external) {
+    tooltip += '\n(hosted externally to the fhirpath-lab)'
+  }
+  if (engine.githubRepo) {
+    tooltip += `\nGitHub: ${engine.githubRepo}`
+  }
+  if (engine.supportsXML) {
+    tooltip += '\nSupports XML and Json'
+  }
+  return tooltip
 }
 
 // Handle FHIR version change
