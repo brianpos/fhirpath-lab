@@ -395,7 +395,7 @@ if (!selectedEngine.value && engines.value.length > 0) {
 }
 
 // Lifecycle hooks
-onMounted(() => {
+onMounted(async () => {
   window.addEventListener('hashchange', handleHashChange)
   
   // Check if there's a hash on initial load
@@ -406,7 +406,9 @@ onMounted(() => {
     // Check for query parameters
     const params = readParametersFromQuery()
     if (params.expression) {
-      applyParameters(params)
+      await applyParameters(params)
+      // Run evaluation after applying parameters
+      await evaluateExpression()
     }
   }
 })
