@@ -396,6 +396,7 @@ if (!selectedEngine.value && engines.value.length > 0) {
 
 // Lifecycle hooks
 onMounted(async () => {
+  document.addEventListener('keydown', ctrlEnterHandler)
   window.addEventListener('hashchange', handleHashChange)
   
   // Check if there's a hash on initial load
@@ -414,6 +415,7 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
+  document.removeEventListener('keydown', ctrlEnterHandler)
   window.removeEventListener('hashchange', handleHashChange)
 })
 
@@ -491,6 +493,25 @@ const navigateToExpressionNode = (node: ParseTreeNode) => {
   console.log('Navigate to expression node:', node)
   // TODO: Highlight the expression text in the editor
   // This would need the expression editor to support highlighting
+}
+
+// Keyboard event handler for Ctrl+Enter to run expression
+const ctrlEnterHandler = (event: KeyboardEvent) => {
+ 
+  // Ctrl + Shift + Enter to evaluate with all engines
+  // Command + Shift + Enter to evaluate with all engines on MacOS
+  if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key === "Enter") {
+    evaluateWithAllEngines()
+    event.preventDefault()
+    return
+  }
+  
+  // Ctrl + Enter to evaluate the expression
+  // Command + Enter to evaluate the expression on MacOS
+  if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+    evaluateExpression()
+    event.preventDefault()
+  }
 }
 
 // URL hash handling
