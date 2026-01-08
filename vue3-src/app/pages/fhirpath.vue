@@ -157,16 +157,17 @@
               />
               
               <div class="mt-4">
-                <h5>Results:</h5>
+                <div class="results">RESULTS <span class="processedBy" v-if="singleEngineResult">{{ singleEngineResult.processedByEngine }}</span></div>
                 <v-alert v-if="error" type="error" variant="outlined" class="mt-2">
                   {{ error }}
                 </v-alert>
+
+                <v-card v-if="allEngineResults.size > 0" variant="outlined" class="pa-3 mt-2">
+                  <span class="text-grey">Multiple engine results available. Check the Results tab.</span>
+                </v-card>
                 
                 <!-- Single Engine Result (only show when no multi-engine results) -->
-                <v-card v-if="singleEngineResult && allEngineResults.size === 0" variant="outlined" class="pa-3 mt-2">
-                  <div v-if="singleEngineResult.processedByEngine" class="text-caption text-grey mb-2">
-                    Engine: {{ singleEngineResult.processedByEngine }}
-                  </div>
+                <template v-if="singleEngineResult && allEngineResults.size === 0">
                   <template v-if="singleEngineResult.saveOutcome && singleEngineResult.showOutcome">
                     <v-alert type="error" variant="outlined" density="compact">
                       {{ singleEngineResult.saveOutcome.issue?.map(i => i.details?.text || i.diagnostics || 'Error').join(', ') }}
@@ -174,28 +175,32 @@
                   </template>
                   <template v-else-if="singleEngineResult.results">
                     <template v-for="(resultItem, idx) in singleEngineResult.results" :key="idx">
-                      <div v-if="resultItem.context" class="font-weight-bold mb-1">
-                        Context: {{ resultItem.context }}
-                      </div>
-                      <div v-if="resultItem.result.length > 0">
-                        <div v-for="(item, itemIdx) in resultItem.result" :key="itemIdx" class="mb-2">
-                          <span v-if="item.type" class="text-caption text-grey">{{ item.type }}: </span>
-                          <code>{{ item.value }}</code>
-                          <div v-if="item.path" class="text-caption text-grey">Path: {{ item.path }}</div>
-                        </div>
-                      </div>
-                      <div v-else class="text-grey">Empty result</div>
+                      <table class="v-table v-table--density-default" style="flex-shrink: 1; border: solid thin #eee; border-spacing: 0;">
+                        <tr v-if="resultItem.context">
+                          <td class="context" colspan="2">
+                            <div>Context: <b>{{ resultItem.context }}</b></div>
+                          </td>
+                        </tr>
+                        <template v-for="(item, itemIdx) in resultItem.result" :key="itemIdx">
+                          <tr>
+                            <td class="result-value">
+                              <div class="code-json">{{ item.value }}</div>
+                            </td>
+                            <td class="result-type">
+                              <i v-if="item.type">({{ item.type }})</i>
+                              <span v-if="item.path" class="result-path">{{ item.path }}</span>
+                            </td>
+                          </tr>
+                        </template>
+                      </table>
                     </template>
                   </template>
-                </v-card>
+                </template>
                 
                 <v-card v-if="!singleEngineResult && allEngineResults.size === 0" variant="outlined" class="pa-3 mt-2">
                   <span class="text-grey">No results yet. Enter an expression and click run.</span>
                 </v-card>
                 
-                <v-card v-if="allEngineResults.size > 0" variant="outlined" class="pa-3 mt-2">
-                  <span class="text-grey">Multiple engine results available. Check the Results tab.</span>
-                </v-card>
               </div>
             </div>
           </template>
@@ -956,7 +961,9 @@ const evaluateExpression = async () => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@use '~/assets/variables.scss' as *;
+
 .container-fluid {
   padding-left: 16px;
   padding-right: 16px;
@@ -990,4 +997,71 @@ const evaluateExpression = async () => {
   top: 20px;
   z-index: 2;
 }
+
+td {
+  vertical-align: top;
+  height: unset !important;
+  padding: 8px;
+}
+
+.results {
+  padding: 4px 12px;
+  color: white;
+  font-style: bold;
+  font-size: 1.25rem;
+  line-height: 1.5;
+  background-color: $card-header-color;
+  margin-top: 10px;
+}
+
+.processedBy {
+  float: right;
+  font-size: small;
+}
+
+.result-type {
+  position: relative;
+  border-bottom: silver 1px solid;
+}
+
+.result-value {
+  position: relative;
+  width: 100%;
+  border-bottom: silver 1px solid;
+}
+
+.code-json {
+  white-space: pre-wrap;
+}
+
+.context {
+  border-bottom: silver 1px solid;
+  background-color: $tab-backcolor;
+}
+
+.result-path {
+  display: inline-block;
+  margin-left: 8px;
+  font-size: 0.875rem;
+}
+
+.result-type:has(.result-path) {
+  padding-bottom: 12px;
+}
+
+.result-path {
+  font-size: 0.6rem;
+  color: #666;
+  font-style: italic;
+  position: absolute;
+  bottom: -1px;
+  right: 4px;
+  text-wrap-mode: nowrap;
+}
+
+.result-path-target {
+  right: 0px;
+  bottom: 2px;
+}
+
 </style>
