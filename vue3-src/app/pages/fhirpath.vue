@@ -148,6 +148,7 @@
                 persistent-placeholder
               />
               <v-textarea
+                ref="fhirpathExpressionInput"
                 v-model="fhirpathExpression"
                 label="FHIRPath Expression"
                 rows="3"
@@ -391,6 +392,7 @@ const dotnetServerDownloader = ref<string>('https://proxy.fhir.forms-lab.com/dow
 
 // Template ref
 const resourceEditor = ref<InstanceType<typeof ResourceEditor>>()
+const fhirpathExpressionInput = ref()
 
 // Event handlers
 const onResourceUrlUpdate = (newUrl: string) => {
@@ -515,6 +517,10 @@ const removeVariable = (index: number) => {
 const resetExpression = () => {
   fhirpathExpression.value = ''
   fhirpathContextExpression.value = ''
+  // Focus the expression input after resetting
+  nextTick(() => {
+    fhirpathExpressionInput.value?.focus()
+  })
 }
 
 // Navigate to expression node from AST
