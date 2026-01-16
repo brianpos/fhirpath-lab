@@ -3,6 +3,9 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+# 16 January 2026
+* Add support for logical model generation from random XML/json content in the FML test page
+
 # 8 January 2026
 * Port the URL handling code to Nuxt3/Vue3 (for fhirpath tester page) - share links, processing and loading from URL parameters
 * Port the reset expression and context button to Nuxt3/Vue3 (for fhirpath tester page)

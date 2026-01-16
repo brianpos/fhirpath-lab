@@ -57,7 +57,13 @@
           <template v-slot:Input>
             <resource-editor label="Test Resource Id" ref="inputResourceEditor" textLabel="Test Resource"
               :resourceUrl="resourceId" @update:resourceUrl="resourceId = $event" :resourceText="resourceText"
-              @update:resourceText="resourceText = $event" />
+              @update:resourceText="resourceText = $event" >
+              <template v-slot:append>
+                <v-btn icon small tile @click="generateLogicalModelFromInputResource" title="generate a logical model from this input resource">
+                  <v-icon> mdi-tree-outline </v-icon>
+                </v-btn>
+              </template>
+            </resource-editor>
           </template>
 
           <template v-slot:Models>
@@ -70,7 +76,29 @@
               @update:resourceUrl="modelsSearch = ($event ?? '')"
               footerLabel="The Model can be either an individual StructureDefinition (e.g. logical model) or a search query for a bundle of models"
               :resourceText="modelsText"
-              @update:resourceText="modelsText = $event" />
+              @update:resourceText="modelsText = $event">
+              <template v-slot:append>
+                <v-btn icon small tile @click="generateLogicalModelFromInputResource" title="generate a logical model from the input resource">
+                  <!-- <v-icon> mdi-tree-outline </v-icon> -->
+                  <template>
+                    <div style="position: relative" class="d-inline-block">
+                      <!-- Base icon -->
+                      <v-icon>mdi-tree-outline</v-icon>
+
+                      <!-- Overlay icon -->
+                      <v-icon
+                        x-small dense
+                        style="position: absolute !important; right: 0; bottom: 0; height: 12px; width: 12px;"
+                        class="bg-white rounded-circle"
+                      >
+                        mdi-refresh
+                      </v-icon>
+                    </div>
+                  </template>
+
+                </v-btn>
+              </template>
+            </resource-editor>
           </template>
 
           <template v-slot:Trace>
@@ -389,6 +417,7 @@ import ResourceEditor from "~/components/ResourceEditor.vue";
 import { parseFML } from "~/helpers/fml_parser";
 import type { FmlStructureMap } from "~/helpers/fml_models";
 import xmlFormat from 'xml-formatter';
+import { createFhirLogicalModel, CreateLogicalModelOptions } from '~/helpers/logical_model_generator';
 
 import "ace-builds";
 import ace from "ace-builds";
@@ -854,6 +883,46 @@ group SetEntryData(source src: Patient, target entry)
 
     updateNow() {
       this.$forceUpdate();
+    },
+
+    generateLogicalModelFromInputResource() {
+      // read the resource, then call the logical model generator for XML or JSON
+      let inputResource = this.resourceText?.trim() ?? '';
+      if (inputResource.startsWith('<') || inputResource.startsWith('{') || inputResource.startsWith('[')) {
+        // this is XML or JSON, so call the logical model generator
+        try {
+          // Try to extract options from the existing model if it exists and is valid
+          let options: CreateLogicalModelOptions = { 
+            publisher: settings.getDefaultProviderField()
+          };
+          let rootTypeName: string | undefined;
+          if (this.modelsText) {
+            try {
+              const existingModel = JSON.parse(this.modelsText);
+              if (existingModel?.resourceType === 'StructureDefinition' && existingModel?.kind === 'logical') {
+                options = {
+                  name: existingModel.name,
+                  title: existingModel.title,
+                  url: existingModel.url,
+                  description: existingModel.description,
+                  publisher: existingModel.publisher ?? settings.getDefaultProviderField(),
+                  version: existingModel.version,
+                  status: existingModel.status
+                };
+                // Use existing name as the rootTypeName for JSON inputs
+                rootTypeName = existingModel.name;
+              }
+            } catch {
+              // Ignore parse errors - will regenerate with defaults
+            }
+          }
+          const sd = createFhirLogicalModel(inputResource, rootTypeName, options);
+          this.modelsText = JSON.stringify(sd, null, 4);
+          this.selectTab(2);
+        } catch (e) {
+          console.error('Failed to generate logical model:', e);
+        }
+      }
     },
 
     clearDebuggerSelectionMarkers() {

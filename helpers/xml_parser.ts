@@ -1,3 +1,66 @@
+/**
+ * FHIR XML Parser - Parses FHIR XML resources into navigable node trees with positional metadata
+ * 
+ * ## Overview
+ * This module provides XML parsing capabilities for FHIR resources, producing:
+ * 1. A positional node tree (`IJsonNode`) for path-based navigation and highlighting
+ * 2. Optionally, a JavaScript object representation for evaluation
+ * 
+ * ## High-Level Approach
+ * Uses ANTLR4-generated XML lexer/parser with custom listener classes that walk the parse tree:
+ * - `PathListener`: Builds only the `IJsonNode` tree with paths and positions (lighter weight)
+ * - `PathAndObjectListener`: Builds both the node tree AND a JS object for runtime use
+ * 
+ * The parsers leverage the FHIR model info (R4 by default) to:
+ * - Resolve element data types from parent type context
+ * - Handle FHIR choice types (e.g., `valueString`, `valueBoolean`) by normalizing paths
+ * - Detect array vs scalar properties and promote to arrays when duplicates found
+ * - Identify polymorphic resource containers (Bundle.entry.resource, contained, etc.)
+ * 
+ * ## Key Data Structures
+ * - `IJsonNode`: Tree node with `Path`, `DefinitionPath`, `DataType`, `text`, `position`, 
+ *   `children`, `isArray`, and `Index` properties for precise source mapping
+ * - `IJsonNodePosition`: Tracks `line`, `column`, `prop_start_pos`, `prop_stop_pos` for 
+ *   editor highlighting and selection
+ * - `Model`: FHIR model info providing `type2Parent`, `choiceTypePaths` for type resolution
+ * 
+ * ## Key Functions
+ * - `parseXml(xml, model?)`: Returns only the `IJsonNode` tree (for path navigation/highlighting)
+ * - `parseXmlAndObject(xml, model?)`: Returns both the node tree AND parsed JS object
+ * 
+ * ## FHIR-Specific Handling
+ * - **Choice Types**: Strips type suffix from path (e.g., `valueString` → `value`) while 
+ *   preserving original name in object output
+ * - **Primitive Extensions**: Handles FHIR's `_propertyName` pattern for primitives with 
+ *   extensions/attributes (id, extension elements on primitives)
+ * - **Value Attributes**: Converts FHIR XML's `value="..."` attribute pattern to JSON primitives
+ * - **Type Coercion**: Parses boolean/integer/decimal based on DataType context
+ * - **Forced Arrays**: Elements like `extension`, `modifierExtension` always become arrays
+ * - **Resource Containers**: Handles Bundle.entry.resource, contained, Parameters.parameter.resource
+ *   by setting resourceType on the contained resource object
+ * - **Namespace Filtering**: Strips xmlns attributes from JSON output
+ * - **XHTML div**: Preserves complete HTML structure for narrative div elements
+ * 
+ * ## Non-FHIR XML Handling
+ * The parser gracefully handles arbitrary XML content, though with reduced functionality:
+ * - **What works**: Basic parsing, path construction, position tracking, array detection 
+ *   for duplicate siblings, attribute capture, and nested object construction
+ * - **What degrades**: 
+ *   - `DataType` is `undefined` for all nodes (root doesn't match FHIR type registry)
+ *   - No `resourceType` property on the output object
+ *   - No type coercion (all values remain strings, e.g., `"42"` not `42`)
+ *   - Choice type path normalization is skipped
+ *   - Only FHIR-named elements (`extension`, `modifierExtension`) get forced arrays
+ * - **Safe to use**: Functions as a generic XML→node-tree/object converter with paths 
+ *   matching literal element names and all primitive values as strings
+ * 
+ * ## Usage Example
+ * ```typescript
+ * const { node, object } = parseXmlAndObject(xmlString, r4Model);
+ * // node.Path = "Patient", node.children[0].Path = "Patient.name[0]", etc.
+ * // object = { resourceType: "Patient", name: [{ given: ["John"] }], ... }
+ * ```
+ */
 import antlr4 from "antlr4";
 import { ParseTreeWalker } from "antlr4";
 import Lexer from "../xml-parser/XMLLexer";
