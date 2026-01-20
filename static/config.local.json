@@ -32,6 +32,10 @@
 	"atomic_server_r5": "https://fhirpath.atomic-ehr.org/r5",
 	"atomic_server_r6": "https://fhirpath.atomic-ehr.org/r6",
 
+	"ignixa_r4": "https://ignixafhirpath.azurewebsites.net/api/$fhirpath-r4",
+	"ignixa_r5": "https://ignixafhirpath.azurewebsites.net/api/$fhirpath-r5",
+	"ignixa_r6": "https://ignixafhirpath.azurewebsites.net/api/$fhirpath-r6",
+
 	"local_r4": "http://localhost:3001/fhir/$fhirpath",
 	"local_r5": "http://localhost:3001/fhir/$fhirpath-r5",
 	"local_r6": "http://localhost:3001/fhir/$fhirpath-r6"
