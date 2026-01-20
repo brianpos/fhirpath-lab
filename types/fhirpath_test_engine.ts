@@ -403,4 +403,43 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         supportsAST: true,
         supportsXML: false
     },
+    "Ignixa (R4)": {
+        name: "Ignixa",
+        legacyName: "Ignixa (R4)",
+        fhirVersion: "R4",
+        appInsightsEngineName: "Ignixa",
+        publisher: "Ignixa",
+        configSetting: "ignixa_r4",
+        githubRepo: "https://github.com/brendankowitz/ignixa-fhir",
+        description: "Ignixa FHIRPath engine",
+        external: true,
+        supportsAST: true,
+        supportsXML: false
+    },
+    "Ignixa (R5)": {
+        name: "Ignixa",
+        legacyName: "Ignixa (R5)",
+        fhirVersion: "R5",
+        appInsightsEngineName: "Ignixa",
+        publisher: "Ignixa",
+        configSetting: "ignixa_r5",
+        githubRepo: "https://github.com/brendankowitz/ignixa-fhir",
+        description: "Ignixa FHIRPath engine for FHIR R5",
+        external: true,
+        supportsAST: true,
+        supportsXML: false
+    },
+    "Ignixa (R6)": {
+        name: "Ignixa",
+        legacyName: "Ignixa (R6)",
+        fhirVersion: "R6",
+        appInsightsEngineName: "Ignixa",
+        publisher: "Ignixa",
+        configSetting: "ignixa_r6",
+        githubRepo: "https://github.com/brendankowitz/ignixa-fhir",
+        description: "Ignixa FHIRPath engine for FHIR R6",
+        external: true,
+        supportsAST: true,
+        supportsXML: false
+    },
 };
