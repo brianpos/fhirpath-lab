@@ -1270,6 +1270,11 @@
           "Result": true
         },
         {
+          "Name": "testDiv6",
+          "Expression": "-5.5 div 2 = -2",
+          "Result": true
+        },
+        {
           "Name": "testDivEmpty1",
           "Expression": "1 div {}",
           "Result": true
@@ -3647,6 +3652,11 @@
         {
           "Name": "testMod5",
           "Expression": "5 mod 0",
+          "Result": true
+        },
+        {
+          "Name": "testMod6",
+          "Expression": "-5.5 mod 2 = -1.5",
           "Result": true
         },
         {

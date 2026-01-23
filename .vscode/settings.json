@@ -3,6 +3,7 @@
         "aehrc",
         "Behaviours",
         "fpjs",
+        "groupable",
         "initialise",
         "noconflict",
         "sqlonfhir",
