@@ -391,6 +391,31 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         supportsAST: true,
         supportsXML: false
     },
+    "fhirpath.zig (R4)": {
+        name: "fhirpath.zig",
+        legacyName: "fhirpath.zig (R4)",
+        fhirVersion: "R4",
+        appInsightsEngineName: "fhirpath.zig",
+        publisher: "Joshua Mandel",
+        githubRepo: "https://github.com/jmandel/fhirpath.zig",
+        description: "A Zig/WASM FHIRPath engine running locally in the browser.",
+        external: false,
+        supportsAST: false,
+        supportsXML: true
+    },
+    "fhirpath.zig (R5)": {
+        name: "fhirpath.zig",
+        legacyName: "fhirpath.zig (R5)",
+        fhirVersion: "R5",
+        appInsightsEngineName: "fhirpath.zig",
+        publisher: "Joshua Mandel",
+        githubRepo: "https://github.com/jmandel/fhirpath.zig",
+        description: "A Zig/WASM FHIRPath engine running locally in the browser for FHIR R5.",
+        external: false,
+        supportsAST: false,
+        supportsXML: true
+    },
+
     "CQL (R4)": {
         name: "CQL-Facade",
         legacyName: "CQL (R4)",

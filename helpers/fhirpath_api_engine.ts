@@ -964,6 +964,143 @@ export function convertOptionsToParametersJavaR5R6(
   return parameters;
 }
 
+// --- fhirpath.zig WASM engine support ---
+
+const FHIRPATH_ZIG_BASE = "https://joshuamandel.com/fhirpath.zig";
+
+let _zigEnginePromise: Promise<any> | null = null;
+let _zigSchemasRegistered: Set<string> = new Set();
+
+async function getZigEngine(): Promise<any> {
+  if (!_zigEnginePromise) {
+    _zigEnginePromise = (async () => {
+      // Dynamic import of the JS wrapper from the deployed site
+      const mod = await import(/* webpackIgnore: true */ `${FHIRPATH_ZIG_BASE}/fhirpath.js`);
+      const FhirPathEngine = mod.FhirPathEngine;
+      const engine = await FhirPathEngine.instantiate();
+      return engine;
+    })();
+  }
+  return _zigEnginePromise;
+}
+
+async function ensureZigSchema(engine: any, fhirVersion: string): Promise<string> {
+  const version = fhirVersion.toLowerCase();
+  const schemaName = version; // "r4" or "r5"
+  if (!_zigSchemasRegistered.has(schemaName)) {
+    await engine.registerSchema({
+      name: schemaName,
+      isDefault: _zigSchemasRegistered.size === 0,
+    });
+    _zigSchemasRegistered.add(schemaName);
+  }
+  return schemaName;
+}
+
+/**
+ * Evaluate FHIRPath expression using fhirpath.zig WASM engine
+ */
+export async function evaluateExpressionUsingFhirpathZig(
+  options: FhirPathEvaluationOptions,
+  fhirVersion: 'R4' | 'R5' = 'R4'
+): Promise<FhirPathEvaluationResult> {
+  const result: FhirPathEvaluationResult = {
+    results: [],
+    debugTraceData: [],
+    processedByEngine: `fhirpath.zig (${fhirVersion} WASM)`
+  };
+
+  try {
+    const engine = await getZigEngine();
+    const schemaName = await ensureZigSchema(engine, fhirVersion);
+
+    // Set current time
+    engine.setNowDate(new Date());
+
+    const resourceText = options.resourceJson || '{}';
+    const isXml = !!options.isXmlResource;
+
+    // Helper: call eval or evalXml depending on input format
+    function zigEval(expr: string, input: string, inputIsXml: boolean) {
+      if (inputIsXml) {
+        return engine.evalXml({ expr, xml: input, schema: schemaName });
+      }
+      return engine.eval({ expr, json: input, schema: schemaName });
+    }
+
+    // Evaluate context expression to get context nodes, or use root
+    let contexts: { path?: string; text: string; isXml: boolean }[] = [];
+    if (options.contextExpression) {
+      try {
+        const contextResult = zigEval(options.contextExpression, resourceText, isXml);
+        for (const node of contextResult) {
+          // Context results are always JSON (node.data is a JS object)
+          contexts.push({
+            path: node.meta?.typeName || undefined,
+            text: JSON.stringify(node.data),
+            isXml: false,
+          });
+        }
+      } catch (err: any) {
+        result.saveOutcome = CreateOperationOutcome('fatal', 'exception',
+          `Context expression error: ${err.message || err}`);
+        result.showOutcome = true;
+        return result;
+      }
+    } else {
+      // No context expression — use the original resource as-is
+      contexts.push({ text: resourceText, isXml });
+    }
+
+    // Evaluate main expression for each context
+    for (const ctx of contexts) {
+      const resData: ResultData = {
+        context: ctx.path,
+        result: [],
+        trace: []
+      };
+
+      try {
+        const evalResult = zigEval(options.expression, ctx.text, ctx.isXml);
+
+        for (const node of evalResult) {
+          const typeName = node.meta?.typeName || '';
+          const data = node.data;
+
+          let value: any;
+          if (data !== null && data !== undefined) {
+            if (typeof data === 'object' && data.value !== undefined && data.unit !== undefined) {
+              // Quantity
+              value = `${data.value} '${data.unit}'`;
+            } else if (typeof data === 'object') {
+              value = JSON.stringify(data, null, 2);
+            } else {
+              value = data;
+            }
+          }
+
+          resData.result.push({
+            type: typeName,
+            value: typeof value === 'string' ? value : JSON.stringify(value),
+          });
+        }
+      } catch (err: any) {
+        result.saveOutcome = CreateOperationOutcome('fatal', 'exception', err.message || String(err));
+        result.showOutcome = true;
+        return result;
+      }
+
+      result.results.push(resData);
+    }
+  } catch (err: any) {
+    result.saveOutcome = CreateOperationOutcome('fatal', 'exception',
+      `Failed to load fhirpath.zig engine: ${err.message || err}`);
+    result.showOutcome = true;
+  }
+
+  return result;
+}
+
 /**
  * Get engine URL and determine if it's a local (non-RESTful) engine
  */
@@ -980,6 +1117,9 @@ export async function getEngineInfo(selectedEngine: IFhirPathEngineDetails): Pro
   if (!selectedEngine.external) {
     if (engineName === "fhirpath.js") {
       return { isLocal: true, requiresSpecialParameterHandling: false, astSupported: true };
+    }
+    if (engineName === "fhirpath.zig") {
+      return { isLocal: true, requiresSpecialParameterHandling: false, astSupported: false };
     }
   }
   
@@ -1014,6 +1154,11 @@ export async function evaluateFhirPathExpression(
   const engineInfo = await getEngineInfo(selectedEngine);
   
   if (engineInfo.isLocal) {
+    const engineName = selectedEngine.name.toLowerCase();
+    if (engineName === "fhirpath.zig") {
+      const fhirVersion = selectedEngine.fhirVersion.toLowerCase() === 'r5' ? 'R5' : 'R4';
+      return await evaluateExpressionUsingFhirpathZig(options, fhirVersion);
+    }
     // Use local fhirpath.js engine
     const fhirVersion = selectedEngine.fhirVersion.toLowerCase() === 'r5' ? 'R5' : 'R4';
     return await evaluateExpressionUsingFhirpathJs(options, fhirVersion as 'R4' | 'R5' | 'R6');
