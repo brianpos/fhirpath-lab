@@ -977,7 +977,9 @@ async function getZigEngine(): Promise<any> {
       // Dynamic import of the JS wrapper from the deployed site
       const mod = await import(/* webpackIgnore: true */ `${FHIRPATH_ZIG_BASE}/fhirpath.js`);
       const FhirPathEngine = mod.FhirPathEngine;
-      const engine = await FhirPathEngine.instantiate(`${FHIRPATH_ZIG_BASE}/fhirpath.wasm`);
+      const engine = await FhirPathEngine.instantiate({
+        wasmUrl: `${FHIRPATH_ZIG_BASE}/fhirpath.wasm`,
+      });
       return engine;
     })();
   }
@@ -988,7 +990,7 @@ async function ensureZigSchema(engine: any, fhirVersion: string): Promise<string
   const version = fhirVersion.toLowerCase();
   const schemaName = version; // "r4" or "r5"
   if (!_zigSchemasRegistered.has(schemaName)) {
-    await engine.registerSchemaFromUrl({
+    await engine.registerSchema({
       name: schemaName,
       prefix: "FHIR",
       url: `${FHIRPATH_ZIG_BASE}/model-${schemaName}.bin`,
