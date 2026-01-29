@@ -1019,17 +1019,22 @@ export async function evaluateExpressionUsingFhirpathZig(
     // Set current time
     engine.setNowDate(new Date());
 
-    const resourceJson = options.resourceJson || '{}';
+    const resourceText = options.resourceJson || '{}';
+    const isXml = resourceText.trimStart().startsWith('<');
+
+    // Helper: call eval or evalXml depending on input format
+    function zigEval(expr: string, input: string, inputIsXml: boolean) {
+      if (inputIsXml) {
+        return engine.evalXml({ expr, xml: input, schema: schemaName });
+      }
+      return engine.eval({ expr, json: input, schema: schemaName });
+    }
 
     // Evaluate context expression to get context nodes, or use root
     let contexts: { path?: string; json: string }[] = [];
     if (options.contextExpression) {
       try {
-        const contextResult = engine.eval({
-          expr: options.contextExpression,
-          json: resourceJson,
-          schema: schemaName,
-        });
+        const contextResult = zigEval(options.contextExpression, resourceText, isXml);
         for (const node of contextResult) {
           contexts.push({
             path: node.meta?.typeName || undefined,
@@ -1043,7 +1048,7 @@ export async function evaluateExpressionUsingFhirpathZig(
         return result;
       }
     } else {
-      contexts.push({ json: resourceJson });
+      contexts.push({ json: resourceText });
     }
 
     // Evaluate main expression for each context
@@ -1055,11 +1060,9 @@ export async function evaluateExpressionUsingFhirpathZig(
       };
 
       try {
-        const evalResult = engine.eval({
-          expr: options.expression,
-          json: ctx.json,
-          schema: schemaName,
-        });
+        // Context results are always JSON (serialized from first eval)
+        const ctxIsXml = isXml && !options.contextExpression;
+        const evalResult = zigEval(options.expression, ctx.json, ctxIsXml);
 
         for (const node of evalResult) {
           const typeName = node.meta?.typeName || '';

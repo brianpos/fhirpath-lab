@@ -401,7 +401,7 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         description: "A Zig/WASM FHIRPath engine running locally in the browser.",
         external: false,
         supportsAST: false,
-        supportsXML: false
+        supportsXML: true
     },
     "fhirpath.zig (R5)": {
         name: "fhirpath.zig",
@@ -413,7 +413,7 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         description: "A Zig/WASM FHIRPath engine running locally in the browser for FHIR R5.",
         external: false,
         supportsAST: false,
-        supportsXML: false
+        supportsXML: true
     },
 
     "CQL (R4)": {
