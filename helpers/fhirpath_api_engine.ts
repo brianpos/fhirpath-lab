@@ -990,8 +990,6 @@ async function ensureZigSchema(engine: any, fhirVersion: string): Promise<string
   if (!_zigSchemasRegistered.has(schemaName)) {
     await engine.registerSchema({
       name: schemaName,
-      prefix: "FHIR",
-      url: `${FHIRPATH_ZIG_BASE}/model-${schemaName}.bin`,
       isDefault: _zigSchemasRegistered.size === 0,
     });
     _zigSchemasRegistered.add(schemaName);
