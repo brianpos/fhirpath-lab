@@ -977,9 +977,7 @@ async function getZigEngine(): Promise<any> {
       // Dynamic import of the JS wrapper from the deployed site
       const mod = await import(/* webpackIgnore: true */ `${FHIRPATH_ZIG_BASE}/fhirpath.js`);
       const FhirPathEngine = mod.FhirPathEngine;
-      const engine = await FhirPathEngine.instantiate({
-        wasmUrl: `${FHIRPATH_ZIG_BASE}/fhirpath.wasm`,
-      });
+      const engine = await FhirPathEngine.instantiate();
       return engine;
     })();
   }
