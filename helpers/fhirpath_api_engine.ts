@@ -1031,14 +1031,16 @@ export async function evaluateExpressionUsingFhirpathZig(
     }
 
     // Evaluate context expression to get context nodes, or use root
-    let contexts: { path?: string; json: string }[] = [];
+    let contexts: { path?: string; text: string; isXml: boolean }[] = [];
     if (options.contextExpression) {
       try {
         const contextResult = zigEval(options.contextExpression, resourceText, isXml);
         for (const node of contextResult) {
+          // Context results are always JSON (node.data is a JS object)
           contexts.push({
             path: node.meta?.typeName || undefined,
-            json: JSON.stringify(node.data),
+            text: JSON.stringify(node.data),
+            isXml: false,
           });
         }
       } catch (err: any) {
@@ -1048,7 +1050,8 @@ export async function evaluateExpressionUsingFhirpathZig(
         return result;
       }
     } else {
-      contexts.push({ json: resourceText });
+      // No context expression — use the original resource as-is
+      contexts.push({ text: resourceText, isXml });
     }
 
     // Evaluate main expression for each context
@@ -1060,9 +1063,7 @@ export async function evaluateExpressionUsingFhirpathZig(
       };
 
       try {
-        // Context results are always JSON (serialized from first eval)
-        const ctxIsXml = isXml && !options.contextExpression;
-        const evalResult = zigEval(options.expression, ctx.json, ctxIsXml);
+        const evalResult = zigEval(options.expression, ctx.text, ctx.isXml);
 
         for (const node of evalResult) {
           const typeName = node.meta?.typeName || '';
