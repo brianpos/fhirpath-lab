@@ -1020,7 +1020,7 @@ export async function evaluateExpressionUsingFhirpathZig(
     engine.setNowDate(new Date());
 
     const resourceText = options.resourceJson || '{}';
-    const isXml = options.isXmlResource ?? resourceText.trimStart().startsWith('<');
+    const isXml = !!options.isXmlResource;
 
     // Helper: call eval or evalXml depending on input format
     function zigEval(expr: string, input: string, inputIsXml: boolean) {
