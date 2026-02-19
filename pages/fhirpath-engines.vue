@@ -9,6 +9,8 @@
       <p class="hint-text mb-4">
         <v-icon small>mdi-information-outline</v-icon>
         Add custom engines via URL parameter: <code>?engines=url1,url2</code> or <code>?engines=url1&amp;engines=url2</code>
+        <br/>
+        Skip engines via URL parameter: <code>?skip=Firely,Hapi</code> or <code>?skip=all</code> to hide all default engines
       </p>
 
       <!-- Summary Table -->
@@ -239,7 +241,7 @@ h5 {
 import Vue from "vue";
 
 // Engine configuration - file paths for lazy loading
-const defaultEngineConfigs = [
+const defaultEngineConfigs: EngineConfig[] = [
   { name: 'Firely', file: '/results/Firely-5.12.1 R5.json' },
   { name: 'FhirPathJS', file: '/results/fhirpath.js-4.5.1 r5.json' },
   { name: 'Hapi', file: '/results/Java 6.6.2 R5.json' },
@@ -277,7 +279,13 @@ export default Vue.extend({
   },
   computed: {
     engineConfigs(): EngineConfig[] {
-      return [...defaultEngineConfigs, ...this.customEngineConfigs];
+      const allConfigs = [...defaultEngineConfigs, ...this.customEngineConfigs];
+      if (this.skipEngines.length === 0) return allConfigs;
+      const skipLower = this.skipEngines.map(s => s.toLowerCase());
+      if (skipLower.includes('all')) {
+        return allConfigs.filter(c => c.isCustom);
+      }
+      return allConfigs.filter(c => !skipLower.includes(c.name.toLowerCase()));
     },
     filteredTestData(): Array<any> {
       if (!this.hideFullySupported) {
@@ -325,7 +333,23 @@ export default Vue.extend({
     parseUrlParameters() {
       // Parse URL parameters for custom engine files
       // Supports: ?engines=url1,url2,url3 or ?engines=url1&engines=url2
+      // Supports: ?skip=Firely,Hapi to exclude engines by name
       const urlParams = new URLSearchParams(window.location.search);
+
+      // Parse skip parameter
+      const skipNames: string[] = [];
+      urlParams.getAll('skip').forEach(param => {
+        param.split(',').forEach(name => {
+          const trimmed = name.trim();
+          if (trimmed) {
+            skipNames.push(trimmed);
+          }
+        });
+      });
+      this.skipEngines = skipNames;
+      if (skipNames.length > 0) {
+        console.log('Skipping engines:', skipNames);
+      }
       const engineUrls: string[] = [];
       
       // Handle comma-separated values
@@ -485,6 +509,7 @@ export default Vue.extend({
       hideFullySupported: false,
       debouncedSearch: '',
       searchTimeout: undefined as ReturnType<typeof setTimeout> | undefined,
+      skipEngines: [] as string[],
       customEngineConfigs: [] as EngineConfig[],
       loadedCustomEngineNames: [] as string[],
       headers: [
