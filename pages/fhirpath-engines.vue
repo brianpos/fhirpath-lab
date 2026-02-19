@@ -10,7 +10,7 @@
         <v-icon small>mdi-information-outline</v-icon>
         Add custom engines via URL parameter: <code>?engines=url1,url2</code> or <code>?engines=url1&amp;engines=url2</code>
         <br/>
-        Skip engines via URL parameter: <code>?skip=Firely,Hapi</code> or <code>?skip=all</code> to hide all default engines
+        Skip engines via URL parameter: <code>?skip={{ defaultEngineNames.join(',') }}</code> or <code>?skip=all</code> to hide all default engines
       </p>
 
       <!-- Summary Table -->
@@ -63,6 +63,16 @@
             <a class="link-plain-text expression-cell" :href="'https://hackweek.fhirpath-lab.com/FhirPath?expression=' + encodeURIComponent(item.expression)" target="_blank">{{ item.expression }}</a>
           </template>
 
+          <template v-slot:item.successCount="{ item }">
+            <span style="color: rgb(16, 185, 129);">{{ item.successCount }}</span>
+          </template>
+          <template v-slot:item.failedCount="{ item }">
+            <span style="color: rgb(239, 68, 68);">{{ item.failedCount }}</span>
+          </template>
+          <template v-slot:item.notImplementedCount="{ item }">
+            <span style="color: grey;">{{ item.notImplementedCount }}</span>
+          </template>
+
           <!-- Dynamic engine header slots -->
           <template v-for="engine in engineConfigs" v-slot:[`header.${engine.name}`]="{ header }">
             <v-tooltip :key="'header-' + engine.name" bottom color="primary">
@@ -84,9 +94,13 @@
             <span v-text="item.name" />
             <template v-if="item.description">
               <br/>
-              <v-icon v-if="item.description.startsWith('Contested:')" color="purple">mdi-information-outline</v-icon>
-              <span v-if="item.description.startsWith('Contested:')" style="color: purple;;" v-text="item.description" />
-              <span v-if="!item.description.startsWith('Contested:')" style="color: grey; font-style: italic;" v-text="item.description" />
+              <v-icon v-if="item.description.startsWith('Contested:')" color="purple" small>mdi-information-outline</v-icon>
+              <v-icon v-if="item.description.startsWith('AI:')" color="green" small>mdi-brain</v-icon>
+              <v-icon v-if="item.description.startsWith('HR:')" color="rgb(0,0,255)" small>mdi-brain</v-icon>
+              <span v-if="item.description.startsWith('Contested:')" style="color: purple;" v-text="item.description" />
+              <span v-if="item.description.startsWith('AI:')" class="ai-description" v-text="item.description" />
+              <span v-if="item.description.startsWith('HR:')" class="hr-description" v-text="item.description" />
+              <span v-if="!item.description.startsWith('Contested:') && !item.description.startsWith('AI:') && !item.description.startsWith('HR:')" style="color: grey; font-style: italic;" v-text="item.description" />
             </template>
           </template>
 
@@ -103,6 +117,24 @@
 <style lang="scss" scoped>
 span.markdown p {
   margin-bottom: 8px;
+}
+
+::v-deep tr:has(td span.ai-description) td {
+  background-color: rgba(0, 255, 0, 0.1);
+}
+
+.ai-description {
+  color: green;
+  font-style: italic;
+}
+
+::v-deep tr:has(td span.hr-description) td {
+  background-color: rgba(0, 0, 255, 0.1);
+}
+
+.hr-description {
+  color: blue;
+  font-style: italic;
 }
 
 .summary-table {
@@ -245,10 +277,10 @@ const defaultEngineConfigs: EngineConfig[] = [
   { name: 'Firely', file: '/results/Firely-5.12.1 R5.json' },
   { name: 'FhirPathJS', file: '/results/fhirpath.js-4.5.1 r5.json' },
   { name: 'Hapi', file: '/results/Java 6.6.2 R5.json' },
-  { name: 'PythonData', file: '/results/fhirpath-py 1.0.3.json' },
-  { name: 'AidboxData', file: '/results/Aidbox FHIR R5.json' },
-  { name: 'HeliosData', file: '/results/Helios Software r5.json' },
-  { name: 'IgnixaData', file: '/results/Ignixa-0.0.151 R5.json' },
+  { name: 'Python', file: '/results/fhirpath-py 1.0.3.json' },
+  { name: 'Aidbox', file: '/results/Aidbox FHIR R5.json' },
+  { name: 'Helios', file: '/results/Helios Software r5.json' },
+  { name: 'Ignixa', file: '/results/Ignixa-0.0.151 R5.json' },
 ];
 
 interface EngineConfig {
@@ -278,6 +310,9 @@ export default Vue.extend({
     await this.loadData();
   },
   computed: {
+    defaultEngineNames(): string[] {
+      return defaultEngineConfigs.map(c => c.name.toLowerCase());
+    },
     engineConfigs(): EngineConfig[] {
       const allConfigs = [...defaultEngineConfigs, ...this.customEngineConfigs];
       if (this.skipEngines.length === 0) return allConfigs;
@@ -412,7 +447,9 @@ export default Vue.extend({
           { text: 'Category', value: 'groupName', align: 'start' },
           { text: 'Test name', align: 'start', value: 'name', groupable: false },
           { text: 'Expression', align: 'start', value: 'expression', groupable: false },
-          { text: '#', align: 'center', value: 'successCount', groupable: false },
+          { text: '# ✓', align: 'center', value: 'successCount', groupable: false },
+          { text: '# ✗', align: 'center', value: 'failedCount', groupable: false },
+          { text: '# 🔧', align: 'center', value: 'notImplementedCount', groupable: false },
         ];
         
         // Track successfully loaded engines for the custom engines list
@@ -451,6 +488,8 @@ export default Vue.extend({
                   name: test.Name,
                   groupName: group.Name,
                   successCount: 0,
+                  failedCount: 0,
+                  notImplementedCount: 0,
                 };
                 localTestDataMap.set(itemKey, item);
               }
@@ -463,6 +502,12 @@ export default Vue.extend({
               }
               if (test.Result === true) {
                 item.successCount += 1;
+              }
+              if (test.Result === false) {
+                item.failedCount += 1;
+              }
+              if (test.NotImplemented === true) {
+                item.notImplementedCount += 1;
               }
               
               // Freeze the engine result object - it never changes
@@ -530,6 +575,18 @@ export default Vue.extend({
           text: '#',
           align: 'center',
           value: 'successCount',
+          groupable: false,
+        },
+        {
+          text: '# ✗',
+          align: 'center',
+          value: 'failedCount',
+          groupable: false,
+        },
+        {
+          text: '# 🔧',
+          align: 'center',
+          value: 'notImplementedCount',
           groupable: false,
         },
       ] as Array<HeaderData>,
