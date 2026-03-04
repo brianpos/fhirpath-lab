@@ -682,13 +682,15 @@ export default Vue.extend({
         return [
           ".NET (brianpos)",
           "java (HAPI)",
-          "matchbox"
+          "matchbox",
+          "Python (MaLaC-HD)"
         ];
       }
       return [
         ".NET (brianpos)",
         "java (HAPI)",
-        "matchbox" // matchbox now released! Thanks Oliver
+        "matchbox", // matchbox now released! Thanks Oliver
+        "Python (MaLaC-HD)"
       ]
     },
 
@@ -1795,6 +1797,10 @@ group SetEntryData(source src: Patient, target entry)
       else if (this.selectedEngine == "matchbox") {
         url = (await settings.getServerEngineUrl("mapper_server_matchbox"));
         (this as any).$appInsights?.trackEvent({ name: 'evaluate matchbox (map)' });
+      }
+      else if (this.selectedEngine == "Python (MaLaC-HD)") {
+        url = (await settings.getServerEngineUrl("mapper_server_malac_hd"));
+        (this as any).$appInsights?.trackEvent({ name: 'evaluate malac-hd (map)' });
       }
       else {
         (this as any).$appInsights?.trackEvent({ name: 'evaluate .NET (map)' });
