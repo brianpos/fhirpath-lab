@@ -444,7 +444,14 @@ if (!selectedEngine.value && engines.value.length > 0) {
 onMounted(async () => {
   document.addEventListener('keydown', ctrlEnterHandler)
   window.addEventListener('hashchange', handleHashChange)
-  
+
+  // Apply config URL override before any config fetch is triggered
+  const route = useRoute()
+  const configParam = route.query.config as string | undefined
+  if (configParam) {
+    settings.setConfigUrl(configParam)
+  }
+
   // Check if there's a hash on initial load
   const hash = window.location.hash ? window.location.hash.substring(1) : undefined
   if (hash) {

@@ -39,6 +39,18 @@ export namespace settings {
     // the cached version of the configuration data
     let serverConnectionsData: any = {};
 
+    // URL to fetch config from (defaults to '/config.json', can be overridden via setConfigUrl)
+    let configUrl: string = '/config.json';
+
+    /** Override the URL used to load the config JSON (call before any config is first fetched). */
+    export function setConfigUrl(url: string): void {
+        if (url && url !== configUrl) {
+            configUrl = url;
+            // Reset the cache so the new URL is used on the next fetch
+            serverConnectionsData = {};
+        }
+    }
+
     export async function getServerConnectionData(): Promise<any> {
         if (Object.keys(serverConnectionsData).length > 0) {
             // return the cached data
@@ -46,7 +58,7 @@ export namespace settings {
         }
         
         try {
-            let configResponse = await fetch('/config.json');
+            let configResponse = await fetch(configUrl);
             serverConnectionsData = await configResponse.json();
             console.log("loaded config", serverConnectionsData);
         } catch(err) {
