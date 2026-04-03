@@ -594,7 +594,7 @@ import { DomainResource, FhirResource, Resource } from "fhir/r4b";
 import { findNodeByPath, IJsonNode, IJsonNodePosition, parseJson } from "~/helpers/json_parser";
 import { parseXml, parseXmlAndObject } from "~/helpers/xml_parser";
 import TwinPaneTab, { TabData } from "~/components/TwinPaneTab.vue";
-import { IFhirPathEngineDetails, registeredEngines } from "~/types/fhirpath_test_engine";
+import { IFhirPathEngineDetails, registeredEngines, applyEngineOverrides } from "~/types/fhirpath_test_engine";
 
 import { FhirPathTools, createFhirPathEvaluateTools } from "~/helpers/openai_tools";
 import { Console } from "console";
@@ -823,6 +823,8 @@ interface FhirPathData {
   debugExpressionSelectionMarker?: number[];
   debugTestResourceSelectionMarker?: number[];
   debugThisSelectionMarker?: number[];
+  /** Local copy of the effective engine registry (baseline + config overrides). */
+  effectiveEngines: Record<string, IFhirPathEngineDetails>;
 }
 
 function fullPropertyName(node: ResourceNode) : string | undefined {
@@ -1021,9 +1023,7 @@ interface IFhirPathProps
 export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFhirPathProps>({
   async mounted() {
     window.document.title = "FhirPath Tester";
-    if (!this.selectedEngine2) {
-      this.selectedEngine2 = this.engines[0];
-    }
+
     this.showAdvancedSettings = settings.showAdvancedSettings();
     this.defaultProviderField = settings.getDefaultProviderField();
     this.openAIFeedbackEnabled = settings.getOpenAIFeedbackEnabled();
@@ -1116,14 +1116,15 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       return this.library == undefined && this.showAdvancedSettings && ((this.defaultProviderField?.length ?? 0) > 0);
     },
     engines(): IFhirPathEngineDetails[] {
-      // filter the registeredEngines to only those with the selectedFhirVersion
+      // filter the effectiveEngines to only those with the selectedFhirVersion
       let isLocalEngineSupported = this.showAdvancedSettings
        && (window.location.hostname.startsWith("dev.") || window.location.hostname.startsWith("localhost"))
        && (this.defaultProviderField?.length ?? 0) > 0;
 
-      const filteredEngines = Object.values(registeredEngines)
+      const filteredEngines = Object.values(this.effectiveEngines)
         .filter(engine => engine.fhirVersion === this.selectedFhirVersion
           && (engine.name !== "Localhost" && engine.name !== "CQL-Facade" || isLocalEngineSupported)
+          && (!engine.earlyAdopter || this.showAdvancedSettings)
         );
       return filteredEngines;
     }
@@ -1366,6 +1367,24 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     if (tabControl && tabControl.singleTabMode())
       this.selectTab(0);
 
+    // Apply config URL override before any config fetch is triggered
+    const configParam = this.$route?.query?.config as string | undefined;
+    if (configParam) {
+      console.log("Applying config override from URL:", configParam);
+      settings.setConfigUrl(configParam);
+    }
+
+    // Eagerly load config and build the effective engine list (baseline + overrides)
+    const config = await settings.getServerConnectionData();
+
+    // Load config and build the effective engine list (baseline + overrides)
+    this.effectiveEngines = await applyEngineOverrides(registeredEngines, config);
+
+    if (!this.selectedEngine2) {
+      this.selectedEngine2 = this.engines[0];
+      console.log("Selected engine", this.selectedEngine2);
+    }
+
     await this.applyParameters(data);
     // refresh the variables
     this.fhirpathExpressionChangedEvent();
@@ -1594,8 +1613,8 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         }
 
           if (p.engine) {
-            // select the engine from the registeredEngines
-            const engine = Object.values(registeredEngines).find(e => e.legacyName === p.engine);
+            // select the engine from the effectiveEngines
+            const engine = Object.values(this.effectiveEngines).find(e => e.legacyName === p.engine);
             if (engine) {
               this.selectedEngine2 = engine;
               this.selectedFhirVersion = engine.fhirVersion;
@@ -3625,6 +3644,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       debugExpressionSelectionMarker: [],
       debugTestResourceSelectionMarker: [],
       debugThisSelectionMarker: [],
+      effectiveEngines: { },
     };
   },
 });

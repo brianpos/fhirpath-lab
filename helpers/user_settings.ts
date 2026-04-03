@@ -39,8 +39,10 @@ export namespace settings {
     // the cached version of the configuration data
     let serverConnectionsData: any = {};
 
+    const defaultConfigUrl = '/config.json';
+
     // URL to fetch config from (defaults to '/config.json', can be overridden via setConfigUrl)
-    let configUrl: string = '/config.json';
+    let configUrl: string = defaultConfigUrl;
 
     /** Override the URL used to load the config JSON (call before any config is first fetched). */
     export function setConfigUrl(url: string): void {
@@ -100,6 +102,17 @@ export namespace settings {
             return serverData.dotnet_server_r4b;
 
         if (!(configName in serverData)) {
+            // if this isn't the default source, try reading the value from the default source to allow for custom engines without requiring config changes
+            if (configUrl !== defaultConfigUrl) {
+                // read default source
+                const defaultConfigResponse = await fetch(defaultConfigUrl);
+                const defaultServerData = await defaultConfigResponse.json();
+                if (configName in defaultServerData) {
+                    console.log(`Config key '${configName}' not found in custom config, but found in default config — using that value.`);
+                    return defaultServerData[configName];
+                }
+            }
+
             console.warn(`No server connection configuration found for '${configName}', using default`);
             return serverData.dotnet_server_r4b;
         }

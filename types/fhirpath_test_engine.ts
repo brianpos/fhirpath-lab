@@ -38,11 +38,14 @@ export interface IFhirPathEngineDetails {
      *  (because it can't handle cross-version parsing)
      * For FHIR versions other than R4 */
     encodeResourceJsonAsExtension?: boolean;
+
+    /** If true, the engine is only visible when showAdvancedSettings is on.
+     *  Use for new/in-development engines that shouldn't clutter the default UI. */
+    earlyAdopter?: boolean;
 }
 
-// All registered FHIRPath engines
-// (exported as editable so that values can be updated in the UI - specifically version)
-export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
+// All registered FHIRPath engines (read-only baseline; config overrides produce a new copy using applyEngineOverrides)
+export const registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
     "fhirpath.js": {
         name: "fhirpath.js",
         legacyName: "fhirpath.js",
@@ -443,3 +446,76 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         supportsXML: false
     },
 };
+
+/**
+ * Build a merged engine registry from a baseline and config overrides.
+ * Returns a new object — the baseline is never mutated.
+ *
+ * Supported config keys:
+ * - `engines`: A map of engine key → partial (override) or full (new) IFhirPathEngineDetails.
+ *     Existing keys are shallow-merged (only specified fields override);
+ *     new keys are added if they provide all required fields.
+ * - `enabledEngines`: An array of engine keys. When present, only listed engines are
+ *     returned and the result order follows the array order.
+ *
+ * Ordering:
+ * - Without `enabledEngines`: baseline engines first (in registration order),
+ *   followed by any new engines added via `config.engines`.
+ * - With `enabledEngines`: result order matches the `enabledEngines` array.
+ */
+export function applyEngineOverrides(
+    baseline: Record<string, IFhirPathEngineDetails>,
+    config: any
+): Record<string, IFhirPathEngineDetails> {
+    // Build a merged pool: baseline first (insertion order), then new additions from config.
+    const pool: Record<string, IFhirPathEngineDetails> = {};
+    for (const [key, value] of Object.entries(baseline)) {
+        pool[key] = { ...value };
+    }
+
+    if (!config) return pool;
+
+    // Merge / add engines
+    const engineOverrides = config.engines as Record<string, Partial<IFhirPathEngineDetails>> | undefined;
+    if (engineOverrides && typeof engineOverrides === 'object') {
+        for (const [key, overrideValues] of Object.entries(engineOverrides)) {
+            if (key in pool) {
+                // Shallow-merge: override only the fields provided
+                pool[key] = { ...pool[key], ...overrideValues } as IFhirPathEngineDetails;
+            } else {
+                // New engine — validate required fields are present
+                const required: (keyof IFhirPathEngineDetails)[] = [
+                    'name', 'legacyName', 'fhirVersion', 'appInsightsEngineName',
+                    'publisher', 'description', 'supportsAST'
+                ];
+                const missing = required.filter(f => !(f in overrideValues));
+                if (missing.length > 0) {
+                    console.warn(
+                        `Config engine "${key}" is missing required fields: ${missing.join(', ')} — skipping.`
+                    );
+                    continue;
+                }
+                // Appended after all baseline entries
+                pool[key] = overrideValues as IFhirPathEngineDetails;
+            }
+        }
+    }
+
+    // If enabledEngines is specified, return a new record in that exact order.
+    const enabledEngines = config.enabledEngines as string[] | undefined;
+    if (Array.isArray(enabledEngines)) {
+        const ordered: Record<string, IFhirPathEngineDetails> = {};
+        for (const key of enabledEngines) {
+            if (key in pool) {
+                ordered[key] = pool[key];
+            } else {
+                console.warn(`enabledEngines references unknown engine key "${key}" — skipping.`);
+            }
+        }
+        console.log("Ordered engines based on enabledEngines config:", Object.keys(ordered));
+        return ordered;
+    }
+
+    console.log("Merged engine pool without enabledEngines filtering:", Object.keys(pool));
+    return pool;
+}
