@@ -5,6 +5,7 @@
 
 # 4 April 2026
 * Add support for custom configuration via URL parameters (for testing new engines without needing to modify the lab source code) - see [docs/custom-configuration.md](docs/custom-configuration.md) for details
+* Add support for the new MaLaC-HD server for FHIR mapping testing
 
 # 16 January 2026
 * Add support for logical model generation from random XML/json content in the FML test page
