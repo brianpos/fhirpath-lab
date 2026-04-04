@@ -15,5 +15,5 @@
 	    }
 	},
 
-	"pathling_server_r4": "https://fhirpath-lab.pathling.app/$fhirpath-r4"
+	"pathling_server_r4": "https://fhirpath-lab.pathling.app/fhir/$fhirpath"
 }
