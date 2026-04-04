@@ -1,0 +1,20 @@
+{
+	"engines": {
+		"Pathling (R4)": {
+			"name": "Pathling",
+			"legacyName": "Pathling (R4)",
+			"fhirVersion": "R4",
+			"appInsightsEngineName": "Pathling",
+			"publisher": "Australian e-Health Research Centre",
+			"configSetting": "pathling_server_r4",
+			"githubRepo": "https://github.com/aehrc/pathling",
+			"description": "Pathling FHIRPath engine for FHIR R4",
+			"external": true,
+			"supportsAST": false,
+			"supportsXML": false,
+			"earlyAdopter": true
+	    }
+	},
+
+	"pathling_server_r4": "https://fhirpath-lab.pathling.app/$fhirpath-r4"
+}

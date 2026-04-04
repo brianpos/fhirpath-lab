@@ -346,7 +346,7 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
 import type { TabData } from '~/components/TwinPaneTab.vue'
 import ResourceEditor from '~/components/ResourceEditor.vue'
-import { type IFhirPathEngineDetails, registeredEngines, applyEngineOverrides } from '@legacy/types/fhirpath_test_engine'
+import { type IFhirPathEngineDetails, registeredEngines, applyConfigEngines } from '@legacy/types/fhirpath_test_engine'
 import { evaluateFhirPathExpression, type FhirPathEvaluationOptions, type FhirPathEvaluationResult } from '@legacy/helpers/fhirpath_api_engine'
 import type { VariableData } from 'models/testenginemodel'
 import type { ParseTreeNode } from 'models/FhirpathTesterData'
@@ -460,7 +460,7 @@ onMounted(async () => {
   // Eagerly load config and build the effective engine list (baseline + overrides)
   const config = await settings.getServerConnectionData();
   
-  effectiveEngines.value = await applyEngineOverrides(registeredEngines, config);
+  effectiveEngines.value = await applyConfigEngines(registeredEngines, config);
 
   // Re-select engine after registry may have changed
   if (!selectedEngine.value || !engines.value.includes(selectedEngine.value)) {

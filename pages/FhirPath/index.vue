@@ -594,7 +594,7 @@ import { DomainResource, FhirResource, Resource } from "fhir/r4b";
 import { findNodeByPath, IJsonNode, IJsonNodePosition, parseJson } from "~/helpers/json_parser";
 import { parseXml, parseXmlAndObject } from "~/helpers/xml_parser";
 import TwinPaneTab, { TabData } from "~/components/TwinPaneTab.vue";
-import { IFhirPathEngineDetails, registeredEngines, applyEngineOverrides } from "~/types/fhirpath_test_engine";
+import { IFhirPathEngineDetails, registeredEngines, applyConfigEngines } from "~/types/fhirpath_test_engine";
 
 import { FhirPathTools, createFhirPathEvaluateTools } from "~/helpers/openai_tools";
 import { Console } from "console";
@@ -1378,7 +1378,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     const config = await settings.getServerConnectionData();
 
     // Load config and build the effective engine list (baseline + overrides)
-    this.effectiveEngines = await applyEngineOverrides(registeredEngines, config);
+    this.effectiveEngines = await applyConfigEngines(registeredEngines, config);
 
     if (!this.selectedEngine2) {
       this.selectedEngine2 = this.engines[0];

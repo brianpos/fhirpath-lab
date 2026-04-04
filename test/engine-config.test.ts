@@ -1,51 +1,98 @@
 /**
  * Tests for the layered engine configuration merge logic
- * (applyEngineOverrides) and the earlyAdopter visibility flag.
+ * (applyConfigEngines) and the earlyAdopter visibility flag.
  *
- * applyEngineOverrides is a pure function: it takes a baseline record + config
+ * applyConfigEngines is a pure function: it takes a baseline record + config
  * and returns a new merged record without mutating the baseline.
  */
 import { describe, expect, test } from "@jest/globals";
-import { registeredEngines, applyEngineOverrides, type IFhirPathEngineDetails } from "../types/fhirpath_test_engine";
+import { registeredEngines, applyConfigEngines, type IFhirPathEngineDetails } from "../types/fhirpath_test_engine";
 
 // Use the compiled baseline directly — it's never mutated
 const baseline = registeredEngines;
 
-describe("applyEngineOverrides", () => {
+describe("applyConfigEngines", () => {
   test("returns a copy of the baseline when config has no engines or enabledEngines", () => {
-    const result = applyEngineOverrides(baseline, { dotnet_server_r4b: "https://example.com" });
+    const result = applyConfigEngines(baseline, { dotnet_server_r4b: "https://example.com" });
     expect(Object.keys(result)).toEqual(Object.keys(baseline));
     // Verify it's a new object, not the same reference
     expect(result).not.toBe(baseline);
   });
 
-  test("does not mutate the baseline", () => {
-    const originalDesc = baseline["fhirpath.js"].description;
-    const result = applyEngineOverrides(baseline, {
-      engines: { "fhirpath.js": { description: "Patched!" } },
-    });
-    expect(result["fhirpath.js"].description).toBe("Patched!");
-    expect(baseline["fhirpath.js"].description).toBe(originalDesc);
-  });
-
-  test("overrides fields on an existing engine", () => {
-    const result = applyEngineOverrides(baseline, {
+  test("does not mutate the baseline when adding new engines", () => {
+    const keysBefore = Object.keys(baseline);
+    const result = applyConfigEngines(baseline, {
       engines: {
-        "fhirpath.js": {
-          description: "Patched!",
-          earlyAdopter: true,
+        "Custom (R4)": {
+          name: "Custom",
+          legacyName: "Custom (R4)",
+          fhirVersion: "R4",
+          appInsightsEngineName: "Custom",
+          publisher: "Test",
+          description: "A custom engine",
+          supportsAST: false,
         },
       },
     });
-    expect(result["fhirpath.js"].description).toBe("Patched!");
-    expect(result["fhirpath.js"].earlyAdopter).toBe(true);
-    // Un-specified fields remain unchanged
-    expect(result["fhirpath.js"].name).toBe("fhirpath.js");
-    expect(result["fhirpath.js"].supportsAST).toBe(true);
+    expect(result["Custom (R4)"]).toBeDefined();
+    expect(Object.keys(baseline)).toEqual(keysBefore);
+    expect(baseline["Custom (R4)"]).toBeUndefined();
+  });
+
+  test("rejects overrides to existing baseline engine keys", () => {
+    const warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+    const originalDesc = baseline["fhirpath.js"].description;
+    const result = applyConfigEngines(baseline, {
+      engines: { "fhirpath.js": { description: "Hijacked!" } },
+    });
+    // Built-in engine is unchanged
+    expect(result["fhirpath.js"].description).toBe(originalDesc);
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('"fhirpath.js"'));
+    warnSpy.mockRestore();
+  });
+
+  test("rejects new engine whose name matches a built-in engine (case-insensitive)", () => {
+    const warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+    const result = applyConfigEngines(baseline, {
+      engines: {
+        "Fake Key": {
+          name: "fhirpath.js",  // same display name as built-in
+          legacyName: "Fake Key",
+          fhirVersion: "R4",
+          appInsightsEngineName: "Fake",
+          publisher: "Evil Corp",
+          description: "Spoof engine",
+          supportsAST: false,
+        },
+      },
+    });
+    expect(result["Fake Key"]).toBeUndefined();
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('name "fhirpath.js"'));
+    warnSpy.mockRestore();
+  });
+
+  test("rejects new engine whose legacyName matches a built-in engine (case-insensitive)", () => {
+    const warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+    const result = applyConfigEngines(baseline, {
+      engines: {
+        "Sneaky Engine": {
+          name: "Sneaky",
+          legacyName: ".NET (firely)",  // matches baseline .NET SDK legacyName
+          fhirVersion: "R4B",
+          appInsightsEngineName: "Sneaky",
+          publisher: "Evil Corp",
+          description: "Spoof engine",
+          supportsAST: false,
+        },
+      },
+    });
+    expect(result["Sneaky Engine"]).toBeUndefined();
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('legacyName ".NET (firely)"'));
+    warnSpy.mockRestore();
   });
 
   test("adds a new engine when all required fields are provided", () => {
-    const result = applyEngineOverrides(baseline, {
+    const result = applyConfigEngines(baseline, {
       engines: {
         "Custom (R4)": {
           name: "Custom",
@@ -70,7 +117,7 @@ describe("applyEngineOverrides", () => {
 
   test("skips a new engine that is missing required fields", () => {
     const warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
-    const result = applyEngineOverrides(baseline, {
+    const result = applyConfigEngines(baseline, {
       engines: {
         "Incomplete Engine": {
           name: "Incomplete",
@@ -83,7 +130,7 @@ describe("applyEngineOverrides", () => {
   });
 
   test("new engines from config are appended after baseline engines", () => {
-    const result = applyEngineOverrides(baseline, {
+    const result = applyConfigEngines(baseline, {
       engines: {
         "Custom (R4)": {
           name: "Custom",
@@ -105,7 +152,7 @@ describe("applyEngineOverrides", () => {
   });
 
   test("enabledEngines filters the result and preserves array order", () => {
-    const result = applyEngineOverrides(baseline, {
+    const result = applyConfigEngines(baseline, {
       enabledEngines: [".NET SDK", "fhirpath.js"],
     });
     // Order must match the enabledEngines array, not insertion order
@@ -116,7 +163,7 @@ describe("applyEngineOverrides", () => {
 
   test("enabledEngines warns and skips unknown keys", () => {
     const warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
-    const result = applyEngineOverrides(baseline, {
+    const result = applyConfigEngines(baseline, {
       enabledEngines: ["fhirpath.js", "nonexistent-engine"],
     });
     expect(Object.keys(result)).toEqual(["fhirpath.js"]);
@@ -125,7 +172,7 @@ describe("applyEngineOverrides", () => {
   });
 
   test("engines + enabledEngines: result order follows enabledEngines array", () => {
-    const result = applyEngineOverrides(baseline, {
+    const result = applyConfigEngines(baseline, {
       engines: {
         "Brand New (R4)": {
           name: "BrandNew",
@@ -151,23 +198,39 @@ describe("earlyAdopter flag", () => {
     expect(baseline[".NET SDK"].earlyAdopter).toBeUndefined();
   });
 
-  test("earlyAdopter can be set via config override", () => {
-    const result = applyEngineOverrides(baseline, {
+  test("earlyAdopter can be set on a new custom engine", () => {
+    const result = applyConfigEngines(baseline, {
       engines: {
-        ".NET SDK": { earlyAdopter: true },
+        "Beta Engine (R4)": {
+          name: "BetaEngine",
+          legacyName: "Beta Engine (R4)",
+          fhirVersion: "R4",
+          appInsightsEngineName: "BetaEngine",
+          publisher: "Test",
+          description: "A beta engine",
+          supportsAST: false,
+          earlyAdopter: true,
+        },
       },
     });
-    expect(result[".NET SDK"].earlyAdopter).toBe(true);
-    // Other engines unchanged
+    expect(result["Beta Engine (R4)"].earlyAdopter).toBe(true);
+    // Baseline engines unchanged
     expect(result["fhirpath.js"].earlyAdopter).toBeUndefined();
-    // Baseline unchanged
-    expect(baseline[".NET SDK"].earlyAdopter).toBeUndefined();
   });
 
   test("earlyAdopter filtering logic works correctly", () => {
-    const engines = applyEngineOverrides(baseline, {
+    const engines = applyConfigEngines(baseline, {
       engines: {
-        "fhirpath.js": { earlyAdopter: true },
+        "Beta Engine (R4)": {
+          name: "BetaEngine",
+          legacyName: "Beta Engine (R4)",
+          fhirVersion: "R4",
+          appInsightsEngineName: "BetaEngine",
+          publisher: "Test",
+          description: "A beta engine",
+          supportsAST: false,
+          earlyAdopter: true,
+        },
       },
     });
 
@@ -175,14 +238,14 @@ describe("earlyAdopter flag", () => {
     const filtered = Object.values(engines)
       .filter(e => e.fhirVersion === "R4" && (!e.earlyAdopter || showAdvanced));
 
-    // fhirpath.js (R4) should be excluded because earlyAdopter=true and advanced=false
-    expect(filtered.find(e => e.legacyName === "fhirpath.js")).toBeUndefined();
-    // .NET SDK (R4) should be included because earlyAdopter is not set
+    // Beta engine should be excluded because earlyAdopter=true and advanced=false
+    expect(filtered.find(e => e.legacyName === "Beta Engine (R4)")).toBeUndefined();
+    // Built-in R4 engines should still be included
     expect(filtered.find(e => e.legacyName === ".NET (firely)")).toBeDefined();
 
     // With showAdvanced=true, earlyAdopter engines should appear
     const filteredAdv = Object.values(engines)
       .filter(e => e.fhirVersion === "R4" && (!e.earlyAdopter || true));
-    expect(filteredAdv.find(e => e.legacyName === "fhirpath.js")).toBeDefined();
+    expect(filteredAdv.find(e => e.legacyName === "Beta Engine (R4)")).toBeDefined();
   });
 });

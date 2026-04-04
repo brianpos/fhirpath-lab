@@ -9,12 +9,12 @@ FHIRPath Lab uses two layers of engine configuration:
 | Layer | Source | Purpose |
 |-------|--------|---------|
 | **Baseline** | `types/fhirpath_test_engine.ts` — compiled into the app | Defines all built-in engines with their metadata and capabilities |
-| **Config JSON** | `static/config.json` — loaded at runtime | Maps `configSetting` keys to endpoint URLs, and can optionally override/extend the baseline engine registry |
+| **Config JSON** | `static/config.json` — loaded at runtime | Maps `configSetting` keys to endpoint URLs, and can optionally add new engines to the baseline registry |
 
 When the application loads config JSON, it:
 1. Reads the flat URL map (e.g. `"dotnet_server_r4b": "https://..."`)
-2. If an `"engines"` key is present, merges those entries into the baseline engine registry
-3. If an `"enabledEngines"` key is present, removes any engine not listed
+2. If an `"engines"` key is present, adds **new** engine entries to the registry (built-in engines cannot be modified — see [Security](#security) below)
+3. If an `"enabledEngines"` key is present, filters to only the listed engines and orders them to match the array
 
 This layered approach means you can provide a minimal config file that only contains what you need to change, without duplicating the entire engine registry.
 
@@ -47,20 +47,11 @@ The traditional URL map — flat key/value pairs where the key matches a `config
 }
 ```
 
-### 2. `engines` — Override or Add Engines
+### 2. `engines` — Add New Engines
 
-An optional object where each key is an engine registry key and each value is a partial (for overrides) or full (for new engines) `IFhirPathEngineDetails` object.
+An optional object where each key is a new engine registry key and the value is a full `IFhirPathEngineDetails` object with all required fields.
 
-**Override an existing engine** (shallow merge — only specified fields change):
-```json
-{
-  "engines": {
-    ".NET SDK": {
-      "supportsXML": false
-    }
-  }
-}
-```
+> **Security:** Config JSON can only **add** new engines — it cannot override or modify built-in engines. Entries whose key, `name`, or `legacyName` matches a built-in engine (case-insensitive) are silently ignored. See [Security](#security) for details.
 
 **Add a new engine** (all required fields must be present):
 ```json
@@ -84,7 +75,7 @@ An optional object where each key is an engine registry key and each value is a 
 
 ### 3. `enabledEngines` — Filter Visible Engines
 
-An optional array of engine registry keys. When present, **only** the listed engines will be visible — all others are removed. This is useful for a focused testing view:
+An optional array of engine registry keys. When present, **only** the listed engines will be visible, and the **order of the array controls the order in the engine selector dropdown**. This is useful for a focused testing view:
 
 ```json
 {
@@ -126,7 +117,7 @@ This is intended for:
 - **New engines under development** — include them in the registry without cluttering the default view for most users
 - **Gradual rollout** — let power users opt in to testing new engines before they are promoted to the default list
 
-You can set this flag either in the compiled baseline (`types/fhirpath_test_engine.ts`) or via a config JSON override:
+You can set this flag in the compiled baseline (`types/fhirpath_test_engine.ts`) or on a new custom engine via config JSON:
 
 ```json
 {
@@ -224,11 +215,21 @@ If your engine is still under active development when submitted, consider settin
 
 When running FHIRPath Lab locally, you can also edit `static/config.local.json` to point existing engines at local URLs. This file has the same structure as `config.json` but is intended for local development only and should not be committed with production URLs.
 
+## Security
+
+Because the `?config=` URL parameter can be shared via links, the engine merge function (`applyConfigEngines`) enforces several safety rules to prevent a malicious config from hijacking built-in engines:
+
+1. **No overriding built-in engine keys** — If a config `engines` entry uses a key that already exists in the baseline registry (e.g. `".NET SDK"`), it is ignored with a console warning.
+2. **No display-name spoofing** — If a new engine's `name` or `legacyName` matches (case-insensitive) the `name` or `legacyName` of any built-in engine, it is ignored. This prevents a custom engine from impersonating a trusted engine in the UI.
+3. **New engines only** — Config JSON can add engines to the registry but cannot modify properties of existing ones. To change a built-in engine, submit a PR to update `types/fhirpath_test_engine.ts`.
+
+These rules ensure that sharing a `?config=` link can introduce new engines for testing but can never silently redirect evaluation traffic intended for a known engine to an untrusted endpoint.
+
 ## Merging Behavior Summary
 
 | Config Key | Behavior |
 |------------|----------|
 | Flat URL keys (e.g. `"my_engine_r4"`) | Used by `getServerEngineUrl()` to resolve endpoint URLs at evaluation time |
-| `engines` → existing key | Shallow-merges specified fields into the baseline engine entry |
-| `engines` → new key | Adds a new engine (requires all required fields; logs a warning and skips if incomplete) |
-| `enabledEngines` | Removes any engine whose key is not in the array (applied after `engines` merges) |
+| `engines` → built-in key | **Ignored** (cannot override built-in engines) |
+| `engines` → new key | Adds a new engine (requires all required fields and unique `name`/`legacyName`; logs a warning and skips otherwise) |
+| `enabledEngines` | Filters to only listed engines, in the order specified by the array (applied after `engines` additions) |
