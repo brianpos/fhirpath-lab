@@ -3,6 +3,9 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+# 4 April 2026
+* Add support for custom configuration via URL parameters (for testing new engines without needing to modify the lab source code) - see [docs/custom-configuration.md](docs/custom-configuration.md) for details
+
 # 16 January 2026
 * Add support for logical model generation from random XML/json content in the FML test page
 
