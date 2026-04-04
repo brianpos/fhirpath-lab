@@ -346,7 +346,7 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
 import type { TabData } from '~/components/TwinPaneTab.vue'
 import ResourceEditor from '~/components/ResourceEditor.vue'
-import { type IFhirPathEngineDetails, registeredEngines } from '@legacy/types/fhirpath_test_engine'
+import { type IFhirPathEngineDetails, registeredEngines, applyConfigEngines } from '@legacy/types/fhirpath_test_engine'
 import { evaluateFhirPathExpression, type FhirPathEvaluationOptions, type FhirPathEvaluationResult } from '@legacy/helpers/fhirpath_api_engine'
 import type { VariableData } from 'models/testenginemodel'
 import type { ParseTreeNode } from 'models/FhirpathTesterData'
@@ -427,11 +427,16 @@ const variables = ref<Array<{name: string, value: string}>>([]) // Start with no
 const shareToolTipMessage = ref<string>('Copy a sharable link to this test expression')
 const shareZulipToolTipMessage = ref<string>('Copy a sharable link for Zulip to this test expression')
 const resourceJsonChanged = ref<boolean>(false)
+const showAdvancedSettings = ref<boolean>(settings.showAdvancedSettings())
+// Local copy of the effective engine registry (baseline + config overrides)
+const effectiveEngines = ref<Record<string, IFhirPathEngineDetails>>({ })
 
 // Computed property for filtered engines based on selected FHIR version
 const engines = computed<IFhirPathEngineDetails[]>(() => {
-  const filteredEngines = Object.values(registeredEngines)
-    .filter(engine => engine.fhirVersion === selectedFhirVersion.value)
+  const filteredEngines = Object.values(effectiveEngines.value)
+    .filter(engine => engine.fhirVersion === selectedFhirVersion.value
+      && (!engine.earlyAdopter || showAdvancedSettings.value)
+    )
   return filteredEngines
 })
 
@@ -444,7 +449,24 @@ if (!selectedEngine.value && engines.value.length > 0) {
 onMounted(async () => {
   document.addEventListener('keydown', ctrlEnterHandler)
   window.addEventListener('hashchange', handleHashChange)
+
+  // Apply config URL override before any config fetch is triggered
+  const route = useRoute()
+  const configParam = route.query.config as string | undefined
+  if (configParam) {
+    settings.setConfigUrl(configParam)
+  }
+
+  // Eagerly load config and build the effective engine list (baseline + overrides)
+  const config = await settings.getServerConnectionData();
   
+  effectiveEngines.value = await applyConfigEngines(registeredEngines, config);
+
+  // Re-select engine after registry may have changed
+  if (!selectedEngine.value || !engines.value.includes(selectedEngine.value)) {
+    selectedEngine.value = engines.value[0]
+  }
+
   // Check if there's a hash on initial load
   const hash = window.location.hash ? window.location.hash.substring(1) : undefined
   if (hash) {
@@ -684,7 +706,7 @@ const applyParameters = async (p: TestFhirpathData) => {
   }
   
   if (p.engine) {
-    const engine = Object.values(registeredEngines).find(e => e.legacyName === p.engine)
+    const engine = Object.values(effectiveEngines.value).find(e => e.legacyName === p.engine)
     if (engine) {
       selectedEngine.value = engine
       selectedFhirVersion.value = engine.fhirVersion

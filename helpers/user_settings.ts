@@ -39,6 +39,22 @@ export namespace settings {
     // the cached version of the configuration data
     let serverConnectionsData: any = {};
 
+    let defaultServerConnectionsData: any = {};
+
+    const defaultConfigUrl = '/config.json';
+
+    // URL to fetch config from (defaults to '/config.json', can be overridden via setConfigUrl)
+    let configUrl: string = defaultConfigUrl;
+
+    /** Override the URL used to load the config JSON (call before any config is first fetched). */
+    export function setConfigUrl(url: string): void {
+        if (url && url !== configUrl) {
+            configUrl = url;
+            // Reset the cache so the new URL is used on the next fetch
+            serverConnectionsData = {};
+        }
+    }
+
     export async function getServerConnectionData(): Promise<any> {
         if (Object.keys(serverConnectionsData).length > 0) {
             // return the cached data
@@ -46,11 +62,23 @@ export namespace settings {
         }
         
         try {
-            let configResponse = await fetch('/config.json');
-            serverConnectionsData = await configResponse.json();
-            console.log("loaded config", serverConnectionsData);
+            let configResponse = await fetch(defaultConfigUrl);
+            defaultServerConnectionsData = await configResponse.json();
+            console.log("loaded default config", defaultServerConnectionsData);
         } catch(err) {
             console.error('Failed to load config.json:', err);
+        };
+
+        try {
+            if (configUrl === defaultConfigUrl) {
+                serverConnectionsData = defaultServerConnectionsData;
+            } else {
+                let configResponse = await fetch(configUrl);
+                serverConnectionsData = await configResponse.json();
+                console.log("loaded config", serverConnectionsData);
+            }
+        } catch(err) {
+            console.error('Failed to load '+configUrl+":", err);
         };
         return serverConnectionsData;
     }
@@ -77,18 +105,30 @@ export namespace settings {
     }
 
     export function getTabSpaces(): number {
+        // using a function here as some point in the future we may want to allow users to configure this value, or use different values for different engines
         return 2;
     }
+
     export async function dotnet_server_downloader(): Promise<string> {
-        return (await getServerConnectionData()).dotnet_server_downloader;
+        // ensure the configuration data is loaded
+        await getServerConnectionData();
+        
+        // use the default configuration so that the custom config doesn't override the proxy downloader.
+        return defaultServerConnectionsData.dotnet_server_downloader;
     }
+
     export async function getServerEngineUrl(configName?: string): Promise<string> {
         let serverData = await getServerConnectionData();
         if (!configName)
             return serverData.dotnet_server_r4b;
 
+        if (configName in defaultServerConnectionsData) {
+            console.log(`Using server connection configuration for '${configName}' from default config`);
+            return defaultServerConnectionsData[configName];
+        }
+
         if (!(configName in serverData)) {
-            console.warn(`No server connection configuration found for '${configName}', using default`);
+            console.warn(`No server connection configuration found for '${configName}', using default dotnet engine`);
             return serverData.dotnet_server_r4b;
         }
 

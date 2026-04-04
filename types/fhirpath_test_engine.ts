@@ -38,11 +38,14 @@ export interface IFhirPathEngineDetails {
      *  (because it can't handle cross-version parsing)
      * For FHIR versions other than R4 */
     encodeResourceJsonAsExtension?: boolean;
+
+    /** If true, the engine is only visible when showAdvancedSettings is on.
+     *  Use for new/in-development engines that shouldn't clutter the default UI. */
+    earlyAdopter?: boolean;
 }
 
-// All registered FHIRPath engines
-// (exported as editable so that values can be updated in the UI - specifically version)
-export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
+// All registered FHIRPath engines (read-only baseline; config additions produce a new copy using applyConfigEngines)
+export const registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
     "fhirpath.js": {
         name: "fhirpath.js",
         legacyName: "fhirpath.js",
@@ -159,17 +162,6 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         supportsXML: true,
         encodeResourceJsonAsExtension: true,
     },
-    // "java (IBM)": {
-    //     name: "java-ibm",
-    //     legacyName: "java (IBM)",
-    //     fhirVersion: "R4",
-    //     appInsightsEngineName: "IBM",
-    //     publisher: "Linux for health (formerly IBM FHIR Server)",
-    //     configSetting: "ibm_server_r4b",
-    //     githubRepo: "https://github.com/LinuxForHealth/FHIR",
-    //     description: "A Java FHIRPath engine from Linux for health (formerly IBM FHIR Server).",
-    //     external: false
-    // },
     "fhirpath-py (Beda Software)": {
         name: "fhirpath-py",
         legacyName: "fhirpath-py (Beda Software)",
@@ -355,42 +347,6 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         encodeResourceJsonAsExtension: true
     },
 
-    // "Local (R4)": {
-    //     name: "Localhost",
-    //     legacyName: "Local (R4)",
-    //     fhirVersion: "R4",
-    //     appInsightsEngineName: "Local",
-    //     publisher: "http://localhost:3001/fhir/$fhirpath",
-    //     configSetting: "local_r4",
-    //     description: "Your own locally hosted fhirpath engine.",
-    //     external: true,
-    //     supportsAST: true,
-    //     supportsXML: false
-    // },
-    // "Local (R5)": {
-    //     name: "Localhost",
-    //     legacyName: "Local (R5)",
-    //     fhirVersion: "R5",
-    //     appInsightsEngineName: "Local",
-    //     publisher: "http://localhost:3001/fhir/$fhirpath-r5",
-    //     configSetting: "local_r5",
-    //     description: "Your own locally hosted fhirpath engine.",
-    //     external: true,
-    //     supportsAST: true,
-    //     supportsXML: false
-    // },
-    // "Local (R6)": {
-    //     name: "Localhost",
-    //     legacyName: "Local (R6)",
-    //     fhirVersion: "R6",
-    //     appInsightsEngineName: "Local",
-    //     publisher: "http://localhost:3001/fhir/$fhirpath-r6",
-    //     configSetting: "local_r6",
-    //     description: "Your own locally hosted fhirpath engine.",
-    //     external: true,
-    //     supportsAST: true,
-    //     supportsXML: false
-    // },
     "CQL (R4)": {
         name: "CQL-Facade",
         legacyName: "CQL (R4)",
@@ -443,3 +399,103 @@ export let registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         supportsXML: false
     },
 };
+
+/**
+ * Build a merged engine registry from a baseline and config overrides.
+ * Returns a new object — the baseline is never mutated.
+ *
+ * Supported config keys:
+ * - `engines`: A map of engine key → full IFhirPathEngineDetails for **new** engines only.
+ *     Keys that match a built-in baseline engine are ignored (security: prevents
+ *     a shared `?config=` URL from hijacking known engine endpoints).
+ *     New keys are added if they provide all required fields.
+ * - `enabledEngines`: An array of engine keys. When present, only listed engines are
+ *     returned and the result order follows the array order.
+ *
+ * Ordering:
+ * - Without `enabledEngines`: baseline engines first (in registration order),
+ *   followed by any new engines added via `config.engines`.
+ * - With `enabledEngines`: result order matches the `enabledEngines` array.
+ */
+export function applyConfigEngines(
+    baseline: Record<string, IFhirPathEngineDetails>,
+    config: any
+): Record<string, IFhirPathEngineDetails> {
+    // Build a merged pool: baseline first (insertion order), then new additions from config.
+    const pool: Record<string, IFhirPathEngineDetails> = {};
+    for (const [key, value] of Object.entries(baseline)) {
+        pool[key] = { ...value };
+    }
+
+    if (!config) return pool;
+
+    // Add new engines from config (existing baseline engines cannot be overridden
+    // to prevent a malicious ?config= URL from hijacking known engine endpoints).
+    // Also reject new engines whose display label (name or legacyName) collides
+    // with a built-in engine to prevent UI spoofing.
+    const engineOverrides = config.engines as Record<string, Partial<IFhirPathEngineDetails>> | undefined;
+    if (engineOverrides && typeof engineOverrides === 'object') {
+        // Pre-compute the set of display labels used by baseline engines
+        const baselineNames = new Set<string>();
+        const baselineLegacyNames = new Set<string>();
+        for (const e of Object.values(baseline)) {
+            baselineNames.add(e.name.toLowerCase());
+            baselineLegacyNames.add(e.legacyName.toLowerCase());
+        }
+
+        for (const [key, overrideValues] of Object.entries(engineOverrides)) {
+            if (key in baseline) {
+                // Security: refuse to override a built-in engine
+                console.warn(
+                    `Config engine "${key}" matches a built-in engine key — ignored.`
+                );
+                continue;
+            }
+            // New engine — validate required fields are present
+            const required: (keyof IFhirPathEngineDetails)[] = [
+                'name', 'legacyName', 'fhirVersion', 'appInsightsEngineName',
+                'publisher', 'description', 'supportsAST'
+            ];
+            const missing = required.filter(f => !(f in overrideValues));
+            if (missing.length > 0) {
+                console.warn(
+                    `Config engine "${key}" is missing required fields: ${missing.join(', ')} — skipping.`
+                );
+                continue;
+            }
+            // Security: reject if name or legacyName collides with a built-in engine
+            if (overrideValues.name && baselineNames.has(overrideValues.name.toLowerCase())) {
+                console.warn(
+                    `Config engine "${key}" uses name "${overrideValues.name}" which matches a built-in engine — ignored.`
+                );
+                continue;
+            }
+            if (overrideValues.legacyName && baselineLegacyNames.has(overrideValues.legacyName.toLowerCase())) {
+                console.warn(
+                    `Config engine "${key}" uses legacyName "${overrideValues.legacyName}" which matches a built-in engine — ignored.`
+                );
+                continue;
+            }
+            // Appended after all baseline entries
+            pool[key] = overrideValues as IFhirPathEngineDetails;
+        }
+    }
+
+    // If enabledEngines is specified, return a new record in that exact order.
+    const enabledEngines = config.enabledEngines as string[] | undefined;
+    if (Array.isArray(enabledEngines)) {
+        const ordered: Record<string, IFhirPathEngineDetails> = {};
+        for (const key of enabledEngines) {
+            if (key in pool) {
+                ordered[key] = pool[key];
+            } else {
+                console.warn(`enabledEngines references unknown engine key "${key}" — skipping.`);
+            }
+        }
+        console.log("Ordered engines based on enabledEngines config:", Object.keys(ordered));
+        return ordered;
+    }
+
+    console.log("Merged engine pool without enabledEngines filtering:", Object.keys(pool));
+    return pool;
+}
