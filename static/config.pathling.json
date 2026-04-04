@@ -11,8 +11,7 @@
 			"description": "Pathling FHIRPath engine for FHIR R4",
 			"external": true,
 			"supportsAST": false,
-			"supportsXML": false,
-			"earlyAdopter": true
+			"supportsXML": false
 	    }
 	},
 
