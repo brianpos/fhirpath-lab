@@ -39,6 +39,8 @@ export namespace settings {
     // the cached version of the configuration data
     let serverConnectionsData: any = {};
 
+    let defaultServerConnectionsData: any = {};
+
     const defaultConfigUrl = '/config.json';
 
     // URL to fetch config from (defaults to '/config.json', can be overridden via setConfigUrl)
@@ -60,11 +62,23 @@ export namespace settings {
         }
         
         try {
-            let configResponse = await fetch(configUrl);
-            serverConnectionsData = await configResponse.json();
-            console.log("loaded config", serverConnectionsData);
+            let configResponse = await fetch(defaultConfigUrl);
+            defaultServerConnectionsData = await configResponse.json();
+            console.log("loaded default config", defaultServerConnectionsData);
         } catch(err) {
             console.error('Failed to load config.json:', err);
+        };
+
+        try {
+            if (configUrl === defaultConfigUrl) {
+                serverConnectionsData = defaultServerConnectionsData;
+            } else {
+                let configResponse = await fetch(configUrl);
+                serverConnectionsData = await configResponse.json();
+                console.log("loaded config", serverConnectionsData);
+            }
+        } catch(err) {
+            console.error('Failed to load '+configUrl+":", err);
         };
         return serverConnectionsData;
     }
@@ -91,29 +105,30 @@ export namespace settings {
     }
 
     export function getTabSpaces(): number {
+        // using a function here as some point in the future we may want to allow users to configure this value, or use different values for different engines
         return 2;
     }
+
     export async function dotnet_server_downloader(): Promise<string> {
-        return (await getServerConnectionData()).dotnet_server_downloader;
+        // ensure the configuration data is loaded
+        await getServerConnectionData();
+        
+        // use the default configuration so that the custom config doesn't override the proxy downloader.
+        return defaultServerConnectionsData.dotnet_server_downloader;
     }
+
     export async function getServerEngineUrl(configName?: string): Promise<string> {
         let serverData = await getServerConnectionData();
         if (!configName)
             return serverData.dotnet_server_r4b;
 
-        if (!(configName in serverData)) {
-            // if this isn't the default source, try reading the value from the default source to allow for custom engines without requiring config changes
-            if (configUrl !== defaultConfigUrl) {
-                // read default source
-                const defaultConfigResponse = await fetch(defaultConfigUrl);
-                const defaultServerData = await defaultConfigResponse.json();
-                if (configName in defaultServerData) {
-                    console.log(`Config key '${configName}' not found in custom config, but found in default config — using that value.`);
-                    return defaultServerData[configName];
-                }
-            }
+        if (configName in defaultServerConnectionsData) {
+            console.log(`Using server connection configuration for '${configName}' from default config`);
+            return defaultServerConnectionsData[configName];
+        }
 
-            console.warn(`No server connection configuration found for '${configName}', using default`);
+        if (!(configName in serverData)) {
+            console.warn(`No server connection configuration found for '${configName}', using default dotnet engine`);
             return serverData.dotnet_server_r4b;
         }
 
