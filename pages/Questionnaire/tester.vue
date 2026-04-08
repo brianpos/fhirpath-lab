@@ -881,7 +881,7 @@ export default Vue.extend({
         return;
       }
 
-      console.log('[Embedded Mode] ✅ Received valid message:', message.messageType ?? 'Response to: ' + message.responseToMessageId ?? '');
+      console.log('[Embedded Mode] ✅ Received valid message:', message.messageType ?? 'Response to: ' + message.responseToMessageId);
 
       // Log the received message
       this.embeddedMessageLog.push({
