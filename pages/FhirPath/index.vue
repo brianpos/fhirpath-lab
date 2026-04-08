@@ -1827,10 +1827,18 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         this.removeMarkers(this.resourceJsonEditor, this.debugThisSelectionMarker);
         this.debugThisSelectionMarker = [];
 
+        const expression = this.getFhirpathExpression() ?? '';
         let ast: fpjsNode | undefined = undefined;
+        try {
+          ast = fhirpath.parse(expression);
+        }
+        catch {
+          ast = undefined;
+        }
+
         if (this.selectedEngine2?.legacyName?.indexOf("fhirpath.js") != -1){
           const astTab2 = this.$refs.astTabComponent2 as ParseTreeTab;
-          ast = astTab2?.displayTreeForExpression(this.getContextExpression() ?? '', this.getFhirpathExpression() ?? '');
+          astTab2?.displayTreeForExpression(this.getContextExpression() ?? '', expression);
         }
 
         // accumulate the variables
@@ -1857,45 +1865,20 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
           }
         }
         else {
-          console.log('No AST - scanning text for variables via tokens in expression editor');
-          let dvVars = new Set<string>();
-          const count = session.doc.getLength();
-          for (let row = 0; row<= count; row++){
-            if (session.doc.getLine(row).includes("%")){
-              const tkns = this.expressionEditor?.session.getTokens(row);
-              if (tkns){
-                for (const tkn of tkns){
-                  if (tkn.type === "fhir_identifier" && tkn.value == "defineVariable") {
-                    // check that there is a token for the identifier, which is 2 tokens ahead
-                    const tknIndex = tkns.indexOf(tkn);
-                    if (tknIndex + 2 < tkns.length){
-                      const varTkn = tkns[tknIndex + 2];
-                      if (varTkn.type === "fhir_string"){
-                        const dvName = varTkn.value.substring(1, varTkn.value.length - 1); // remove quotes
-                        dvVars.add(dvName);
-                      }
-                    }
-                  }
+          console.log('No parse tree - scanning editor tokens for variables');
+          const { definedVariables, usedVariables } = detectVariablesFromEditorTokens(session);
+          for (const varName of usedVariables) {
+            if (isSystemVariableName(varName)) continue;
+            if (definedVariables.has(varName)) continue;
 
-                  if (tkn.type === "fhir_variable"){
-                    const varName = canonicalVariableName(tkn.value);
-                    if (isSystemVariableName(varName)) continue;
-                    if (dvVars.has(varName)) continue; // was a defined variable
-
-                    if (!this.variables.has(varName)){
-                      // console.log(tkn.value + ' ' + varName);
-                      updatedVariables.set(varName, { name: varName,  data: undefined });
-                      // provide default implementation values for known env vars
-                      switch(varName){
-                        case 'ucum': updatedVariables.set(varName, "http://unitsofmeasure.org"); break;
-                      }
-                    }
-                    else {
-                      updatedVariables.set(varName, this.variables.get(varName));
-                    }
-                  }
-                }
+            if (!this.variables.has(varName)){
+              updatedVariables.set(varName, { name: varName,  data: undefined });
+              switch(varName){
+                case 'ucum': updatedVariables.set(varName, "http://unitsofmeasure.org"); break;
               }
+            }
+            else {
+              updatedVariables.set(varName, this.variables.get(varName));
             }
           }
         }
