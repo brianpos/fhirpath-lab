@@ -6,7 +6,8 @@
 # 8 April 2026
 * Updated fhirpath.js to 4.9.2
 * Updated support for chatgpt-5+
-* Updated npm dependencies in the Vuejs3 project to remove all known vulnerabilities (as of 8 April 2026)
+* Updated npm dependencies in the Vue3 project to remove all known vulnerabilities (as of 8 April 2026)
+* More reliable handling of the variable list in the fhirpath tester when using the `defineVariable()`
 
 # 4 April 2026
 * Add support for custom configuration via URL parameters (for testing new engines without needing to modify the lab source code) - see [docs/custom-configuration.md](docs/custom-configuration.md) for details

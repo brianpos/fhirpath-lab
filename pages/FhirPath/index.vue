@@ -908,6 +908,83 @@ interface ResourceNode {
   fullPropertyName(): string | undefined;
 }
 
+interface IExpressionEditorToken {
+  type: string;
+  value: string;
+}
+
+function extractStringLiteralValue(value: string): string | undefined {
+  const trimmedValue = value.trim();
+  if (trimmedValue.length < 2) return undefined;
+  if (!trimmedValue.startsWith("'") || !trimmedValue.endsWith("'")) return undefined;
+  return trimmedValue.substring(1, trimmedValue.length - 1).replaceAll("\\'", "'");
+}
+
+function isWhitespaceToken(token: IExpressionEditorToken): boolean {
+  return token.type === "text" && token.value.trim().length === 0;
+}
+
+function isLeftParenToken(token: IExpressionEditorToken): boolean {
+  return token.type === "fhir_paren.lparen" || token.value === "(";
+}
+
+function isRightParenToken(token: IExpressionEditorToken): boolean {
+  return token.type === "fhir_paren.rparen" || token.value === ")";
+}
+
+function flattenEditorTokens(session: ace.Ace.EditSession): IExpressionEditorToken[] {
+  const tokens: IExpressionEditorToken[] = [];
+  const rowCount = session.doc.getLength();
+  for (let row = 0; row < rowCount; row++) {
+    const rowTokens = session.getTokens(row) ?? [];
+    tokens.push(...rowTokens.map((token) => ({ type: token.type, value: token.value })));
+  }
+  return tokens;
+}
+
+function getDefineVariableNameFromTokens(tokens: IExpressionEditorToken[], startIndex: number): string | undefined {
+  let sawOpenParen = false;
+  for (let tokenIndex = startIndex + 1; tokenIndex < tokens.length; tokenIndex++) {
+    const token = tokens[tokenIndex];
+    if (isWhitespaceToken(token)) continue;
+
+    if (!sawOpenParen) {
+      if (isLeftParenToken(token)) {
+        sawOpenParen = true;
+      }
+      continue;
+    }
+
+    if (isRightParenToken(token)) {
+      return undefined;
+    }
+
+    return extractStringLiteralValue(token.value);
+  }
+  return undefined;
+}
+
+function detectVariablesFromEditorTokens(session: ace.Ace.EditSession): { definedVariables: Set<string>, usedVariables: Set<string> } {
+  const definedVariables = new Set<string>();
+  const usedVariables = new Set<string>();
+  const tokens = flattenEditorTokens(session);
+
+  tokens.forEach((token, index) => {
+    if (token.type === "fhir_identifier" && token.value === "defineVariable") {
+      const definedVariableName = getDefineVariableNameFromTokens(tokens, index);
+      if (definedVariableName) {
+        definedVariables.add(definedVariableName);
+      }
+    }
+
+    if (token.type === "fhir_variable") {
+      usedVariables.add(canonicalVariableName(token.value));
+    }
+  });
+
+  return { definedVariables, usedVariables };
+}
+
 function canonicalVariableName(name: string): string {
   if (name.startsWith("%")) name = name.substring(1);
   if (name.startsWith("`")) name = name.substring(1);

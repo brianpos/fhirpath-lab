@@ -90,6 +90,37 @@ import fhirpath_r5_model from "fhirpath/fhir-context/r5";
 import { settings } from "~/helpers/user_settings";
 import { mapFunctionReferences, mapOperatorReferences, ISpecFunctionDetails } from "~/helpers/fhirpath_references";
 
+function canonicalVariableName(name: string): string {
+  if (name.startsWith("%")) name = name.substring(1);
+  if (name.startsWith("`")) name = name.substring(1);
+  if (name.endsWith("`")) name = name.substring(0, name.length - 1);
+  if (name.indexOf("\\`") !== -1) name = name.replaceAll("\\`", "`");
+  return name;
+}
+
+function parseTreeStringLiteralValue(text: string | undefined): string | undefined {
+  if (!text || text.length < 2) return undefined;
+  if (!text.startsWith("'") || !text.endsWith("'")) return undefined;
+  return text.substring(1, text.length - 1).replaceAll("\\'", "'");
+}
+
+function getDefineVariableName(node: fpjsNode): string | undefined {
+  if (node.type !== 'Functn') return undefined;
+  if (node.children?.[0]?.type !== 'Identifier' || node.children[0].text !== 'defineVariable') return undefined;
+  const firstArgument = node.children[1]?.children?.[0];
+  return parseTreeStringLiteralValue(firstArgument?.text);
+}
+
+function getExternalVariableName(node: fpjsNode): string | undefined {
+  if (node.type !== 'ExternalConstantTerm') return undefined;
+  if (node.text) return canonicalVariableName(node.text);
+
+  const identifierNode = node.children?.[0]?.children?.[0];
+  if (identifierNode?.type === 'Identifier' && identifierNode.text) {
+    return canonicalVariableName(identifierNode.text);
+  }
+}
+
 /** Scan the expression tree and report all the names of any variables defined using `defineVariable`
  * (Note: this only scans for `defineVariable` calls, other variable definition mechanisms are not detected, 
  * and is not sensitive to scope - that is a separate concern)
@@ -100,14 +131,9 @@ import { mapFunctionReferences, mapOperatorReferences, ISpecFunctionDetails } fr
  */
 export function GetExpressionDefinedVariables(node: fpjsNode): string[] {
   let result: string[] = [];
-  if (node.type === 'Functn') {
-    if (node.children?.length === 2 && node.children[1].children){
-      if (node.children[0].text === 'defineVariable' && node.children[0].type === 'Identifier'){
-        let varName = node.children[1].children[0].text;
-        varName = varName.substring(1, varName.length - 1);
-        result.push(varName);
-      }
-    }
+  const definedVariableName = getDefineVariableName(node);
+  if (definedVariableName) {
+    result.push(definedVariableName);
   }
   if (node.children) {
     node.children.forEach((element) => {
@@ -121,8 +147,9 @@ export function GetExpressionDefinedVariables(node: fpjsNode): string[] {
 
 export function GetExternalVariablesUsed(node: fpjsNode, ignoreVar: string[] = []) : string[] {
   let result: string[] = [];
-  if (node.type === 'ExternalConstantTerm' && node.text){
-    let varName = node.text;
+  const externalVariableName = getExternalVariableName(node);
+  if (externalVariableName) {
+    let varName = externalVariableName;
     if (!ignoreVar.includes(varName) && !result.includes(varName)){
       result.push(varName);
     }
