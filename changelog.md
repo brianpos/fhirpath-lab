@@ -3,6 +3,11 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+# 8 April 2026
+* Updated fhirpath.js to 4.9.2
+* Updated support for chatgpt-5+
+* Updated npm dependencies in the Vuejs3 project to remove all known vulnerabilities (as of 8 April 2026)
+
 # 4 April 2026
 * Add support for custom configuration via URL parameters (for testing new engines without needing to modify the lab source code) - see [docs/custom-configuration.md](docs/custom-configuration.md) for details
 * Add support for the new MaLaC-HD server for FHIR mapping testing
