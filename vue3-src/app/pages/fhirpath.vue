@@ -8,51 +8,59 @@
           <v-toolbar-title>FHIRPath Tester</v-toolbar-title>
           <v-spacer />
           
-          <v-tooltip location="bottom">
+          <v-tooltip location="bottom" :disabled="isFhirVersionMenuOpen">
             <template v-slot:activator="{ props }">
-              <v-select 
-                dark 
-                style="max-width: 6ch; margin-right: 8px; margin-left: 8px;" 
-                :items="fhirVersions" 
-                v-model="selectedFhirVersion" 
-                hide-details="auto" 
-                @update:modelValue="changeFhirVersion"
-                density="compact"
-                v-bind="props"
-              />
+              <div class="toolbar-select-activator" v-bind="props">
+                <v-select 
+                  dark 
+                  style="max-width: 6ch; margin-right: 8px; margin-left: 8px;" 
+                  :items="fhirVersions" 
+                  v-model="selectedFhirVersion" 
+                  hide-details="auto" 
+                  @update:modelValue="changeFhirVersion"
+                  @update:menu="isFhirVersionMenuOpen = $event"
+                  density="compact"
+                />
+              </div>
             </template>
             <span>Evaluate using FHIR Version</span>
           </v-tooltip>
           
           <v-tooltip location="bottom" :disabled="isEngineMenuOpen">
             <template v-slot:activator="{ props }">
-              <v-select 
-                dark 
-                style="max-width: 13ch" 
-                :items="engines" 
-                item-title="name"
-                return-object 
-                v-model="selectedEngine" 
-                hide-details="auto" 
-                @update:modelValue="evaluateExpression"
-                @update:menu="isEngineMenuOpen = $event"
-                density="compact"
-                v-bind="props"
-              >
-                <template v-slot:item="{ item, props }">
-                  <v-list-item v-bind="props" :title="engineTooltip(item.raw)">
-                    <template v-slot:title>
-                      <span v-if="!item.raw.external">{{ item.raw.name }}</span>
-                      <span v-else class="external-engine">
-                        <v-icon size="small">mdi-web</v-icon> {{ item.raw.name }} *
-                      </span>
-                    </template>
-                    <template v-slot:subtitle>
-                      <span :class="item.raw.external ? 'external-engine' : ''">{{ item.raw.publisher }}</span>
-                    </template>
-                  </v-list-item>
-                </template>
-              </v-select>
+              <div class="toolbar-select-activator" v-bind="props">
+                <v-select 
+                  dark 
+                  style="max-width: 13ch" 
+                  :items="engines" 
+                  item-title="name"
+                  return-object 
+                  v-model="selectedEngine" 
+                  hide-details="auto" 
+                  @update:modelValue="evaluateExpression"
+                  @update:menu="isEngineMenuOpen = $event"
+                  density="compact"
+                >
+                  <template v-slot:item="{ item, props }">
+                    <div class="engine-item-tooltip-activator">
+                      <v-list-item v-bind="props">
+                        <template v-slot:title>
+                          <span v-if="!item.external">{{ item.name }}</span>
+                          <span v-else class="external-engine">
+                            <v-icon size="small">mdi-web</v-icon> {{ item.name }} *
+                          </span>
+                        </template>
+                        <template v-slot:subtitle>
+                          <span :class="item.external ? 'external-engine' : ''">{{ item.publisher }}</span>
+                        </template>
+                      </v-list-item>
+                      <v-tooltip activator="parent" location="end">
+                        <span class="engine-tooltip-content">{{ engineTooltip(item) }}</span>
+                      </v-tooltip>
+                    </div>
+                  </template>
+                </v-select>
+              </div>
             </template>
             <span style="white-space: pre-line;">{{ engineTooltip(selectedEngine) }}</span>
           </v-tooltip>
@@ -379,6 +387,7 @@ const astData = ref<ParseTreeNode | null>(null)
 const fhirVersions = ['R4', 'R5', 'R6']
 const selectedFhirVersion = ref<string>('R4')
 const selectedEngine = ref<IFhirPathEngineDetails | undefined>()
+const isFhirVersionMenuOpen = ref<boolean>(false)
 // Track engine menu state to hide tooltip when menu is open (prevents tooltip from staying visible behind the dropdown)
 const isEngineMenuOpen = ref<boolean>(false)
 
@@ -1029,6 +1038,18 @@ const evaluateExpression = async () => {
 
 .external-engine {
   color: blueviolet !important;
+}
+
+.toolbar-select-activator {
+  display: inline-flex;
+}
+
+.engine-item-tooltip-activator {
+  display: block;
+}
+
+.engine-tooltip-content {
+  white-space: pre-line;
 }
 
 .tab-content {
