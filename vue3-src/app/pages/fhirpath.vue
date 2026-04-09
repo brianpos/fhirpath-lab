@@ -531,6 +531,7 @@ const tabDetails = computed<TabData[]>(() => [
     title: "Abstract Syntax Tree",
     show: true,
     enabled: true,
+    keepMounted: true,
   },
   {
     iconName: "mdi-bug-outline",
