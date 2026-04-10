@@ -265,7 +265,7 @@ export default class ResourceJsonEditor extends Vue {
   }
 
   detectResourceType() {
-    const content = this.internalResourceText.trim();
+    const content = this.internalResourceText?.trim() ?? '';
     if (content.startsWith('<')) {
       if (this.resourceType != 'xml') {
         this.resourceType = 'xml';
