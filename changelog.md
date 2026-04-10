@@ -3,6 +3,9 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+# 11 April 2026
+* Updated fhirpath.js to 4.9.3
+
 # 8 April 2026
 * Updated fhirpath.js to 4.9.2
 * Updated support for chatgpt-5+
