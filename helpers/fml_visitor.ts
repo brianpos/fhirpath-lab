@@ -410,17 +410,33 @@ export class FmlModelBuilder {
     const qualIdNodes = (ctx as any).qualifiedIdentifier_list?.();
     const nameNode = (ctx as any).ruleName?.();
     
-    if (qualIdNodes) {
-      // This is a MapSimpleCopyContext - simple copy rule
+    if (qualIdNodes && qualIdNodes.length >= 2) {
+      // This is a MapSimpleCopyContext - simple copy rule: src.x -> tgt.y;
       const name = nameNode ? this.removeQuotes(nameNode.getText()) : undefined;
       
-      // For simple copy, create a basic rule
-      // The qualifiedIdentifiers represent source -> target mappings
+      const srcText = qualIdNodes[0].getText();
+      const tgtText = qualIdNodes[1].getText();
+      const srcDot = srcText.indexOf('.');
+      const tgtDot = tgtText.indexOf('.');
+      
+      const srcContext = srcDot > 0 ? srcText.substring(0, srcDot) : srcText;
+      const srcElement = srcDot > 0 ? srcText.substring(srcDot + 1) : undefined;
+      const tgtContext = tgtDot > 0 ? tgtText.substring(0, tgtDot) : tgtText;
+      const tgtElement = tgtDot > 0 ? tgtText.substring(tgtDot + 1) : undefined;
+      
       return {
         position: this.getPosition(ctx),
         name,
-        sources: [],
-        targets: [],
+        sources: [{
+          position: this.getPosition(qualIdNodes[0]),
+          context: srcContext,
+          element: srcElement,
+        }],
+        targets: [{
+          position: this.getPosition(qualIdNodes[1]),
+          context: tgtContext,
+          element: tgtElement,
+        }],
         dependent: undefined
       };
     }
