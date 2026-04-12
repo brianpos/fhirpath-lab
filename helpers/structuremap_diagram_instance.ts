@@ -1,5 +1,6 @@
 import { StructureMap, StructureMapGroupRule } from "fhir/r4b";
 import type { FmlStructureMap, Rule as FmlRule, RuleDependent } from "./fml_models";
+import type { Model } from "fhirpath";
 
 // ===== Exported Data Types =====
 
@@ -73,7 +74,7 @@ interface VarInfo {
  * For each group, identifies source/target types and the properties
  * accessed within each type by walking rule sources and targets.
  */
-export function extractStructureMapDiagram(map: StructureMap): StructureMapDiagram {
+export function extractStructureMapDiagram(map: StructureMap, model?: Model, showMissingProperties?: boolean): StructureMapDiagram {
   const groups: DiagramGroup[] = [];
   nextRuleId = 0;
   nextConnectionId = 0;
@@ -888,8 +889,8 @@ function renderSankeyRibbon(
  * Each group is rendered as a box containing source and target type boxes
  * with the properties read/written listed inside each type box.
  */
-export function generateInstanceDiagramSvg(map: StructureMap): string {
-  const data = extractStructureMapDiagram(map);
+export function generateInstanceDiagramSvg(map: StructureMap, model?: Model, showMissingProperties?: boolean): string {
+  const data = extractStructureMapDiagram(map, model, showMissingProperties);
 
   if (data.groups.length === 0) {
     return [
