@@ -117,10 +117,17 @@ export function extractStructureMapDiagram(map: StructureMap, model?: Model, sho
     // Prune "no data flow" connections from source→target.
     // When a target has fixedValue or a self-contained transformFunction
     // (no valueId params), no data actually flows from the source — the
-    // connector is misleading. Remove connectionIds from such targets
-    // AND the corresponding source entries.
+    // connector is misleading.  Remove the connectionId from those
+    // individual targets so they don't show ports/ribbons.
     // Only prune connections rooted in sourceTypes — target-to-target
     // connections (used by splitSecondaryTargets) must be preserved.
+    //
+    // Important: in multi-target rules (e.g. `src.x as s -> tgt.a = create(..) as t,
+    // t.b = 'fixed', t.c = s`) all targets share the same connectionId.
+    // We must NOT remove the connectionId from targets that DO consume
+    // source data (like `t.c = s`) just because a sibling target has
+    // noSourceData.  So we remove per-target, then clean up source entries
+    // only when NO surviving targets reference their connectionId.
     const srcBoxConnIds = new Set<number>();
     for (const dt of sourceTypes) {
       for (const p of dt.properties) {
@@ -128,30 +135,35 @@ export function extractStructureMapDiagram(map: StructureMap, model?: Model, sho
         for (const addl of p.additionalConnectionIds || []) srcBoxConnIds.add(addl);
       }
     }
-    const noDataFlowConnIds = new Set<number>();
+    // Remove connectionId from individual targets that don't consume source data
     for (const dt of targetTypes) {
       for (const p of dt.properties) {
         if (p.role === "target" && p.connectionId !== undefined &&
             srcBoxConnIds.has(p.connectionId) && p.noSourceData) {
-          noDataFlowConnIds.add(p.connectionId);
-        }
-      }
-    }
-    // Remove "no data flow" connectionIds from targets and sources
-    for (const dt of targetTypes) {
-      for (const p of dt.properties) {
-        if (p.connectionId !== undefined && noDataFlowConnIds.has(p.connectionId)) {
           p.connectionId = undefined;
         }
       }
     }
+    // Collect connectionIds that still have at least one surviving target
+    const survivingTargetConnIds = new Set<number>();
+    for (const dt of targetTypes) {
+      for (const p of dt.properties) {
+        if (p.role === "target" && p.connectionId !== undefined) {
+          survivingTargetConnIds.add(p.connectionId);
+        }
+      }
+    }
+    // Remove source connectionIds only when no target references them any more
     for (const dt of sourceTypes) {
       for (const p of dt.properties) {
-        if (p.connectionId !== undefined && noDataFlowConnIds.has(p.connectionId)) {
+        if (p.connectionId !== undefined && srcBoxConnIds.has(p.connectionId) &&
+            !survivingTargetConnIds.has(p.connectionId)) {
           p.connectionId = undefined;
         }
         if (p.additionalConnectionIds) {
-          p.additionalConnectionIds = p.additionalConnectionIds.filter(id => !noDataFlowConnIds.has(id));
+          p.additionalConnectionIds = p.additionalConnectionIds.filter(
+            id => survivingTargetConnIds.has(id)
+          );
           if (p.additionalConnectionIds.length === 0) p.additionalConnectionIds = undefined;
         }
       }
@@ -391,6 +403,14 @@ function collectProperties(
           // self-contained functions with no variable references)
           const hasVariableRef = (tgt.parameter || []).some((p: any) => p.valueId !== undefined);
           if (entry.fixedValue || (fnDesc && !hasVariableRef)) {
+            entry.noSourceData = true;
+          }
+          // Explicit create/cc/c transforms that don't reference source
+          // variables don't consume source data — UNLESS the target also
+          // serves as context for sub-rules (variable + sub-rules), in which
+          // case data flows through the sub-rules.
+          const isCreateContext = tgt.variable && rule.rule && rule.rule.length > 0;
+          if (isCreateTransform(tgt.transform) && !hasVariableRef && !isCreateContext) {
             entry.noSourceData = true;
           }
           // A target with a variable allocated but not receiving data from
