@@ -188,6 +188,16 @@
               @apply-suggested-jsonpatch="copySuggestionToClipboard" />
           </template>
 
+          <template v-slot:Diagram>
+              <div v-if="diagramSvg" v-html="diagramSvg" style="overflow: auto;" @click="handleDiagramClick"></div>
+              <div v-else style="color: #999; font-style: italic;">No diagram available</div>
+          </template>
+
+          <template v-slot:Instance>
+              <div v-if="instanceSvg" v-html="instanceSvg" style="overflow: auto;" @click="handleDiagramClick"></div>
+              <div v-else style="color: #999; font-style: italic;">No instance diagram available</div>
+          </template>
+
           <template v-slot:Debug>
             <resource-editor textLabel="Debug" :readOnly="true" :resourceText="debugText" />
           </template>
@@ -416,6 +426,8 @@ import ResourceEditor from "~/components/ResourceEditor.vue";
 
 import { parseFML } from "~/helpers/fml_parser";
 import type { FmlStructureMap } from "~/helpers/fml_models";
+import { generateInstanceDiagramSvg, fmlToStructureMapForDiagram } from "~/helpers/structuremap_diagram_instance";
+import { generateStructureMapDiagramSvg } from "~/helpers/structuremap_diagram";
 import xmlFormat from 'xml-formatter';
 import { createFhirLogicalModel, CreateLogicalModelOptions } from '~/helpers/logical_model_generator';
 
@@ -544,6 +556,9 @@ interface FhirMapData {
   openAILastContext: string;
   openAIexpressionExplanationLoading: boolean;
   parsedFmlMap?: FmlStructureMap;
+  instanceSvg?: string;
+  diagramSvg?: string;
+  diagramDebounceTimer?: ReturnType<typeof setTimeout>;
 
   // debugger state information
   debugTracePosition: number;
@@ -674,6 +689,7 @@ export default Vue.extend({
 
   beforeDestroy() {
     document.removeEventListener('keydown', this.DebugFunctionKeyHandler);
+    if (this.diagramDebounceTimer) clearTimeout(this.diagramDebounceTimer);
   },
 
   computed: {
@@ -750,6 +766,20 @@ export default Vue.extend({
           tabHeaderName: "FHIRPath AI Chat",
           title: "FHIRPath AI Chat",
           show: this.chatEnabled,
+          enabled: true,
+        },
+        {
+          iconName: "mdi-vector-polygon",
+          tabName: "Diagram",
+          title: "Rule-level view showing source/target type boxes with property mappings",
+          show: true,
+          enabled: true,
+        },
+        {
+          iconName: "mdi-file-document-outline",
+          tabName: "Instance",
+          title: "Instance-level view showing source/target objects with mapped and unmapped properties",
+          show: this.showAdvancedSettings,
           enabled: true,
         },
         {
@@ -1492,7 +1522,57 @@ group SetEntryData(source src: Patient, target entry)
     },
 
     fhirpathExpressionChangedEvent() {
+      if (this.diagramDebounceTimer) clearTimeout(this.diagramDebounceTimer);
+      this.diagramDebounceTimer = setTimeout(() => {
+        this.regenerateInstanceDiagram();
+      }, 500);
     },
+
+    regenerateInstanceDiagram() {
+      const fmlText = this.getFhirpathExpression();
+      if (!fmlText) {
+        this.parsedFmlMap = undefined;
+        this.instanceSvg = undefined;
+        this.diagramSvg = undefined;
+        return;
+      }
+      const result = parseFML(fmlText);
+      if ('resourceType' in result && result.resourceType === 'OperationOutcome') {
+        this.parsedFmlMap = undefined;
+        this.instanceSvg = undefined;
+        this.diagramSvg = undefined;
+        return;
+      }
+      const fmlMap = result as FmlStructureMap;
+      this.parsedFmlMap = fmlMap;
+      try {
+        const fhirMap = fmlToStructureMapForDiagram(fmlMap);
+        this.instanceSvg = generateInstanceDiagramSvg(fhirMap);
+        this.diagramSvg = generateStructureMapDiagramSvg(fhirMap);
+      } catch (e) {
+        console.error('Failed to generate instance diagram:', e);
+        this.instanceSvg = undefined;
+        this.diagramSvg = undefined;
+      }
+    },
+
+    handleDiagramClick(event: MouseEvent) {
+      let el = event.target as Element | null;
+      while (el) {
+        const start = el.getAttribute?.('data-pos-start');
+        const end = el.getAttribute?.('data-pos-end');
+        if (start != null && end != null) {
+          const startPos = parseInt(start, 10);
+          const endPos = parseInt(end, 10);
+          if (!isNaN(startPos) && !isNaN(endPos) && endPos > startPos) {
+            this.highlightText(this.expressionEditor, startPos, endPos - startPos);
+          }
+          return;
+        }
+        el = el.parentElement;
+      }
+    },
+
     tabTitle() {
       if (this.getResourceJson() && this.resourceJsonChanged) return '(local resource JSON)';
       return this.resourceId;
@@ -1755,11 +1835,22 @@ group SetEntryData(source src: Patient, target entry)
           // Store the error but continue execution
           console.log('FML parsing failed:', result);
           this.parsedFmlMap = undefined;
+          this.instanceSvg = undefined;
+          this.diagramSvg = undefined;
         } else {
           // Store the successfully parsed map
           const fmlMap = result as FmlStructureMap;
           console.log('FML map parsed successfully:', JSON.parse(JSON.stringify(fmlMap)));
           this.parsedFmlMap = fmlMap;
+          try {
+            const fhirMap = fmlToStructureMapForDiagram(fmlMap);
+            this.instanceSvg = generateInstanceDiagramSvg(fhirMap);
+            this.diagramSvg = generateStructureMapDiagramSvg(fhirMap);
+          } catch (e) {
+            console.error('Failed to generate instance diagram:', e);
+            this.instanceSvg = undefined;
+            this.diagramSvg = undefined;
+          }
         }
       }
 
@@ -1872,6 +1963,9 @@ group SetEntryData(source src: Patient, target entry)
       expressionEditor: undefined,
       testResourceFormat: "json",
       parsedFmlMap: undefined,
+      instanceSvg: undefined,
+      diagramSvg: undefined,
+      diagramDebounceTimer: undefined,
 
       debugTracePosition: 0,
       debugMapSelectionMarker: [],

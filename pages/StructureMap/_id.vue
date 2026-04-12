@@ -27,57 +27,46 @@
             </v-icon>
           </v-btn>
         </v-toolbar>
-        <v-tabs vertical v-model="tab">
-          <v-tab>
-            <v-icon left> mdi-card-bulleted-settings-outline </v-icon>
-            Details
-          </v-tab>
-          <v-tab>
-            <v-icon left> mdi-download-network-outline </v-icon>
-            Publishing
-          </v-tab>
-          <v-tab>
-            <v-icon left> mdi-file-tree </v-icon>
-            Map
-          </v-tab>
-
-          <v-tabs-items touchless v-model="tab">
-            <v-tab-item>
+        <twin-pane-tab :tabs="tabDetails" @mounted="twinPaneMounted" ref="twinTabControl">
+          <template v-slot:Details>
               <!-- Details -->
               <conformance-resource-details-tab :raw="raw" :readonly="readonly"
-                :showAdvancedSettings="showAdvancedSettings" @update="updateNow" />
-            </v-tab-item>
+                :hideHeader="true" :showAdvancedSettings="showAdvancedSettings" @update="updateNow" />
+          </template>
 
-            <v-tab-item>
+          <template v-slot:Publishing>
               <!-- Publishing -->
               <conformance-resource-publishing-tab :raw="raw" :publishedVersions="publishedVersions"
-                :lockPublisher="false"
+                :lockPublisher="false" :hideHeader="true"
                 :readonly="readonly" :showAdvancedSettings="showAdvancedSettings" @update="updateNow" />
-            </v-tab-item>
+          </template>
 
-            <v-tab-item>
+          <template v-slot:Map>
               <!-- Content -->
-              <v-card flat>
-                <v-card-text>
-                  <p class="fl-tab-header">Elements</p>
-                  <v-textarea :value="rawMap"></v-textarea>
-                </v-card-text>
-              </v-card>
-            </v-tab-item>
-          </v-tabs-items>
-        </v-tabs>
+              <resource-editor label="FML" :resourceText="rawMap" :readOnly="true" />
+          </template>
+
+          <template v-slot:Diagram>
+              <!-- Diagram -->
+              <div v-if="diagramSvg" v-html="diagramSvg" style="overflow: auto;"></div>
+              <div v-else style="color: #999; font-style: italic;">No diagram available</div>
+          </template>
+
+
+          <template v-slot:Instance>
+              <!-- Instance -->
+              <div v-if="instanceSvg" v-html="instanceSvg" style="overflow: auto;"></div>
+              <div v-else style="color: #999; font-style: italic;">No instance diagram available</div>
+          </template>
+
+          <template v-slot:json>
+            <resource-editor label="StructureMap ID" :resourceUrl="loadedUrl" :resourceText="JSON.stringify(raw, null, tabSpaces())" :readOnly="true" />
+          </template>
+        </twin-pane-tab>
       </v-card>
       <br />
       <OperationOutcomeOverlay v-if="showOutcome" :saveOutcome="saveOutcome" :showOutcome="showOutcome"
         title="Error Saving" @close="clearOutcome" />
-      <v-expansion-panels accordion>
-        <v-expansion-panel>
-          <v-expansion-panel-header>Raw JSON</v-expansion-panel-header>
-          <v-expansion-panel-content>
-            <code><pre v-text="JSON.stringify(raw, null, tabSpaces())" /></code>
-          </v-expansion-panel-content>
-        </v-expansion-panel>
-      </v-expansion-panels>
     </div>
     <table-loading v-if="saving || !raw" />
   </div>
@@ -119,8 +108,15 @@ import {
   unsetFavourite,
 } from "~/helpers/favourites";
 import { BaseResource_defaultValues } from "~/models/BaseResourceTableData";
+import StructureMapUtilitiesRender from "~/helpers/structuremap_to_fml";
+import { generateStructureMapDiagramSvg } from "~/helpers/structuremap_diagram";
+import { generateInstanceDiagramSvg } from "~/helpers/structuremap_diagram_instance";
+import TwinPaneTab from "~/components/TwinPaneTab.vue";
+import ResourceEditor from "~/components/ResourceEditor.vue";
+import fhirpath_r4_model from "fhirpath/fhir-context/r4";
 
 export default Vue.extend({
+  components: { ResourceEditor },
   mounted() {
     if (this.$route.query.fhirserver){
       this.fhirServerUrl = this.$route.query.fhirserver as string;
@@ -176,6 +172,11 @@ export default Vue.extend({
       if (this.raw) {
         this.isFavourite = isFavourite(this.raw.resourceType, this.raw.id);
         document.title = `Structure Map: ${this.raw.title ?? this.raw.name }`;  
+
+        this.rawMap = StructureMapUtilitiesRender.render(this.raw);
+        this.diagramSvg = generateStructureMapDiagramSvg(this.raw);
+        this.instanceSvg = generateInstanceDiagramSvg(this.raw, fhirpath_r4_model as any, true);
+        // this.rawMap = JSON.stringify(this.raw, null, 2);
       }
     },
     async saveData() {
@@ -205,7 +206,52 @@ export default Vue.extend({
     return {
       raw: null,
       rawMap: null,
+      diagramSvg: null as string | null,
+      flowSvg: null as string | null,
+      sankeySvg: null as string | null,
+      instanceSvg: null as string | null,
       publishedVersions: [],
+      tabDetails: [
+        {
+          iconName: "mdi-card-bulleted-settings-outline",
+          tabName: "Details",
+          show: true,
+          enabled: true,
+        },
+        {
+          iconName: "mdi-download-network-outline",
+          tabName: "Publishing",
+          show: true,
+          enabled: true,
+        },
+        {
+          iconName: "mdi-file-tree",
+          tabName: "Map",
+          title: "FML representation of the StructureMap",
+          show: true,
+          enabled: true,
+        },
+        {
+          iconName: "mdi-vector-polygon",
+          tabName: "Diagram",
+          title: "Visual diagram of group inputs, outputs and mapped properties",
+          show: true,
+          enabled: true,
+        },
+        {
+          iconName: "mdi-file-document-outline",
+          tabName: "Instance",
+          title: "Instance-level view showing source/target objects with mapped and unmapped properties",
+          show: true,
+          enabled: true,
+        },
+        {
+          iconName: "mdi-code-json",
+          tabName: "json",
+          show: true,
+          enabled: true,
+        },
+      ],
       ...BaseResource_defaultValues,
     };
   },
