@@ -238,13 +238,13 @@ class StructureMapUtilitiesRender {
             b.push(` as ${rs.variable}`);
         }
         if (rs.condition) {
-            b.push(` where ${rs.condition}`);
+            b.push(` where (${rs.condition})`);
         }
         if (rs.check) {
-            b.push(` check ${rs.check}`);
+            b.push(` check (${rs.check})`);
         }
         if (rs.logMessage) {
-            b.push(` log ${rs.logMessage}`);
+            b.push(` log (${rs.logMessage})`);
         }
     }
     
