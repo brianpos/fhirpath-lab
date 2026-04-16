@@ -8,7 +8,11 @@
         <div>New: {{ formatBytes(rawProgressNew) }}</div>
       </div>
     </div>
-    <v-progress-linear v-if="!rawError" indeterminate color="primary" style="max-width: 400px; margin: 20px auto;" />
+    <v-progress-linear v-if="!rawError && !rawErrorOld && !rawErrorNew" indeterminate color="primary" style="max-width: 400px; margin: 20px auto;" />
+    <div v-if="rawErrorOld || rawErrorNew" style="max-width: 500px; margin: 10px auto; text-align: left; word-break: break-all;">
+      <p v-if="rawErrorOld" style="color: red;"><strong>Old:</strong> {{ rawErrorOld }}</p>
+      <p v-if="rawErrorNew" style="color: red;"><strong>New:</strong> {{ rawErrorNew }}</p>
+    </div>
     <p v-if="rawError" style="color: red;">{{ rawError }}</p>
   </div>
   <div v-else class="main">
@@ -95,6 +99,8 @@ const downloaderPrefix = 'https://fhirpath-lab-dotnet2.azurewebsites.net/api/dow
 const rawMode = ref(false)
 const rawStatus = ref('')
 const rawError = ref('')
+const rawErrorOld = ref('')
+const rawErrorNew = ref('')
 const rawProgressOld = ref(0)
 const rawProgressNew = ref(0)
 
@@ -105,6 +111,7 @@ const newUrl = ref('https://build.fhir.org/ig/HL7/FHIRPath/branches/BP-2026-03-q
 // Internal state for raw mode
 const oldSpecHtml = ref('')
 const newSpecHtml = ref('')
+const activeOldUrl = ref('')
 const activeNewUrl = ref('')
 
 // Methods
@@ -121,20 +128,26 @@ function startCompare() {
 }
 
 function wrapWithProxy(url: string): string {
-  if (url.startsWith('http://build.fhir.org/') || url.startsWith('http://hl7.org/fhir/'))
+    if (url.startsWith('http://hl7.org/fhir/'))
     url = 'https://' + url.substring(7)
 
-  if (url.startsWith('https://build.fhir.org/') || url.startsWith('https://github.com/HL7/') || url.startsWith('https://hl7.org/fhir/'))
+  if (url.startsWith('https://github.com/HL7/') || url.startsWith('https://hl7.org/fhir/'))
     url = downloaderPrefix + url
 
-  return url
+    return url
 }
 
 function getBaseUrl(url: string): string {
   if (url.startsWith(downloaderPrefix)) {
     url = url.substring(downloaderPrefix.length)
   }
-  return url.substring(0, url.lastIndexOf('/') + 1)
+  // If the last path segment has no extension, treat it as a directory
+  const lastSlash = url.lastIndexOf('/')
+  const lastSegment = url.substring(lastSlash + 1)
+  if (!lastSegment || lastSegment.indexOf('.') === -1) {
+    return url.endsWith('/') ? url : url + '/'
+  }
+  return url.substring(0, lastSlash + 1)
 }
 
 function rebaseHeadUrls(html: string, baseUrl: string): string {
@@ -195,18 +208,46 @@ async function comparePages() {
   try {
     rawStatus.value = 'Computing diff...'
     const val = await executeDiffInWorker(oldHtml, newHtml)
-    renderRawDiff(val, activeNewUrl.value)
+    renderRawDiff(val, activeOldUrl.value, activeNewUrl.value)
   } catch (e) {
     console.error(e)
     rawError.value = 'Diff computation failed: ' + (e as Error).message
   }
 }
 
-function renderRawDiff(diffHtml: string, newPageUrl: string) {
-  const baseUrl = getBaseUrl(newPageUrl)
+function rewriteRelativeLinks(html: string, oldBaseUrl: string, newBaseUrl: string): string {
+  const tempDiv = document.createElement('div')
+  tempDiv.innerHTML = html
+  const diffPagePath = window.location.pathname
+  tempDiv.querySelectorAll('a[href]').forEach(el => {
+    const href = el.getAttribute('href')
+    if (!href) return
+    // Skip absolute, anchor-only, mailto, data, javascript links
+    if (/^(https?:\/\/|\/\/|#|mailto:|data:|javascript:)/i.test(href)) return
+    // Skip non-page resources
+    if (/\.(css|js|png|jpg|jpeg|gif|svg|ico|woff2?|ttf|eot|json|xml|zip|pdf)$/i.test(href)) return
+    // Strip any fragment for URL resolution, preserve it for display
+    const [path, fragment] = href.split('#')
+    if (!path) return // anchor-only like #foo was already skipped, but just in case
+    try {
+      const newTarget = new URL(path, newBaseUrl).href
+      const oldTarget = new URL(path, oldBaseUrl).href
+      const diffUrl = diffPagePath + '?old=' + encodeURIComponent(oldTarget) + '&new=' + encodeURIComponent(newTarget)
+      el.setAttribute('href', diffUrl + (fragment ? '#' + fragment : ''))
+    } catch (_) {
+      // If URL resolution fails, leave link as-is
+    }
+  })
+  return tempDiv.innerHTML
+}
 
-  const headContent = rebaseHeadUrls(newSpecHtml.value, baseUrl)
-  diffHtml = rebaseBodySrcUrls(diffHtml, baseUrl)
+function renderRawDiff(diffHtml: string, oldPageUrl: string, newPageUrl: string) {
+  const newBaseUrl = getBaseUrl(newPageUrl)
+  const oldBaseUrl = getBaseUrl(oldPageUrl)
+
+  const headContent = rebaseHeadUrls(newSpecHtml.value, newBaseUrl)
+  diffHtml = rebaseBodySrcUrls(diffHtml, newBaseUrl)
+  diffHtml = rewriteRelativeLinks(diffHtml, oldBaseUrl, newBaseUrl)
 
   const fullHtml = `<!DOCTYPE html>
 <html>
@@ -346,31 +387,60 @@ window.addEventListener('load', function() {
   document.close()
 }
 
+function formatDownloadError(error: any, url: string): string {
+  if (error.response) {
+    const status = error.response.status
+    const statusText = error.response.statusText || ''
+    const data = typeof error.response.data === 'string' ? error.response.data.substring(0, 200) : ''
+    return `${url} — ${status} ${statusText}${data ? ': ' + data : ''}`
+  }
+  return `${url} — ${error.message || 'Unknown error'}`
+}
+
+function resolvedUrl(response: any, originalUrl: string, usedProxy: boolean): string {
+  if (usedProxy) return originalUrl
+  const finalUrl = response.request?.responseURL
+  if (!finalUrl) return originalUrl
+  return finalUrl
+}
+
 function downloadAndCompare(oldPageUrl: string, newPageUrl: string) {
   rawMode.value = true
   rawStatus.value = 'Downloading pages...'
   rawError.value = ''
+  rawErrorOld.value = ''
+  rawErrorNew.value = ''
   rawProgressOld.value = 0
   rawProgressNew.value = 0
+  activeOldUrl.value = oldPageUrl  // fallback, updated after download with resolved URL
   activeNewUrl.value = newPageUrl
 
   const proxiedOld = wrapWithProxy(oldPageUrl)
   const proxiedNew = wrapWithProxy(newPageUrl)
+  const oldUsedProxy = proxiedOld !== oldPageUrl
+  const newUsedProxy = proxiedNew !== newPageUrl
 
-  Promise.all([
-    axios.get(proxiedOld, {
-      onDownloadProgress: (e) => { rawProgressOld.value = e.loaded }
-    }),
-    axios.get(proxiedNew, {
-      onDownloadProgress: (e) => { rawProgressNew.value = e.loaded }
-    }),
-  ]).then(([oldResponse, newResponse]) => {
+  const fetchOld = axios.get(proxiedOld, {
+    onDownloadProgress: (e) => { rawProgressOld.value = e.loaded }
+  }).catch(error => {
+    rawErrorOld.value = formatDownloadError(error, oldPageUrl)
+    return null
+  })
+
+  const fetchNew = axios.get(proxiedNew, {
+    onDownloadProgress: (e) => { rawProgressNew.value = e.loaded }
+  }).catch(error => {
+    rawErrorNew.value = formatDownloadError(error, newPageUrl)
+    return null
+  })
+
+  Promise.all([fetchOld, fetchNew]).then(([oldResponse, newResponse]) => {
+    if (!oldResponse || !newResponse) return
+    activeOldUrl.value = resolvedUrl(oldResponse, oldPageUrl, oldUsedProxy)
+    activeNewUrl.value = resolvedUrl(newResponse, newPageUrl, newUsedProxy)
     oldSpecHtml.value = oldResponse.data
     newSpecHtml.value = newResponse.data
     return comparePages()
-  }).catch(error => {
-    console.error('Error in raw compare:', error)
-    rawError.value = 'Failed to download pages: ' + error.message
   })
 }
 
