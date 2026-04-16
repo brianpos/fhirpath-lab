@@ -274,21 +274,30 @@ ins.diffmod { background-color: #b6ffa7; }
   border: 1px solid #ccc;
   border-left: none;
   border-radius: 0 8px 8px 0;
-  padding: 8px 10px 8px 8px;
+  padding: 6px 8px 6px 6px;
   box-shadow: 2px 2px 8px rgba(0,0,0,0.15);
   font-family: sans-serif;
   font-size: 13px;
 }
 #diff-nav button {
-  padding: 6px 10px;
+  padding: 0;
+  width: 28px;
+  height: 28px;
   cursor: pointer;
   border: 1px solid #ccc;
-  border-radius: 4px;
   background: #f5f5f5;
-  font-size: 16px;
-  width: 100%;
+  font-size: 14px;
+  line-height: 28px;
+  text-align: center;
+  border-radius: 0;
 }
 #diff-nav button:hover { background: #e0e0e0; }
+#diff-nav .diff-row button:first-child { border-radius: 4px 0 0 4px; }
+#diff-nav .diff-row button:last-child { border-radius: 0 4px 4px 0; border-left: none; }
+#diff-nav .diff-row {
+  display: flex;
+  width: 100%;
+}
 #diff-nav .diff-pos {
   display: flex;
   align-items: center;
@@ -313,9 +322,15 @@ ins.diffmod { background-color: #b6ffa7; }
 </head>
 <body>
 <div id="diff-nav">
-  <button onclick="diffNavPrev()" title="Previous change  ( , )\nShift: skip to previous change off-screen ( < )">&#9650;</button>
+  <div class="diff-row">
+    <button onclick="diffNavPrev()" title="Previous change ( , )">&#x2191;</button>
+    <button onclick="diffNavPrevSection()" title="Skip to previous off-screen change ( < )">&#x21D1;</button>
+  </div>
   <div class="diff-pos"><input type="text" class="diff-counter" id="diff-counter" value="0" /><span class="diff-total" id="diff-total"></span></div>
-  <button onclick="diffNavNext()" title="Next change  ( . )\nShift: skip to next change off-screen ( > )">&#9660;</button>
+  <div class="diff-row">
+    <button onclick="diffNavNext()" title="Next change ( . )">&#x2193;</button>
+    <button onclick="diffNavNextSection()" title="Skip to next off-screen change ( > )">&#x21D3;</button>
+  </div>
 </div>
 ${diffHtml}
 <script>
