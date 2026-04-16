@@ -338,23 +338,62 @@ window.addEventListener('load', function() {
   counter.value = '0';
   total.textContent = '/' + diffs.length;
 
-  function highlight(idx) {
+  function highlight(idx, scroll) {
     if (currentIdx >= 0 && currentIdx < diffs.length)
       diffs[currentIdx].classList.remove('diff-current-highlight');
     currentIdx = idx;
     if (currentIdx >= 0 && currentIdx < diffs.length) {
       var el = diffs[currentIdx];
       el.classList.add('diff-current-highlight');
-      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (scroll !== false) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
       counter.value = String(currentIdx + 1);
     }
   }
+
+  // Track scroll position and sync counter to first visible diff
+  var scrollTimer = null;
+  var navTriggeredScroll = false;
+
+  function isInViewport(el) {
+    var rect = el.getBoundingClientRect();
+    return rect.bottom > 0 && rect.top < window.innerHeight;
+  }
+
+  function onUserScroll() {
+    if (navTriggeredScroll) return;
+    if (scrollTimer) clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(function() {
+      // If current highlight is still visible, do nothing
+      if (currentIdx >= 0 && currentIdx < diffs.length && isInViewport(diffs[currentIdx])) return;
+      // Find first visible diff using binary search for performance with 1600+ diffs
+      var lo = 0, hi = diffs.length - 1, firstVisible = -1;
+      while (lo <= hi) {
+        var mid = (lo + hi) >> 1;
+        var rect = diffs[mid].getBoundingClientRect();
+        if (rect.top >= window.innerHeight) {
+          hi = mid - 1;
+        } else if (rect.bottom <= 0) {
+          lo = mid + 1;
+        } else {
+          firstVisible = mid;
+          hi = mid - 1;
+        }
+      }
+      if (firstVisible >= 0 && firstVisible !== currentIdx) {
+        highlight(firstVisible, false);
+      }
+    }, 150);
+  }
+
+  window.addEventListener('scroll', onUserScroll, { passive: true });
 
   counter.addEventListener('keydown', function(e) {
     if (e.key === 'Enter') {
       var num = parseInt(counter.value, 10);
       if (!isNaN(num) && num >= 1 && num <= diffs.length) {
+        navTriggeredScroll = true;
         highlight(num - 1);
+        setTimeout(function() { navTriggeredScroll = false; }, 500);
       } else {
         counter.value = currentIdx >= 0 ? String(currentIdx + 1) : '0';
       }
@@ -364,11 +403,15 @@ window.addEventListener('load', function() {
 
   window.diffNavNext = function() {
     if (diffs.length === 0) return;
+    navTriggeredScroll = true;
     highlight(currentIdx < diffs.length - 1 ? currentIdx + 1 : 0);
+    setTimeout(function() { navTriggeredScroll = false; }, 500);
   };
   window.diffNavPrev = function() {
     if (diffs.length === 0) return;
+    navTriggeredScroll = true;
     highlight(currentIdx > 0 ? currentIdx - 1 : diffs.length - 1);
+    setTimeout(function() { navTriggeredScroll = false; }, 500);
   };
 
   document.addEventListener('keydown', function(e) {
