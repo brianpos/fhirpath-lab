@@ -313,9 +313,9 @@ ins.diffmod { background-color: #b6ffa7; }
 </head>
 <body>
 <div id="diff-nav">
-  <button onclick="diffNavPrev()" title="Previous change  ( &lt; or , )">&#9650;</button>
+  <button onclick="diffNavPrev()" title="Previous change  ( , )\nShift: skip to previous change off-screen ( < )">&#9650;</button>
   <div class="diff-pos"><input type="text" class="diff-counter" id="diff-counter" value="0" /><span class="diff-total" id="diff-total"></span></div>
-  <button onclick="diffNavNext()" title="Next change  ( &gt; or . )">&#9660;</button>
+  <button onclick="diffNavNext()" title="Next change  ( . )\nShift: skip to next change off-screen ( > )">&#9660;</button>
 </div>
 ${diffHtml}
 <script>
@@ -345,7 +345,8 @@ window.addEventListener('load', function() {
     if (currentIdx >= 0 && currentIdx < diffs.length) {
       var el = diffs[currentIdx];
       el.classList.add('diff-current-highlight');
-      if (scroll !== false) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (scroll !== false && !isInViewport(el))
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
       counter.value = String(currentIdx + 1);
     }
   }
@@ -413,12 +414,36 @@ window.addEventListener('load', function() {
     highlight(currentIdx > 0 ? currentIdx - 1 : diffs.length - 1);
     setTimeout(function() { navTriggeredScroll = false; }, 500);
   };
+  window.diffNavNextSection = function() {
+    if (diffs.length === 0) return;
+    for (var i = currentIdx + 1; i < diffs.length; i++) {
+      if (!isInViewport(diffs[i])) {
+        navTriggeredScroll = true;
+        highlight(i);
+        setTimeout(function() { navTriggeredScroll = false; }, 500);
+        return;
+      }
+    }
+  };
+  window.diffNavPrevSection = function() {
+    if (diffs.length === 0) return;
+    for (var i = (currentIdx >= 0 ? currentIdx : diffs.length) - 1; i >= 0; i--) {
+      if (!isInViewport(diffs[i])) {
+        navTriggeredScroll = true;
+        highlight(i);
+        setTimeout(function() { navTriggeredScroll = false; }, 500);
+        return;
+      }
+    }
+  };
 
   document.addEventListener('keydown', function(e) {
     // Skip when typing in the counter input
     if (e.target === counter) return;
-    if (e.key === '>' || e.key === '.' || e.key === ']') { diffNavNext(); e.preventDefault(); }
-    if (e.key === '<' || e.key === ',' || e.key === '[') { diffNavPrev(); e.preventDefault(); }
+    if (e.key === '>') { diffNavNextSection(); e.preventDefault(); }
+    else if (e.key === '<') { diffNavPrevSection(); e.preventDefault(); }
+    else if (e.key === '.' || e.key === ']') { diffNavNext(); e.preventDefault(); }
+    else if (e.key === ',' || e.key === '[') { diffNavPrev(); e.preventDefault(); }
   });
 });
 <\/script>
