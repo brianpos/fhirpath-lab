@@ -565,14 +565,11 @@ function downloadAndCompare(oldPageUrl: string, newPageUrl: string) {
   const oldUsedProxy = proxiedOld !== oldPageUrl;
   const newUsedProxy = proxiedNew !== newPageUrl;
 
-  const noCacheHeaders = {
-    "Cache-Control": "no-cache",
-    Pragma: "no-cache",
-  };
+  // for some reason the build server don't like the nocache options...
 
   const fetchOld = axios
     .get(proxiedOld, {
-      headers: noCacheHeaders,
+      // headers: noCacheHeaders,
       onDownloadProgress: (e) => {
         rawProgressOld.value = e.loaded;
       },
@@ -584,7 +581,7 @@ function downloadAndCompare(oldPageUrl: string, newPageUrl: string) {
 
   const fetchNew = axios
     .get(proxiedNew, {
-      headers: noCacheHeaders,
+      // headers: noCacheHeaders,
       onDownloadProgress: (e) => {
         rawProgressNew.value = e.loaded;
       },
