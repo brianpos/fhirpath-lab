@@ -1,28 +1,56 @@
 <template>
-  <div v-if="rawMode" style="font-family: sans-serif; padding: 40px; text-align: center;">
+  <div
+    v-if="rawMode"
+    style="font-family: sans-serif; padding: 40px; text-align: center"
+  >
     <h2>FHIR Spec Diff Viewer</h2>
-    <div style="max-width: 400px; margin: 10px auto; font-size: 0.85em; color: #666; text-align: left;">
-      <p style="text-align: center;">{{ rawStatus }}</p>
+    <div
+      style="
+        max-width: 400px;
+        margin: 10px auto;
+        font-size: 0.85em;
+        color: #666;
+        text-align: left;
+      "
+    >
+      <p style="text-align: center">{{ rawStatus }}</p>
       <div v-if="rawProgressOld || rawProgressNew">
-        <div style="margin-bottom: 4px;">Old: {{ formatBytes(rawProgressOld) }}</div>
+        <div style="margin-bottom: 4px">
+          Old: {{ formatBytes(rawProgressOld) }}
+        </div>
         <div>New: {{ formatBytes(rawProgressNew) }}</div>
       </div>
     </div>
-    <v-progress-linear v-if="!rawError && !rawErrorOld && !rawErrorNew" indeterminate color="primary" style="max-width: 400px; margin: 20px auto;" />
-    <div v-if="rawErrorOld || rawErrorNew" style="max-width: 500px; margin: 10px auto; text-align: left; word-break: break-all;">
-      <p v-if="rawErrorOld" style="color: red;"><strong>Old:</strong> {{ rawErrorOld }}</p>
-      <p v-if="rawErrorNew" style="color: red;"><strong>New:</strong> {{ rawErrorNew }}</p>
+    <v-progress-linear
+      v-if="!rawError && !rawErrorOld && !rawErrorNew"
+      indeterminate
+      color="primary"
+      style="max-width: 400px; margin: 20px auto"
+    />
+    <div
+      v-if="rawErrorOld || rawErrorNew"
+      style="
+        max-width: 500px;
+        margin: 10px auto;
+        text-align: left;
+        word-break: break-all;
+      "
+    >
+      <p v-if="rawErrorOld" style="color: red">
+        <strong>Old:</strong> {{ rawErrorOld }}
+      </p>
+      <p v-if="rawErrorNew" style="color: red">
+        <strong>New:</strong> {{ rawErrorNew }}
+      </p>
     </div>
-    <p v-if="rawError" style="color: red;">{{ rawError }}</p>
+    <p v-if="rawError" style="color: red">{{ rawError }}</p>
   </div>
   <div v-else class="main">
     <HeaderNavbar />
 
     <div class="container bd-layout" style="padding-top: 100px">
       <br />
-      <p class="leader">
-        FHIR Spec Diff Viewer
-      </p>
+      <p class="leader">FHIR Spec Diff Viewer</p>
       <br />
       <div>
         <v-text-field density="compact" label="Old Page URL" v-model="oldUrl" />
@@ -74,7 +102,7 @@ p {
   bottom: 0;
   left: 0;
   right: 0;
-  background-image: url('/fhir-lab-ico-300x300.png');
+  background-image: url("/fhir-lab-ico-300x300.png");
   background-position: center;
   background-attachment: fixed;
   opacity: 0.2;
@@ -83,171 +111,198 @@ p {
 </style>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import axios from 'axios'
+import { ref, onMounted } from "vue";
+import axios from "axios";
 
 useHead({
-  title: 'FHIR Spec Diff Viewer - FHIRPath Lab'
-})
+  title: "FHIR Spec Diff Viewer - FHIRPath Lab",
+});
 
-const route = useRoute()
-const router = useRouter()
+const route = useRoute();
+const router = useRouter();
 
-const downloaderPrefix = 'https://fhirpath-lab-dotnet2.azurewebsites.net/api/downloader?url='
+const downloaderPrefix =
+  "https://fhirpath-lab-dotnet2.azurewebsites.net/api/downloader?url=";
 
 // Reactive state
-const rawMode = ref(false)
-const rawStatus = ref('')
-const rawError = ref('')
-const rawErrorOld = ref('')
-const rawErrorNew = ref('')
-const rawProgressOld = ref(0)
-const rawProgressNew = ref(0)
+const rawMode = ref(false);
+const rawStatus = ref("");
+const rawError = ref("");
+const rawErrorOld = ref("");
+const rawErrorNew = ref("");
+const rawProgressOld = ref(0);
+const rawProgressNew = ref(0);
 
 // Form inputs (shown when no query params)
-const oldUrl = ref('https://build.fhir.org/ig/HL7/FHIRPath/index.html')
-const newUrl = ref('https://build.fhir.org/ig/HL7/FHIRPath/branches/BP-2026-03-quantity-preview/index.html')
+const oldUrl = ref("https://build.fhir.org/ig/HL7/FHIRPath/index.html");
+const newUrl = ref(
+  "https://build.fhir.org/ig/HL7/FHIRPath/branches/BP-2026-03-quantity-preview/index.html"
+);
 
 // Internal state for raw mode
-const oldSpecHtml = ref('')
-const newSpecHtml = ref('')
-const activeOldUrl = ref('')
-const activeNewUrl = ref('')
+const oldSpecHtml = ref("");
+const newSpecHtml = ref("");
+const activeOldUrl = ref("");
+const activeNewUrl = ref("");
 
 // Methods
 function formatBytes(bytes: number): string {
-  if (!bytes) return '0 B'
-  if (bytes < 1024) return bytes + ' B'
-  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
-  return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
+  if (!bytes) return "0 B";
+  if (bytes < 1024) return bytes + " B";
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+  return (bytes / (1024 * 1024)).toFixed(1) + " MB";
 }
 
 function startCompare() {
-  router.push({ path: '/htmldiff', query: { old: oldUrl.value, new: newUrl.value } })
-  downloadAndCompare(oldUrl.value, newUrl.value)
+  router.push({
+    path: "/htmldiff",
+    query: { old: oldUrl.value, new: newUrl.value },
+  });
+  downloadAndCompare(oldUrl.value, newUrl.value);
 }
 
 function wrapWithProxy(url: string): string {
-    if (url.startsWith('http://hl7.org/fhir/'))
-    url = 'https://' + url.substring(7)
+  if (url.startsWith("http://hl7.org/fhir/"))
+    url = "https://" + url.substring(7);
 
   if (url.startsWith('https://github.com/HL7/') || url.startsWith('https://hl7.org/fhir/'))
-    url = downloaderPrefix + url
+    url = downloaderPrefix + url;
 
-    return url
+  return url;
 }
 
 function getBaseUrl(url: string): string {
   if (url.startsWith(downloaderPrefix)) {
-    url = url.substring(downloaderPrefix.length)
+    url = url.substring(downloaderPrefix.length);
   }
   // If the last path segment has no extension, treat it as a directory
-  const lastSlash = url.lastIndexOf('/')
-  const lastSegment = url.substring(lastSlash + 1)
-  if (!lastSegment || lastSegment.indexOf('.') === -1) {
-    return url.endsWith('/') ? url : url + '/'
+  const lastSlash = url.lastIndexOf("/");
+  const lastSegment = url.substring(lastSlash + 1);
+  if (!lastSegment || lastSegment.indexOf(".") === -1) {
+    return url.endsWith("/") ? url : url + "/";
   }
-  return url.substring(0, lastSlash + 1)
+  return url.substring(0, lastSlash + 1);
 }
 
 function rebaseHeadUrls(html: string, baseUrl: string): string {
-  const parser = new DOMParser()
-  const doc = parser.parseFromString(html, 'text/html')
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, "text/html");
 
-  doc.head.querySelectorAll('[href], [src]').forEach(el => {
-    for (const attr of ['href', 'src']) {
-      const val = el.getAttribute(attr)
+  doc.head.querySelectorAll("[href], [src]").forEach((el) => {
+    for (const attr of ["href", "src"]) {
+      const val = el.getAttribute(attr);
       if (val && !/^(https?:\/\/|\/\/|data:|#|mailto:)/i.test(val)) {
-        el.setAttribute(attr, baseUrl + val)
+        el.setAttribute(attr, baseUrl + val);
       }
     }
-  })
+  });
 
-  return doc.head.innerHTML
+  return doc.head.innerHTML;
 }
 
 function rebaseBodySrcUrls(html: string, baseUrl: string): string {
-  const tempDiv = document.createElement('div')
-  tempDiv.innerHTML = html
-  tempDiv.querySelectorAll('[src]').forEach(el => {
-    const val = el.getAttribute('src')
+  const tempDiv = document.createElement("div");
+  tempDiv.innerHTML = html;
+  tempDiv.querySelectorAll("[src]").forEach((el) => {
+    const val = el.getAttribute("src");
     if (val && !/^(https?:\/\/|\/\/|data:|#|mailto:)/i.test(val)) {
-      el.setAttribute('src', baseUrl + val)
+      el.setAttribute("src", baseUrl + val);
     }
-  })
-  return tempDiv.innerHTML
+  });
+  return tempDiv.innerHTML;
 }
 
 function extractBody(html: string): string {
-  const match = html.match(/<body[^>]*>([\s\S]*)<\/body>/i)
-  return match ? match[1] : html
+  const match = html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
+  return match ? match[1] : html;
 }
 
-function executeDiffInWorker(oldHtml: string, newHtml: string): Promise<string> {
+function executeDiffInWorker(
+  oldHtml: string,
+  newHtml: string
+): Promise<string> {
   return new Promise((resolve, reject) => {
     const worker = new Worker(
-      new URL('../workers/htmldiff.worker.ts', import.meta.url),
-      { type: 'module' }
-    )
+      new URL("../workers/htmldiff.worker.ts", import.meta.url),
+      { type: "module" }
+    );
     worker.onmessage = (e: MessageEvent<string>) => {
-      resolve(e.data)
-      worker.terminate()
-    }
+      resolve(e.data);
+      worker.terminate();
+    };
     worker.onerror = (e) => {
-      reject(new Error(e.message))
-      worker.terminate()
-    }
-    worker.postMessage({ oldHtml, newHtml })
-  })
+      reject(new Error(e.message));
+      worker.terminate();
+    };
+    worker.postMessage({ oldHtml, newHtml });
+  });
 }
 
 async function comparePages() {
-  const oldHtml = extractBody(oldSpecHtml.value)
-  const newHtml = extractBody(newSpecHtml.value)
+  const oldHtml = extractBody(oldSpecHtml.value);
+  const newHtml = extractBody(newSpecHtml.value);
 
   try {
-    rawStatus.value = 'Computing diff...'
-    const val = await executeDiffInWorker(oldHtml, newHtml)
-    renderRawDiff(val, activeOldUrl.value, activeNewUrl.value)
+    rawStatus.value = "Computing diff...";
+    const val = await executeDiffInWorker(oldHtml, newHtml);
+    renderRawDiff(val, activeOldUrl.value, activeNewUrl.value);
   } catch (e) {
-    console.error(e)
-    rawError.value = 'Diff computation failed: ' + (e as Error).message
+    console.error(e);
+    rawError.value = "Diff computation failed: " + (e as Error).message;
   }
 }
 
-function rewriteRelativeLinks(html: string, oldBaseUrl: string, newBaseUrl: string): string {
-  const tempDiv = document.createElement('div')
-  tempDiv.innerHTML = html
-  const diffPagePath = window.location.pathname
-  tempDiv.querySelectorAll('a[href]').forEach(el => {
-    const href = el.getAttribute('href')
-    if (!href) return
+function rewriteRelativeLinks(
+  html: string,
+  oldBaseUrl: string,
+  newBaseUrl: string
+): string {
+  const tempDiv = document.createElement("div");
+  tempDiv.innerHTML = html;
+  const diffPagePath = window.location.pathname;
+  tempDiv.querySelectorAll("a[href]").forEach((el) => {
+    const href = el.getAttribute("href");
+    if (!href) return;
     // Skip absolute, anchor-only, mailto, data, javascript links
-    if (/^(https?:\/\/|\/\/|#|mailto:|data:|javascript:)/i.test(href)) return
+    if (/^(https?:\/\/|\/\/|#|mailto:|data:|javascript:)/i.test(href)) return;
     // Skip non-page resources
-    if (/\.(css|js|png|jpg|jpeg|gif|svg|ico|woff2?|ttf|eot|json|xml|zip|pdf)$/i.test(href)) return
+    if (
+      /\.(css|js|png|jpg|jpeg|gif|svg|ico|woff2?|ttf|eot|json|xml|zip|pdf)$/i.test(
+        href
+      )
+    )
+      return;
     // Strip any fragment for URL resolution, preserve it for display
-    const [path, fragment] = href.split('#')
-    if (!path) return // anchor-only like #foo was already skipped, but just in case
+    const [path, fragment] = href.split("#");
+    if (!path) return; // anchor-only like #foo was already skipped, but just in case
     try {
-      const newTarget = new URL(path, newBaseUrl).href
-      const oldTarget = new URL(path, oldBaseUrl).href
-      const diffUrl = diffPagePath + '?old=' + encodeURIComponent(oldTarget) + '&new=' + encodeURIComponent(newTarget)
-      el.setAttribute('href', diffUrl + (fragment ? '#' + fragment : ''))
+      const newTarget = new URL(path, newBaseUrl).href;
+      const oldTarget = new URL(path, oldBaseUrl).href;
+      const diffUrl =
+        diffPagePath +
+        "?old=" +
+        encodeURIComponent(oldTarget) +
+        "&new=" +
+        encodeURIComponent(newTarget);
+      el.setAttribute("href", diffUrl + (fragment ? "#" + fragment : ""));
     } catch (_) {
       // If URL resolution fails, leave link as-is
     }
-  })
-  return tempDiv.innerHTML
+  });
+  return tempDiv.innerHTML;
 }
 
-function renderRawDiff(diffHtml: string, oldPageUrl: string, newPageUrl: string) {
-  const newBaseUrl = getBaseUrl(newPageUrl)
-  const oldBaseUrl = getBaseUrl(oldPageUrl)
+function renderRawDiff(
+  diffHtml: string,
+  oldPageUrl: string,
+  newPageUrl: string
+) {
+  const newBaseUrl = getBaseUrl(newPageUrl);
+  const oldBaseUrl = getBaseUrl(oldPageUrl);
 
-  const headContent = rebaseHeadUrls(newSpecHtml.value, newBaseUrl)
-  diffHtml = rebaseBodySrcUrls(diffHtml, newBaseUrl)
-  diffHtml = rewriteRelativeLinks(diffHtml, oldBaseUrl, newBaseUrl)
+  const headContent = rebaseHeadUrls(newSpecHtml.value, newBaseUrl);
+  diffHtml = rebaseBodySrcUrls(diffHtml, newBaseUrl);
+  diffHtml = rewriteRelativeLinks(diffHtml, oldBaseUrl, newBaseUrl);
 
   const fullHtml = `<!DOCTYPE html>
 <html>
@@ -463,76 +518,98 @@ window.addEventListener('load', function() {
 });
 <\/script>
 </body>
-</html>`
+</html>`;
 
-  document.open()
-  document.write(fullHtml)
-  document.close()
+  document.open();
+  document.write(fullHtml);
+  document.close();
 }
 
 function formatDownloadError(error: any, url: string): string {
   if (error.response) {
-    const status = error.response.status
-    const statusText = error.response.statusText || ''
-    const data = typeof error.response.data === 'string' ? error.response.data.substring(0, 200) : ''
-    return `${url} — ${status} ${statusText}${data ? ': ' + data : ''}`
+    const status = error.response.status;
+    const statusText = error.response.statusText || "";
+    const data =
+      typeof error.response.data === "string"
+        ? error.response.data.substring(0, 200)
+        : "";
+    return `${url} — ${status} ${statusText}${data ? ": " + data : ""}`;
   }
-  return `${url} — ${error.message || 'Unknown error'}`
+  return `${url} — ${error.message || "Unknown error"}`;
 }
 
-function resolvedUrl(response: any, originalUrl: string, usedProxy: boolean): string {
-  if (usedProxy) return originalUrl
-  const finalUrl = response.request?.responseURL
-  if (!finalUrl) return originalUrl
-  return finalUrl
+function resolvedUrl(
+  response: any,
+  originalUrl: string,
+  usedProxy: boolean
+): string {
+  if (usedProxy) return originalUrl;
+  const finalUrl = response.request?.responseURL;
+  if (!finalUrl) return originalUrl;
+  return finalUrl;
 }
 
 function downloadAndCompare(oldPageUrl: string, newPageUrl: string) {
-  rawMode.value = true
-  rawStatus.value = 'Downloading pages...'
-  rawError.value = ''
-  rawErrorOld.value = ''
-  rawErrorNew.value = ''
-  rawProgressOld.value = 0
-  rawProgressNew.value = 0
-  activeOldUrl.value = oldPageUrl  // fallback, updated after download with resolved URL
-  activeNewUrl.value = newPageUrl
+  rawMode.value = true;
+  rawStatus.value = "Downloading pages...";
+  rawError.value = "";
+  rawErrorOld.value = "";
+  rawErrorNew.value = "";
+  rawProgressOld.value = 0;
+  rawProgressNew.value = 0;
+  activeOldUrl.value = oldPageUrl; // fallback, updated after download with resolved URL
+  activeNewUrl.value = newPageUrl;
 
-  const proxiedOld = wrapWithProxy(oldPageUrl)
-  const proxiedNew = wrapWithProxy(newPageUrl)
-  const oldUsedProxy = proxiedOld !== oldPageUrl
-  const newUsedProxy = proxiedNew !== newPageUrl
+  const proxiedOld = wrapWithProxy(oldPageUrl);
+  const proxiedNew = wrapWithProxy(newPageUrl);
+  const oldUsedProxy = proxiedOld !== oldPageUrl;
+  const newUsedProxy = proxiedNew !== newPageUrl;
 
-  const fetchOld = axios.get(proxiedOld, {
-    onDownloadProgress: (e) => { rawProgressOld.value = e.loaded }
-  }).catch(error => {
-    rawErrorOld.value = formatDownloadError(error, oldPageUrl)
-    return null
-  })
+  const noCacheHeaders = {
+    "Cache-Control": "no-cache",
+    Pragma: "no-cache",
+  };
 
-  const fetchNew = axios.get(proxiedNew, {
-    onDownloadProgress: (e) => { rawProgressNew.value = e.loaded }
-  }).catch(error => {
-    rawErrorNew.value = formatDownloadError(error, newPageUrl)
-    return null
-  })
+  const fetchOld = axios
+    .get(proxiedOld, {
+      headers: noCacheHeaders,
+      onDownloadProgress: (e) => {
+        rawProgressOld.value = e.loaded;
+      },
+    })
+    .catch((error) => {
+      rawErrorOld.value = formatDownloadError(error, oldPageUrl);
+      return null;
+    });
+
+  const fetchNew = axios
+    .get(proxiedNew, {
+      headers: noCacheHeaders,
+      onDownloadProgress: (e) => {
+        rawProgressNew.value = e.loaded;
+      },
+    })
+    .catch((error) => {
+      rawErrorNew.value = formatDownloadError(error, newPageUrl);
+      return null;
+    });
 
   Promise.all([fetchOld, fetchNew]).then(([oldResponse, newResponse]) => {
-    if (!oldResponse || !newResponse) return
-    activeOldUrl.value = resolvedUrl(oldResponse, oldPageUrl, oldUsedProxy)
-    activeNewUrl.value = resolvedUrl(newResponse, newPageUrl, newUsedProxy)
-    oldSpecHtml.value = oldResponse.data
-    newSpecHtml.value = newResponse.data
-    return comparePages()
-  })
+    if (!oldResponse || !newResponse) return;
+    activeOldUrl.value = resolvedUrl(oldResponse, oldPageUrl, oldUsedProxy);
+    activeNewUrl.value = resolvedUrl(newResponse, newPageUrl, newUsedProxy);
+    oldSpecHtml.value = oldResponse.data;
+    newSpecHtml.value = newResponse.data;
+    return comparePages();
+  });
 }
 
 // Raw mode: auto-download and compare when old/new query params are present
 onMounted(() => {
-  const qOld = route.query.old as string
-  const qNew = route.query.new as string
+  const qOld = route.query.old as string;
+  const qNew = route.query.new as string;
   if (qOld && qNew) {
-    downloadAndCompare(qOld, qNew)
+    downloadAndCompare(qOld, qNew);
   }
-})
+});
 </script>
