@@ -3,6 +3,9 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+# 24 April 2026
+* Update NLM LHC-Forms to 41.2.0
+
 # 11 April 2026
 * Updated fhirpath.js to 4.9.3
 
