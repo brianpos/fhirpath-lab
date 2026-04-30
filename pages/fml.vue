@@ -813,7 +813,7 @@ export default Vue.extend({
     },
   },
   watch: {
-    modelsText(_newVal: string | undefined, _oldVal: string | undefined) {
+    modelsText() {
       // Re-parse the Models tab content into an isolated TypeLookup. We rebuild
       // the user dictionary lazily here (rather than on every diagram regen) so
       // the parse cost is paid once per edit instead of once per FML keystroke.
