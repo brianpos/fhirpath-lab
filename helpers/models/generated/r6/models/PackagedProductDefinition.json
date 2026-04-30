@@ -1,0 +1,330 @@
+{
+  "PackagedProductDefinition": {
+    "TypeName": "PackagedProductDefinition",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "name",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "packageFor",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/MedicinalProductDefinition"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "status",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "statusDate",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      },
+      {
+        "ElementName": "containedItemQuantity",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "description",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      },
+      {
+        "ElementName": "legalStatusOfSupply",
+        "Type": [
+          {
+            "TypeName": "packagedproductdefinition_legalStatusOfSupply"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "marketingStatus",
+        "Type": [
+          {
+            "TypeName": "MarketingStatus"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "copackagedIndicator",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "manufacturer",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "attachedDocument",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/DocumentReference"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "packaging",
+        "Type": [
+          {
+            "TypeName": "packagedproductdefinition_packaging"
+          }
+        ]
+      },
+      {
+        "ElementName": "characteristic",
+        "Type": [
+          {
+            "TypeName": "packagedproductdefinition_packaging_property"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "packagedproductdefinition_legalStatusOfSupply": {
+    "TypeName": "packagedproductdefinition_legalStatusOfSupply",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "code",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "jurisdiction",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      }
+    ]
+  },
+  "packagedproductdefinition_packaging": {
+    "TypeName": "packagedproductdefinition_packaging",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "componentPart",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "quantity",
+        "Type": [
+          {
+            "TypeName": "integer"
+          }
+        ]
+      },
+      {
+        "ElementName": "material",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "alternateMaterial",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "shelfLifeStorage",
+        "Type": [
+          {
+            "TypeName": "ProductShelfLife"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "manufacturer",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "property",
+        "Type": [
+          {
+            "TypeName": "packagedproductdefinition_packaging_property"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "containedItem",
+        "Type": [
+          {
+            "TypeName": "packagedproductdefinition_packaging_containedItem"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "packaging",
+        "Type": [
+          {
+            "TypeName": "packagedproductdefinition_packaging"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "packagedproductdefinition_packaging_property": {
+    "TypeName": "packagedproductdefinition_packaging_property",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "value[x]",
+        "Type": [
+          {
+            "TypeName": "Attachment"
+          },
+          {
+            "TypeName": "CodeableConcept"
+          },
+          {
+            "TypeName": "Quantity"
+          },
+          {
+            "TypeName": "boolean"
+          },
+          {
+            "TypeName": "date"
+          }
+        ]
+      }
+    ]
+  },
+  "packagedproductdefinition_packaging_containedItem": {
+    "TypeName": "packagedproductdefinition_packaging_containedItem",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "item",
+        "Type": [
+          {
+            "TypeName": "CodeableReference"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "amount",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
+      }
+    ]
+  }
+}

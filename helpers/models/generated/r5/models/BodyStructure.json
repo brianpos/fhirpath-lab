@@ -1,0 +1,200 @@
+{
+  "BodyStructure": {
+    "TypeName": "BodyStructure",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "active",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "morphology",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "includedStructure",
+        "Type": [
+          {
+            "TypeName": "bodystructure_includedStructure"
+          }
+        ],
+        "IsArray": true,
+        "Required": true
+      },
+      {
+        "ElementName": "excludedStructure",
+        "Type": [
+          {
+            "TypeName": "bodystructure_includedStructure"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "description",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      },
+      {
+        "ElementName": "image",
+        "Type": [
+          {
+            "TypeName": "Attachment"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "patient",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Patient"
+            ]
+          }
+        ],
+        "Required": true
+      }
+    ]
+  },
+  "bodystructure_includedStructure": {
+    "TypeName": "bodystructure_includedStructure",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "structure",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "laterality",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "bodyLandmarkOrientation",
+        "Type": [
+          {
+            "TypeName": "bodystructure_includedStructure_bodyLandmarkOrientation"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "spatialReference",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/ImagingSelection"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "qualifier",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "bodystructure_includedStructure_bodyLandmarkOrientation": {
+    "TypeName": "bodystructure_includedStructure_bodyLandmarkOrientation",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "landmarkDescription",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "clockFacePosition",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "distanceFromLandmark",
+        "Type": [
+          {
+            "TypeName": "bodystructure_includedStructure_bodyLandmarkOrientation_distanceFromLandmark"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "surfaceOrientation",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "bodystructure_includedStructure_bodyLandmarkOrientation_distanceFromLandmark": {
+    "TypeName": "bodystructure_includedStructure_bodyLandmarkOrientation_distanceFromLandmark",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "device",
+        "Type": [
+          {
+            "TypeName": "CodeableReference"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "value",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  }
+}

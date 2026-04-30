@@ -113,7 +113,7 @@ import { generateStructureMapDiagramSvg } from "~/helpers/structuremap_diagram";
 import { generateInstanceDiagramSvg } from "~/helpers/structuremap_diagram_instance";
 import TwinPaneTab from "~/components/TwinPaneTab.vue";
 import ResourceEditor from "~/components/ResourceEditor.vue";
-import fhirpath_r4_model from "fhirpath/fhir-context/r4";
+import { lookupByTypeName as lookupByTypeNameR4B } from "~/helpers/models/generated/r4b";
 
 export default Vue.extend({
   components: { ResourceEditor },
@@ -175,7 +175,7 @@ export default Vue.extend({
 
         this.rawMap = StructureMapUtilitiesRender.render(this.raw);
         this.diagramSvg = generateStructureMapDiagramSvg(this.raw);
-        this.instanceSvg = generateInstanceDiagramSvg(this.raw, fhirpath_r4_model as any, true);
+        this.instanceSvg = generateInstanceDiagramSvg(this.raw, lookupByTypeNameR4B, true);
         // this.rawMap = JSON.stringify(this.raw, null, 2);
       }
     },

@@ -1,0 +1,268 @@
+{
+  "AdministrableProductDefinition": {
+    "TypeName": "AdministrableProductDefinition",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "status",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "formOf",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/MedicinalProductDefinition"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "administrableDoseForm",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "unitOfPresentation",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "producedFrom",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/ManufacturedItemDefinition"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "ingredient",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "device",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/DeviceDefinition"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "property",
+        "Type": [
+          {
+            "TypeName": "administrableproductdefinition_property"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "routeOfAdministration",
+        "Type": [
+          {
+            "TypeName": "administrableproductdefinition_routeOfAdministration"
+          }
+        ],
+        "IsArray": true,
+        "Required": true
+      }
+    ]
+  },
+  "administrableproductdefinition_property": {
+    "TypeName": "administrableproductdefinition_property",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "value[x]",
+        "Type": [
+          {
+            "TypeName": "Attachment"
+          },
+          {
+            "TypeName": "CodeableConcept"
+          },
+          {
+            "TypeName": "Quantity"
+          },
+          {
+            "TypeName": "boolean"
+          },
+          {
+            "TypeName": "date"
+          }
+        ]
+      },
+      {
+        "ElementName": "status",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      }
+    ]
+  },
+  "administrableproductdefinition_routeOfAdministration": {
+    "TypeName": "administrableproductdefinition_routeOfAdministration",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "code",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "firstDose",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
+      },
+      {
+        "ElementName": "maxSingleDose",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
+      },
+      {
+        "ElementName": "maxDosePerDay",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
+      },
+      {
+        "ElementName": "maxDosePerTreatmentPeriod",
+        "Type": [
+          {
+            "TypeName": "Ratio"
+          }
+        ]
+      },
+      {
+        "ElementName": "maxTreatmentPeriod",
+        "Type": [
+          {
+            "TypeName": "Duration"
+          }
+        ]
+      },
+      {
+        "ElementName": "targetSpecies",
+        "Type": [
+          {
+            "TypeName": "administrableproductdefinition_routeOfAdministration_targetSpecies"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "administrableproductdefinition_routeOfAdministration_targetSpecies": {
+    "TypeName": "administrableproductdefinition_routeOfAdministration_targetSpecies",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "code",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "withdrawalPeriod",
+        "Type": [
+          {
+            "TypeName": "administrableproductdefinition_routeOfAdministration_targetSpecies_withdrawalPeriod"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "administrableproductdefinition_routeOfAdministration_targetSpecies_withdrawalPeriod": {
+    "TypeName": "administrableproductdefinition_routeOfAdministration_targetSpecies_withdrawalPeriod",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "tissue",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "value",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "supportingInformation",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,125 @@
+{
+  "MedicinalProductIndication": {
+    "TypeName": "MedicinalProductIndication",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "subject",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Medication",
+              "http://hl7.org/fhir/StructureDefinition/MedicinalProduct"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "diseaseSymptomProcedure",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "diseaseStatus",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "comorbidity",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "intendedEffect",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "duration",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
+      },
+      {
+        "ElementName": "otherTherapy",
+        "Type": [
+          {
+            "TypeName": "medicinalproductindication_otherTherapy"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "undesirableEffect",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/MedicinalProductUndesirableEffect"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "population",
+        "Type": [
+          {
+            "TypeName": "Population"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "medicinalproductindication_otherTherapy": {
+    "TypeName": "medicinalproductindication_otherTherapy",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "therapyRelationshipType",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "medication[x]",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Medication",
+              "http://hl7.org/fhir/StructureDefinition/MedicinalProduct",
+              "http://hl7.org/fhir/StructureDefinition/Substance",
+              "http://hl7.org/fhir/StructureDefinition/SubstanceSpecification"
+            ]
+          }
+        ],
+        "Required": true
+      }
+    ]
+  }
+}

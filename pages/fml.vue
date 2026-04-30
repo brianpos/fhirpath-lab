@@ -428,6 +428,7 @@ import { parseFML } from "~/helpers/fml_parser";
 import type { FmlStructureMap } from "~/helpers/fml_models";
 import { generateInstanceDiagramSvg, fmlToStructureMapForDiagram } from "~/helpers/structuremap_diagram_instance";
 import { generateStructureMapDiagramSvg } from "~/helpers/structuremap_diagram";
+import { lookupByTypeName as lookupByTypeNameR4B } from "~/helpers/models/generated/r4b";
 import xmlFormat from 'xml-formatter';
 import { createFhirLogicalModel, CreateLogicalModelOptions } from '~/helpers/logical_model_generator';
 
@@ -1547,8 +1548,8 @@ group SetEntryData(source src: Patient, target entry)
       this.parsedFmlMap = fmlMap;
       try {
         const fhirMap = fmlToStructureMapForDiagram(fmlMap);
-        this.instanceSvg = generateInstanceDiagramSvg(fhirMap);
-        this.diagramSvg = generateStructureMapDiagramSvg(fhirMap);
+        this.instanceSvg = generateInstanceDiagramSvg(fhirMap, lookupByTypeNameR4B, true);
+        this.diagramSvg = generateStructureMapDiagramSvg(fhirMap, lookupByTypeNameR4B);
       } catch (e) {
         console.error('Failed to generate instance diagram:', e);
         this.instanceSvg = undefined;
@@ -1844,8 +1845,8 @@ group SetEntryData(source src: Patient, target entry)
           this.parsedFmlMap = fmlMap;
           try {
             const fhirMap = fmlToStructureMapForDiagram(fmlMap);
-            this.instanceSvg = generateInstanceDiagramSvg(fhirMap);
-            this.diagramSvg = generateStructureMapDiagramSvg(fhirMap);
+            this.instanceSvg = generateInstanceDiagramSvg(fhirMap, lookupByTypeNameR4B, true);
+            this.diagramSvg = generateStructureMapDiagramSvg(fhirMap, lookupByTypeNameR4B);
           } catch (e) {
             console.error('Failed to generate instance diagram:', e);
             this.instanceSvg = undefined;

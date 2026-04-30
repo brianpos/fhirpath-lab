@@ -1,0 +1,413 @@
+{
+  "ClinicalUseDefinition": {
+    "TypeName": "ClinicalUseDefinition",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "category",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "subject",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/ActivityDefinition",
+              "http://hl7.org/fhir/StructureDefinition/BiologicallyDerivedProduct",
+              "http://hl7.org/fhir/StructureDefinition/Device",
+              "http://hl7.org/fhir/StructureDefinition/DeviceDefinition",
+              "http://hl7.org/fhir/StructureDefinition/Medication",
+              "http://hl7.org/fhir/StructureDefinition/MedicinalProductDefinition",
+              "http://hl7.org/fhir/StructureDefinition/NutritionProduct",
+              "http://hl7.org/fhir/StructureDefinition/PlanDefinition",
+              "http://hl7.org/fhir/StructureDefinition/Substance"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "status",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "contraindication",
+        "Type": [
+          {
+            "TypeName": "clinicalusedefinition_contraindication"
+          }
+        ]
+      },
+      {
+        "ElementName": "indication",
+        "Type": [
+          {
+            "TypeName": "clinicalusedefinition_indication"
+          }
+        ]
+      },
+      {
+        "ElementName": "interaction",
+        "Type": [
+          {
+            "TypeName": "clinicalusedefinition_interaction"
+          }
+        ]
+      },
+      {
+        "ElementName": "population",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Group"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "library",
+        "Type": [
+          {
+            "TypeName": "canonical"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "undesirableEffect",
+        "Type": [
+          {
+            "TypeName": "clinicalusedefinition_undesirableEffect"
+          }
+        ]
+      },
+      {
+        "ElementName": "warning",
+        "Type": [
+          {
+            "TypeName": "clinicalusedefinition_warning"
+          }
+        ]
+      }
+    ]
+  },
+  "clinicalusedefinition_contraindication": {
+    "TypeName": "clinicalusedefinition_contraindication",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "diseaseSymptomProcedure",
+        "Type": [
+          {
+            "TypeName": "CodeableReference"
+          }
+        ]
+      },
+      {
+        "ElementName": "diseaseStatus",
+        "Type": [
+          {
+            "TypeName": "CodeableReference"
+          }
+        ]
+      },
+      {
+        "ElementName": "comorbidity",
+        "Type": [
+          {
+            "TypeName": "CodeableReference"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "indication",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/ClinicalUseDefinition"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "applicability",
+        "Type": [
+          {
+            "TypeName": "Expression"
+          }
+        ]
+      },
+      {
+        "ElementName": "otherTherapy",
+        "Type": [
+          {
+            "TypeName": "clinicalusedefinition_contraindication_otherTherapy"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "clinicalusedefinition_contraindication_otherTherapy": {
+    "TypeName": "clinicalusedefinition_contraindication_otherTherapy",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "relationshipType",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "treatment",
+        "Type": [
+          {
+            "TypeName": "CodeableReference"
+          }
+        ],
+        "Required": true
+      }
+    ]
+  },
+  "clinicalusedefinition_indication": {
+    "TypeName": "clinicalusedefinition_indication",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "diseaseSymptomProcedure",
+        "Type": [
+          {
+            "TypeName": "CodeableReference"
+          }
+        ]
+      },
+      {
+        "ElementName": "diseaseStatus",
+        "Type": [
+          {
+            "TypeName": "CodeableReference"
+          }
+        ]
+      },
+      {
+        "ElementName": "comorbidity",
+        "Type": [
+          {
+            "TypeName": "CodeableReference"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "intendedEffect",
+        "Type": [
+          {
+            "TypeName": "CodeableReference"
+          }
+        ]
+      },
+      {
+        "ElementName": "duration[x]",
+        "Type": [
+          {
+            "TypeName": "Range"
+          },
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "undesirableEffect",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/ClinicalUseDefinition"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "applicability",
+        "Type": [
+          {
+            "TypeName": "Expression"
+          }
+        ]
+      },
+      {
+        "ElementName": "otherTherapy",
+        "Type": [
+          {
+            "TypeName": "clinicalusedefinition_contraindication_otherTherapy"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "clinicalusedefinition_interaction": {
+    "TypeName": "clinicalusedefinition_interaction",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "interactant",
+        "Type": [
+          {
+            "TypeName": "clinicalusedefinition_interaction_interactant"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "effect",
+        "Type": [
+          {
+            "TypeName": "CodeableReference"
+          }
+        ]
+      },
+      {
+        "ElementName": "incidence",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "management",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "clinicalusedefinition_interaction_interactant": {
+    "TypeName": "clinicalusedefinition_interaction_interactant",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "item[x]",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/BiologicallyDerivedProduct",
+              "http://hl7.org/fhir/StructureDefinition/Medication",
+              "http://hl7.org/fhir/StructureDefinition/MedicinalProductDefinition",
+              "http://hl7.org/fhir/StructureDefinition/NutritionProduct",
+              "http://hl7.org/fhir/StructureDefinition/ObservationDefinition",
+              "http://hl7.org/fhir/StructureDefinition/Substance"
+            ]
+          }
+        ],
+        "Required": true
+      }
+    ]
+  },
+  "clinicalusedefinition_undesirableEffect": {
+    "TypeName": "clinicalusedefinition_undesirableEffect",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "symptomConditionEffect",
+        "Type": [
+          {
+            "TypeName": "CodeableReference"
+          }
+        ]
+      },
+      {
+        "ElementName": "classification",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "frequencyOfOccurrence",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      }
+    ]
+  },
+  "clinicalusedefinition_warning": {
+    "TypeName": "clinicalusedefinition_warning",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "description",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      },
+      {
+        "ElementName": "code",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      }
+    ]
+  }
+}

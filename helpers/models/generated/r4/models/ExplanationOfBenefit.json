@@ -1,0 +1,1858 @@
+{
+  "ExplanationOfBenefit": {
+    "TypeName": "ExplanationOfBenefit",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "status",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "subType",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "use",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "patient",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Patient"
+            ]
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "billablePeriod",
+        "Type": [
+          {
+            "TypeName": "Period"
+          }
+        ]
+      },
+      {
+        "ElementName": "created",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "enterer",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Practitioner",
+              "http://hl7.org/fhir/StructureDefinition/PractitionerRole"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "insurer",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "provider",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization",
+              "http://hl7.org/fhir/StructureDefinition/Practitioner",
+              "http://hl7.org/fhir/StructureDefinition/PractitionerRole"
+            ]
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "priority",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "fundsReserveRequested",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "fundsReserve",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "related",
+        "Type": [
+          {
+            "TypeName": "explanationofbenefit_related"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "prescription",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/MedicationRequest",
+              "http://hl7.org/fhir/StructureDefinition/VisionPrescription"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "originalPrescription",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/MedicationRequest"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "payee",
+        "Type": [
+          {
+            "TypeName": "explanationofbenefit_payee"
+          }
+        ]
+      },
+      {
+        "ElementName": "referral",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/ServiceRequest"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "facility",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Location"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "claim",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Claim"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "claimResponse",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/ClaimResponse"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "outcome",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "disposition",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "preAuthRef",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "preAuthRefPeriod",
+        "Type": [
+          {
+            "TypeName": "Period"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "careTeam",
+        "Type": [
+          {
+            "TypeName": "explanationofbenefit_careTeam"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "supportingInfo",
+        "Type": [
+          {
+            "TypeName": "explanationofbenefit_supportingInfo"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "diagnosis",
+        "Type": [
+          {
+            "TypeName": "explanationofbenefit_diagnosis"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "procedure",
+        "Type": [
+          {
+            "TypeName": "explanationofbenefit_procedure"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "precedence",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ]
+      },
+      {
+        "ElementName": "insurance",
+        "Type": [
+          {
+            "TypeName": "explanationofbenefit_insurance"
+          }
+        ],
+        "IsArray": true,
+        "Required": true
+      },
+      {
+        "ElementName": "accident",
+        "Type": [
+          {
+            "TypeName": "explanationofbenefit_accident"
+          }
+        ]
+      },
+      {
+        "ElementName": "item",
+        "Type": [
+          {
+            "TypeName": "explanationofbenefit_item"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "addItem",
+        "Type": [
+          {
+            "TypeName": "explanationofbenefit_addItem"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "adjudication",
+        "Type": [
+          {
+            "TypeName": "explanationofbenefit_item_adjudication"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "total",
+        "Type": [
+          {
+            "TypeName": "explanationofbenefit_total"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "payment",
+        "Type": [
+          {
+            "TypeName": "explanationofbenefit_payment"
+          }
+        ]
+      },
+      {
+        "ElementName": "formCode",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "form",
+        "Type": [
+          {
+            "TypeName": "Attachment"
+          }
+        ]
+      },
+      {
+        "ElementName": "processNote",
+        "Type": [
+          {
+            "TypeName": "explanationofbenefit_processNote"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "benefitPeriod",
+        "Type": [
+          {
+            "TypeName": "Period"
+          }
+        ]
+      },
+      {
+        "ElementName": "benefitBalance",
+        "Type": [
+          {
+            "TypeName": "explanationofbenefit_benefitBalance"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "explanationofbenefit_related": {
+    "TypeName": "explanationofbenefit_related",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "claim",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Claim"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "relationship",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "reference",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ]
+      }
+    ]
+  },
+  "explanationofbenefit_payee": {
+    "TypeName": "explanationofbenefit_payee",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "party",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization",
+              "http://hl7.org/fhir/StructureDefinition/Patient",
+              "http://hl7.org/fhir/StructureDefinition/Practitioner",
+              "http://hl7.org/fhir/StructureDefinition/PractitionerRole",
+              "http://hl7.org/fhir/StructureDefinition/RelatedPerson"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "explanationofbenefit_careTeam": {
+    "TypeName": "explanationofbenefit_careTeam",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "sequence",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "provider",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization",
+              "http://hl7.org/fhir/StructureDefinition/Practitioner",
+              "http://hl7.org/fhir/StructureDefinition/PractitionerRole"
+            ]
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "responsible",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "role",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "qualification",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      }
+    ]
+  },
+  "explanationofbenefit_supportingInfo": {
+    "TypeName": "explanationofbenefit_supportingInfo",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "sequence",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "category",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "code",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "timing[x]",
+        "Type": [
+          {
+            "TypeName": "Period"
+          },
+          {
+            "TypeName": "date"
+          }
+        ]
+      },
+      {
+        "ElementName": "value[x]",
+        "Type": [
+          {
+            "TypeName": "Attachment"
+          },
+          {
+            "TypeName": "Quantity"
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Resource"
+            ]
+          },
+          {
+            "TypeName": "boolean"
+          },
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "reason",
+        "Type": [
+          {
+            "TypeName": "Coding"
+          }
+        ]
+      }
+    ]
+  },
+  "explanationofbenefit_diagnosis": {
+    "TypeName": "explanationofbenefit_diagnosis",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "sequence",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "diagnosis[x]",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Condition"
+            ]
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "onAdmission",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "packageCode",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      }
+    ]
+  },
+  "explanationofbenefit_procedure": {
+    "TypeName": "explanationofbenefit_procedure",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "sequence",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "date",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      },
+      {
+        "ElementName": "procedure[x]",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Procedure"
+            ]
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "udi",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Device"
+            ]
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "explanationofbenefit_insurance": {
+    "TypeName": "explanationofbenefit_insurance",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "focal",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "coverage",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Coverage"
+            ]
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "preAuthRef",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "explanationofbenefit_accident": {
+    "TypeName": "explanationofbenefit_accident",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "date",
+        "Type": [
+          {
+            "TypeName": "date"
+          }
+        ]
+      },
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "location[x]",
+        "Type": [
+          {
+            "TypeName": "Address"
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Location"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "explanationofbenefit_item": {
+    "TypeName": "explanationofbenefit_item",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "sequence",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "careTeamSequence",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "diagnosisSequence",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "procedureSequence",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "informationSequence",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "revenue",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "category",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "productOrService",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "modifier",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "programCode",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "serviced[x]",
+        "Type": [
+          {
+            "TypeName": "Period"
+          },
+          {
+            "TypeName": "date"
+          }
+        ]
+      },
+      {
+        "ElementName": "location[x]",
+        "Type": [
+          {
+            "TypeName": "Address"
+          },
+          {
+            "TypeName": "CodeableConcept"
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Location"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "quantity",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
+      },
+      {
+        "ElementName": "unitPrice",
+        "Type": [
+          {
+            "TypeName": "Money"
+          }
+        ]
+      },
+      {
+        "ElementName": "factor",
+        "Type": [
+          {
+            "TypeName": "decimal"
+          }
+        ]
+      },
+      {
+        "ElementName": "net",
+        "Type": [
+          {
+            "TypeName": "Money"
+          }
+        ]
+      },
+      {
+        "ElementName": "udi",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Device"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "bodySite",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "subSite",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "encounter",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Encounter"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "noteNumber",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "adjudication",
+        "Type": [
+          {
+            "TypeName": "explanationofbenefit_item_adjudication"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "detail",
+        "Type": [
+          {
+            "TypeName": "explanationofbenefit_item_detail"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "explanationofbenefit_item_adjudication": {
+    "TypeName": "explanationofbenefit_item_adjudication",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "category",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "reason",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "amount",
+        "Type": [
+          {
+            "TypeName": "Money"
+          }
+        ]
+      },
+      {
+        "ElementName": "value",
+        "Type": [
+          {
+            "TypeName": "decimal"
+          }
+        ]
+      }
+    ]
+  },
+  "explanationofbenefit_item_detail": {
+    "TypeName": "explanationofbenefit_item_detail",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "sequence",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "revenue",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "category",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "productOrService",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "modifier",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "programCode",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "quantity",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
+      },
+      {
+        "ElementName": "unitPrice",
+        "Type": [
+          {
+            "TypeName": "Money"
+          }
+        ]
+      },
+      {
+        "ElementName": "factor",
+        "Type": [
+          {
+            "TypeName": "decimal"
+          }
+        ]
+      },
+      {
+        "ElementName": "net",
+        "Type": [
+          {
+            "TypeName": "Money"
+          }
+        ]
+      },
+      {
+        "ElementName": "udi",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Device"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "noteNumber",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "adjudication",
+        "Type": [
+          {
+            "TypeName": "explanationofbenefit_item_adjudication"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "subDetail",
+        "Type": [
+          {
+            "TypeName": "explanationofbenefit_item_detail_subDetail"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "explanationofbenefit_item_detail_subDetail": {
+    "TypeName": "explanationofbenefit_item_detail_subDetail",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "sequence",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "revenue",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "category",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "productOrService",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "modifier",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "programCode",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "quantity",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
+      },
+      {
+        "ElementName": "unitPrice",
+        "Type": [
+          {
+            "TypeName": "Money"
+          }
+        ]
+      },
+      {
+        "ElementName": "factor",
+        "Type": [
+          {
+            "TypeName": "decimal"
+          }
+        ]
+      },
+      {
+        "ElementName": "net",
+        "Type": [
+          {
+            "TypeName": "Money"
+          }
+        ]
+      },
+      {
+        "ElementName": "udi",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Device"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "noteNumber",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "adjudication",
+        "Type": [
+          {
+            "TypeName": "explanationofbenefit_item_adjudication"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "explanationofbenefit_addItem": {
+    "TypeName": "explanationofbenefit_addItem",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "itemSequence",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "detailSequence",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "subDetailSequence",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "provider",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization",
+              "http://hl7.org/fhir/StructureDefinition/Practitioner",
+              "http://hl7.org/fhir/StructureDefinition/PractitionerRole"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "productOrService",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "modifier",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "programCode",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "serviced[x]",
+        "Type": [
+          {
+            "TypeName": "Period"
+          },
+          {
+            "TypeName": "date"
+          }
+        ]
+      },
+      {
+        "ElementName": "location[x]",
+        "Type": [
+          {
+            "TypeName": "Address"
+          },
+          {
+            "TypeName": "CodeableConcept"
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Location"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "quantity",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
+      },
+      {
+        "ElementName": "unitPrice",
+        "Type": [
+          {
+            "TypeName": "Money"
+          }
+        ]
+      },
+      {
+        "ElementName": "factor",
+        "Type": [
+          {
+            "TypeName": "decimal"
+          }
+        ]
+      },
+      {
+        "ElementName": "net",
+        "Type": [
+          {
+            "TypeName": "Money"
+          }
+        ]
+      },
+      {
+        "ElementName": "bodySite",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "subSite",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "noteNumber",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "adjudication",
+        "Type": [
+          {
+            "TypeName": "explanationofbenefit_item_adjudication"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "detail",
+        "Type": [
+          {
+            "TypeName": "explanationofbenefit_addItem_detail"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "explanationofbenefit_addItem_detail": {
+    "TypeName": "explanationofbenefit_addItem_detail",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "productOrService",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "modifier",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "quantity",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
+      },
+      {
+        "ElementName": "unitPrice",
+        "Type": [
+          {
+            "TypeName": "Money"
+          }
+        ]
+      },
+      {
+        "ElementName": "factor",
+        "Type": [
+          {
+            "TypeName": "decimal"
+          }
+        ]
+      },
+      {
+        "ElementName": "net",
+        "Type": [
+          {
+            "TypeName": "Money"
+          }
+        ]
+      },
+      {
+        "ElementName": "noteNumber",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "adjudication",
+        "Type": [
+          {
+            "TypeName": "explanationofbenefit_item_adjudication"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "subDetail",
+        "Type": [
+          {
+            "TypeName": "explanationofbenefit_addItem_detail_subDetail"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "explanationofbenefit_addItem_detail_subDetail": {
+    "TypeName": "explanationofbenefit_addItem_detail_subDetail",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "productOrService",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "modifier",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "quantity",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
+      },
+      {
+        "ElementName": "unitPrice",
+        "Type": [
+          {
+            "TypeName": "Money"
+          }
+        ]
+      },
+      {
+        "ElementName": "factor",
+        "Type": [
+          {
+            "TypeName": "decimal"
+          }
+        ]
+      },
+      {
+        "ElementName": "net",
+        "Type": [
+          {
+            "TypeName": "Money"
+          }
+        ]
+      },
+      {
+        "ElementName": "noteNumber",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "adjudication",
+        "Type": [
+          {
+            "TypeName": "explanationofbenefit_item_adjudication"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "explanationofbenefit_total": {
+    "TypeName": "explanationofbenefit_total",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "category",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "amount",
+        "Type": [
+          {
+            "TypeName": "Money"
+          }
+        ],
+        "Required": true
+      }
+    ]
+  },
+  "explanationofbenefit_payment": {
+    "TypeName": "explanationofbenefit_payment",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "adjustment",
+        "Type": [
+          {
+            "TypeName": "Money"
+          }
+        ]
+      },
+      {
+        "ElementName": "adjustmentReason",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "date",
+        "Type": [
+          {
+            "TypeName": "date"
+          }
+        ]
+      },
+      {
+        "ElementName": "amount",
+        "Type": [
+          {
+            "TypeName": "Money"
+          }
+        ]
+      },
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ]
+      }
+    ]
+  },
+  "explanationofbenefit_processNote": {
+    "TypeName": "explanationofbenefit_processNote",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "number",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ]
+      },
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "text",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "language",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      }
+    ]
+  },
+  "explanationofbenefit_benefitBalance": {
+    "TypeName": "explanationofbenefit_benefitBalance",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "category",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "excluded",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "name",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "description",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "network",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "unit",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "term",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "financial",
+        "Type": [
+          {
+            "TypeName": "explanationofbenefit_benefitBalance_financial"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "explanationofbenefit_benefitBalance_financial": {
+    "TypeName": "explanationofbenefit_benefitBalance_financial",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "allowed[x]",
+        "Type": [
+          {
+            "TypeName": "Money"
+          },
+          {
+            "TypeName": "string"
+          },
+          {
+            "TypeName": "unsignedInt"
+          }
+        ]
+      },
+      {
+        "ElementName": "used[x]",
+        "Type": [
+          {
+            "TypeName": "Money"
+          },
+          {
+            "TypeName": "unsignedInt"
+          }
+        ]
+      }
+    ]
+  }
+}

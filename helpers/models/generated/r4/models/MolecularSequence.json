@@ -1,0 +1,637 @@
+{
+  "MolecularSequence": {
+    "TypeName": "MolecularSequence",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "coordinateSystem",
+        "Type": [
+          {
+            "TypeName": "integer"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "patient",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Patient"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "specimen",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Specimen"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "device",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Device"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "performer",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "quantity",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
+      },
+      {
+        "ElementName": "referenceSeq",
+        "Type": [
+          {
+            "TypeName": "molecularsequence_referenceSeq"
+          }
+        ]
+      },
+      {
+        "ElementName": "variant",
+        "Type": [
+          {
+            "TypeName": "molecularsequence_variant"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "observedSeq",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "quality",
+        "Type": [
+          {
+            "TypeName": "molecularsequence_quality"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "readCoverage",
+        "Type": [
+          {
+            "TypeName": "integer"
+          }
+        ]
+      },
+      {
+        "ElementName": "repository",
+        "Type": [
+          {
+            "TypeName": "molecularsequence_repository"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "pointer",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/MolecularSequence"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "structureVariant",
+        "Type": [
+          {
+            "TypeName": "molecularsequence_structureVariant"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "molecularsequence_referenceSeq": {
+    "TypeName": "molecularsequence_referenceSeq",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "chromosome",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "genomeBuild",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "orientation",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "referenceSeqId",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "referenceSeqPointer",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/MolecularSequence"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "referenceSeqString",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "strand",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "windowStart",
+        "Type": [
+          {
+            "TypeName": "integer"
+          }
+        ]
+      },
+      {
+        "ElementName": "windowEnd",
+        "Type": [
+          {
+            "TypeName": "integer"
+          }
+        ]
+      }
+    ]
+  },
+  "molecularsequence_variant": {
+    "TypeName": "molecularsequence_variant",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "start",
+        "Type": [
+          {
+            "TypeName": "integer"
+          }
+        ]
+      },
+      {
+        "ElementName": "end",
+        "Type": [
+          {
+            "TypeName": "integer"
+          }
+        ]
+      },
+      {
+        "ElementName": "observedAllele",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "referenceAllele",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "cigar",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "variantPointer",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Observation"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "molecularsequence_quality": {
+    "TypeName": "molecularsequence_quality",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "standardSequence",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "start",
+        "Type": [
+          {
+            "TypeName": "integer"
+          }
+        ]
+      },
+      {
+        "ElementName": "end",
+        "Type": [
+          {
+            "TypeName": "integer"
+          }
+        ]
+      },
+      {
+        "ElementName": "score",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
+      },
+      {
+        "ElementName": "method",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "truthTP",
+        "Type": [
+          {
+            "TypeName": "decimal"
+          }
+        ]
+      },
+      {
+        "ElementName": "queryTP",
+        "Type": [
+          {
+            "TypeName": "decimal"
+          }
+        ]
+      },
+      {
+        "ElementName": "truthFN",
+        "Type": [
+          {
+            "TypeName": "decimal"
+          }
+        ]
+      },
+      {
+        "ElementName": "queryFP",
+        "Type": [
+          {
+            "TypeName": "decimal"
+          }
+        ]
+      },
+      {
+        "ElementName": "gtFP",
+        "Type": [
+          {
+            "TypeName": "decimal"
+          }
+        ]
+      },
+      {
+        "ElementName": "precision",
+        "Type": [
+          {
+            "TypeName": "decimal"
+          }
+        ]
+      },
+      {
+        "ElementName": "recall",
+        "Type": [
+          {
+            "TypeName": "decimal"
+          }
+        ]
+      },
+      {
+        "ElementName": "fScore",
+        "Type": [
+          {
+            "TypeName": "decimal"
+          }
+        ]
+      },
+      {
+        "ElementName": "roc",
+        "Type": [
+          {
+            "TypeName": "molecularsequence_quality_roc"
+          }
+        ]
+      }
+    ]
+  },
+  "molecularsequence_quality_roc": {
+    "TypeName": "molecularsequence_quality_roc",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "score",
+        "Type": [
+          {
+            "TypeName": "integer"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "numTP",
+        "Type": [
+          {
+            "TypeName": "integer"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "numFP",
+        "Type": [
+          {
+            "TypeName": "integer"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "numFN",
+        "Type": [
+          {
+            "TypeName": "integer"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "precision",
+        "Type": [
+          {
+            "TypeName": "decimal"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "sensitivity",
+        "Type": [
+          {
+            "TypeName": "decimal"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "fMeasure",
+        "Type": [
+          {
+            "TypeName": "decimal"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "molecularsequence_repository": {
+    "TypeName": "molecularsequence_repository",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "url",
+        "Type": [
+          {
+            "TypeName": "uri"
+          }
+        ]
+      },
+      {
+        "ElementName": "name",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "datasetId",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "variantsetId",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "readsetId",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      }
+    ]
+  },
+  "molecularsequence_structureVariant": {
+    "TypeName": "molecularsequence_structureVariant",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "variantType",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "exact",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "length",
+        "Type": [
+          {
+            "TypeName": "integer"
+          }
+        ]
+      },
+      {
+        "ElementName": "outer",
+        "Type": [
+          {
+            "TypeName": "molecularsequence_structureVariant_outer"
+          }
+        ]
+      },
+      {
+        "ElementName": "inner",
+        "Type": [
+          {
+            "TypeName": "molecularsequence_structureVariant_inner"
+          }
+        ]
+      }
+    ]
+  },
+  "molecularsequence_structureVariant_outer": {
+    "TypeName": "molecularsequence_structureVariant_outer",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "start",
+        "Type": [
+          {
+            "TypeName": "integer"
+          }
+        ]
+      },
+      {
+        "ElementName": "end",
+        "Type": [
+          {
+            "TypeName": "integer"
+          }
+        ]
+      }
+    ]
+  },
+  "molecularsequence_structureVariant_inner": {
+    "TypeName": "molecularsequence_structureVariant_inner",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "start",
+        "Type": [
+          {
+            "TypeName": "integer"
+          }
+        ]
+      },
+      {
+        "ElementName": "end",
+        "Type": [
+          {
+            "TypeName": "integer"
+          }
+        ]
+      }
+    ]
+  }
+}
