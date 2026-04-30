@@ -1,0 +1,49 @@
+{
+  "Expression": {
+    "TypeName": "Expression",
+    "BaseTypeName": "Element",
+    "Elements": [
+      {
+        "ElementName": "description",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "name",
+        "Type": [
+          {
+            "TypeName": "id"
+          }
+        ]
+      },
+      {
+        "ElementName": "language",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "expression",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "reference",
+        "Type": [
+          {
+            "TypeName": "uri"
+          }
+        ]
+      }
+    ]
+  }
+}

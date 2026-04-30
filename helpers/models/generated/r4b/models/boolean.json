@@ -1,0 +1,16 @@
+{
+  "boolean": {
+    "TypeName": "boolean",
+    "BaseTypeName": "Element",
+    "Elements": [
+      {
+        "ElementName": "value",
+        "Type": [
+          {
+            "TypeName": "System.Boolean"
+          }
+        ]
+      }
+    ]
+  }
+}

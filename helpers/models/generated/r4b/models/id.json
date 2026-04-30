@@ -1,0 +1,16 @@
+{
+  "id": {
+    "TypeName": "id",
+    "BaseTypeName": "string",
+    "Elements": [
+      {
+        "ElementName": "value",
+        "Type": [
+          {
+            "TypeName": "System.String"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,238 @@
+{
+  "ObservationDefinition": {
+    "TypeName": "ObservationDefinition",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "category",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "code",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "permittedDataType",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "multipleResultsAllowed",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "method",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "preferredReportName",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "quantitativeDetails",
+        "Type": [
+          {
+            "TypeName": "observationdefinition_quantitativeDetails"
+          }
+        ]
+      },
+      {
+        "ElementName": "qualifiedInterval",
+        "Type": [
+          {
+            "TypeName": "observationdefinition_qualifiedInterval"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "validCodedValueSet",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/ValueSet"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "normalCodedValueSet",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/ValueSet"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "abnormalCodedValueSet",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/ValueSet"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "criticalCodedValueSet",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/ValueSet"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "observationdefinition_quantitativeDetails": {
+    "TypeName": "observationdefinition_quantitativeDetails",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "customaryUnit",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "unit",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "conversionFactor",
+        "Type": [
+          {
+            "TypeName": "decimal"
+          }
+        ]
+      },
+      {
+        "ElementName": "decimalPrecision",
+        "Type": [
+          {
+            "TypeName": "integer"
+          }
+        ]
+      }
+    ]
+  },
+  "observationdefinition_qualifiedInterval": {
+    "TypeName": "observationdefinition_qualifiedInterval",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "category",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "range",
+        "Type": [
+          {
+            "TypeName": "Range"
+          }
+        ]
+      },
+      {
+        "ElementName": "context",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "appliesTo",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "gender",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "age",
+        "Type": [
+          {
+            "TypeName": "Range"
+          }
+        ]
+      },
+      {
+        "ElementName": "gestationalAge",
+        "Type": [
+          {
+            "TypeName": "Range"
+          }
+        ]
+      },
+      {
+        "ElementName": "condition",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      }
+    ]
+  }
+}

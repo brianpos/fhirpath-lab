@@ -1,0 +1,32 @@
+{
+  "RatioRange": {
+    "TypeName": "RatioRange",
+    "BaseTypeName": "Element",
+    "Elements": [
+      {
+        "ElementName": "lowNumerator",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
+      },
+      {
+        "ElementName": "highNumerator",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
+      },
+      {
+        "ElementName": "denominator",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
+      }
+    ]
+  }
+}

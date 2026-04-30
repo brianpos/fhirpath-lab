@@ -1,0 +1,204 @@
+{
+  "InsurancePlan": {
+    "TypeName": "InsurancePlan",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "product",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/InsuranceProduct"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "coverageArea",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Location"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "network",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "generalCost",
+        "Type": [
+          {
+            "TypeName": "insuranceplan_generalCost"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "specificCost",
+        "Type": [
+          {
+            "TypeName": "insuranceplan_specificCost"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "insuranceplan_generalCost": {
+    "TypeName": "insuranceplan_generalCost",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "groupSize",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ]
+      },
+      {
+        "ElementName": "cost",
+        "Type": [
+          {
+            "TypeName": "Money"
+          }
+        ]
+      },
+      {
+        "ElementName": "comment",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      }
+    ]
+  },
+  "insuranceplan_specificCost": {
+    "TypeName": "insuranceplan_specificCost",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "category",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "benefit",
+        "Type": [
+          {
+            "TypeName": "insuranceplan_specificCost_benefit"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "insuranceplan_specificCost_benefit": {
+    "TypeName": "insuranceplan_specificCost_benefit",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "cost",
+        "Type": [
+          {
+            "TypeName": "insuranceplan_specificCost_benefit_cost"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "insuranceplan_specificCost_benefit_cost": {
+    "TypeName": "insuranceplan_specificCost_benefit_cost",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "applicability",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "qualifier",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "value",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
+      }
+    ]
+  }
+}

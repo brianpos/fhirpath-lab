@@ -1,0 +1,16 @@
+{
+  "decimal": {
+    "TypeName": "decimal",
+    "BaseTypeName": "Element",
+    "Elements": [
+      {
+        "ElementName": "value",
+        "Type": [
+          {
+            "TypeName": "System.Decimal"
+          }
+        ]
+      }
+    ]
+  }
+}

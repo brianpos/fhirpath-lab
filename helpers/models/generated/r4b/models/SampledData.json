@@ -1,0 +1,67 @@
+{
+  "SampledData": {
+    "TypeName": "SampledData",
+    "BaseTypeName": "Element",
+    "Elements": [
+      {
+        "ElementName": "origin",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "period",
+        "Type": [
+          {
+            "TypeName": "decimal"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "factor",
+        "Type": [
+          {
+            "TypeName": "decimal"
+          }
+        ]
+      },
+      {
+        "ElementName": "lowerLimit",
+        "Type": [
+          {
+            "TypeName": "decimal"
+          }
+        ]
+      },
+      {
+        "ElementName": "upperLimit",
+        "Type": [
+          {
+            "TypeName": "decimal"
+          }
+        ]
+      },
+      {
+        "ElementName": "dimensions",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "data",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      }
+    ]
+  }
+}

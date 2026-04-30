@@ -1,0 +1,16 @@
+{
+  "instant": {
+    "TypeName": "instant",
+    "BaseTypeName": "Element",
+    "Elements": [
+      {
+        "ElementName": "value",
+        "Type": [
+          {
+            "TypeName": "System.DateTime"
+          }
+        ]
+      }
+    ]
+  }
+}

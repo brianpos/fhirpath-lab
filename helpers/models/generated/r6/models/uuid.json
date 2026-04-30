@@ -1,0 +1,16 @@
+{
+  "uuid": {
+    "TypeName": "uuid",
+    "BaseTypeName": "uri",
+    "Elements": [
+      {
+        "ElementName": "value",
+        "Type": [
+          {
+            "TypeName": "System.String"
+          }
+        ]
+      }
+    ]
+  }
+}

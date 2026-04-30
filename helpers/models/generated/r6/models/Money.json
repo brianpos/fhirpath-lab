@@ -1,0 +1,24 @@
+{
+  "Money": {
+    "TypeName": "Money",
+    "BaseTypeName": "DataType",
+    "Elements": [
+      {
+        "ElementName": "value",
+        "Type": [
+          {
+            "TypeName": "decimal"
+          }
+        ]
+      },
+      {
+        "ElementName": "currency",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      }
+    ]
+  }
+}

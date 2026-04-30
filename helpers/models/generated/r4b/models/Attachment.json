@@ -1,0 +1,72 @@
+{
+  "Attachment": {
+    "TypeName": "Attachment",
+    "BaseTypeName": "Element",
+    "Elements": [
+      {
+        "ElementName": "contentType",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "language",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "data",
+        "Type": [
+          {
+            "TypeName": "base64Binary"
+          }
+        ]
+      },
+      {
+        "ElementName": "url",
+        "Type": [
+          {
+            "TypeName": "url"
+          }
+        ]
+      },
+      {
+        "ElementName": "size",
+        "Type": [
+          {
+            "TypeName": "unsignedInt"
+          }
+        ]
+      },
+      {
+        "ElementName": "hash",
+        "Type": [
+          {
+            "TypeName": "base64Binary"
+          }
+        ]
+      },
+      {
+        "ElementName": "title",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "creation",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "Narrative": {
+    "TypeName": "Narrative",
+    "BaseTypeName": "Element",
+    "Elements": [
+      {
+        "ElementName": "status",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "div",
+        "Type": [
+          {
+            "TypeName": "xhtml"
+          }
+        ],
+        "Required": true
+      }
+    ]
+  }
+}

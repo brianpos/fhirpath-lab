@@ -1,0 +1,16 @@
+{
+  "base64Binary": {
+    "TypeName": "base64Binary",
+    "BaseTypeName": "PrimitiveType",
+    "Elements": [
+      {
+        "ElementName": "value",
+        "Type": [
+          {
+            "TypeName": "System.String"
+          }
+        ]
+      }
+    ]
+  }
+}

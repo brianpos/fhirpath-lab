@@ -1,0 +1,584 @@
+{
+  "Appointment": {
+    "TypeName": "Appointment",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "status",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "cancellationReason",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "class",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "serviceCategory",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "serviceType",
+        "Type": [
+          {
+            "TypeName": "CodeableReference"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "specialty",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "appointmentType",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "reason",
+        "Type": [
+          {
+            "TypeName": "CodeableReference"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "priority",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "description",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "replaces",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Appointment"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "virtualService",
+        "Type": [
+          {
+            "TypeName": "VirtualServiceDetail"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "supportingInformation",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Resource"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "previousAppointment",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Appointment"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "originatingAppointment",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Appointment"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "start",
+        "Type": [
+          {
+            "TypeName": "instant"
+          }
+        ]
+      },
+      {
+        "ElementName": "end",
+        "Type": [
+          {
+            "TypeName": "instant"
+          }
+        ]
+      },
+      {
+        "ElementName": "minutesDuration",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ]
+      },
+      {
+        "ElementName": "requestedPeriod",
+        "Type": [
+          {
+            "TypeName": "Period"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "slot",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Slot"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "account",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Account"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "created",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      },
+      {
+        "ElementName": "cancellationDate",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      },
+      {
+        "ElementName": "note",
+        "Type": [
+          {
+            "TypeName": "Annotation"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "patientInstruction",
+        "Type": [
+          {
+            "TypeName": "CodeableReference"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "basedOn",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/CarePlan",
+              "http://hl7.org/fhir/StructureDefinition/DeviceRequest",
+              "http://hl7.org/fhir/StructureDefinition/MedicationRequest",
+              "http://hl7.org/fhir/StructureDefinition/ServiceRequest"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "subject",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Group",
+              "http://hl7.org/fhir/StructureDefinition/Patient"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "participant",
+        "Type": [
+          {
+            "TypeName": "appointment_participant"
+          }
+        ],
+        "IsArray": true,
+        "Required": true
+      },
+      {
+        "ElementName": "recurrenceId",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ]
+      },
+      {
+        "ElementName": "occurrenceChanged",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "recurrenceTemplate",
+        "Type": [
+          {
+            "TypeName": "appointment_recurrenceTemplate"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "appointment_participant": {
+    "TypeName": "appointment_participant",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "period",
+        "Type": [
+          {
+            "TypeName": "Period"
+          }
+        ]
+      },
+      {
+        "ElementName": "actor",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/CareTeam",
+              "http://hl7.org/fhir/StructureDefinition/Device",
+              "http://hl7.org/fhir/StructureDefinition/Group",
+              "http://hl7.org/fhir/StructureDefinition/HealthcareService",
+              "http://hl7.org/fhir/StructureDefinition/Location",
+              "http://hl7.org/fhir/StructureDefinition/Patient",
+              "http://hl7.org/fhir/StructureDefinition/Practitioner",
+              "http://hl7.org/fhir/StructureDefinition/PractitionerRole",
+              "http://hl7.org/fhir/StructureDefinition/RelatedPerson"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "required",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "status",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      }
+    ]
+  },
+  "appointment_recurrenceTemplate": {
+    "TypeName": "appointment_recurrenceTemplate",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "timezone",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "recurrenceType",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "lastOccurrenceDate",
+        "Type": [
+          {
+            "TypeName": "date"
+          }
+        ]
+      },
+      {
+        "ElementName": "occurrenceCount",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ]
+      },
+      {
+        "ElementName": "occurrenceDate",
+        "Type": [
+          {
+            "TypeName": "date"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "weeklyTemplate",
+        "Type": [
+          {
+            "TypeName": "appointment_recurrenceTemplate_weeklyTemplate"
+          }
+        ]
+      },
+      {
+        "ElementName": "monthlyTemplate",
+        "Type": [
+          {
+            "TypeName": "appointment_recurrenceTemplate_monthlyTemplate"
+          }
+        ]
+      },
+      {
+        "ElementName": "yearlyTemplate",
+        "Type": [
+          {
+            "TypeName": "appointment_recurrenceTemplate_yearlyTemplate"
+          }
+        ]
+      },
+      {
+        "ElementName": "excludingDate",
+        "Type": [
+          {
+            "TypeName": "date"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "excludingRecurrenceId",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "appointment_recurrenceTemplate_weeklyTemplate": {
+    "TypeName": "appointment_recurrenceTemplate_weeklyTemplate",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "monday",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "tuesday",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "wednesday",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "thursday",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "friday",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "saturday",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "sunday",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "weekInterval",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ]
+      }
+    ]
+  },
+  "appointment_recurrenceTemplate_monthlyTemplate": {
+    "TypeName": "appointment_recurrenceTemplate_monthlyTemplate",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "dayOfMonth",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ]
+      },
+      {
+        "ElementName": "nthWeekOfMonth",
+        "Type": [
+          {
+            "TypeName": "Coding"
+          }
+        ]
+      },
+      {
+        "ElementName": "dayOfWeek",
+        "Type": [
+          {
+            "TypeName": "Coding"
+          }
+        ]
+      },
+      {
+        "ElementName": "monthInterval",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ],
+        "Required": true
+      }
+    ]
+  },
+  "appointment_recurrenceTemplate_yearlyTemplate": {
+    "TypeName": "appointment_recurrenceTemplate_yearlyTemplate",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "yearInterval",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ],
+        "Required": true
+      }
+    ]
+  }
+}

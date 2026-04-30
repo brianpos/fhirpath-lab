@@ -1,0 +1,36 @@
+{
+  "Binary": {
+    "TypeName": "Binary",
+    "BaseTypeName": "Resource",
+    "Elements": [
+      {
+        "ElementName": "contentType",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "securityContext",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Resource"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "data",
+        "Type": [
+          {
+            "TypeName": "base64Binary"
+          }
+        ]
+      }
+    ]
+  }
+}

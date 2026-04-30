@@ -1,0 +1,535 @@
+{
+  "TerminologyCapabilities": {
+    "TypeName": "TerminologyCapabilities",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "url",
+        "Type": [
+          {
+            "TypeName": "uri"
+          }
+        ]
+      },
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "version",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "versionAlgorithm[x]",
+        "Type": [
+          {
+            "TypeName": "Coding"
+          },
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "name",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "title",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "status",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "experimental",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "date",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "publisher",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "contact",
+        "Type": [
+          {
+            "TypeName": "ContactDetail"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "description",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      },
+      {
+        "ElementName": "useContext",
+        "Type": [
+          {
+            "TypeName": "UsageContext"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "jurisdiction",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "purpose",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      },
+      {
+        "ElementName": "copyright",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      },
+      {
+        "ElementName": "copyrightLabel",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "kind",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "software",
+        "Type": [
+          {
+            "TypeName": "terminologycapabilities_software"
+          }
+        ]
+      },
+      {
+        "ElementName": "implementation",
+        "Type": [
+          {
+            "TypeName": "terminologycapabilities_implementation"
+          }
+        ]
+      },
+      {
+        "ElementName": "lockedDate",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "codeSystem",
+        "Type": [
+          {
+            "TypeName": "terminologycapabilities_codeSystem"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "supplements",
+        "Type": [
+          {
+            "TypeName": "terminologycapabilities_supplements"
+          }
+        ]
+      },
+      {
+        "ElementName": "expansion",
+        "Type": [
+          {
+            "TypeName": "terminologycapabilities_expansion"
+          }
+        ]
+      },
+      {
+        "ElementName": "codeSearch",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "validateCode",
+        "Type": [
+          {
+            "TypeName": "terminologycapabilities_validateCode"
+          }
+        ]
+      },
+      {
+        "ElementName": "translation",
+        "Type": [
+          {
+            "TypeName": "terminologycapabilities_translation"
+          }
+        ]
+      }
+    ]
+  },
+  "terminologycapabilities_software": {
+    "TypeName": "terminologycapabilities_software",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "name",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "version",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      }
+    ]
+  },
+  "terminologycapabilities_implementation": {
+    "TypeName": "terminologycapabilities_implementation",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "description",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "url",
+        "Type": [
+          {
+            "TypeName": "url"
+          }
+        ]
+      }
+    ]
+  },
+  "terminologycapabilities_codeSystem": {
+    "TypeName": "terminologycapabilities_codeSystem",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "uri",
+        "Type": [
+          {
+            "TypeName": "canonical"
+          }
+        ]
+      },
+      {
+        "ElementName": "supplement",
+        "Type": [
+          {
+            "TypeName": "canonical"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "version",
+        "Type": [
+          {
+            "TypeName": "terminologycapabilities_codeSystem_version"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "content",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "subsumption",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      }
+    ]
+  },
+  "terminologycapabilities_codeSystem_version": {
+    "TypeName": "terminologycapabilities_codeSystem_version",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "code",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "isDefault",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "supplement",
+        "Type": [
+          {
+            "TypeName": "canonical"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "compositional",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "language",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "filter",
+        "Type": [
+          {
+            "TypeName": "terminologycapabilities_codeSystem_version_filter"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "property",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "terminologycapabilities_codeSystem_version_filter": {
+    "TypeName": "terminologycapabilities_codeSystem_version_filter",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "code",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "op",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "IsArray": true,
+        "Required": true
+      }
+    ]
+  },
+  "terminologycapabilities_supplements": {
+    "TypeName": "terminologycapabilities_supplements",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "globals",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      }
+    ]
+  },
+  "terminologycapabilities_expansion": {
+    "TypeName": "terminologycapabilities_expansion",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "hierarchical",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "paging",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "incomplete",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "parameter",
+        "Type": [
+          {
+            "TypeName": "terminologycapabilities_expansion_parameter"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "textFilter",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      }
+    ]
+  },
+  "terminologycapabilities_expansion_parameter": {
+    "TypeName": "terminologycapabilities_expansion_parameter",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "name",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "documentation",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      }
+    ]
+  },
+  "terminologycapabilities_validateCode": {
+    "TypeName": "terminologycapabilities_validateCode",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "translations",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ],
+        "Required": true
+      }
+    ]
+  },
+  "terminologycapabilities_translation": {
+    "TypeName": "terminologycapabilities_translation",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "needsMap",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ],
+        "Required": true
+      }
+    ]
+  }
+}

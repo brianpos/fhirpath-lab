@@ -1,0 +1,153 @@
+{
+  "Dosage": {
+    "TypeName": "Dosage",
+    "BaseTypeName": "BackboneType",
+    "Elements": [
+      {
+        "ElementName": "condition",
+        "Type": [
+          {
+            "TypeName": "DosageCondition"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "text",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "additionalInstruction",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "patientInstruction",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "timing",
+        "Type": [
+          {
+            "TypeName": "Timing"
+          }
+        ]
+      },
+      {
+        "ElementName": "asNeeded",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "asNeededFor",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "site",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "route",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "method",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "doseAndRate",
+        "Type": [
+          {
+            "TypeName": "dosage_doseAndRate"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "safety",
+        "Type": [
+          {
+            "TypeName": "DosageSafety"
+          }
+        ]
+      }
+    ]
+  },
+  "dosage_doseAndRate": {
+    "TypeName": "dosage_doseAndRate",
+    "BaseTypeName": "Element",
+    "Elements": [
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "dose[x]",
+        "Type": [
+          {
+            "TypeName": "Expression"
+          },
+          {
+            "TypeName": "Quantity"
+          },
+          {
+            "TypeName": "Range"
+          }
+        ]
+      },
+      {
+        "ElementName": "rate[x]",
+        "Type": [
+          {
+            "TypeName": "Expression"
+          },
+          {
+            "TypeName": "Quantity"
+          },
+          {
+            "TypeName": "Range"
+          },
+          {
+            "TypeName": "Ratio"
+          }
+        ]
+      }
+    ]
+  }
+}

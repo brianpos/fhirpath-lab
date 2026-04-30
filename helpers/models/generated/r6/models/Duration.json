@@ -1,0 +1,7 @@
+{
+  "Duration": {
+    "TypeName": "Duration",
+    "BaseTypeName": "Quantity",
+    "Elements": []
+  }
+}

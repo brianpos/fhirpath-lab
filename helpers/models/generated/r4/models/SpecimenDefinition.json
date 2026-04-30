@@ -1,0 +1,265 @@
+{
+  "SpecimenDefinition": {
+    "TypeName": "SpecimenDefinition",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ]
+      },
+      {
+        "ElementName": "typeCollected",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "patientPreparation",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "timeAspect",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "collection",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "typeTested",
+        "Type": [
+          {
+            "TypeName": "specimendefinition_typeTested"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "specimendefinition_typeTested": {
+    "TypeName": "specimendefinition_typeTested",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "isDerived",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "preference",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "container",
+        "Type": [
+          {
+            "TypeName": "specimendefinition_typeTested_container"
+          }
+        ]
+      },
+      {
+        "ElementName": "requirement",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "retentionTime",
+        "Type": [
+          {
+            "TypeName": "Duration"
+          }
+        ]
+      },
+      {
+        "ElementName": "rejectionCriterion",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "handling",
+        "Type": [
+          {
+            "TypeName": "specimendefinition_typeTested_handling"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "specimendefinition_typeTested_container": {
+    "TypeName": "specimendefinition_typeTested_container",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "material",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "cap",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "description",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "capacity",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
+      },
+      {
+        "ElementName": "minimumVolume[x]",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          },
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "additive",
+        "Type": [
+          {
+            "TypeName": "specimendefinition_typeTested_container_additive"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "preparation",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      }
+    ]
+  },
+  "specimendefinition_typeTested_container_additive": {
+    "TypeName": "specimendefinition_typeTested_container_additive",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "additive[x]",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Substance"
+            ]
+          }
+        ],
+        "Required": true
+      }
+    ]
+  },
+  "specimendefinition_typeTested_handling": {
+    "TypeName": "specimendefinition_typeTested_handling",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "temperatureQualifier",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "temperatureRange",
+        "Type": [
+          {
+            "TypeName": "Range"
+          }
+        ]
+      },
+      {
+        "ElementName": "maxDuration",
+        "Type": [
+          {
+            "TypeName": "Duration"
+          }
+        ]
+      },
+      {
+        "ElementName": "instruction",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      }
+    ]
+  }
+}

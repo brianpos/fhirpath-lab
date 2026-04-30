@@ -1,0 +1,25 @@
+{
+  "ContactDetail": {
+    "TypeName": "ContactDetail",
+    "BaseTypeName": "Element",
+    "Elements": [
+      {
+        "ElementName": "name",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "telecom",
+        "Type": [
+          {
+            "TypeName": "ContactPoint"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  }
+}

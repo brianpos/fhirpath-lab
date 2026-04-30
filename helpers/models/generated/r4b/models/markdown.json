@@ -1,0 +1,16 @@
+{
+  "markdown": {
+    "TypeName": "markdown",
+    "BaseTypeName": "string",
+    "Elements": [
+      {
+        "ElementName": "value",
+        "Type": [
+          {
+            "TypeName": "System.String"
+          }
+        ]
+      }
+    ]
+  }
+}

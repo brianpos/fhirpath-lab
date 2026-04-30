@@ -4,14 +4,12 @@
 
 import type { TypeModel } from "../../../custom_model";
 
-// FHIR complex types
+// FHIR complex types (with their backbone elements)
 
 export const Address: TypeModel = {
     TypeName: "Address",
     BaseTypeName: "Element",
     Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
         { ElementName: "use", Type: [{ TypeName: "code" }] },
         { ElementName: "type", Type: [{ TypeName: "code" }] },
         { ElementName: "text", Type: [{ TypeName: "string" }] },
@@ -28,23 +26,13 @@ export const Address: TypeModel = {
 export const Age: TypeModel = {
     TypeName: "Age",
     BaseTypeName: "Quantity",
-    Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
-        { ElementName: "value", Type: [{ TypeName: "decimal" }] },
-        { ElementName: "comparator", Type: [{ TypeName: "code" }] },
-        { ElementName: "unit", Type: [{ TypeName: "string" }] },
-        { ElementName: "system", Type: [{ TypeName: "uri" }] },
-        { ElementName: "code", Type: [{ TypeName: "code" }] },
-    ],
+    Elements: [],
 };
 
 export const Annotation: TypeModel = {
     TypeName: "Annotation",
     BaseTypeName: "Element",
     Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
         { ElementName: "author[x]", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Organization", "http://hl7.org/fhir/StructureDefinition/Patient", "http://hl7.org/fhir/StructureDefinition/Practitioner", "http://hl7.org/fhir/StructureDefinition/RelatedPerson"] }, { TypeName: "string" }] },
         { ElementName: "time", Type: [{ TypeName: "dateTime" }] },
         { ElementName: "text", Type: [{ TypeName: "markdown" }], Required: true },
@@ -55,8 +43,6 @@ export const Attachment: TypeModel = {
     TypeName: "Attachment",
     BaseTypeName: "Element",
     Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
         { ElementName: "contentType", Type: [{ TypeName: "code" }] },
         { ElementName: "language", Type: [{ TypeName: "code" }] },
         { ElementName: "data", Type: [{ TypeName: "base64Binary" }] },
@@ -72,8 +58,6 @@ export const BackboneElement: TypeModel = {
     TypeName: "BackboneElement",
     BaseTypeName: "Element",
     Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
         { ElementName: "modifierExtension", Type: [{ TypeName: "Extension" }], IsArray: true },
     ],
 };
@@ -82,8 +66,6 @@ export const CodeableConcept: TypeModel = {
     TypeName: "CodeableConcept",
     BaseTypeName: "Element",
     Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
         { ElementName: "coding", Type: [{ TypeName: "Coding" }], IsArray: true },
         { ElementName: "text", Type: [{ TypeName: "string" }] },
     ],
@@ -93,8 +75,6 @@ export const Coding: TypeModel = {
     TypeName: "Coding",
     BaseTypeName: "Element",
     Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
         { ElementName: "system", Type: [{ TypeName: "uri" }] },
         { ElementName: "version", Type: [{ TypeName: "string" }] },
         { ElementName: "code", Type: [{ TypeName: "code" }] },
@@ -107,8 +87,6 @@ export const ContactDetail: TypeModel = {
     TypeName: "ContactDetail",
     BaseTypeName: "Element",
     Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
         { ElementName: "name", Type: [{ TypeName: "string" }] },
         { ElementName: "telecom", Type: [{ TypeName: "ContactPoint" }], IsArray: true },
     ],
@@ -118,8 +96,6 @@ export const ContactPoint: TypeModel = {
     TypeName: "ContactPoint",
     BaseTypeName: "Element",
     Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
         { ElementName: "system", Type: [{ TypeName: "code" }] },
         { ElementName: "value", Type: [{ TypeName: "string" }] },
         { ElementName: "use", Type: [{ TypeName: "code" }] },
@@ -132,8 +108,6 @@ export const Contributor: TypeModel = {
     TypeName: "Contributor",
     BaseTypeName: "Element",
     Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
         { ElementName: "type", Type: [{ TypeName: "code" }], Required: true },
         { ElementName: "name", Type: [{ TypeName: "string" }], Required: true },
         { ElementName: "contact", Type: [{ TypeName: "ContactDetail" }], IsArray: true },
@@ -143,23 +117,13 @@ export const Contributor: TypeModel = {
 export const Count: TypeModel = {
     TypeName: "Count",
     BaseTypeName: "Quantity",
-    Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
-        { ElementName: "value", Type: [{ TypeName: "decimal" }] },
-        { ElementName: "comparator", Type: [{ TypeName: "code" }] },
-        { ElementName: "unit", Type: [{ TypeName: "string" }] },
-        { ElementName: "system", Type: [{ TypeName: "uri" }] },
-        { ElementName: "code", Type: [{ TypeName: "code" }] },
-    ],
+    Elements: [],
 };
 
 export const DataRequirement: TypeModel = {
     TypeName: "DataRequirement",
     BaseTypeName: "Element",
     Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
         { ElementName: "type", Type: [{ TypeName: "code" }], Required: true },
         { ElementName: "profile", Type: [{ TypeName: "canonical" }], IsArray: true },
         { ElementName: "subject[x]", Type: [{ TypeName: "CodeableConcept" }, { TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Group"] }] },
@@ -171,27 +135,46 @@ export const DataRequirement: TypeModel = {
     ],
 };
 
+export const datarequirement_codeFilter: TypeModel = {
+    TypeName: "datarequirement_codeFilter",
+    BaseTypeName: "Element",
+    Elements: [
+        { ElementName: "path", Type: [{ TypeName: "string" }] },
+        { ElementName: "searchParam", Type: [{ TypeName: "string" }] },
+        { ElementName: "valueSet", Type: [{ TypeName: "canonical" }] },
+        { ElementName: "code", Type: [{ TypeName: "Coding" }], IsArray: true },
+    ],
+};
+
+export const datarequirement_dateFilter: TypeModel = {
+    TypeName: "datarequirement_dateFilter",
+    BaseTypeName: "Element",
+    Elements: [
+        { ElementName: "path", Type: [{ TypeName: "string" }] },
+        { ElementName: "searchParam", Type: [{ TypeName: "string" }] },
+        { ElementName: "value[x]", Type: [{ TypeName: "Duration" }, { TypeName: "Period" }, { TypeName: "dateTime" }] },
+    ],
+};
+
+export const datarequirement_sort: TypeModel = {
+    TypeName: "datarequirement_sort",
+    BaseTypeName: "Element",
+    Elements: [
+        { ElementName: "path", Type: [{ TypeName: "string" }], Required: true },
+        { ElementName: "direction", Type: [{ TypeName: "code" }], Required: true },
+    ],
+};
+
 export const Distance: TypeModel = {
     TypeName: "Distance",
     BaseTypeName: "Quantity",
-    Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
-        { ElementName: "value", Type: [{ TypeName: "decimal" }] },
-        { ElementName: "comparator", Type: [{ TypeName: "code" }] },
-        { ElementName: "unit", Type: [{ TypeName: "string" }] },
-        { ElementName: "system", Type: [{ TypeName: "uri" }] },
-        { ElementName: "code", Type: [{ TypeName: "code" }] },
-    ],
+    Elements: [],
 };
 
 export const Dosage: TypeModel = {
     TypeName: "Dosage",
     BaseTypeName: "BackboneElement",
     Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
-        { ElementName: "modifierExtension", Type: [{ TypeName: "Extension" }], IsArray: true },
         { ElementName: "sequence", Type: [{ TypeName: "integer" }] },
         { ElementName: "text", Type: [{ TypeName: "string" }] },
         { ElementName: "additionalInstruction", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
@@ -208,18 +191,20 @@ export const Dosage: TypeModel = {
     ],
 };
 
+export const dosage_doseAndRate: TypeModel = {
+    TypeName: "dosage_doseAndRate",
+    BaseTypeName: "Element",
+    Elements: [
+        { ElementName: "type", Type: [{ TypeName: "CodeableConcept" }] },
+        { ElementName: "dose[x]", Type: [{ TypeName: "Quantity" }, { TypeName: "Range" }] },
+        { ElementName: "rate[x]", Type: [{ TypeName: "Quantity" }, { TypeName: "Range" }, { TypeName: "Ratio" }] },
+    ],
+};
+
 export const Duration: TypeModel = {
     TypeName: "Duration",
     BaseTypeName: "Quantity",
-    Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
-        { ElementName: "value", Type: [{ TypeName: "decimal" }] },
-        { ElementName: "comparator", Type: [{ TypeName: "code" }] },
-        { ElementName: "unit", Type: [{ TypeName: "string" }] },
-        { ElementName: "system", Type: [{ TypeName: "uri" }] },
-        { ElementName: "code", Type: [{ TypeName: "code" }] },
-    ],
+    Elements: [],
 };
 
 export const Element: TypeModel = {
@@ -234,9 +219,6 @@ export const ElementDefinition: TypeModel = {
     TypeName: "ElementDefinition",
     BaseTypeName: "BackboneElement",
     Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
-        { ElementName: "modifierExtension", Type: [{ TypeName: "Extension" }], IsArray: true },
         { ElementName: "path", Type: [{ TypeName: "string" }], Required: true },
         { ElementName: "representation", Type: [{ TypeName: "code" }], IsArray: true },
         { ElementName: "sliceName", Type: [{ TypeName: "string" }] },
@@ -274,12 +256,96 @@ export const ElementDefinition: TypeModel = {
     ],
 };
 
+export const elementdefinition_slicing: TypeModel = {
+    TypeName: "elementdefinition_slicing",
+    BaseTypeName: "Element",
+    Elements: [
+        { ElementName: "discriminator", Type: [{ TypeName: "elementdefinition_slicing_discriminator" }], IsArray: true },
+        { ElementName: "description", Type: [{ TypeName: "string" }] },
+        { ElementName: "ordered", Type: [{ TypeName: "boolean" }] },
+        { ElementName: "rules", Type: [{ TypeName: "code" }], Required: true },
+    ],
+};
+
+export const elementdefinition_slicing_discriminator: TypeModel = {
+    TypeName: "elementdefinition_slicing_discriminator",
+    BaseTypeName: "Element",
+    Elements: [
+        { ElementName: "type", Type: [{ TypeName: "code" }], Required: true },
+        { ElementName: "path", Type: [{ TypeName: "string" }], Required: true },
+    ],
+};
+
+export const elementdefinition_base: TypeModel = {
+    TypeName: "elementdefinition_base",
+    BaseTypeName: "Element",
+    Elements: [
+        { ElementName: "path", Type: [{ TypeName: "string" }], Required: true },
+        { ElementName: "min", Type: [{ TypeName: "unsignedInt" }], Required: true },
+        { ElementName: "max", Type: [{ TypeName: "string" }], Required: true },
+    ],
+};
+
+export const elementdefinition_type: TypeModel = {
+    TypeName: "elementdefinition_type",
+    BaseTypeName: "Element",
+    Elements: [
+        { ElementName: "code", Type: [{ TypeName: "uri" }], Required: true },
+        { ElementName: "profile", Type: [{ TypeName: "canonical" }], IsArray: true },
+        { ElementName: "targetProfile", Type: [{ TypeName: "canonical" }], IsArray: true },
+        { ElementName: "aggregation", Type: [{ TypeName: "code" }], IsArray: true },
+        { ElementName: "versioning", Type: [{ TypeName: "code" }] },
+    ],
+};
+
+export const elementdefinition_example: TypeModel = {
+    TypeName: "elementdefinition_example",
+    BaseTypeName: "Element",
+    Elements: [
+        { ElementName: "label", Type: [{ TypeName: "string" }], Required: true },
+        { ElementName: "value[x]", Type: [{ TypeName: "Address" }, { TypeName: "Age" }, { TypeName: "Annotation" }, { TypeName: "Attachment" }, { TypeName: "CodeableConcept" }, { TypeName: "Coding" }, { TypeName: "ContactDetail" }, { TypeName: "ContactPoint" }, { TypeName: "Contributor" }, { TypeName: "Count" }, { TypeName: "DataRequirement" }, { TypeName: "Distance" }, { TypeName: "Dosage" }, { TypeName: "Duration" }, { TypeName: "Expression" }, { TypeName: "HumanName" }, { TypeName: "Identifier" }, { TypeName: "Meta" }, { TypeName: "Money" }, { TypeName: "ParameterDefinition" }, { TypeName: "Period" }, { TypeName: "Quantity" }, { TypeName: "Range" }, { TypeName: "Ratio" }, { TypeName: "Reference" }, { TypeName: "RelatedArtifact" }, { TypeName: "SampledData" }, { TypeName: "Signature" }, { TypeName: "Timing" }, { TypeName: "TriggerDefinition" }, { TypeName: "UsageContext" }, { TypeName: "base64Binary" }, { TypeName: "boolean" }, { TypeName: "canonical" }, { TypeName: "code" }, { TypeName: "date" }, { TypeName: "dateTime" }, { TypeName: "decimal" }, { TypeName: "id" }, { TypeName: "instant" }, { TypeName: "integer" }, { TypeName: "markdown" }, { TypeName: "oid" }, { TypeName: "positiveInt" }, { TypeName: "string" }, { TypeName: "time" }, { TypeName: "unsignedInt" }, { TypeName: "uri" }, { TypeName: "url" }, { TypeName: "uuid" }], Required: true },
+    ],
+};
+
+export const elementdefinition_constraint: TypeModel = {
+    TypeName: "elementdefinition_constraint",
+    BaseTypeName: "Element",
+    Elements: [
+        { ElementName: "key", Type: [{ TypeName: "id" }], Required: true },
+        { ElementName: "requirements", Type: [{ TypeName: "string" }] },
+        { ElementName: "severity", Type: [{ TypeName: "code" }], Required: true },
+        { ElementName: "human", Type: [{ TypeName: "string" }], Required: true },
+        { ElementName: "expression", Type: [{ TypeName: "string" }] },
+        { ElementName: "xpath", Type: [{ TypeName: "string" }] },
+        { ElementName: "source", Type: [{ TypeName: "canonical" }] },
+    ],
+};
+
+export const elementdefinition_binding: TypeModel = {
+    TypeName: "elementdefinition_binding",
+    BaseTypeName: "Element",
+    Elements: [
+        { ElementName: "strength", Type: [{ TypeName: "code" }], Required: true },
+        { ElementName: "description", Type: [{ TypeName: "string" }] },
+        { ElementName: "valueSet", Type: [{ TypeName: "canonical" }] },
+    ],
+};
+
+export const elementdefinition_mapping: TypeModel = {
+    TypeName: "elementdefinition_mapping",
+    BaseTypeName: "Element",
+    Elements: [
+        { ElementName: "identity", Type: [{ TypeName: "id" }], Required: true },
+        { ElementName: "language", Type: [{ TypeName: "code" }] },
+        { ElementName: "map", Type: [{ TypeName: "string" }], Required: true },
+        { ElementName: "comment", Type: [{ TypeName: "string" }] },
+    ],
+};
+
 export const Expression: TypeModel = {
     TypeName: "Expression",
     BaseTypeName: "Element",
     Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
         { ElementName: "description", Type: [{ TypeName: "string" }] },
         { ElementName: "name", Type: [{ TypeName: "id" }] },
         { ElementName: "language", Type: [{ TypeName: "code" }], Required: true },
@@ -292,8 +358,6 @@ export const Extension: TypeModel = {
     TypeName: "Extension",
     BaseTypeName: "Element",
     Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
         { ElementName: "url", Type: [{ TypeName: "uri" }], Required: true },
         { ElementName: "value[x]", Type: [{ TypeName: "Address" }, { TypeName: "Age" }, { TypeName: "Annotation" }, { TypeName: "Attachment" }, { TypeName: "CodeableConcept" }, { TypeName: "Coding" }, { TypeName: "ContactDetail" }, { TypeName: "ContactPoint" }, { TypeName: "Contributor" }, { TypeName: "Count" }, { TypeName: "DataRequirement" }, { TypeName: "Distance" }, { TypeName: "Dosage" }, { TypeName: "Duration" }, { TypeName: "Expression" }, { TypeName: "HumanName" }, { TypeName: "Identifier" }, { TypeName: "Meta" }, { TypeName: "Money" }, { TypeName: "ParameterDefinition" }, { TypeName: "Period" }, { TypeName: "Quantity" }, { TypeName: "Range" }, { TypeName: "Ratio" }, { TypeName: "Reference" }, { TypeName: "RelatedArtifact" }, { TypeName: "SampledData" }, { TypeName: "Signature" }, { TypeName: "Timing" }, { TypeName: "TriggerDefinition" }, { TypeName: "UsageContext" }, { TypeName: "base64Binary" }, { TypeName: "boolean" }, { TypeName: "canonical" }, { TypeName: "code" }, { TypeName: "date" }, { TypeName: "dateTime" }, { TypeName: "decimal" }, { TypeName: "id" }, { TypeName: "instant" }, { TypeName: "integer" }, { TypeName: "markdown" }, { TypeName: "oid" }, { TypeName: "positiveInt" }, { TypeName: "string" }, { TypeName: "time" }, { TypeName: "unsignedInt" }, { TypeName: "uri" }, { TypeName: "url" }, { TypeName: "uuid" }] },
     ],
@@ -303,8 +367,6 @@ export const HumanName: TypeModel = {
     TypeName: "HumanName",
     BaseTypeName: "Element",
     Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
         { ElementName: "use", Type: [{ TypeName: "code" }] },
         { ElementName: "text", Type: [{ TypeName: "string" }] },
         { ElementName: "family", Type: [{ TypeName: "string" }] },
@@ -319,8 +381,6 @@ export const Identifier: TypeModel = {
     TypeName: "Identifier",
     BaseTypeName: "Element",
     Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
         { ElementName: "use", Type: [{ TypeName: "code" }] },
         { ElementName: "type", Type: [{ TypeName: "CodeableConcept" }] },
         { ElementName: "system", Type: [{ TypeName: "uri" }] },
@@ -334,9 +394,6 @@ export const MarketingStatus: TypeModel = {
     TypeName: "MarketingStatus",
     BaseTypeName: "BackboneElement",
     Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
-        { ElementName: "modifierExtension", Type: [{ TypeName: "Extension" }], IsArray: true },
         { ElementName: "country", Type: [{ TypeName: "CodeableConcept" }], Required: true },
         { ElementName: "jurisdiction", Type: [{ TypeName: "CodeableConcept" }] },
         { ElementName: "status", Type: [{ TypeName: "CodeableConcept" }], Required: true },
@@ -349,8 +406,6 @@ export const Meta: TypeModel = {
     TypeName: "Meta",
     BaseTypeName: "Element",
     Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
         { ElementName: "versionId", Type: [{ TypeName: "id" }] },
         { ElementName: "lastUpdated", Type: [{ TypeName: "instant" }] },
         { ElementName: "source", Type: [{ TypeName: "uri" }] },
@@ -364,8 +419,6 @@ export const Money: TypeModel = {
     TypeName: "Money",
     BaseTypeName: "Element",
     Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
         { ElementName: "value", Type: [{ TypeName: "decimal" }] },
         { ElementName: "currency", Type: [{ TypeName: "code" }] },
     ],
@@ -375,8 +428,6 @@ export const Narrative: TypeModel = {
     TypeName: "Narrative",
     BaseTypeName: "Element",
     Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
         { ElementName: "status", Type: [{ TypeName: "code" }], Required: true },
         { ElementName: "div", Type: [{ TypeName: "xhtml" }], Required: true },
     ],
@@ -386,8 +437,6 @@ export const ParameterDefinition: TypeModel = {
     TypeName: "ParameterDefinition",
     BaseTypeName: "Element",
     Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
         { ElementName: "name", Type: [{ TypeName: "code" }] },
         { ElementName: "use", Type: [{ TypeName: "code" }], Required: true },
         { ElementName: "min", Type: [{ TypeName: "integer" }] },
@@ -402,8 +451,6 @@ export const Period: TypeModel = {
     TypeName: "Period",
     BaseTypeName: "Element",
     Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
         { ElementName: "start", Type: [{ TypeName: "dateTime" }] },
         { ElementName: "end", Type: [{ TypeName: "dateTime" }] },
     ],
@@ -413,9 +460,6 @@ export const Population: TypeModel = {
     TypeName: "Population",
     BaseTypeName: "BackboneElement",
     Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
-        { ElementName: "modifierExtension", Type: [{ TypeName: "Extension" }], IsArray: true },
         { ElementName: "age[x]", Type: [{ TypeName: "CodeableConcept" }, { TypeName: "Range" }] },
         { ElementName: "gender", Type: [{ TypeName: "CodeableConcept" }] },
         { ElementName: "race", Type: [{ TypeName: "CodeableConcept" }] },
@@ -427,9 +471,6 @@ export const ProdCharacteristic: TypeModel = {
     TypeName: "ProdCharacteristic",
     BaseTypeName: "BackboneElement",
     Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
-        { ElementName: "modifierExtension", Type: [{ TypeName: "Extension" }], IsArray: true },
         { ElementName: "height", Type: [{ TypeName: "Quantity" }] },
         { ElementName: "width", Type: [{ TypeName: "Quantity" }] },
         { ElementName: "depth", Type: [{ TypeName: "Quantity" }] },
@@ -448,9 +489,6 @@ export const ProductShelfLife: TypeModel = {
     TypeName: "ProductShelfLife",
     BaseTypeName: "BackboneElement",
     Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
-        { ElementName: "modifierExtension", Type: [{ TypeName: "Extension" }], IsArray: true },
         { ElementName: "identifier", Type: [{ TypeName: "Identifier" }] },
         { ElementName: "type", Type: [{ TypeName: "CodeableConcept" }], Required: true },
         { ElementName: "period", Type: [{ TypeName: "Quantity" }], Required: true },
@@ -462,8 +500,6 @@ export const Quantity: TypeModel = {
     TypeName: "Quantity",
     BaseTypeName: "Element",
     Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
         { ElementName: "value", Type: [{ TypeName: "decimal" }] },
         { ElementName: "comparator", Type: [{ TypeName: "code" }] },
         { ElementName: "unit", Type: [{ TypeName: "string" }] },
@@ -476,8 +512,6 @@ export const Range: TypeModel = {
     TypeName: "Range",
     BaseTypeName: "Element",
     Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
         { ElementName: "low", Type: [{ TypeName: "Quantity" }] },
         { ElementName: "high", Type: [{ TypeName: "Quantity" }] },
     ],
@@ -487,8 +521,6 @@ export const Ratio: TypeModel = {
     TypeName: "Ratio",
     BaseTypeName: "Element",
     Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
         { ElementName: "numerator", Type: [{ TypeName: "Quantity" }] },
         { ElementName: "denominator", Type: [{ TypeName: "Quantity" }] },
     ],
@@ -498,8 +530,6 @@ export const Reference: TypeModel = {
     TypeName: "Reference",
     BaseTypeName: "Element",
     Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
         { ElementName: "reference", Type: [{ TypeName: "string" }] },
         { ElementName: "type", Type: [{ TypeName: "uri" }] },
         { ElementName: "identifier", Type: [{ TypeName: "Identifier" }] },
@@ -511,8 +541,6 @@ export const RelatedArtifact: TypeModel = {
     TypeName: "RelatedArtifact",
     BaseTypeName: "Element",
     Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
         { ElementName: "type", Type: [{ TypeName: "code" }], Required: true },
         { ElementName: "label", Type: [{ TypeName: "string" }] },
         { ElementName: "display", Type: [{ TypeName: "string" }] },
@@ -527,8 +555,6 @@ export const SampledData: TypeModel = {
     TypeName: "SampledData",
     BaseTypeName: "Element",
     Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
         { ElementName: "origin", Type: [{ TypeName: "Quantity" }], Required: true },
         { ElementName: "period", Type: [{ TypeName: "decimal" }], Required: true },
         { ElementName: "factor", Type: [{ TypeName: "decimal" }] },
@@ -543,8 +569,6 @@ export const Signature: TypeModel = {
     TypeName: "Signature",
     BaseTypeName: "Element",
     Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
         { ElementName: "type", Type: [{ TypeName: "Coding" }], IsArray: true, Required: true },
         { ElementName: "when", Type: [{ TypeName: "instant" }], Required: true },
         { ElementName: "who", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Device", "http://hl7.org/fhir/StructureDefinition/Organization", "http://hl7.org/fhir/StructureDefinition/Patient", "http://hl7.org/fhir/StructureDefinition/Practitioner", "http://hl7.org/fhir/StructureDefinition/PractitionerRole", "http://hl7.org/fhir/StructureDefinition/RelatedPerson"] }], Required: true },
@@ -559,9 +583,6 @@ export const SubstanceAmount: TypeModel = {
     TypeName: "SubstanceAmount",
     BaseTypeName: "BackboneElement",
     Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
-        { ElementName: "modifierExtension", Type: [{ TypeName: "Extension" }], IsArray: true },
         { ElementName: "amount[x]", Type: [{ TypeName: "Quantity" }, { TypeName: "Range" }, { TypeName: "string" }] },
         { ElementName: "amountType", Type: [{ TypeName: "CodeableConcept" }] },
         { ElementName: "amountText", Type: [{ TypeName: "string" }] },
@@ -569,16 +590,44 @@ export const SubstanceAmount: TypeModel = {
     ],
 };
 
+export const substanceamount_referenceRange: TypeModel = {
+    TypeName: "substanceamount_referenceRange",
+    BaseTypeName: "Element",
+    Elements: [
+        { ElementName: "lowLimit", Type: [{ TypeName: "Quantity" }] },
+        { ElementName: "highLimit", Type: [{ TypeName: "Quantity" }] },
+    ],
+};
+
 export const Timing: TypeModel = {
     TypeName: "Timing",
     BaseTypeName: "BackboneElement",
     Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
-        { ElementName: "modifierExtension", Type: [{ TypeName: "Extension" }], IsArray: true },
         { ElementName: "event", Type: [{ TypeName: "dateTime" }], IsArray: true },
         { ElementName: "repeat", Type: [{ TypeName: "timing_repeat" }] },
         { ElementName: "code", Type: [{ TypeName: "CodeableConcept" }] },
+    ],
+};
+
+export const timing_repeat: TypeModel = {
+    TypeName: "timing_repeat",
+    BaseTypeName: "Element",
+    Elements: [
+        { ElementName: "bounds[x]", Type: [{ TypeName: "Duration" }, { TypeName: "Period" }, { TypeName: "Range" }] },
+        { ElementName: "count", Type: [{ TypeName: "positiveInt" }] },
+        { ElementName: "countMax", Type: [{ TypeName: "positiveInt" }] },
+        { ElementName: "duration", Type: [{ TypeName: "decimal" }] },
+        { ElementName: "durationMax", Type: [{ TypeName: "decimal" }] },
+        { ElementName: "durationUnit", Type: [{ TypeName: "code" }] },
+        { ElementName: "frequency", Type: [{ TypeName: "positiveInt" }] },
+        { ElementName: "frequencyMax", Type: [{ TypeName: "positiveInt" }] },
+        { ElementName: "period", Type: [{ TypeName: "decimal" }] },
+        { ElementName: "periodMax", Type: [{ TypeName: "decimal" }] },
+        { ElementName: "periodUnit", Type: [{ TypeName: "code" }] },
+        { ElementName: "dayOfWeek", Type: [{ TypeName: "code" }], IsArray: true },
+        { ElementName: "timeOfDay", Type: [{ TypeName: "time" }], IsArray: true },
+        { ElementName: "when", Type: [{ TypeName: "code" }], IsArray: true },
+        { ElementName: "offset", Type: [{ TypeName: "unsignedInt" }] },
     ],
 };
 
@@ -586,8 +635,6 @@ export const TriggerDefinition: TypeModel = {
     TypeName: "TriggerDefinition",
     BaseTypeName: "Element",
     Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
         { ElementName: "type", Type: [{ TypeName: "code" }], Required: true },
         { ElementName: "name", Type: [{ TypeName: "string" }] },
         { ElementName: "timing[x]", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Schedule"] }, { TypeName: "Timing" }, { TypeName: "date" }, { TypeName: "dateTime" }] },
@@ -600,8 +647,6 @@ export const UsageContext: TypeModel = {
     TypeName: "UsageContext",
     BaseTypeName: "Element",
     Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
         { ElementName: "code", Type: [{ TypeName: "Coding" }], Required: true },
         { ElementName: "value[x]", Type: [{ TypeName: "CodeableConcept" }, { TypeName: "Quantity" }, { TypeName: "Range" }, { TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Group", "http://hl7.org/fhir/StructureDefinition/HealthcareService", "http://hl7.org/fhir/StructureDefinition/InsurancePlan", "http://hl7.org/fhir/StructureDefinition/Location", "http://hl7.org/fhir/StructureDefinition/Organization", "http://hl7.org/fhir/StructureDefinition/PlanDefinition", "http://hl7.org/fhir/StructureDefinition/ResearchStudy"] }], Required: true },
     ],
@@ -620,11 +665,23 @@ export const byUrl: Readonly<Record<string, TypeModel>> = Object.freeze({
     "http://hl7.org/fhir/StructureDefinition/Contributor": Contributor,
     "http://hl7.org/fhir/StructureDefinition/Count": Count,
     "http://hl7.org/fhir/StructureDefinition/DataRequirement": DataRequirement,
+    "http://fhir.forms-lab.com/custom-model/r4/datarequirement_codeFilter": datarequirement_codeFilter,
+    "http://fhir.forms-lab.com/custom-model/r4/datarequirement_dateFilter": datarequirement_dateFilter,
+    "http://fhir.forms-lab.com/custom-model/r4/datarequirement_sort": datarequirement_sort,
     "http://hl7.org/fhir/StructureDefinition/Distance": Distance,
     "http://hl7.org/fhir/StructureDefinition/Dosage": Dosage,
+    "http://fhir.forms-lab.com/custom-model/r4/dosage_doseAndRate": dosage_doseAndRate,
     "http://hl7.org/fhir/StructureDefinition/Duration": Duration,
     "http://hl7.org/fhir/StructureDefinition/Element": Element,
     "http://hl7.org/fhir/StructureDefinition/ElementDefinition": ElementDefinition,
+    "http://fhir.forms-lab.com/custom-model/r4/elementdefinition_slicing": elementdefinition_slicing,
+    "http://fhir.forms-lab.com/custom-model/r4/elementdefinition_slicing_discriminator": elementdefinition_slicing_discriminator,
+    "http://fhir.forms-lab.com/custom-model/r4/elementdefinition_base": elementdefinition_base,
+    "http://fhir.forms-lab.com/custom-model/r4/elementdefinition_type": elementdefinition_type,
+    "http://fhir.forms-lab.com/custom-model/r4/elementdefinition_example": elementdefinition_example,
+    "http://fhir.forms-lab.com/custom-model/r4/elementdefinition_constraint": elementdefinition_constraint,
+    "http://fhir.forms-lab.com/custom-model/r4/elementdefinition_binding": elementdefinition_binding,
+    "http://fhir.forms-lab.com/custom-model/r4/elementdefinition_mapping": elementdefinition_mapping,
     "http://hl7.org/fhir/StructureDefinition/Expression": Expression,
     "http://hl7.org/fhir/StructureDefinition/Extension": Extension,
     "http://hl7.org/fhir/StructureDefinition/HumanName": HumanName,
@@ -646,7 +703,9 @@ export const byUrl: Readonly<Record<string, TypeModel>> = Object.freeze({
     "http://hl7.org/fhir/StructureDefinition/SampledData": SampledData,
     "http://hl7.org/fhir/StructureDefinition/Signature": Signature,
     "http://hl7.org/fhir/StructureDefinition/SubstanceAmount": SubstanceAmount,
+    "http://fhir.forms-lab.com/custom-model/r4/substanceamount_referenceRange": substanceamount_referenceRange,
     "http://hl7.org/fhir/StructureDefinition/Timing": Timing,
+    "http://fhir.forms-lab.com/custom-model/r4/timing_repeat": timing_repeat,
     "http://hl7.org/fhir/StructureDefinition/TriggerDefinition": TriggerDefinition,
     "http://hl7.org/fhir/StructureDefinition/UsageContext": UsageContext,
 });
@@ -664,11 +723,23 @@ export const byTypeName: Readonly<Record<string, TypeModel>> = Object.freeze({
     "Contributor": Contributor,
     "Count": Count,
     "DataRequirement": DataRequirement,
+    "datarequirement_codeFilter": datarequirement_codeFilter,
+    "datarequirement_dateFilter": datarequirement_dateFilter,
+    "datarequirement_sort": datarequirement_sort,
     "Distance": Distance,
     "Dosage": Dosage,
+    "dosage_doseAndRate": dosage_doseAndRate,
     "Duration": Duration,
     "Element": Element,
     "ElementDefinition": ElementDefinition,
+    "elementdefinition_slicing": elementdefinition_slicing,
+    "elementdefinition_slicing_discriminator": elementdefinition_slicing_discriminator,
+    "elementdefinition_base": elementdefinition_base,
+    "elementdefinition_type": elementdefinition_type,
+    "elementdefinition_example": elementdefinition_example,
+    "elementdefinition_constraint": elementdefinition_constraint,
+    "elementdefinition_binding": elementdefinition_binding,
+    "elementdefinition_mapping": elementdefinition_mapping,
     "Expression": Expression,
     "Extension": Extension,
     "HumanName": HumanName,
@@ -690,7 +761,9 @@ export const byTypeName: Readonly<Record<string, TypeModel>> = Object.freeze({
     "SampledData": SampledData,
     "Signature": Signature,
     "SubstanceAmount": SubstanceAmount,
+    "substanceamount_referenceRange": substanceamount_referenceRange,
     "Timing": Timing,
+    "timing_repeat": timing_repeat,
     "TriggerDefinition": TriggerDefinition,
     "UsageContext": UsageContext,
 });

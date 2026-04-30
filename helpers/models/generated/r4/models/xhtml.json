@@ -1,0 +1,17 @@
+{
+  "xhtml": {
+    "TypeName": "xhtml",
+    "BaseTypeName": "Element",
+    "Elements": [
+      {
+        "ElementName": "value",
+        "Type": [
+          {
+            "TypeName": "System.String"
+          }
+        ],
+        "Required": true
+      }
+    ]
+  }
+}

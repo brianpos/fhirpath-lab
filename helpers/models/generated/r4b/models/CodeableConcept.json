@@ -1,0 +1,25 @@
+{
+  "CodeableConcept": {
+    "TypeName": "CodeableConcept",
+    "BaseTypeName": "Element",
+    "Elements": [
+      {
+        "ElementName": "coding",
+        "Type": [
+          {
+            "TypeName": "Coding"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "text",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      }
+    ]
+  }
+}

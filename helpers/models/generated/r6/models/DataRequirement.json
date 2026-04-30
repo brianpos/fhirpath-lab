@@ -1,0 +1,236 @@
+{
+  "DataRequirement": {
+    "TypeName": "DataRequirement",
+    "BaseTypeName": "DataType",
+    "Elements": [
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "profile",
+        "Type": [
+          {
+            "TypeName": "canonical"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "subject[x]",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Group"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "mustSupport",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "codeFilter",
+        "Type": [
+          {
+            "TypeName": "datarequirement_codeFilter"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "dateFilter",
+        "Type": [
+          {
+            "TypeName": "datarequirement_dateFilter"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "valueFilter",
+        "Type": [
+          {
+            "TypeName": "datarequirement_valueFilter"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "limit",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ]
+      },
+      {
+        "ElementName": "sort",
+        "Type": [
+          {
+            "TypeName": "datarequirement_sort"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "datarequirement_codeFilter": {
+    "TypeName": "datarequirement_codeFilter",
+    "BaseTypeName": "Element",
+    "Elements": [
+      {
+        "ElementName": "path",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "searchParam",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "valueSet",
+        "Type": [
+          {
+            "TypeName": "canonical"
+          }
+        ]
+      },
+      {
+        "ElementName": "code",
+        "Type": [
+          {
+            "TypeName": "Coding"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "datarequirement_dateFilter": {
+    "TypeName": "datarequirement_dateFilter",
+    "BaseTypeName": "Element",
+    "Elements": [
+      {
+        "ElementName": "path",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "searchParam",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "value[x]",
+        "Type": [
+          {
+            "TypeName": "Duration"
+          },
+          {
+            "TypeName": "Period"
+          },
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      }
+    ]
+  },
+  "datarequirement_valueFilter": {
+    "TypeName": "datarequirement_valueFilter",
+    "BaseTypeName": "Element",
+    "Elements": [
+      {
+        "ElementName": "path",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "searchParam",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "comparator",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "value[x]",
+        "Type": [
+          {
+            "TypeName": "Duration"
+          },
+          {
+            "TypeName": "Period"
+          },
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      }
+    ]
+  },
+  "datarequirement_sort": {
+    "TypeName": "datarequirement_sort",
+    "BaseTypeName": "Element",
+    "Elements": [
+      {
+        "ElementName": "path",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "direction",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      }
+    ]
+  }
+}

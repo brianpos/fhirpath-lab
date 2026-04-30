@@ -1,0 +1,39 @@
+{
+  "Resource": {
+    "TypeName": "Resource",
+    "Elements": [
+      {
+        "ElementName": "id",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "meta",
+        "Type": [
+          {
+            "TypeName": "Meta"
+          }
+        ]
+      },
+      {
+        "ElementName": "implicitRules",
+        "Type": [
+          {
+            "TypeName": "uri"
+          }
+        ]
+      },
+      {
+        "ElementName": "language",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      }
+    ]
+  }
+}

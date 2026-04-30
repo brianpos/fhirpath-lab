@@ -1,0 +1,16 @@
+{
+  "url": {
+    "TypeName": "url",
+    "BaseTypeName": "uri",
+    "Elements": [
+      {
+        "ElementName": "value",
+        "Type": [
+          {
+            "TypeName": "System.String"
+          }
+        ]
+      }
+    ]
+  }
+}

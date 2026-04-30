@@ -1,0 +1,260 @@
+{
+  "SubstancePolymer": {
+    "TypeName": "SubstancePolymer",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "class",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "geometry",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "copolymerConnectivity",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "modification",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "monomerSet",
+        "Type": [
+          {
+            "TypeName": "substancepolymer_monomerSet"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "repeat",
+        "Type": [
+          {
+            "TypeName": "substancepolymer_repeat"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "substancepolymer_monomerSet": {
+    "TypeName": "substancepolymer_monomerSet",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "ratioType",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "startingMaterial",
+        "Type": [
+          {
+            "TypeName": "substancepolymer_monomerSet_startingMaterial"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "substancepolymer_monomerSet_startingMaterial": {
+    "TypeName": "substancepolymer_monomerSet_startingMaterial",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "material",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "isDefining",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "amount",
+        "Type": [
+          {
+            "TypeName": "SubstanceAmount"
+          }
+        ]
+      }
+    ]
+  },
+  "substancepolymer_repeat": {
+    "TypeName": "substancepolymer_repeat",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "numberOfUnits",
+        "Type": [
+          {
+            "TypeName": "integer"
+          }
+        ]
+      },
+      {
+        "ElementName": "averageMolecularFormula",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "repeatUnitAmountType",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "repeatUnit",
+        "Type": [
+          {
+            "TypeName": "substancepolymer_repeat_repeatUnit"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "substancepolymer_repeat_repeatUnit": {
+    "TypeName": "substancepolymer_repeat_repeatUnit",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "orientationOfPolymerisation",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "repeatUnit",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "amount",
+        "Type": [
+          {
+            "TypeName": "SubstanceAmount"
+          }
+        ]
+      },
+      {
+        "ElementName": "degreeOfPolymerisation",
+        "Type": [
+          {
+            "TypeName": "substancepolymer_repeat_repeatUnit_degreeOfPolymerisation"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "structuralRepresentation",
+        "Type": [
+          {
+            "TypeName": "substancepolymer_repeat_repeatUnit_structuralRepresentation"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "substancepolymer_repeat_repeatUnit_degreeOfPolymerisation": {
+    "TypeName": "substancepolymer_repeat_repeatUnit_degreeOfPolymerisation",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "degree",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "amount",
+        "Type": [
+          {
+            "TypeName": "SubstanceAmount"
+          }
+        ]
+      }
+    ]
+  },
+  "substancepolymer_repeat_repeatUnit_structuralRepresentation": {
+    "TypeName": "substancepolymer_repeat_repeatUnit_structuralRepresentation",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "representation",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "attachment",
+        "Type": [
+          {
+            "TypeName": "Attachment"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -21,13 +21,11 @@ const sdString: StructureDefinition = {
     kind: "primitive-type",
     baseDefinition: "http://hl7.org/fhir/StructureDefinition/Element",
     derivation: "specialization",
-    snapshot: {
+    differential: {
         element: [
             { id: "string", path: "string" },
-            { id: "string.id", path: "string.id", min: 0, max: "1", type: [{ code: "string" }] },
-            { id: "string.extension", path: "string.extension", min: 0, max: "*", type: [{ code: "Extension" }] },
-            // Real HL7 uses code "http://hl7.org/fhirpath/System.String" here; the generator
-            // ignores that and looks up the System.* type from the SD.type field.
+            // Real HL7 differentials only carry own-type rows. `id` and `extension`
+            // are inherited from Element. value uses the magic System.* code.
             { id: "string.value", path: "string.value", min: 0, max: "1", type: [{ code: "http://hl7.org/fhirpath/System.String" }] },
         ],
     },
@@ -41,7 +39,7 @@ const sdReference: StructureDefinition = {
     kind: "complex-type",
     baseDefinition: "http://hl7.org/fhir/StructureDefinition/Element",
     derivation: "specialization",
-    snapshot: {
+    differential: {
         element: [
             { id: "Reference", path: "Reference" },
             { id: "Reference.reference", path: "Reference.reference", min: 0, max: "1", type: [{ code: "string" }] },
@@ -58,7 +56,7 @@ const sdExtension: StructureDefinition = {
     kind: "complex-type",
     baseDefinition: "http://hl7.org/fhir/StructureDefinition/Element",
     derivation: "specialization",
-    snapshot: {
+    differential: {
         element: [
             { id: "Extension", path: "Extension" },
             { id: "Extension.url", path: "Extension.url", min: 1, max: "1", type: [{ code: "uri" }] },
@@ -83,10 +81,10 @@ const sdPatient: StructureDefinition = {
     kind: "resource",
     baseDefinition: "http://hl7.org/fhir/StructureDefinition/DomainResource",
     derivation: "specialization",
-    snapshot: {
+    differential: {
         element: [
             { id: "Patient", path: "Patient" },
-            { id: "Patient.id", path: "Patient.id", min: 0, max: "1", type: [{ code: "string" }] },
+            // `id` and other inherited rows live on Resource/DomainResource; differential walk skips them.
             { id: "Patient.active", path: "Patient.active", min: 0, max: "1", type: [{ code: "boolean" }] },
             { id: "Patient.name", path: "Patient.name", min: 0, max: "*", type: [{ code: "string" }] },
             {
@@ -110,7 +108,7 @@ const sdObservation: StructureDefinition = {
     kind: "resource",
     baseDefinition: "http://hl7.org/fhir/StructureDefinition/DomainResource",
     derivation: "specialization",
-    snapshot: {
+    differential: {
         element: [
             { id: "Observation", path: "Observation" },
             {
@@ -141,7 +139,7 @@ const sdQuestionnaire: StructureDefinition = {
     kind: "resource",
     baseDefinition: "http://hl7.org/fhir/StructureDefinition/DomainResource",
     derivation: "specialization",
-    snapshot: {
+    differential: {
         element: [
             { id: "Questionnaire", path: "Questionnaire" },
             { id: "Questionnaire.item", path: "Questionnaire.item", min: 0, max: "*", type: [{ code: "BackboneElement" }] },
@@ -164,7 +162,7 @@ const sdElement: StructureDefinition = {
     kind: "complex-type",
     abstract: true,
     derivation: "specialization",
-    snapshot: {
+    differential: {
         element: [
             { id: "Element", path: "Element" },
             { id: "Element.id", path: "Element.id", min: 0, max: "1", type: [{ code: "string" }] },
@@ -183,7 +181,7 @@ function stubPrimitive(name: string): StructureDefinition {
         kind: "primitive-type",
         baseDefinition: "http://hl7.org/fhir/StructureDefinition/Element",
         derivation: "specialization",
-        snapshot: {
+        differential: {
             element: [
                 { id: name, path: name },
                 { id: `${name}.id`, path: `${name}.id`, min: 0, max: "1", type: [{ code: "string" }] },
@@ -200,7 +198,7 @@ function stubComplex(name: string): StructureDefinition {
         kind: "complex-type",
         baseDefinition: "http://hl7.org/fhir/StructureDefinition/Element",
         derivation: "specialization",
-        snapshot: { element: [{ id: name, path: name }] },
+        differential: { element: [{ id: name, path: name }] },
     };
 }
 const sdUri = stubPrimitive("uri");
@@ -264,11 +262,10 @@ describe("buildVersion", () => {
         const valueEl = stringEntry!.model.Elements.find((e) => e.ElementName === "value");
         expect(valueEl).toBeDefined();
         expect(valueEl!.Type).toEqual([{ TypeName: "System.String" }]);
-        const idEl = stringEntry!.model.Elements.find((e) => e.ElementName === "id");
-        expect(idEl).toBeDefined();
-        const extEl = stringEntry!.model.Elements.find((e) => e.ElementName === "extension");
-        expect(extEl).toBeDefined();
-        expect(extEl!.IsArray).toBe(true);
+        // Differential walk: id/extension are inherited from Element and not emitted on `string`.
+        expect(stringEntry!.model.Elements.find((e) => e.ElementName === "id")).toBeUndefined();
+        expect(stringEntry!.model.Elements.find((e) => e.ElementName === "extension")).toBeUndefined();
+        expect(stringEntry!.model.BaseTypeName).toBe("Element");
     });
 
     test("Reference TargetProfile retained when present, omitted when absent (Reference(Any))", () => {
@@ -328,8 +325,10 @@ describe("buildVersion", () => {
         const patient = result.entries.find((e) => e.model.TypeName === "Patient")!;
         const nameEl = patient.model.Elements.find((e) => e.ElementName === "name")!;
         expect(nameEl.IsArray).toBe(true);
-        const idEl = patient.model.Elements.find((e) => e.ElementName === "id")!;
-        expect(idEl.IsArray).toBeUndefined();
+        const linkEl = patient.model.Elements.find((e) => e.ElementName === "link")!;
+        expect(linkEl.IsArray).toBe(true);
+        const moEl = patient.model.Elements.find((e) => e.ElementName === "managingOrganization")!;
+        expect(moEl.IsArray).toBeUndefined();
     });
 
     test("Required propagated from min", () => {
@@ -359,14 +358,14 @@ describe("emit", () => {
     const result = buildVersion("r4", [TYPES_BUNDLE, RESOURCES_BUNDLE]);
     const files = emitInMemory(result);
 
-    test("emits one file per category plus index.ts", () => {
+    test("emits one file per category plus index.ts (no separate backbones file)", () => {
         expect(Object.keys(files).sort()).toEqual([
-            "backbones.ts", "complex-types.ts", "index.ts", "primitives.ts", "resources.ts",
+            "complex-types.ts", "index.ts", "primitives.ts", "resources.ts",
         ]);
     });
 
     test("category files include both byUrl and byTypeName sub-indexes", () => {
-        for (const f of ["primitives.ts", "complex-types.ts", "resources.ts", "backbones.ts"]) {
+        for (const f of ["primitives.ts", "complex-types.ts", "resources.ts"]) {
             expect(files[f]).toContain("export const byUrl");
             expect(files[f]).toContain("export const byTypeName");
         }
@@ -379,7 +378,7 @@ describe("emit", () => {
         expect(idx).toContain("primitives.byUrl");
         expect(idx).toContain("complexTypes.byUrl");
         expect(idx).toContain("resources.byUrl");
-        expect(idx).toContain("backbones.byUrl");
+        expect(idx).not.toContain("backbones.byUrl");
     });
 
     test("primitive `string` container appears in primitives.ts and points at System.String", () => {
@@ -388,10 +387,25 @@ describe("emit", () => {
         expect(f).toContain('TypeName: "System.String"');
     });
 
-    test("synthetic backbones land in backbones.ts and use the minted URL", () => {
-        const f = files["backbones.ts"];
+    test("synthetic backbones land in resources.ts (not a separate file) with their parent's URL prefix", () => {
+        const f = files["resources.ts"];
         expect(f).toContain('TypeName: "questionnaire_item"');
         expect(f).toContain("http://fhir.forms-lab.com/custom-model/r4/questionnaire_item");
+        // backbones.ts must not exist as a separate emitted file
+        expect(files["backbones.ts"]).toBeUndefined();
+    });
+
+    test("backbone is emitted immediately after its parent", () => {
+        const f = files["resources.ts"];
+        const parentIdx = f.indexOf('TypeName: "Questionnaire"');
+        const backboneIdx = f.indexOf('TypeName: "questionnaire_item"');
+        const otherTopIdx = f.indexOf('TypeName: "Patient"');
+        expect(parentIdx).toBeGreaterThan(0);
+        expect(backboneIdx).toBeGreaterThan(parentIdx);
+        // No unrelated top-level type should appear between parent and its backbone.
+        if (otherTopIdx > parentIdx) {
+            expect(otherTopIdx).toBeGreaterThan(backboneIdx);
+        }
     });
 
     test("output is deterministic — entries sorted by canonical URL", () => {

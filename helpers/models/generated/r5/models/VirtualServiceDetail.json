@@ -1,0 +1,58 @@
+{
+  "VirtualServiceDetail": {
+    "TypeName": "VirtualServiceDetail",
+    "BaseTypeName": "DataType",
+    "Elements": [
+      {
+        "ElementName": "channelType",
+        "Type": [
+          {
+            "TypeName": "Coding"
+          }
+        ]
+      },
+      {
+        "ElementName": "address[x]",
+        "Type": [
+          {
+            "TypeName": "ContactPoint"
+          },
+          {
+            "TypeName": "ExtendedContactDetail"
+          },
+          {
+            "TypeName": "string"
+          },
+          {
+            "TypeName": "url"
+          }
+        ]
+      },
+      {
+        "ElementName": "additionalInfo",
+        "Type": [
+          {
+            "TypeName": "url"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "maxParticipants",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ]
+      },
+      {
+        "ElementName": "sessionKey",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      }
+    ]
+  }
+}

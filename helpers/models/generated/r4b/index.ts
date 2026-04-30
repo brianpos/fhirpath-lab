@@ -6,14 +6,12 @@ import { systemTypesByTypeName, systemTypesByUrl } from "../system-types";
 import * as primitives from "./primitives";
 import * as complexTypes from "./complex-types";
 import * as resources from "./resources";
-import * as backbones from "./backbones";
 
 export const byUrl: Readonly<Record<string, TypeModel>> = Object.freeze({
     ...systemTypesByUrl,
     ...primitives.byUrl,
     ...complexTypes.byUrl,
     ...resources.byUrl,
-    ...backbones.byUrl,
 });
 
 export const byTypeName: Readonly<Record<string, TypeModel>> = Object.freeze({
@@ -21,7 +19,6 @@ export const byTypeName: Readonly<Record<string, TypeModel>> = Object.freeze({
     ...primitives.byTypeName,
     ...complexTypes.byTypeName,
     ...resources.byTypeName,
-    ...backbones.byTypeName,
 });
 
 /** Lookup a TypeModel by canonical URL. Returns undefined if absent. */

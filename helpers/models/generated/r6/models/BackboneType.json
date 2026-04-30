@@ -1,0 +1,17 @@
+{
+  "BackboneType": {
+    "TypeName": "BackboneType",
+    "BaseTypeName": "DataType",
+    "Elements": [
+      {
+        "ElementName": "modifierExtension",
+        "Type": [
+          {
+            "TypeName": "Extension"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  }
+}

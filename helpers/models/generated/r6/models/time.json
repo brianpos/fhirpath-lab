@@ -1,0 +1,16 @@
+{
+  "time": {
+    "TypeName": "time",
+    "BaseTypeName": "PrimitiveType",
+    "Elements": [
+      {
+        "ElementName": "value",
+        "Type": [
+          {
+            "TypeName": "System.Time"
+          }
+        ]
+      }
+    ]
+  }
+}

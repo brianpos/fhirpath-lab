@@ -1,0 +1,16 @@
+{
+  "positiveInt": {
+    "TypeName": "positiveInt",
+    "BaseTypeName": "integer",
+    "Elements": [
+      {
+        "ElementName": "value",
+        "Type": [
+          {
+            "TypeName": "System.Integer"
+          }
+        ]
+      }
+    ]
+  }
+}

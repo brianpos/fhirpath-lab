@@ -10,8 +10,6 @@ export const base64Binary: TypeModel = {
     TypeName: "base64Binary",
     BaseTypeName: "Element",
     Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
         { ElementName: "value", Type: [{ TypeName: "System.String" }] },
     ],
 };
@@ -20,8 +18,6 @@ export const boolean: TypeModel = {
     TypeName: "boolean",
     BaseTypeName: "Element",
     Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
         { ElementName: "value", Type: [{ TypeName: "System.Boolean" }] },
     ],
 };
@@ -30,8 +26,6 @@ export const canonical: TypeModel = {
     TypeName: "canonical",
     BaseTypeName: "uri",
     Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
         { ElementName: "value", Type: [{ TypeName: "System.String" }] },
     ],
 };
@@ -40,8 +34,6 @@ export const code: TypeModel = {
     TypeName: "code",
     BaseTypeName: "string",
     Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
         { ElementName: "value", Type: [{ TypeName: "System.String" }] },
     ],
 };
@@ -50,8 +42,6 @@ export const date: TypeModel = {
     TypeName: "date",
     BaseTypeName: "Element",
     Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
         { ElementName: "value", Type: [{ TypeName: "System.Date" }] },
     ],
 };
@@ -60,8 +50,6 @@ export const dateTime: TypeModel = {
     TypeName: "dateTime",
     BaseTypeName: "Element",
     Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
         { ElementName: "value", Type: [{ TypeName: "System.DateTime" }] },
     ],
 };
@@ -70,8 +58,6 @@ export const decimal: TypeModel = {
     TypeName: "decimal",
     BaseTypeName: "Element",
     Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
         { ElementName: "value", Type: [{ TypeName: "System.Decimal" }] },
     ],
 };
@@ -80,8 +66,6 @@ export const id: TypeModel = {
     TypeName: "id",
     BaseTypeName: "string",
     Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
         { ElementName: "value", Type: [{ TypeName: "System.String" }] },
     ],
 };
@@ -90,8 +74,6 @@ export const instant: TypeModel = {
     TypeName: "instant",
     BaseTypeName: "Element",
     Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
         { ElementName: "value", Type: [{ TypeName: "System.DateTime" }] },
     ],
 };
@@ -100,8 +82,6 @@ export const integer: TypeModel = {
     TypeName: "integer",
     BaseTypeName: "Element",
     Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
         { ElementName: "value", Type: [{ TypeName: "System.Integer" }] },
     ],
 };
@@ -110,8 +90,6 @@ export const markdown: TypeModel = {
     TypeName: "markdown",
     BaseTypeName: "string",
     Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
         { ElementName: "value", Type: [{ TypeName: "System.String" }] },
     ],
 };
@@ -120,8 +98,6 @@ export const oid: TypeModel = {
     TypeName: "oid",
     BaseTypeName: "uri",
     Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
         { ElementName: "value", Type: [{ TypeName: "System.String" }] },
     ],
 };
@@ -130,8 +106,6 @@ export const positiveInt: TypeModel = {
     TypeName: "positiveInt",
     BaseTypeName: "integer",
     Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
         { ElementName: "value", Type: [{ TypeName: "System.Integer" }] },
     ],
 };
@@ -140,8 +114,6 @@ export const string: TypeModel = {
     TypeName: "string",
     BaseTypeName: "Element",
     Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
         { ElementName: "value", Type: [{ TypeName: "System.String" }] },
     ],
 };
@@ -150,8 +122,6 @@ export const time: TypeModel = {
     TypeName: "time",
     BaseTypeName: "Element",
     Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
         { ElementName: "value", Type: [{ TypeName: "System.Time" }] },
     ],
 };
@@ -160,8 +130,6 @@ export const unsignedInt: TypeModel = {
     TypeName: "unsignedInt",
     BaseTypeName: "integer",
     Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
         { ElementName: "value", Type: [{ TypeName: "System.Integer" }] },
     ],
 };
@@ -170,8 +138,6 @@ export const uri: TypeModel = {
     TypeName: "uri",
     BaseTypeName: "Element",
     Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
         { ElementName: "value", Type: [{ TypeName: "System.String" }] },
     ],
 };
@@ -180,8 +146,6 @@ export const url: TypeModel = {
     TypeName: "url",
     BaseTypeName: "uri",
     Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
         { ElementName: "value", Type: [{ TypeName: "System.String" }] },
     ],
 };
@@ -190,8 +154,6 @@ export const uuid: TypeModel = {
     TypeName: "uuid",
     BaseTypeName: "uri",
     Elements: [
-        { ElementName: "id", Type: [{ TypeName: "string" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }], IsArray: true },
         { ElementName: "value", Type: [{ TypeName: "System.String" }] },
     ],
 };
@@ -200,8 +162,6 @@ export const xhtml: TypeModel = {
     TypeName: "xhtml",
     BaseTypeName: "Element",
     Elements: [
-        { ElementName: "id", Type: [{ TypeName: "System.String" }] },
-        { ElementName: "extension", Type: [{ TypeName: "Extension" }] },
         { ElementName: "value", Type: [{ TypeName: "System.String" }], Required: true },
     ],
 };

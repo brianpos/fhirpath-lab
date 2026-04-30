@@ -1,0 +1,16 @@
+{
+  "oid": {
+    "TypeName": "oid",
+    "BaseTypeName": "uri",
+    "Elements": [
+      {
+        "ElementName": "value",
+        "Type": [
+          {
+            "TypeName": "System.String"
+          }
+        ]
+      }
+    ]
+  }
+}

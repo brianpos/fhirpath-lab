@@ -1,0 +1,16 @@
+{
+  "unsignedInt": {
+    "TypeName": "unsignedInt",
+    "BaseTypeName": "integer",
+    "Elements": [
+      {
+        "ElementName": "value",
+        "Type": [
+          {
+            "TypeName": "System.Integer"
+          }
+        ]
+      }
+    ]
+  }
+}

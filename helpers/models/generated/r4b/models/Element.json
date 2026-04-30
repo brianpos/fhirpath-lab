@@ -1,0 +1,24 @@
+{
+  "Element": {
+    "TypeName": "Element",
+    "Elements": [
+      {
+        "ElementName": "id",
+        "Type": [
+          {
+            "TypeName": "id"
+          }
+        ]
+      },
+      {
+        "ElementName": "extension",
+        "Type": [
+          {
+            "TypeName": "Extension"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  }
+}

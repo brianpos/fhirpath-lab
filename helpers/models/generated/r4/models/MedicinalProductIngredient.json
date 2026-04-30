@@ -1,0 +1,240 @@
+{
+  "MedicinalProductIngredient": {
+    "TypeName": "MedicinalProductIngredient",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ]
+      },
+      {
+        "ElementName": "role",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "allergenicIndicator",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "manufacturer",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "specifiedSubstance",
+        "Type": [
+          {
+            "TypeName": "medicinalproductingredient_specifiedSubstance"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "substance",
+        "Type": [
+          {
+            "TypeName": "medicinalproductingredient_substance"
+          }
+        ]
+      }
+    ]
+  },
+  "medicinalproductingredient_specifiedSubstance": {
+    "TypeName": "medicinalproductingredient_specifiedSubstance",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "code",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "group",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "confidentiality",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "strength",
+        "Type": [
+          {
+            "TypeName": "medicinalproductingredient_specifiedSubstance_strength"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "medicinalproductingredient_specifiedSubstance_strength": {
+    "TypeName": "medicinalproductingredient_specifiedSubstance_strength",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "presentation",
+        "Type": [
+          {
+            "TypeName": "Ratio"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "presentationLowLimit",
+        "Type": [
+          {
+            "TypeName": "Ratio"
+          }
+        ]
+      },
+      {
+        "ElementName": "concentration",
+        "Type": [
+          {
+            "TypeName": "Ratio"
+          }
+        ]
+      },
+      {
+        "ElementName": "concentrationLowLimit",
+        "Type": [
+          {
+            "TypeName": "Ratio"
+          }
+        ]
+      },
+      {
+        "ElementName": "measurementPoint",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "country",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "referenceStrength",
+        "Type": [
+          {
+            "TypeName": "medicinalproductingredient_specifiedSubstance_strength_referenceStrength"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "medicinalproductingredient_specifiedSubstance_strength_referenceStrength": {
+    "TypeName": "medicinalproductingredient_specifiedSubstance_strength_referenceStrength",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "substance",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "strength",
+        "Type": [
+          {
+            "TypeName": "Ratio"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "strengthLowLimit",
+        "Type": [
+          {
+            "TypeName": "Ratio"
+          }
+        ]
+      },
+      {
+        "ElementName": "measurementPoint",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "country",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "medicinalproductingredient_substance": {
+    "TypeName": "medicinalproductingredient_substance",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "code",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "strength",
+        "Type": [
+          {
+            "TypeName": "medicinalproductingredient_specifiedSubstance_strength"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "TriggerDefinition": {
+    "TypeName": "TriggerDefinition",
+    "BaseTypeName": "Element",
+    "Elements": [
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "name",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "timing[x]",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Schedule"
+            ]
+          },
+          {
+            "TypeName": "Timing"
+          },
+          {
+            "TypeName": "date"
+          },
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      },
+      {
+        "ElementName": "data",
+        "Type": [
+          {
+            "TypeName": "DataRequirement"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "condition",
+        "Type": [
+          {
+            "TypeName": "Expression"
+          }
+        ]
+      }
+    ]
+  }
+}

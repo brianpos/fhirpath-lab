@@ -1,0 +1,112 @@
+{
+  "Attachment": {
+    "TypeName": "Attachment",
+    "BaseTypeName": "DataType",
+    "Elements": [
+      {
+        "ElementName": "contentType",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "language",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "data",
+        "Type": [
+          {
+            "TypeName": "base64Binary"
+          }
+        ]
+      },
+      {
+        "ElementName": "url",
+        "Type": [
+          {
+            "TypeName": "url"
+          }
+        ]
+      },
+      {
+        "ElementName": "size",
+        "Type": [
+          {
+            "TypeName": "integer64"
+          }
+        ]
+      },
+      {
+        "ElementName": "hash",
+        "Type": [
+          {
+            "TypeName": "base64Binary"
+          }
+        ]
+      },
+      {
+        "ElementName": "title",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "creation",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      },
+      {
+        "ElementName": "height",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ]
+      },
+      {
+        "ElementName": "width",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ]
+      },
+      {
+        "ElementName": "frames",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ]
+      },
+      {
+        "ElementName": "duration",
+        "Type": [
+          {
+            "TypeName": "decimal"
+          }
+        ]
+      },
+      {
+        "ElementName": "pages",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ]
+      }
+    ]
+  }
+}

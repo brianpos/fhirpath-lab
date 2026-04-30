@@ -1,0 +1,43 @@
+{
+  "Population": {
+    "TypeName": "Population",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "age[x]",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          },
+          {
+            "TypeName": "Range"
+          }
+        ]
+      },
+      {
+        "ElementName": "gender",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "race",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "physiologicalCondition",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      }
+    ]
+  }
+}

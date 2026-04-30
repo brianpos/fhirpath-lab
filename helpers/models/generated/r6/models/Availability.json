@@ -1,0 +1,95 @@
+{
+  "Availability": {
+    "TypeName": "Availability",
+    "BaseTypeName": "DataType",
+    "Elements": [
+      {
+        "ElementName": "period",
+        "Type": [
+          {
+            "TypeName": "Period"
+          }
+        ]
+      },
+      {
+        "ElementName": "availableTime",
+        "Type": [
+          {
+            "TypeName": "availability_availableTime"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "notAvailableTime",
+        "Type": [
+          {
+            "TypeName": "availability_notAvailableTime"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "availability_availableTime": {
+    "TypeName": "availability_availableTime",
+    "BaseTypeName": "Element",
+    "Elements": [
+      {
+        "ElementName": "daysOfWeek",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "allDay",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "availableStartTime",
+        "Type": [
+          {
+            "TypeName": "time"
+          }
+        ]
+      },
+      {
+        "ElementName": "availableEndTime",
+        "Type": [
+          {
+            "TypeName": "time"
+          }
+        ]
+      }
+    ]
+  },
+  "availability_notAvailableTime": {
+    "TypeName": "availability_notAvailableTime",
+    "BaseTypeName": "Element",
+    "Elements": [
+      {
+        "ElementName": "description",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "during",
+        "Type": [
+          {
+            "TypeName": "Period"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "integer": {
+    "TypeName": "integer",
+    "BaseTypeName": "Element",
+    "Elements": [
+      {
+        "ElementName": "value",
+        "Type": [
+          {
+            "TypeName": "System.Integer"
+          }
+        ]
+      }
+    ]
+  }
+}

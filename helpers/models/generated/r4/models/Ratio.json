@@ -1,0 +1,24 @@
+{
+  "Ratio": {
+    "TypeName": "Ratio",
+    "BaseTypeName": "Element",
+    "Elements": [
+      {
+        "ElementName": "numerator",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
+      },
+      {
+        "ElementName": "denominator",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
+      }
+    ]
+  }
+}

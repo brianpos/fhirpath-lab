@@ -1,0 +1,184 @@
+{
+  "Extension": {
+    "TypeName": "Extension",
+    "BaseTypeName": "DataType",
+    "Elements": [
+      {
+        "ElementName": "url",
+        "Type": [
+          {
+            "TypeName": "uri"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "value[x]",
+        "Type": [
+          {
+            "TypeName": "Address"
+          },
+          {
+            "TypeName": "Age"
+          },
+          {
+            "TypeName": "Annotation"
+          },
+          {
+            "TypeName": "Attachment"
+          },
+          {
+            "TypeName": "Availability"
+          },
+          {
+            "TypeName": "CodeableConcept"
+          },
+          {
+            "TypeName": "CodeableReference"
+          },
+          {
+            "TypeName": "Coding"
+          },
+          {
+            "TypeName": "ContactDetail"
+          },
+          {
+            "TypeName": "ContactPoint"
+          },
+          {
+            "TypeName": "Count"
+          },
+          {
+            "TypeName": "DataRequirement"
+          },
+          {
+            "TypeName": "Distance"
+          },
+          {
+            "TypeName": "Dosage"
+          },
+          {
+            "TypeName": "Duration"
+          },
+          {
+            "TypeName": "Expression"
+          },
+          {
+            "TypeName": "ExtendedContactDetail"
+          },
+          {
+            "TypeName": "HumanName"
+          },
+          {
+            "TypeName": "Identifier"
+          },
+          {
+            "TypeName": "Meta"
+          },
+          {
+            "TypeName": "Money"
+          },
+          {
+            "TypeName": "ParameterDefinition"
+          },
+          {
+            "TypeName": "Period"
+          },
+          {
+            "TypeName": "Quantity"
+          },
+          {
+            "TypeName": "Range"
+          },
+          {
+            "TypeName": "Ratio"
+          },
+          {
+            "TypeName": "RatioRange"
+          },
+          {
+            "TypeName": "Reference"
+          },
+          {
+            "TypeName": "RelatedArtifact"
+          },
+          {
+            "TypeName": "SampledData"
+          },
+          {
+            "TypeName": "Signature"
+          },
+          {
+            "TypeName": "Timing"
+          },
+          {
+            "TypeName": "TriggerDefinition"
+          },
+          {
+            "TypeName": "UsageContext"
+          },
+          {
+            "TypeName": "base64Binary"
+          },
+          {
+            "TypeName": "boolean"
+          },
+          {
+            "TypeName": "canonical"
+          },
+          {
+            "TypeName": "code"
+          },
+          {
+            "TypeName": "date"
+          },
+          {
+            "TypeName": "dateTime"
+          },
+          {
+            "TypeName": "decimal"
+          },
+          {
+            "TypeName": "id"
+          },
+          {
+            "TypeName": "instant"
+          },
+          {
+            "TypeName": "integer"
+          },
+          {
+            "TypeName": "integer64"
+          },
+          {
+            "TypeName": "markdown"
+          },
+          {
+            "TypeName": "oid"
+          },
+          {
+            "TypeName": "positiveInt"
+          },
+          {
+            "TypeName": "string"
+          },
+          {
+            "TypeName": "time"
+          },
+          {
+            "TypeName": "unsignedInt"
+          },
+          {
+            "TypeName": "uri"
+          },
+          {
+            "TypeName": "url"
+          },
+          {
+            "TypeName": "uuid"
+          }
+        ]
+      }
+    ]
+  }
+}

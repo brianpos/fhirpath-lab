@@ -1,0 +1,16 @@
+{
+  "dateTime": {
+    "TypeName": "dateTime",
+    "BaseTypeName": "PrimitiveType",
+    "Elements": [
+      {
+        "ElementName": "value",
+        "Type": [
+          {
+            "TypeName": "System.DateTime"
+          }
+        ]
+      }
+    ]
+  }
+}

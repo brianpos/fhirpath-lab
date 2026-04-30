@@ -1,0 +1,68 @@
+{
+  "SubstanceAmount": {
+    "TypeName": "SubstanceAmount",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "amount[x]",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          },
+          {
+            "TypeName": "Range"
+          },
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "amountType",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "amountText",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "referenceRange",
+        "Type": [
+          {
+            "TypeName": "substanceamount_referenceRange"
+          }
+        ]
+      }
+    ]
+  },
+  "substanceamount_referenceRange": {
+    "TypeName": "substanceamount_referenceRange",
+    "BaseTypeName": "Element",
+    "Elements": [
+      {
+        "ElementName": "lowLimit",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
+      },
+      {
+        "ElementName": "highLimit",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
+      }
+    ]
+  }
+}

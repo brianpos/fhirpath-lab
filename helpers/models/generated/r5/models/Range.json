@@ -1,0 +1,24 @@
+{
+  "Range": {
+    "TypeName": "Range",
+    "BaseTypeName": "DataType",
+    "Elements": [
+      {
+        "ElementName": "low",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
+      },
+      {
+        "ElementName": "high",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "Distance": {
+    "TypeName": "Distance",
+    "BaseTypeName": "Quantity",
+    "Elements": []
+  }
+}

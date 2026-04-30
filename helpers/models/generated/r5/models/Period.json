@@ -1,0 +1,24 @@
+{
+  "Period": {
+    "TypeName": "Period",
+    "BaseTypeName": "DataType",
+    "Elements": [
+      {
+        "ElementName": "start",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      },
+      {
+        "ElementName": "end",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      }
+    ]
+  }
+}

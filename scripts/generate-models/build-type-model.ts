@@ -15,6 +15,12 @@ export interface TypeModelEntry {
     synthetic?: boolean;
     /** Original SD kind, used by the emitter to route into the right per-category file. */
     kind: "primitive-type" | "complex-type" | "resource" | "backbone" | "logical";
+    /** For synthetic backbones: TypeName of the top-level (resource/complex-type) ancestor.
+     *  Used by the emitter to co-locate backbones with their parent. */
+    rootTypeName?: string;
+    /** For synthetic backbones: zero-based encounter order within the parent SD's
+     *  differential walk, used to keep backbones in their original document order. */
+    rootOrder?: number;
 }
 
 export interface BuildResult {
@@ -136,12 +142,16 @@ function processStructureDefinition(
         // so don't blanket-skip abstracts. Fall through.
     }
 
-    const elements = sd.snapshot?.element ?? [];
+    // Walk the SD's *differential* element list, not its snapshot. This means the
+    // emitted TypeModel only contains elements introduced by *this* SD; inherited
+    // elements live on the BaseTypeName chain. Fall back to snapshot when no
+    // differential is provided (e.g. some hand-built test fixtures).
+    const elements = sd.differential?.element ?? sd.snapshot?.element ?? [];
     if (elements.length === 0) return;
 
-    // Some SDs (e.g. primitive types) have an element whose id matches sd.type
-    const rootElement = elements[0];
-    const rootTypeName = sd.type ?? rootElement.path;
+    // The differential's first element is normally the SD's root row (id === sd.type),
+    // but defensively handle both presence and absence.
+    const rootTypeName = sd.type ?? elements[0]?.path;
     if (!rootTypeName) return;
 
     const baseTypeName = lastSegment(sd.baseDefinition);
@@ -168,12 +178,13 @@ function processStructureDefinition(
         hasChildren: buildHasChildren(elements),
     };
 
-    // skip element 0 (the root itself)
-    for (let i = 1; i < elements.length; i++) {
-        const el = elements[i];
+    // Iterate every element except the SD's own root row (id === rootTypeName).
+    let backboneOrder = 0;
+    for (const el of elements) {
         if (!el.id) continue;
+        if (el.id === rootTypeName) continue; // skip the SD-root row
         if (isSliceElement(el)) continue;
-        processElement(el, ctx, version, out);
+        backboneOrder = processElement(el, ctx, version, out, rootTypeName, backboneOrder);
     }
 }
 
@@ -185,16 +196,18 @@ function processElement(
     el: SDElement,
     ctx: SDProcessingContext,
     version: FhirVersionKey,
-    out: TypeModelEntry[]
-): void {
+    out: TypeModelEntry[],
+    rootTypeName: string,
+    backboneOrder: number
+): number {
     const id = el.id!;
     const parentId = parentIdOf(id);
-    if (!parentId) return; // shouldn't happen; root handled in caller
+    if (!parentId) return backboneOrder; // shouldn't happen; root handled in caller
 
     const owner = ctx.pathOwners.get(parentId);
     if (!owner) {
         // Parent wasn't processed (maybe a slice or unsupported branch). Skip silently.
-        return;
+        return backboneOrder;
     }
 
     const elementName = elementNameFromId(id);
@@ -216,7 +229,7 @@ function processElement(
             ...(isRequired(el) ? { Required: true } : {}),
         };
         owner.Elements.push(m);
-        return;
+        return backboneOrder;
     }
 
     // contentReference: synthesize Type pointing at the resolved synthetic name.
@@ -229,13 +242,13 @@ function processElement(
             ...(isRequired(el) ? { Required: true } : {}),
         };
         owner.Elements.push(m);
-        return;
+        return backboneOrder;
     }
 
     const types = el.type ?? [];
     if (types.length === 0) {
         // No type info; nothing useful to emit.
-        return;
+        return backboneOrder;
     }
 
     const firstCode = resolveTypeCode(types[0]);
@@ -256,6 +269,8 @@ function processElement(
             model: synthetic,
             synthetic: true,
             kind: "backbone",
+            rootTypeName,
+            rootOrder: backboneOrder++,
         });
         const m: ElementModel = {
             ElementName: elementName,
@@ -264,7 +279,7 @@ function processElement(
             ...(isRequired(el) ? { Required: true } : {}),
         };
         owner.Elements.push(m);
-        return;
+        return backboneOrder;
     }
 
     // Regular element. Map type[] entries.
@@ -286,6 +301,7 @@ function processElement(
         ...(isRequired(el) ? { Required: true } : {}),
     };
     owner.Elements.push(m);
+    return backboneOrder;
 }
 
 /** Pass 4: Self-consistency assertions. Throws on failure. */

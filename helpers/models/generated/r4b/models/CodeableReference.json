@@ -1,0 +1,24 @@
+{
+  "CodeableReference": {
+    "TypeName": "CodeableReference",
+    "BaseTypeName": "Element",
+    "Elements": [
+      {
+        "ElementName": "concept",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "reference",
+        "Type": [
+          {
+            "TypeName": "Reference"
+          }
+        ]
+      }
+    ]
+  }
+}

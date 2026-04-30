@@ -1,0 +1,189 @@
+{
+  "SubstanceNucleicAcid": {
+    "TypeName": "SubstanceNucleicAcid",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "sequenceType",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "numberOfSubunits",
+        "Type": [
+          {
+            "TypeName": "integer"
+          }
+        ]
+      },
+      {
+        "ElementName": "areaOfHybridisation",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "oligoNucleotideType",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "subunit",
+        "Type": [
+          {
+            "TypeName": "substancenucleicacid_subunit"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "substancenucleicacid_subunit": {
+    "TypeName": "substancenucleicacid_subunit",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "subunit",
+        "Type": [
+          {
+            "TypeName": "integer"
+          }
+        ]
+      },
+      {
+        "ElementName": "sequence",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "length",
+        "Type": [
+          {
+            "TypeName": "integer"
+          }
+        ]
+      },
+      {
+        "ElementName": "sequenceAttachment",
+        "Type": [
+          {
+            "TypeName": "Attachment"
+          }
+        ]
+      },
+      {
+        "ElementName": "fivePrime",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "threePrime",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "linkage",
+        "Type": [
+          {
+            "TypeName": "substancenucleicacid_subunit_linkage"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "sugar",
+        "Type": [
+          {
+            "TypeName": "substancenucleicacid_subunit_sugar"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "substancenucleicacid_subunit_linkage": {
+    "TypeName": "substancenucleicacid_subunit_linkage",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "connectivity",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ]
+      },
+      {
+        "ElementName": "name",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "residueSite",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      }
+    ]
+  },
+  "substancenucleicacid_subunit_sugar": {
+    "TypeName": "substancenucleicacid_subunit_sugar",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ]
+      },
+      {
+        "ElementName": "name",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "residueSite",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      }
+    ]
+  }
+}

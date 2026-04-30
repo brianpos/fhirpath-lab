@@ -1,0 +1,16 @@
+{
+  "canonical": {
+    "TypeName": "canonical",
+    "BaseTypeName": "uri",
+    "Elements": [
+      {
+        "ElementName": "value",
+        "Type": [
+          {
+            "TypeName": "System.String"
+          }
+        ]
+      }
+    ]
+  }
+}

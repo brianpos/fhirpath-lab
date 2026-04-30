@@ -1,0 +1,40 @@
+{
+  "Resource": {
+    "TypeName": "Resource",
+    "BaseTypeName": "Base",
+    "Elements": [
+      {
+        "ElementName": "id",
+        "Type": [
+          {
+            "TypeName": "id"
+          }
+        ]
+      },
+      {
+        "ElementName": "meta",
+        "Type": [
+          {
+            "TypeName": "Meta"
+          }
+        ]
+      },
+      {
+        "ElementName": "implicitRules",
+        "Type": [
+          {
+            "TypeName": "uri"
+          }
+        ]
+      },
+      {
+        "ElementName": "language",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      }
+    ]
+  }
+}
