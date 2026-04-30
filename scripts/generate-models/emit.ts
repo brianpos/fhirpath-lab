@@ -133,14 +133,13 @@ function sortEntries(entries: TypeModelEntry[]): TypeModelEntry[] {
     return entries;
 }
 
-function emitCategoryFile(group: CategoryGroup): string {
+function emitCategoryFile(group: CategoryGroup, exported: { name: string; entry: TypeModelEntry }[]): string {
     const out: string[] = [];
     out.push(HEADER);
     out.push(`// ${group.title}`);
     out.push("");
     const sorted = sortEntries(group.entries);
     const seen = new Set<string>();
-    const exportedNames: { name: string; entry: TypeModelEntry }[] = [];
     for (const e of sorted) {
         let v = varNameFor(e.model.TypeName);
         // Disambiguate any collisions deterministically.
@@ -150,49 +149,63 @@ function emitCategoryFile(group: CategoryGroup): string {
             v = `${varNameFor(e.model.TypeName)}_${suffix}`;
         }
         seen.add(v);
-        exportedNames.push({ name: v, entry: e });
+        exported.push({ name: v, entry: e });
         out.push(emitTypeModel(v, e.model));
         out.push("");
     }
-    // byUrl / byTypeName sub-indexes for this category.
+    return out.join("\n");
+}
+
+/** Build the dedicated dictionary file. Imports every TypeModel const from the
+ *  per-category files and assembles the combined `byUrl` / `byTypeName` indexes
+ *  (with shared `System.*` spread in). */
+function emitDictionaryFile(allExports: { categoryFile: string; name: string; entry: TypeModelEntry }[]): string {
+    const byCategory = new Map<string, string[]>();
+    for (const e of allExports) {
+        const list = byCategory.get(e.categoryFile) ?? [];
+        list.push(e.name);
+        byCategory.set(e.categoryFile, list);
+    }
+    const out: string[] = [];
+    out.push(`// THIS FILE IS GENERATED — DO NOT EDIT BY HAND.`);
+    out.push(`// Run \`npm run generate:models -- --version <r4|r4b|r5|r6>\` to regenerate.`);
+    out.push(`// See docs/custom-model-generator-plan.md.`);
+    out.push("");
+    out.push(`import type { TypeModel } from "../../../custom_model";`);
+    out.push(`import { systemTypesByTypeName, systemTypesByUrl } from "../system-types";`);
+    for (const [file, names] of byCategory) {
+        const moduleName = file.replace(/\.ts$/, "");
+        out.push(`import { ${names.join(", ")} } from ${jsString("./" + moduleName)};`);
+    }
+    out.push("");
     out.push(`export const byUrl: Readonly<Record<string, TypeModel>> = Object.freeze({`);
-    for (const { name, entry } of exportedNames) {
-        out.push(`    ${jsString(entry.url)}: ${name},`);
+    out.push(`    ...systemTypesByUrl,`);
+    for (const e of allExports) {
+        out.push(`    ${jsString(e.entry.url)}: ${e.name},`);
     }
     out.push(`});`);
     out.push("");
     out.push(`export const byTypeName: Readonly<Record<string, TypeModel>> = Object.freeze({`);
-    for (const { name, entry } of exportedNames) {
-        out.push(`    ${jsString(entry.model.TypeName)}: ${name},`);
+    out.push(`    ...systemTypesByTypeName,`);
+    for (const e of allExports) {
+        out.push(`    ${jsString(e.entry.model.TypeName)}: ${e.name},`);
     }
     out.push(`});`);
     out.push("");
     return out.join("\n");
 }
 
+/** The per-version `index.ts` is the public surface — it re-exports the dictionary
+ *  and the lookup helpers. Keeps the dictionary's churn-prone bulk in its own file. */
 function emitIndexFile(): string {
     return `// THIS FILE IS GENERATED — DO NOT EDIT BY HAND.
 // Run \`npm run generate:models -- --version <r4|r4b|r5|r6>\` to regenerate.
+// See docs/custom-model-generator-plan.md.
 
 import type { TypeModel } from "../../../custom_model";
-import { systemTypesByTypeName, systemTypesByUrl } from "../system-types";
-import * as primitives from "./primitives";
-import * as complexTypes from "./complex-types";
-import * as resources from "./resources";
+import { byUrl, byTypeName } from "./dictionary";
 
-export const byUrl: Readonly<Record<string, TypeModel>> = Object.freeze({
-    ...systemTypesByUrl,
-    ...primitives.byUrl,
-    ...complexTypes.byUrl,
-    ...resources.byUrl,
-});
-
-export const byTypeName: Readonly<Record<string, TypeModel>> = Object.freeze({
-    ...systemTypesByTypeName,
-    ...primitives.byTypeName,
-    ...complexTypes.byTypeName,
-    ...resources.byTypeName,
-});
+export { byUrl, byTypeName };
 
 /** Lookup a TypeModel by canonical URL. Returns undefined if absent. */
 export function lookupByUrl(url: string): TypeModel | undefined {
@@ -217,12 +230,18 @@ export function emit(result: BuildResult, opts: EmitOptions = {}): string[] {
     const written: string[] = [];
 
     const groups = groupByCategory(result.entries);
+    const allExports: { categoryFile: string; name: string; entry: TypeModelEntry }[] = [];
     for (const g of groups) {
-        const content = emitCategoryFile(g);
+        const exported: { name: string; entry: TypeModelEntry }[] = [];
+        const content = emitCategoryFile(g, exported);
         const file = path.join(outDir, g.file);
         fs.writeFileSync(file, content, "utf8");
         written.push(file);
+        for (const e of exported) allExports.push({ categoryFile: g.file, ...e });
     }
+    const dictFile = path.join(outDir, "dictionary.ts");
+    fs.writeFileSync(dictFile, emitDictionaryFile(allExports), "utf8");
+    written.push(dictFile);
     const indexFile = path.join(outDir, "index.ts");
     fs.writeFileSync(indexFile, emitIndexFile(), "utf8");
     written.push(indexFile);
@@ -336,9 +355,13 @@ function mapValues<T, U>(rec: Record<string, T>, f: (v: T, k: string) => U): Rec
 /** In-memory variant for tests: returns { fileName -> content } without writing to disk. */
 export function emitInMemory(result: BuildResult): Record<string, string> {
     const out: Record<string, string> = {};
+    const allExports: { categoryFile: string; name: string; entry: TypeModelEntry }[] = [];
     for (const g of groupByCategory(result.entries)) {
-        out[g.file] = emitCategoryFile(g);
+        const exported: { name: string; entry: TypeModelEntry }[] = [];
+        out[g.file] = emitCategoryFile(g, exported);
+        for (const e of exported) allExports.push({ categoryFile: g.file, ...e });
     }
+    out["dictionary.ts"] = emitDictionaryFile(allExports);
     out["index.ts"] = emitIndexFile();
     return out;
 }

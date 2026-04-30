@@ -295,7 +295,7 @@ describe("buildVersion", () => {
         const comp = result.entries.find((e) => e.model.TypeName === "observation_component")!;
         expect(comp.synthetic).toBe(true);
         expect(comp.kind).toBe("backbone");
-        expect(comp.url).toBe("http://fhir.forms-lab.com/custom-model/r4/observation_component");
+        expect(comp.url).toBe("http://hl7.org/fhir/StructureDefinition/Observation#Observation.component");
         const codes = comp.model.Elements.map((e) => e.ElementName);
         expect(codes).toEqual(["code", "value[x]"]);
     });
@@ -358,27 +358,39 @@ describe("emit", () => {
     const result = buildVersion("r4", [TYPES_BUNDLE, RESOURCES_BUNDLE]);
     const files = emitInMemory(result);
 
-    test("emits one file per category plus index.ts (no separate backbones file)", () => {
+    test("emits primitives/complex/resources + dictionary + index (no backbones file)", () => {
         expect(Object.keys(files).sort()).toEqual([
-            "complex-types.ts", "index.ts", "primitives.ts", "resources.ts",
+            "complex-types.ts", "dictionary.ts", "index.ts", "primitives.ts", "resources.ts",
         ]);
     });
 
-    test("category files include both byUrl and byTypeName sub-indexes", () => {
+    test("category files contain only TypeModel consts (no per-category byUrl/byTypeName)", () => {
         for (const f of ["primitives.ts", "complex-types.ts", "resources.ts"]) {
-            expect(files[f]).toContain("export const byUrl");
-            expect(files[f]).toContain("export const byTypeName");
+            expect(files[f]).toContain("const ");
+            expect(files[f]).not.toContain("export const byUrl");
+            expect(files[f]).not.toContain("export const byTypeName");
         }
     });
 
-    test("index.ts spreads System.* and every category", () => {
+    test("dictionary.ts holds the combined byUrl/byTypeName and imports from each category", () => {
+        const d = files["dictionary.ts"];
+        expect(d).toContain("export const byUrl");
+        expect(d).toContain("export const byTypeName");
+        expect(d).toContain("systemTypesByUrl");
+        expect(d).toContain("systemTypesByTypeName");
+        expect(d).toContain('from "./primitives"');
+        expect(d).toContain('from "./complex-types"');
+        expect(d).toContain('from "./resources"');
+        expect(d).not.toContain('from "./backbones"');
+    });
+
+    test("index.ts re-exports the dictionary and exposes lookup helpers", () => {
         const idx = files["index.ts"];
-        expect(idx).toContain("systemTypesByUrl");
-        expect(idx).toContain("systemTypesByTypeName");
-        expect(idx).toContain("primitives.byUrl");
-        expect(idx).toContain("complexTypes.byUrl");
-        expect(idx).toContain("resources.byUrl");
-        expect(idx).not.toContain("backbones.byUrl");
+        expect(idx).toContain('from "./dictionary"');
+        expect(idx).toContain("byUrl");
+        expect(idx).toContain("byTypeName");
+        expect(idx).toContain("lookupByUrl");
+        expect(idx).toContain("lookupByTypeName");
     });
 
     test("primitive `string` container appears in primitives.ts and points at System.String", () => {
@@ -387,12 +399,16 @@ describe("emit", () => {
         expect(f).toContain('TypeName: "System.String"');
     });
 
-    test("synthetic backbones land in resources.ts (not a separate file) with their parent's URL prefix", () => {
+    test("synthetic backbones land in resources.ts and use `<sdUrl>#<elementId>` as their URL", () => {
         const f = files["resources.ts"];
         expect(f).toContain('TypeName: "questionnaire_item"');
-        expect(f).toContain("http://fhir.forms-lab.com/custom-model/r4/questionnaire_item");
         // backbones.ts must not exist as a separate emitted file
         expect(files["backbones.ts"]).toBeUndefined();
+        // The new URL form lives in dictionary.ts (the resources.ts file no longer carries URLs).
+        expect(files["dictionary.ts"]).toContain(
+            "http://hl7.org/fhir/StructureDefinition/Questionnaire#Questionnaire.item"
+        );
+        expect(files["dictionary.ts"]).not.toContain("http://fhir.forms-lab.com/custom-model");
     });
 
     test("backbone is emitted immediately after its parent", () => {

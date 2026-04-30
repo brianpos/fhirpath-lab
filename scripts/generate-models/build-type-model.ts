@@ -28,8 +28,6 @@ export interface BuildResult {
     entries: TypeModelEntry[];
 }
 
-const SYNTHETIC_URL_BASE = "http://fhir.forms-lab.com/custom-model";
-
 /** Produce the synthetic TypeName for an element id like "Questionnaire.item.enableWhen". */
 function syntheticTypeName(elementId: string): string {
     const parts = elementId.split(".");
@@ -39,8 +37,10 @@ function syntheticTypeName(elementId: string): string {
     return parts[0].toLowerCase() + parts.slice(1).map((p) => "_" + p).join("");
 }
 
-function syntheticUrl(version: FhirVersionKey, name: string): string {
-    return `${SYNTHETIC_URL_BASE}/${version}/${name}`;
+/** Synthetic backbone canonical URL: `<parentSdUrl>#<elementId>`,
+ *  e.g. `http://hl7.org/fhir/StructureDefinition/AdverseEvent#AdverseEvent.suspectEntity`. */
+function syntheticUrl(parentSdUrl: string, elementId: string): string {
+    return `${parentSdUrl}#${elementId}`;
 }
 
 function lastSegment(url: string | undefined): string | undefined {
@@ -265,7 +265,7 @@ function processElement(
         ctx.synthetics.set(syntheticName, synthetic);
         ctx.pathOwners.set(id, synthetic);
         out.push({
-            url: syntheticUrl(version, syntheticName),
+            url: syntheticUrl(ctx.sd.url, id),
             model: synthetic,
             synthetic: true,
             kind: "backbone",

@@ -27,8 +27,8 @@ Stage 1 is complete; Stage 2 has had its JSON outputs prepared as a size-preview
 - [x] Pass 3 — promote `BackboneElement` / `Element` (anonymous) into synthetic
   `<parent>_<child>` TypeModels (recursive); resolve `contentReference`s including
   recursive (`Questionnaire.item.item`).
-- [x] Pass 4 — `byUrl` and `byTypeName` indexes; synthetic backbones get a minted
-  `http://fhir.forms-lab.com/custom-model/<version>/<typename>` URL; `System.*` types
+- [x] Pass 4 — `byUrl` and `byTypeName` indexes; synthetic backbones get a canonical
+  URL of the form `<parentSdUrl>#<elementId>`; `System.*` types
   spread in by reference so identity is preserved across versions.
 - [x] Pass 5 — emit per-category TS modules + per-version `index.ts`.
 - [x] Self-consistency check (dangling references, duplicate URLs/TypeNames,
@@ -43,6 +43,13 @@ Stage 1 is complete; Stage 2 has had its JSON outputs prepared as a size-preview
 - [x] **Backbones co-located with their parent** — backbones are emitted into the
   same per-category TS file as their root parent (resources / complex-types) and
   appear immediately after the parent. The separate `backbones.ts` was removed.
+- [x] **Backbone canonical URL** uses the parent SD URL with a fragment, e.g.
+  `http://hl7.org/fhir/StructureDefinition/AdverseEvent#AdverseEvent.suspectEntity`,
+  rather than a forms-lab synthetic URL.
+- [x] **Dictionary in its own file** — `byUrl` / `byTypeName` indexes live in
+  `dictionary.ts` per version. Category files (`primitives.ts`, `complex-types.ts`,
+  `resources.ts`) contain only the `TypeModel` consts. `index.ts` re-exports the
+  dictionary plus the lookup helpers.
 - [x] Fixture-driven unit tests (25, all green); full suite 106/106.
 
 ### Stage 2 preview — JSON dictionaries (PARTIAL — emit only)
@@ -132,9 +139,10 @@ version-independent and total ~8 entries.
 helpers/models/generated/
   system-types.ts           // hand-authored, NOT generated — System.* TypeModels
   r4/
-    index.ts                // exports byUrl, byTypeName (Readonly)
-    resources.ts            // generated — resources + their synthetic backbones
-    complex-types.ts        // generated — complex types + their synthetic backbones
+    index.ts                // public surface: re-exports byUrl/byTypeName + lookup helpers
+    dictionary.ts           // generated — combined byUrl/byTypeName indexes
+    resources.ts            // generated — resources + their synthetic backbones (consts only)
+    complex-types.ts        // generated — complex types + their synthetic backbones (consts only)
     primitives.ts           // generated (FHIR `string`, `boolean`, ... containers)
     models/                 // Stage-2 preview JSON (one file per top-level type)
       <TypeName>.json
@@ -147,7 +155,9 @@ helpers/models/generated/
 Synthetic backbones (`patient_contact`, `questionnaire_item_enableWhen`, …) are
 emitted into the same TS file as their root parent and appear immediately after
 that parent. There is no separate `backbones.ts` — backbones are meaningless
-without their parent and always co-accessed.
+without their parent and always co-accessed. Their canonical URL takes the form
+`<parentSdUrl>#<elementId>`, e.g.
+`http://hl7.org/fhir/StructureDefinition/AdverseEvent#AdverseEvent.suspectEntity`.
 
 Each version's `index.ts` imports `system-types.ts` and spreads it into the dictionaries
 so `System.*` instances are shared by reference across versions.
@@ -234,11 +244,11 @@ table and writes them into the index at emit time.
 Both indexes hold *references* to the same `TypeModel` instances, so identity is
 preserved and `byUrl[url] === byTypeName[name]` for any matched pair.
 
-Synthetic backbone types do not have a real canonical URL from HL7. Mint one of the
-form `http://fhir.forms-lab.com/custom-model/<version>/<typename>` (e.g.
-`.../r4/questionnaire_item`) so they're addressable in `byUrl` too. This keeps every
-`TypeModel` reachable through both indexes without special-casing backbones in
-consumers.
+Synthetic backbone types do not have a published HL7 canonical URL. Mint one of
+the form `<parentSdUrl>#<elementId>` (e.g.
+`http://hl7.org/fhir/StructureDefinition/Questionnaire#Questionnaire.item`) so
+they're addressable in `byUrl` too. This keeps every `TypeModel` reachable
+through both indexes without special-casing backbones in consumers.
 
 Merge `system-types.ts` into both indexes by spreading its exports. The same object
 instances appear in every version's index, preserving cross-version identity.
@@ -253,7 +263,7 @@ export const byUrl: Readonly<Record<string, TypeModel>> = Object.freeze({
   "http://hl7.org/fhir/StructureDefinition/Patient":     Patient,
   "http://hl7.org/fhir/StructureDefinition/Observation": Observation,
   ...systemTypesByUrl,
-  "http://fhir.forms-lab.com/custom-model/r4/questionnaire_item": questionnaire_item,
+  "http://hl7.org/fhir/StructureDefinition/Questionnaire#Questionnaire.item": questionnaire_item,
   // ...
 });
 

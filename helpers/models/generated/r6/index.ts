@@ -1,25 +1,11 @@
 // THIS FILE IS GENERATED — DO NOT EDIT BY HAND.
 // Run `npm run generate:models -- --version <r4|r4b|r5|r6>` to regenerate.
+// See docs/custom-model-generator-plan.md.
 
 import type { TypeModel } from "../../../custom_model";
-import { systemTypesByTypeName, systemTypesByUrl } from "../system-types";
-import * as primitives from "./primitives";
-import * as complexTypes from "./complex-types";
-import * as resources from "./resources";
+import { byUrl, byTypeName } from "./dictionary";
 
-export const byUrl: Readonly<Record<string, TypeModel>> = Object.freeze({
-    ...systemTypesByUrl,
-    ...primitives.byUrl,
-    ...complexTypes.byUrl,
-    ...resources.byUrl,
-});
-
-export const byTypeName: Readonly<Record<string, TypeModel>> = Object.freeze({
-    ...systemTypesByTypeName,
-    ...primitives.byTypeName,
-    ...complexTypes.byTypeName,
-    ...resources.byTypeName,
-});
+export { byUrl, byTypeName };
 
 /** Lookup a TypeModel by canonical URL. Returns undefined if absent. */
 export function lookupByUrl(url: string): TypeModel | undefined {
