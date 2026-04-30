@@ -1,0 +1,965 @@
+{
+  "DeviceDefinition": {
+    "TypeName": "DeviceDefinition",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "url",
+        "Type": [
+          {
+            "TypeName": "uri"
+          }
+        ]
+      },
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "version",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "versionAlgorithm[x]",
+        "Type": [
+          {
+            "TypeName": "Coding"
+          },
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "name",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "title",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "status",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "experimental",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "date",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      },
+      {
+        "ElementName": "publisher",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "contact",
+        "Type": [
+          {
+            "TypeName": "ContactDetail"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "description",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      },
+      {
+        "ElementName": "useContext",
+        "Type": [
+          {
+            "TypeName": "UsageContext"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "jurisdiction",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "purpose",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      },
+      {
+        "ElementName": "copyright",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      },
+      {
+        "ElementName": "copyrightLabel",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "approvalDate",
+        "Type": [
+          {
+            "TypeName": "date"
+          }
+        ]
+      },
+      {
+        "ElementName": "lastReviewDate",
+        "Type": [
+          {
+            "TypeName": "date"
+          }
+        ]
+      },
+      {
+        "ElementName": "effectivePeriod",
+        "Type": [
+          {
+            "TypeName": "Period"
+          }
+        ]
+      },
+      {
+        "ElementName": "partNumber",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "manufacturer",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "modelNumber",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "udiDeviceIdentifier",
+        "Type": [
+          {
+            "TypeName": "devicedefinition_udiDeviceIdentifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "regulatoryIdentifier",
+        "Type": [
+          {
+            "TypeName": "devicedefinition_regulatoryIdentifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "deviceName",
+        "Type": [
+          {
+            "TypeName": "devicedefinition_deviceName"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "classification",
+        "Type": [
+          {
+            "TypeName": "devicedefinition_classification"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "conformsTo",
+        "Type": [
+          {
+            "TypeName": "devicedefinition_conformsTo"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "hasPart",
+        "Type": [
+          {
+            "TypeName": "devicedefinition_hasPart"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "packaging",
+        "Type": [
+          {
+            "TypeName": "devicedefinition_packaging"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "deviceVersion",
+        "Type": [
+          {
+            "TypeName": "devicedefinition_deviceVersion"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "safety",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "shelfLifeStorage",
+        "Type": [
+          {
+            "TypeName": "ProductShelfLife"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "outputLanguage",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "property",
+        "Type": [
+          {
+            "TypeName": "devicedefinition_property"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "link",
+        "Type": [
+          {
+            "TypeName": "devicedefinition_link"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "note",
+        "Type": [
+          {
+            "TypeName": "Annotation"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "material",
+        "Type": [
+          {
+            "TypeName": "devicedefinition_material"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "productionIdentifierInUDI",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "guideline",
+        "Type": [
+          {
+            "TypeName": "devicedefinition_guideline"
+          }
+        ]
+      },
+      {
+        "ElementName": "correctiveAction",
+        "Type": [
+          {
+            "TypeName": "devicedefinition_correctiveAction"
+          }
+        ]
+      },
+      {
+        "ElementName": "chargeItem",
+        "Type": [
+          {
+            "TypeName": "devicedefinition_chargeItem"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "devicedefinition_udiDeviceIdentifier": {
+    "TypeName": "devicedefinition_udiDeviceIdentifier",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "deviceIdentifier",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "issuer",
+        "Type": [
+          {
+            "TypeName": "uri"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "jurisdiction",
+        "Type": [
+          {
+            "TypeName": "uri"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "marketDistribution",
+        "Type": [
+          {
+            "TypeName": "devicedefinition_udiDeviceIdentifier_marketDistribution"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "deviceIdentifierSystem",
+        "Type": [
+          {
+            "TypeName": "uri"
+          }
+        ]
+      }
+    ]
+  },
+  "devicedefinition_udiDeviceIdentifier_marketDistribution": {
+    "TypeName": "devicedefinition_udiDeviceIdentifier_marketDistribution",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "marketPeriod",
+        "Type": [
+          {
+            "TypeName": "Period"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "subJurisdiction",
+        "Type": [
+          {
+            "TypeName": "uri"
+          }
+        ],
+        "Required": true
+      }
+    ]
+  },
+  "devicedefinition_regulatoryIdentifier": {
+    "TypeName": "devicedefinition_regulatoryIdentifier",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "issuer",
+        "Type": [
+          {
+            "TypeName": "uri"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "jurisdiction",
+        "Type": [
+          {
+            "TypeName": "uri"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "identifierSystem",
+        "Type": [
+          {
+            "TypeName": "uri"
+          }
+        ]
+      }
+    ]
+  },
+  "devicedefinition_deviceName": {
+    "TypeName": "devicedefinition_deviceName",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "name",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      }
+    ]
+  },
+  "devicedefinition_classification": {
+    "TypeName": "devicedefinition_classification",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "justification",
+        "Type": [
+          {
+            "TypeName": "RelatedArtifact"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "devicedefinition_conformsTo": {
+    "TypeName": "devicedefinition_conformsTo",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "category",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "specification",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "version",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "source",
+        "Type": [
+          {
+            "TypeName": "RelatedArtifact"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "devicedefinition_hasPart": {
+    "TypeName": "devicedefinition_hasPart",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "definition[x]",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          },
+          {
+            "TypeName": "canonical"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "count",
+        "Type": [
+          {
+            "TypeName": "integer"
+          }
+        ]
+      }
+    ]
+  },
+  "devicedefinition_packaging": {
+    "TypeName": "devicedefinition_packaging",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ]
+      },
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "count",
+        "Type": [
+          {
+            "TypeName": "integer"
+          }
+        ]
+      },
+      {
+        "ElementName": "distributor",
+        "Type": [
+          {
+            "TypeName": "devicedefinition_packaging_distributor"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "udiDeviceIdentifier",
+        "Type": [
+          {
+            "TypeName": "devicedefinition_udiDeviceIdentifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "packaging",
+        "Type": [
+          {
+            "TypeName": "devicedefinition_packaging"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "devicedefinition_packaging_distributor": {
+    "TypeName": "devicedefinition_packaging_distributor",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "name",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "organizationReference",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "devicedefinition_deviceVersion": {
+    "TypeName": "devicedefinition_deviceVersion",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "component",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ]
+      },
+      {
+        "ElementName": "value",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "Required": true
+      }
+    ]
+  },
+  "devicedefinition_property": {
+    "TypeName": "devicedefinition_property",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "value[x]",
+        "Type": [
+          {
+            "TypeName": "Attachment"
+          },
+          {
+            "TypeName": "CodeableConcept"
+          },
+          {
+            "TypeName": "Quantity"
+          },
+          {
+            "TypeName": "Range"
+          },
+          {
+            "TypeName": "boolean"
+          },
+          {
+            "TypeName": "integer"
+          },
+          {
+            "TypeName": "string"
+          }
+        ],
+        "Required": true
+      }
+    ]
+  },
+  "devicedefinition_link": {
+    "TypeName": "devicedefinition_link",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "relation",
+        "Type": [
+          {
+            "TypeName": "Coding"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "relatedDevice[x]",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          },
+          {
+            "TypeName": "canonical"
+          }
+        ],
+        "Required": true
+      }
+    ]
+  },
+  "devicedefinition_material": {
+    "TypeName": "devicedefinition_material",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "substance",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "alternate",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "allergenicIndicator",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      }
+    ]
+  },
+  "devicedefinition_guideline": {
+    "TypeName": "devicedefinition_guideline",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "useContext",
+        "Type": [
+          {
+            "TypeName": "UsageContext"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "usageInstruction",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      },
+      {
+        "ElementName": "relatedArtifact",
+        "Type": [
+          {
+            "TypeName": "RelatedArtifact"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "indication",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "contraindication",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "warning",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "intendedUse",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      }
+    ]
+  },
+  "devicedefinition_correctiveAction": {
+    "TypeName": "devicedefinition_correctiveAction",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "recall",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "scope",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "period",
+        "Type": [
+          {
+            "TypeName": "Period"
+          }
+        ],
+        "Required": true
+      }
+    ]
+  },
+  "devicedefinition_chargeItem": {
+    "TypeName": "devicedefinition_chargeItem",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "chargeItemCode",
+        "Type": [
+          {
+            "TypeName": "CodeableReference"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "count",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "effectivePeriod",
+        "Type": [
+          {
+            "TypeName": "Period"
+          }
+        ]
+      },
+      {
+        "ElementName": "useContext",
+        "Type": [
+          {
+            "TypeName": "UsageContext"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  }
+}

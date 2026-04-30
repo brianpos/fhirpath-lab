@@ -1,0 +1,241 @@
+{
+  "MedicinalProductPackaged": {
+    "TypeName": "MedicinalProductPackaged",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "subject",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/MedicinalProduct"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "description",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "legalStatusOfSupply",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "marketingStatus",
+        "Type": [
+          {
+            "TypeName": "MarketingStatus"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "marketingAuthorization",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/MedicinalProductAuthorization"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "manufacturer",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "batchIdentifier",
+        "Type": [
+          {
+            "TypeName": "medicinalproductpackaged_batchIdentifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "packageItem",
+        "Type": [
+          {
+            "TypeName": "medicinalproductpackaged_packageItem"
+          }
+        ],
+        "IsArray": true,
+        "Required": true
+      }
+    ]
+  },
+  "medicinalproductpackaged_batchIdentifier": {
+    "TypeName": "medicinalproductpackaged_batchIdentifier",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "outerPackaging",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "immediatePackaging",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ]
+      }
+    ]
+  },
+  "medicinalproductpackaged_packageItem": {
+    "TypeName": "medicinalproductpackaged_packageItem",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "quantity",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "material",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "alternateMaterial",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "device",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/DeviceDefinition"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "manufacturedItem",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/MedicinalProductManufactured"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "packageItem",
+        "Type": [
+          {
+            "TypeName": "medicinalproductpackaged_packageItem"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "physicalCharacteristics",
+        "Type": [
+          {
+            "TypeName": "ProdCharacteristic"
+          }
+        ]
+      },
+      {
+        "ElementName": "otherCharacteristics",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "shelfLifeStorage",
+        "Type": [
+          {
+            "TypeName": "ProductShelfLife"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "manufacturer",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  }
+}

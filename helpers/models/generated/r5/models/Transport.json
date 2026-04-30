@@ -1,0 +1,733 @@
+{
+  "Transport": {
+    "TypeName": "Transport",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "instantiatesCanonical",
+        "Type": [
+          {
+            "TypeName": "canonical"
+          }
+        ]
+      },
+      {
+        "ElementName": "instantiatesUri",
+        "Type": [
+          {
+            "TypeName": "uri"
+          }
+        ]
+      },
+      {
+        "ElementName": "basedOn",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Resource"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "groupIdentifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ]
+      },
+      {
+        "ElementName": "partOf",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Transport"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "status",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "statusReason",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "intent",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "priority",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "code",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "description",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "focus",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Resource"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "for",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Resource"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "encounter",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Encounter"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "completionTime",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      },
+      {
+        "ElementName": "authoredOn",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      },
+      {
+        "ElementName": "lastModified",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      },
+      {
+        "ElementName": "requester",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Device",
+              "http://hl7.org/fhir/StructureDefinition/Organization",
+              "http://hl7.org/fhir/StructureDefinition/Patient",
+              "http://hl7.org/fhir/StructureDefinition/Practitioner",
+              "http://hl7.org/fhir/StructureDefinition/PractitionerRole",
+              "http://hl7.org/fhir/StructureDefinition/RelatedPerson"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "performerType",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "owner",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/CareTeam",
+              "http://hl7.org/fhir/StructureDefinition/Device",
+              "http://hl7.org/fhir/StructureDefinition/HealthcareService",
+              "http://hl7.org/fhir/StructureDefinition/Organization",
+              "http://hl7.org/fhir/StructureDefinition/Patient",
+              "http://hl7.org/fhir/StructureDefinition/Practitioner",
+              "http://hl7.org/fhir/StructureDefinition/PractitionerRole",
+              "http://hl7.org/fhir/StructureDefinition/RelatedPerson"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "location",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Location"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "insurance",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/ClaimResponse",
+              "http://hl7.org/fhir/StructureDefinition/Coverage"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "note",
+        "Type": [
+          {
+            "TypeName": "Annotation"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "relevantHistory",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Provenance"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "restriction",
+        "Type": [
+          {
+            "TypeName": "transport_restriction"
+          }
+        ]
+      },
+      {
+        "ElementName": "input",
+        "Type": [
+          {
+            "TypeName": "transport_input"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "output",
+        "Type": [
+          {
+            "TypeName": "transport_output"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "requestedLocation",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Location"
+            ]
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "currentLocation",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Location"
+            ]
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "reason",
+        "Type": [
+          {
+            "TypeName": "CodeableReference"
+          }
+        ]
+      },
+      {
+        "ElementName": "history",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Transport"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "transport_restriction": {
+    "TypeName": "transport_restriction",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "repetitions",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ]
+      },
+      {
+        "ElementName": "period",
+        "Type": [
+          {
+            "TypeName": "Period"
+          }
+        ]
+      },
+      {
+        "ElementName": "recipient",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Group",
+              "http://hl7.org/fhir/StructureDefinition/Organization",
+              "http://hl7.org/fhir/StructureDefinition/Patient",
+              "http://hl7.org/fhir/StructureDefinition/Practitioner",
+              "http://hl7.org/fhir/StructureDefinition/PractitionerRole",
+              "http://hl7.org/fhir/StructureDefinition/RelatedPerson"
+            ]
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "transport_input": {
+    "TypeName": "transport_input",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "value[x]",
+        "Type": [
+          {
+            "TypeName": "Address"
+          },
+          {
+            "TypeName": "Age"
+          },
+          {
+            "TypeName": "Annotation"
+          },
+          {
+            "TypeName": "Attachment"
+          },
+          {
+            "TypeName": "Availability"
+          },
+          {
+            "TypeName": "CodeableConcept"
+          },
+          {
+            "TypeName": "CodeableReference"
+          },
+          {
+            "TypeName": "Coding"
+          },
+          {
+            "TypeName": "ContactDetail"
+          },
+          {
+            "TypeName": "ContactPoint"
+          },
+          {
+            "TypeName": "Count"
+          },
+          {
+            "TypeName": "DataRequirement"
+          },
+          {
+            "TypeName": "Distance"
+          },
+          {
+            "TypeName": "Dosage"
+          },
+          {
+            "TypeName": "Duration"
+          },
+          {
+            "TypeName": "Expression"
+          },
+          {
+            "TypeName": "ExtendedContactDetail"
+          },
+          {
+            "TypeName": "HumanName"
+          },
+          {
+            "TypeName": "Identifier"
+          },
+          {
+            "TypeName": "Meta"
+          },
+          {
+            "TypeName": "Money"
+          },
+          {
+            "TypeName": "ParameterDefinition"
+          },
+          {
+            "TypeName": "Period"
+          },
+          {
+            "TypeName": "Quantity"
+          },
+          {
+            "TypeName": "Range"
+          },
+          {
+            "TypeName": "Ratio"
+          },
+          {
+            "TypeName": "RatioRange"
+          },
+          {
+            "TypeName": "Reference"
+          },
+          {
+            "TypeName": "RelatedArtifact"
+          },
+          {
+            "TypeName": "SampledData"
+          },
+          {
+            "TypeName": "Signature"
+          },
+          {
+            "TypeName": "Timing"
+          },
+          {
+            "TypeName": "TriggerDefinition"
+          },
+          {
+            "TypeName": "UsageContext"
+          },
+          {
+            "TypeName": "base64Binary"
+          },
+          {
+            "TypeName": "boolean"
+          },
+          {
+            "TypeName": "canonical"
+          },
+          {
+            "TypeName": "code"
+          },
+          {
+            "TypeName": "date"
+          },
+          {
+            "TypeName": "dateTime"
+          },
+          {
+            "TypeName": "decimal"
+          },
+          {
+            "TypeName": "id"
+          },
+          {
+            "TypeName": "instant"
+          },
+          {
+            "TypeName": "integer"
+          },
+          {
+            "TypeName": "integer64"
+          },
+          {
+            "TypeName": "markdown"
+          },
+          {
+            "TypeName": "oid"
+          },
+          {
+            "TypeName": "positiveInt"
+          },
+          {
+            "TypeName": "string"
+          },
+          {
+            "TypeName": "time"
+          },
+          {
+            "TypeName": "unsignedInt"
+          },
+          {
+            "TypeName": "uri"
+          },
+          {
+            "TypeName": "url"
+          },
+          {
+            "TypeName": "uuid"
+          }
+        ],
+        "Required": true
+      }
+    ]
+  },
+  "transport_output": {
+    "TypeName": "transport_output",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "value[x]",
+        "Type": [
+          {
+            "TypeName": "Address"
+          },
+          {
+            "TypeName": "Age"
+          },
+          {
+            "TypeName": "Annotation"
+          },
+          {
+            "TypeName": "Attachment"
+          },
+          {
+            "TypeName": "Availability"
+          },
+          {
+            "TypeName": "CodeableConcept"
+          },
+          {
+            "TypeName": "CodeableReference"
+          },
+          {
+            "TypeName": "Coding"
+          },
+          {
+            "TypeName": "ContactDetail"
+          },
+          {
+            "TypeName": "ContactPoint"
+          },
+          {
+            "TypeName": "Count"
+          },
+          {
+            "TypeName": "DataRequirement"
+          },
+          {
+            "TypeName": "Distance"
+          },
+          {
+            "TypeName": "Dosage"
+          },
+          {
+            "TypeName": "Duration"
+          },
+          {
+            "TypeName": "Expression"
+          },
+          {
+            "TypeName": "ExtendedContactDetail"
+          },
+          {
+            "TypeName": "HumanName"
+          },
+          {
+            "TypeName": "Identifier"
+          },
+          {
+            "TypeName": "Meta"
+          },
+          {
+            "TypeName": "Money"
+          },
+          {
+            "TypeName": "ParameterDefinition"
+          },
+          {
+            "TypeName": "Period"
+          },
+          {
+            "TypeName": "Quantity"
+          },
+          {
+            "TypeName": "Range"
+          },
+          {
+            "TypeName": "Ratio"
+          },
+          {
+            "TypeName": "RatioRange"
+          },
+          {
+            "TypeName": "Reference"
+          },
+          {
+            "TypeName": "RelatedArtifact"
+          },
+          {
+            "TypeName": "SampledData"
+          },
+          {
+            "TypeName": "Signature"
+          },
+          {
+            "TypeName": "Timing"
+          },
+          {
+            "TypeName": "TriggerDefinition"
+          },
+          {
+            "TypeName": "UsageContext"
+          },
+          {
+            "TypeName": "base64Binary"
+          },
+          {
+            "TypeName": "boolean"
+          },
+          {
+            "TypeName": "canonical"
+          },
+          {
+            "TypeName": "code"
+          },
+          {
+            "TypeName": "date"
+          },
+          {
+            "TypeName": "dateTime"
+          },
+          {
+            "TypeName": "decimal"
+          },
+          {
+            "TypeName": "id"
+          },
+          {
+            "TypeName": "instant"
+          },
+          {
+            "TypeName": "integer"
+          },
+          {
+            "TypeName": "integer64"
+          },
+          {
+            "TypeName": "markdown"
+          },
+          {
+            "TypeName": "oid"
+          },
+          {
+            "TypeName": "positiveInt"
+          },
+          {
+            "TypeName": "string"
+          },
+          {
+            "TypeName": "time"
+          },
+          {
+            "TypeName": "unsignedInt"
+          },
+          {
+            "TypeName": "uri"
+          },
+          {
+            "TypeName": "url"
+          },
+          {
+            "TypeName": "uuid"
+          }
+        ],
+        "Required": true
+      }
+    ]
+  }
+}

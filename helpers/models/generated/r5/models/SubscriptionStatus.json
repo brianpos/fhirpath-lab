@@ -1,0 +1,117 @@
+{
+  "SubscriptionStatus": {
+    "TypeName": "SubscriptionStatus",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "status",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "eventsSinceSubscriptionStart",
+        "Type": [
+          {
+            "TypeName": "integer64"
+          }
+        ]
+      },
+      {
+        "ElementName": "notificationEvent",
+        "Type": [
+          {
+            "TypeName": "subscriptionstatus_notificationEvent"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "subscription",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Subscription"
+            ]
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "topic",
+        "Type": [
+          {
+            "TypeName": "canonical"
+          }
+        ]
+      },
+      {
+        "ElementName": "error",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "subscriptionstatus_notificationEvent": {
+    "TypeName": "subscriptionstatus_notificationEvent",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "eventNumber",
+        "Type": [
+          {
+            "TypeName": "integer64"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "timestamp",
+        "Type": [
+          {
+            "TypeName": "instant"
+          }
+        ]
+      },
+      {
+        "ElementName": "focus",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Resource"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "additionalContext",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Resource"
+            ]
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  }
+}

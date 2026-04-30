@@ -1,0 +1,854 @@
+{
+  "CapabilityStatement": {
+    "TypeName": "CapabilityStatement",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "url",
+        "Type": [
+          {
+            "TypeName": "uri"
+          }
+        ]
+      },
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "version",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "versionAlgorithm[x]",
+        "Type": [
+          {
+            "TypeName": "Coding"
+          },
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "name",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "title",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "status",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "experimental",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "date",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "publisher",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "contact",
+        "Type": [
+          {
+            "TypeName": "ContactDetail"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "description",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      },
+      {
+        "ElementName": "useContext",
+        "Type": [
+          {
+            "TypeName": "UsageContext"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "actorDefinition",
+        "Type": [
+          {
+            "TypeName": "canonical"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "jurisdiction",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "purpose",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      },
+      {
+        "ElementName": "copyright",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      },
+      {
+        "ElementName": "copyrightLabel",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "kind",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "instantiates",
+        "Type": [
+          {
+            "TypeName": "canonical"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "imports",
+        "Type": [
+          {
+            "TypeName": "canonical"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "software",
+        "Type": [
+          {
+            "TypeName": "capabilitystatement_software"
+          }
+        ]
+      },
+      {
+        "ElementName": "implementation",
+        "Type": [
+          {
+            "TypeName": "capabilitystatement_implementation"
+          }
+        ]
+      },
+      {
+        "ElementName": "fhirVersion",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "format",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "IsArray": true,
+        "Required": true
+      },
+      {
+        "ElementName": "patchFormat",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "acceptLanguage",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "implementationGuide",
+        "Type": [
+          {
+            "TypeName": "canonical"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "rest",
+        "Type": [
+          {
+            "TypeName": "capabilitystatement_rest"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "messaging",
+        "Type": [
+          {
+            "TypeName": "capabilitystatement_messaging"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "document",
+        "Type": [
+          {
+            "TypeName": "capabilitystatement_document"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "capabilitystatement_software": {
+    "TypeName": "capabilitystatement_software",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "name",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "version",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "releaseDate",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      }
+    ]
+  },
+  "capabilitystatement_implementation": {
+    "TypeName": "capabilitystatement_implementation",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "description",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "url",
+        "Type": [
+          {
+            "TypeName": "url"
+          }
+        ]
+      },
+      {
+        "ElementName": "custodian",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "capabilitystatement_rest": {
+    "TypeName": "capabilitystatement_rest",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "mode",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "documentation",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      },
+      {
+        "ElementName": "security",
+        "Type": [
+          {
+            "TypeName": "capabilitystatement_rest_security"
+          }
+        ]
+      },
+      {
+        "ElementName": "resource",
+        "Type": [
+          {
+            "TypeName": "capabilitystatement_rest_resource"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "interaction",
+        "Type": [
+          {
+            "TypeName": "capabilitystatement_rest_interaction"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "searchParam",
+        "Type": [
+          {
+            "TypeName": "capabilitystatement_rest_resource_searchParam"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "operation",
+        "Type": [
+          {
+            "TypeName": "capabilitystatement_rest_resource_operation"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "compartment",
+        "Type": [
+          {
+            "TypeName": "canonical"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "capabilitystatement_rest_security": {
+    "TypeName": "capabilitystatement_rest_security",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "cors",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "service",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "description",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      }
+    ]
+  },
+  "capabilitystatement_rest_resource": {
+    "TypeName": "capabilitystatement_rest_resource",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "uri"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "definition",
+        "Type": [
+          {
+            "TypeName": "canonical"
+          }
+        ]
+      },
+      {
+        "ElementName": "profile",
+        "Type": [
+          {
+            "TypeName": "canonical"
+          }
+        ]
+      },
+      {
+        "ElementName": "supportedProfile",
+        "Type": [
+          {
+            "TypeName": "canonical"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "documentation",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      },
+      {
+        "ElementName": "interaction",
+        "Type": [
+          {
+            "TypeName": "capabilitystatement_rest_resource_interaction"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "versioning",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "readHistory",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "updateCreate",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "conditionalCreate",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "conditionalRead",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "conditionalUpdate",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "conditionalPatch",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "conditionalDelete",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "referencePolicy",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "searchInclude",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "searchRevInclude",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "searchParam",
+        "Type": [
+          {
+            "TypeName": "capabilitystatement_rest_resource_searchParam"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "operation",
+        "Type": [
+          {
+            "TypeName": "capabilitystatement_rest_resource_operation"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "capabilitystatement_rest_resource_interaction": {
+    "TypeName": "capabilitystatement_rest_resource_interaction",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "code",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "documentation",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      }
+    ]
+  },
+  "capabilitystatement_rest_resource_searchParam": {
+    "TypeName": "capabilitystatement_rest_resource_searchParam",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "name",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "definition",
+        "Type": [
+          {
+            "TypeName": "canonical"
+          }
+        ]
+      },
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "documentation",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      }
+    ]
+  },
+  "capabilitystatement_rest_resource_operation": {
+    "TypeName": "capabilitystatement_rest_resource_operation",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "name",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "definition",
+        "Type": [
+          {
+            "TypeName": "canonical"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "documentation",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      }
+    ]
+  },
+  "capabilitystatement_rest_interaction": {
+    "TypeName": "capabilitystatement_rest_interaction",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "code",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "documentation",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      }
+    ]
+  },
+  "capabilitystatement_messaging": {
+    "TypeName": "capabilitystatement_messaging",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "endpoint",
+        "Type": [
+          {
+            "TypeName": "capabilitystatement_messaging_endpoint"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "reliableCache",
+        "Type": [
+          {
+            "TypeName": "unsignedInt"
+          }
+        ]
+      },
+      {
+        "ElementName": "documentation",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      },
+      {
+        "ElementName": "supportedMessage",
+        "Type": [
+          {
+            "TypeName": "capabilitystatement_messaging_supportedMessage"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "capabilitystatement_messaging_endpoint": {
+    "TypeName": "capabilitystatement_messaging_endpoint",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "protocol",
+        "Type": [
+          {
+            "TypeName": "Coding"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "address",
+        "Type": [
+          {
+            "TypeName": "url"
+          }
+        ],
+        "Required": true
+      }
+    ]
+  },
+  "capabilitystatement_messaging_supportedMessage": {
+    "TypeName": "capabilitystatement_messaging_supportedMessage",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "mode",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "definition",
+        "Type": [
+          {
+            "TypeName": "canonical"
+          }
+        ],
+        "Required": true
+      }
+    ]
+  },
+  "capabilitystatement_document": {
+    "TypeName": "capabilitystatement_document",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "mode",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "documentation",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      },
+      {
+        "ElementName": "profile",
+        "Type": [
+          {
+            "TypeName": "canonical"
+          }
+        ],
+        "Required": true
+      }
+    ]
+  }
+}

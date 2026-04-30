@@ -1,0 +1,339 @@
+{
+  "SubstanceSourceMaterial": {
+    "TypeName": "SubstanceSourceMaterial",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "sourceMaterialClass",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "sourceMaterialType",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "sourceMaterialState",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "organismId",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ]
+      },
+      {
+        "ElementName": "organismName",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "parentSubstanceId",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "parentSubstanceName",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "countryOfOrigin",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "geographicalLocation",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "developmentStage",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "fractionDescription",
+        "Type": [
+          {
+            "TypeName": "substancesourcematerial_fractionDescription"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "organism",
+        "Type": [
+          {
+            "TypeName": "substancesourcematerial_organism"
+          }
+        ]
+      },
+      {
+        "ElementName": "partDescription",
+        "Type": [
+          {
+            "TypeName": "substancesourcematerial_partDescription"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "substancesourcematerial_fractionDescription": {
+    "TypeName": "substancesourcematerial_fractionDescription",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "fraction",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "materialType",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      }
+    ]
+  },
+  "substancesourcematerial_organism": {
+    "TypeName": "substancesourcematerial_organism",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "family",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "genus",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "species",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "intraspecificType",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "intraspecificDescription",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "author",
+        "Type": [
+          {
+            "TypeName": "substancesourcematerial_organism_author"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "hybrid",
+        "Type": [
+          {
+            "TypeName": "substancesourcematerial_organism_hybrid"
+          }
+        ]
+      },
+      {
+        "ElementName": "organismGeneral",
+        "Type": [
+          {
+            "TypeName": "substancesourcematerial_organism_organismGeneral"
+          }
+        ]
+      }
+    ]
+  },
+  "substancesourcematerial_organism_author": {
+    "TypeName": "substancesourcematerial_organism_author",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "authorType",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "authorDescription",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      }
+    ]
+  },
+  "substancesourcematerial_organism_hybrid": {
+    "TypeName": "substancesourcematerial_organism_hybrid",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "maternalOrganismId",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "maternalOrganismName",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "paternalOrganismId",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "paternalOrganismName",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "hybridType",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      }
+    ]
+  },
+  "substancesourcematerial_organism_organismGeneral": {
+    "TypeName": "substancesourcematerial_organism_organismGeneral",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "kingdom",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "phylum",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "class",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "order",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      }
+    ]
+  },
+  "substancesourcematerial_partDescription": {
+    "TypeName": "substancesourcematerial_partDescription",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "part",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "partLocation",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      }
+    ]
+  }
+}

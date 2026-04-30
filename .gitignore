@@ -94,3 +94,6 @@ sw.*
 
 # Visual Studio User Workspace
 .vs
+
+# Custom-model generator cache (downloaded HL7 bundles)
+scripts/generate-models/.cache/

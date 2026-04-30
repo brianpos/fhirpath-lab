@@ -1,0 +1,352 @@
+{
+  "TestReport": {
+    "TypeName": "TestReport",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ]
+      },
+      {
+        "ElementName": "name",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "status",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "testScript",
+        "Type": [
+          {
+            "TypeName": "canonical"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "result",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "score",
+        "Type": [
+          {
+            "TypeName": "decimal"
+          }
+        ]
+      },
+      {
+        "ElementName": "tester",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "issued",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      },
+      {
+        "ElementName": "participant",
+        "Type": [
+          {
+            "TypeName": "testreport_participant"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "setup",
+        "Type": [
+          {
+            "TypeName": "testreport_setup"
+          }
+        ]
+      },
+      {
+        "ElementName": "test",
+        "Type": [
+          {
+            "TypeName": "testreport_test"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "teardown",
+        "Type": [
+          {
+            "TypeName": "testreport_teardown"
+          }
+        ]
+      }
+    ]
+  },
+  "testreport_participant": {
+    "TypeName": "testreport_participant",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "uri",
+        "Type": [
+          {
+            "TypeName": "uri"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "display",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      }
+    ]
+  },
+  "testreport_setup": {
+    "TypeName": "testreport_setup",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "action",
+        "Type": [
+          {
+            "TypeName": "testreport_setup_action"
+          }
+        ],
+        "IsArray": true,
+        "Required": true
+      }
+    ]
+  },
+  "testreport_setup_action": {
+    "TypeName": "testreport_setup_action",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "operation",
+        "Type": [
+          {
+            "TypeName": "testreport_setup_action_operation"
+          }
+        ]
+      },
+      {
+        "ElementName": "assert",
+        "Type": [
+          {
+            "TypeName": "testreport_setup_action_assert"
+          }
+        ]
+      }
+    ]
+  },
+  "testreport_setup_action_operation": {
+    "TypeName": "testreport_setup_action_operation",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "result",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "message",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      },
+      {
+        "ElementName": "detail",
+        "Type": [
+          {
+            "TypeName": "uri"
+          }
+        ]
+      }
+    ]
+  },
+  "testreport_setup_action_assert": {
+    "TypeName": "testreport_setup_action_assert",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "result",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "message",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      },
+      {
+        "ElementName": "detail",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "requirement",
+        "Type": [
+          {
+            "TypeName": "testreport_setup_action_assert_requirement"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "testreport_setup_action_assert_requirement": {
+    "TypeName": "testreport_setup_action_assert_requirement",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "link[x]",
+        "Type": [
+          {
+            "TypeName": "canonical"
+          },
+          {
+            "TypeName": "uri"
+          }
+        ]
+      }
+    ]
+  },
+  "testreport_test": {
+    "TypeName": "testreport_test",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "name",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "description",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "action",
+        "Type": [
+          {
+            "TypeName": "testreport_test_action"
+          }
+        ],
+        "IsArray": true,
+        "Required": true
+      }
+    ]
+  },
+  "testreport_test_action": {
+    "TypeName": "testreport_test_action",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "operation",
+        "Type": [
+          {
+            "TypeName": "testreport_setup_action_operation"
+          }
+        ]
+      },
+      {
+        "ElementName": "assert",
+        "Type": [
+          {
+            "TypeName": "testreport_setup_action_assert"
+          }
+        ]
+      }
+    ]
+  },
+  "testreport_teardown": {
+    "TypeName": "testreport_teardown",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "action",
+        "Type": [
+          {
+            "TypeName": "testreport_teardown_action"
+          }
+        ],
+        "IsArray": true,
+        "Required": true
+      }
+    ]
+  },
+  "testreport_teardown_action": {
+    "TypeName": "testreport_teardown_action",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "operation",
+        "Type": [
+          {
+            "TypeName": "testreport_setup_action_operation"
+          }
+        ],
+        "Required": true
+      }
+    ]
+  }
+}

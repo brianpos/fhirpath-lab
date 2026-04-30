@@ -5,6 +5,97 @@ defined in [helpers/custom_model.ts](../helpers/custom_model.ts). These dictiona
 schema-side input for FML mapping validation (and any future structural reasoning), distinct
 from the runtime evaluation `Model` shape that fhirpath.js consumes.
 
+## Status (current implementation)
+
+Stage 1 is complete; Stage 2 has had its JSON outputs prepared as a size-preview only
+(no loader yet).
+
+### Stage 1 — TS dictionaries (DONE)
+- [x] Hand-written shared `helpers/models/generated/system-types.ts` with the eight
+  `System.*` TypeModels and `fhirPrimitiveToSystemTypeName` map.
+- [x] Generator at `scripts/generate-models/` (`fetch-bundles`, `build-type-model`,
+  `emit`, `index`, `sd-types`).
+- [x] CLI: `npm run generate:models -- --version <r4|r4b|r5|r6>` (repeatable; default
+  = all four). Flags `--from-dir`, `--base-url`, `--force`, `--no-write`.
+- [x] Bundle fetching with on-disk cache under `scripts/generate-models/.cache/<version>/`
+  (gitignored).
+- [x] Pass 1 — collect & classify SDs by `kind`; skip `derivation === "constraint"`
+  (profiles) and `kind === "logical"`.
+- [x] Pass 2 — flatten elements per type; map `type[]` to `ElementTypeModel`s; detect
+  `IsArray` (`max !== "1"`/`"0"`), `Required` (`min ≥ 1`), `[x]` choice elements
+  (sorted alphabetically by TypeName).
+- [x] Pass 3 — promote `BackboneElement` / `Element` (anonymous) into synthetic
+  `<parent>_<child>` TypeModels (recursive); resolve `contentReference`s including
+  recursive (`Questionnaire.item.item`).
+- [x] Pass 4 — `byUrl` and `byTypeName` indexes; synthetic backbones get a canonical
+  URL of the form `<parentSdUrl>#<elementId>`; `System.*` types
+  spread in by reference so identity is preserved across versions.
+- [x] Pass 5 — emit per-category TS modules + per-version `index.ts`.
+- [x] Self-consistency check (dangling references, duplicate URLs/TypeNames,
+  primitives carrying Elements).
+- [x] Resolve System.* type-code URLs via `structuredefinition-fhir-type` extension
+  (`Resource.id`, `string.value`, etc. — real HL7 SDs use the System URL).
+- [x] R4 / R4B / R5 / R6 dictionaries generated and committed (R6 sourced from
+  `https://hl7.org/fhir/6.0.0-ballot4/` since `/R6/` 404s).
+- [x] **Differential walk** — generator reads `sd.differential.element[]`, not the
+  snapshot. Inherited elements live on the BaseTypeName chain only; consumers walk
+  inheritance.
+- [x] **Backbones co-located with their parent** — backbones are emitted into the
+  same per-category TS file as their root parent (resources / complex-types) and
+  appear immediately after the parent. The separate `backbones.ts` was removed.
+- [x] **Backbone canonical URL** uses the parent SD URL with a fragment, e.g.
+  `http://hl7.org/fhir/StructureDefinition/AdverseEvent#AdverseEvent.suspectEntity`,
+  rather than a forms-lab synthetic URL.
+- [x] **Dictionary in its own file** — `byUrl` / `byTypeName` indexes live in
+  `dictionary.ts` per version. Category files (`primitives.ts`, `complex-types.ts`,
+  `resources.ts`) contain only the `TypeModel` consts. `index.ts` re-exports the
+  dictionary plus the lookup helpers.
+- [x] Fixture-driven unit tests (25, all green); full suite 106/106.
+
+### Stage 2 preview — JSON dictionaries (PARTIAL — emit only)
+- [x] JSON emit alongside TS, produced by the same `npm run generate:models` run.
+- [x] **One `foundation.json` per version** at
+  `helpers/models/generated/<version>/models/foundation.json` — every TypeModel
+  loaded from `profiles-types.json` (FHIR primitive containers + complex types
+  like `HumanName`, `Reference`, `Period`, …) plus their synthetic backbones,
+  keyed by `TypeName`. Bucketing is decided by **source bundle**, not `kind`,
+  so abstract bases like `Element` / `BackboneElement` (which ship in
+  `profiles-types.json`) live in `foundation.json`, while
+  `Resource` / `DomainResource` (which ship in `profiles-resources.json`) get
+  their own file.
+- [x] One JSON file per resource at
+  `helpers/models/generated/<version>/models/<ResourceName>.json`, keyed by
+  `TypeName`, carrying the resource and all its synthetic backbone descendants.
+- [x] `helpers/models/generated/<version>/models/index.json` with three sections:
+  - `byUrl`: canonical URL → JSON filename (empty string ⇒ inline `system`)
+  - `byTypeName`: TypeName → JSON filename (empty string ⇒ inline `system`)
+  - `system`: the eight `System.*` TypeModels inlined, eagerly available
+- [ ] **Loader** — not implemented. JSON exists for size review only.
+- [ ] **Validator prefetch pass** — not implemented.
+- [ ] Static asset placement under `static/models/<version>/` — not done.
+- [ ] Switch build to JSON and remove bundled TS — not done.
+
+### File-size snapshot (R4, current generator output)
+
+| Output                              | Size  |
+|--------------------------------------|-------|
+| `r4/resources.ts` (incl. backbones) | ~564 KB |
+| `r4/complex-types.ts`               | ~44 KB  |
+| `r4/primitives.ts`                  | ~8 KB   |
+| `r4/dictionary.ts`                  | ~132 KB |
+| `r4/index.ts`                       | <1 KB   |
+| `r4/models/` directory total        | ~1.4 MB |
+| `r4/models/foundation.json`         | ~68 KB  |
+| `r4/models/index.json`              | ~106 KB |
+| `r4/models/Patient.json`            | ~5.4 KB |
+| `r4/models/Questionnaire.json`      | ~9.2 KB |
+| `r4/models/Bundle.json`             | ~4.8 KB |
+
+R5 is the largest dictionary (~2.0 MB JSON, ~852 KB resources.ts). Per-resource JSON
+files are in the single-digit-KB range — small enough that lazy-load is cheap.
+
+---
+
 ## Goals
 
 - Produce read-only, immutable, per-FHIR-version dictionaries of `TypeModel`s, indexed by
@@ -43,8 +134,10 @@ URLs follow the form (examples):
 
 Each file is a FHIR `Bundle` whose entries are `StructureDefinition` resources.
 Generation iterates `Bundle.entry[].resource` and reads
-`StructureDefinition.snapshot.element[]` (not differential) so element inheritance
-is already flattened.
+`StructureDefinition.differential.element[]` so each emitted `TypeModel` only
+contains the elements introduced by that SD. Inherited elements live on the
+`BaseTypeName` chain (`Patient` → `DomainResource` → `Resource` → `Element`),
+and consumers walk inheritance at lookup time.
 
 `System.*` primitives (`System.String`, `System.Boolean`, `System.Integer`,
 `System.Decimal`, `System.DateTime`, `System.Date`, `System.Time`, `System.Quantity`)
@@ -57,15 +150,26 @@ version-independent and total ~8 entries.
 helpers/models/generated/
   system-types.ts           // hand-authored, NOT generated — System.* TypeModels
   r4/
-    index.ts                // exports byUrl, byTypeName (Readonly)
-    resources.ts            // generated
-    complex-types.ts        // generated
+    index.ts                // public surface: re-exports byUrl/byTypeName + lookup helpers
+    dictionary.ts           // generated — combined byUrl/byTypeName indexes
+    resources.ts            // generated — resources + their synthetic backbones (consts only)
+    complex-types.ts        // generated — complex types + their synthetic backbones (consts only)
     primitives.ts           // generated (FHIR `string`, `boolean`, ... containers)
-    backbones.ts            // generated synthetic <parent>_<child> types
+    models/                 // Stage-2 preview JSON
+      foundation.json       // primitives + complex types + their backbones (one file)
+      <ResourceName>.json   // one file per resource (with its backbones)
+      index.json            // byUrl/byTypeName → filename + inlined System.*
   r4b/  (same shape)
   r5/   (same shape)
   r6/   (same shape)
 ```
+
+Synthetic backbones (`patient_contact`, `questionnaire_item_enableWhen`, …) are
+emitted into the same TS file as their root parent and appear immediately after
+that parent. There is no separate `backbones.ts` — backbones are meaningless
+without their parent and always co-accessed. Their canonical URL takes the form
+`<parentSdUrl>#<elementId>`, e.g.
+`http://hl7.org/fhir/StructureDefinition/AdverseEvent#AdverseEvent.suspectEntity`.
 
 Each version's `index.ts` imports `system-types.ts` and spreads it into the dictionaries
 so `System.*` instances are shared by reference across versions.
@@ -104,8 +208,10 @@ Walk every SD in the package and bucket by `kind`:
 
 ### Pass 2 — flatten elements per type
 
-For each SD, walk `snapshot.element[]`. Element index 0 is the type itself; subsequent
-elements have `path = TypeName.foo.bar`. For each element:
+For each SD, walk `differential.element[]`. The first row is normally the SD's own
+root (`id === sd.type`) and is skipped. Remaining rows have `path = TypeName.foo.bar`
+and describe elements introduced by *this* SD; inherited rows live on ancestor SDs
+and are resolved through `BaseTypeName` at lookup time. For each element:
 
 - Resolve `type[]` into one or more `ElementTypeModel`s.
 - Drop `Extension`-typed boilerplate elements where appropriate (no, keep them — FML
@@ -150,11 +256,11 @@ table and writes them into the index at emit time.
 Both indexes hold *references* to the same `TypeModel` instances, so identity is
 preserved and `byUrl[url] === byTypeName[name]` for any matched pair.
 
-Synthetic backbone types do not have a real canonical URL from HL7. Mint one of the
-form `http://fhir.forms-lab.com/custom-model/<version>/<typename>` (e.g.
-`.../r4/questionnaire_item`) so they're addressable in `byUrl` too. This keeps every
-`TypeModel` reachable through both indexes without special-casing backbones in
-consumers.
+Synthetic backbone types do not have a published HL7 canonical URL. Mint one of
+the form `<parentSdUrl>#<elementId>` (e.g.
+`http://hl7.org/fhir/StructureDefinition/Questionnaire#Questionnaire.item`) so
+they're addressable in `byUrl` too. This keeps every `TypeModel` reachable
+through both indexes without special-casing backbones in consumers.
 
 Merge `system-types.ts` into both indexes by spreading its exports. The same object
 instances appear in every version's index, preserving cross-version identity.
@@ -169,7 +275,7 @@ export const byUrl: Readonly<Record<string, TypeModel>> = Object.freeze({
   "http://hl7.org/fhir/StructureDefinition/Patient":     Patient,
   "http://hl7.org/fhir/StructureDefinition/Observation": Observation,
   ...systemTypesByUrl,
-  "http://fhir.forms-lab.com/custom-model/r4/questionnaire_item": questionnaire_item,
+  "http://hl7.org/fhir/StructureDefinition/Questionnaire#Questionnaire.item": questionnaire_item,
   // ...
 });
 
@@ -198,9 +304,12 @@ Stage 1 plan: don't ship reverse lookup until something needs it.
 
 ### Pass 5 — emit
 
-- Sort `TypeModel`s by canonical URL.
-- Sort each TypeModel's `Elements` by their original snapshot order (preserve, don't
-  re-sort alphabetically — order matters for some readers).
+- Sort `TypeModel`s by canonical URL within each category. Synthetic backbones
+  are then spliced in right after their parent (preserving their original
+  differential-document encounter order), so a parent and its backbones travel
+  together inside the file.
+- Sort each TypeModel's `Elements` by their original differential order
+  (preserve, don't re-sort alphabetically — order matters for some readers).
 - Sort `Type[]` and `TargetProfile[]` arrays alphabetically.
 - Emit TS object literals with `as const` / explicit `Readonly<...>` typing so the
   compiler enforces immutability.
@@ -214,9 +323,9 @@ Stage 1 plan: don't ship reverse lookup until something needs it.
 - **`Reference(Any)`**: omit `TargetProfile`. Missing `TargetProfile` = no constraint.
 - **Empty / root `type[]`**: the SD's root element has no `type[]` (it *is* the type).
   Skip when iterating elements.
-- **Slicing in snapshot**: ignore for stage 1. Filter out elements whose `id`
+- **Slicing in differential**: ignore for stage 1. Filter out elements whose `id`
   contains `:sliceName`. Keep the unsliced base element only.
-- **Choice element slices**: snapshot may include `Observation.value[x]:valueQuantity`
+- **Choice element slices**: differential may include `Observation.value[x]:valueQuantity`
   rows. Take the `[x]` base row; ignore the slice rows.
 - **`Extension`-typed elements**: keep them (FML can navigate `.extension`).
 - **Profile constraints on element types**: ignore (`type[].profile`); use the bare

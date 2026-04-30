@@ -1,0 +1,775 @@
+{
+  "MedicationKnowledge": {
+    "TypeName": "MedicationKnowledge",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "code",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "status",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "author",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "intendedJurisdiction",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "name",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "relatedMedicationKnowledge",
+        "Type": [
+          {
+            "TypeName": "medicationknowledge_relatedMedicationKnowledge"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "associatedMedication",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Medication"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "productType",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "monograph",
+        "Type": [
+          {
+            "TypeName": "medicationknowledge_monograph"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "preparationInstruction",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      },
+      {
+        "ElementName": "cost",
+        "Type": [
+          {
+            "TypeName": "medicationknowledge_cost"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "monitoringProgram",
+        "Type": [
+          {
+            "TypeName": "medicationknowledge_monitoringProgram"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "indicationGuideline",
+        "Type": [
+          {
+            "TypeName": "medicationknowledge_indicationGuideline"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "medicineClassification",
+        "Type": [
+          {
+            "TypeName": "medicationknowledge_medicineClassification"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "packaging",
+        "Type": [
+          {
+            "TypeName": "medicationknowledge_packaging"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "clinicalUseIssue",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/ClinicalUseDefinition"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "storageGuideline",
+        "Type": [
+          {
+            "TypeName": "medicationknowledge_storageGuideline"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "regulatory",
+        "Type": [
+          {
+            "TypeName": "medicationknowledge_regulatory"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "definitional",
+        "Type": [
+          {
+            "TypeName": "medicationknowledge_definitional"
+          }
+        ]
+      }
+    ]
+  },
+  "medicationknowledge_relatedMedicationKnowledge": {
+    "TypeName": "medicationknowledge_relatedMedicationKnowledge",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "reference",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/MedicationKnowledge"
+            ]
+          }
+        ],
+        "IsArray": true,
+        "Required": true
+      }
+    ]
+  },
+  "medicationknowledge_monograph": {
+    "TypeName": "medicationknowledge_monograph",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "source",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/DocumentReference"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "medicationknowledge_cost": {
+    "TypeName": "medicationknowledge_cost",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "effectiveDate",
+        "Type": [
+          {
+            "TypeName": "Period"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "source",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "cost[x]",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          },
+          {
+            "TypeName": "Money"
+          }
+        ],
+        "Required": true
+      }
+    ]
+  },
+  "medicationknowledge_monitoringProgram": {
+    "TypeName": "medicationknowledge_monitoringProgram",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "name",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      }
+    ]
+  },
+  "medicationknowledge_indicationGuideline": {
+    "TypeName": "medicationknowledge_indicationGuideline",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "indication",
+        "Type": [
+          {
+            "TypeName": "CodeableReference"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "dosingGuideline",
+        "Type": [
+          {
+            "TypeName": "medicationknowledge_indicationGuideline_dosingGuideline"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "medicationknowledge_indicationGuideline_dosingGuideline": {
+    "TypeName": "medicationknowledge_indicationGuideline_dosingGuideline",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "treatmentIntent",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "dosage",
+        "Type": [
+          {
+            "TypeName": "medicationknowledge_indicationGuideline_dosingGuideline_dosage"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "administrationTreatment",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "patientCharacteristic",
+        "Type": [
+          {
+            "TypeName": "medicationknowledge_indicationGuideline_dosingGuideline_patientCharacteristic"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "medicationknowledge_indicationGuideline_dosingGuideline_dosage": {
+    "TypeName": "medicationknowledge_indicationGuideline_dosingGuideline_dosage",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "dosage",
+        "Type": [
+          {
+            "TypeName": "Dosage"
+          }
+        ],
+        "IsArray": true,
+        "Required": true
+      }
+    ]
+  },
+  "medicationknowledge_indicationGuideline_dosingGuideline_patientCharacteristic": {
+    "TypeName": "medicationknowledge_indicationGuideline_dosingGuideline_patientCharacteristic",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "value[x]",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          },
+          {
+            "TypeName": "Quantity"
+          },
+          {
+            "TypeName": "Range"
+          }
+        ]
+      }
+    ]
+  },
+  "medicationknowledge_medicineClassification": {
+    "TypeName": "medicationknowledge_medicineClassification",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "source[x]",
+        "Type": [
+          {
+            "TypeName": "string"
+          },
+          {
+            "TypeName": "uri"
+          }
+        ]
+      },
+      {
+        "ElementName": "classification",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "medicationknowledge_packaging": {
+    "TypeName": "medicationknowledge_packaging",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "cost",
+        "Type": [
+          {
+            "TypeName": "medicationknowledge_cost"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "packagedProduct",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/PackagedProductDefinition"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "medicationknowledge_storageGuideline": {
+    "TypeName": "medicationknowledge_storageGuideline",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "reference",
+        "Type": [
+          {
+            "TypeName": "uri"
+          }
+        ]
+      },
+      {
+        "ElementName": "note",
+        "Type": [
+          {
+            "TypeName": "Annotation"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "stabilityDuration",
+        "Type": [
+          {
+            "TypeName": "Duration"
+          }
+        ]
+      },
+      {
+        "ElementName": "environmentalSetting",
+        "Type": [
+          {
+            "TypeName": "medicationknowledge_storageGuideline_environmentalSetting"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "medicationknowledge_storageGuideline_environmentalSetting": {
+    "TypeName": "medicationknowledge_storageGuideline_environmentalSetting",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "value[x]",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          },
+          {
+            "TypeName": "Quantity"
+          },
+          {
+            "TypeName": "Range"
+          }
+        ],
+        "Required": true
+      }
+    ]
+  },
+  "medicationknowledge_regulatory": {
+    "TypeName": "medicationknowledge_regulatory",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "regulatoryAuthority",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "substitution",
+        "Type": [
+          {
+            "TypeName": "medicationknowledge_regulatory_substitution"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "schedule",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "maxDispense",
+        "Type": [
+          {
+            "TypeName": "medicationknowledge_regulatory_maxDispense"
+          }
+        ]
+      }
+    ]
+  },
+  "medicationknowledge_regulatory_substitution": {
+    "TypeName": "medicationknowledge_regulatory_substitution",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "allowed",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ],
+        "Required": true
+      }
+    ]
+  },
+  "medicationknowledge_regulatory_maxDispense": {
+    "TypeName": "medicationknowledge_regulatory_maxDispense",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "quantity",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "period",
+        "Type": [
+          {
+            "TypeName": "Duration"
+          }
+        ]
+      }
+    ]
+  },
+  "medicationknowledge_definitional": {
+    "TypeName": "medicationknowledge_definitional",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "definition",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/MedicinalProductDefinition"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "doseForm",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "intendedRoute",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "ingredient",
+        "Type": [
+          {
+            "TypeName": "medicationknowledge_definitional_ingredient"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "drugCharacteristic",
+        "Type": [
+          {
+            "TypeName": "medicationknowledge_definitional_drugCharacteristic"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "medicationknowledge_definitional_ingredient": {
+    "TypeName": "medicationknowledge_definitional_ingredient",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "item",
+        "Type": [
+          {
+            "TypeName": "CodeableReference"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "strength[x]",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          },
+          {
+            "TypeName": "Quantity"
+          },
+          {
+            "TypeName": "Ratio"
+          }
+        ]
+      }
+    ]
+  },
+  "medicationknowledge_definitional_drugCharacteristic": {
+    "TypeName": "medicationknowledge_definitional_drugCharacteristic",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "value[x]",
+        "Type": [
+          {
+            "TypeName": "Attachment"
+          },
+          {
+            "TypeName": "CodeableConcept"
+          },
+          {
+            "TypeName": "Quantity"
+          },
+          {
+            "TypeName": "base64Binary"
+          },
+          {
+            "TypeName": "string"
+          }
+        ]
+      }
+    ]
+  }
+}
