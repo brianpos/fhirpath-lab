@@ -1,4 +1,12 @@
 import { StructureMap, StructureMapGroupRule } from "fhir/r4b";
+import type { TypeModel, ElementModel } from "./custom_model";
+import { lookupByTypeName as lookupByTypeNameR4B } from "./models/generated/r4b";
+
+/**
+ * Function used to resolve a TypeModel by its TypeName. Pass any per-version
+ * dictionary's `lookupByTypeName` function (e.g. from `helpers/models/generated/r4b`).
+ */
+export type TypeLookup = (typeName: string) => TypeModel | undefined;
 
 // ===== Exported Data Types =====
 
@@ -50,6 +58,16 @@ export interface PropertyEntry {
   fmlPosition?: { startIndex: number; endIndex: number };
   /** Rule-level FML position for click-to-select on rule dividers */
   ruleFmlPosition?: { startIndex: number; endIndex: number };
+  /** True when this element is declared as a collection (IsArray) in the type model */
+  isCollection?: boolean;
+  /** The element's resolved type name from the type model (used for tooltip) */
+  elementTypeName?: string;
+  /** True when the property path could not be resolved against the type model
+   *  (the type box has a known typeName but the path doesn't match any element). */
+  unknownElement?: boolean;
+  /** Human-readable validation error (e.g. created-type/element-type mismatch).
+   *  When set, this overrides the default tooltip text. */
+  validationError?: string;
 }
 
 // ===== Data Extraction =====
@@ -60,13 +78,154 @@ interface VarInfo {
 }
 
 /**
+ * Variable info used by the type-inference pre-pass. Tracks the type of the
+ * variable's root context so that dependent group calls can infer untyped
+ * input types from the caller.
+ */
+interface InferVarInfo {
+  /** Resolved type of the variable's root context */
+  rootType?: string;
+  /** Dotted path from the root context to this variable */
+  path: string;
+}
+
+/**
+ * Walk every group's rules to infer types for group inputs that have no
+ * declared type, by following dependent group invocations. Iterates to a
+ * fixed point so chains of untyped groups are resolved.
+ *
+ * Returns a map of `groupName → inputName → inferredTypeName`.
+ */
+function inferGroupInputTypes(
+  map: StructureMap,
+  lookup: TypeLookup
+): Map<string, Map<string, string>> {
+  const inferred = new Map<string, Map<string, string>>();
+  const allGroups = map.group || [];
+  const groupByName = new Map<string, any>();
+  for (const g of allGroups) groupByName.set(g.name, g);
+
+  /** Look up the effective declared/inferred type of a group input. */
+  const effectiveInputType = (groupName: string, inputName: string): string | undefined => {
+    const grp = groupByName.get(groupName);
+    if (!grp) return undefined;
+    const inp = (grp.input || []).find((i: any) => i.name === inputName);
+    if (inp?.type) return inp.type;
+    return inferred.get(groupName)?.get(inputName);
+  };
+
+  /** Walk one group's rules, tracking variable types, recording inferences. */
+  const walkGroup = (group: any): boolean => {
+    let changed = false;
+    const initialVars = new Map<string, InferVarInfo>();
+    for (const inp of group.input || []) {
+      initialVars.set(inp.name, {
+        rootType: effectiveInputType(group.name, inp.name),
+        path: "",
+      });
+    }
+
+    const walkRules = (rules: any[] | undefined, varMap: Map<string, InferVarInfo>) => {
+      if (!rules) return;
+      for (const rule of rules) {
+        const ruleVars = new Map(varMap);
+        // Source variable assignments: `src.element as v` → v inherits root type
+        for (const src of rule.source || []) {
+          if (!src.context) continue;
+          const ctx = ruleVars.get(src.context);
+          if (!ctx) continue;
+          if (src.variable) {
+            if (src.element) {
+              const newPath = ctx.path ? `${ctx.path}.${src.element}` : src.element;
+              ruleVars.set(src.variable, { rootType: ctx.rootType, path: newPath });
+            } else {
+              ruleVars.set(src.variable, { rootType: ctx.rootType, path: ctx.path });
+            }
+          }
+        }
+        // Target variable assignments: `tgt.element as v` → v inherits root type.
+        // Special case: `create("Type") as v` (and shortcut transforms
+        // cc/c/qty/id/cp) re-root v at the created type with empty path,
+        // so dependent calls can flow that type through.
+        for (const tgt of rule.target || []) {
+          if (!tgt.variable) continue;
+          const createdType = getCreatedType(tgt);
+          if (createdType) {
+            ruleVars.set(tgt.variable, { rootType: createdType, path: "" });
+            continue;
+          }
+          if (!tgt.context) continue;
+          const ctx = ruleVars.get(tgt.context);
+          if (!ctx) continue;
+          if (tgt.element) {
+            const newPath = ctx.path ? `${ctx.path}.${tgt.element}` : tgt.element;
+            ruleVars.set(tgt.variable, { rootType: ctx.rootType, path: newPath });
+          }
+        }
+        // Dependent invocations: try to infer untyped input types of callee
+        for (const dep of rule.dependent || []) {
+          if (!dep.name) continue;
+          const callee = groupByName.get(dep.name);
+          if (!callee) continue;
+          const calleeInputs = callee.input || [];
+          const passedVars = (dep.variable && dep.variable.length > 0)
+            ? [...dep.variable]
+            : [
+                ...(rule.source || []).filter((s: any) => s.variable).map((s: any) => s.variable),
+                ...(rule.target || []).filter((t: any) => t.variable).map((t: any) => t.variable),
+              ];
+          for (let i = 0; i < calleeInputs.length && i < passedVars.length; i++) {
+            const calleeInput = calleeInputs[i];
+            if (calleeInput.type) continue; // declared — skip
+            const existing = inferred.get(dep.name)?.get(calleeInput.name);
+            const callerVar = ruleVars.get(passedVars[i]);
+            if (!callerVar || !callerVar.rootType) continue;
+            const resolved = resolvePathInModel(callerVar.rootType, callerVar.path, lookup);
+            const inferredType = resolved?.elementTypeName;
+            if (!inferredType || inferredType === existing) continue;
+            if (!inferred.has(dep.name)) inferred.set(dep.name, new Map());
+            inferred.get(dep.name)!.set(calleeInput.name, inferredType);
+            changed = true;
+          }
+        }
+        // Recurse into nested rules with the rule-scoped varMap
+        walkRules(rule.rule, ruleVars);
+      }
+    };
+
+    walkRules(group.rule, initialVars);
+    return changed;
+  };
+
+  // Iterate to a fixed point (caps to avoid runaway on pathological inputs)
+  for (let pass = 0; pass < 8; pass++) {
+    let anyChange = false;
+    for (const g of allGroups) {
+      if (walkGroup(g)) anyChange = true;
+    }
+    if (!anyChange) break;
+  }
+  return inferred;
+}
+
+/**
  * Extract the diagram data model from a FHIR StructureMap resource.
  * For each group, identifies source/target types and the properties
  * accessed within each type by walking rule sources and targets.
+ *
+ * When a `typeLookup` is provided, each property entry is enriched with
+ * `isCollection` (from ElementModel.IsArray) and `elementTypeName` so the
+ * renderer can append `[]` for arrays and show the type in a tooltip. If
+ * omitted, the bundled R4B dictionary is used as a sensible default.
  */
-export function extractStructureMapDiagram(map: StructureMap): StructureMapDiagram {
+export function extractStructureMapDiagram(map: StructureMap, typeLookup?: TypeLookup): StructureMapDiagram {
   const groups: DiagramGroup[] = [];
   nextRuleId = 0;
+  const lookup = typeLookup ?? lookupByTypeNameR4B;
+
+  // Pre-pass: infer types for any group input that has no declared type by
+  // following dependent invocations from callers.
+  const inferredInputTypes = inferGroupInputTypes(map, lookup);
 
   for (const group of map.group || []) {
     const varMap = new Map<string, VarInfo>();
@@ -89,8 +248,9 @@ export function extractStructureMapDiagram(map: StructureMap): StructureMapDiagr
       const entries = input.mode === "source"
         ? deduplicateSourceProperties(rawEntries)
         : rawEntries;
+      const inferredType = inferredInputTypes.get(group.name)?.get(input.name);
       const dt: DiagramType = {
-        typeName: input.type || "",
+        typeName: input.type || inferredType || "",
         paramName: input.name,
         properties: entries,
       };
@@ -104,7 +264,189 @@ export function extractStructureMapDiagram(map: StructureMap): StructureMapDiagr
     groups.push(dg);
   }
 
+  // Walk the FHIR type model for each type box and annotate property entries
+  // with isCollection (IsArray) and elementTypeName for tooltip display.
+  for (const group of groups) {
+    for (const dt of [...group.sourceTypes, ...group.targetTypes]) {
+      // Either no declared type, or the declared type isn't in the model:
+      // every property on this box is therefore unverifiable — flag them all.
+      const rootKnown = !!dt.typeName && !!lookup(dt.typeName);
+      // Build a map of paths within this box that re-root to a created
+      // type — so deeper properties like `entry.resource.status` resolve
+      // against the created type (e.g. Observation) rather than the
+      // static element type at `entry.resource` (Resource).
+      const createBoundaries = new Map<string, string>();
+      for (const p of dt.properties) {
+        if (!p.dependentCall && p.createdType && p.path && p.path !== ".") {
+          createBoundaries.set(p.path, p.createdType);
+        }
+      }
+      for (const p of dt.properties) {
+        if (p.dependentCall) continue; // not a property
+        if (!rootKnown) {
+          if (p.path && p.path !== ".") p.unknownElement = true;
+          continue;
+        }
+        if (!p.path || p.path === ".") continue;
+        const resolved = resolvePathInModel(dt.typeName, p.path, lookup, createBoundaries);
+        if (resolved) {
+          if (resolved.isCollection) p.isCollection = true;
+          if (resolved.elementTypeName) p.elementTypeName = resolved.elementTypeName;
+        } else {
+          p.unknownElement = true;
+        }
+        // When a target was populated by `create('Type')`, the actual
+        // runtime type at this position is the created type — prefer it
+        // over the static element type from the model. Also validate that
+        // the created type is allowed by the element's declared Type[].
+        if (p.createdType) {
+          p.elementTypeName = p.createdType;
+          if (resolved && resolved.element) {
+            if (!isCreatedTypeAllowed(resolved.element, p.createdType, lookup)) {
+              const allowed = describeAllowedTypes(resolved.element);
+              const msg = `created type "${p.createdType}" is not allowed at ${dt.typeName}.${p.path} (allowed: ${allowed})`;
+              console.warn(`[structuremap_diagram] ${msg}`);
+              p.unknownElement = true;
+              p.validationError = msg;
+            }
+          }
+        }
+      }
+    }
+  }
+
   return { groups };
+}
+
+/**
+ * Walk a TypeModel/ElementModel chain to resolve a dotted property path.
+ * Returns the resolved element's IsArray flag and concrete type name.
+ *
+ * Choice elements (e.g. `value[x]`) are matched by stripping the `[x]` suffix
+ * and locating a Type[] entry whose TypeName (case-insensitively) matches the
+ * remainder of the segment (e.g. `valueQuantity` → `Quantity`).
+ *
+ * Inherited elements are resolved by walking the BaseTypeName chain.
+ */
+function resolvePathInModel(
+  rootTypeName: string,
+  path: string,
+  lookup: TypeLookup,
+  createBoundaries?: Map<string, string>
+): { isCollection: boolean; elementTypeName?: string; element?: ElementModel } | undefined {
+  if (!rootTypeName) return undefined;
+  if (!path || path === ".") {
+    return { isCollection: false, elementTypeName: rootTypeName };
+  }
+  let currentType = lookup(rootTypeName);
+  if (!currentType) return undefined;
+  let isCollection = false;
+  let elementTypeName: string | undefined;
+  let element: ElementModel | undefined;
+  let prefix = "";
+  for (const part of path.split(".")) {
+    const found = findElementInType(currentType, part, lookup);
+    if (!found) return undefined;
+    isCollection = !!found.element.IsArray;
+    elementTypeName = found.chosenTypeName;
+    element = found.element;
+    prefix = prefix ? `${prefix}.${part}` : part;
+    // If this prefix was re-rooted by a create('Type'), switch the
+    // walker to the created type for any deeper segments.
+    const createdAtPrefix = createBoundaries?.get(prefix);
+    if (createdAtPrefix) {
+      elementTypeName = createdAtPrefix;
+    }
+    currentType = elementTypeName ? lookup(elementTypeName) : undefined;
+  }
+  return { isCollection, elementTypeName, element };
+}
+
+/**
+ * Validate that `createdType` is allowed at the position described by
+ * `element`. Walks the createdType's BaseTypeName chain so subtypes are
+ * accepted, and resolves Reference TargetProfile URLs to short type names
+ * (treating `Resource` as a wildcard).
+ */
+function isCreatedTypeAllowed(
+  element: ElementModel,
+  createdType: string,
+  lookup: TypeLookup
+): boolean {
+  const ancestors = new Set<string>();
+  let cur = lookup(createdType);
+  while (cur) {
+    ancestors.add(cur.TypeName);
+    cur = cur.BaseTypeName ? lookup(cur.BaseTypeName) : undefined;
+  }
+  if (ancestors.size === 0) ancestors.add(createdType);
+
+  for (const t of element.Type) {
+    if (ancestors.has(t.TypeName)) return true;
+    if (t.TypeName === "Reference" && t.TargetProfile) {
+      for (const profile of t.TargetProfile) {
+        const tn = profile.split("/").pop();
+        if (!tn) continue;
+        if (tn === "Resource") return true; // wildcard
+        if (ancestors.has(tn)) return true;
+      }
+    }
+  }
+  return false;
+}
+
+/** Describe the types allowed at an element for use in error messages. */
+function describeAllowedTypes(element: ElementModel): string {
+  const parts: string[] = [];
+  for (const t of element.Type) {
+    if (t.TypeName === "Reference" && t.TargetProfile && t.TargetProfile.length > 0) {
+      const targets = t.TargetProfile.map((p) => p.split("/").pop() || p);
+      parts.push(`Reference(${targets.join("|")})`);
+    } else {
+      parts.push(t.TypeName);
+    }
+  }
+  return parts.join(" | ") || "<none>";
+}
+
+/**
+ * Find an element on a TypeModel by name, walking up BaseTypeName for
+ * inherited elements and matching choice element segments such as
+ * `valueQuantity` against an `ElementName` of `value[x]`.
+ */
+function findElementInType(
+  typeModel: TypeModel | undefined,
+  segment: string,
+  lookup: TypeLookup
+): { element: ElementModel; chosenTypeName?: string } | undefined {
+  if (!typeModel) return undefined;
+  const direct = typeModel.Elements.find((e) => e.ElementName === segment);
+  if (direct) {
+    return { element: direct, chosenTypeName: direct.Type[0]?.TypeName };
+  }
+  // Bare choice-element name match: segment "value" → ElementName "value[x]"
+  // (the type is ambiguous, so chosenTypeName is left undefined and any
+  // deeper navigation will halt unless the next segment narrows the type).
+  const bareChoice = typeModel.Elements.find((e) => e.ElementName === `${segment}[x]`);
+  if (bareChoice) {
+    return { element: bareChoice, chosenTypeName: undefined };
+  }
+  for (const e of typeModel.Elements) {
+    if (e.ElementName.endsWith("[x]")) {
+      const prefix = e.ElementName.slice(0, -3);
+      if (segment.length > prefix.length && segment.startsWith(prefix)) {
+        const suffix = segment.slice(prefix.length);
+        const match = e.Type.find(
+          (t) => t.TypeName.toLowerCase() === suffix.toLowerCase()
+        );
+        if (match) return { element: e, chosenTypeName: match.TypeName };
+      }
+    }
+  }
+  if (typeModel.BaseTypeName) {
+    return findElementInType(lookup(typeModel.BaseTypeName), segment, lookup);
+  }
+  return undefined;
 }
 
 /**
@@ -313,16 +655,28 @@ function describeTransformFunction(tgt: { transform?: string; parameter?: any[] 
 
 /** Check if a transform indicates node creation */
 function isCreateTransform(transform?: string): boolean {
-  return transform === "create" || transform === "cc" || transform === "c";
+  return !!transform && (transform === "create" || transform in SHORTCUT_TRANSFORM_TYPES);
 }
 
-/** Extract the type name from a create transform's first parameter */
+/** Mapping from FHIR Mapping Language shortcut transforms to the FHIR
+ *  type they construct. `create('Type')` is handled separately because
+ *  it takes the type as a parameter. */
+const SHORTCUT_TRANSFORM_TYPES: Readonly<Record<string, string>> = Object.freeze({
+  cc: "CodeableConcept",
+  c: "Coding",
+  qty: "Quantity",
+  id: "Identifier",
+  cp: "ContactPoint",
+});
+
+/** Extract the type name produced by a create/cc/c/qty/id/cp transform. */
 function getCreatedType(tgt: { transform?: string; parameter?: any[] }): string | undefined {
+  if (!tgt.transform) return undefined;
   if (tgt.transform === "create" && tgt.parameter && tgt.parameter.length > 0) {
     const p = tgt.parameter[0];
     if (p.valueString) return p.valueString;
   }
-  return undefined;
+  return SHORTCUT_TRANSFORM_TYPES[tgt.transform];
 }
 
 // ===== SVG Layout Constants =====
@@ -390,6 +744,14 @@ interface PropertyDisplay {
   fmlPosition?: { startIndex: number; endIndex: number };
   /** Rule-level FML position */
   ruleFmlPosition?: { startIndex: number; endIndex: number };
+  /** True when the resolved type model element is a collection (IsArray) */
+  isCollection?: boolean;
+  /** Resolved element type name from the type model (for tooltip) */
+  elementTypeName?: string;
+  /** True when the property path could not be resolved against the type model */
+  unknownElement?: boolean;
+  /** Human-readable validation error (overrides default tooltip) */
+  validationError?: string;
 }
 
 /**
@@ -434,6 +796,10 @@ function buildPropertyDisplay(properties: PropertyEntry[]): PropertyDisplay[] {
       additionalRuleIds: entry.additionalRuleIds,
       fmlPosition: entry.fmlPosition,
       ruleFmlPosition: entry.ruleFmlPosition,
+      isCollection: entry.isCollection,
+      elementTypeName: entry.elementTypeName,
+      unknownElement: entry.unknownElement,
+      validationError: entry.validationError,
     };
   });
 }
@@ -493,7 +859,8 @@ function calcTypeBoxSize(type: DiagramType, mode?: "source" | "target"): {
   for (const pd of propDisplay) {
     // Dependent call rows include inline chevron + text
     const depExtra = pd.dependentCall ? 16 : 0;
-    const w = pd.depth * PROP_INDENT + pd.displayName.length * CHAR_WIDTH + iconExtra + depExtra;
+    const collectionSuffixLen = pd.isCollection && !pd.dependentCall ? 2 : 0;
+    const w = pd.depth * PROP_INDENT + (pd.displayName.length + collectionSuffixLen) * CHAR_WIDTH + iconExtra + depExtra;
     if (w > maxPropWidth) maxPropWidth = w;
   }
   const propsWidth = maxPropWidth + 2 * TYPE_BOX_PADDING_X;
@@ -529,8 +896,8 @@ function countRuleDividers(propDisplay: PropertyDisplay[]): number {
  * Each group is rendered as a box containing source and target type boxes
  * with the properties read/written listed inside each type box.
  */
-export function generateStructureMapDiagramSvg(map: StructureMap): string {
-  const data = extractStructureMapDiagram(map);
+export function generateStructureMapDiagramSvg(map: StructureMap, typeLookup?: TypeLookup): string {
+  const data = extractStructureMapDiagram(map, typeLookup);
 
   if (data.groups.length === 0) {
     return [
@@ -830,8 +1197,29 @@ export function generateStructureMapDiagramSvg(map: StructureMap): string {
               `<text x="${px + 16}" y="${propY}" class="sm-prop-dependent"${propPosAttrs}>${escapeXml(pd.dependentCall)}</text>`
             );
           } else {
+            const collectionSuffix = pd.isCollection ? "[]" : "";
+            const propLabel = `${pd.displayName}${collectionSuffix}`;
+            let tooltipText = pd.elementTypeName
+              ? `${pd.elementTypeName}${pd.isCollection ? "[]" : ""}`
+              : "";
+            if (pd.validationError) {
+              tooltipText = pd.validationError;
+            } else if (pd.unknownElement) {
+              tooltipText = tooltipText
+                ? `${tooltipText} (unknown element)`
+                : "unknown element";
+            }
+            const tooltipChild = tooltipText ? `<title>${escapeXml(tooltipText)}</title>` : "";
+            // Pale red background for properties whose path doesn't resolve
+            // against the type model.
+            if (pd.unknownElement) {
+              const rowTop = propY - PROP_LINE_HEIGHT + 4;
+              svg.push(
+                `<rect x="${tb.x + 1}" y="${rowTop}" width="${tb.width - 2}" height="${PROP_LINE_HEIGHT}" fill="#fdecea" />`
+              );
+            }
             svg.push(
-              `<text x="${px}" y="${propY}" class="sm-prop"${propPosAttrs}>${escapeXml(pd.displayName)}</text>`
+              `<text x="${px}" y="${propY}" class="sm-prop"${propPosAttrs}>${tooltipChild}${escapeXml(propLabel)}</text>`
             );
             // Right-aligned annotation icons; created/function icon before (left of) filter/fixed
             const hasCreated = pd.isCreated;
