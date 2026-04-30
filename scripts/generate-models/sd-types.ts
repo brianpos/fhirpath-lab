@@ -35,4 +35,12 @@ export interface SDElementType {
     code: string;
     profile?: string[];
     targetProfile?: string[];
+    extension?: SDExtension[];
+}
+
+export interface SDExtension {
+    url: string;
+    valueUrl?: string;
+    valueString?: string;
+    valueCode?: string;
 }

@@ -14,7 +14,9 @@ const VERSION_PATHS: Record<FhirVersion, string> = {
     r4: "R4",
     r4b: "R4B",
     r5: "R5",
-    r6: "R6",
+    // R6 is still in ballot — `https://hl7.org/fhir/R6/` 404s. Point at the latest
+    // published ballot instead. Override with `--base-url` if a newer ballot ships.
+    r6: "6.0.0-ballot4",
 };
 
 export const BUNDLE_NAMES = ["profiles-resources.json", "profiles-types.json"] as const;

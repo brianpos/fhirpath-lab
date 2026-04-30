@@ -19,7 +19,7 @@ import type { TypeModel } from "../../custom_model";
 function makeSystemType(typeName: string): TypeModel {
     return Object.freeze({
         TypeName: typeName,
-        Elements: Object.freeze([]) as ReadonlyArray<never> as TypeModel["Elements"],
+        Elements: [],
         IsPrimitive: true,
     }) as TypeModel;
 }

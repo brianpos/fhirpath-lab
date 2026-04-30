@@ -85,6 +85,23 @@ function resolveContentReference(ref: string, sdRootType: string): string {
     return syntheticTypeName(local);
 }
 
+/** Resolve a SD type[].code into the canonical FHIR type name we want to record.
+ *  HL7 publishes elements like `Resource.id` and `string.value` with code
+ *  `http://hl7.org/fhirpath/System.String` plus a `structuredefinition-fhir-type`
+ *  extension giving the real FHIR primitive code (e.g. `id`, `string`). Prefer
+ *  the extension when present; otherwise fall back to mapping the System URL
+ *  to a System.* TypeName. */
+function resolveTypeCode(t: { code: string; extension?: Array<{ url: string; valueUrl?: string }> }): string {
+    if (!t.code.startsWith("http://hl7.org/fhirpath/System.")) return t.code;
+    const ext = (t.extension ?? []).find(
+        (e) => e.url === "http://hl7.org/fhir/StructureDefinition/structuredefinition-fhir-type"
+    );
+    if (ext && ext.valueUrl) return ext.valueUrl;
+    // No extension — treat as a direct System.* reference.
+    const tail = t.code.substring("http://hl7.org/fhirpath/".length);
+    return tail; // e.g. "System.String"
+}
+
 interface SDProcessingContext {
     sd: StructureDefinition;
     rootTypeName: string;
@@ -221,7 +238,7 @@ function processElement(
         return;
     }
 
-    const firstCode = types[0].code;
+    const firstCode = resolveTypeCode(types[0]);
     const hasKids = ctx.hasChildren.has(id);
     const isBackbone = (firstCode === "BackboneElement" || firstCode === "Element") && hasKids;
 
@@ -252,8 +269,9 @@ function processElement(
 
     // Regular element. Map type[] entries.
     const mapped: ElementTypeModel[] = types.map((t) => {
-        const etm: ElementTypeModel = { TypeName: t.code };
-        if (t.code === "Reference" && t.targetProfile && t.targetProfile.length > 0) {
+        const code = resolveTypeCode(t);
+        const etm: ElementTypeModel = { TypeName: code };
+        if (code === "Reference" && t.targetProfile && t.targetProfile.length > 0) {
             etm.TargetProfile = [...t.targetProfile].sort();
         }
         return etm;
