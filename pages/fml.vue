@@ -429,6 +429,7 @@ import type { FmlStructureMap } from "~/helpers/fml_models";
 import { generateInstanceDiagramSvg, fmlToStructureMapForDiagram } from "~/helpers/structuremap_diagram_instance";
 import { generateStructureMapDiagramSvg } from "~/helpers/structuremap_diagram";
 import { lookupByTypeName as lookupByTypeNameR4B } from "~/helpers/models/generated/r4b";
+import { buildUserModelLookup, composeLookups, type TypeLookup, type UserModelLookup } from "~/helpers/user_models";
 import xmlFormat from 'xml-formatter';
 import { createFhirLogicalModel, CreateLogicalModelOptions } from '~/helpers/logical_model_generator';
 
@@ -560,6 +561,11 @@ interface FhirMapData {
   instanceSvg?: string;
   diagramSvg?: string;
   diagramDebounceTimer?: ReturnType<typeof setTimeout>;
+  /** Lookup built from the Models tab JSON (Bundle of SDs or a single SD).
+   *  Kept separate from the built-in r4b dictionary — composed at call time
+   *  so the static dictionary is never mutated. Undefined when the Models
+   *  tab is empty or doesn't contain valid SD JSON. */
+  userModelLookup?: UserModelLookup;
 
   // debugger state information
   debugTracePosition: number;
@@ -806,7 +812,32 @@ export default Vue.extend({
       return promptOptions;
     },
   },
+  watch: {
+    modelsText(_newVal: string | undefined, _oldVal: string | undefined) {
+      // Re-parse the Models tab content into an isolated TypeLookup. We rebuild
+      // the user dictionary lazily here (rather than on every diagram regen) so
+      // the parse cost is paid once per edit instead of once per FML keystroke.
+      this.userModelLookup = buildUserModelLookup(this.modelsText);
+      // Diagrams resolve types through this lookup, so refresh them.
+      this.scheduleDiagramRegen();
+    },
+  },
   methods: {
+    /** Compose the user-supplied model lookup (from the Models tab) with the
+     *  built-in r4b dictionary. User models take precedence. The static
+     *  dictionary is never mutated — composition is by function wrapping. */
+    composedTypeLookup(): TypeLookup {
+      return composeLookups(this.userModelLookup?.lookup, lookupByTypeNameR4B);
+    },
+
+    /** Debounced trigger for instance/structure-map diagram regeneration.
+     *  Mirrors the keystroke-debounce used elsewhere on the page. */
+    scheduleDiagramRegen() {
+      if (this.diagramDebounceTimer) clearTimeout(this.diagramDebounceTimer);
+      this.diagramDebounceTimer = setTimeout(() => {
+        this.regenerateInstanceDiagram();
+      }, 500);
+    },
     async twinPaneMounted(): Promise<void> {
       // Update the editor's Mode
       let editorDiv: any = this.$refs.aceEditorExpression as Element;
@@ -1548,8 +1579,9 @@ group SetEntryData(source src: Patient, target entry)
       this.parsedFmlMap = fmlMap;
       try {
         const fhirMap = fmlToStructureMapForDiagram(fmlMap);
-        this.instanceSvg = generateInstanceDiagramSvg(fhirMap, lookupByTypeNameR4B, true);
-        this.diagramSvg = generateStructureMapDiagramSvg(fhirMap, lookupByTypeNameR4B);
+        const lookup = this.composedTypeLookup();
+        this.instanceSvg = generateInstanceDiagramSvg(fhirMap, lookup, true);
+        this.diagramSvg = generateStructureMapDiagramSvg(fhirMap, lookup);
       } catch (e) {
         console.error('Failed to generate instance diagram:', e);
         this.instanceSvg = undefined;
@@ -1845,8 +1877,9 @@ group SetEntryData(source src: Patient, target entry)
           this.parsedFmlMap = fmlMap;
           try {
             const fhirMap = fmlToStructureMapForDiagram(fmlMap);
-            this.instanceSvg = generateInstanceDiagramSvg(fhirMap, lookupByTypeNameR4B, true);
-            this.diagramSvg = generateStructureMapDiagramSvg(fhirMap, lookupByTypeNameR4B);
+            const lookup = this.composedTypeLookup();
+            this.instanceSvg = generateInstanceDiagramSvg(fhirMap, lookup, true);
+            this.diagramSvg = generateStructureMapDiagramSvg(fhirMap, lookup);
           } catch (e) {
             console.error('Failed to generate instance diagram:', e);
             this.instanceSvg = undefined;
@@ -1967,6 +2000,7 @@ group SetEntryData(source src: Patient, target entry)
       instanceSvg: undefined,
       diagramSvg: undefined,
       diagramDebounceTimer: undefined,
+      userModelLookup: undefined,
 
       debugTracePosition: 0,
       debugMapSelectionMarker: [],
