@@ -9,6 +9,10 @@
         "sqlonfhir",
         "structuremap",
         "tracefunction",
+        "vuetify",
         "Zulip"
-    ]
+    ],
+    "chat.tools.terminal.autoApprove": {
+        "npx jest": true
+    }
 }

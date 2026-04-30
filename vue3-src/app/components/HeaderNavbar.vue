@@ -86,14 +86,7 @@
       <slot name="extraNavButtons"></slot>
     </v-app-bar>
     <v-dialog v-model="overlay" max-width="600px">
-      <!-- TODO: Implement UserSettings component for Vue 3 -->
-      <v-card>
-        <v-card-title>Settings</v-card-title>
-        <v-card-text>Settings panel coming soon...</v-card-text>
-        <v-card-actions>
-          <v-btn @click="closeSettings">Close</v-btn>
-        </v-card-actions>
-      </v-card>
+      <UserSettings v-if="overlay" @close="closeSettings" />
     </v-dialog>
   </div>
 </template>
@@ -149,8 +142,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-// TODO: Import UserSettings component when available in Vue 3 version
-// import UserSettings from './UserSettings.vue'
+import UserSettings from './UserSettings.vue'
 
 // Props interface
 interface Props {

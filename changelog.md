@@ -3,6 +3,11 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+# 30 April 2026
+* Modified AppInsights configuration, added to the Vue3 migration, and updated to latest version
+* Added settings configuration support to the Vue3 port
+* Update CSIRO renderer dependencies:  sdc-populate@4.7.0, sdc-template-extract@1.0.15, @aehrc/smart-forms-renderer@1.3.1
+
 # 24 April 2026
 * Update NLM LHC-Forms to 41.2.0
 

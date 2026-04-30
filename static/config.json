@@ -1,4 +1,6 @@
 {
+	"appInsightsKey": "6734f815-da7c-4b6d-b532-90d1421dd2b8",
+
 	"dotnet_server_downloader": "https://fhirpath-lab-dotnet2.azurewebsites.net/api/downloader",
 	"cql_r4": "https://fhirpath-lab-java2.azurewebsites.net/fhir/$fhirpath-cql",
 

@@ -1,6 +1,6 @@
 <template>
   <div>
-    <HeaderNavbar />
+    <HeaderNavbar @close-settings="onSettingsClosed" />
     
     <div class="container-fluid bd-layout" style="padding-top: 80px">
       <v-card class="page-content">
@@ -367,6 +367,9 @@ import AbstractSyntaxTreeTab from '~/components/AbstractSyntaxTreeTab.vue'
 import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from 'lz-string'
 import { EncodeTestFhirpathData, DecodeTestFhirpathData, type TestFhirpathData } from 'models/testenginemodel'
 import { settings } from '@legacy/helpers/user_settings'
+import type { IApplicationInsights } from '@microsoft/applicationinsights-web'
+
+const { $appInsights } = useNuxtApp() as unknown as { $appInsights?: IApplicationInsights }
 
 // Set the page title
 useHead({
@@ -411,7 +414,7 @@ const testResource = ref<string>(`{
 }`)
 const resourceText = ref<string>(testResource.value)
 const tabSpaces = ref<number>(2)
-const fhirServerExamplesUrl = ref<string>('https://hapi.fhir.org/baseR4')
+const fhirServerExamplesUrl = ref<string>(settings.load().fhirServerExamplesUrl ?? 'https://hapi.fhir.org/baseR4')
 const dotnetServerDownloader = ref<string>('https://proxy.fhir.forms-lab.com/downloader')
 
 // Template ref
@@ -448,6 +451,20 @@ const engines = computed<IFhirPathEngineDetails[]>(() => {
     )
   return filteredEngines
 })
+
+// Refresh local state from user settings after the settings dialog closes
+const onSettingsClosed = () => {
+  const s = settings.load()
+  showAdvancedSettings.value = s.showAdvancedSettings
+  if (s.fhirServerExamplesUrl) {
+    fhirServerExamplesUrl.value = s.fhirServerExamplesUrl
+  }
+  // If the currently selected engine is no longer in the visible list
+  // (e.g. advanced settings was disabled), fall back to the first available.
+  if (selectedEngine.value && !engines.value.includes(selectedEngine.value)) {
+    selectedEngine.value = engines.value[0]
+  }
+}
 
 // Initialize selected engine
 if (!selectedEngine.value && engines.value.length > 0) {
@@ -865,6 +882,13 @@ const evaluateWithAllEngines = async () => {
   loadingAll.value = true
   error.value = ''
   singleEngineResult.value = null
+
+  // Track a single aggregate event for the all-engines batch run so the individual
+  // engine stats aren't skewed by the parallel fire-and-forget execution.
+  // Don't trace usage by Brian as that distorts the usage data.
+  if (settings.load().defaultProviderField !== 'Brian Postlethwaite') {
+    $appInsights?.trackEvent({ name: 'evaluate hackweek' })
+  }
   
   // Switch to the all engines results tab (index 2)
   if (twinTabControl.value) {
@@ -973,6 +997,11 @@ const evaluateExpression = async () => {
   error.value = ''
   singleEngineResult.value = null
   allEngineResults.value.clear()
+
+  // Don't trace usage by Brian as that distorts the usage data.
+  if (settings.load().defaultProviderField !== 'Brian Postlethwaite') {
+    $appInsights?.trackEvent({ name: 'evaluate ' + (selectedEngine.value.appInsightsEngineName ?? selectedEngine.value.name) })
+  }
 
   try {
     // Convert variables to Map format
