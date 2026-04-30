@@ -54,9 +54,18 @@ Stage 1 is complete; Stage 2 has had its JSON outputs prepared as a size-preview
 
 ### Stage 2 preview — JSON dictionaries (PARTIAL — emit only)
 - [x] JSON emit alongside TS, produced by the same `npm run generate:models` run.
-- [x] One JSON file per top-level type at
-  `helpers/models/generated/<version>/models/<TypeName>.json`, keyed by `TypeName`,
-  carrying the parent and all its synthetic backbone descendants.
+- [x] **One `foundation.json` per version** at
+  `helpers/models/generated/<version>/models/foundation.json` — every TypeModel
+  loaded from `profiles-types.json` (FHIR primitive containers + complex types
+  like `HumanName`, `Reference`, `Period`, …) plus their synthetic backbones,
+  keyed by `TypeName`. Bucketing is decided by **source bundle**, not `kind`,
+  so abstract bases like `Element` / `BackboneElement` (which ship in
+  `profiles-types.json`) live in `foundation.json`, while
+  `Resource` / `DomainResource` (which ship in `profiles-resources.json`) get
+  their own file.
+- [x] One JSON file per resource at
+  `helpers/models/generated/<version>/models/<ResourceName>.json`, keyed by
+  `TypeName`, carrying the resource and all its synthetic backbone descendants.
 - [x] `helpers/models/generated/<version>/models/index.json` with three sections:
   - `byUrl`: canonical URL → JSON filename (empty string ⇒ inline `system`)
   - `byTypeName`: TypeName → JSON filename (empty string ⇒ inline `system`)
@@ -70,11 +79,13 @@ Stage 1 is complete; Stage 2 has had its JSON outputs prepared as a size-preview
 
 | Output                              | Size  |
 |--------------------------------------|-------|
-| `r4/resources.ts` (incl. backbones) | ~664 KB |
+| `r4/resources.ts` (incl. backbones) | ~564 KB |
 | `r4/complex-types.ts`               | ~44 KB  |
 | `r4/primitives.ts`                  | ~8 KB   |
-| `r4/index.ts`                       | ~4 KB   |
-| `r4/models/` directory total        | ~1.6 MB |
+| `r4/dictionary.ts`                  | ~132 KB |
+| `r4/index.ts`                       | <1 KB   |
+| `r4/models/` directory total        | ~1.4 MB |
+| `r4/models/foundation.json`         | ~68 KB  |
 | `r4/models/index.json`              | ~106 KB |
 | `r4/models/Patient.json`            | ~5.4 KB |
 | `r4/models/Questionnaire.json`      | ~9.2 KB |
@@ -144,8 +155,9 @@ helpers/models/generated/
     resources.ts            // generated — resources + their synthetic backbones (consts only)
     complex-types.ts        // generated — complex types + their synthetic backbones (consts only)
     primitives.ts           // generated (FHIR `string`, `boolean`, ... containers)
-    models/                 // Stage-2 preview JSON (one file per top-level type)
-      <TypeName>.json
+    models/                 // Stage-2 preview JSON
+      foundation.json       // primitives + complex types + their backbones (one file)
+      <ResourceName>.json   // one file per resource (with its backbones)
       index.json            // byUrl/byTypeName → filename + inlined System.*
   r4b/  (same shape)
   r5/   (same shape)

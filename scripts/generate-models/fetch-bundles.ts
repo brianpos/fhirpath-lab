@@ -7,6 +7,7 @@ import * as fs from "fs";
 import * as https from "https";
 import * as path from "path";
 import type { SDBundle } from "./sd-types";
+import type { TaggedBundle } from "./build-type-model";
 
 export type FhirVersion = "r4" | "r4b" | "r5" | "r6";
 
@@ -85,23 +86,23 @@ async function fetchBundle(
 export async function fetchAllBundles(
     version: FhirVersion,
     opts: FetchOptions = {}
-): Promise<SDBundle[]> {
-    const bundles: SDBundle[] = [];
+): Promise<TaggedBundle[]> {
+    const bundles: TaggedBundle[] = [];
     for (const name of BUNDLE_NAMES) {
-        bundles.push(await fetchBundle(version, name, opts));
+        bundles.push({ name, bundle: await fetchBundle(version, name, opts) });
     }
     return bundles;
 }
 
 /** Load bundles from a directory of pre-downloaded JSON files (for offline / test use). */
-export function loadBundlesFromDir(dir: string): SDBundle[] {
-    const bundles: SDBundle[] = [];
+export function loadBundlesFromDir(dir: string): TaggedBundle[] {
+    const bundles: TaggedBundle[] = [];
     for (const name of BUNDLE_NAMES) {
         const file = path.join(dir, name);
         if (!fs.existsSync(file)) {
             throw new Error(`bundle file not found: ${file}`);
         }
-        bundles.push(JSON.parse(fs.readFileSync(file, "utf8")) as SDBundle);
+        bundles.push({ name, bundle: JSON.parse(fs.readFileSync(file, "utf8")) as SDBundle });
     }
     return bundles;
 }

@@ -252,11 +252,15 @@ export function emit(result: BuildResult, opts: EmitOptions = {}): string[] {
     return written;
 }
 
-/** Emit one JSON file per top-level type (resource / complex-type / primitive container)
- *  under `<outDir>/models/`, plus a small `index.json` mapping canonical URL → filename.
- *  Each per-type file carries the parent TypeModel and any synthetic backbones, keyed
- *  by TypeName. System.* types are inlined into `index.json` since they're tiny and
- *  touched by every lookup. */
+/** Emit JSON files under `<outDir>/models/`:
+ *   - `foundation.json` — every primitive + complex-type TypeModel (and their
+ *     synthetic backbones), keyed by TypeName. These are small, ubiquitous, and
+ *     overwhelmingly co-accessed, so collapsing them into one file is cheaper
+ *     than chasing per-type fetches.
+ *   - `<ResourceName>.json` — one file per resource, carrying the resource itself
+ *     plus its synthetic backbones, keyed by TypeName.
+ *   - `index.json` — `byUrl` / `byTypeName` mapping canonical URL → filename
+ *     (empty string for inlined `System.*`), plus the inlined `System.*` map. */
 function emitJsonFiles(result: BuildResult, outDir: string): string[] {
     const modelsDir = path.join(outDir, "models");
     fs.mkdirSync(modelsDir, { recursive: true });
@@ -264,15 +268,15 @@ function emitJsonFiles(result: BuildResult, outDir: string): string[] {
 
     // Group entries by their root type — top-level types own themselves; backbones
     // attach to their `rootTypeName`.
-    const filesByRoot = new Map<string, TypeModelEntry[]>();
+    const groupsByRoot = new Map<string, TypeModelEntry[]>();
     for (const e of result.entries) {
         const root = e.kind === "backbone" ? (e.rootTypeName ?? e.model.TypeName) : e.model.TypeName;
-        const list = filesByRoot.get(root) ?? [];
+        const list = groupsByRoot.get(root) ?? [];
         list.push(e);
-        filesByRoot.set(root, list);
+        groupsByRoot.set(root, list);
     }
-    // Within each file, list the parent first then its backbones in encounter order.
-    for (const [, list] of filesByRoot) {
+    // Within each group, list the parent first then its backbones in encounter order.
+    for (const [, list] of groupsByRoot) {
         list.sort((a, b) => {
             const ak = a.kind === "backbone" ? 1 : 0;
             const bk = b.kind === "backbone" ? 1 : 0;
@@ -284,28 +288,52 @@ function emitJsonFiles(result: BuildResult, outDir: string): string[] {
     const indexByUrl: Record<string, string> = {};
     const indexByTypeName: Record<string, string> = {};
 
-    const rootNames = [...filesByRoot.keys()].sort();
+    // Foundation bucket: all primitives + complex-types (and their backbones).
+    const foundationBody: Record<string, TypeModel> = {};
+    const FOUNDATION_FILE = "foundation.json";
+
+    const rootNames = [...groupsByRoot.keys()].sort();
     for (const root of rootNames) {
-        const entries = filesByRoot.get(root)!;
+        const entries = groupsByRoot.get(root)!;
         // Find the parent entry (the non-backbone one). If it's missing — orphan
         // backbone — skip; selfConsistencyCheck would already have flagged this.
         const parent = entries.find((e) => e.kind !== "backbone");
         if (!parent) continue;
 
-        const fileName = `${jsonSafeFileName(root)}.json`;
-        const filePath = path.join(modelsDir, fileName);
-        const fileBody: Record<string, TypeModel> = {};
-        for (const e of entries) {
-            fileBody[e.model.TypeName] = e.model;
+        // Foundation = anything sourced from `profiles-types.json` (FHIR primitive
+        // and complex types, plus their backbones). Resources (loaded from
+        // `profiles-resources.json`) keep one file each. Fallback: when no source
+        // bundle is recorded (e.g. hand-built test fixtures), bucket primitives
+        // and complex-types into foundation by `kind`.
+        const goesIntoFoundation = parent.sourceBundle
+            ? parent.sourceBundle === "profiles-types.json"
+            : (parent.kind === "primitive-type" || parent.kind === "complex-type");
+        const fileName = goesIntoFoundation
+            ? FOUNDATION_FILE
+            : `${jsonSafeFileName(root)}.json`;
+
+        if (goesIntoFoundation) {
+            for (const e of entries) foundationBody[e.model.TypeName] = e.model;
+        } else {
+            const filePath = path.join(modelsDir, fileName);
+            const fileBody: Record<string, TypeModel> = {};
+            for (const e of entries) fileBody[e.model.TypeName] = e.model;
+            fs.writeFileSync(filePath, JSON.stringify(fileBody, null, 2) + "\n", "utf8");
+            written.push(filePath);
         }
-        fs.writeFileSync(filePath, JSON.stringify(fileBody, null, 2) + "\n", "utf8");
-        written.push(filePath);
 
         for (const e of entries) {
             indexByUrl[e.url] = fileName;
             indexByTypeName[e.model.TypeName] = fileName;
         }
     }
+
+    // Write the merged foundation bundle (sorted by TypeName for deterministic diffs).
+    const sortedFoundation: Record<string, TypeModel> = {};
+    for (const k of Object.keys(foundationBody).sort()) sortedFoundation[k] = foundationBody[k];
+    const foundationPath = path.join(modelsDir, FOUNDATION_FILE);
+    fs.writeFileSync(foundationPath, JSON.stringify(sortedFoundation, null, 2) + "\n", "utf8");
+    written.push(foundationPath);
 
     // Eagerly inline System.* types into the index — they're 8 entries, every
     // validation touches them, and they're version-independent.

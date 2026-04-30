@@ -21,6 +21,10 @@ export interface TypeModelEntry {
     /** For synthetic backbones: zero-based encounter order within the parent SD's
      *  differential walk, used to keep backbones in their original document order. */
     rootOrder?: number;
+    /** Name of the bundle file this entry was loaded from (e.g. `profiles-types.json`).
+     *  Backbones inherit their root parent's value. Used by the JSON emitter to
+     *  decide which entries belong in `foundation.json` vs a per-resource file. */
+    sourceBundle?: string;
 }
 
 export interface BuildResult {
@@ -133,7 +137,8 @@ function buildHasChildren(elements: SDElement[]): Set<string> {
 function processStructureDefinition(
     sd: StructureDefinition,
     version: FhirVersionKey,
-    out: TypeModelEntry[]
+    out: TypeModelEntry[],
+    sourceBundle?: string
 ): void {
     if (sd.kind === "logical") return; // stage 1: skip logicals
     if (sd.derivation === "constraint") return; // stage 1: skip profiles
@@ -168,6 +173,7 @@ function processStructureDefinition(
         kind: sd.kind === "primitive-type" ? "primitive-type"
             : sd.kind === "complex-type" ? "complex-type"
             : "resource",
+        ...(sourceBundle ? { sourceBundle } : {}),
     });
 
     const ctx: SDProcessingContext = {
@@ -184,7 +190,7 @@ function processStructureDefinition(
         if (!el.id) continue;
         if (el.id === rootTypeName) continue; // skip the SD-root row
         if (isSliceElement(el)) continue;
-        backboneOrder = processElement(el, ctx, version, out, rootTypeName, backboneOrder);
+        backboneOrder = processElement(el, ctx, version, out, rootTypeName, backboneOrder, sourceBundle);
     }
 }
 
@@ -198,7 +204,8 @@ function processElement(
     version: FhirVersionKey,
     out: TypeModelEntry[],
     rootTypeName: string,
-    backboneOrder: number
+    backboneOrder: number,
+    sourceBundle?: string
 ): number {
     const id = el.id!;
     const parentId = parentIdOf(id);
@@ -271,6 +278,7 @@ function processElement(
             kind: "backbone",
             rootTypeName,
             rootOrder: backboneOrder++,
+            ...(sourceBundle ? { sourceBundle } : {}),
         });
         const m: ElementModel = {
             ElementName: elementName,
@@ -338,23 +346,40 @@ export function selfConsistencyCheck(entries: TypeModelEntry[]): void {
     }
 }
 
+/** A bundle paired with the name of the source file it came from. */
+export interface TaggedBundle {
+    /** Source filename (e.g. `profiles-types.json`) — propagated onto every
+     *  TypeModelEntry produced from this bundle. */
+    name?: string;
+    bundle: SDBundle;
+}
+
 /** Drive the full transformation pipeline for one FHIR version.
+ *  Accepts either bare `SDBundle[]` (legacy, used in tests) or `TaggedBundle[]`
+ *  carrying source-file names that propagate onto every produced entry.
  *  Set `skipSelfConsistency` when running on a partial fixture in tests. */
 export function buildVersion(
     version: FhirVersionKey,
-    bundles: SDBundle[],
+    bundles: SDBundle[] | TaggedBundle[],
     opts: { skipSelfConsistency?: boolean } = {}
 ): BuildResult {
+    const tagged: TaggedBundle[] = bundles.map((b) =>
+        isTaggedBundle(b) ? b : { bundle: b }
+    );
     const entries: TypeModelEntry[] = [];
-    for (const bundle of bundles) {
-        for (const entry of bundle.entry ?? []) {
+    for (const t of tagged) {
+        for (const entry of t.bundle.entry ?? []) {
             const sd = entry.resource;
             if (!sd || sd.resourceType !== "StructureDefinition") continue;
-            processStructureDefinition(sd, version, entries);
+            processStructureDefinition(sd, version, entries, t.name);
         }
     }
     if (!opts.skipSelfConsistency) selfConsistencyCheck(entries);
     return { version, entries };
+}
+
+function isTaggedBundle(b: SDBundle | TaggedBundle): b is TaggedBundle {
+    return (b as TaggedBundle).bundle !== undefined;
 }
 
 /** Helpers exported for tests. */
