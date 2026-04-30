@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "nuxt",
     "build": "nuxt build",
-    "test": "jest test",
+    "test": "jest",
+    "generate:models": "ts-node --transpile-only scripts/generate-models/index.ts",
     "start": "nuxt start",
     "generate": "nuxt generate",
     "dockerize": "docker build -t fhirpath-lab ."

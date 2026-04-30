@@ -1,0 +1,333 @@
+// SD -> TypeModel transformation. Implements passes 1..4 of the plan.
+// See docs/custom-model-generator-plan.md "Transformation pipeline".
+
+import type { ElementModel, ElementTypeModel, TypeModel } from "../../helpers/custom_model";
+import { fhirPrimitiveToSystemTypeName, systemTypesByTypeName, systemTypesByUrl } from "../../helpers/models/generated/system-types";
+import type { SDBundle, SDElement, StructureDefinition } from "./sd-types";
+
+export type FhirVersionKey = "r4" | "r4b" | "r5" | "r6";
+
+/** A TypeModel together with its canonical URL — kept side-by-side rather than on the model itself. */
+export interface TypeModelEntry {
+    url: string;
+    model: TypeModel;
+    /** True for synthetic backbone/element types minted by the generator. */
+    synthetic?: boolean;
+    /** Original SD kind, used by the emitter to route into the right per-category file. */
+    kind: "primitive-type" | "complex-type" | "resource" | "backbone" | "logical";
+}
+
+export interface BuildResult {
+    version: FhirVersionKey;
+    entries: TypeModelEntry[];
+}
+
+const SYNTHETIC_URL_BASE = "http://fhir.forms-lab.com/custom-model";
+
+/** Produce the synthetic TypeName for an element id like "Questionnaire.item.enableWhen". */
+function syntheticTypeName(elementId: string): string {
+    const parts = elementId.split(".");
+    if (parts.length < 2) {
+        throw new Error(`cannot derive synthetic name from element id without children: ${elementId}`);
+    }
+    return parts[0].toLowerCase() + parts.slice(1).map((p) => "_" + p).join("");
+}
+
+function syntheticUrl(version: FhirVersionKey, name: string): string {
+    return `${SYNTHETIC_URL_BASE}/${version}/${name}`;
+}
+
+function lastSegment(url: string | undefined): string | undefined {
+    if (!url) return undefined;
+    const slash = url.lastIndexOf("/");
+    return slash >= 0 ? url.substring(slash + 1) : url;
+}
+
+/** Strip slice-suffix elements (`Foo.bar:slice`) and the slice rows of choice elements
+ *  (`Foo.value[x]:valueQuantity`). The base unsliced row is retained. */
+function isSliceElement(el: SDElement): boolean {
+    return !!el.id && el.id.includes(":");
+}
+
+function isArrayElement(el: SDElement): boolean {
+    if (!el.max) return false;
+    return el.max !== "1" && el.max !== "0";
+}
+
+function isRequired(el: SDElement): boolean {
+    return typeof el.min === "number" && el.min >= 1;
+}
+
+function elementNameFromId(id: string): string {
+    const dot = id.lastIndexOf(".");
+    return dot >= 0 ? id.substring(dot + 1) : id;
+}
+
+function parentIdOf(id: string): string | undefined {
+    const dot = id.lastIndexOf(".");
+    return dot >= 0 ? id.substring(0, dot) : undefined;
+}
+
+/** Resolve a contentReference (e.g. "#Questionnaire.item" or just "#item" relative form, or a full URL) to a synthetic TypeName. */
+function resolveContentReference(ref: string, sdRootType: string): string {
+    // Strip URL part before '#', if any: "http://hl7.org/fhir/StructureDefinition/Questionnaire#Questionnaire.item"
+    const hash = ref.lastIndexOf("#");
+    const local = hash >= 0 ? ref.substring(hash + 1) : ref;
+    if (!local) {
+        throw new Error(`empty contentReference: ${ref}`);
+    }
+    // local can be "Questionnaire.item" or just "item" (rare/older forms).
+    const parts = local.split(".");
+    if (parts[0] !== sdRootType) {
+        // assume relative
+        return syntheticTypeName([sdRootType, ...parts].join("."));
+    }
+    return syntheticTypeName(local);
+}
+
+interface SDProcessingContext {
+    sd: StructureDefinition;
+    rootTypeName: string;
+    /** path string -> owning TypeModel (real or synthetic) */
+    pathOwners: Map<string, TypeModel>;
+    /** synthetic backbone TypeModels minted while processing this SD, keyed by their TypeName */
+    synthetics: Map<string, TypeModel>;
+    /** snapshot elements with descendants? per-path "has children" lookup */
+    hasChildren: Set<string>;
+}
+
+function buildHasChildren(elements: SDElement[]): Set<string> {
+    const set = new Set<string>();
+    for (const el of elements) {
+        if (!el.id) continue;
+        const parent = parentIdOf(el.id);
+        if (parent) set.add(parent);
+    }
+    return set;
+}
+
+/** Build a single TypeModel (and any synthetic backbone TypeModels) from one StructureDefinition. */
+function processStructureDefinition(
+    sd: StructureDefinition,
+    version: FhirVersionKey,
+    out: TypeModelEntry[]
+): void {
+    if (sd.kind === "logical") return; // stage 1: skip logicals
+    if (sd.derivation === "constraint") return; // stage 1: skip profiles
+    if (sd.abstract === true && sd.kind === "resource" && sd.type === "Resource") {
+        // We still want abstract types like Resource, DomainResource, Element, BackboneElement, etc.
+        // so don't blanket-skip abstracts. Fall through.
+    }
+
+    const elements = sd.snapshot?.element ?? [];
+    if (elements.length === 0) return;
+
+    // Some SDs (e.g. primitive types) have an element whose id matches sd.type
+    const rootElement = elements[0];
+    const rootTypeName = sd.type ?? rootElement.path;
+    if (!rootTypeName) return;
+
+    const baseTypeName = lastSegment(sd.baseDefinition);
+
+    const rootModel: TypeModel = {
+        TypeName: rootTypeName,
+        ...(baseTypeName ? { BaseTypeName: baseTypeName } : {}),
+        Elements: [],
+        ...(sd.kind === "primitive-type" && isSystemPrimitiveBacked(sd) ? {} : {}),
+    };
+
+    out.push({
+        url: sd.url,
+        model: rootModel,
+        kind: sd.kind === "primitive-type" ? "primitive-type"
+            : sd.kind === "complex-type" ? "complex-type"
+            : "resource",
+    });
+
+    const ctx: SDProcessingContext = {
+        sd,
+        rootTypeName,
+        pathOwners: new Map([[rootTypeName, rootModel]]),
+        synthetics: new Map(),
+        hasChildren: buildHasChildren(elements),
+    };
+
+    // skip element 0 (the root itself)
+    for (let i = 1; i < elements.length; i++) {
+        const el = elements[i];
+        if (!el.id) continue;
+        if (isSliceElement(el)) continue;
+        processElement(el, ctx, version, out);
+    }
+}
+
+function isSystemPrimitiveBacked(sd: StructureDefinition): boolean {
+    return sd.kind === "primitive-type" && !!sd.type && sd.type in fhirPrimitiveToSystemTypeName;
+}
+
+function processElement(
+    el: SDElement,
+    ctx: SDProcessingContext,
+    version: FhirVersionKey,
+    out: TypeModelEntry[]
+): void {
+    const id = el.id!;
+    const parentId = parentIdOf(id);
+    if (!parentId) return; // shouldn't happen; root handled in caller
+
+    const owner = ctx.pathOwners.get(parentId);
+    if (!owner) {
+        // Parent wasn't processed (maybe a slice or unsupported branch). Skip silently.
+        return;
+    }
+
+    const elementName = elementNameFromId(id);
+
+    // Special handling: FHIR primitive container's `value` element. SDs encode this with
+    // a magic type code like "http://hl7.org/fhirpath/System.String"; we override it to
+    // point at the System.* TypeModel directly.
+    if (
+        ctx.sd.kind === "primitive-type" &&
+        elementName === "value" &&
+        parentId === ctx.rootTypeName &&
+        isSystemPrimitiveBacked(ctx.sd)
+    ) {
+        const sysName = fhirPrimitiveToSystemTypeName[ctx.sd.type!];
+        const m: ElementModel = {
+            ElementName: "value",
+            Type: [{ TypeName: sysName }],
+            ...(isArrayElement(el) ? { IsArray: true } : {}),
+            ...(isRequired(el) ? { Required: true } : {}),
+        };
+        owner.Elements.push(m);
+        return;
+    }
+
+    // contentReference: synthesize Type pointing at the resolved synthetic name.
+    if (el.contentReference) {
+        const refName = resolveContentReference(el.contentReference, ctx.rootTypeName);
+        const m: ElementModel = {
+            ElementName: elementName,
+            Type: [{ TypeName: refName }],
+            ...(isArrayElement(el) ? { IsArray: true } : {}),
+            ...(isRequired(el) ? { Required: true } : {}),
+        };
+        owner.Elements.push(m);
+        return;
+    }
+
+    const types = el.type ?? [];
+    if (types.length === 0) {
+        // No type info; nothing useful to emit.
+        return;
+    }
+
+    const firstCode = types[0].code;
+    const hasKids = ctx.hasChildren.has(id);
+    const isBackbone = (firstCode === "BackboneElement" || firstCode === "Element") && hasKids;
+
+    if (isBackbone) {
+        const syntheticName = syntheticTypeName(id);
+        const synthetic: TypeModel = {
+            TypeName: syntheticName,
+            BaseTypeName: firstCode,
+            Elements: [],
+        };
+        ctx.synthetics.set(syntheticName, synthetic);
+        ctx.pathOwners.set(id, synthetic);
+        out.push({
+            url: syntheticUrl(version, syntheticName),
+            model: synthetic,
+            synthetic: true,
+            kind: "backbone",
+        });
+        const m: ElementModel = {
+            ElementName: elementName,
+            Type: [{ TypeName: syntheticName }],
+            ...(isArrayElement(el) ? { IsArray: true } : {}),
+            ...(isRequired(el) ? { Required: true } : {}),
+        };
+        owner.Elements.push(m);
+        return;
+    }
+
+    // Regular element. Map type[] entries.
+    const mapped: ElementTypeModel[] = types.map((t) => {
+        const etm: ElementTypeModel = { TypeName: t.code };
+        if (t.code === "Reference" && t.targetProfile && t.targetProfile.length > 0) {
+            etm.TargetProfile = [...t.targetProfile].sort();
+        }
+        return etm;
+    });
+    // Sort Type[] alphabetically by TypeName for deterministic output.
+    mapped.sort((a, b) => (a.TypeName < b.TypeName ? -1 : a.TypeName > b.TypeName ? 1 : 0));
+
+    const m: ElementModel = {
+        ElementName: elementName,
+        Type: mapped,
+        ...(isArrayElement(el) ? { IsArray: true } : {}),
+        ...(isRequired(el) ? { Required: true } : {}),
+    };
+    owner.Elements.push(m);
+}
+
+/** Pass 4: Self-consistency assertions. Throws on failure. */
+export function selfConsistencyCheck(entries: TypeModelEntry[]): void {
+    const byTypeName = new Map<string, TypeModel>();
+    const seenUrls = new Set<string>();
+    for (const e of entries) {
+        if (seenUrls.has(e.url)) {
+            throw new Error(`duplicate canonical URL in dictionary: ${e.url}`);
+        }
+        seenUrls.add(e.url);
+        if (byTypeName.has(e.model.TypeName)) {
+            const other = byTypeName.get(e.model.TypeName)!;
+            if (other !== e.model) {
+                throw new Error(`duplicate TypeName in dictionary: ${e.model.TypeName}`);
+            }
+        }
+        byTypeName.set(e.model.TypeName, e.model);
+    }
+    for (const e of entries) {
+        const isPrim = !!e.model.IsPrimitive;
+        for (const el of e.model.Elements) {
+            if (isPrim) {
+                throw new Error(`primitive type ${e.model.TypeName} should not have Elements`);
+            }
+            for (const t of el.Type) {
+                if (byTypeName.has(t.TypeName)) continue;
+                if (t.TypeName in systemTypesByTypeName) continue;
+                throw new Error(
+                    `dangling ElementTypeModel.TypeName "${t.TypeName}" referenced by ${e.model.TypeName}.${el.ElementName}`
+                );
+            }
+        }
+    }
+}
+
+/** Drive the full transformation pipeline for one FHIR version.
+ *  Set `skipSelfConsistency` when running on a partial fixture in tests. */
+export function buildVersion(
+    version: FhirVersionKey,
+    bundles: SDBundle[],
+    opts: { skipSelfConsistency?: boolean } = {}
+): BuildResult {
+    const entries: TypeModelEntry[] = [];
+    for (const bundle of bundles) {
+        for (const entry of bundle.entry ?? []) {
+            const sd = entry.resource;
+            if (!sd || sd.resourceType !== "StructureDefinition") continue;
+            processStructureDefinition(sd, version, entries);
+        }
+    }
+    if (!opts.skipSelfConsistency) selfConsistencyCheck(entries);
+    return { version, entries };
+}
+
+/** Helpers exported for tests. */
+export const __test = {
+    syntheticTypeName,
+    syntheticUrl,
+    resolveContentReference,
+    systemTypesByUrl,
+};
