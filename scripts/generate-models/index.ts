@@ -25,18 +25,23 @@ interface CliArgs {
 
 function parseArgs(argv: string[]): CliArgs {
     const args: CliArgs = { versions: [], force: false, write: true };
+    const requireValue = (flag: string, i: number): string => {
+        const v = argv[i];
+        if (v === undefined) throw new Error(`${flag} requires a value`);
+        return v;
+    };
     for (let i = 0; i < argv.length; i++) {
         const a = argv[i];
         if (a === "--version") {
-            const v = argv[++i];
-            if (!v || !ALL_VERSIONS.includes(v as FhirVersionKey)) {
+            const v = requireValue("--version", ++i);
+            if (!ALL_VERSIONS.includes(v as FhirVersionKey)) {
                 throw new Error(`--version must be one of ${ALL_VERSIONS.join(", ")} (got ${v})`);
             }
             args.versions.push(v as FhirVersionKey);
         } else if (a === "--from-dir") {
-            args.fromDir = argv[++i];
+            args.fromDir = requireValue("--from-dir", ++i);
         } else if (a === "--base-url") {
-            args.baseUrl = argv[++i];
+            args.baseUrl = requireValue("--base-url", ++i);
         } else if (a === "--force") {
             args.force = true;
         } else if (a === "--no-write") {

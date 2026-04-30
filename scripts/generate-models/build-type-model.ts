@@ -133,7 +133,6 @@ function processStructureDefinition(
         TypeName: rootTypeName,
         ...(baseTypeName ? { BaseTypeName: baseTypeName } : {}),
         Elements: [],
-        ...(sd.kind === "primitive-type" && isSystemPrimitiveBacked(sd) ? {} : {}),
     };
 
     out.push({
