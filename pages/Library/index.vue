@@ -14,6 +14,42 @@ tr.ve-table-body-tr {
 .fl-toolbar {
   margin-bottom: 6px;
 }
+
+/* Cell-filling anchor: makes the whole table cell a real link
+   so that long-press (mobile) and right-click (desktop) get the
+   native browser "Open in new tab" menu, while normal clicks are
+   still intercepted for SPA routing. */
+.cell-link {
+  display: flex;
+  align-items: center;
+  margin: 0 -16px;
+  padding: 0 16px;
+  min-height: 48px;
+  color: inherit;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.cell-link:hover {
+  text-decoration: none;
+}
+
+/* In mobile/tile mode Vuetify lays each cell out as:
+     td.v-data-table__mobile-row
+       div.v-data-table__mobile-row__header   <-- the field label on the left
+       div.v-data-table__mobile-row__cell     <-- our slot (anchor) on the right
+   Stretch the anchor across the entire <td> so a tap/long-press anywhere
+   on the row (header label included) hits the real <a href>. */
+::v-deep td.v-data-table__mobile-row {
+  position: relative;
+}
+::v-deep .v-data-table__mobile-row .cell-link {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0 16px;
+  justify-content: flex-end;
+  text-align: right;
+}
 </style>
 
 <template>
@@ -55,17 +91,32 @@ tr.ve-table-body-tr {
       <v-data-table
         :headers="columns"
         :items="tableData"
-        :event-custom-option="eventCustomOption"
-        row-key-field-name="id"
         :fixed-header="true"
         :items-per-page="-1"
         :disable-pagination="true"
         show-expand
-        @row:click="navigateSelection"
         :expanded.sync="expanded"
       >
-        <template v-slot:item.title="{ index, item }">
-          <a @click="navigateSelection(item)">{{ item.title }}</a>
+        <template v-slot:item.title="{ item }">
+          <a :href="`/Library/${item.id}`" class="cell-link" @click="onCellLinkClick($event, item)">{{ item.title }}</a>
+        </template>
+        <template v-slot:item.version="{ item }">
+          <a :href="`/Library/${item.id}`" class="cell-link" @click="onCellLinkClick($event, item)">{{ item.version }}</a>
+        </template>
+        <template v-slot:item.status="{ item }">
+          <a :href="`/Library/${item.id}`" class="cell-link" @click="onCellLinkClick($event, item)">{{ item.status }}</a>
+        </template>
+        <template v-slot:item.useContext="{ item }">
+          <a :href="`/Library/${item.id}`" class="cell-link" @click="onCellLinkClick($event, item)">{{ item.useContext }}</a>
+        </template>
+        <template v-slot:item.date="{ item }">
+          <a :href="`/Library/${item.id}`" class="cell-link" @click="onCellLinkClick($event, item)">{{ item.date }}</a>
+        </template>
+        <template v-slot:item.publisher="{ item }">
+          <a :href="`/Library/${item.id}`" class="cell-link" @click="onCellLinkClick($event, item)">{{ item.publisher }}</a>
+        </template>
+        <template v-slot:item.id="{ item }">
+          <a :href="`/Library/${item.id}`" class="cell-link" @click="onCellLinkClick($event, item)">{{ item.id }}</a>
         </template>
         <template v-slot:expanded-item="{ headers, item }">
           <td :colspan="headers.length">
@@ -240,40 +291,23 @@ export default Vue.extend({
       settings.saveSearchData("Library", searchData);
     },
 
-    navigateSelection(data: LibraryTableData, event: PointerEvent) {
-      const selectedResourceId = data.id;
-      if (event?.ctrlKey){
-        window.open("/Library/" + selectedResourceId, '_blank'); 
+    /** Click handler for the cell-spanning anchors. Lets the browser handle
+     *  modifier-clicks (Ctrl/⌘/Shift) and middle-click natively (so they
+     *  open in a new tab/window via the real href), and intercepts plain
+     *  left-clicks for SPA routing. Right-click and long-press never reach
+     *  this handler — the browser shows its native context menu against the
+     *  real <a href>. */
+    onCellLinkClick(event: MouseEvent, data: LibraryTableData) {
+      if (event.ctrlKey || event.metaKey || event.shiftKey || event.button === 1) {
+        return; // let the browser handle modifier/middle clicks
       }
-      else{
-        this.$router.push("/Library/" + selectedResourceId);
-      }
+      event.preventDefault();
+      this.$router.push("/Library/" + data.id);
     }
 
   },
   data(): LibraryTableDefinition {
     return {
-      eventCustomOption: {
-        bodyRowEvents: ({ row, rowIndex }: any) => {
-          return {
-            click: (event: PointerEvent) => {
-              console.log("click::", row, rowIndex, event);
-              var data: LibraryTableData = row;
-              console.log("row data::", data);
-              if (event.ctrlKey) {
-                window.open("/Library/" + data.id, '_blank'); 
-              }
-              else {
-                this.$router.push("/Library/" + data.id);
-              }
-            },
-            contextmenu: (event: PointerEvent) => {
-              console.log("contextmenu::", row, rowIndex, event);
-              event.preventDefault();
-            },
-          };
-        },
-      },
       columns: [
         { value: "title", key: "a", text: "Name", align: "start", type: "expand", sortable: false },
         { value: "version", key: "v", text: "Version", align: "start", sortable: false },
