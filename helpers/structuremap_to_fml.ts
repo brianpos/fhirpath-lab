@@ -266,7 +266,7 @@ class StructureMapUtilitiesRender {
                     b.push(`${rt.transform}(${this.formatParam(rt.parameter[0])}, ${this.formatParam(rt.parameter[1])})`);
                 }
             } else {
-                let params = rt.parameter?.map(p => this.formatParam(p)).join(", ");
+                let params = rt.parameter?.map(p => this.formatParam(p)).join(", ") ?? "";
                 b.push(`${rt.transform}(${params})`);
             }
         }
