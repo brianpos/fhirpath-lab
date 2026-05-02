@@ -275,7 +275,8 @@ export function extractStructureMapDiagram(map: StructureMap, typeLookup?: TypeL
           if (resolved && resolved.element) {
             if (!isCreatedTypeAllowed(resolved.element, p.createdType, lookup)) {
               const allowed = describeAllowedTypes(resolved.element);
-              const msg = `created type "${p.createdType}" is not allowed at ${dt.typeName}.${p.path} (allowed: ${allowed})`;
+              const displayPath = stripPathDiscriminators(p.path);
+              const msg = `created type "${p.createdType}" is not allowed at ${dt.typeName}.${displayPath} (allowed: ${allowed})`;
               console.warn(`[structuremap_diagram_instance] ${msg}`);
               p.unknownElement = true;
               p.validationError = msg;
@@ -292,6 +293,23 @@ export function extractStructureMapDiagram(map: StructureMap, typeLookup?: TypeL
 }
 
 /**
+ * Strip variable-binding discriminators (`#var_id` suffixes) from each segment
+ * of a path. Discriminators are appended to target paths when a variable is
+ * bound at a collection element so that distinct bundle entries (etc.) get
+ * their own rows; this helper recovers the user-facing FHIR path.
+ */
+function stripPathDiscriminators(path: string): string {
+  if (!path || path === ".") return path;
+  return path
+    .split(".")
+    .map((seg) => {
+      const idx = seg.indexOf("#");
+      return idx >= 0 ? seg.slice(0, idx) : seg;
+    })
+    .join(".");
+}
+
+/**
  * Walk a TypeModel/ElementModel chain to resolve a dotted property path.
  * Returns the resolved element's IsArray flag and concrete type name.
  *
@@ -300,6 +318,11 @@ export function extractStructureMapDiagram(map: StructureMap, typeLookup?: TypeL
  * remainder of the segment (e.g. `valueQuantity` → `Quantity`).
  *
  * Inherited elements are resolved by walking the BaseTypeName chain.
+ *
+ * Path segments may contain variable-binding discriminators (`name#var_id`).
+ * These are stripped when matching against the type model, but preserved in
+ * the `prefix` accumulator so `createBoundaries` (also keyed on discriminated
+ * paths) can be looked up correctly.
  */
 function resolvePathInModel(
   rootTypeName: string,
@@ -318,7 +341,9 @@ function resolvePathInModel(
   let element: ElementModel | undefined;
   let prefix = "";
   for (const part of path.split(".")) {
-    const found = findElementInType(currentType, part, lookup);
+    const hashIdx = part.indexOf("#");
+    const cleanPart = hashIdx >= 0 ? part.slice(0, hashIdx) : part;
+    const found = findElementInType(currentType, cleanPart, lookup);
     if (!found) return undefined;
     isCollection = !!found.element.IsArray;
     elementTypeName = found.chosenTypeName;
@@ -648,9 +673,26 @@ function collectProperties(
       if (tgt.context) {
         const info = varMap.get(tgt.context);
         if (info && tgt.element) {
-          const fullPath = info.path
+          let fullPath = info.path
             ? `${info.path}.${tgt.element}`
             : tgt.element;
+          // When a variable is bound at a target collection element,
+          // append a `#var_connectionId` discriminator so each binding
+          // occurrence becomes its own row (e.g. multiple Bundle entries
+          // created by sibling rules don't collapse into one).
+          //
+          // The discriminator is keyed on the variable name plus the
+          // rule's connectionId so two distinct rules that happen to use
+          // the same variable name (e.g. both bind `tgt.entry as entry`)
+          // each get their own row, while the variable itself remains
+          // usable as a context for any sub-rules in this same rule.
+          if (tgt.variable && info.rootInputType) {
+            const cleanPath = stripPathDiscriminators(fullPath);
+            const resolved = resolvePathInModel(info.rootInputType, cleanPath, typeLookup);
+            if (resolved?.isCollection) {
+              fullPath = `${fullPath}#${tgt.variable}_${connectionId}`;
+            }
+          }
           const entry: PropertyEntry = {
             path: fullPath,
             role: "target",
@@ -704,6 +746,10 @@ function collectProperties(
             // variable as context (e.g. `resource.status` after
             // `entry.resource = create('Observation') as resource`) push
             // their property entries at the correct path within the box.
+            // `fullPath` here may include a `#var_connectionId`
+            // discriminator (added above when binding to a collection);
+            // sub-rules will inherit that discriminator so their entries
+            // group under the correct binding row.
             // The createdType is recorded separately on the entry's
             // PropertyEntry already (entry.createdType) and is also used
             // during dependent-call inference below via varMap.createdType.
@@ -1083,11 +1129,13 @@ function buildPropertyDisplay(properties: PropertyEntry[]): PropertyDisplay[] {
         deepestAncestorDepth = i;
       }
     }
-    const displayName = parts.slice(deepestAncestorDepth).join(".");
+    // Strip variable-binding discriminators (`#var_id`) from each segment
+    // so the user sees the real FHIR path, not internal disambiguators.
+    const displayName = stripPathDiscriminators(parts.slice(deepestAncestorDepth).join("."));
     return {
       displayName,
       depth: deepestAncestorDepth,
-      fullPath: entry.path,
+      fullPath: stripPathDiscriminators(entry.path),
       role: entry.role,
       filter: entry.filter,
       typeFilter: entry.typeFilter,
