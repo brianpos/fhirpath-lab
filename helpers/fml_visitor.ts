@@ -48,6 +48,7 @@ import type {
   GroupInvocation,
   InvocationParameter
 } from "./fml_models";
+import { parseCanonicalVersion, selectModelVersions } from "./fml_cross_version";
 import type { ParserRuleContext } from "antlr4";
 
 /**
@@ -136,7 +137,8 @@ export class FmlModelBuilder {
       structures,
       imports,
       constants,
-      groups
+      groups,
+      ...selectModelVersions(structures)
     };
   }
   
@@ -280,12 +282,16 @@ export class FmlModelBuilder {
     if (text.includes('queried')) mode = 'queried';
     else if (text.includes('target')) mode = 'target';
     else if (text.includes('produced')) mode = 'produced';
-    
-    return { 
+
+    const parsed = parseCanonicalVersion(url);
+
+    return {
       position: this.getPosition(ctx),
-      url, 
-      alias, 
-      mode 
+      url,
+      alias,
+      mode,
+      canonical: parsed.canonical,
+      fhirVersion: parsed.version
     };
   }
   
