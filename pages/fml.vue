@@ -427,8 +427,10 @@ import ResourceEditor from "~/components/ResourceEditor.vue";
 import { parseFML } from "~/helpers/fml_parser";
 import type { FmlStructureMap } from "~/helpers/fml_models";
 import { generateInstanceDiagramSvg, fmlToStructureMapForDiagram } from "~/helpers/structuremap_diagram_instance";
+import { highlightDiagramConnection, findConnectionIdsForClick } from "~/helpers/diagram_interaction";
 import { generateStructureMapDiagramSvg } from "~/helpers/structuremap_diagram";
 import { lookupByTypeName as lookupByTypeNameR4B } from "~/helpers/models/generated/r4b";
+import { buildUserModelLookup, composeLookups, type TypeLookup, type UserModelLookup } from "~/helpers/user_models";
 import xmlFormat from 'xml-formatter';
 import { createFhirLogicalModel, CreateLogicalModelOptions } from '~/helpers/logical_model_generator';
 
@@ -538,6 +540,7 @@ interface FhirMapData {
   modelsText?: string;
   debugText: string;
   loadingData: boolean;
+  initializing: boolean;
   saveOutcome?: fhir4b.OperationOutcome;
   showOutcome?: boolean;
   helpWithError?: string;
@@ -560,6 +563,11 @@ interface FhirMapData {
   instanceSvg?: string;
   diagramSvg?: string;
   diagramDebounceTimer?: ReturnType<typeof setTimeout>;
+  /** Lookup built from the Models tab JSON (Bundle of SDs or a single SD).
+   *  Kept separate from the built-in r4b dictionary — composed at call time
+   *  so the static dictionary is never mutated. Undefined when the Models
+   *  tab is empty or doesn't contain valid SD JSON. */
+  userModelLookup?: UserModelLookup;
 
   // debugger state information
   debugTracePosition: number;
@@ -762,14 +770,6 @@ export default Vue.extend({
           enabled: true,
         },
         {
-          iconName: "mdi-brain",
-          tabName: "AI Chat",
-          tabHeaderName: "FHIRPath AI Chat",
-          title: "FHIRPath AI Chat",
-          show: this.chatEnabled,
-          enabled: true,
-        },
-        {
           iconName: "mdi-vector-polygon",
           tabName: "Diagram",
           title: "Rule-level view showing source/target type boxes with property mappings",
@@ -781,6 +781,14 @@ export default Vue.extend({
           tabName: "Instance",
           title: "Instance-level view showing source/target objects with mapped and unmapped properties",
           show: this.showAdvancedSettings,
+          enabled: true,
+        },
+        {
+          iconName: "mdi-brain",
+          tabName: "AI Chat",
+          tabHeaderName: "FHIRPath AI Chat",
+          title: "FHIRPath AI Chat",
+          show: this.chatEnabled,
           enabled: true,
         },
         {
@@ -806,7 +814,32 @@ export default Vue.extend({
       return promptOptions;
     },
   },
+  watch: {
+    modelsText() {
+      // Re-parse the Models tab content into an isolated TypeLookup. We rebuild
+      // the user dictionary lazily here (rather than on every diagram regen) so
+      // the parse cost is paid once per edit instead of once per FML keystroke.
+      this.userModelLookup = buildUserModelLookup(this.modelsText);
+      // Diagrams resolve types through this lookup, so refresh them.
+      this.scheduleDiagramRegen();
+    },
+  },
   methods: {
+    /** Compose the user-supplied model lookup (from the Models tab) with the
+     *  built-in r4b dictionary. User models take precedence. The static
+     *  dictionary is never mutated — composition is by function wrapping. */
+    composedTypeLookup(): TypeLookup {
+      return composeLookups(this.userModelLookup?.lookup, lookupByTypeNameR4B);
+    },
+
+    /** Debounced trigger for instance/structure-map diagram regeneration.
+     *  Mirrors the keystroke-debounce used elsewhere on the page. */
+    scheduleDiagramRegen() {
+      if (this.diagramDebounceTimer) clearTimeout(this.diagramDebounceTimer);
+      this.diagramDebounceTimer = setTimeout(() => {
+        this.regenerateInstanceDiagram();
+      }, 500);
+    },
     async twinPaneMounted(): Promise<void> {
       // Update the editor's Mode
       let editorDiv: any = this.$refs.aceEditorExpression as Element;
@@ -857,8 +890,31 @@ group SetEntryData(source src: Patient, target entry)
         this.expressionEditor.on("change", this.fhirpathExpressionChangedEvent)
       }
 
-      // this.selectTabs(0, 4, 'left');
-      this.selectTab(1);
+      this.selectTab(1); // the second tab should be the input resource (tab parameter processing will overload this if a ?tab= query parameter is present)
+      let tabControl: TwinPaneTab = this.$refs.twinTabControl as TwinPaneTab;
+      if (tabControl) {
+        if (this.$route.query.tab) {
+          this.$nextTick(() => {
+            const tabString = this.$route.query.tab as string;
+            // String tab mode
+            if (tabString.includes(",")) {
+              const tabParts = tabString.split(",");
+              if (tabParts.length == 2) {
+                if (tabControl) {
+                  tabControl.selectTabs(
+                    tabControl.getTabIndex(tabParts[0]),
+                    tabControl.getTabIndex(tabParts[1]),
+                    "left"
+                  );
+                }
+              }
+            } else {
+              tabControl.setSinglePanelMode(true);
+              tabControl.selectTab(tabControl.getTabIndex(tabString));
+            }
+          });
+        }
+      }
 
       // Check for the encoded parameters first
       const parameters = this.$route.query.parameters as string;
@@ -869,6 +925,7 @@ group SetEntryData(source src: Patient, target entry)
       await this.applyParameters(data);
       await this.evaluateFhirPathExpression();
       this.loadingData = false;
+      this.initializing = false;
     },
 
     DebugFunctionKeyHandler(event: KeyboardEvent): void {
@@ -1484,6 +1541,10 @@ group SetEntryData(source src: Patient, target entry)
         if (this.$route.query.engine) {
           data.engine = this.$route.query.engine as string ?? '';
         }
+
+        if (this.$route.query.structureMap) {
+          data.structureMap = this.$route.query.structureMap as string;
+        }
       }
       return data;
     },
@@ -1508,6 +1569,11 @@ group SetEntryData(source src: Patient, target entry)
 
       if (p.engine) {
         this.selectedEngine = p.engine ?? '';
+      }
+
+      if (p.structureMap) {
+        this.structureMapId = p.structureMap;
+        await this.downloadStructureMapResource();
       }
 
       if (p.expression) {
@@ -1548,8 +1614,9 @@ group SetEntryData(source src: Patient, target entry)
       this.parsedFmlMap = fmlMap;
       try {
         const fhirMap = fmlToStructureMapForDiagram(fmlMap);
-        this.instanceSvg = generateInstanceDiagramSvg(fhirMap, lookupByTypeNameR4B, true);
-        this.diagramSvg = generateStructureMapDiagramSvg(fhirMap, lookupByTypeNameR4B);
+        const lookup = this.composedTypeLookup();
+        this.instanceSvg = generateInstanceDiagramSvg(fhirMap, lookup, true);
+        this.diagramSvg = generateStructureMapDiagramSvg(fhirMap, lookup);
       } catch (e) {
         console.error('Failed to generate instance diagram:', e);
         this.instanceSvg = undefined;
@@ -1558,6 +1625,15 @@ group SetEntryData(source src: Patient, target entry)
     },
 
     handleDiagramClick(event: MouseEvent) {
+      // Walk up to find a connection-id-tagged element first so a click
+      // on a row/connector flashes its peers (rows + connectors with the
+      // same connectionId). Then continue walking for the FML position
+      // attribute, which jumps the editor to the corresponding source.
+      const connIds = findConnectionIdsForClick(event.target);
+      if (connIds.length > 0) {
+        const container = event.currentTarget as Element;
+        highlightDiagramConnection(container, connIds);
+      }
       let el = event.target as Element | null;
       while (el) {
         const start = el.getAttribute?.('data-pos-start');
@@ -1845,8 +1921,9 @@ group SetEntryData(source src: Patient, target entry)
           this.parsedFmlMap = fmlMap;
           try {
             const fhirMap = fmlToStructureMapForDiagram(fmlMap);
-            this.instanceSvg = generateInstanceDiagramSvg(fhirMap, lookupByTypeNameR4B, true);
-            this.diagramSvg = generateStructureMapDiagramSvg(fhirMap, lookupByTypeNameR4B);
+            const lookup = this.composedTypeLookup();
+            this.instanceSvg = generateInstanceDiagramSvg(fhirMap, lookup, true);
+            this.diagramSvg = generateStructureMapDiagramSvg(fhirMap, lookup);
           } catch (e) {
             console.error('Failed to generate instance diagram:', e);
             this.instanceSvg = undefined;
@@ -1922,7 +1999,7 @@ group SetEntryData(source src: Patient, target entry)
 
       // Show the output tab if it wasn't already visible
       let tabControl: TwinPaneTab = this.$refs.twinTabControl as TwinPaneTab;
-      if (tabControl) {
+      if (tabControl && this.initializing == false) {
         if (!tabControl.tabIsVisible(4))
           tabControl.selectTab(4);
       }
@@ -1947,6 +2024,7 @@ group SetEntryData(source src: Patient, target entry)
       modelsText: '',
       debugText: '',
       loadingData: true,
+      initializing: true,
       saveOutcome: undefined,
       showOutcome: false,
       helpWithError: undefined,
@@ -1967,6 +2045,7 @@ group SetEntryData(source src: Patient, target entry)
       instanceSvg: undefined,
       diagramSvg: undefined,
       diagramDebounceTimer: undefined,
+      userModelLookup: undefined,
 
       debugTracePosition: 0,
       debugMapSelectionMarker: [],

@@ -138,9 +138,10 @@ function processStructureDefinition(
     sd: StructureDefinition,
     version: FhirVersionKey,
     out: TypeModelEntry[],
-    sourceBundle?: string
+    sourceBundle?: string,
+    includeLogical?: boolean
 ): void {
-    if (sd.kind === "logical") return; // stage 1: skip logicals
+    if (sd.kind === "logical" && !includeLogical) return; // stage 1: skip logicals unless explicitly opted-in
     if (sd.derivation === "constraint") return; // stage 1: skip profiles
     if (sd.abstract === true && sd.kind === "resource" && sd.type === "Resource") {
         // We still want abstract types like Resource, DomainResource, Element, BackboneElement, etc.
@@ -172,6 +173,7 @@ function processStructureDefinition(
         model: rootModel,
         kind: sd.kind === "primitive-type" ? "primitive-type"
             : sd.kind === "complex-type" ? "complex-type"
+            : sd.kind === "logical" ? "logical"
             : "resource",
         ...(sourceBundle ? { sourceBundle } : {}),
     });
@@ -357,11 +359,14 @@ export interface TaggedBundle {
 /** Drive the full transformation pipeline for one FHIR version.
  *  Accepts either bare `SDBundle[]` (legacy, used in tests) or `TaggedBundle[]`
  *  carrying source-file names that propagate onto every produced entry.
- *  Set `skipSelfConsistency` when running on a partial fixture in tests. */
+ *  Set `skipSelfConsistency` when running on a partial fixture in tests.
+ *  Set `includeLogical` to also emit entries for `kind: "logical"` SDs (used by
+ *  the runtime when the user supplies their own logical models — the static code
+ *  generator leaves this flag off and continues to skip logicals). */
 export function buildVersion(
     version: FhirVersionKey,
     bundles: SDBundle[] | TaggedBundle[],
-    opts: { skipSelfConsistency?: boolean } = {}
+    opts: { skipSelfConsistency?: boolean; includeLogical?: boolean } = {}
 ): BuildResult {
     const tagged: TaggedBundle[] = bundles.map((b) =>
         isTaggedBundle(b) ? b : { bundle: b }
@@ -371,7 +376,7 @@ export function buildVersion(
         for (const entry of t.bundle.entry ?? []) {
             const sd = entry.resource;
             if (!sd || sd.resourceType !== "StructureDefinition") continue;
-            processStructureDefinition(sd, version, entries, t.name);
+            processStructureDefinition(sd, version, entries, t.name, opts.includeLogical);
         }
     }
     if (!opts.skipSelfConsistency) selfConsistencyCheck(entries);

@@ -32,6 +32,13 @@ export interface DiagramType {
   properties: PropertyEntry[];
   /** Source position in the FML text for click-to-select on the type header */
   fmlPosition?: { startIndex: number; endIndex: number };
+  /** When true, this DiagramType represents a "computed value" source
+   *  produced by a variable-only target rule (e.g. `uuid() as fullUrl`,
+   *  `cc('http://loinc.org', '8302-2', 'Body height') as coding`). It
+   *  is rendered with a purple style, stacked beneath the regular
+   *  source boxes, and acts as the originating node for any rule that
+   *  references its variable via `(%var)`. */
+  isComputed?: boolean;
 }
 
 export interface PropertyEntry {
@@ -77,6 +84,11 @@ export interface PropertyEntry {
   /** Human-readable validation error (e.g. created-type/element-type mismatch).
    *  When set, this overrides the default tooltip text. */
   validationError?: string;
+  /** True when this entry's top-level rule has no nested sub-rules and no
+   *  dependent group calls. Such "leaf" rules represent direct value flow
+   *  (e.g. `coding as c -> tgt.code = c`) and are rendered as thin lines
+   *  rather than sankey bands. */
+  isLeafRule?: boolean;
 }
 
 // ===== Data Extraction =====
@@ -91,6 +103,18 @@ interface VarInfo {
    *  type — used directly during dependent-call inference so the type
    *  flows through without needing the model to walk the path. */
   createdType?: string;
+  /** The PropertyEntry that originally bound this variable. When a
+   *  later sub-rule references the variable with no `.element`, the
+   *  new connectionId is folded into this entry's
+   *  `additionalConnectionIds` instead of producing a duplicate row. */
+  bindingEntry?: PropertyEntry;
+  /** When this variable was bound by a variable-only target create
+   *  (e.g. `uuid() as fullUrl`, `cc(…) as coding`), the connectionId
+   *  of the synthetic computed-source row that emits its value. Any
+   *  rule that references this variable via `(%var)` gets that
+   *  connectionId added to its target row's `additionalConnectionIds`
+   *  so the consumer connects back to the computed-source box. */
+  computedSourceConnId?: number;
 }
 
 /**
@@ -121,6 +145,7 @@ export function extractStructureMapDiagram(map: StructureMap, typeLookup?: TypeL
   for (const group of map.group || []) {
     const varMap = new Map<string, VarInfo>();
     const propsMap = new Map<string, PropertyEntry[]>();
+    const computedSources: DiagramType[] = [];
 
     for (const input of group.input || []) {
       varMap.set(input.name, {
@@ -132,7 +157,7 @@ export function extractStructureMapDiagram(map: StructureMap, typeLookup?: TypeL
     }
 
     collectProperties(
-      group.rule, varMap, propsMap,
+      group.rule, varMap, propsMap, computedSources,
       map.group || [], new Set([group.name]), resolvedDependentNames, typeRefinements,
       lookup
     );
@@ -151,6 +176,14 @@ export function extractStructureMapDiagram(map: StructureMap, typeLookup?: TypeL
       if ((input as any)._fmlPosition) dt.fmlPosition = (input as any)._fmlPosition;
       if (input.mode === "source") sourceTypes.push(dt);
       else targetTypes.push(dt);
+    }
+
+    // Append computed-value source boxes (one per `transform() as var`
+    // target with no context) to the source column. They render with a
+    // purple style and act as origins for any rule that consumes their
+    // variable via `(%var)`.
+    for (const cs of computedSources) {
+      sourceTypes.push(cs);
     }
 
     // Prune "no data flow" connections from source→target.
@@ -183,17 +216,27 @@ export function extractStructureMapDiagram(map: StructureMap, typeLookup?: TypeL
         }
       }
     }
-    // Collect connectionIds that still have at least one surviving target
+    // Collect connectionIds that still have at least one surviving target.
+    // We must include both the target row's main connectionId AND its
+    // additionalConnectionIds (used by consumers to reference computed-
+    // value source boxes) — otherwise the source-side pruning below
+    // would drop the very anchor that lets the connector draw.
     const survivingTargetConnIds = new Set<number>();
     for (const dt of targetTypes) {
       for (const p of dt.properties) {
         if (p.role === "target" && p.connectionId !== undefined) {
           survivingTargetConnIds.add(p.connectionId);
         }
+        for (const addl of p.additionalConnectionIds || []) {
+          if (p.role === "target") survivingTargetConnIds.add(addl);
+        }
       }
     }
-    // Remove source connectionIds only when no target references them any more
+    // Remove source connectionIds only when no target references them any more.
+    // Computed-value source boxes are exempt: their connectionId is the
+    // origin of the data flow, and stripping it would orphan the box.
     for (const dt of sourceTypes) {
+      if (dt.isComputed) continue;
       for (const p of dt.properties) {
         if (p.connectionId !== undefined && srcBoxConnIds.has(p.connectionId) &&
             !survivingTargetConnIds.has(p.connectionId)) {
@@ -239,6 +282,10 @@ export function extractStructureMapDiagram(map: StructureMap, typeLookup?: TypeL
       ...group.secondaryTargetTypes,
     ];
     for (const dt of allTypes) {
+      // Computed-value source boxes contain a single synthetic row whose
+      // path is the literal rule text — there's no element to resolve
+      // against the type model, so skip the annotation pass entirely.
+      if (dt.isComputed) continue;
       // Either no declared type, or the declared type isn't in the model:
       // every property on this box is therefore unverifiable — flag them all.
       const rootKnown = !!dt.typeName && !!lookup(dt.typeName);
@@ -275,7 +322,8 @@ export function extractStructureMapDiagram(map: StructureMap, typeLookup?: TypeL
           if (resolved && resolved.element) {
             if (!isCreatedTypeAllowed(resolved.element, p.createdType, lookup)) {
               const allowed = describeAllowedTypes(resolved.element);
-              const msg = `created type "${p.createdType}" is not allowed at ${dt.typeName}.${p.path} (allowed: ${allowed})`;
+              const displayPath = stripPathDiscriminators(p.path);
+              const msg = `created type "${p.createdType}" is not allowed at ${dt.typeName}.${displayPath} (allowed: ${allowed})`;
               console.warn(`[structuremap_diagram_instance] ${msg}`);
               p.unknownElement = true;
               p.validationError = msg;
@@ -292,6 +340,23 @@ export function extractStructureMapDiagram(map: StructureMap, typeLookup?: TypeL
 }
 
 /**
+ * Strip variable-binding discriminators (`#var_id` suffixes) from each segment
+ * of a path. Discriminators are appended to target paths when a variable is
+ * bound at a collection element so that distinct bundle entries (etc.) get
+ * their own rows; this helper recovers the user-facing FHIR path.
+ */
+function stripPathDiscriminators(path: string): string {
+  if (!path || path === ".") return path;
+  return path
+    .split(".")
+    .map((seg) => {
+      const idx = seg.indexOf("#");
+      return idx >= 0 ? seg.slice(0, idx) : seg;
+    })
+    .join(".");
+}
+
+/**
  * Walk a TypeModel/ElementModel chain to resolve a dotted property path.
  * Returns the resolved element's IsArray flag and concrete type name.
  *
@@ -300,6 +365,11 @@ export function extractStructureMapDiagram(map: StructureMap, typeLookup?: TypeL
  * remainder of the segment (e.g. `valueQuantity` → `Quantity`).
  *
  * Inherited elements are resolved by walking the BaseTypeName chain.
+ *
+ * Path segments may contain variable-binding discriminators (`name#var_id`).
+ * These are stripped when matching against the type model, but preserved in
+ * the `prefix` accumulator so `createBoundaries` (also keyed on discriminated
+ * paths) can be looked up correctly.
  */
 function resolvePathInModel(
   rootTypeName: string,
@@ -318,7 +388,9 @@ function resolvePathInModel(
   let element: ElementModel | undefined;
   let prefix = "";
   for (const part of path.split(".")) {
-    const found = findElementInType(currentType, part, lookup);
+    const hashIdx = part.indexOf("#");
+    const cleanPart = hashIdx >= 0 ? part.slice(0, hashIdx) : part;
+    const found = findElementInType(currentType, cleanPart, lookup);
     if (!found) return undefined;
     isCollection = !!found.element.IsArray;
     elementTypeName = found.chosenTypeName;
@@ -575,13 +647,23 @@ function collectProperties(
   rules: StructureMapGroupRule[] | undefined,
   varMap: Map<string, VarInfo>,
   propsMap: Map<string, PropertyEntry[]>,
+  /** Per-group accumulator for synthetic computed-value source
+   *  DiagramTypes (one box per `transform() as var` target with no
+   *  context). Filled during the target loop and consumed by the
+   *  caller after `collectProperties` returns. */
+  computedSources: DiagramType[],
   allGroups: any[],
   visitedGroups: Set<string>,
   resolvedDependentNames: Set<string>,
   typeRefinements: Map<string, Map<string, string>>,
   typeLookup: TypeLookup,
   parentRuleId?: number,
-  parentRuleName?: string
+  parentRuleName?: string,
+  /** Inherited from the top-level rule: true when that rule has no
+   *  sub-rules and no dependent group calls. All entries produced by
+   *  recursive walks (sub-rules, dependents) inherit this flag so the
+   *  whole rule tree renders consistently. */
+  parentIsLeafRule?: boolean
 ): void {
   if (!rules) return;
 
@@ -590,6 +672,13 @@ function collectProperties(
     const ruleName = parentRuleName ?? rule.name;
     const connectionId = nextConnectionId++;
     const rulePos = (rule as any)._fmlPosition as { startIndex: number; endIndex: number } | undefined;
+    // For a top-level rule (parentRuleId undefined), "leaf" means no
+    // sub-rules and no dependent group calls. Propagate the inherited
+    // flag for nested calls so all entries from the same rule tree share
+    // the same connector style.
+    const isLeafRule = parentRuleId === undefined
+      ? ((rule.rule?.length || 0) === 0 && (rule.dependent?.length || 0) === 0)
+      : !!parentIsLeafRule;
 
     for (const src of rule.source || []) {
       if (src.context) {
@@ -604,6 +693,7 @@ function collectProperties(
             ruleId,
             connectionId,
             ruleName,
+            isLeafRule,
           };
           if (src.condition) entry.filter = src.condition;
           if (src.type) entry.typeFilter = src.type;
@@ -616,27 +706,54 @@ function collectProperties(
               rootInput: info.rootInput,
               path: fullPath,
               rootInputType: info.rootInputType,
+              bindingEntry: entry,
             });
           }
         } else if (info && !src.element) {
-          // Source references the type directly — show as $this
-          const dotEntry: PropertyEntry = {
-            path: ".",
-            role: "source",
-            ruleId,
-            connectionId,
-            ruleName,
-          };
-          if ((src as any)._fmlPosition) dotEntry.fmlPosition = (src as any)._fmlPosition;
-          if (src.variable) dotEntry.variableName = src.variable;
-          if (rulePos) dotEntry.ruleFmlPosition = rulePos;
-          propsMap.get(info.rootInput)?.push(dotEntry);
-          if (src.variable) {
-            varMap.set(src.variable, {
-              rootInput: info.rootInput,
-              path: info.path,
-              rootInputType: info.rootInputType,
-            });
+          // Source references the variable directly (no `.element`).
+          // When the variable was previously bound to a non-root path
+          // (e.g. `patientItem.item as name` then a sub-rule does
+          // `name -> tgtName.text = …`), reuse the original binding
+          // entry by folding this connectionId into its
+          // `additionalConnectionIds` so we don't produce a duplicate
+          // row. For root-input variables (path is empty) we still
+          // emit a `.` placeholder row.
+          if (info.bindingEntry) {
+            const be = info.bindingEntry;
+            if (!be.additionalConnectionIds) be.additionalConnectionIds = [];
+            be.additionalConnectionIds.push(connectionId);
+            // Variable rebinding (rare — usually the same variable name):
+            if (src.variable && src.variable !== info.rootInput) {
+              varMap.set(src.variable, {
+                rootInput: info.rootInput,
+                path: info.path,
+                rootInputType: info.rootInputType,
+                bindingEntry: be,
+              });
+            }
+          } else {
+            // Root-input variable with no prior binding entry —
+            // emit a `.` row so the connection has an anchor.
+            const dotEntry: PropertyEntry = {
+              path: ".",
+              role: "source",
+              ruleId,
+              connectionId,
+              ruleName,
+              isLeafRule,
+            };
+            if ((src as any)._fmlPosition) dotEntry.fmlPosition = (src as any)._fmlPosition;
+            if (src.variable) dotEntry.variableName = src.variable;
+            if (rulePos) dotEntry.ruleFmlPosition = rulePos;
+            propsMap.get(info.rootInput)?.push(dotEntry);
+            if (src.variable) {
+              varMap.set(src.variable, {
+                rootInput: info.rootInput,
+                path: info.path,
+                rootInputType: info.rootInputType,
+                bindingEntry: dotEntry,
+              });
+            }
           }
         }
       }
@@ -645,18 +762,71 @@ function collectProperties(
     let lastTargetRootInput: string | undefined;
 
     for (const tgt of rule.target || []) {
+      if (!tgt.context && tgt.variable) {
+        // Variable-only target create: e.g. `uuid() as fullUrl`,
+        // `cc('http://loinc.org', '8302-2', 'Body height') as coding`.
+        // Emit a synthetic computed-value source DiagramType so the
+        // value's origin is visible and any consumer that references
+        // `(%fullUrl)` / `(%coding)` can wire back to this box.
+        const computedConnId = nextConnectionId++;
+        const ruleText = describeComputedSource(tgt) || tgt.variable;
+        const computedTypeName = getComputedSourceType(tgt) || "";
+        const computedEntry: PropertyEntry = {
+          path: ruleText,
+          role: "source",
+          ruleId,
+          connectionId: computedConnId,
+          // Suppress the rule-name divider on these single-row boxes.
+          isLeafRule: true,
+        };
+        if ((tgt as any)._fmlPosition) computedEntry.fmlPosition = (tgt as any)._fmlPosition;
+        if (rulePos) computedEntry.ruleFmlPosition = rulePos;
+        computedSources.push({
+          typeName: computedTypeName,
+          paramName: tgt.variable,
+          properties: [computedEntry],
+          isComputed: true,
+          fmlPosition: (tgt as any)._fmlPosition,
+        });
+        varMap.set(tgt.variable, {
+          rootInput: tgt.variable,
+          path: "",
+          rootInputType: computedTypeName || undefined,
+          createdType: computedTypeName || undefined,
+          computedSourceConnId: computedConnId,
+        });
+        continue;
+      }
       if (tgt.context) {
         const info = varMap.get(tgt.context);
         if (info && tgt.element) {
-          const fullPath = info.path
+          let fullPath = info.path
             ? `${info.path}.${tgt.element}`
             : tgt.element;
+          // When a variable is bound at a target collection element,
+          // append a `#var_connectionId` discriminator so each binding
+          // occurrence becomes its own row (e.g. multiple Bundle entries
+          // created by sibling rules don't collapse into one).
+          //
+          // The discriminator is keyed on the variable name plus the
+          // rule's connectionId so two distinct rules that happen to use
+          // the same variable name (e.g. both bind `tgt.entry as entry`)
+          // each get their own row, while the variable itself remains
+          // usable as a context for any sub-rules in this same rule.
+          if (tgt.variable && info.rootInputType) {
+            const cleanPath = stripPathDiscriminators(fullPath);
+            const resolved = resolvePathInModel(info.rootInputType, cleanPath, typeLookup);
+            if (resolved?.isCollection) {
+              fullPath = `${fullPath}#${tgt.variable}_${connectionId}`;
+            }
+          }
           const entry: PropertyEntry = {
             path: fullPath,
             role: "target",
             ruleId,
             connectionId,
             ruleName,
+            isLeafRule,
           };
           const fixedDesc = describeFixedValue(tgt);
           if (fixedDesc) entry.fixedValue = fixedDesc;
@@ -697,6 +867,22 @@ function collectProperties(
           if ((tgt as any)._fmlPosition) entry.fmlPosition = (tgt as any)._fmlPosition;
           if (tgt.variable) entry.variableName = tgt.variable;
           if (rulePos) entry.ruleFmlPosition = rulePos;
+          // Wire references to computed-value sources: for each
+          // `valueId` parameter that names a variable bound to a
+          // computed source, fold that source's connectionId into
+          // this consumer's additionalConnectionIds so the renderer
+          // draws a connector from the computed-source box to here.
+          for (const param of tgt.parameter || []) {
+            const refName = (param as any).valueId as string | undefined;
+            if (!refName) continue;
+            const refInfo = varMap.get(refName);
+            const cid = refInfo?.computedSourceConnId;
+            if (cid === undefined) continue;
+            if (!entry.additionalConnectionIds) entry.additionalConnectionIds = [];
+            if (!entry.additionalConnectionIds.includes(cid)) {
+              entry.additionalConnectionIds.push(cid);
+            }
+          }
           propsMap.get(info.rootInput)?.push(entry);
           lastTargetRootInput = info.rootInput;
           if (tgt.variable) {
@@ -704,6 +890,10 @@ function collectProperties(
             // variable as context (e.g. `resource.status` after
             // `entry.resource = create('Observation') as resource`) push
             // their property entries at the correct path within the box.
+            // `fullPath` here may include a `#var_connectionId`
+            // discriminator (added above when binding to a collection);
+            // sub-rules will inherit that discriminator so their entries
+            // group under the correct binding row.
             // The createdType is recorded separately on the entry's
             // PropertyEntry already (entry.createdType) and is also used
             // during dependent-call inference below via varMap.createdType.
@@ -823,12 +1013,12 @@ function collectProperties(
       // Recurse into dependent group's rules with the SAME propsMap,
       // so its properties flow into the parent's type boxes.
       collectProperties(
-        refGroup.rule, depVarMap, propsMap,
-        allGroups, nestedVisited, resolvedDependentNames, typeRefinements, typeLookup, ruleId, ruleName
+        refGroup.rule, depVarMap, propsMap, computedSources,
+        allGroups, nestedVisited, resolvedDependentNames, typeRefinements, typeLookup, ruleId, ruleName, isLeafRule
       );
     }
 
-    collectProperties(rule.rule, varMap, propsMap, allGroups, visitedGroups, resolvedDependentNames, typeRefinements, typeLookup, ruleId, ruleName);
+    collectProperties(rule.rule, varMap, propsMap, computedSources, allGroups, visitedGroups, resolvedDependentNames, typeRefinements, typeLookup, ruleId, ruleName, isLeafRule);
   }
 }
 
@@ -913,6 +1103,45 @@ function getCreatedType(tgt: { transform?: string; parameter?: any[] }): string 
   return SHORTCUT_TRANSFORM_TYPES[tgt.transform];
 }
 
+/**
+ * Best-effort type name produced by an arbitrary transform when emitted
+ * as a computed-value source box header. Falls back to undefined when
+ * the type can't be inferred from the transform alone.
+ */
+function getComputedSourceType(tgt: { transform?: string; parameter?: any[] }): string | undefined {
+  const direct = getCreatedType(tgt);
+  if (direct) return direct;
+  switch (tgt.transform) {
+    case "uuid": return "id";
+    case "reference": return "Reference";
+    case "pointer": return "Reference";
+    case "append":
+    case "truncate":
+    case "escape": return "string";
+    case "translate": return "Coding";
+    default: return undefined;
+  }
+}
+
+/**
+ * Produce the FML-like text used as the body row for a computed-value
+ * source box (e.g. `cc('http://loinc.org', '8302-2', 'Body height')`,
+ * `uuid()`, `create('Quantity')`). Falls back to undefined for plain
+ * `as var` aliases that don't have a transform call.
+ */
+function describeComputedSource(tgt: { transform?: string; parameter?: any[] }): string | undefined {
+  if (!tgt.transform) return undefined;
+  const params = (tgt.parameter || []).map((p: any) => {
+    if (p.valueString !== undefined) return `'${p.valueString}'`;
+    if (p.valueId !== undefined) return p.valueId;
+    if (p.valueBoolean !== undefined) return `${p.valueBoolean}`;
+    if (p.valueInteger !== undefined) return `${p.valueInteger}`;
+    if (p.valueDecimal !== undefined) return `${p.valueDecimal}`;
+    return "?";
+  });
+  return `${tgt.transform}(${params.join(", ")})`;
+}
+
 // ===== SVG Layout Constants =====
 
 const PADDING = 20;
@@ -945,6 +1174,10 @@ const COLORS = {
   targetHeaderBg: "#e8f5e9",
   targetBorder: "#a5d6a7",
   targetHeaderText: "#2e7d32",
+  // Purple palette for computed-value source boxes (uuid(), cc(), etc.)
+  computedHeaderBg: "#f3e5f5",
+  computedBorder: "#ce93d8",
+  computedHeaderText: "#6a1b9a",
   propText: "#212529",
   arrowColor: "#6c757d",
 };
@@ -992,6 +1225,9 @@ interface PropertyDisplay {
   unknownElement?: boolean;
   /** Human-readable validation error (overrides default tooltip) */
   validationError?: string;
+  /** True when this entry's top-level rule has no nested sub-rules and
+   *  no dependent group calls (rendered with thin connectors). */
+  isLeafRule?: boolean;
 }
 
 /**
@@ -1083,11 +1319,13 @@ function buildPropertyDisplay(properties: PropertyEntry[]): PropertyDisplay[] {
         deepestAncestorDepth = i;
       }
     }
-    const displayName = parts.slice(deepestAncestorDepth).join(".");
+    // Strip variable-binding discriminators (`#var_id`) from each segment
+    // so the user sees the real FHIR path, not internal disambiguators.
+    const displayName = stripPathDiscriminators(parts.slice(deepestAncestorDepth).join("."));
     return {
       displayName,
       depth: deepestAncestorDepth,
-      fullPath: entry.path,
+      fullPath: stripPathDiscriminators(entry.path),
       role: entry.role,
       filter: entry.filter,
       typeFilter: entry.typeFilter,
@@ -1106,6 +1344,7 @@ function buildPropertyDisplay(properties: PropertyEntry[]): PropertyDisplay[] {
       elementTypeName: entry.elementTypeName,
       unknownElement: entry.unknownElement,
       validationError: entry.validationError,
+      isLeafRule: entry.isLeafRule,
     };
   });
 }
@@ -1187,7 +1426,9 @@ function calcTypeBoxSize(type: DiagramType): {
 
   const width = Math.max(MIN_TYPE_WIDTH, headerWidth, propsWidth);
   const propCount = Math.max(propDisplay.length, 1);
-  const dividerCount = countRuleDividers(propDisplay);
+  // Computed-source boxes suppress rule dividers in the renderer, so
+  // their height calculation must skip them too.
+  const dividerCount = type.isComputed ? 0 : countRuleDividers(propDisplay);
   const height =
     TYPE_HEADER_HEIGHT + propCount * PROP_LINE_HEIGHT + dividerCount * RULE_DIVIDER_HEIGHT + TYPE_BOX_PADDING_Y;
 
@@ -1230,20 +1471,34 @@ function clampY(y: number, box: TypeBoxLayout): number {
   return Math.max(top, Math.min(bottom, y));
 }
 
-/** Render a sankey-style curved ribbon between two points. */
+/** Render a sankey-style curved band between two vertical extents. */
+function renderSankeyBand(
+  svg: string[],
+  x0: number, y0Top: number, y0Bottom: number,
+  x1: number, y1Top: number, y1Bottom: number,
+  tooltip: string,
+  cls: string = "sm-sankey-ribbon",
+  connIds?: number[],
+): void {
+  const cp = (x1 - x0) * 0.5;
+  const idAttr = connIds && connIds.length > 0
+    ? ` data-conn-id-list="${connIds.join(",")}"`
+    : "";
+  svg.push(
+    `<path class="${cls}" d="M${x0} ${y0Top} C${x0 + cp} ${y0Top} ${x1 - cp} ${y1Top} ${x1} ${y1Top} L${x1} ${y1Bottom} C${x1 - cp} ${y1Bottom} ${x0 + cp} ${y0Bottom} ${x0} ${y0Bottom} Z" fill="${SANKEY_RIBBON_COLOR}"${idAttr}>${tooltip}</path>`
+  );
+}
+
+/** Render a sankey-style curved ribbon between two points (fixed thickness). */
 function renderSankeyRibbon(
   svg: string[],
   x0: number, y0: number,
   x1: number, y1: number,
   tooltip: string,
+  connIds?: number[],
 ): void {
   const half = SANKEY_RIBBON_THICKNESS / 2;
-  const cp = (x1 - x0) * 0.5;
-  const y0t = y0 - half, y0b = y0 + half;
-  const y1t = y1 - half, y1b = y1 + half;
-  svg.push(
-    `<path class="sm-sankey-ribbon" d="M${x0} ${y0t} C${x0 + cp} ${y0t} ${x1 - cp} ${y1t} ${x1} ${y1t} L${x1} ${y1b} C${x1 - cp} ${y1b} ${x0 + cp} ${y0b} ${x0} ${y0b} Z" fill="${SANKEY_RIBBON_COLOR}">${tooltip}</path>`
-  );
+  renderSankeyBand(svg, x0, y0 - half, y0 + half, x1, y1 - half, y1 + half, tooltip, "sm-sankey-ribbon", connIds);
 }
 
 // ===== Main SVG Generator =====
@@ -1406,6 +1661,7 @@ export function generateInstanceDiagramSvg(map: StructureMap, typeLookup?: TypeL
   svg.push(".sm-type-title { font-size: 13px; font-weight: 600; }");
   svg.push(`.sm-source-title { fill: ${COLORS.sourceHeaderText}; }`);
   svg.push(`.sm-target-title { fill: ${COLORS.targetHeaderText}; }`);
+  svg.push(`.sm-computed-title { fill: ${COLORS.computedHeaderText}; }`);
   svg.push(
     `.sm-prop { font-size: 12px; fill: ${COLORS.propText}; font-family: "Cascadia Code", "Fira Code", Consolas, monospace; }`
   );
@@ -1441,6 +1697,26 @@ export function generateInstanceDiagramSvg(map: StructureMap, typeLookup?: TypeL
   );
   svg.push(
     `[data-pos-start] { cursor: pointer; }`
+  );
+  svg.push(
+    `[data-conn-id-list] { cursor: pointer; }`
+  );
+  // Highlight styles applied by the host page when a row or connector is
+  // clicked (see handleDiagramClick).
+  svg.push(
+    `.sm-row-highlight { fill: rgba(255, 235, 59, 0.45) !important; }`
+  );
+  svg.push(
+    `.sm-connector-line.sm-conn-highlight { stroke: #f57f17; stroke-width: 2.4; opacity: 1; }`
+  );
+  svg.push(
+    `.sm-sankey-ribbon.sm-conn-highlight { fill: rgba(245, 127, 23, 0.55); }`
+  );
+  svg.push(
+    `.sm-connector-port-source.sm-port-highlight, .sm-connector-port-source-connected.sm-port-highlight { stroke: #f57f17; stroke-width: 2.4; }`
+  );
+  svg.push(
+    `.sm-connector-port-target.sm-port-highlight, .sm-connector-port-target-connected.sm-port-highlight { stroke: #f57f17; stroke-width: 2.4; }`
   );
   svg.push("</style>");
 
@@ -1483,17 +1759,37 @@ export function generateInstanceDiagramSvg(map: StructureMap, typeLookup?: TypeL
       sourceAnchors: ConnectionAnchor[];
       targetAnchors: ConnectionAnchor[];
       ruleName?: string;
+      /** Top-level rule id (shared across nested sub-rules). Used to
+       *  aggregate per-rule sankey bands so nested rules contribute to
+       *  the parent rule's vertical span. */
+      ruleId?: number;
     }>();
     const propertyMarkers: PropertyMarker[] = [];
+    /** Top-level rule ids whose source side uses a property accessor
+     *  (e.g. `src.authored as s`). Such rules get per-connectionId thin
+     *  lines instead of a sankey band, since the accessor row already
+     *  visually pins the data flow to a specific property. */
+    const rulesWithPropertyAccessorSource = new Set<number>();
+    /** Top-level rule ids whose rule has no nested sub-rules and no
+     *  dependent group calls ("leaf" rules). These represent direct
+     *  value flow and are also rendered as thin lines. */
+    const leafRuleIds = new Set<number>();
 
     // Render type boxes
     for (const tb of gl.typeBoxes) {
       const isSource = tb.mode === "source";
-      const headerBg = isSource
-        ? COLORS.sourceHeaderBg
-        : COLORS.targetHeaderBg;
-      const border = isSource ? COLORS.sourceBorder : COLORS.targetBorder;
-      const titleCls = isSource ? "sm-source-title" : "sm-target-title";
+      const isComputed = !!tb.type.isComputed;
+      const headerBg = isComputed
+        ? COLORS.computedHeaderBg
+        : isSource
+          ? COLORS.sourceHeaderBg
+          : COLORS.targetHeaderBg;
+      const border = isComputed
+        ? COLORS.computedBorder
+        : isSource ? COLORS.sourceBorder : COLORS.targetBorder;
+      const titleCls = isComputed
+        ? "sm-computed-title"
+        : isSource ? "sm-source-title" : "sm-target-title";
 
       // Box outline
       svg.push(
@@ -1537,8 +1833,10 @@ export function generateInstanceDiagramSvg(map: StructureMap, typeLookup?: TypeL
         for (let pi = 0; pi < tb.propDisplay.length; pi++) {
           const pd = tb.propDisplay[pi];
 
-          // Rule header bar: first rule and between different rules
-          if (pi === 0 || pd.ruleId !== tb.propDisplay[pi - 1].ruleId) {
+          // Rule header bar: first rule and between different rules.
+          // Skip on computed-value source boxes (single-row, the header
+          // already names the variable so the divider would just be noise).
+          if (!isComputed && (pi === 0 || pd.ruleId !== tb.propDisplay[pi - 1].ruleId)) {
             const divY = propY - PROP_LINE_HEIGHT + 4;
             const rulePos = pd.ruleFmlPosition;
             const rulePosAttrs = rulePos ? ` data-pos-start="${rulePos.startIndex}" data-pos-end="${rulePos.endIndex}"` : "";
@@ -1561,16 +1859,32 @@ export function generateInstanceDiagramSvg(map: StructureMap, typeLookup?: TypeL
             // Fallback to tb.mode when role is not set
             const effectiveRole = pd.role || tb.mode;
             const anchorX = effectiveRole === "source" ? tb.x + tb.width : tb.x;
+            // A source row whose path is a real property accessor (not the
+            // root-context placeholder ".") flags its top-level rule for
+            // thin-line rendering instead of a sankey band.
+            if (effectiveRole === "source" && pd.ruleId !== undefined &&
+                pd.fullPath && pd.fullPath !== ".") {
+              rulesWithPropertyAccessorSource.add(pd.ruleId);
+            }
+            // Leaf rules (no sub-rules and no dependents) also render as
+            // thin lines — the rule represents a direct value flow.
+            if (pd.ruleId !== undefined && pd.isLeafRule) {
+              leafRuleIds.add(pd.ruleId);
+            }
             if (!connectionAnchors.has(pd.connectionId)) {
               connectionAnchors.set(pd.connectionId, {
                 sourceAnchors: [],
                 targetAnchors: [],
                 ruleName: pd.ruleName,
+                ruleId: pd.ruleId,
               });
             }
             const entry = connectionAnchors.get(pd.connectionId)!;
             if (!entry.ruleName && pd.ruleName) {
               entry.ruleName = pd.ruleName;
+            }
+            if (entry.ruleId === undefined && pd.ruleId !== undefined) {
+              entry.ruleId = pd.ruleId;
             }
             const anchor: ConnectionAnchor = { x: anchorX, y: centerY, boxMode: tb.mode };
             if (effectiveRole === "source") {
@@ -1587,11 +1901,15 @@ export function generateInstanceDiagramSvg(map: StructureMap, typeLookup?: TypeL
                   sourceAnchors: [],
                   targetAnchors: [],
                   ruleName: pd.ruleName,
+                  ruleId: pd.ruleId,
                 });
               }
               const addlEntry = connectionAnchors.get(addlConnId)!;
               if (!addlEntry.ruleName && pd.ruleName) {
                 addlEntry.ruleName = pd.ruleName;
+              }
+              if (addlEntry.ruleId === undefined && pd.ruleId !== undefined) {
+                addlEntry.ruleId = pd.ruleId;
               }
               const addlAnchor: ConnectionAnchor = { x: anchorX, y: centerY, boxMode: tb.mode };
               if (effectiveRole === "source") {
@@ -1681,6 +1999,14 @@ export function generateInstanceDiagramSvg(map: StructureMap, typeLookup?: TypeL
             const posAttrs = pd.fmlPosition
               ? ` data-pos-start="${pd.fmlPosition.startIndex}" data-pos-end="${pd.fmlPosition.endIndex}"`
               : "";
+            // Collect every connection id this row anchors so the host
+            // page can highlight matching rows/connectors when clicked.
+            const rowConnIds: number[] = [];
+            if (pd.connectionId !== undefined) rowConnIds.push(pd.connectionId);
+            for (const addl of pd.additionalConnectionIds || []) rowConnIds.push(addl);
+            const connAttr = rowConnIds.length > 0
+              ? ` data-conn-id-list="${rowConnIds.join(",")}"`
+              : "";
             let tooltipText = pd.elementTypeName
               ? `${pd.elementTypeName}${pd.isCollection ? "[]" : ""}`
               : "";
@@ -1692,9 +2018,9 @@ export function generateInstanceDiagramSvg(map: StructureMap, typeLookup?: TypeL
                 : "unknown element";
             }
             const tooltipChild = tooltipText ? `<title>${escapeXml(tooltipText)}</title>` : "";
-            if (posAttrs || tooltipChild) {
+            if (posAttrs || tooltipChild || connAttr) {
               svg.push(
-                `<rect x="${tb.x + 1}" y="${rowTop}" width="${tb.width - 2}" height="${PROP_LINE_HEIGHT}" fill="transparent"${posAttrs}>${tooltipChild}</rect>`
+                `<rect x="${tb.x + 1}" y="${rowTop}" width="${tb.width - 2}" height="${PROP_LINE_HEIGHT}" fill="transparent"${posAttrs}${connAttr}>${tooltipChild}</rect>`
               );
             }
           }
@@ -1703,103 +2029,160 @@ export function generateInstanceDiagramSvg(map: StructureMap, typeLookup?: TypeL
       }
     }
 
-    // Draw connectors
+    // Draw connectors.
+    //
+    // Strategy: aggregate anchors per top-level rule (ruleId) so a single
+    // sankey band represents the rule's data flow. The band's vertical
+    // extent on each side spans the union of all touched rows (from the
+    // top of the highest row to the bottom of the lowest), so a rule whose
+    // sub-rules touch multiple target rows produces a tall band that
+    // visibly covers them.
+    //
+    // Target-to-target connections (from secondary target boxes) are kept
+    // as per-connectionId dashed straight lines because they represent a
+    // different concept (variable plumbing inside the target column).
+
+    const halfRow = PROP_LINE_HEIGHT / 2;
+
+    // Classify connectionIds: target-to-target vs source-to-target
+    const t2tConnIds = new Set<number>();
     for (const [connId, positions] of connectionAnchors) {
-      if (positions.sourceAnchors.length === 0 || positions.targetAnchors.length === 0) {
+      if (positions.sourceAnchors.length === 0 || positions.targetAnchors.length === 0) continue;
+      const allInTarget =
+        positions.sourceAnchors.every(a => a.boxMode === "target") &&
+        positions.targetAnchors.every(a => a.boxMode === "target");
+      if (allInTarget) t2tConnIds.add(connId);
+    }
+
+    // Aggregate source-to-target anchors per top-level ruleId
+    interface RuleBand {
+      sources: ConnectionAnchor[];
+      targets: ConnectionAnchor[];
+      ruleName?: string;
+      connIds: Set<number>;
+    }
+    const ruleBands = new Map<number, RuleBand>();
+    // Anchors that aren't tagged with a ruleId fall back to per-connectionId rendering
+    const untaggedConnIds: number[] = [];
+    for (const [connId, positions] of connectionAnchors) {
+      if (t2tConnIds.has(connId)) continue;
+      if (positions.ruleId === undefined) {
+        untaggedConnIds.push(connId);
+        continue;
+      }
+      let band = ruleBands.get(positions.ruleId);
+      if (!band) {
+        band = { sources: [], targets: [], ruleName: positions.ruleName, connIds: new Set() };
+        ruleBands.set(positions.ruleId, band);
+      }
+      band.sources.push(...positions.sourceAnchors);
+      band.targets.push(...positions.targetAnchors);
+      band.connIds.add(connId);
+      if (!band.ruleName && positions.ruleName) band.ruleName = positions.ruleName;
+    }
+
+    // Draw a sankey band per ruleId (only when both sides contributed anchors).
+    // Rules whose source side has a property accessor are rendered as
+    // per-connectionId thin lines instead, so the band doesn't visually
+    // "swallow" a specifically-named source field.
+    const completeRuleIds = new Set<number>();
+    for (const [rid, band] of ruleBands) {
+      if (band.sources.length === 0 || band.targets.length === 0) continue;
+      completeRuleIds.add(rid);
+
+      const tooltip = band.ruleName ? `<title>rule: ${escapeXml(band.ruleName)}</title>` : "";
+
+      if (rulesWithPropertyAccessorSource.has(rid) || leafRuleIds.has(rid)) {
+        // Property-accessor source: draw a thin line per connectionId
+        for (const cid of band.connIds) {
+          const positions = connectionAnchors.get(cid);
+          if (!positions) continue;
+          for (const sourceAnchor of positions.sourceAnchors) {
+            for (const targetAnchor of positions.targetAnchors) {
+              svg.push(
+                `<g class="sm-connector">${tooltip}` +
+                `<line class="sm-connector-line" x1="${sourceAnchor.x}" y1="${sourceAnchor.y}" x2="${targetAnchor.x}" y2="${targetAnchor.y}" data-conn-id-list="${cid}" />` +
+                `</g>`
+              );
+            }
+          }
+        }
         continue;
       }
 
+      const sourceX = Math.max(...band.sources.map(a => a.x));
+      const targetX = Math.min(...band.targets.map(a => a.x));
+      if (sourceX >= targetX) continue;
+      const sourceTop = Math.min(...band.sources.map(a => a.y - halfRow));
+      const sourceBottom = Math.max(...band.sources.map(a => a.y + halfRow));
+      const targetTop = Math.min(...band.targets.map(a => a.y - halfRow));
+      const targetBottom = Math.max(...band.targets.map(a => a.y + halfRow));
+      renderSankeyBand(svg, sourceX, sourceTop, sourceBottom, targetX, targetTop, targetBottom, tooltip, "sm-sankey-ribbon", [...band.connIds]);
+    }
+
+    // Untagged connectionIds (no ruleId): fall back to a thin straight line
+    for (const connId of untaggedConnIds) {
+      const positions = connectionAnchors.get(connId)!;
+      if (positions.sourceAnchors.length === 0 || positions.targetAnchors.length === 0) continue;
       const tooltip = positions.ruleName ? `<title>rule: ${escapeXml(positions.ruleName)}</title>` : "";
-
-      // Detect target-to-target connectors (both anchors in target boxes)
-      const isTargetToTarget =
-        positions.sourceAnchors.every(a => a.boxMode === "target") &&
-        positions.targetAnchors.every(a => a.boxMode === "target");
-      const dashAttr = isTargetToTarget ? ' stroke-dasharray="6 3"' : "";
-      const connectorCls = isTargetToTarget ? "sm-connector-line sm-connector-line-dashed" : "sm-connector-line";
-
-      // Direct source → target
       for (const sourceAnchor of positions.sourceAnchors) {
         for (const targetAnchor of positions.targetAnchors) {
           svg.push(
             `<g class="sm-connector">${tooltip}` +
-            `<line class="${connectorCls}" x1="${sourceAnchor.x}" y1="${sourceAnchor.y}" x2="${targetAnchor.x}" y2="${targetAnchor.y}"${dashAttr} />` +
+            `<line class="sm-connector-line" x1="${sourceAnchor.x}" y1="${sourceAnchor.y}" x2="${targetAnchor.x}" y2="${targetAnchor.y}" data-conn-id-list="${connId}" />` +
             `</g>`
           );
         }
       }
     }
 
-    // Sankey-style ribbons for orphan connectionIds (one side only).
-    // With dedup merging additionalConnectionIds, most orphans are eliminated.
-    // For any remaining, connect to a source/target from the same rule (by ruleName)
-    // rather than the nearest box edge.
-    const connectedByRule = new Map<string, { sourceAnchors: ConnectionAnchor[], targetAnchors: ConnectionAnchor[] }>();
-    for (const [, pos] of connectionAnchors) {
-      if (pos.sourceAnchors.length > 0 && pos.targetAnchors.length > 0 && pos.ruleName) {
-        if (!connectedByRule.has(pos.ruleName)) {
-          connectedByRule.set(pos.ruleName, { sourceAnchors: [], targetAnchors: [] });
-        }
-        const ruleEntry = connectedByRule.get(pos.ruleName)!;
-        ruleEntry.sourceAnchors.push(...pos.sourceAnchors);
-        ruleEntry.targetAnchors.push(...pos.targetAnchors);
-      }
-    }
-    for (const [connId, positions] of connectionAnchors) {
-      if (positions.sourceAnchors.length > 0 && positions.targetAnchors.length > 0) continue;
-      // Orphan: only one side has anchors — find matching side from same rule
+    // Target-to-target connectors (dashed)
+    for (const connId of t2tConnIds) {
+      const positions = connectionAnchors.get(connId)!;
       const tooltip = positions.ruleName ? `<title>rule: ${escapeXml(positions.ruleName)}</title>` : "";
-      const ruleAnchors = positions.ruleName ? connectedByRule.get(positions.ruleName) : undefined;
-      if (positions.targetAnchors.length > 0 && positions.sourceAnchors.length === 0) {
-        // Target-only orphan: draw ribbon from same-rule source anchor
-        if (ruleAnchors && ruleAnchors.sourceAnchors.length > 0) {
-          const srcAnchor = ruleAnchors.sourceAnchors[0];
-          for (const tgtAnchor of positions.targetAnchors) {
-            renderSankeyRibbon(svg, srcAnchor.x, srcAnchor.y, tgtAnchor.x, tgtAnchor.y, tooltip);
-          }
-        }
-      } else if (positions.sourceAnchors.length > 0 && positions.targetAnchors.length === 0) {
-        // Source-only orphan: draw ribbon to same-rule target anchor
-        if (ruleAnchors && ruleAnchors.targetAnchors.length > 0) {
-          const tgtAnchor = ruleAnchors.targetAnchors[0];
-          for (const srcAnchor of positions.sourceAnchors) {
-            renderSankeyRibbon(svg, srcAnchor.x, srcAnchor.y, tgtAnchor.x, tgtAnchor.y, tooltip);
-          }
+      for (const sourceAnchor of positions.sourceAnchors) {
+        for (const targetAnchor of positions.targetAnchors) {
+          svg.push(
+            `<g class="sm-connector">${tooltip}` +
+            `<line class="sm-connector-line sm-connector-line-dashed" x1="${sourceAnchor.x}" y1="${sourceAnchor.y}" x2="${targetAnchor.x}" y2="${targetAnchor.y}" stroke-dasharray="6 3" data-conn-id-list="${connId}" />` +
+            `</g>`
+          );
         }
       }
     }
 
-    // Collect connectionIds that have actual connectors drawn
-    // Collect connectionIds that have actual connectors drawn
-    // (both source and target present, OR sankey ribbon drawn for orphans)
+    // Collect connectionIds that participate in a drawn connector
+    // (filled-port indicator).
     const connectedIds = new Set<number>();
     for (const [connId, positions] of connectionAnchors) {
-      const hasSource = positions.sourceAnchors.length > 0;
-      const hasTarget = positions.targetAnchors.length > 0;
-      if (hasSource && hasTarget) {
+      if (t2tConnIds.has(connId)) {
         connectedIds.add(connId);
-      } else {
-        // Orphan with sankey ribbon drawn (if same-rule anchors were found)
-        const ruleAnchors = positions.ruleName ? connectedByRule.get(positions.ruleName) : undefined;
-        if (ruleAnchors) {
-          if (hasTarget && ruleAnchors.sourceAnchors.length > 0) connectedIds.add(connId);
-          if (hasSource && ruleAnchors.targetAnchors.length > 0) connectedIds.add(connId);
-        }
+        continue;
+      }
+      if (positions.ruleId !== undefined && completeRuleIds.has(positions.ruleId)) {
+        connectedIds.add(connId);
+        continue;
+      }
+      if (positions.sourceAnchors.length > 0 && positions.targetAnchors.length > 0) {
+        connectedIds.add(connId);
       }
     }
 
     // Draw connector ports on type box properties
     for (const marker of propertyMarkers) {
       const isFilled = marker.connectionId !== undefined && connectedIds.has(marker.connectionId);
+      const idAttr = marker.connectionId !== undefined
+        ? ` data-conn-id-list="${marker.connectionId}"`
+        : "";
       if (marker.mode === "source") {
         const cls = isFilled ? "sm-connector-port-source-connected" : "sm-connector-port-source";
         svg.push(
-          `<circle class="${cls}" cx="${marker.x}" cy="${marker.y}" r="${CONNECTOR_PORT_RADIUS}" />`
+          `<circle class="${cls}" cx="${marker.x}" cy="${marker.y}" r="${CONNECTOR_PORT_RADIUS}"${idAttr} />`
         );
       } else {
         const cls = isFilled ? "sm-connector-port-target-connected" : "sm-connector-port-target";
         svg.push(
-          `<rect class="${cls}" x="${marker.x - CONNECTOR_PORT_SIZE / 2}" y="${marker.y - CONNECTOR_PORT_SIZE / 2}" width="${CONNECTOR_PORT_SIZE}" height="${CONNECTOR_PORT_SIZE}" rx="1.5" />`
+          `<rect class="${cls}" x="${marker.x - CONNECTOR_PORT_SIZE / 2}" y="${marker.y - CONNECTOR_PORT_SIZE / 2}" width="${CONNECTOR_PORT_SIZE}" height="${CONNECTOR_PORT_SIZE}" rx="1.5"${idAttr} />`
         );
       }
     }

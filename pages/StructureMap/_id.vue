@@ -26,6 +26,11 @@
               mdi-content-save
             </v-icon>
           </v-btn>
+          <v-btn dark icon dense title="debug" :href="debugInFmlPath()">
+            <v-icon>
+              mdi-bug-outline
+            </v-icon>
+          </v-btn>
         </v-toolbar>
         <twin-pane-tab :tabs="tabDetails" @mounted="twinPaneMounted" ref="twinTabControl">
           <template v-slot:Details>
@@ -43,19 +48,19 @@
 
           <template v-slot:Map>
               <!-- Content -->
-              <resource-editor label="FML" :resourceText="rawMap" :readOnly="true" />
+              <resource-editor ref="fmlEditor" label="FML" :resourceText="rawMap" :readOnly="true" />
           </template>
 
           <template v-slot:Diagram>
               <!-- Diagram -->
-              <div v-if="diagramSvg" v-html="diagramSvg" style="overflow: auto;"></div>
+              <div v-if="diagramSvg" v-html="diagramSvg" style="overflow: auto;" @click="handleDiagramClick"></div>
               <div v-else style="color: #999; font-style: italic;">No diagram available</div>
           </template>
 
 
           <template v-slot:Instance>
               <!-- Instance -->
-              <div v-if="instanceSvg" v-html="instanceSvg" style="overflow: auto;"></div>
+              <div v-if="instanceSvg" v-html="instanceSvg" style="overflow: auto;" @click="handleDiagramClick"></div>
               <div v-else style="color: #999; font-style: italic;">No instance diagram available</div>
           </template>
 
@@ -110,7 +115,9 @@ import {
 import { BaseResource_defaultValues } from "~/models/BaseResourceTableData";
 import StructureMapUtilitiesRender from "~/helpers/structuremap_to_fml";
 import { generateStructureMapDiagramSvg } from "~/helpers/structuremap_diagram";
-import { generateInstanceDiagramSvg } from "~/helpers/structuremap_diagram_instance";
+import { generateInstanceDiagramSvg, fmlToStructureMapForDiagram } from "~/helpers/structuremap_diagram_instance";
+import { highlightDiagramConnection, findConnectionIdsForClick } from "~/helpers/diagram_interaction";
+import { parseFML } from "~/helpers/fml_parser";
 import TwinPaneTab from "~/components/TwinPaneTab.vue";
 import ResourceEditor from "~/components/ResourceEditor.vue";
 import { lookupByTypeName as lookupByTypeNameR4B } from "~/helpers/models/generated/r4b";
@@ -126,6 +133,66 @@ export default Vue.extend({
   methods: {
     tabSpaces: function() {
       return settings.getTabSpaces();
+    },
+    handleDiagramClick(event: MouseEvent) {
+      // Flash matching rows + connectors when a row or connector is
+      // clicked. Then walk up for `data-pos-start/end` and ask the FML
+      // editor to flash the corresponding text region (mirrors the
+      // behaviour of the FML page).
+      const connIds = findConnectionIdsForClick(event.target);
+      if (connIds.length > 0) {
+        const container = event.currentTarget as Element;
+        highlightDiagramConnection(container, connIds);
+      }
+      let el = event.target as Element | null;
+      while (el) {
+        const start = el.getAttribute?.('data-pos-start');
+        const end = el.getAttribute?.('data-pos-end');
+        if (start != null && end != null) {
+          const startPos = parseInt(start, 10);
+          const endPos = parseInt(end, 10);
+          if (!isNaN(startPos) && !isNaN(endPos) && endPos > startPos) {
+            const editor = this.$refs.fmlEditor as any;
+            editor?.highlightText?.(startPos, endPos - startPos);
+          }
+          return;
+        }
+        el = el.parentElement;
+      }
+    },
+    debugInFmlPath(): string {
+      const url = this.loadedUrl ?? ((this.fhirServerUrl ?? settings.getFhirServerUrl()) + '/StructureMap/' + (this.raw?.id ?? this.$route.params.id));
+      return `/fml?structureMap=${encodeURIComponent(url)}`;
+    },
+    twinPaneMounted(): void {
+      let tabControl: TwinPaneTab = this.$refs.twinTabControl as TwinPaneTab;
+      if (tabControl) {
+        if (this.$route.query.tab) {
+          this.$nextTick(() => {
+            const tabString = this.$route.query.tab as string;
+            // String tab mode
+            if (tabString.includes(",")) {
+              const tabParts = tabString.split(",");
+              if (tabParts.length == 2) {
+                if (tabControl) {
+                  tabControl.selectTabs(
+                    tabControl.getTabIndex(tabParts[0]),
+                    tabControl.getTabIndex(tabParts[1]),
+                    "left"
+                  );
+                }
+              }
+            } else {
+              tabControl.setSinglePanelMode(true);
+              tabControl.selectTab(tabControl.getTabIndex(tabString));
+            }
+          });
+        }
+        else {
+          tabControl.setSinglePanelMode(true);
+          tabControl.selectTab(0);
+        }
+      }
     },
     settingsClosed() {
       this.showAdvancedSettings = settings.showAdvancedSettings();
@@ -174,8 +241,24 @@ export default Vue.extend({
         document.title = `Structure Map: ${this.raw.title ?? this.raw.name }`;  
 
         this.rawMap = StructureMapUtilitiesRender.render(this.raw);
-        this.diagramSvg = generateStructureMapDiagramSvg(this.raw);
-        this.instanceSvg = generateInstanceDiagramSvg(this.raw, lookupByTypeNameR4B, true);
+        // Re-parse the rendered FML so each diagram element carries
+        // `_fmlPosition` referring to offsets in `rawMap` (the text
+        // shown in the FML editor). This is what makes diagram clicks
+        // able to highlight the matching FML region. Both the base
+        // structure-map diagram and the instance diagram benefit from
+        // these positions. Falls back to the raw FHIR map if parsing
+        // fails — the diagrams still draw, just without text highlight.
+        let diagramInput = this.raw as fhir4b.StructureMap;
+        try {
+          const parsed = parseFML(this.rawMap);
+          if (parsed && !('resourceType' in parsed && parsed.resourceType === 'OperationOutcome')) {
+            diagramInput = fmlToStructureMapForDiagram(parsed as any) as fhir4b.StructureMap;
+          }
+        } catch (e) {
+          console.warn('FML re-parse for diagram positions failed:', e);
+        }
+        this.diagramSvg = generateStructureMapDiagramSvg(diagramInput);
+        this.instanceSvg = generateInstanceDiagramSvg(diagramInput, lookupByTypeNameR4B, true);
         // this.rawMap = JSON.stringify(this.raw, null, 2);
       }
     },
