@@ -14,13 +14,10 @@
  * version-neutral canonical form.
  */
 
-import type { StructureDeclaration } from "./fml_models";
+import type { StructureDeclaration, FhirVersion } from "./fml_models";
 
-/**
- * Recognised FHIR releases. Maps to the major.minor segment that may
- * appear in a cross-version canonical URL.
- */
-export type FhirVersion = 'DSTU2' | 'STU3' | 'R4' | 'R4B' | 'R5' | 'R6';
+/** Re-export so existing importers from this module keep working. */
+export type { FhirVersion } from "./fml_models";
 
 /**
  * Mapping from `<major>.<minor>` URL segment to FHIR release identifier.
@@ -47,13 +44,11 @@ const CROSS_VERSION_URL_RE =
  * Result of parsing a (possibly version-qualified) canonical URL.
  */
 export interface ParsedCanonical {
-  /** The original input URL (unchanged). */
-  original: string;
-
   /**
    * The version-neutral canonical that should be used to look the
    * structure up in a model catalogue. If the input URL did not contain
-   * a recognisable FHIR version segment this is identical to `original`.
+   * a recognisable FHIR version segment this is identical to the input
+   * URL.
    */
   canonical: string;
 
@@ -83,12 +78,12 @@ export interface ParsedCanonical {
  */
 export function parseCanonicalVersion(url: string): ParsedCanonical {
   if (!url) {
-    return { original: url, canonical: url };
+    return { canonical: url };
   }
 
   const m = CROSS_VERSION_URL_RE.exec(url);
   if (!m) {
-    return { original: url, canonical: url };
+    return { canonical: url };
   }
 
   const [, prefix, segment, rest] = m;
@@ -96,11 +91,10 @@ export function parseCanonicalVersion(url: string): ParsedCanonical {
   if (!version) {
     // hl7.org/fhir/<x.y>/... but `<x.y>` is not a recognised release, so
     // leave the URL untouched.
-    return { original: url, canonical: url };
+    return { canonical: url };
   }
 
   return {
-    original: url,
     canonical: `${prefix}/${rest}`,
     version,
   };
