@@ -889,7 +889,7 @@ group SetEntryData(source src: Patient, target entry)
         this.expressionEditor.on("change", this.fhirpathExpressionChangedEvent)
       }
 
-      // this.selectTabs(0, 4, 'left');
+      this.selectTab(1); // the second tab should be the input resource (tab parameter processing will overload this if a ?tab= query parameter is present)
       let tabControl: TwinPaneTab = this.$refs.twinTabControl as TwinPaneTab;
       if (tabControl) {
         if (this.$route.query.tab) {
