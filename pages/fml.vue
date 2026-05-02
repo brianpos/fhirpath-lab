@@ -924,6 +924,7 @@ group SetEntryData(source src: Patient, target entry)
       await this.applyParameters(data);
       await this.evaluateFhirPathExpression();
       this.loadingData = false;
+      this.initializing = false;
     },
 
     DebugFunctionKeyHandler(event: KeyboardEvent): void {
