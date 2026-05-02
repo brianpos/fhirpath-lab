@@ -427,6 +427,7 @@ import ResourceEditor from "~/components/ResourceEditor.vue";
 import { parseFML } from "~/helpers/fml_parser";
 import type { FmlStructureMap } from "~/helpers/fml_models";
 import { generateInstanceDiagramSvg, fmlToStructureMapForDiagram } from "~/helpers/structuremap_diagram_instance";
+import { highlightDiagramConnection, findConnectionIdsForClick } from "~/helpers/diagram_interaction";
 import { generateStructureMapDiagramSvg } from "~/helpers/structuremap_diagram";
 import { lookupByTypeName as lookupByTypeNameR4B } from "~/helpers/models/generated/r4b";
 import { buildUserModelLookup, composeLookups, type TypeLookup, type UserModelLookup } from "~/helpers/user_models";
@@ -1624,6 +1625,15 @@ group SetEntryData(source src: Patient, target entry)
     },
 
     handleDiagramClick(event: MouseEvent) {
+      // Walk up to find a connection-id-tagged element first so a click
+      // on a row/connector flashes its peers (rows + connectors with the
+      // same connectionId). Then continue walking for the FML position
+      // attribute, which jumps the editor to the corresponding source.
+      const connIds = findConnectionIdsForClick(event.target);
+      if (connIds.length > 0) {
+        const container = event.currentTarget as Element;
+        highlightDiagramConnection(container, connIds);
+      }
       let el = event.target as Element | null;
       while (el) {
         const start = el.getAttribute?.('data-pos-start');

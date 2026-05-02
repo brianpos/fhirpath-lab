@@ -577,36 +577,78 @@ export class FmlModelBuilder {
   
   /**
    * Visit individual rule target element
+   *
+   * Grammar (FmlMapping.g4):
+   *   ruleTarget
+   *     : qualifiedIdentifier ('=' transform)? alias? targetListMode?
+   *     | '(' fpExpression ')' alias? targetListMode?     // pure fhirpath based variables
+   *     | groupInvocation alias?                          // pure transform invocation, e.g. uuid() as fullUrl
    */
   visitSingleRuleTarget(ctx: any): RuleTarget | null {
-    const qualIdNode = ctx.qualifiedIdentifier();
-    if (!qualIdNode) return null;
-    
-    const fullPath = this.visitQualifiedIdentifier(qualIdNode);
-    const parts = fullPath.split('.');
-    const context = parts[0];
-    const element = parts.length > 1 ? parts.slice(1).join('.') : undefined;
-    
-    // Get transform if present
-    const transformNode = ctx.transform();
-    const transform = transformNode ? this.visitTransform(transformNode) : undefined;
-    
-    // Get variable name if present
+    // Get variable name if present (alias is shared across all three forms)
     const aliasNode = ctx.alias();
     const variable = aliasNode?.identifier()?.getText();
-    
-    // Get list mode if present
-    const listModeNode = ctx.targetListMode();
+
+    // Get list mode if present (only forms 1 and 2)
+    const listModeNode = ctx.targetListMode?.();
     const listMode = listModeNode?.getText() as 'first' | 'share' | 'last' | 'single' | undefined;
-    
-    return {
-      position: this.getPosition(ctx),
-      context,
-      element,
-      transform: transform || undefined,
-      variable,
-      listMode
-    };
+
+    // Form 1: qualifiedIdentifier ('=' transform)?
+    const qualIdNode = ctx.qualifiedIdentifier();
+    if (qualIdNode) {
+      const fullPath = this.visitQualifiedIdentifier(qualIdNode);
+      const parts = fullPath.split('.');
+      const context = parts[0];
+      const element = parts.length > 1 ? parts.slice(1).join('.') : undefined;
+
+      const transformNode = ctx.transform();
+      const transform = transformNode ? this.visitTransform(transformNode) : undefined;
+
+      return {
+        position: this.getPosition(ctx),
+        context,
+        element,
+        transform: transform || undefined,
+        variable,
+        listMode
+      };
+    }
+
+    // Form 3: groupInvocation alias? — variable-only target produced by a
+    // transform call (e.g. `uuid() as fullUrl`, `cc(…) as coding`).
+    // Emit a target with no context/element so the diagram extractor
+    // recognises it as a computed-value source.
+    const invocationNode = ctx.groupInvocation?.();
+    if (invocationNode) {
+      const transform = this.visitInvocationAsTransform(invocationNode);
+      return {
+        position: this.getPosition(ctx),
+        transform: transform || undefined,
+        variable,
+        listMode
+      };
+    }
+
+    // Form 2: '(' fpExpression ')' alias? — fhirpath-evaluated variable.
+    const fpExprNode = ctx.fpExpression?.();
+    if (fpExprNode) {
+      const transform: Transform = {
+        position: this.getPosition(ctx),
+        type: 'evaluate',
+        parameters: [{
+          type: 'expression',
+          value: fpExprNode.getText()
+        }]
+      };
+      return {
+        position: this.getPosition(ctx),
+        transform,
+        variable,
+        listMode
+      };
+    }
+
+    return null;
   }
   
   /**
