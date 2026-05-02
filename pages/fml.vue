@@ -539,6 +539,7 @@ interface FhirMapData {
   modelsText?: string;
   debugText: string;
   loadingData: boolean;
+  initializing: boolean;
   saveOutcome?: fhir4b.OperationOutcome;
   showOutcome?: boolean;
   helpWithError?: string;
@@ -889,7 +890,30 @@ group SetEntryData(source src: Patient, target entry)
       }
 
       // this.selectTabs(0, 4, 'left');
-      this.selectTab(1);
+      let tabControl: TwinPaneTab = this.$refs.twinTabControl as TwinPaneTab;
+      if (tabControl) {
+        if (this.$route.query.tab) {
+          this.$nextTick(() => {
+            const tabString = this.$route.query.tab as string;
+            // String tab mode
+            if (tabString.includes(",")) {
+              const tabParts = tabString.split(",");
+              if (tabParts.length == 2) {
+                if (tabControl) {
+                  tabControl.selectTabs(
+                    tabControl.getTabIndex(tabParts[0]),
+                    tabControl.getTabIndex(tabParts[1]),
+                    "left"
+                  );
+                }
+              }
+            } else {
+              tabControl.setSinglePanelMode(true);
+              tabControl.selectTab(tabControl.getTabIndex(tabString));
+            }
+          });
+        }
+      }
 
       // Check for the encoded parameters first
       const parameters = this.$route.query.parameters as string;
@@ -1964,7 +1988,7 @@ group SetEntryData(source src: Patient, target entry)
 
       // Show the output tab if it wasn't already visible
       let tabControl: TwinPaneTab = this.$refs.twinTabControl as TwinPaneTab;
-      if (tabControl) {
+      if (tabControl && this.initializing == false) {
         if (!tabControl.tabIsVisible(4))
           tabControl.selectTab(4);
       }
@@ -1989,6 +2013,7 @@ group SetEntryData(source src: Patient, target entry)
       modelsText: '',
       debugText: '',
       loadingData: true,
+      initializing: true,
       saveOutcome: undefined,
       showOutcome: false,
       helpWithError: undefined,

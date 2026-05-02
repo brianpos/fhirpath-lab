@@ -136,6 +136,36 @@ export default Vue.extend({
       const url = this.loadedUrl ?? ((this.fhirServerUrl ?? settings.getFhirServerUrl()) + '/StructureMap/' + (this.raw?.id ?? this.$route.params.id));
       return `/fml?structureMap=${encodeURIComponent(url)}`;
     },
+    twinPaneMounted(): void {
+      let tabControl: TwinPaneTab = this.$refs.twinTabControl as TwinPaneTab;
+      if (tabControl) {
+        if (this.$route.query.tab) {
+          this.$nextTick(() => {
+            const tabString = this.$route.query.tab as string;
+            // String tab mode
+            if (tabString.includes(",")) {
+              const tabParts = tabString.split(",");
+              if (tabParts.length == 2) {
+                if (tabControl) {
+                  tabControl.selectTabs(
+                    tabControl.getTabIndex(tabParts[0]),
+                    tabControl.getTabIndex(tabParts[1]),
+                    "left"
+                  );
+                }
+              }
+            } else {
+              tabControl.setSinglePanelMode(true);
+              tabControl.selectTab(tabControl.getTabIndex(tabString));
+            }
+          });
+        }
+        else {
+          tabControl.setSinglePanelMode(true);
+          tabControl.selectTab(0);
+        }
+      }
+    },
     settingsClosed() {
       this.showAdvancedSettings = settings.showAdvancedSettings();
     },
