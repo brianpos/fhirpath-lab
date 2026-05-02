@@ -26,6 +26,11 @@
               mdi-content-save
             </v-icon>
           </v-btn>
+          <v-btn dark icon dense title="debug" :href="debugInFmlPath()">
+            <v-icon>
+              mdi-bug-outline
+            </v-icon>
+          </v-btn>
         </v-toolbar>
         <twin-pane-tab :tabs="tabDetails" @mounted="twinPaneMounted" ref="twinTabControl">
           <template v-slot:Details>
@@ -126,6 +131,10 @@ export default Vue.extend({
   methods: {
     tabSpaces: function() {
       return settings.getTabSpaces();
+    },
+    debugInFmlPath(): string {
+      const url = this.loadedUrl ?? ((this.fhirServerUrl ?? settings.getFhirServerUrl()) + '/StructureMap/' + (this.raw?.id ?? this.$route.params.id));
+      return `/fml?structureMap=${encodeURIComponent(url)}`;
     },
     settingsClosed() {
       this.showAdvancedSettings = settings.showAdvancedSettings();

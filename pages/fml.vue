@@ -768,14 +768,6 @@ export default Vue.extend({
           enabled: true,
         },
         {
-          iconName: "mdi-brain",
-          tabName: "AI Chat",
-          tabHeaderName: "FHIRPath AI Chat",
-          title: "FHIRPath AI Chat",
-          show: this.chatEnabled,
-          enabled: true,
-        },
-        {
           iconName: "mdi-vector-polygon",
           tabName: "Diagram",
           title: "Rule-level view showing source/target type boxes with property mappings",
@@ -787,6 +779,14 @@ export default Vue.extend({
           tabName: "Instance",
           title: "Instance-level view showing source/target objects with mapped and unmapped properties",
           show: this.showAdvancedSettings,
+          enabled: true,
+        },
+        {
+          iconName: "mdi-brain",
+          tabName: "AI Chat",
+          tabHeaderName: "FHIRPath AI Chat",
+          title: "FHIRPath AI Chat",
+          show: this.chatEnabled,
           enabled: true,
         },
         {
@@ -1515,6 +1515,10 @@ group SetEntryData(source src: Patient, target entry)
         if (this.$route.query.engine) {
           data.engine = this.$route.query.engine as string ?? '';
         }
+
+        if (this.$route.query.structureMap) {
+          data.structureMap = this.$route.query.structureMap as string;
+        }
       }
       return data;
     },
@@ -1539,6 +1543,11 @@ group SetEntryData(source src: Patient, target entry)
 
       if (p.engine) {
         this.selectedEngine = p.engine ?? '';
+      }
+
+      if (p.structureMap) {
+        this.structureMapId = p.structureMap;
+        await this.downloadStructureMapResource();
       }
 
       if (p.expression) {
