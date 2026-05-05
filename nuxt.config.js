@@ -3,6 +3,10 @@ export default {
   target: 'static',
   ssr: false,
 
+  router: {
+    base: process.env.ROUTER_BASE || '/',
+  },
+
   vue: {
     config: {
       ignoredElements: ['aidbox-form-renderer']

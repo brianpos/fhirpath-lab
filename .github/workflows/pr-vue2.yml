@@ -6,11 +6,17 @@ on:
       - main
       - master
       - develop
+    types: [opened, synchronize, reopened, closed]
+
+permissions:
+  contents: write
+  pull-requests: write
 
 jobs:
   build:
-    name: Build & Upload Vue2 Static Site
+    name: Build & Deploy Vue2 PR Preview
     runs-on: ubuntu-latest
+    if: github.event.action != 'closed'
 
     steps:
       - name: Checkout
@@ -27,12 +33,44 @@ jobs:
         run: npm ci
 
       - name: Generate static site
+        env:
+          ROUTER_BASE: /fhirpath-lab/pr-preview/vue2/pr-${{ github.event.pull_request.number }}/
         run: npm run generate
 
-      - name: Upload static site artifact
-        uses: actions/upload-artifact@v4
+      - name: Deploy preview to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          name: vue2-static-site-pr-${{ github.event.pull_request.number }}
-          path: dist/
-          if-no-files-found: error
-          compression-level: 0
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: dist/
+          destination_dir: pr-preview/vue2/pr-${{ github.event.pull_request.number }}
+          keep_files: true
+
+      - name: Post preview URL comment
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            ## Vue2 PR Preview
+            🔍 Preview deployed: https://brianpos.github.io/fhirpath-lab/pr-preview/vue2/pr-${{ github.event.pull_request.number }}/
+          comment-author: github-actions[bot]
+          edit-mode: replace
+          body-includes: Vue2 PR Preview
+
+  cleanup:
+    name: Remove Vue2 PR Preview
+    runs-on: ubuntu-latest
+    if: github.event.action == 'closed'
+
+    steps:
+      - name: Checkout gh-pages branch
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+
+      - name: Remove preview directory
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git rm -rf pr-preview/vue2/pr-${{ github.event.pull_request.number }} || true
+          git diff --cached --quiet || git commit -m "chore: remove Vue2 preview for PR #${{ github.event.pull_request.number }}"
+          git push
