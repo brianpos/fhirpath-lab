@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - master
+      - develop
 
 jobs:
   build:
