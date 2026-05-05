@@ -1,22 +1,27 @@
 name: PR Build – Vue3 (Nuxt4)
 
 on:
-  pull_request:
+  push:
     branches:
       - main
       - master
       - develop
+  pull_request:
     types: [opened, synchronize, reopened, closed]
+    branches:
+      - main
+      - master
+      - develop
 
 permissions:
-  contents: write
+  contents: read
   pull-requests: write
 
 jobs:
-  build:
-    name: Build & Deploy Vue3 PR Preview
+  build_and_deploy:
+    name: Build & Deploy Vue3 Static Site
     runs-on: ubuntu-latest
-    if: github.event.action != 'closed'
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
 
     defaults:
       run:
@@ -37,46 +42,26 @@ jobs:
         run: npm ci
 
       - name: Generate static site
-        env:
-          NUXT_APP_BASE_URL: /fhirpath-lab/pr-preview/vue3/pr-${{ github.event.pull_request.number }}/
         run: npm run generate
 
-      - name: Deploy preview to gh-pages
-        uses: peaceiris/actions-gh-pages@v4
+      - name: Deploy to Azure Static Web Apps
+        uses: Azure/static-web-apps-deploy@v1
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: vue3-src/.output/public/
-          destination_dir: pr-preview/vue3/pr-${{ github.event.pull_request.number }}
-          keep_files: true
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_VUE3 }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: upload
+          app_location: vue3-src/.output/public/
+          skip_app_build: true
 
-      - name: Post preview URL comment
-        uses: peter-evans/create-or-update-comment@v4
-        with:
-          issue-number: ${{ github.event.pull_request.number }}
-          body: |
-            ## Vue3 PR Preview
-            🔍 Preview deployed: https://brianpos.github.io/fhirpath-lab/pr-preview/vue3/pr-${{ github.event.pull_request.number }}/
-          comment-author: github-actions[bot]
-          edit-mode: replace
-          body-includes: Vue3 PR Preview
-
-  cleanup:
-    name: Remove Vue3 PR Preview
+  close_preview:
+    name: Close Vue3 PR Preview
     runs-on: ubuntu-latest
-    if: github.event.action == 'closed'
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
 
     steps:
-      - name: Checkout gh-pages branch
-        uses: actions/checkout@v4
+      - name: Close Azure Static Web Apps preview
+        uses: Azure/static-web-apps-deploy@v1
         with:
-          ref: gh-pages
-
-      - name: Remove preview directory
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git rm -rf pr-preview/vue3/pr-${{ github.event.pull_request.number }} || true
-          git diff --cached --quiet || git commit -m "chore: remove Vue3 preview for PR #${{ github.event.pull_request.number }}"
-          for i in 1 2 3; do
-            git pull --rebase origin gh-pages && git push && break || sleep 10
-          done
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_VUE3 }}
+          action: close
+          app_location: /
