@@ -17,6 +17,7 @@ import fhirpath_r5_model from "fhirpath/fhir-context/r5";
 // Note: R6 is not yet available in fhirpath.js package
 import fhirpath_r6_model from "models/r6";
 import { IFhirPathEngineDetails } from "../types/fhirpath_test_engine";
+import { validateFhirpathExpression, type FhirVersionKey } from "./fhirpath_validator";
 
 
 export interface DebugTraceData {
@@ -538,8 +539,37 @@ export async function evaluateExpressionUsingFhirpathJs(
     processedByEngine: `fhirpath.js-${fhirpath.version} ${versionLabel}`
   };
 
-  // Parse the FHIRPath expression to generate AST
+  // Run the FHIRPath validator first. It produces a typed AST (matching what
+  // the .NET engine's parseDebugTree looks like) and a FHIR OperationOutcome
+  // with any semantic issues (unknown property, wrong arg type, etc.). The
+  // engine still runs even if issues are found — the resulting outcome is
+  // surfaced via `expressionParseOutcome`, mirroring what the .NET engine
+  // does server-side.
   if (options.expression) {
+    try {
+      const fhirVersionKey: FhirVersionKey =
+        fhirVersion === 'R5' ? 'r5' : fhirVersion === 'R6' ? 'r6' : 'r4';
+      const contextType = options.contextExpression?.split('.')[0]?.split('(')[0]?.trim() || undefined;
+      const validation = validateFhirpathExpression(options.expression, {
+        fhirVersion: fhirVersionKey,
+        contextType,
+      });
+      if (validation.parseDebugTree) {
+        result.parseDebugTree = JSON.stringify(validation.parseDebugTree);
+      }
+      if (validation.outcome) {
+        result.expressionParseOutcome = validation.outcome;
+      }
+    } catch (err: any) {
+      console.log('FHIRPath validator failed:', err);
+      // Validation is best-effort; never block evaluation if it fails.
+    }
+  }
+
+  // Parse the FHIRPath expression to generate AST (fall back to fhirpath.js if
+  // the validator could not produce one — e.g. the expression has syntax
+  // errors but the engine can still surface a different message).
+  if (options.expression && !result.parseDebugTree) {
     try {
       const parsedAst = fhirpath.parse(options.expression);
       if (parsedAst.children && parsedAst.children.length > 0) {

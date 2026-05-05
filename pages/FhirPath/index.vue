@@ -595,6 +595,7 @@ import { findNodeByPath, IJsonNode, IJsonNodePosition, parseJson } from "~/helpe
 import { parseXml, parseXmlAndObject } from "~/helpers/xml_parser";
 import TwinPaneTab, { TabData } from "~/components/TwinPaneTab.vue";
 import { IFhirPathEngineDetails, registeredEngines, applyConfigEngines } from "~/types/fhirpath_test_engine";
+import { validateFhirpathExpression, type FhirVersionKey } from "~/helpers/fhirpath_validator";
 
 import { FhirPathTools, createFhirPathEvaluateTools } from "~/helpers/openai_tools";
 import { Console } from "console";
@@ -1048,6 +1049,7 @@ export interface IFhirPathMethods
   downloadTestResource(): void;
   downloadVariableResource(name: string): void;
   evaluateExpressionUsingFhirpathJsRx(modelInfo: Model, fhirVersion: string): void;
+  runFhirpathValidator(fhirVersion: FhirVersionKey): void;
   prepareSharePackageData(): TestFhirpathData;
   showShareLink(): boolean;
   updateShareText(): void;
@@ -2635,6 +2637,50 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       chat.setThinking(false);
     },
 
+    /**
+     * Run the FHIRPath validator (driven by helpers/fhirpath-spec/) before
+     * delegating to fhirpath.js.
+     *
+     * The validator produces a typed AST and a FHIR OperationOutcome; the AST
+     * is shown in the Parse Tree tab (replacing the unannotated fhirpath.js
+     * tree) and the outcome is hoisted into `expressionParseOutcome` so the
+     * existing OperationOutcomePanel renders it. The fhirpath.js engine is
+     * then invoked unconditionally — issues from the validator are simply
+     * appended to whatever the engine produces, which is the same behaviour
+     * the .NET engine has server-side.
+     */
+    runFhirpathValidator(fhirVersion: FhirVersionKey): void {
+      const expression = this.getFhirpathExpression() ?? '';
+      const astTab = this.$refs.astTabComponent2 as ParseTreeTab;
+      if (!expression) {
+        astTab?.clearDisplay();
+        return;
+      }
+      try {
+        const contextExpr = this.getContextExpression() ?? this.resourceType ?? undefined;
+        const contextType = contextExpr ? contextExpr.split('.')[0]?.split('(')[0]?.trim() : undefined;
+        const result = validateFhirpathExpression(expression, {
+          fhirVersion,
+          contextType: contextType || undefined,
+        });
+        if (result.parseDebugTree) {
+          astTab?.displayTree(result.parseDebugTree as any);
+        } else {
+          // Fall back to the fhirpath.js-derived tree when the validator could
+          // not parse the expression (it returns syntax-error diagnostics).
+          astTab?.displayTreeForExpression(this.getContextExpression() ?? '', expression);
+        }
+        if (result.outcome) {
+          this.expressionParseOutcome = result.outcome;
+        }
+      } catch (err) {
+        // Validator is best-effort — if it crashes for any reason, fall back
+        // to the existing fhirpath.js-based AST display.
+        console.log('FHIRPath validator failed:', err);
+        astTab?.displayTreeForExpression(this.getContextExpression() ?? '', expression);
+      }
+    },
+
     async evaluateExpressionUsingFhirpathJsRx(modelInfo: Model, fhirVersion: string) {
       if (!this.getResourceJson() && this.resourceId) {
         await this.downloadTestResource();
@@ -3326,7 +3372,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
 
       // Browser only fhirpath.js engines
       if (this.selectedEngine2?.legacyName == "fhirpath.js") {
-        astTab2?.displayTreeForExpression(this.getContextExpression() ?? '', this.getFhirpathExpression() ?? '');
+        this.runFhirpathValidator('r4');
         await this.evaluateExpressionUsingFhirpathJsRx(fhirpath_r4_model, 'r4');
         this.saveLastUsedParameters(true);
         if (this.prevFocus){
@@ -3336,7 +3382,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       }
 
       if (this.selectedEngine2?.legacyName == "fhirpath.js (R5)") {
-        astTab2?.displayTreeForExpression(this.getContextExpression() ?? '', this.getFhirpathExpression() ?? '');
+        this.runFhirpathValidator('r5');
         await this.evaluateExpressionUsingFhirpathJsRx(fhirpath_r5_model, 'r5');
         this.saveLastUsedParameters(true);
         if (this.prevFocus){
@@ -3346,7 +3392,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       }
 
       if (this.selectedEngine2?.legacyName == "fhirpath.js (R6)") {
-        astTab2?.displayTreeForExpression(this.getContextExpression() ?? '', this.getFhirpathExpression() ?? '');
+        this.runFhirpathValidator('r6');
         await this.evaluateExpressionUsingFhirpathJsRx(fhirpath_r6_model, 'r6');
         this.saveLastUsedParameters(true);
         if (this.prevFocus){
