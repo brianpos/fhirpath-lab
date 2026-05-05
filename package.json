@@ -8,6 +8,7 @@
     "build": "nuxt build",
     "test": "jest",
     "generate:models": "ts-node --transpile-only scripts/generate-models/index.ts",
+    "generate:fhirpath-spec": "ts-node --transpile-only scripts/generate-fhirpath-spec/index.ts",
     "start": "nuxt start",
     "generate": "nuxt generate",
     "dockerize": "docker build -t fhirpath-lab ."

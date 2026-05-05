@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "target": "ES2018",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "strict": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "experimentalDecorators": true,
+    "types": ["node", "fhir"]
+  },
+  "include": [
+    "helpers/fhirpath-spec/**/*.ts",
+    "helpers/fhirpath_visitor.ts",
+    "helpers/fhirpath_validator.ts",
+    "helpers/custom_model.ts",
+    "helpers/models/generated/**/*.ts",
+    "fhirpath-parser/**/*.ts"
+  ]
+}

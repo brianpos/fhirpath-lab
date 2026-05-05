@@ -1,0 +1,2414 @@
+{
+  "categories": [
+    {
+      "name": "Existence",
+      "sectionNumber": "5.1",
+      "functions": [
+        {
+          "functionName": "empty",
+          "description": "Returns `true` if the input collection is empty (`{ }`) and `false` otherwise.",
+          "arguments": [],
+          "returnType": "Boolean",
+          "emptyInputResult": "true",
+          "errorOnMultipleInput": false,
+          "inputTypes": [],
+          "typeMapping": [
+            "Any-Boolean"
+          ],
+          "exampleOfUse": "```fhirpath\nPatient.link.empty() // returns true if the patient has no link elements\n```",
+          "sectionNumber": "5.1.1"
+        },
+        {
+          "functionName": "exists",
+          "description": "Returns `true` if the input collection has any elements (optionally filtered by the criteria), and `false` otherwise. This is the opposite of `empty()`, and as such is a shorthand for `empty().not()`.",
+          "arguments": [
+            {
+              "name": "criteria",
+              "type": "expression",
+              "description": "Optional criteria to filter the elements",
+              "optional": true
+            }
+          ],
+          "returnType": "Boolean",
+          "emptyInputResult": "false",
+          "errorOnMultipleInput": false,
+          "inputTypes": [],
+          "typeMapping": [
+            "Any-Boolean"
+          ],
+          "exampleOfUse": "```fhirpath\nPatient.name.exists()\nPatient.identifier.exists(use = 'official')\nPatient.telecom.exists(system = 'phone' and use = 'mobile')\n```",
+          "sectionNumber": "5.1.2"
+        },
+        {
+          "functionName": "all",
+          "description": "Returns `true` if for every element in the input collection, `criteria` evaluates to `true`. Otherwise, the result is `false`.",
+          "arguments": [
+            {
+              "name": "criteria",
+              "type": "expression",
+              "description": "Expression to evaluate against each element"
+            }
+          ],
+          "returnType": "Boolean",
+          "emptyInputResult": "true",
+          "errorOnMultipleInput": false,
+          "inputTypes": [],
+          "typeMapping": [
+            "Any-Boolean"
+          ],
+          "exampleOfUse": "```fhirpath\ngeneralPractitioner.all($this.resolve() is Practitioner)\n```",
+          "sectionNumber": "5.1.3"
+        },
+        {
+          "functionName": "allTrue",
+          "description": "Takes a collection of Boolean values and returns `true` if all the items are `true`. If any items are `false`, the result is `false`.",
+          "arguments": [],
+          "returnType": "Boolean",
+          "emptyInputResult": "true",
+          "errorOnMultipleInput": false,
+          "inputTypes": [],
+          "typeMapping": [
+            "Boolean-Boolean"
+          ],
+          "exampleOfUse": "```fhirpath\nObservation.select(component.value > 90 'mm[Hg]').allTrue()\n```",
+          "sectionNumber": "5.1.4"
+        },
+        {
+          "functionName": "anyTrue",
+          "description": "Takes a collection of Boolean values and returns `true` if any of the items are `true`. If all the items are `false`, the result is `false`.",
+          "arguments": [],
+          "returnType": "Boolean",
+          "emptyInputResult": "false",
+          "errorOnMultipleInput": false,
+          "inputTypes": [],
+          "typeMapping": [
+            "Boolean-Boolean"
+          ],
+          "exampleOfUse": "```fhirpath\nObservation.select(component.value > 90 'mm[Hg]').anyTrue()\n```",
+          "sectionNumber": "5.1.5"
+        },
+        {
+          "functionName": "allFalse",
+          "description": "Takes a collection of Boolean values and returns `true` if all the items are `false`. If any items are `true`, the result is `false`.",
+          "arguments": [],
+          "returnType": "Boolean",
+          "emptyInputResult": "true",
+          "errorOnMultipleInput": false,
+          "inputTypes": [],
+          "typeMapping": [
+            "Boolean-Boolean"
+          ],
+          "exampleOfUse": "```fhirpath\nObservation.select(component.value > 90 'mm[Hg]').allFalse()\n```",
+          "sectionNumber": "5.1.6"
+        },
+        {
+          "functionName": "anyFalse",
+          "description": "Takes a collection of Boolean values and returns `true` if any of the items are `false`. If all the items are `true`, the result is `false`.",
+          "arguments": [],
+          "returnType": "Boolean",
+          "emptyInputResult": "false",
+          "errorOnMultipleInput": false,
+          "inputTypes": [],
+          "typeMapping": [
+            "Boolean-Boolean"
+          ],
+          "exampleOfUse": "```fhirpath\nObservation.select(component.value > 90 'mm[Hg]').anyFalse()\n```",
+          "sectionNumber": "5.1.7"
+        },
+        {
+          "functionName": "subsetOf",
+          "description": "Returns `true` if all items in the input collection are members of the collection passed as the `other` argument. Membership is determined using the equals (`=`) operation.",
+          "arguments": [
+            {
+              "name": "other",
+              "type": "collection",
+              "description": "Collection to check membership against"
+            }
+          ],
+          "returnType": "Boolean",
+          "emptyInputResult": "true",
+          "errorOnMultipleInput": false,
+          "inputTypes": [],
+          "typeMapping": [
+            "Any-Boolean"
+          ],
+          "exampleOfUse": "```fhirpath\nMedicationRequest.contained.meta.tag.subsetOf(MedicationRequest.meta.tag)\n```",
+          "sectionNumber": "5.1.8"
+        },
+        {
+          "functionName": "supersetOf",
+          "description": "Returns `true` if all items in the collection passed as the `other` argument are members of the input collection. Membership is determined using the equals (`=`) operation.",
+          "arguments": [
+            {
+              "name": "other",
+              "type": "collection",
+              "description": "Collection to check membership against"
+            }
+          ],
+          "returnType": "Boolean",
+          "emptyInputResult": "true",
+          "errorOnMultipleInput": false,
+          "inputTypes": [],
+          "typeMapping": [
+            "Any-Boolean"
+          ],
+          "exampleOfUse": "```fhirpath\nMedicationRequest.contained.meta.tag.supersetOf(MedicationRequest.meta.tag)\n```",
+          "sectionNumber": "5.1.9"
+        },
+        {
+          "functionName": "count",
+          "description": "Returns the integer count of the number of items in the input collection. Returns 0 when the input collection is empty.",
+          "arguments": [],
+          "returnType": "Integer",
+          "emptyInputResult": "0",
+          "errorOnMultipleInput": false,
+          "inputTypes": [],
+          "typeMapping": [
+            "Any-Integer"
+          ],
+          "exampleOfUse": "```fhirpath\nPatient.name.count() // returns the number of name elements\n```",
+          "sectionNumber": "5.1.10"
+        },
+        {
+          "functionName": "distinct",
+          "description": "Returns a collection containing only the unique items in the input collection. To determine whether two items are the same, the equals (`=`) operator is used.",
+          "arguments": [],
+          "returnType": "collection",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": false,
+          "inputTypes": [],
+          "typeMapping": [
+            "Any-Any"
+          ],
+          "exampleOfUse": "```fhirpath\nPatient.meta.tag.distinct()\n```",
+          "sectionNumber": "5.1.11"
+        },
+        {
+          "functionName": "isDistinct",
+          "description": "Returns `true` if all the items in the input collection are distinct. To determine whether two items are distinct, the equals (`=`) operator is used.",
+          "arguments": [],
+          "returnType": "Boolean",
+          "emptyInputResult": "true",
+          "errorOnMultipleInput": false,
+          "inputTypes": [],
+          "typeMapping": [
+            "Any-Boolean"
+          ],
+          "exampleOfUse": "```fhirpath\n1.combine(2).combine(3).isDistinct() // true\n```",
+          "sectionNumber": "5.1.12"
+        }
+      ]
+    },
+    {
+      "name": "Filtering and projection",
+      "sectionNumber": "5.2",
+      "functions": [
+        {
+          "functionName": "where",
+          "description": "Returns a collection containing only those elements in the input collection for which the stated `criteria` expression evaluates to `true`. Elements for which the expression evaluates to `false` or empty (`{ }`) are not included in the result.",
+          "arguments": [
+            {
+              "name": "criteria",
+              "type": "expression",
+              "description": "Expression to filter the elements"
+            }
+          ],
+          "returnType": "collection",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": false,
+          "inputTypes": [],
+          "typeMapping": [
+            "Any-Any"
+          ],
+          "exampleOfUse": "```fhirpath\nPatient.telecom.where(use = 'official')\n```",
+          "sectionNumber": "5.2.1"
+        },
+        {
+          "functionName": "select",
+          "description": "Evaluates the `projection` expression for each item in the input collection. The result of each evaluation is added to the output collection. If the evaluation results in a collection with multiple items, all items are added to the output collection (collections resulting from evaluation of `projection` are _flattened_).",
+          "arguments": [
+            {
+              "name": "projection",
+              "type": "expression",
+              "description": "Expression to project each element"
+            }
+          ],
+          "returnType": "collection",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": false,
+          "inputTypes": [],
+          "typeMapping": [
+            "Any-Any"
+          ],
+          "exampleOfUse": "```fhirpath\nPatient.name.where(use = 'usual').select(given.first() + ' ' + family)\n```",
+          "sectionNumber": "5.2.2"
+        },
+        {
+          "functionName": "sort",
+          "description": "Returns a collection containing the items in the input collection, sorted according to the specified key selector expressions. The function takes a variable number of key selector parameters, each of which can be optionally qualified with `asc` (ascending) or `desc` (descending). If no qualifier is provided, `asc` is the default.",
+          "arguments": [
+            {
+              "name": "keySelector",
+              "type": "expression",
+              "description": "Optional key selector expression with optional asc/desc qualifier",
+              "optional": true,
+              "variableArgs": true
+            }
+          ],
+          "returnType": "collection",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": false,
+          "inputTypes": [],
+          "typeMapping": [
+            "Any-Any"
+          ],
+          "exampleOfUse": "```fhirpath\n(3 | 1 | 2).sort() // (1 | 2 | 3) - natural numeric ordering\n(3 | 1 | 2).sort($this) // (1 | 2 | 3) - explicit ascending\n(3 | 1 | 2).sort($this desc) // (3 | 2 | 1) - descending\nPatient.name.sort(family desc, given.first()) // sort by family name descending, then by first given name ascending\n```",
+          "sectionNumber": "5.2.4",
+          "status": "STU"
+        },
+        {
+          "functionName": "repeat",
+          "description": "A version of `select` that will repeat the `projection` and add items to the output collection only if they are not already in the output collection as determined by the equals (`=`) operator.",
+          "arguments": [
+            {
+              "name": "projection",
+              "type": "expression",
+              "description": "Expression to repeatedly project elements"
+            }
+          ],
+          "returnType": "collection",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": false,
+          "inputTypes": [],
+          "typeMapping": [
+            "Any-Any"
+          ],
+          "exampleOfUse": "```fhirpath\nQuestionnaire.repeat(item)\n```",
+          "sectionNumber": "5.2.5"
+        },
+        {
+          "functionName": "repeatAll",
+          "description": "A version of `repeat` that allows duplicate items in the output collection. Unlike `repeat`, this function does not check whether items are already present in the output collection before adding them.",
+          "arguments": [
+            {
+              "name": "projection",
+              "type": "expression",
+              "description": "Expression to repeatedly project elements"
+            }
+          ],
+          "returnType": "collection",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": false,
+          "inputTypes": [],
+          "typeMapping": [
+            "Any-Any"
+          ],
+          "exampleOfUse": "```fhirpath\nValueSet.expansion.repeatAll(contains)\nQuestionnaire.repeatAll(item)\n```",
+          "sectionNumber": "5.2.6",
+          "status": "STU"
+        },
+        {
+          "functionName": "ofType",
+          "description": "Returns a collection that contains all items in the input collection that are of the given type or a subclass thereof.",
+          "arguments": [
+            {
+              "name": "type",
+              "type": "type specifier",
+              "description": "Type to filter elements by"
+            }
+          ],
+          "returnType": "collection",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": false,
+          "inputTypes": [],
+          "typeMapping": [
+            "Any-Any"
+          ],
+          "exampleOfUse": "```fhirpath\nBundle.entry.resource.ofType(Patient)\n```",
+          "sectionNumber": "5.2.7"
+        },
+        {
+          "functionName": "coalesce",
+          "description": "The coalesce function takes a variable number of arguments, each of which is a collection. It returns the first non-empty collection from the arguments. If all arguments are empty collections, the result is an empty collection.",
+          "arguments": [
+            {
+              "name": "value",
+              "type": "collection",
+              "description": "Collection to check for non-empty values",
+              "variableArgs": true
+            }
+          ],
+          "returnType": "collection",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [],
+          "typeMapping": [
+            "Any-Any"
+          ],
+          "exampleOfUse": "```fhirpath\nPatient.coalesce(name.where(use='official'), name.where(use='usual'), name.first()).text // preferentially select name via use\nPatient.name.select(coalesce(family & ' ' & given.join(', '), text, 'unknown')) // select is required to process each name separately\ncoalesce(Patient.identifier.where(system = 'http://example.org/identifier').value.first(), 'unknown')\n```",
+          "sectionNumber": "5.2.8",
+          "status": "STU"
+        }
+      ]
+    },
+    {
+      "name": "Subsetting",
+      "sectionNumber": "5.3",
+      "functions": [
+        {
+          "functionName": "single",
+          "description": "Will return the single item in the input if there is just one item. If there are multiple items, an error is signaled to the evaluation environment.",
+          "arguments": [],
+          "returnType": "collection",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [],
+          "typeMapping": [
+            "Any-Any"
+          ],
+          "exampleOfUse": "```fhirpath\nPatient.name.single()\n```",
+          "sectionNumber": "5.3.2"
+        },
+        {
+          "functionName": "first",
+          "description": "Returns a collection containing only the first item in the input collection. This function is equivalent to `item[0]`.",
+          "arguments": [],
+          "returnType": "collection",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": false,
+          "inputTypes": [],
+          "typeMapping": [
+            "Any-Any"
+          ],
+          "exampleOfUse": "```fhirpath\nPatient.name.first() // equivalent to Patient.name[0]\n```",
+          "sectionNumber": "5.3.3"
+        },
+        {
+          "functionName": "last",
+          "description": "Returns a collection containing only the last item in the input collection.",
+          "arguments": [],
+          "returnType": "collection",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": false,
+          "inputTypes": [],
+          "typeMapping": [
+            "Any-Any"
+          ],
+          "exampleOfUse": "```fhirpath\nPatient.name.last() // returns the last name element in the collection\n```",
+          "sectionNumber": "5.3.4"
+        },
+        {
+          "functionName": "tail",
+          "description": "Returns a collection containing all but the first item in the input collection.",
+          "arguments": [],
+          "returnType": "collection",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": false,
+          "inputTypes": [],
+          "typeMapping": [
+            "Any-Any"
+          ],
+          "exampleOfUse": "```fhirpath\n(0 | 1 | 2).tail() // 1, 2\n```",
+          "sectionNumber": "5.3.5"
+        },
+        {
+          "functionName": "skip",
+          "description": "Returns a collection containing all but the first `num` items in the input collection.",
+          "arguments": [
+            {
+              "name": "num",
+              "type": "Integer",
+              "description": "Number of items to skip"
+            }
+          ],
+          "returnType": "collection",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": false,
+          "inputTypes": [],
+          "typeMapping": [
+            "Any-Any"
+          ],
+          "exampleOfUse": "```fhirpath\n(0 | 1 | 2).skip(1) // 1, 2\n(0 | 1 | 2).skip(2) // 2\n```",
+          "sectionNumber": "5.3.6"
+        },
+        {
+          "functionName": "take",
+          "description": "Returns a collection containing the first `num` items in the input collection, or less if there are less than `num` items. If num is less than or equal to 0, `take` returns an empty collection.",
+          "arguments": [
+            {
+              "name": "num",
+              "type": "Integer",
+              "description": "Number of items to take"
+            }
+          ],
+          "returnType": "collection",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": false,
+          "inputTypes": [],
+          "typeMapping": [
+            "Any-Any"
+          ],
+          "exampleOfUse": "```fhirpath\n(0 | 1 | 2).take(2) // 0, 1\n(0 | 1 | 2).take(5) // 0, 1, 2\n```",
+          "sectionNumber": "5.3.7"
+        },
+        {
+          "functionName": "intersect",
+          "description": "Returns the set of elements that are in both collections. Duplicate items will be eliminated by this function. Order of items is not guaranteed to be preserved in the result of this function.",
+          "arguments": [
+            {
+              "name": "other",
+              "type": "collection",
+              "description": "Collection to intersect with"
+            }
+          ],
+          "returnType": "collection",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": false,
+          "inputTypes": [],
+          "typeMapping": [
+            "Any-Any"
+          ],
+          "exampleOfUse": "```fhirpath\n(1 | 2 | 3).intersect(2 | 4) // 2\n```",
+          "sectionNumber": "5.3.8"
+        },
+        {
+          "functionName": "exclude",
+          "description": "Returns the set of elements that are not in the `other` collection. Duplicate items will not be eliminated by this function, and order will be preserved.",
+          "arguments": [
+            {
+              "name": "other",
+              "type": "collection",
+              "description": "Collection to exclude"
+            }
+          ],
+          "returnType": "collection",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": false,
+          "inputTypes": [],
+          "typeMapping": [
+            "Any-Any"
+          ],
+          "exampleOfUse": "```fhirpath\n(1 | 2 | 3).exclude(2) // returns (1 | 3)\n```",
+          "sectionNumber": "5.3.9"
+        }
+      ]
+    },
+    {
+      "name": "Combining",
+      "sectionNumber": "5.4",
+      "functions": [
+        {
+          "functionName": "union",
+          "description": "Merge the two collections into a single collection, eliminating any duplicate values (using equals (`=`) to determine equality). There is no expectation of order in the resulting collection.",
+          "arguments": [
+            {
+              "name": "other",
+              "type": "collection",
+              "description": "Collection to union with"
+            }
+          ],
+          "returnType": "collection",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": false,
+          "inputTypes": [],
+          "typeMapping": [
+            "Any-Any"
+          ],
+          "exampleOfUse": "```fhirpath\nA.union(B) // 1, 2, 3\nA.union({}) // 1, 2, 3\n```",
+          "sectionNumber": "5.4.1"
+        },
+        {
+          "functionName": "combine",
+          "description": "Merge the input and other collections into a single collection without eliminating duplicate values. Combining an empty collection with a non-empty collection will return the non-empty collection. When `preserveOrder` is `false`, or not supplied, there is no expectation of order. When `preserveOrder` is `true`, the elements of the other collection are appended to the elements of the input collection, preserving the order of elements in both collections.",
+          "arguments": [
+            {
+              "name": "other",
+              "type": "collection",
+              "description": "Collection to combine with"
+            },
+            {
+              "name": "preserveOrder",
+              "type": "Boolean",
+              "description": "Optional parameter to preserve order of elements",
+              "optional": true
+            }
+          ],
+          "returnType": "collection",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": false,
+          "inputTypes": [],
+          "typeMapping": [
+            "Any-Any"
+          ],
+          "exampleOfUse": "```fhirpath\nA.combine(B) // 1, 1, 2, 2, 3, 3 - order is not guaranteed to be preserved\nA.combine(B, true) // 1, 1, 2, 3, 2, 3 - The order is preserved using the `preserveOrder` argument\nA.combine( {} ) // 1, 1, 2, 3 - combining an empty collection with a non-empty collection returns the non-empty collection\n```",
+          "sectionNumber": "5.4.2"
+        }
+      ]
+    },
+    {
+      "name": "Conversion",
+      "sectionNumber": "5.5",
+      "functions": [
+        {
+          "functionName": "iif",
+          "description": "The `iif` function in FHIRPath is an _immediate if_, also known as a conditional operator. If `criterion` is true, the function returns the value of the `true-result` argument. If `criterion` is `false` or an empty collection, the function returns `otherwise-result`.",
+          "arguments": [
+            {
+              "name": "criterion",
+              "type": "expression",
+              "description": "Boolean expression to evaluate"
+            },
+            {
+              "name": "true-result",
+              "type": "collection",
+              "description": "Result if criterion is true"
+            },
+            {
+              "name": "otherwise-result",
+              "type": "collection",
+              "description": "Result if criterion is false (optional)",
+              "optional": true
+            }
+          ],
+          "returnType": "collection",
+          "emptyInputResult": "criterion-dependent",
+          "errorOnMultipleInput": true,
+          "inputTypes": [],
+          "typeMapping": [
+            "Any-Any"
+          ],
+          "exampleOfUse": "```fhirpath\niif(true, 'It is true', 'It is false') // returns 'It is true'\nbirthDate.iif(exists(), toString(), '(unknown)') // returns the birthDate as a string, or '(unknown)' if not present\n```",
+          "sectionNumber": "5.5.1"
+        },
+        {
+          "functionName": "toBoolean",
+          "description": "If the input collection contains a single item, this function will return a single boolean if the item is a Boolean, an Integer/Decimal with boolean representation, or a String with boolean representation.",
+          "arguments": [],
+          "returnType": "Boolean",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [
+            "Boolean",
+            "Integer",
+            "Decimal",
+            "String"
+          ],
+          "typeMapping": [
+            "Boolean-Boolean",
+            "Integer-Boolean",
+            "Decimal-Boolean",
+            "String-Boolean"
+          ],
+          "exampleOfUse": "```fhirpath\n'true'.toBoolean() // true\n1.toBoolean() // true\n```",
+          "sectionNumber": "5.5.2.1"
+        },
+        {
+          "functionName": "convertsToBoolean",
+          "description": "If the input collection contains a single item, this function will return true if the item can be converted to a Boolean value.",
+          "arguments": [],
+          "returnType": "Boolean",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [],
+          "typeMapping": [
+            "Any-Boolean"
+          ],
+          "exampleOfUse": "```fhirpath\n'true'.convertsToBoolean() // true\n```",
+          "sectionNumber": "5.5.2.2"
+        },
+        {
+          "functionName": "toInteger",
+          "description": "If the input collection contains a single item, this function will return a single integer if the item is an Integer, a String convertible to an integer, or a Boolean.",
+          "arguments": [],
+          "returnType": "Integer",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [
+            "Boolean",
+            "Integer",
+            "String"
+          ],
+          "typeMapping": [
+            "Boolean-Integer",
+            "Integer-Integer",
+            "String-Integer"
+          ],
+          "exampleOfUse": "```fhirpath\n'1'.toInteger() // 1\n```",
+          "sectionNumber": "5.5.3.1"
+        },
+        {
+          "functionName": "convertsToInteger",
+          "description": "If the input collection contains a single item, this function will return true if the item can be converted to an Integer value.",
+          "arguments": [],
+          "returnType": "Boolean",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [],
+          "typeMapping": [
+            "Any-Boolean"
+          ],
+          "exampleOfUse": "```fhirpath\n'1'.convertsToInteger() // true\n```",
+          "sectionNumber": "5.5.3.2"
+        },
+        {
+          "functionName": "toLong",
+          "description": "If the input collection contains a single item, this function will return a single Long if the item is an Integer or Long, a String convertible to a 64 bit integer, or a Boolean.",
+          "arguments": [],
+          "returnType": "Long",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [
+            "Boolean",
+            "Integer",
+            "Long",
+            "String"
+          ],
+          "typeMapping": [
+            "Boolean-Long",
+            "Integer-Long",
+            "Long-Long",
+            "String-Long"
+          ],
+          "exampleOfUse": "```fhirpath\n42.toLong() // 42\n'123'.toLong() // 123\n```",
+          "sectionNumber": "5.5.3.3",
+          "status": "STU"
+        },
+        {
+          "functionName": "convertsToLong",
+          "description": "If the input collection contains a single item, this function will return true if the item can be converted to a Long value.",
+          "arguments": [],
+          "returnType": "Boolean",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [],
+          "typeMapping": [
+            "Any-Boolean"
+          ],
+          "exampleOfUse": "```fhirpath\n'123'.convertsToLong() // true\n```",
+          "sectionNumber": "5.5.3.4",
+          "status": "STU"
+        },
+        {
+          "functionName": "toDate",
+          "description": "If the input collection contains a single item, this function will return a single date if the item is a Date, a DateTime, or a String convertible to a Date.",
+          "arguments": [
+            {
+              "name": "format",
+              "type": "String",
+              "description": "Optional format template for parsing string input (STU). Uses date/datetime format codes when provided instead of the default format.",
+              "optional": true
+            }
+          ],
+          "returnType": "Date",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [
+            "Date",
+            "DateTime",
+            "String"
+          ],
+          "typeMapping": [
+            "Date-Date",
+            "DateTime-Date",
+            "String-Date"
+          ],
+          "exampleOfUse": "```fhirpath\n@2024-01-15T23:30:00-05:00.toDate() // @2024-01-15\n'2024-01-15'.toDate() // @2024-01-15\n'150124'.toDate('ddMMyy') // @2024-01-15\n'15-01-2024'.toDate('dd-MM-yyyy') // @2024-01-15\n```",
+          "sectionNumber": "5.5.4.2"
+        },
+        {
+          "functionName": "convertsToDate",
+          "description": "If the input collection contains a single item, this function will return true if the item can be converted to a Date value.",
+          "arguments": [
+            {
+              "name": "format",
+              "type": "String",
+              "description": "Optional format template for checking string convertibility (STU). Uses date/datetime format codes when provided instead of the default format.",
+              "optional": true
+            }
+          ],
+          "returnType": "Boolean",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [],
+          "typeMapping": [
+            "Any-Boolean"
+          ],
+          "exampleOfUse": "```fhirpath\n'2015-02-04'.convertsToDate() // true\n```",
+          "sectionNumber": "5.5.4.3"
+        },
+        {
+          "functionName": "toDateTime",
+          "description": "If the input collection contains a single item, this function will return a single datetime if the item is a DateTime, a Date, or a String convertible to a DateTime.",
+          "arguments": [
+            {
+              "name": "format",
+              "type": "String",
+              "description": "Optional format template for parsing string input (STU). Uses date/datetime format codes when provided instead of the default format.",
+              "optional": true
+            }
+          ],
+          "returnType": "DateTime",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [
+            "DateTime",
+            "Date",
+            "String"
+          ],
+          "typeMapping": [
+            "DateTime-DateTime",
+            "Date-DateTime",
+            "String-DateTime"
+          ],
+          "exampleOfUse": "```fhirpath\n'2015-02-04T14:34:28Z'.toDateTime() // @2015-02-04T14:34:28Z\n'2012-01-01T10:00'.toDateTime() // @2012-01-01T10:00 ; partial datetime is preserved\n```",
+          "sectionNumber": "5.5.5.1"
+        },
+        {
+          "functionName": "convertsToDateTime",
+          "description": "If the input collection contains a single item, this function will return true if the item can be converted to a DateTime value.",
+          "arguments": [
+            {
+              "name": "format",
+              "type": "String",
+              "description": "Optional format template for checking string convertibility (STU). Uses date/datetime format codes when provided instead of the default format.",
+              "optional": true
+            }
+          ],
+          "returnType": "Boolean",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [],
+          "typeMapping": [
+            "Any-Boolean"
+          ],
+          "exampleOfUse": "```fhirpath\n'2015-02-04T14:34:28'.convertsToDateTime() // true\n```",
+          "sectionNumber": "5.5.5.2"
+        },
+        {
+          "functionName": "toDecimal",
+          "description": "If the input collection contains a single item, this function will return a single decimal if the item is an Integer or Decimal, a String convertible to a Decimal, or a Boolean.",
+          "arguments": [],
+          "returnType": "Decimal",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [
+            "Integer",
+            "Decimal",
+            "String",
+            "Boolean"
+          ],
+          "typeMapping": [
+            "Integer-Decimal",
+            "Decimal-Decimal",
+            "String-Decimal",
+            "Boolean-Decimal"
+          ],
+          "exampleOfUse": "```fhirpath\n'1.1'.toDecimal() // 1.1\n'42'.toDecimal() // 42 (as a decimal value)\n```",
+          "sectionNumber": "5.5.6.1"
+        },
+        {
+          "functionName": "convertsToDecimal",
+          "description": "If the input collection contains a single item, this function will true if the item can be converted to a Decimal value.",
+          "arguments": [],
+          "returnType": "Boolean",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [],
+          "typeMapping": [
+            "Any-Boolean"
+          ],
+          "exampleOfUse": "```fhirpath\n'1.0'.convertsToDecimal() // true\n'42'.convertsToDecimal() // true\n```",
+          "sectionNumber": "5.5.6.2"
+        },
+        {
+          "functionName": "toQuantity",
+          "description": "If the input collection contains a single item, this function will return a single quantity if the item is an Integer or Decimal, a Quantity, a String convertible to a Quantity, or a Boolean.",
+          "arguments": [
+            {
+              "name": "unit",
+              "type": "String",
+              "description": "Optional unit to convert to",
+              "optional": true
+            }
+          ],
+          "returnType": "Quantity",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [
+            "Integer",
+            "Decimal",
+            "Quantity",
+            "String",
+            "Boolean"
+          ],
+          "typeMapping": [
+            "Integer-Quantity",
+            "Decimal-Quantity",
+            "Quantity-Quantity",
+            "String-Quantity",
+            "Boolean-Quantity"
+          ],
+          "exampleOfUse": "```fhirpath\nq.toQuantity('g') // changes the value and units in the quantity according to UCUM conversion rules\n```",
+          "sectionNumber": "5.5.7.1"
+        },
+        {
+          "functionName": "convertsToQuantity",
+          "description": "If the input collection contains a single item, this function will return true if the item can be converted to a Quantity.",
+          "arguments": [
+            {
+              "name": "unit",
+              "type": "String",
+              "description": "Optional unit to check convertibility to",
+              "optional": true
+            }
+          ],
+          "returnType": "Boolean",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [],
+          "typeMapping": [
+            "Any-Boolean"
+          ],
+          "exampleOfUse": "```fhirpath\n'1 day'.convertsToQuantity() // true\n10 'mg'.convertsToQuantity() // true\n2 '[in_i]'.convertsToQuantity('cm') // true ; can convert inches to centimeters (commensurate units)\n```",
+          "sectionNumber": "5.5.7.3"
+        },
+        {
+          "functionName": "toString",
+          "description": "If the input collection contains a single item, this function will return a single String if the item is a String, an Integer, Decimal, Date, Time, DateTime, or Quantity, or a Boolean.",
+          "arguments": [],
+          "returnType": "String",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [
+            "String",
+            "Integer",
+            "Decimal",
+            "Date",
+            "Time",
+            "DateTime",
+            "Quantity",
+            "Boolean"
+          ],
+          "typeMapping": [
+            "String-String",
+            "Integer-String",
+            "Decimal-String",
+            "Date-String",
+            "Time-String",
+            "DateTime-String",
+            "Quantity-String",
+            "Boolean-String"
+          ],
+          "exampleOfUse": "```fhirpath\n42.toString() // '42'\n3.14.toString() // '3.14'\ntrue.toString() // 'true'\n(53 'km').toString() // '53 \\'km\\''\n@2020-01-01.toString() // '2020-01-01'\n```",
+          "sectionNumber": "5.5.8.1"
+        },
+        {
+          "functionName": "convertsToString",
+          "description": "If the input collection contains a single item, this function will return true if the item can be converted to a String.",
+          "arguments": [],
+          "returnType": "Boolean",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [],
+          "typeMapping": [
+            "Any-Boolean"
+          ],
+          "exampleOfUse": "```fhirpath\n@2025-01-15.convertsToString() // true\n1.convertsToString() // true\n```",
+          "sectionNumber": "5.5.8.2"
+        },
+        {
+          "functionName": "toTime",
+          "description": "If the input collection contains a single item, this function will return a single time if the item is a Time or a String convertible to a Time.",
+          "arguments": [],
+          "returnType": "Time",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [
+            "Time",
+            "String"
+          ],
+          "typeMapping": [
+            "Time-Time",
+            "String-Time"
+          ],
+          "exampleOfUse": "```fhirpath\n'14:34:28'.toTime() // @T14:34:28\n'10:00'.toTime() // @T10:00 ; partial time is preserved\n```",
+          "sectionNumber": "5.5.9.1"
+        },
+        {
+          "functionName": "convertsToTime",
+          "description": "If the input collection contains a single item, this function will return true if the item can be converted to a Time.",
+          "arguments": [],
+          "returnType": "Boolean",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [],
+          "typeMapping": [
+            "Any-Boolean"
+          ],
+          "exampleOfUse": "```fhirpath\n'14:34:28'.convertsToTime() // true\n```",
+          "sectionNumber": "5.5.9.2"
+        }
+      ]
+    },
+    {
+      "name": "String Manipulation",
+      "sectionNumber": "5.6",
+      "functions": [
+        {
+          "functionName": "indexOf",
+          "description": "Returns the 0-based index of the first position `substring` is found in the input string, or -1 if it is not found.",
+          "arguments": [
+            {
+              "name": "substring",
+              "type": "String",
+              "description": "Substring to find"
+            }
+          ],
+          "returnType": "Integer",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [
+            "String"
+          ],
+          "typeMapping": [
+            "String-Integer"
+          ],
+          "exampleOfUse": "```fhirpath\n'abcdefg'.indexOf('bc') // 1\n'abcdefg'.indexOf('x') // -1\n'abcdefg'.indexOf('abcdefg') // 0\n```",
+          "sectionNumber": "5.6.1"
+        },
+        {
+          "functionName": "lastIndexOf",
+          "description": "Returns the 0-based index of the last position `substring` is found in the input string, or -1 if it is not found.",
+          "arguments": [
+            {
+              "name": "substring",
+              "type": "String",
+              "description": "Substring to find"
+            }
+          ],
+          "returnType": "Integer",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [
+            "String"
+          ],
+          "typeMapping": [
+            "String-Integer"
+          ],
+          "exampleOfUse": "```fhirpath\n'abcdefg'.lastIndexOf('bc') // 1\n'abcdefg'.lastIndexOf('x') // -1\n'abc abc'.lastIndexOf('a') // 4\n```",
+          "sectionNumber": "5.6.2",
+          "status": "STU"
+        },
+        {
+          "functionName": "substring",
+          "description": "Returns the part of the string starting at position `start` (zero-based). If `length` is given, will return at most `length` number of characters from the input string.",
+          "arguments": [
+            {
+              "name": "start",
+              "type": "Integer",
+              "description": "Start position (zero-based)"
+            },
+            {
+              "name": "length",
+              "type": "Integer",
+              "description": "Optional length of substring to return",
+              "optional": true
+            }
+          ],
+          "returnType": "String",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [
+            "String"
+          ],
+          "typeMapping": [
+            "String-String"
+          ],
+          "exampleOfUse": "```fhirpath\n'abcdefg'.substring(3) // 'defg'\n'abcdefg'.substring(1, 2) // 'bc'\n```",
+          "sectionNumber": "5.6.3"
+        },
+        {
+          "functionName": "startsWith",
+          "description": "Returns `true` when the input string starts with the given `prefix`.",
+          "arguments": [
+            {
+              "name": "prefix",
+              "type": "String",
+              "description": "Prefix to check"
+            }
+          ],
+          "returnType": "Boolean",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [
+            "String"
+          ],
+          "typeMapping": [
+            "String-Boolean"
+          ],
+          "exampleOfUse": "```fhirpath\n'abcdefg'.startsWith('abc') // true\n'abcdefg'.startsWith('xyz') // false\n```",
+          "sectionNumber": "5.6.4"
+        },
+        {
+          "functionName": "endsWith",
+          "description": "Returns `true` when the input string ends with the given `suffix`.",
+          "arguments": [
+            {
+              "name": "suffix",
+              "type": "String",
+              "description": "Suffix to check"
+            }
+          ],
+          "returnType": "Boolean",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [
+            "String"
+          ],
+          "typeMapping": [
+            "String-Boolean"
+          ],
+          "exampleOfUse": "```fhirpath\n'abcdefg'.endsWith('efg') // true\n'abcdefg'.endsWith('abc') // false\n```",
+          "sectionNumber": "5.6.5"
+        },
+        {
+          "functionName": "contains",
+          "description": "Returns `true` when the given `substring` is a substring of the input string.",
+          "arguments": [
+            {
+              "name": "substring",
+              "type": "String",
+              "description": "Substring to check"
+            }
+          ],
+          "returnType": "Boolean",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [
+            "String"
+          ],
+          "typeMapping": [
+            "String-Boolean"
+          ],
+          "exampleOfUse": "```fhirpath\n'abc'.contains('b') // true\n'abc'.contains('bc') // true\n'abc'.contains('d') // false\n```",
+          "sectionNumber": "5.6.6"
+        },
+        {
+          "functionName": "upper",
+          "description": "Returns the input string with all characters converted to upper case.",
+          "arguments": [],
+          "returnType": "String",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [
+            "String"
+          ],
+          "typeMapping": [
+            "String-String"
+          ],
+          "exampleOfUse": "```fhirpath\n'abcdefg'.upper() // 'ABCDEFG'\n'AbCdefg'.upper() // 'ABCDEFG'\n```",
+          "sectionNumber": "5.6.7"
+        },
+        {
+          "functionName": "lower",
+          "description": "Returns the input string with all characters converted to lower case.",
+          "arguments": [],
+          "returnType": "String",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [
+            "String"
+          ],
+          "typeMapping": [
+            "String-String"
+          ],
+          "exampleOfUse": "```fhirpath\n'ABCDEFG'.lower() // 'abcdefg'\n'aBcDEFG'.lower() // 'abcdefg'\n```",
+          "sectionNumber": "5.6.8"
+        },
+        {
+          "functionName": "replace",
+          "description": "Returns the input string with all instances of `pattern` replaced with `substitution`. If the substitution is the empty string (`''`), instances of `pattern` are removed from the result.",
+          "arguments": [
+            {
+              "name": "pattern",
+              "type": "String",
+              "description": "Pattern to replace"
+            },
+            {
+              "name": "substitution",
+              "type": "String",
+              "description": "Substitution for the pattern"
+            }
+          ],
+          "returnType": "String",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [
+            "String"
+          ],
+          "typeMapping": [
+            "String-String"
+          ],
+          "exampleOfUse": "```fhirpath\n'abcdefg'.replace('cde', '123') // 'ab123fg'\n'abcdefg'.replace('cde', '') // 'abfg'\n'abc'.replace('', 'x') // 'xaxbxcx'\n```",
+          "sectionNumber": "5.6.9"
+        },
+        {
+          "functionName": "matches",
+          "description": "Returns `true` when the value matches the given regular expression. Regular expressions should function consistently, regardless of any culture- and locale-specific settings in the environment.",
+          "arguments": [
+            {
+              "name": "regex",
+              "type": "String",
+              "description": "Regular expression to match against"
+            },
+            {
+              "name": "flags",
+              "type": "String",
+              "description": "Optional flags for the regex (i for case-insensitive, m for multi-line)",
+              "optional": true
+            }
+          ],
+          "returnType": "Boolean",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [
+            "String"
+          ],
+          "typeMapping": [
+            "String-Boolean"
+          ],
+          "exampleOfUse": "```fhirpath\n'http://fhir.org/guides/cqf/common/Library/FHIR-ModelInfo|4.0.1'.matches('Library') // returns true\n'N8000123123'.matches('^N[0-9]{8}$') // returns false as the string is not an 8 char number (it has 10)\n```",
+          "sectionNumber": "5.6.10"
+        },
+        {
+          "functionName": "matchesFull",
+          "description": "Returns `true` when the value completely matches the given regular expression. This is equivalent to surrounding the regex with ^ and $ but provides a more readable approach.",
+          "arguments": [
+            {
+              "name": "regex",
+              "type": "String",
+              "description": "Regular expression to match against"
+            },
+            {
+              "name": "flags",
+              "type": "String",
+              "description": "Optional flags for the regex (i for case-insensitive, m for multi-line)",
+              "optional": true
+            }
+          ],
+          "returnType": "Boolean",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [
+            "String"
+          ],
+          "typeMapping": [
+            "String-Boolean"
+          ],
+          "exampleOfUse": "```fhirpath\n'N80001231'.matchesFull('N[0-9]{8}') // returns true\n'N8000123123'.matchesFull('N[0-9]{8}') // returns false as the string is not exactly an 8 char number\n```",
+          "sectionNumber": "5.6.11",
+          "status": "STU"
+        },
+        {
+          "functionName": "replaceMatches",
+          "description": "Matches the input using the regular expression in `regex` and replaces each match with the `substitution` string. Within a substitution string, \\n refers to the nth match group in the regex. \\0 refers to the entire match.",
+          "arguments": [
+            {
+              "name": "regex",
+              "type": "String",
+              "description": "Regular expression to match against"
+            },
+            {
+              "name": "substitution",
+              "type": "String",
+              "description": "Substitution string, with \\n referring to match groups"
+            },
+            {
+              "name": "flags",
+              "type": "String",
+              "description": "Optional flags for the regex (i for case-insensitive, m for multi-line)",
+              "optional": true
+            }
+          ],
+          "returnType": "String",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [
+            "String"
+          ],
+          "typeMapping": [
+            "String-String"
+          ],
+          "exampleOfUse": "```fhirpath\n'10/15/2014'.replaceMatches('[0-9]+', 'X') // 'X/X/X'\n'Mary had a little lamb'.replaceMatches('(\\\\w+) (\\\\w+)', '\\\\2, \\\\1') // 'had, Mary a lamb, little'\n```",
+          "sectionNumber": "5.6.12"
+        },
+        {
+          "functionName": "length",
+          "description": "Returns the length of the input string. Returns the number of characters in the string.",
+          "arguments": [],
+          "returnType": "Integer",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [
+            "String"
+          ],
+          "typeMapping": [
+            "String-Integer"
+          ],
+          "exampleOfUse": "```fhirpath\n'abcdefg'.length() // 7\n''.length() // 0\n```",
+          "sectionNumber": "5.6.13"
+        },
+        {
+          "functionName": "toChars",
+          "description": "Returns a collection with one string for each character in the input, in the order in which they appear in the string.",
+          "arguments": [],
+          "returnType": "collection",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [
+            "String"
+          ],
+          "typeMapping": [
+            "String-String"
+          ],
+          "exampleOfUse": "```fhirpath\n'abc'.toChars() // {'a', 'b', 'c'}\n```",
+          "sectionNumber": "5.6.14"
+        }
+      ]
+    },
+    {
+      "name": "Additional String Functions",
+      "sectionNumber": "5.7",
+      "functions": [
+        {
+          "functionName": "encode",
+          "description": "The encode function takes a singleton string and returns the result of encoding that string in the given format. Available formats are hex, base64, and urlbase64.",
+          "arguments": [
+            {
+              "name": "format",
+              "type": "String",
+              "description": "Encoding format (hex, base64, urlbase64)"
+            }
+          ],
+          "returnType": "String",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [
+            "String"
+          ],
+          "typeMapping": [
+            "String-String"
+          ],
+          "exampleOfUse": "```fhirpath\n'test'.encode('base64') // 'dGVzdA=='\n'test'.encode('hex') // '74657374'\n```",
+          "sectionNumber": "5.7.1",
+          "status": "STU"
+        },
+        {
+          "functionName": "decode",
+          "description": "The decode function takes a singleton encoded string and returns the result of decoding that string according to the given format. Available formats are hex, base64, and urlbase64.",
+          "arguments": [
+            {
+              "name": "format",
+              "type": "String",
+              "description": "Encoding format (hex, base64, urlbase64)"
+            }
+          ],
+          "returnType": "String",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [
+            "String"
+          ],
+          "typeMapping": [
+            "String-String"
+          ],
+          "exampleOfUse": "```fhirpath\n'dGVzdA=='.decode('base64') // 'test'\n'74657374'.decode('hex') // 'test'\n```",
+          "sectionNumber": "5.7.2",
+          "status": "STU"
+        },
+        {
+          "functionName": "escape",
+          "description": "The escape function takes a singleton string and escapes it for a given target. Available targets are html and json.",
+          "arguments": [
+            {
+              "name": "target",
+              "type": "String",
+              "description": "Target format (html, json)"
+            }
+          ],
+          "returnType": "String",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [
+            "String"
+          ],
+          "typeMapping": [
+            "String-String"
+          ],
+          "exampleOfUse": "```fhirpath\n'A&B'.escape('html') // 'A&amp;B'\n'\"1<2\"'.escape('json') // '\\\"1<2\\\"'\n```",
+          "sectionNumber": "5.7.3",
+          "status": "STU"
+        },
+        {
+          "functionName": "unescape",
+          "description": "The unescape function takes a singleton string and unescapes it for a given target. Available targets are html and json.",
+          "arguments": [
+            {
+              "name": "target",
+              "type": "String",
+              "description": "Target format (html, json)"
+            }
+          ],
+          "returnType": "String",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [
+            "String"
+          ],
+          "typeMapping": [
+            "String-String"
+          ],
+          "exampleOfUse": "```fhirpath\n'&quot;1&lt;2&quot;'.unescape('html') // '\"1<2\"'\n```",
+          "sectionNumber": "5.7.4",
+          "status": "STU"
+        },
+        {
+          "functionName": "trim",
+          "description": "Returns the input string with leading and trailing whitespace removed.",
+          "arguments": [],
+          "returnType": "String",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [
+            "String"
+          ],
+          "typeMapping": [
+            "String-String"
+          ],
+          "exampleOfUse": "```fhirpath\n'  abc  '.trim() // 'abc'\n'\\tabc\\n'.trim() // 'abc'\n```",
+          "sectionNumber": "5.7.5",
+          "status": "STU"
+        },
+        {
+          "functionName": "split",
+          "description": "Splits the input string using `separator` as the split point and returns a collection with one string for each portion of the input.",
+          "arguments": [
+            {
+              "name": "separator",
+              "type": "String",
+              "description": "String to use as separator"
+            }
+          ],
+          "returnType": "collection",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [
+            "String"
+          ],
+          "typeMapping": [
+            "String-String"
+          ],
+          "exampleOfUse": "```fhirpath\n'a,b,c,d,e'.split(',') // { 'a', 'b', 'c', 'd', 'e' }\n'a b c'.split(' ') // { 'a', 'b', 'c' }\n```",
+          "sectionNumber": "5.7.6",
+          "status": "STU"
+        },
+        {
+          "functionName": "join",
+          "description": "Combines the elements in the input collection into a single string, separated by `separator`. If no separator is specified, the elements are concatenated directly.",
+          "arguments": [
+            {
+              "name": "separator",
+              "type": "String",
+              "description": "Optional separator to use between elements",
+              "optional": true
+            }
+          ],
+          "returnType": "String",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": false,
+          "inputTypes": [
+            "String"
+          ],
+          "typeMapping": [
+            "String-String"
+          ],
+          "exampleOfUse": "```fhirpath\n{'a', 'b', 'c'}.join(',') // 'a,b,c'\n{'a', 'b', 'c'}.join() // 'abc'\n```",
+          "sectionNumber": "5.7.7",
+          "status": "STU"
+        }
+      ]
+    },
+    {
+      "name": "Math",
+      "sectionNumber": "5.8",
+      "functions": [
+        {
+          "functionName": "abs",
+          "description": "Returns the absolute value of the input. When taking the absolute value of a quantity, the unit is unchanged.",
+          "arguments": [],
+          "returnType": "Integer | Long | Decimal | Quantity",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [
+            "Integer",
+            "Long",
+            "Decimal",
+            "Quantity"
+          ],
+          "typeMapping": [
+            "Integer-Integer",
+            "Long-Long",
+            "Decimal-Decimal", 
+            "Quantity-Quantity"
+          ],
+          "exampleOfUse": "```fhirpath\n(-5).abs() // 5\n(-5.5).abs() // 5.5\n(-5.5 'mg').abs() // 5.5 'mg'\n```",
+          "sectionNumber": "5.8.1",
+          "status": "STU"
+        },
+        {
+          "functionName": "ceiling",
+          "description": "Returns the first integer greater than or equal to the input.",
+          "arguments": [],
+          "returnType": "Integer | Quantity",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [
+            "Integer",
+            "Decimal",
+            "Quantity"
+          ],
+          "typeMapping": [
+            "Integer-Integer",
+            "Decimal-Integer",
+            "Quantity-Quantity"
+          ],
+          "exampleOfUse": "```fhirpath\n1.ceiling() // 1\n1.1.ceiling() // 2\n(-1.1).ceiling() // -1\n```",
+          "sectionNumber": "5.8.2",
+          "status": "STU"
+        },
+        {
+          "functionName": "exp",
+          "description": "Returns _e_ raised to the power of the input.",
+          "arguments": [],
+          "returnType": "Decimal",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [
+            "Integer",
+            "Long",
+            "Decimal"
+          ],
+          "inputTypeViaImplicitCasting": [
+            "Integer",
+            "Long"
+          ],
+          "typeMapping": [
+            "Integer-Decimal",
+            "Long-Decimal",
+            "Decimal-Decimal"
+          ],
+          "exampleOfUse": "```fhirpath\n0.exp() // 1.0\n(-0.0).exp() // 1.0\n```",
+          "sectionNumber": "5.8.3",
+          "status": "STU"
+        },
+        {
+          "functionName": "floor",
+          "description": "Returns the first integer less than or equal to the input.",
+          "arguments": [],
+          "returnType": "Integer | Quantity",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [
+            "Integer",
+            "Decimal",
+            "Quantity"
+          ],
+          "typeMapping": [
+            "Integer-Integer",
+            "Decimal-Integer",
+            "Quantity-Quantity"
+          ],
+          "exampleOfUse": "```fhirpath\n1.floor() // 1\n2.1.floor() // 2\n(-2.1).floor() // -3\n```",
+          "sectionNumber": "5.8.4",
+          "status": "STU"
+        },
+        {
+          "functionName": "ln",
+          "description": "Returns the natural logarithm of the input (i.e. the logarithm base _e_).",
+          "arguments": [],
+          "returnType": "Decimal",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [
+            "Integer",
+            "Long",
+            "Decimal"
+          ],
+          "inputTypeViaImplicitCasting": [
+            "Integer",
+            "Long"
+          ],
+          "typeMapping": [
+            "Integer-Decimal",
+            "Long-Decimal",
+            "Decimal-Decimal"
+          ],
+          "exampleOfUse": "```fhirpath\n1.ln() // 0.0\n1.0.ln() // 0.0\n```",
+          "sectionNumber": "5.8.5",
+          "status": "STU"
+        },
+        {
+          "functionName": "log",
+          "description": "Returns the logarithm base `base` of the input number.",
+          "arguments": [
+            {
+              "name": "base",
+              "type": "Decimal",
+              "description": "Base of the logarithm"
+            }
+          ],
+          "returnType": "Decimal",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [
+            "Integer",
+            "Long",
+            "Decimal"
+          ],
+          "inputTypeViaImplicitCasting": [
+            "Integer",
+            "Long"
+          ],
+          "typeMapping": [
+            "Integer-Decimal",
+            "Long-Decimal",
+            "Decimal-Decimal"
+          ],
+          "exampleOfUse": "```fhirpath\n16.log(2) // 4.0\n100.0.log(10.0) // 2.0\n```",
+          "sectionNumber": "5.8.6",
+          "status": "STU"
+        },
+        {
+          "functionName": "power",
+          "description": "Raises a number to the `exponent` power. This function can operate on Decimal and Integer types, but not on Quantity. If this function is used with Integers, the result is an Integer. If the function is used with Decimals, the result is a Decimal. If the function is used with a mixture of Integer and Decimal, the Integer is implicitly converted to a Decimal and the result is a Decimal. Note that if both the base and the `exponent` are integers and the `exponent` is negative, the result is empty since that might result in a Decimal value, not an Integer (the expected output type for this case). If the power cannot be represented (such as the -1 raised to the 0.5), the result is empty.",
+          "arguments": [
+            {
+              "name": "exponent",
+              "type": "Integer | Decimal",
+              "description": "The exponent to raise the input number to"
+            }
+          ],
+          "returnType": "Decimal",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [
+            "Integer",
+            "Long",
+            "Decimal"
+          ],
+          "typeMapping": [
+            "Integer-Decimal",
+            "Long-Decimal",
+            "Decimal-Decimal"
+          ],
+          "exampleOfUse": "```fhirpath\n2.power(3) // 8\n2.5.power(2) // 6.25\n(-1).power(0.5) // empty ({ })\n```",
+          "sectionNumber": "5.8.7",
+          "status": "STU"
+        },
+        {
+          "functionName": "round",
+          "description": "Rounds the input to the nearest whole number using a traditional round (i.e. to the nearest whole number), meaning that a decimal value greater than or equal to 0.5 and less than 1.0 will round to 1, and a decimal value less than or equal to -0.5 and greater than -1.0 will round to -1. If specified, the precision argument determines the decimal place at which the rounding will occur. If not specified, the rounding will default to 0 decimal places.",
+          "arguments": [
+            {
+              "name": "precision",
+              "type": "Integer",
+              "description": "Optional decimal places to round to",
+              "optional": true
+            }
+          ],
+          "returnType": "Decimal | Quantity",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [
+            "Integer",
+            "Long",
+            "Decimal",
+            "Quantity"
+          ],
+          "typeMapping": [
+            "Integer-Decimal",
+            "Long-Decimal",
+            "Decimal-Decimal",
+            "Quantity-Quantity"
+          ],
+          "exampleOfUse": "```fhirpath\n1.round() // 1\n3.14159.round(3) // 3.142\n```",
+          "sectionNumber": "5.8.8",
+          "status": "STU"
+        },
+        {
+          "functionName": "sqrt",
+          "description": "Returns the square root of the input number as a Decimal.",
+          "arguments": [],
+          "returnType": "Decimal",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [
+            "Integer",
+            "Long",
+            "Decimal"
+          ],
+          "inputTypeViaImplicitCasting": [
+            "Integer",
+            "Long"
+          ],
+          "typeMapping": [
+            "Integer-Decimal",
+            "Long-Decimal",
+            "Decimal-Decimal"
+          ],
+          "exampleOfUse": "```fhirpath\n81.sqrt() // 9.0\n(-1).sqrt() // empty\n```",
+          "sectionNumber": "5.8.9",
+          "status": "STU"
+        },
+        {
+          "functionName": "truncate",
+          "description": "Returns the integer portion of the input.",
+          "arguments": [],
+          "returnType": "Integer | Quantity",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [
+            "Integer",
+            "Decimal",
+            "Quantity"
+          ],
+          "typeMapping": [
+            "Integer-Integer",
+            "Decimal-Integer",
+            "Quantity-Quantity"
+          ],
+          "exampleOfUse": "```fhirpath\n101.truncate() // 101\n1.00000001.truncate() // 1\n(-1.56).truncate() // -1\n```",
+          "sectionNumber": "5.8.10",
+          "status": "STU"
+        }
+      ]
+    },
+    {
+      "name": "Tree navigation",
+      "sectionNumber": "5.9",
+      "functions": [
+        {
+          "functionName": "children",
+          "description": "Returns a collection with all immediate child nodes of all items in the input collection. Note that the ordering of the children is undefined.",
+          "arguments": [],
+          "returnType": "collection",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": false,
+          "inputTypes": [],
+          "typeMapping": [
+            "Any-Any"
+          ],
+          "exampleOfUse": "```fhirpath\nPatient.gender.children() // the FHIR patient gender datatype is a FHIR code, which could have value, id and potentially extensions returned.\n```",
+          "sectionNumber": "5.9.1"
+        },
+        {
+          "functionName": "descendants",
+          "description": "Returns a collection with all descendant nodes of all items in the input collection. The result does not include the nodes in the input collection themselves.",
+          "arguments": [],
+          "returnType": "collection",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": false,
+          "inputTypes": [],
+          "typeMapping": [
+            "Any-Any"
+          ],
+          "exampleOfUse": "```fhirpath\nQuestionnaireResponse.descendants().answer.value.ofType(Coding) // returns all coded answers anywhere in a QuestionnaireResponse\n```",
+          "sectionNumber": "5.9.2"
+        }
+      ]
+    },
+    {
+      "name": "Utility functions",
+      "sectionNumber": "5.10",
+      "functions": [
+        {
+          "functionName": "trace",
+          "description": "Adds a String representation of the input collection to the diagnostic log, using the `name` argument as the name in the log. Does not change the input, so returns the input collection as output.",
+          "arguments": [
+            {
+              "name": "name",
+              "type": "String",
+              "description": "Name to use in the log"
+            },
+            {
+              "name": "projection",
+              "type": "Expression",
+              "description": "Optional expression to project for logging",
+              "optional": true
+            }
+          ],
+          "returnType": "collection",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": false,
+          "inputTypes": [],
+          "typeMapping": [
+            "Any-Any"
+          ],
+          "exampleOfUse": "```fhirpath\ncontained.where(criteria).trace('unmatched', id).empty()\n```",
+          "sectionNumber": "5.10.1"
+        },
+        {
+          "functionName": "pathname",
+          "description": "Returns the direct path of each element of the input collection within the input resource, using only element names and indexers. If an element was derived from computation rather than navigation it is excluded from the result. Elements outside the input resource are also excluded, unless they are contained resources.",
+          "arguments": [
+            {
+              "name": "short",
+              "type": "Boolean",
+              "description": "Optional parameter to exclude array indexers if an element is known to not be an array",
+              "optional": true
+            }
+          ],
+          "returnType": "collection",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": false,
+          "inputTypes": [],
+          "typeMapping": [
+            "Any-String"
+          ],
+          "exampleOfUse": "```fhirpath\nitem.item.item.where(linkId = 'i508').item.where(linkId='i534').answer.value.pathname()\n// 'QuestionnaireResponse.item[2].item[8].item[1].item[1].answer[0].value[0]'\n```",
+          "sectionNumber": "5.10.2",
+          "status": "STU"
+        },
+        {
+          "functionName": "now",
+          "description": "Returns the current date and time, including timezone offset.",
+          "arguments": [],
+          "returnType": "DateTime",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": false,
+          "inputTypes": [],
+          "typeMapping": [
+            "Any-DateTime"
+          ],
+          "exampleOfUse": "```fhirpath\nnow() // Could return values like @2026-02-25T14:31:39.096+11:00, @2026-02-25T03:31:44.306994+00:00, @2026-02-25T03:31:41.197Z\n```",
+          "sectionNumber": "5.10.3.1"
+        },
+        {
+          "functionName": "timeOfDay",
+          "description": "Returns the current time.",
+          "arguments": [],
+          "returnType": "Time",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": false,
+          "inputTypes": [],
+          "typeMapping": [
+            "Any-Time"
+          ],
+          "exampleOfUse": "```fhirpath\ntimeOfDay() // @T14:34:17.923 ; only the time portion of the result of now(). Equivalent to now().timeOf().\ntimeOfDay() = timeOfDay() // true ; timeOfDay is deterministic within a single expression\n```",
+          "sectionNumber": "5.10.3.2"
+        },
+        {
+          "functionName": "today",
+          "description": "Returns the current date.",
+          "arguments": [],
+          "returnType": "Date",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": false,
+          "inputTypes": [],
+          "typeMapping": [
+            "Any-Date"
+          ],
+          "exampleOfUse": "```fhirpath\ntoday() // @2026-02-25 ; equivalent to now().toDate()\n```",
+          "sectionNumber": "5.10.3.3"
+        },
+        {
+          "functionName": "defineVariable",
+          "description": "Defines a variable named `name` that is accessible in subsequent expressions on the output collection and has the value of `projection` if present, otherwise the value of the input collection. In either case the function does not change the input and the output is the same as the input collection.",
+          "arguments": [
+            {
+              "name": "name",
+              "type": "String",
+              "description": "Name of the variable"
+            },
+            {
+              "name": "projection",
+              "type": "collection",
+              "description": "Optional value for the variable; if not provided, the input collection is used",
+              "optional": true
+            }
+          ],
+          "returnType": "collection",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": false,
+          "inputTypes": [],
+          "typeMapping": [
+            "Any-Any"
+          ],
+          "exampleOfUse": "```fhirpath\ngroup.select(defineVariable('grp'))\n```",
+          "sectionNumber": "5.10.4",
+          "status": "STU"
+        },
+        {
+          "functionName": "lowBoundary",
+          "description": "The least possible value of the input to the specified precision. The function can only be used with Decimal, Date, DateTime, and Time values, and returns the same type as the value in the input collection.",
+          "arguments": [
+            {
+              "name": "precision",
+              "type": "Integer",
+              "description": "Optional precision specification",
+              "optional": true
+            }
+          ],
+          "returnType": "Decimal | Date | DateTime | Time",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [
+            "Decimal",
+            "Date",
+            "DateTime",
+            "Time"
+          ],
+          "typeMapping": [
+            "Decimal-Decimal",
+            "Date-Date",
+            "DateTime-DateTime",
+            "Time-Time"
+          ],
+          "exampleOfUse": "```fhirpath\n1.587.lowBoundary(8) // 1.58700000\n@2014.lowBoundary(6) // @2014-01\n@2014-01-01T08.lowBoundary(17) // @2014-01-01T08:00:00.000\n@T10:30.lowBoundary(9) // @T10:30:00.000\n```",
+          "sectionNumber": "5.10.5",
+          "status": "STU"
+        },
+        {
+          "functionName": "highBoundary",
+          "description": "The greatest possible value of the input to the specified precision. The function can only be used with Decimal, Date, DateTime, and Time values, and returns the same type as the value in the input collection.",
+          "arguments": [
+            {
+              "name": "precision",
+              "type": "Integer",
+              "description": "Optional precision specification",
+              "optional": true
+            }
+          ],
+          "returnType": "Decimal | Date | DateTime | Time",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [
+            "Decimal",
+            "Date",
+            "DateTime",
+            "Time"
+          ],
+          "typeMapping": [
+            "Decimal-Decimal",
+            "Date-Date",
+            "DateTime-DateTime",
+            "Time-Time"
+          ],
+          "exampleOfUse": "```fhirpath\n1.587.highBoundary(8) // 1.58799999\n@2014.highBoundary(6) // @2014-12\n@2014-01-01T08.highBoundary(17) // @2014-01-01T08:59:59.999\n@T10:30.highBoundary(9) // @T10:30:59.999\n```",
+          "sectionNumber": "5.10.6",
+          "status": "STU"
+        },
+        {
+          "functionName": "precision",
+          "description": "If the input collection contains a single item, this function will return the number of digits of precision. The function can only be used with Decimal, Date, DateTime, and Time values.",
+          "arguments": [],
+          "returnType": "Integer",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [
+            "Decimal",
+            "Date",
+            "DateTime",
+            "Time"
+          ],
+          "typeMapping": [
+            "Decimal-Integer",
+            "Date-Integer",
+            "DateTime-Integer",
+            "Time-Integer"
+          ],
+          "exampleOfUse": "```fhirpath\n1.58700.precision() // 5\n@2014.precision() // 4\n@2014-01-05T10:30:00.000.precision() // 17\n@T10:30.precision() // 4\n@T10:30:00.000.precision() // 9\n```",
+          "sectionNumber": "5.10.7",
+          "status": "STU"
+        },
+        {
+          "functionName": "yearOf",
+          "description": "If the input collection contains a single Date or DateTime, this function will return the year component.",
+          "arguments": [],
+          "returnType": "Integer",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [
+            "Date",
+            "DateTime"
+          ],
+          "typeMapping": [
+            "Date-Integer",
+            "DateTime-Integer"
+          ],
+          "exampleOfUse": "```fhirpath\n@2014-01-05T10:30:00.000.yearOf() // 2014\n```",
+          "sectionNumber": "5.10.8.1",
+          "status": "STU"
+        },
+        {
+          "functionName": "monthOf",
+          "description": "If the input collection contains a single Date or DateTime, this function will return the month component.",
+          "arguments": [],
+          "returnType": "Integer",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [
+            "Date",
+            "DateTime"
+          ],
+          "typeMapping": [
+            "Date-Integer",
+            "DateTime-Integer"
+          ],
+          "exampleOfUse": "```fhirpath\n@2014-01-05T10:30:00.000.monthOf() // 1\n```",
+          "sectionNumber": "5.10.8.2",
+          "status": "STU"
+        },
+        {
+          "functionName": "dayOf",
+          "description": "If the input collection contains a single Date or DateTime, this function will return the day component.",
+          "arguments": [],
+          "returnType": "Integer",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [
+            "Date",
+            "DateTime"
+          ],
+          "typeMapping": [
+            "Date-Integer",
+            "DateTime-Integer"
+          ],
+          "exampleOfUse": "```fhirpath\n@2014-01-05T10:30:00.000.dayOf() // 5\n```",
+          "sectionNumber": "5.10.8.3",
+          "status": "STU"
+        },
+        {
+          "functionName": "hourOf",
+          "description": "If the input collection contains a single Date, DateTime or Time, this function will return the hour component.",
+          "arguments": [],
+          "returnType": "Integer",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [
+            "Date",
+            "DateTime",
+            "Time"
+          ],
+          "typeMapping": [
+            "Date-Integer",
+            "DateTime-Integer",
+            "Time-Integer"
+          ],
+          "exampleOfUse": "```fhirpath\n@2014-01-05T10:30:00.000.hourOf() // 10\n```",
+          "sectionNumber": "5.10.8.4",
+          "status": "STU"
+        },
+        {
+          "functionName": "minuteOf",
+          "description": "If the input collection contains a single Date, DateTime or Time, this function will return the minute component.",
+          "arguments": [],
+          "returnType": "Integer",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [
+            "Date",
+            "DateTime",
+            "Time"
+          ],
+          "typeMapping": [
+            "Date-Integer",
+            "DateTime-Integer",
+            "Time-Integer"
+          ],
+          "exampleOfUse": "```fhirpath\n@2012-01-01T12:30:40.002-07:00.minuteOf() // 30\n```",
+          "sectionNumber": "5.10.8.5",
+          "status": "STU"
+        },
+        {
+          "functionName": "secondOf",
+          "description": "If the input collection contains a single Date, DateTime or Time, this function will return the second component.",
+          "arguments": [],
+          "returnType": "Integer",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [
+            "Date",
+            "DateTime",
+            "Time"
+          ],
+          "typeMapping": [
+            "Date-Integer",
+            "DateTime-Integer",
+            "Time-Integer"
+          ],
+          "exampleOfUse": "```fhirpath\n@2012-01-01T12:30:40.002-07:00.secondOf() // 40\n```",
+          "sectionNumber": "5.10.8.6",
+          "status": "STU"
+        },
+        {
+          "functionName": "millisecondOf",
+          "description": "If the input collection contains a single Date, DateTime or Time, this function will return the millisecond component.",
+          "arguments": [],
+          "returnType": "Integer",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [
+            "Date",
+            "DateTime",
+            "Time"
+          ],
+          "typeMapping": [
+            "Date-Integer",
+            "DateTime-Integer",
+            "Time-Integer"
+          ],
+          "exampleOfUse": "```fhirpath\n@2012-01-01T12:30:00.002-07:00.millisecondOf() // 2\n```",
+          "sectionNumber": "5.10.8.7",
+          "status": "STU"
+        },
+        {
+          "functionName": "timezoneOffsetOf",
+          "description": "If the input collection contains a single DateTime, this function will return the timezone offset component.",
+          "arguments": [],
+          "returnType": "Decimal",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [
+            "DateTime"
+          ],
+          "typeMapping": [
+            "DateTime-Decimal"
+          ],
+          "exampleOfUse": "```fhirpath\n@2012-01-01T12:30:00.000-07:00.timezoneOffsetOf() // -7.0\n```",
+          "sectionNumber": "5.10.8.8",
+          "status": "STU"
+        },
+        {
+          "functionName": "dateOf",
+          "description": "If the input collection contains a single Date or DateTime, this function will return the date component (up to the precision present in the input value).",
+          "arguments": [],
+          "returnType": "Date",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [
+            "Date",
+            "DateTime"
+          ],
+          "typeMapping": [
+            "Date-Date",
+            "DateTime-Date"
+          ],
+          "exampleOfUse": "```fhirpath\n@2012-01-01T12:30:00.000-07:00.dateOf() // @2012-01-01\n```",
+          "sectionNumber": "5.10.8.9",
+          "status": "STU"
+        },
+        {
+          "functionName": "timeOf",
+          "description": "If the input collection contains a single DateTime, this function will return the time component.",
+          "arguments": [],
+          "returnType": "Time",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [
+            "DateTime"
+          ],
+          "typeMapping": [
+            "DateTime-Time"
+          ],
+          "exampleOfUse": "```fhirpath\n@2012-01-01T12:30:00.000-07:00.timeOf() // @T12:30:00.000\n```",
+          "sectionNumber": "5.10.8.10",
+          "status": "STU"
+        }
+      ]
+    },
+    {
+      "name": "Date and Time Interval Functions",
+      "sectionNumber": "5.11",
+      "functions": [
+        {
+          "functionName": "duration",
+          "description": "Returns the number of whole calendar periods at the specified precision between the given input value and the value argument. If the input value is after the value argument, the result is negative. The result of this operation is always an integer; any fractional periods are dropped.",
+          "arguments": [
+            {
+              "name": "value",
+              "type": "Date | DateTime | Time",
+              "description": "The value to compare with the input"
+            },
+            {
+              "name": "precision",
+              "type": "identifier",
+              "description": "The precision for the duration calculation"
+            }
+          ],
+          "returnType": "Integer",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [
+            "Date",
+            "DateTime",
+            "Time"
+          ],
+          "exampleOfUse": "```fhirpath\n@2025-01-02.duration(@2025-01-07, 'week') // 0 - hasn't passed 7 days duration\n@2025-01-01.duration(@2025-09-01, 'year') // 0 - baby is 9 months old\n@2024-12-01.duration(@2025-09-01, 'year') // 0 - baby is 10 months old\n```",
+          "sectionNumber": "5.11.1",
+          "status": "STU"
+        },
+        {
+          "functionName": "difference",
+          "description": "Returns the number of boundaries crossed for the specified precision between the input value and the value arguments. If the input value is after the value argument, the result is negative. The result of this operation is always an integer; any fractional boundaries are dropped.",
+          "arguments": [
+            {
+              "name": "value",
+              "type": "Date | DateTime | Time",
+              "description": "The value to compare with the input"
+            },
+            {
+              "name": "precision",
+              "type": "identifier",
+              "description": "The precision for the difference calculation"
+            }
+          ],
+          "returnType": "Integer",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [
+            "Date",
+            "DateTime",
+            "Time"
+          ],
+          "exampleOfUse": "```fhirpath\n@2025-01-02.difference(@2025-01-07, 'week') // 1 - crossed a week boundary (Sunday)\n@2025-01-01.difference(@2025-09-01, 'year') // 0 - baby is 9 months old, but born this year\n@2024-12-01.difference(@2025-09-01, 'year') // 1 - baby is 10 months old, but born last year\n```",
+          "sectionNumber": "5.11.2",
+          "status": "STU"
+        }
+      ]
+    },
+    {
+      "name": "Comparison",
+      "sectionNumber": "6.2",
+      "functions": [
+        {
+          "functionName": "comparable",
+          "description": "Returns `true` if the input Quantity can be compared with the `other` Quantity and their relationship to each other determined. Comparable means that both have values, and the units are the same (irrespective of the system), or both have `code` and `system` values, and the `system` is recognized by the FHIRPath implementation, and the codes are comparable within that system.",
+          "arguments": [
+            {
+              "name": "other",
+              "type": "Quantity",
+              "description": "The Quantity to check comparability against"
+            }
+          ],
+          "returnType": "Boolean",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [
+            "Quantity"
+          ],
+          "typeMapping": [
+            "Quantity-Boolean"
+          ],
+          "exampleOfUse": "```fhirpath\n1 'mg'.comparable(2 'mg') // true - these types are comparable\n1 'm'.comparable(20 'cm') // true - these types are both metric distance measures\niif(Observation.value.comparable(2 'mg'), Observation.value < 2 'mg', {})\n```",
+          "sectionNumber": "6.2.5",
+          "status": "STU"
+        }
+      ]
+    },
+    {
+      "name": "Types",
+      "sectionNumber": "6.3",
+      "functions": [
+        {
+          "functionName": "is",
+          "description": "The is() function is supported for backwards compatibility with previous implementations of FHIRPath. Just as with the is keyword, the type argument is an identifier that must resolve to the name of a type in a model.",
+          "arguments": [
+            {
+              "name": "type",
+              "type": "type specifier",
+              "description": "Type to check against"
+            }
+          ],
+          "returnType": "Boolean",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [],
+          "exampleOfUse": "```fhirpath\nBundle.entry.resource.all($this.is(Observation) implies status = 'finished')\n```",
+          "sectionNumber": "6.3.2"
+        },
+        {
+          "functionName": "as",
+          "description": "The as() function is supported for backwards compatibility with previous implementations of FHIRPath. Just as with the as keyword, the type argument is an identifier that must resolve to the name of a type in a model.",
+          "arguments": [
+            {
+              "name": "type",
+              "type": "type specifier",
+              "description": "Type to cast to"
+            }
+          ],
+          "returnType": "collection",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "inputTypes": [],
+          "exampleOfUse": "```fhirpath\nObservation.component.where(value.as(Quantity) > 30 'mg')\n```",
+          "sectionNumber": "6.3.4"
+        }
+      ]
+    },
+    {
+      "name": "Boolean Logic",
+      "sectionNumber": "6.5",
+      "functions": [
+        {
+          "functionName": "not",
+          "description": "Returns true if the input collection evaluates to false, and false if it evaluates to true. Otherwise, the result is empty.",
+          "arguments": [],
+          "returnType": "Boolean",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": false,
+          "inputTypes": [],
+          "exampleOfUse": "```fhirpath\nPatient.active.not() // true if patient is not active\n```",
+          "sectionNumber": "6.5.3"
+        }
+      ]
+    },
+    {
+      "name": "Aggregates",
+      "sectionNumber": "7",
+      "functions": [
+        {
+          "functionName": "aggregate",
+          "description": "Performs general-purpose aggregation by evaluating the aggregator expression for each element of the input collection. Within this expression, the standard iteration variables of `$this` and `$index` can be accessed, but also a `$total` aggregation variable.",
+          "arguments": [
+            {
+              "name": "aggregator",
+              "type": "expression",
+              "description": "Expression to evaluate for each element"
+            },
+            {
+              "name": "init",
+              "type": "value",
+              "description": "Initial value for the accumulator",
+              "optional": true
+            }
+          ],
+          "returnType": "value",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": false,
+          "inputTypes": [],
+          "exampleOfUse": "```fhirpath\nvalue.aggregate($this + $total, 0)\n```",
+          "sectionNumber": "7.1",
+          "status": "STU"
+        },
+        {
+          "functionName": "sum",
+          "description": "Returns the sum of all elements in the input collection (in the same type).",
+          "arguments": [],
+          "returnType": "Integer | Long | Decimal | Quantity",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": false,
+          "inputTypes": [
+            "Integer",
+            "Long",
+            "Decimal",
+            "Quantity"
+          ],
+          "exampleOfUse": "```fhirpath\n(1.0 | 2.0 | 3.0).sum() // 6.0\n```",
+          "sectionNumber": "7.2",
+          "status": "STU"
+        },
+        {
+          "functionName": "min",
+          "description": "Returns the minimum element in the input collection.",
+          "arguments": [],
+          "returnType": "Integer | Long | Decimal | Quantity | Date | DateTime | Time | String",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": false,
+          "inputTypes": [
+            "Integer",
+            "Long",
+            "Decimal",
+            "Quantity",
+            "Date",
+            "DateTime",
+            "Time",
+            "String"
+          ],
+          "exampleOfUse": "```fhirpath\n(2 | 4 | 8 | 6).min() // 2\n```",
+          "sectionNumber": "7.3",
+          "status": "STU"
+        },
+        {
+          "functionName": "max",
+          "description": "Returns the maximum element in the input collection.",
+          "arguments": [],
+          "returnType": "Integer | Long | Decimal | Quantity | Date | DateTime | Time | String",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": false,
+          "inputTypes": [
+            "Integer",
+            "Long",
+            "Decimal",
+            "Quantity",
+            "Date",
+            "DateTime",
+            "Time",
+            "String"
+          ],
+          "exampleOfUse": "```fhirpath\n(2 | 4 | 8 | 6).max() // 8\n```",
+          "sectionNumber": "7.4",
+          "status": "STU"
+        },
+        {
+          "functionName": "avg",
+          "description": "Returns the average of all elements in the input collection (in the same type).",
+          "arguments": [],
+          "returnType": "Decimal | Quantity",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": false,
+          "inputTypes": [
+            "Integer",
+            "Long",
+            "Decimal",
+            "Quantity"
+          ],
+          "inputTypeViaImplicitCasting": [
+            "Integer",
+            "Long"
+          ],
+          "typeMapping": [
+            "Integer-Decimal",
+            "Long-Decimal",
+            "Decimal-Decimal",
+            "Quantity-Quantity"
+          ],
+          "exampleOfUse": "```fhirpath\n(5.5 | 4.7 | 4.8).avg() // 5.0\n```",
+          "sectionNumber": "7.5",
+          "status": "STU"
+        }
+      ]
+    },
+    {
+      "name": "Reflection",
+      "sectionNumber": "10.2",
+      "functions": [
+        {
+          "functionName": "type",
+          "description": "Returns the type information for each element of the input collection, using concrete subtypes of `TypeInfo`. For primitive types such as `String` and `Integer`, the result is a `SimpleTypeInfo`. For complex types, the result is a `ClassInfo`.",
+          "arguments": [],
+          "returnType": "collection",
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": false,
+          "inputTypes": [],
+          "typeMapping": [
+            "Any-Any"
+          ],
+          "exampleOfUse": "```fhirpath\n('John' | 'Mary').type()\n// { SimpleTypeInfo { namespace: 'System', name: 'String', baseType: 'System.Any' }, SimpleTypeInfo { namespace: 'System', name: 'String', baseType: 'System.Any' } }\n```",
+          "sectionNumber": "10.2.2",
+          "status": "STU"
+        }
+      ]
+    }
+  ]
+}
