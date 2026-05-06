@@ -1130,19 +1130,17 @@ const evaluateExpression = async () => {
 }
 .all-result-engine-clickable {
   cursor: pointer;
-  color: #1976d2;
-  text-decoration: underline;
-  text-underline-offset: 2px;
 }
-.all-result-engine-clickable:hover,
 .all-result-engine-clickable:focus {
-  color: #0d47a1;
   outline: none;
+}
+.all-result-item {
+  border-left: 3px solid transparent;
+  padding-left: 6px;
 }
 .all-result-item-selected {
   background-color: rgba(25, 118, 210, 0.08);
-  border-left: 3px solid #1976d2;
-  padding-left: 6px;
+  border-left-color: #1976d2;
 }
 .all-result-item + .all-result-item {
   border-top: thin solid lightgray;
