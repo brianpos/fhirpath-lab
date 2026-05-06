@@ -353,7 +353,8 @@ export async function executeRestfulEngine(
  * Re-exported from `./fhirpath_ast_converter.ts` so the converter is callable
  * from contexts (e.g. unit tests) that can't load this whole engine module.
  */
-export { convertFhirPathJsToAst } from "./fhirpath_ast_converter";
+import { convertFhirPathJsToAst } from "./fhirpath_ast_converter";
+export { convertFhirPathJsToAst };
 
 /**
  * Evaluate FHIRPath expression using fhirpath.js engine (unified for R4 and R5)
