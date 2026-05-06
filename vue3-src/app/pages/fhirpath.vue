@@ -143,8 +143,18 @@
           <template v-slot:Results>
             <div class="tab-content">
               <h4 class="mb-2">All Engine Results</h4>
+              <p class="text-caption text-grey mb-2" v-if="allEngineResults.size > 0">
+                Click an engine result to view its AST, Trace and Debug data.
+              </p>
               <template v-if="allEngineResults.size > 0">
-                <div v-for="[engineName, result] in allEngineResults" :key="engineName" variant="outlined" class="all-result-item">
+                <div
+                  v-for="[engineName, result] in allEngineResults"
+                  :key="engineName"
+                  variant="outlined"
+                  class="all-result-item"
+                  :class="{ 'all-result-selected': engineName === selectedEngineResultName }"
+                  @click="selectEngineResult(engineName)"
+                >
                   <v-icon style="float:right;" color="grey" v-if="result.parseDebugTree" title="Has Abstract Syntax Tree Data">mdi-file-tree</v-icon>
                   <div class="all-result">
                     <div class="all-result-engine">
@@ -225,6 +235,47 @@
             </div>
           </template>
 
+          <!-- Trace Tab -->
+          <template v-slot:Trace>
+            <div class="tab-content">
+              <template v-if="currentResultForDetails && currentResultForDetails.results">
+                <div v-if="selectedEngineResultName" class="text-caption text-grey mb-2">
+                  Engine: {{ selectedEngineResultName }}
+                </div>
+                <div v-else-if="currentResultForDetails.processedByEngine" class="text-caption text-grey mb-2">
+                  Engine: {{ currentResultForDetails.processedByEngine }}
+                </div>
+                <template v-for="(r2, i1) in currentResultForDetails.results" :key="i1">
+                  <v-table density="compact" class="trace-table">
+                    <tbody>
+                      <tr v-if="r2.context">
+                        <td class="context" colspan="3">
+                          <div>Context: <b>{{ r2.context }}</b></div>
+                        </td>
+                      </tr>
+                      <template v-for="(v1, index) in r2.trace" :key="index">
+                        <tr>
+                          <td class="result-type"><b>{{ v1.name }}</b></td>
+                          <td class="result-value">
+                            <div class="code-json" v-if="v1.value != null">{{ v1.value }}</div>
+                            <div class="code-json" v-if="v1.value == null && v1.type === 'empty-string'"><i>""</i></div>
+                          </td>
+                          <td class="result-type">
+                            <i v-if="v1.type">({{ v1.type }})</i>
+                            <span v-if="v1.path" class="result-path">{{ v1.path }}</span>
+                          </td>
+                        </tr>
+                      </template>
+                    </tbody>
+                  </v-table>
+                </template>
+              </template>
+              <v-card v-else variant="outlined" class="pa-3 mt-2">
+                <span class="text-grey">No trace data available.</span>
+              </v-card>
+            </div>
+          </template>
+
           <!-- AST Tab -->
           <template v-slot:AST>
             <div class="tab-content">
@@ -240,7 +291,7 @@
           <template v-slot:DEBUG>
             <ResourceEditor
               textLabel="Debug"
-              :resourceText="singleEngineResult && singleEngineResult.raw ? JSON.stringify(singleEngineResult.raw, null, tabSpaces) : ''"
+              :resourceText="currentResultForDetails && currentResultForDetails.raw ? JSON.stringify(currentResultForDetails.raw, null, tabSpaces) : ''"
               :readOnly="true"
               :tabSpaces="tabSpaces"
             />
@@ -276,7 +327,48 @@ const loadingAll = ref<boolean>(false)
 const error = ref<string>('')
 const singleEngineResult = ref<FhirPathEvaluationResult | null>(null)
 const allEngineResults = ref<Map<string, FhirPathEvaluationResult>>(new Map())
-const astData = ref<ParseTreeNode | null>(null)
+const selectedEngineResultName = ref<string | null>(null)
+// The result whose AST / Trace / Debug data is currently shown in the corresponding tabs.
+// - Single engine run: always the single engine result.
+// - Multi engine run: the engine the user clicked on, falling back to the first result that
+//   has AST data (or the first result), so the AST/Trace/Debug tabs always have something
+//   sensible to display.
+const currentResultForDetails = computed<FhirPathEvaluationResult | null>(() => {
+  if (allEngineResults.value.size > 0) {
+    if (selectedEngineResultName.value) {
+      const sel = allEngineResults.value.get(selectedEngineResultName.value)
+      if (sel) return sel
+    }
+    // Fallback: first result that has AST data, otherwise the first result
+    for (const r of allEngineResults.value.values()) {
+      if (r.parseDebugTree) return r
+    }
+    const first = allEngineResults.value.values().next().value
+    return first ?? null
+  }
+  return singleEngineResult.value
+})
+
+const astData = computed<ParseTreeNode | null>(() => {
+  const r = currentResultForDetails.value
+  if (!r || !r.parseDebugTree) return null
+  try {
+    return JSON.parse(r.parseDebugTree) as ParseTreeNode
+  } catch (err) {
+    console.error('Failed to parse AST:', err)
+    return null
+  }
+})
+
+const hasTraceData = computed<boolean>(() => {
+  const r = currentResultForDetails.value
+  if (!r || !r.results) return false
+  return r.results.some(rd => rd.trace && rd.trace.length > 0)
+})
+
+const selectEngineResult = (engineName: string) => {
+  selectedEngineResultName.value = engineName
+}
 
 // FHIR version and engine selection
 const fhirVersions = ['R4', 'R5', 'R6']
@@ -359,6 +451,12 @@ const tabDetails = computed<TabData[]>(() => [
     enabled: true,
   },
   {
+    iconName: "mdi-format-list-bulleted",
+    tabName: "Trace",
+    show: true,
+    enabled: hasTraceData.value,
+  },
+  {
     iconName: "mdi-file-tree",
     tabName: "AST",
     tabHeaderName: "Abstract Syntax Tree",
@@ -434,6 +532,7 @@ const evaluateWithAllEngines = async () => {
   loadingAll.value = true
   error.value = ''
   singleEngineResult.value = null
+  selectedEngineResultName.value = null
   
   // Pre-populate with empty loading results for each engine
   allEngineResults.value.clear()
@@ -476,16 +575,7 @@ const evaluateWithAllEngines = async () => {
         const result = await evaluateFhirPathExpression(options, engine)
         // Update the result as soon as it's available
         allEngineResults.value.set(engine.name, result)
-        
-        // Capture the first AST we encounter
-        if (!astData.value && result.parseDebugTree) {
-          try {
-            astData.value = JSON.parse(result.parseDebugTree)
-          } catch (err) {
-            console.error('Failed to parse AST from engine:', engine.name, err)
-          }
-        }
-        
+
         return { engineName: engine.name, result }
       } catch (err: any) {
         console.error(`Error evaluating with engine ${engine.name}:`, err)
@@ -536,6 +626,7 @@ const evaluateExpression = async () => {
   error.value = ''
   singleEngineResult.value = null
   allEngineResults.value.clear()
+  selectedEngineResultName.value = null
 
   try {
     // Convert variables to Map format
@@ -568,20 +659,8 @@ const evaluateExpression = async () => {
     if (result.saveOutcome && result.showOutcome) {
       error.value = result.saveOutcome.issue?.map(i => i.details?.text || i.diagnostics || 'Error').join(', ') || 'Evaluation failed'
     } else {
-      // Store single engine result
+      // Store single engine result; astData and trace are computed from this.
       singleEngineResult.value = result
-      
-      // Update AST display
-      if (result.parseDebugTree) {
-        try {
-          astData.value = JSON.parse(result.parseDebugTree)
-        } catch (err) {
-          console.error('Failed to parse AST:', err)
-          astData.value = null
-        }
-      } else {
-        astData.value = null
-      }
     }
   } catch (err: any) {
     console.error('Evaluation error:', err)
@@ -619,5 +698,45 @@ const evaluateExpression = async () => {
   border-top: thin solid lightgray;
   margin-top: 4px;
   padding-top: 4px;
+}
+.all-result-item {
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+}
+.all-result-item:hover {
+  background-color: #f5f5f5;
+}
+.all-result-item.all-result-selected {
+  background-color: #e3f2fd;
+}
+
+.trace-table {
+  margin-bottom: 12px;
+}
+.trace-table .context {
+  background-color: #f5f5f5;
+  border-bottom: silver 1px solid;
+  font-style: italic;
+}
+.trace-table .result-type {
+  border-bottom: silver 1px solid;
+  vertical-align: top;
+  position: relative;
+}
+.trace-table .result-value {
+  border-bottom: silver 1px solid;
+  vertical-align: top;
+  width: 100%;
+}
+.trace-table .result-path {
+  font-size: 0.6rem;
+  color: #666;
+  font-style: italic;
+  margin-left: 6px;
+}
+.trace-table .code-json {
+  white-space: pre-wrap;
+  font-family: monospace;
 }
 </style>
