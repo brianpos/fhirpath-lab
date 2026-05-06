@@ -422,7 +422,8 @@ group SetEntryData(source src: Patient, target entry)
         if (axios.isAxiosError(err)) {
           const serverError = err as AxiosError<string>;
           if (serverError && serverError.response) {
-            if (serverError.response.headers["content-type"].includes("json")) {
+            const errorContentType = String(serverError.response.headers?.["content-type"] ?? "");
+            if (errorContentType.includes("json")) {
               const errorJson = JSON.parse(serverError.response.data);
               console.log(errorJson);
               if (errorJson?.resourceType == 'OperationOutcome') {
