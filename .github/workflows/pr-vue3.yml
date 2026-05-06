@@ -6,12 +6,38 @@ on:
       - main
       - master
       - develop
+    paths:
+      - 'vue3-src/**'
+      - '.github/workflows/pr-vue3.yml'
+      # Shared Vue2 sources consumed via @legacy/* and 'models' aliases in vue3-src/nuxt.config.ts
+      - 'helpers/**'
+      - 'types/**'
+      - 'models/**'
+      # Transitive deps of helpers/ (ANTLR-generated parsers)
+      - 'fml-parser/**'
+      - 'json-parser/**'
+      - 'xml-parser/**'
+      # Prerendered at build time by vue3-src/server/routes/config.json.get.ts
+      - 'static/config.json'
   pull_request:
     types: [opened, synchronize, reopened, closed]
     branches:
       - main
       - master
       - develop
+    paths:
+      - 'vue3-src/**'
+      - '.github/workflows/pr-vue3.yml'
+      # Shared Vue2 sources consumed via @legacy/* and 'models' aliases in vue3-src/nuxt.config.ts
+      - 'helpers/**'
+      - 'types/**'
+      - 'models/**'
+      # Transitive deps of helpers/ (ANTLR-generated parsers)
+      - 'fml-parser/**'
+      - 'json-parser/**'
+      - 'xml-parser/**'
+      # Prerendered at build time by vue3-src/server/routes/config.json.get.ts
+      - 'static/config.json'
 
 permissions:
   contents: read

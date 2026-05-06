@@ -6,12 +6,18 @@ on:
       - main
       - master
       - develop
+    paths-ignore:
+      - 'vue3-src/**'
+      - '.github/workflows/pr-vue3.yml'
   pull_request:
     types: [opened, synchronize, reopened, closed]
     branches:
       - main
       - master
       - develop
+    paths-ignore:
+      - 'vue3-src/**'
+      - '.github/workflows/pr-vue3.yml'
 
 permissions:
   contents: read
