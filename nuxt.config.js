@@ -83,6 +83,9 @@ export default {
       "marked",
       "antlr4",
       "sql-on-fhir-v2",
+      /* axios 1.x ships its adapter using nullish-coalescing (`??`); webpack 4 in
+         Nuxt 2 needs us to transpile it through Babel. */
+      "axios",
       /* Need to transpile CSIRO renderer and dependencies containing modern ES syntax (`?.`, `??`, etc.) */
       "@aehrc/smart-forms-renderer",
       "@mui",
