@@ -1,1 +1,0 @@
-import{H as o}from"./nKTaOe02.js";import{u as r}from"./DJiA5u-Y.js";import{e as a,c as s,b as n,d as m,o as p}from"./B9A085_h.js";const _=a({__name:"sqlonfhir",setup(c){return r({title:"SQL on FHIR Tester - FHIRPath Lab"}),(d,e)=>{const t=o;return p(),s("div",null,[n(t),e[0]||(e[0]=m(" sql-on-fhir tester ",-1))])}}});export{_ as default};

@@ -18,6 +18,7 @@
     "axios": "^1.13.2",
     "fhir-extension-helpers": "^0.3.0",
     "fhirpath": "^4.8.2",
+    "luxon": "^3.7.2",
     "marked": "^14.1.4",
     "nuxt": "^4.2.2",
     "vue": "^3.5.25",
