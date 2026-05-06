@@ -14,7 +14,7 @@ tr.v-data-table__tr {
 
 <template>
   <div>
-    <HeaderNavbar @close-settings="settingsClosed" :extended="true">
+    <HeaderNavbar :extended="true">
       <template v-slot:extension>
         <SearchNavigator
           label="Library"
@@ -207,10 +207,6 @@ onMounted(() => {
   searchUseContexts.value = loadCustomUseContexts('library', defaultUseContexts)
   searchFhirServer()
 })
-
-function settingsClosed() {
-  // Reserved for future advanced settings handling
-}
 
 function clearSearchFields() {
   searchFor.value = undefined

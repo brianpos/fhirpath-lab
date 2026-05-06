@@ -26,7 +26,7 @@ tr.v-data-table__tr {
 
 <template>
   <div>
-    <HeaderNavbar @close-settings="settingsClosed" :extended="true">
+    <HeaderNavbar :extended="true">
       <template v-slot:extension>
         <SearchNavigator
           label="Form Templates"
@@ -196,8 +196,6 @@ onMounted(() => {
   searchUseContexts.value = loadCustomUseContexts('questionnaire', defaultUseContexts)
   searchFhirServer()
 })
-
-function settingsClosed() {}
 
 function clearSearchFields() {
   searchFor.value = undefined
