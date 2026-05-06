@@ -169,6 +169,12 @@
             </ExternalRenderingEngineHost>
           </template>
 
+          <template v-slot:Beda_Forms>
+            <EditorBedaFormsSection ref="bedaFormsRenderer" v-if="raw" v-bind:questionnaire="raw" :context="contextData"
+              :dataServer="dataServerBaseUrl"
+              @response="processUpdatedQuestionnaireResponse" @highlight-path="highlightPath" />
+          </template>
+
           <template v-slot:Smart_WM>
             <MessageLog 
               v-if="embeddedMode"
@@ -381,6 +387,7 @@ import EditorNLMRendererSection from "~/components/Questionnaire/EditorNLMRender
 import EditorRendererSection from "~/components/Questionnaire/EditorRendererSection.vue";
 import EditorAidboxFormsSection from "~/components/Questionnaire/EditorAidboxFormsSection.vue";
 import SmartWMFormsSection from "~/components/Questionnaire/SmartWMFormSection.vue";
+import EditorBedaFormsSection from "~/components/Questionnaire/EditorBedaFormsSection.vue";
 import MessageLog from "~/components/Questionnaire/MessageLog.vue";
 import ResourceEditor from "~/components/ResourceEditor.vue";
 import { structuredDataCaptureHelpers as sdc } from "~/helpers/structureddatacapture-helpers";
@@ -698,6 +705,14 @@ export default Vue.extend({
           tabSubName: "(external)",
           title: "SmartWM Forms Renderer\n(Rendered by external service)\nPrototype testing SDC SMART Web Messaging",
           show: (this.showAdvancedSettings ?? false),
+          enabled: true,
+        },
+        {
+          iconName: "mdi-bug-play-outline",
+          tabName: "Beda Forms",
+          tabSubName: "(external)",
+          title: "Beda Forms Renderer\nBy Beda Software",
+          show: true,
           enabled: true,
         },
         {
@@ -2062,6 +2077,11 @@ export default Vue.extend({
         if (this.$refs.smartWMFormsRenderer && this.raw != null) {
           let smartWMFormsRenderer = (this.$refs.smartWMFormsRenderer as SmartWMFormsSection);
           await smartWMFormsRenderer.renderQuestionnaireResponse(value, this.raw);
+        }
+
+        if (this.$refs.bedaFormsRenderer && this.raw != null) {
+          let bedaFormsRenderer = (this.$refs.bedaFormsRenderer as EditorBedaFormsSection);
+          await bedaFormsRenderer.renderQuestionnaireResponse(value, this.raw);
         }
 
         if (this.$refs.extractTester as QuestionnaireExtractTest) {
