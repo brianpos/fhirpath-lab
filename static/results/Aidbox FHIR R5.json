@@ -1363,6 +1363,12 @@
           "FailureMessage": "Error (Processing) Divide by zero"
         },
         {
+          "Name": "testDiv6",
+          "Expression": "-5.5 div 2 = -2",
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
+        },
+        {
           "Name": "testDivEmpty1",
           "Expression": "1 div {}",
           "Result": true
@@ -3817,6 +3823,12 @@
           "Expression": "5 mod 0",
           "Result": false,
           "FailureMessage": "Error (Processing) Divide by zero"
+        },
+        {
+          "Name": "testMod6",
+          "Expression": "-5.5 mod 2 = -1.5",
+          "Result": false,
+          "FailureMessage": "Some results didn't match expected values (1 values)"
         },
         {
           "Name": "testModEmpty1",

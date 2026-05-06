@@ -1,0 +1,54 @@
+{
+  "MedicinalProductUndesirableEffect": {
+    "TypeName": "MedicinalProductUndesirableEffect",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "subject",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Medication",
+              "http://hl7.org/fhir/StructureDefinition/MedicinalProduct"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "symptomConditionEffect",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "classification",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "frequencyOfOccurrence",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "population",
+        "Type": [
+          {
+            "TypeName": "Population"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  }
+}

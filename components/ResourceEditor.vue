@@ -192,6 +192,46 @@ export default class ResourceJsonEditor extends Vue {
     }
   }
 
+  /**
+   * Highlight a substring of the editor's current value identified by raw
+   * character offset + length. Used by the structure-map diagram to flash
+   * the FML region corresponding to a clicked row/connector. Mirrors the
+   * helper of the same name in pages/fml.vue.
+   */
+  public highlightText(startPosition?: number, length?: number, debugMode?: boolean): number | void {
+    if (!this.aceEditor || startPosition == undefined || length == undefined) return;
+    const value = this.aceEditor.getValue();
+
+    // Resolve raw offset → start line/column.
+    const textBeforeSelection = value.substring(0, startPosition);
+    const startLine = textBeforeSelection.split(/\r\n|\r|\n/).length;
+    const startColumn = textBeforeSelection.length - textBeforeSelection.lastIndexOf('\n') - 1;
+    const selectedText = value.substring(startPosition, startPosition + length);
+
+    // Resolve length → end line/column.
+    const endLine = startLine + selectedText.split(/\r\n|\r|\n/).length - 1;
+    let endColumn = selectedText.length - selectedText.lastIndexOf('\n') - 1;
+    if (startLine === endLine) {
+      endColumn = startColumn + selectedText.length;
+    }
+    const range = new ace.Range(startLine - 1, startColumn, endLine - 1, endColumn);
+
+    this.aceEditor.clearSelection();
+    this.aceEditor.focus();
+    this.aceEditor.gotoLine(startLine, startColumn, true);
+
+    if (debugMode) {
+      const debugMarker = this.aceEditor.session.addMarker(range, "debugSelection", "text", false);
+      return debugMarker;
+    } else {
+      const selectionMarker = this.aceEditor.session.addMarker(range, "resultSelection", "text", true);
+      // Auto-clear after 1.5s, matching the diagram-row highlight duration.
+      setTimeout(() => {
+        this.aceEditor?.session.removeMarker(selectionMarker);
+      }, 1500);
+    }
+  }
+
   internalResourceUrl: string = this.resourceUrl ?? '';
   internalResourceText: string = this.resourceText;
   resourceTextFromFile: string | undefined = undefined;
@@ -265,7 +305,7 @@ export default class ResourceJsonEditor extends Vue {
   }
 
   detectResourceType() {
-    const content = this.internalResourceText.trim();
+    const content = this.internalResourceText?.trim() ?? '';
     if (content.startsWith('<')) {
       if (this.resourceType != 'xml') {
         this.resourceType = 'xml';
@@ -471,15 +511,12 @@ export default class ResourceJsonEditor extends Vue {
   transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);
 }
 
-.debugSelection {
-  position: absolute;
-  z-index: 20;
-  background-color: #fbff82b1;
-}
-
-.resultSelection {
-  position: absolute;
-  z-index: 20;
-  background-color: #5240ef65;
-}
+/*
+  Note: marker styles `.debugSelection` / `.resultSelection` used by
+  `highlightText` / `navigateToPosition` / `navigateToContext` live in
+  `assets/fhirpath_highlighter.scss` (imported above). They cannot live
+  here in the scoped block because Ace injects the marker DOM node at
+  runtime and Vue's scoped CSS rewrites selectors with a
+  `[data-v-xxx]` attribute the marker element doesn't carry.
+*/
 </style>

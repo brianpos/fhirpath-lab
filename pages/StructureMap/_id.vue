@@ -26,58 +26,52 @@
               mdi-content-save
             </v-icon>
           </v-btn>
+          <v-btn dark icon dense title="debug" :href="debugInFmlPath()">
+            <v-icon>
+              mdi-bug-outline
+            </v-icon>
+          </v-btn>
         </v-toolbar>
-        <v-tabs vertical v-model="tab">
-          <v-tab>
-            <v-icon left> mdi-card-bulleted-settings-outline </v-icon>
-            Details
-          </v-tab>
-          <v-tab>
-            <v-icon left> mdi-download-network-outline </v-icon>
-            Publishing
-          </v-tab>
-          <v-tab>
-            <v-icon left> mdi-file-tree </v-icon>
-            Map
-          </v-tab>
-
-          <v-tabs-items touchless v-model="tab">
-            <v-tab-item>
+        <twin-pane-tab :tabs="tabDetails" @mounted="twinPaneMounted" ref="twinTabControl">
+          <template v-slot:Details>
               <!-- Details -->
               <conformance-resource-details-tab :raw="raw" :readonly="readonly"
-                :showAdvancedSettings="showAdvancedSettings" @update="updateNow" />
-            </v-tab-item>
+                :hideHeader="true" :showAdvancedSettings="showAdvancedSettings" @update="updateNow" />
+          </template>
 
-            <v-tab-item>
+          <template v-slot:Publishing>
               <!-- Publishing -->
               <conformance-resource-publishing-tab :raw="raw" :publishedVersions="publishedVersions"
-                :lockPublisher="false"
+                :lockPublisher="false" :hideHeader="true"
                 :readonly="readonly" :showAdvancedSettings="showAdvancedSettings" @update="updateNow" />
-            </v-tab-item>
+          </template>
 
-            <v-tab-item>
+          <template v-slot:Map>
               <!-- Content -->
-              <v-card flat>
-                <v-card-text>
-                  <p class="fl-tab-header">Elements</p>
-                  <v-textarea :value="rawMap"></v-textarea>
-                </v-card-text>
-              </v-card>
-            </v-tab-item>
-          </v-tabs-items>
-        </v-tabs>
+              <resource-editor ref="fmlEditor" label="FML" :resourceText="rawMap" :readOnly="true" />
+          </template>
+
+          <template v-slot:Diagram>
+              <!-- Diagram -->
+              <div v-if="diagramSvg" v-html="diagramSvg" style="overflow: auto;" @click="handleDiagramClick"></div>
+              <div v-else style="color: #999; font-style: italic;">No diagram available</div>
+          </template>
+
+
+          <template v-slot:Instance>
+              <!-- Instance -->
+              <div v-if="instanceSvg" v-html="instanceSvg" style="overflow: auto;" @click="handleDiagramClick"></div>
+              <div v-else style="color: #999; font-style: italic;">No instance diagram available</div>
+          </template>
+
+          <template v-slot:json>
+            <resource-editor label="StructureMap ID" :resourceUrl="loadedUrl" :resourceText="JSON.stringify(raw, null, tabSpaces())" :readOnly="true" />
+          </template>
+        </twin-pane-tab>
       </v-card>
       <br />
       <OperationOutcomeOverlay v-if="showOutcome" :saveOutcome="saveOutcome" :showOutcome="showOutcome"
         title="Error Saving" @close="clearOutcome" />
-      <v-expansion-panels accordion>
-        <v-expansion-panel>
-          <v-expansion-panel-header>Raw JSON</v-expansion-panel-header>
-          <v-expansion-panel-content>
-            <code><pre v-text="JSON.stringify(raw, null, tabSpaces())" /></code>
-          </v-expansion-panel-content>
-        </v-expansion-panel>
-      </v-expansion-panels>
     </div>
     <table-loading v-if="saving || !raw" />
   </div>
@@ -119,8 +113,17 @@ import {
   unsetFavourite,
 } from "~/helpers/favourites";
 import { BaseResource_defaultValues } from "~/models/BaseResourceTableData";
+import StructureMapUtilitiesRender from "~/helpers/structuremap_to_fml";
+import { generateStructureMapDiagramSvg } from "~/helpers/structuremap_diagram";
+import { generateInstanceDiagramSvg, fmlToStructureMapForDiagram } from "~/helpers/structuremap_diagram_instance";
+import { highlightDiagramConnection, findConnectionIdsForClick } from "~/helpers/diagram_interaction";
+import { parseFML } from "~/helpers/fml_parser";
+import TwinPaneTab from "~/components/TwinPaneTab.vue";
+import ResourceEditor from "~/components/ResourceEditor.vue";
+import { lookupByTypeName as lookupByTypeNameR4B } from "~/helpers/models/generated/r4b";
 
 export default Vue.extend({
+  components: { ResourceEditor },
   mounted() {
     if (this.$route.query.fhirserver){
       this.fhirServerUrl = this.$route.query.fhirserver as string;
@@ -130,6 +133,66 @@ export default Vue.extend({
   methods: {
     tabSpaces: function() {
       return settings.getTabSpaces();
+    },
+    handleDiagramClick(event: MouseEvent) {
+      // Flash matching rows + connectors when a row or connector is
+      // clicked. Then walk up for `data-pos-start/end` and ask the FML
+      // editor to flash the corresponding text region (mirrors the
+      // behaviour of the FML page).
+      const connIds = findConnectionIdsForClick(event.target);
+      if (connIds.length > 0) {
+        const container = event.currentTarget as Element;
+        highlightDiagramConnection(container, connIds);
+      }
+      let el = event.target as Element | null;
+      while (el) {
+        const start = el.getAttribute?.('data-pos-start');
+        const end = el.getAttribute?.('data-pos-end');
+        if (start != null && end != null) {
+          const startPos = parseInt(start, 10);
+          const endPos = parseInt(end, 10);
+          if (!isNaN(startPos) && !isNaN(endPos) && endPos > startPos) {
+            const editor = this.$refs.fmlEditor as any;
+            editor?.highlightText?.(startPos, endPos - startPos);
+          }
+          return;
+        }
+        el = el.parentElement;
+      }
+    },
+    debugInFmlPath(): string {
+      const url = this.loadedUrl ?? ((this.fhirServerUrl ?? settings.getFhirServerUrl()) + '/StructureMap/' + (this.raw?.id ?? this.$route.params.id));
+      return `/fml?structureMap=${encodeURIComponent(url)}`;
+    },
+    twinPaneMounted(): void {
+      let tabControl: TwinPaneTab = this.$refs.twinTabControl as TwinPaneTab;
+      if (tabControl) {
+        if (this.$route.query.tab) {
+          this.$nextTick(() => {
+            const tabString = this.$route.query.tab as string;
+            // String tab mode
+            if (tabString.includes(",")) {
+              const tabParts = tabString.split(",");
+              if (tabParts.length == 2) {
+                if (tabControl) {
+                  tabControl.selectTabs(
+                    tabControl.getTabIndex(tabParts[0]),
+                    tabControl.getTabIndex(tabParts[1]),
+                    "left"
+                  );
+                }
+              }
+            } else {
+              tabControl.setSinglePanelMode(true);
+              tabControl.selectTab(tabControl.getTabIndex(tabString));
+            }
+          });
+        }
+        else {
+          tabControl.setSinglePanelMode(true);
+          tabControl.selectTab(0);
+        }
+      }
     },
     settingsClosed() {
       this.showAdvancedSettings = settings.showAdvancedSettings();
@@ -176,6 +239,27 @@ export default Vue.extend({
       if (this.raw) {
         this.isFavourite = isFavourite(this.raw.resourceType, this.raw.id);
         document.title = `Structure Map: ${this.raw.title ?? this.raw.name }`;  
+
+        this.rawMap = StructureMapUtilitiesRender.render(this.raw);
+        // Re-parse the rendered FML so each diagram element carries
+        // `_fmlPosition` referring to offsets in `rawMap` (the text
+        // shown in the FML editor). This is what makes diagram clicks
+        // able to highlight the matching FML region. Both the base
+        // structure-map diagram and the instance diagram benefit from
+        // these positions. Falls back to the raw FHIR map if parsing
+        // fails — the diagrams still draw, just without text highlight.
+        let diagramInput = this.raw as fhir4b.StructureMap;
+        try {
+          const parsed = parseFML(this.rawMap);
+          if (parsed && !('resourceType' in parsed && parsed.resourceType === 'OperationOutcome')) {
+            diagramInput = fmlToStructureMapForDiagram(parsed as any) as fhir4b.StructureMap;
+          }
+        } catch (e) {
+          console.warn('FML re-parse for diagram positions failed:', e);
+        }
+        this.diagramSvg = generateStructureMapDiagramSvg(diagramInput);
+        this.instanceSvg = generateInstanceDiagramSvg(diagramInput, lookupByTypeNameR4B, true);
+        // this.rawMap = JSON.stringify(this.raw, null, 2);
       }
     },
     async saveData() {
@@ -205,7 +289,52 @@ export default Vue.extend({
     return {
       raw: null,
       rawMap: null,
+      diagramSvg: null as string | null,
+      flowSvg: null as string | null,
+      sankeySvg: null as string | null,
+      instanceSvg: null as string | null,
       publishedVersions: [],
+      tabDetails: [
+        {
+          iconName: "mdi-card-bulleted-settings-outline",
+          tabName: "Details",
+          show: true,
+          enabled: true,
+        },
+        {
+          iconName: "mdi-download-network-outline",
+          tabName: "Publishing",
+          show: true,
+          enabled: true,
+        },
+        {
+          iconName: "mdi-file-tree",
+          tabName: "Map",
+          title: "FML representation of the StructureMap",
+          show: true,
+          enabled: true,
+        },
+        {
+          iconName: "mdi-vector-polygon",
+          tabName: "Diagram",
+          title: "Visual diagram of group inputs, outputs and mapped properties",
+          show: true,
+          enabled: true,
+        },
+        {
+          iconName: "mdi-file-document-outline",
+          tabName: "Instance",
+          title: "Instance-level view showing source/target objects with mapped and unmapped properties",
+          show: true,
+          enabled: true,
+        },
+        {
+          iconName: "mdi-code-json",
+          tabName: "json",
+          show: true,
+          enabled: true,
+        },
+      ],
       ...BaseResource_defaultValues,
     };
   },

@@ -2,11 +2,17 @@
     "cSpell.words": [
         "aehrc",
         "Behaviours",
+        "fpjs",
+        "groupable",
         "initialise",
         "noconflict",
         "sqlonfhir",
         "structuremap",
         "tracefunction",
+        "vuetify",
         "Zulip"
-    ]
+    ],
+    "chat.tools.terminal.autoApprove": {
+        "npx jest": true
+    }
 }

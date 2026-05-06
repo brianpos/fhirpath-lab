@@ -3,9 +3,50 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+# 30 April 2026
+* Modified AppInsights configuration, added to the Vue3 migration, and updated to latest version
+* Added settings configuration support to the Vue3 port
+* Update CSIRO renderer dependencies:  sdc-populate@4.7.0, sdc-template-extract@1.0.15, @aehrc/smart-forms-renderer@1.3.1
+* Update the FML rendering diagrams to resolve the type definitions! (and show red backgrounds if the property doesn't resolve)
+
+# 24 April 2026
+* Update NLM LHC-Forms to 41.2.0
+
+# 11 April 2026
+* Updated fhirpath.js to 4.9.3
+
+# 8 April 2026
+* Updated fhirpath.js to 4.9.2
+* Updated support for chatgpt-5+
+* Updated npm dependencies in the Vue3 project to remove all known vulnerabilities (as of 8 April 2026)
+* More reliable handling of the variable list in the fhirpath tester when using the `defineVariable()`
+
+# 4 April 2026
+* Add support for custom configuration via URL parameters (for testing new engines without needing to modify the lab source code) - see [docs/custom-configuration.md](docs/custom-configuration.md) for details
+* Add support for the new MaLaC-HD server for FHIR mapping testing
+
+# 16 January 2026
+* Add support for logical model generation from random XML/json content in the FML test page
+
+# 8 January 2026
+* Port the URL handling code to Nuxt3/Vue3 (for fhirpath tester page) - share links, processing and loading from URL parameters
+* Port the reset expression and context button to Nuxt3/Vue3 (for fhirpath tester page)
+* Vue3: fhirpath tester page - when opening a page with launch parameters, run the engine
+* Port Ctrl+Enter keyboard shortcut to run expression evaluation in Vue3/Nuxt3 (for fhirpath tester page)
+* Add Ctrl+Shift+Enter keyboard shortcut to evaluate expression with all engines in Vue3/Nuxt3 (for fhirpath tester page)
+* Vue3: fhirpath tester page: results rendering, resource target context navigation
+
+# 6 January 2026
+* Problem with shareable links to tests that uses defineVariable() - Fixes #55
+* Add a copy button to the Response tab to copy to the clipboard the raw QR value
+Fixes #45
+
 # 5 January 2026
 * Update CSIRO renderer (1.2.11) and template extraction (1.0.14) engines
 * Update CSIRO renderer to use the terminology server URL from the settings page
+* fhirpath tester page share link can now support using bookmarks to support much longer links
+* Update axios dependency to 1.13.2
+* Update Nav bar links to have all the testers at the top
 
 # 26 December 2025
 * Updated the static config loading code to use async/await to ensure that the settings are fully loaded before being used.

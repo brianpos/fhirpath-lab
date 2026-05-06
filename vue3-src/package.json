@@ -11,24 +11,28 @@
   },
   "dependencies": {
     "@mdi/font": "^7.4.47",
-    "@nuxt/fonts": "^0.12.1",
+    "@microsoft/applicationinsights-web": "^3.3.0",
+    "@nuxt/fonts": "^0.14.0",
     "@types/fhir": "^0.0.41",
-    "ace-builds": "^1.43.5",
+    "@types/lz-string": "^1.5.0",
+    "ace-builds": "^1.43.6",
     "antlr4": "^4.13.2",
-    "axios": "^1.13.2",
+    "axios": "^1.13.5",
     "fhir-extension-helpers": "^0.3.0",
-    "fhirpath": "^4.8.2",
+    "fhirpath": "^4.9.3",
+    "htmldiff-js": "^1.0.5",
     "luxon": "^3.7.2",
+    "lz-string": "^1.5.0",
     "marked": "^14.1.4",
-    "nuxt": "^4.2.2",
-    "vue": "^3.5.25",
-    "vue-router": "^4.6.4",
+    "nuxt": "^4.4.2",
+    "vue": "^3.5.32",
+    "vue-router": "^5.0.4",
     "vue3-ace-editor": "^2.2.4",
-    "vuetify": "^3.11.4",
-    "vuetify-nuxt-module": "^0.19.0",
-    "xml-formatter": "^3.6.7"
+    "vuetify": "^4.0.5",
+    "vuetify-nuxt-module": "^0.19.5",
+    "xml-formatter": "^3.7.0"
   },
   "devDependencies": {
-    "sass": "^1.96.0"
+    "sass": "^1.99.0"
   }
 }

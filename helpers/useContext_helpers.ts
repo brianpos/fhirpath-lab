@@ -51,7 +51,7 @@ export function mergeUseContexts(initial: FhirpathLabUseContexts[], includeConte
 export function mergeCustomUseContexts(initial: FhirpathLabUseContexts[], includeContexts?: FhirpathLabUseContexts[]): FhirpathLabUseContexts[] {
   if (!includeContexts) return initial;
 
-  var newCodings = [ ... initial] ?? [];
+  var newCodings = [ ... initial];
   for (let coding of includeContexts) {
     if (
       initial?.filter((value, index, array) => {

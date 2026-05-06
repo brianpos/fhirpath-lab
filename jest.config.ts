@@ -4,6 +4,7 @@ const config: Config = {
   preset: 'ts-jest',
   testEnvironment: 'node',
   verbose: true,
+  roots: ['<rootDir>/test', '<rootDir>/scripts/generate-models/__tests__'],
   // Add these settings for better debugging
   testTimeout: 30000, // Longer timeout for debugging
   detectOpenHandles: true,

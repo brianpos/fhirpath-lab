@@ -90,18 +90,66 @@ import fhirpath_r5_model from "fhirpath/fhir-context/r5";
 import { settings } from "~/helpers/user_settings";
 import { mapFunctionReferences, mapOperatorReferences, ISpecFunctionDetails } from "~/helpers/fhirpath_references";
 
+function canonicalVariableName(name: string): string {
+  if (name.startsWith("%")) name = name.substring(1);
+  if (name.startsWith("`")) name = name.substring(1);
+  if (name.endsWith("`")) name = name.substring(0, name.length - 1);
+  if (name.indexOf("\\`") !== -1) name = name.replaceAll("\\`", "`");
+  return name;
+}
+
+function parseTreeStringLiteralValue(text: string | undefined): string | undefined {
+  if (!text || text.length < 2) return undefined;
+  if (!text.startsWith("'") || !text.endsWith("'")) return undefined;
+  return text.substring(1, text.length - 1).replaceAll("\\'", "'");
+}
+
+function getDefineVariableName(node: fpjsNode): string | undefined {
+  if (node.type !== 'Functn') return undefined;
+  if (node.children?.[0]?.type !== 'Identifier' || node.children[0].text !== 'defineVariable') return undefined;
+  const firstArgument = node.children[1]?.children?.[0];
+  return parseTreeStringLiteralValue(firstArgument?.text);
+}
+
+function getExternalVariableName(node: fpjsNode): string | undefined {
+  if (node.type !== 'ExternalConstantTerm') return undefined;
+  if (node.text) return canonicalVariableName(node.text);
+
+  const identifierNode = node.children?.[0]?.children?.[0];
+  if (identifierNode?.type === 'Identifier' && identifierNode.text) {
+    return canonicalVariableName(identifierNode.text);
+  }
+}
+
+/** Scan the expression tree and report all the names of any variables defined using `defineVariable`
+ * (Note: this only scans for `defineVariable` calls, other variable definition mechanisms are not detected, 
+ * and is not sensitive to scope - that is a separate concern)
+ * The Lab uses this to identify variables that are defined in the expression so that they can be excluded
+ * from the list of external variables that are reported as "used" in the expression, and must be set for evaluation.
+ * @param node The root node to scan
+ * @returns An array of variable names defined in the expression (including this node, or any of its children)
+ */
+export function GetExpressionDefinedVariables(node: fpjsNode): string[] {
+  let result: string[] = [];
+  const definedVariableName = getDefineVariableName(node);
+  if (definedVariableName) {
+    result.push(definedVariableName);
+  }
+  if (node.children) {
+    node.children.forEach((element) => {
+      let childResult = GetExpressionDefinedVariables(element);
+      // merge the childResult into the overall result removing duplicates
+      result = result.concat(childResult.filter((item) => !result.includes(item)));
+    });
+  }
+  return result;
+}
 
 export function GetExternalVariablesUsed(node: fpjsNode, ignoreVar: string[] = []) : string[] {
   let result: string[] = [];
-  if (node.type === 'Functn') {
-    if (node.text?.startsWith('defineVariable') && node.children?.length === 2 && node.children[1].children){
-      let varName = node.children[1].children[0].text;
-      varName = varName.substring(1, varName.length - 1);
-      ignoreVar.push(varName);
-    }
-  }
-  if (node.type === 'TermExpression' && node.text?.startsWith('%')){
-    let varName = node.text.substring(1);
+  const externalVariableName = getExternalVariableName(node);
+  if (externalVariableName) {
+    let varName = externalVariableName;
     if (!ignoreVar.includes(varName) && !result.includes(varName)){
       result.push(varName);
     }

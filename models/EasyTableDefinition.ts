@@ -42,7 +42,6 @@ export interface EasyTableDefinitionRaw {
   wordBreak?: 'normal' | 'keep-all' | 'break-all' | 'break-word',
   expanded: [];
 
-  eventCustomOption?: any,
   cellStyleOption?: any;
   showEmpty?: boolean;
   loadingData?: boolean;
