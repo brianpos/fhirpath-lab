@@ -143,10 +143,14 @@ export function validateFhirpathExpression(
 
     // If a context expression is supplied, evaluate it first to determine the
     // starting types/cardinality for the main expression. This mirrors what
-    // the engine does at runtime via `select(<contextExpression>)`.
+    // the engine does at runtime via `select(<contextExpression>)`: when the
+    // context expression yields a collection, the main expression is evaluated
+    // against each individual item, so its input type is the *singular* form.
+    // The outer collection-ness is OR'd back into the final result below.
     let contextValue: FhirPathValue | undefined;
     let contextDiagnostics: Diagnostic[] = [];
     let contextParseDebugTree: JsonNode | undefined;
+    let contextWasCollection = false;
     if (options.contextExpression && options.contextExpression.trim().length > 0) {
         const cv = runVisitor(options.contextExpression, provider, {
             contextType,
@@ -158,9 +162,13 @@ export function validateFhirpathExpression(
         // Even if the context expression had errors, fall back to its computed
         // types — they're the best signal we have for the main expression.
         if (cv.parseDebugTree) {
+            contextWasCollection = cv.expectedReturnIsCollection || !!options.contextIsCollection;
             contextValue = {
                 types: collectTypesFromTree(cv.parseDebugTree, provider),
-                isCollection: cv.expectedReturnIsCollection || !!options.contextIsCollection,
+                // Per-item: the main expression sees a singular value at its
+                // root, regardless of whether the context expression returned
+                // a collection.
+                isCollection: false,
             };
         }
     }
@@ -171,12 +179,24 @@ export function validateFhirpathExpression(
         contextValue,
         environmentVariables: options.environmentVariables,
     });
+    // If the context expression produced a collection, the engine's per-item
+    // iteration flat-maps into the final result, so the main expression's
+    // result is at minimum a collection.
+    const expectedReturnIsCollection = v.expectedReturnIsCollection || contextWasCollection;
+    // Reflect the widened cardinality on the root node's ReturnType decoration
+    // so the Parse Tree tab shows e.g. `string[]` rather than `string` when
+    // the user supplied a collection context expression.
+    if (v.parseDebugTree && contextWasCollection && !v.expectedReturnIsCollection
+        && v.parseDebugTree.ReturnType && !v.parseDebugTree.ReturnType.endsWith("[]")) {
+        const rt = v.parseDebugTree.ReturnType;
+        v.parseDebugTree.ReturnType = rt.includes(" | ") ? `(${rt})[]` : `${rt}[]`;
+    }
     const allDiag = [...contextDiagnostics, ...v.syntaxErrors, ...v.diagnostics];
     const outcome = diagnosticsToOperationOutcome(allDiag);
     return {
         parseDebugTree: v.parseDebugTree,
         expectedReturnType: v.expectedReturnType,
-        expectedReturnIsCollection: v.expectedReturnIsCollection,
+        expectedReturnIsCollection,
         diagnostics: allDiag,
         outcome,
         contextParseDebugTree,

@@ -201,6 +201,38 @@ describe("FHIRPath validator visitor", () => {
             expect(withCtx.expectedReturnIsCollection).toBe(true);
         });
 
+        it("treats a collection context expression as a per-item singular input", () => {
+            // `Patient.name` is a collection of HumanName; the engine evaluates
+            // the main expression against each item individually. The validator
+            // must therefore see a *singular* HumanName as input — but the
+            // outer collection-ness must still flat-map into the final result.
+            const r = validateFhirpathExpression("use", {
+                fhirVersion: "r4",
+                contextType: "Patient",
+                contextExpression: "Patient.name",
+            });
+            expect(r.diagnostics.filter((d) => d.severity === "error")).toEqual([]);
+            // `use` is a single value on HumanName; per-item it is single,
+            // but flat-mapped over the name collection it becomes a collection.
+            expect(r.expectedReturnType).toBe("code");
+            expect(r.expectedReturnIsCollection).toBe(true);
+            expect(r.parseDebugTree?.ReturnType).toBe("code[]");
+        });
+
+        it("does not error on .exists() against a collection context expression", () => {
+            // If the input were the *whole* collection, `.first()` etc. would
+            // still work — but a stricter check could mistakenly flag this as
+            // a multi-input violation. With per-item singular input there's no
+            // such issue.
+            const r = validateFhirpathExpression("exists()", {
+                fhirVersion: "r4",
+                contextType: "Patient",
+                contextExpression: "Patient.name",
+            });
+            expect(r.diagnostics.filter((d) => d.severity === "error")).toEqual([]);
+            expect(r.expectedReturnType).toBe("boolean");
+        });
+
         it("emits an Expression Scope axis node at the leftmost member of the chain", () => {
             // `.given` after a context expression has the Expression Scope axis
             // as its only argument (matches the legacy ParseTree rendering).
