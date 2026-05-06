@@ -183,7 +183,7 @@
                   </template>
                   <template v-else-if="singleEngineResult.results">
                     <template v-for="(resultItem, idx) in singleEngineResult.results" :key="idx">
-                      <table class="v-table v-table--density-default" style="flex-shrink: 1; border: solid thin #eee; border-spacing: 0;">
+                      <table class="v-table v-table--density-default" style="flex-shrink: 1; width: 100%; border: solid thin #eee; border-spacing: 0;">
                         <tr v-if="resultItem.context">
                           <td class="context" colspan="2">
                             <v-btn v-if="resultItem.position" color="transparent" density="compact" size="small" style="float:right;" icon flat title="Goto context" @click="navigateToResourcePath(resultItem.context)">
