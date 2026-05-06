@@ -249,6 +249,143 @@ describe("FHIRPath validator visitor", () => {
         });
     });
 
+    describe("environment variable semantics (%context, %resource, %rootResource)", () => {
+        // Per https://build.fhir.org/ig/HL7/FHIRPath/#scoped-functions:
+        //   - %context     = the *initial* type of the expression being
+        //                    evaluated (the seed/root scope for the expression).
+        //   - %resource    = the input *resource* the expression is being
+        //                    evaluated against (NOT the current focus).
+        //   - %rootResource = the container resource (defaults to %resource).
+        // None of these are rebound by scoped functions like where/select.
+
+        it("%resource is the input resource type, not the contextExpression result", () => {
+            const r = validateFhirpathExpression("%resource", {
+                fhirVersion: "r4",
+                contextType: "Patient",
+                contextExpression: "Patient.name", // navigates into HumanName
+            });
+            // Even though the expression's input is HumanName (per-item),
+            // %resource must remain Patient.
+            expect(r.diagnostics.filter((d) => d.severity === "error")).toEqual([]);
+            expect(r.expectedReturnType).toBe("Patient");
+            // Note: cardinality reflects the outer flat-map of the
+            // contextExpression — semantically equivalent to
+            // `Patient.name.select(%resource)`, which is one Patient per name.
+            expect(r.expectedReturnIsCollection).toBe(true);
+        });
+
+        it("%context is the initial scope of the expression being evaluated", () => {
+            const r = validateFhirpathExpression("%context", {
+                fhirVersion: "r4",
+                contextType: "Patient",
+                contextExpression: "Patient.name",
+            });
+            expect(r.diagnostics.filter((d) => d.severity === "error")).toEqual([]);
+            // %context follows the contextExpression result (singular per item).
+            expect(r.expectedReturnType).toBe("HumanName");
+        });
+
+        it("%context defaults to the contextType when no contextExpression is given", () => {
+            const r = validateFhirpathExpression("%context", {
+                fhirVersion: "r4",
+                contextType: "Patient",
+            });
+            expect(r.expectedReturnType).toBe("Patient");
+        });
+
+        it("%resource is reachable via dotted navigation (e.g. %resource.active)", () => {
+            const r = validateFhirpathExpression("%resource.active", {
+                fhirVersion: "r4",
+                contextType: "Patient",
+                contextExpression: "Patient.name",
+            });
+            expect(r.diagnostics.filter((d) => d.severity === "error")).toEqual([]);
+            expect(r.expectedReturnType).toBe("boolean");
+        });
+
+        it("%rootResource defaults to %resource when no explicit root is given", () => {
+            const r = validateFhirpathExpression("%rootResource", {
+                fhirVersion: "r4",
+                contextType: "Patient",
+            });
+            expect(r.expectedReturnType).toBe("Patient");
+        });
+
+        it("an explicit `resource` option overrides the contextType-based default", () => {
+            // E.g. evaluating an expression whose input resource is a Bundle
+            // entry (HumanName) but %resource should still be the containing
+            // Patient. Caller can override via `resource`.
+            const r = validateFhirpathExpression("%resource", {
+                fhirVersion: "r4",
+                contextType: "HumanName",
+                resource: { types: [], isCollection: false },
+            });
+            // Empty types — but no error: the user explicitly cleared it.
+            expect(r.expectedReturnType).toBe("");
+        });
+    });
+
+    describe("scoped function context handling", () => {
+        // Per the spec, scoped functions (where/select/all/exists/repeat/
+        // aggregate/sort) evaluate their lambda argument with $this set to
+        // each input element. %context and %resource are *not* rebound.
+
+        it("$this inside where() is the singular per-item type of the input", () => {
+            const r = validateFhirpathExpression("Patient.name.where($this.use = 'official').given", {
+                fhirVersion: "r4",
+                contextType: "Patient",
+            });
+            // $this.use must resolve against HumanName (singular), not HumanName[].
+            expect(r.diagnostics.filter((d) => d.severity === "error")).toEqual([]);
+            expect(r.expectedReturnType).toBe("string");
+            expect(r.expectedReturnIsCollection).toBe(true);
+        });
+
+        it("%resource inside a scoped function still refers to the input resource", () => {
+            // `Patient.name.where(%resource.active)` — inside where()'s lambda
+            // the focus is HumanName, but %resource must still be Patient.
+            const r = validateFhirpathExpression("Patient.name.where(%resource.active)", {
+                fhirVersion: "r4",
+                contextType: "Patient",
+            });
+            expect(r.diagnostics.filter((d) => d.severity === "error")).toEqual([]);
+            // where() returns the input type (HumanName collection).
+            expect(r.expectedReturnType).toBe("HumanName");
+            expect(r.expectedReturnIsCollection).toBe(true);
+        });
+
+        it("%context inside a scoped function still refers to the initial scope", () => {
+            // With contextExpression `Patient.name`, %context = HumanName.
+            // Inside the inner where() lambda the focus is the HumanName.use
+            // string per item, but %context must still be HumanName.
+            const r = validateFhirpathExpression("given.where(%context.use = 'official')", {
+                fhirVersion: "r4",
+                contextType: "Patient",
+                contextExpression: "Patient.name",
+            });
+            expect(r.diagnostics.filter((d) => d.severity === "error")).toEqual([]);
+            expect(r.expectedReturnType).toBe("string");
+        });
+
+        it("nested scoped functions preserve %resource across both levels", () => {
+            const r = validateFhirpathExpression(
+                "Patient.contact.where(name.where(%resource.active).exists())",
+                { fhirVersion: "r4", contextType: "Patient" },
+            );
+            expect(r.diagnostics.filter((d) => d.severity === "error")).toEqual([]);
+        });
+
+        it("select() projection's $this is the singular per-item type", () => {
+            const r = validateFhirpathExpression("Patient.name.select($this.use)", {
+                fhirVersion: "r4",
+                contextType: "Patient",
+            });
+            expect(r.diagnostics.filter((d) => d.severity === "error")).toEqual([]);
+            expect(r.expectedReturnType).toBe("code");
+            expect(r.expectedReturnIsCollection).toBe(true);
+        });
+    });
+
     describe("parity with the legacy fhirpath.js tree", () => {
         // When stripped of ReturnType + position info, the validator's typed
         // AST must produce the same tree shape (ExpressionType + Name +

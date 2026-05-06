@@ -156,6 +156,16 @@ export interface VisitorOptions {
     contextValue?: FhirPathValue;
     /** Additional environment variables (canonical name without leading `%`). */
     environmentVariables?: Record<string, FhirPathValue>;
+    /** Type of the input resource — surfaced as `%resource`. Per the FHIRPath
+     *  spec (https://build.fhir.org/ig/HL7/FHIRPath/#scoped-functions),
+     *  `%resource` is the resource the expression is being evaluated against,
+     *  *not* the current focus. When omitted, falls back to `contextType` if
+     *  it resolves to a Resource. */
+    resource?: FhirPathValue;
+    /** Type of the container resource — surfaced as `%rootResource` (e.g. the
+     *  Bundle when evaluating an expression rooted at one of its entries).
+     *  When omitted, defaults to `resource`. */
+    rootResource?: FhirPathValue;
 }
 
 /** Result returned by `runVisitor`. */
@@ -478,6 +488,17 @@ class FhirPathExpressionVisitor {
             return { types: [this.options.contextType], isCollection: !!this.options.contextIsCollection };
         }
         return EMPTY_VALUE;
+    }
+
+    /** Fallback for `%resource` when no explicit `resource` was supplied:
+     *  prefer `contextType` (which is typically the resource the user is
+     *  authoring against, e.g. "Patient" before any contextExpression
+     *  navigates into a sub-element). Falls back to the initial scope. */
+    private resourceFallback(): FhirPathValue {
+        if (this.options.contextType) {
+            return { types: [this.options.contextType], isCollection: false };
+        }
+        return this.contextValue();
     }
 
     private addDiagnostic(d: Omit<Diagnostic, "expression"> & { expression?: string }): void {
@@ -1164,10 +1185,26 @@ class FhirPathExpressionVisitor {
                     return { node, value };
                 }
             }
-            // Context-dependent vars take the configured contextType.
-            const ctxVal = this.contextValue();
-            node.ReturnType = formatValueType(ctxVal);
-            return { node, value: ctxVal };
+            // Context-dependent vars. Per the FHIRPath spec scoped-functions
+            // section, these have distinct semantics:
+            //   - %context     = the *initial* type of the expression being
+            //                    evaluated (i.e. the seed/root scope).
+            //   - %resource    = the input *resource* the expression is being
+            //                    evaluated against (NOT the current focus).
+            //   - %rootResource = the container resource (defaults to
+            //                    %resource when no explicit container exists).
+            // None of these are rebound by scoped functions like where/select.
+            let val: FhirPathValue;
+            if (name === "resource") {
+                val = this.options.resource ?? this.resourceFallback();
+            } else if (name === "rootResource") {
+                val = this.options.rootResource ?? this.options.resource ?? this.resourceFallback();
+            } else {
+                // %context — the initial input scope to the expression.
+                val = this.contextValue();
+            }
+            node.ReturnType = formatValueType(val);
+            return { node, value: val };
         }
         this.addDiagnostic({
             severity: "warning",

@@ -67,6 +67,11 @@ export interface ValidateOptions {
     contextExpression?: string;
     /** Map of `%var` name -> typed value. */
     environmentVariables?: Record<string, FhirPathValue>;
+    /** Optional override for `%resource` — the input resource type. When
+     *  omitted, defaults to `contextType` (per the FHIRPath spec, `%resource`
+     *  is the resource the expression is being evaluated against, not the
+     *  current focus). */
+    resource?: FhirPathValue;
 }
 
 /** Result returned by `validateFhirpathExpression`. */
@@ -156,6 +161,7 @@ export function validateFhirpathExpression(
             contextType,
             contextIsCollection: options.contextIsCollection,
             environmentVariables: options.environmentVariables,
+            resource: options.resource ?? (contextType ? { types: [contextType], isCollection: false } : undefined),
         });
         contextDiagnostics = [...cv.syntaxErrors, ...cv.diagnostics];
         contextParseDebugTree = cv.parseDebugTree;
@@ -178,6 +184,13 @@ export function validateFhirpathExpression(
         contextIsCollection: options.contextIsCollection,
         contextValue,
         environmentVariables: options.environmentVariables,
+        // Per the spec's scoped-functions rules, %resource is the input
+        // resource the expression is being evaluated against, *not* the
+        // current focus. When the user supplied a contextExpression that
+        // navigated into a sub-element, the resource is still the original
+        // contextType (typically the FHIR resource the form is authored
+        // against). Singular by definition.
+        resource: options.resource ?? (contextType ? { types: [contextType], isCollection: false } : undefined),
     });
     // If the context expression produced a collection, the engine's per-item
     // iteration flat-maps into the final result, so the main expression's
