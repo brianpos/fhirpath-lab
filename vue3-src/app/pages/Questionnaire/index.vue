@@ -21,6 +21,7 @@ tr.v-data-table__tr {
 }
 .fl-toolbar {
   margin-bottom: 6px;
+  margin-left: 16px;
 }
 </style>
 
@@ -44,7 +45,7 @@ tr.v-data-table__tr {
       </template>
     </HeaderNavbar>
 
-    <div class="container-fluid bd-layout" style="padding-top: 104px">
+    <div class="container-fluid bd-layout" style="padding-top: 114px">
       <v-form class="fl-toolbar">
         <v-row class="search-row" no-gutters>
           <v-col>

@@ -9,6 +9,7 @@ tr.v-data-table__tr {
 
 .fl-toolbar {
   margin-bottom: 6px;
+  margin-left: 16px;
 }
 </style>
 
