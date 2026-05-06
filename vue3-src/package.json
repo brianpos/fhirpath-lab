@@ -19,7 +19,7 @@
     "antlr4": "^4.13.2",
     "axios": "^1.16.0",
     "fhir-extension-helpers": "^0.3.0",
-    "fhirpath": "^4.9.3",
+    "fhirpath": "^4.10.1",
     "htmldiff-js": "^1.0.5",
     "luxon": "^3.7.2",
     "lz-string": "^1.5.0",
