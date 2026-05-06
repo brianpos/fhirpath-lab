@@ -331,6 +331,47 @@
             </div>
           </template>
 
+          <!-- Trace Tab -->
+          <template v-slot:Trace>
+            <div class="tab-content">
+              <template v-if="singleEngineResult && singleEngineResult.results">
+                <div v-if="selectedEngineName" class="text-caption text-grey mb-2">
+                  Engine: {{ selectedEngineName }}
+                </div>
+                <div v-else-if="singleEngineResult.processedByEngine" class="text-caption text-grey mb-2">
+                  Engine: {{ singleEngineResult.processedByEngine }}
+                </div>
+                <template v-for="(r2, i1) in singleEngineResult.results" :key="i1">
+                  <v-table density="compact" class="trace-table">
+                    <tbody>
+                      <tr v-if="r2.context">
+                        <td class="trace-context" colspan="3">
+                          <div>Context: <b>{{ r2.context }}</b></div>
+                        </td>
+                      </tr>
+                      <template v-for="(v1, index) in r2.trace" :key="index">
+                        <tr>
+                          <td class="trace-name"><b>{{ v1.name }}</b></td>
+                          <td class="trace-value">
+                            <div class="code-json" v-if="v1.value != null">{{ v1.value }}</div>
+                            <div class="code-json" v-if="v1.value == null && v1.type === 'empty-string'"><i>""</i></div>
+                          </td>
+                          <td class="trace-meta">
+                            <i v-if="v1.type">({{ v1.type }})</i>
+                            <span v-if="v1.path" class="trace-path">{{ v1.path }}</span>
+                          </td>
+                        </tr>
+                      </template>
+                    </tbody>
+                  </v-table>
+                </template>
+              </template>
+              <v-card v-else variant="outlined" class="pa-3 mt-2">
+                <span class="text-grey">No trace data available.</span>
+              </v-card>
+            </div>
+          </template>
+
           <!-- AST Tab -->
           <template v-slot:AST>
             <div class="tab-content">
@@ -396,6 +437,16 @@ const astData = ref<ParseTreeNode | null>(null)
 // Tracks which engine in the multi-engine Results tab has been selected for the
 // Expression / AST / DEBUG views. Cleared on every fresh evaluation.
 const selectedEngineName = ref<string | null>(null)
+
+// Trace tab is enabled when the currently displayed result has any trace entries.
+// Driven off `singleEngineResult`, which is updated both by single-engine runs and
+// by selecting an engine row in the multi-engine Results tab, so the Trace tab
+// swaps content together with the AST and DEBUG tabs.
+const hasTraceData = computed<boolean>(() => {
+  const r = singleEngineResult.value
+  if (!r || !r.results) return false
+  return r.results.some(rd => rd.trace && rd.trace.length > 0)
+})
 
 // FHIR version and engine selection
 const fhirVersions = ['R4', 'R5', 'R6']
@@ -551,6 +602,12 @@ const tabDetails = computed<TabData[]>(() => [
     tabName: "Variables", 
     show: variables.value.length > 0,
     enabled: true,
+  },
+  {
+    iconName: "mdi-format-list-bulleted",
+    tabName: "Trace",
+    show: true,
+    enabled: hasTraceData.value,
   },
   {
     iconName: "mdi-file-tree",
@@ -1218,6 +1275,40 @@ td {
 .result-path-target {
   right: 0px;
   bottom: -1px;
+}
+
+.trace-table {
+  margin-bottom: 12px;
+}
+.trace-table .trace-context {
+  background-color: #f5f5f5;
+  border-bottom: silver 1px solid;
+  font-style: italic;
+}
+.trace-table .trace-name {
+  border-bottom: silver 1px solid;
+  vertical-align: top;
+  white-space: nowrap;
+}
+.trace-table .trace-value {
+  border-bottom: silver 1px solid;
+  vertical-align: top;
+  width: 100%;
+}
+.trace-table .trace-meta {
+  border-bottom: silver 1px solid;
+  vertical-align: top;
+  white-space: nowrap;
+}
+.trace-table .trace-path {
+  font-size: 0.6rem;
+  color: #666;
+  font-style: italic;
+  margin-left: 6px;
+}
+.trace-table .code-json {
+  white-space: pre-wrap;
+  font-family: monospace;
 }
 
 </style>
