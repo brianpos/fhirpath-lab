@@ -1,7 +1,7 @@
 <template>
   <div class="search-navigator">
     <v-toolbar-title
-      style="display: inline-flex; font-size: medium"
+      class="search-navigator__label"
       v-text="label"
     ></v-toolbar-title>
     <v-btn
@@ -62,3 +62,19 @@ withDefaults(defineProps<Props>(), {
   add: undefined,
 })
 </script>
+
+<style scoped>
+.search-navigator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 0 16px;
+  box-sizing: border-box;
+}
+.search-navigator__label {
+  font-size: medium;
+  flex: 0 0 auto;
+  margin-right: 8px;
+}
+</style>

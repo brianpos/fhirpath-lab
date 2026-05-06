@@ -92,6 +92,7 @@ tr.v-data-table__tr {
         v-model:expanded="expanded"
         @click:row="onRowClick"
       >
+        <template v-slot:bottom><div /></template>
         <template v-slot:item.title="{ item }">
           <a @click.stop="navigateSelection(item, $event)">{{ item.title }}</a>
         </template>
@@ -146,11 +147,13 @@ const router = useRouter()
 
 const defaultUseContexts: FhirpathLabUseContexts[] = [
   { code: 'demo', display: 'Demonstration' },
+  { code: 'example', display: 'Examples of Use' },
   { system: 'http://fhir.forms-lab.com/CodeSystem/contexts', code: 'devdays', display: 'DevDays Demo' },
   { code: 'extract', display: 'Extract Demonstration' },
 ]
 
 const columns = [
+  { title: '', key: 'data-table-expand', align: 'start' as const, sortable: false, width: '40px' },
   { title: 'Name', key: 'title', align: 'start' as const, sortable: false },
   { title: 'Version', key: 'version', align: 'start' as const, sortable: false },
   { title: 'Status', key: 'status', align: 'start' as const, sortable: false },

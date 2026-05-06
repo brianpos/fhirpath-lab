@@ -102,6 +102,7 @@ tr.v-data-table__tr {
         v-model:expanded="expanded"
         @click:row="onRowClick"
       >
+        <template v-slot:bottom><div /></template>
         <template v-slot:item.title="{ item }">
           <a @click.stop="navigateSelection(item, $event)">{{ item.title }}</a>
         </template>
@@ -162,6 +163,7 @@ const defaultUseContexts: FhirpathLabUseContexts[] = [
 ]
 
 const columns = [
+  { title: '', key: 'data-table-expand', align: 'start' as const, sortable: false, width: '40px' },
   { title: 'Name', key: 'title', align: 'start' as const, sortable: false },
   { title: 'Version', key: 'version', align: 'start' as const, sortable: false },
   { title: 'Status', key: 'status', align: 'start' as const, sortable: false },
