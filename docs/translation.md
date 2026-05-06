@@ -1,268 +1,345 @@
-# Internationalisation of the FHIRPath Lab
+# Internationalisation of the FHIRPath Lab — exploration
 
-> Status: **exploration / discussion only — no code changes proposed yet.**
+> **Status:** discussion paper, no code changes.
 >
-> Goal: understand what it would take to offer the FHIRPath Lab UI (and
-> supporting content) in additional languages so it can be used comfortably in
-> Germany (de-DE), Switzerland (de-CH / fr-CH / it-CH), Austria (de-AT) and
-> Sweden (sv-SE). Also identify low-cost things we can do *now* to make a
-> future translation effort straightforward.
+> **Purpose:** to take to European HL7 affiliates (HL7 Deutschland, HL7
+> Switzerland / eHealth Suisse, HL7 Austria, HL7 Sweden / Inera) and ask
+> a single primary question:
+>
+> > *Would a localised FHIRPath Lab UI in your jurisdiction's language
+> > materially help user training, or is the English version adequate
+> > for your audience?*
+>
+> Everything below is framing for that conversation: what the affiliates
+> would be opting into, what it would (and would not) cost, and what they
+> would need to commit if the answer is "yes please".
+>
+> **Scope:** the in-progress **Vue 3 / Nuxt 4 migration** in
+> [`vue3-src/`](../vue3-src/) only. The current Nuxt 2 production app is
+> explicitly **out of scope** — any localisation effort would land in the
+> rewrite, not be back-ported.
 
 ---
 
-## 1. What "internationalisation" actually means here
+## 1. The question we are actually asking
 
-For a tool like the FHIRPath Lab there are several quite different layers that
-are often lumped together under "translation". They have very different cost,
-risk and maintenance profiles, and we should be explicit about which ones we
-actually want to support.
+The FHIRPath Lab is a developer / implementer tool. Its users are typically
+people who already read FHIR specifications, FHIRPath grammar, JSON, XML,
+HTTP traces, and OperationOutcomes — *all of which are English by definition*.
+A localised chrome around an English domain is not automatically useful, and
+in some communities can actively get in the way (people search for English
+error messages, paste English snippets into Stack Overflow, etc.).
 
-| Layer | Examples in this app | Who owns the strings |
-|---|---|---|
-| **A. Chrome / shell UI** | Page titles, menu items ("Expression Sources", "Settings"), button labels ("Save", "Cancel"), tab names, error toasts, table headers | FHIRPath Lab |
-| **B. Lab-specific domain text** | Walkthrough text, tooltips on FhirPath operators, the "what is this engine" descriptions, AI prompt scaffolding in `helpers/openai_*` | FHIRPath Lab |
-| **C. FHIR specification text** | Structure definition descriptions, element short / definition / comments, search parameter descriptions, value-set display strings | HL7 / national IGs |
-| **D. User content** | Library expressions, Questionnaire `text`/`prefix`, StructureMap names, custom example resources | The user / their FHIR server |
-| **E. Locale-sensitive *behaviour*** | Date / time / number formatting, decimal separators (`,` vs `.`), units (UCUM), collation / sort, FHIRPath itself (`@2024-12-31`, decimal literals) | FHIRPath spec + UI code |
-| **F. Regulatory / privacy copy** | Privacy statement, terms, "do not enter real patient data" warnings | FHIRPath Lab + legal |
+So before any translation work is committed to, we want each affiliate to
+tell us:
 
-The cheapest and most impactful starting point is **A + B + F** (the chrome and
-the lab's own copy). **C** is essentially free if we point at the right FHIR
-servers/IGs. **D** is the user's responsibility. **E** is the one that has the
-most subtle traps — see §5.
+1. **Who is the audience for FHIRPath Lab in your jurisdiction?**
+   * Implementers writing production code? Then English is probably fine.
+   * Clinicians, terminologists, analysts, students learning FHIR for the
+     first time? Then a localised UI may genuinely lower the barrier.
+   * Mixed audience used in classroom-style training (HL7 Affiliate
+     courses, university modules, vendor onboarding)? Worth localising
+     the chrome and the privacy / safety copy at minimum.
 
----
+2. **What is the language reality on the ground?**
+   * Germany / Austria — German is overwhelmingly the working language for
+     non-developer roles; developers are typically bilingual.
+   * Switzerland — multilingual (de-CH, fr-CH, it-CH); choosing one
+     language can disadvantage two of the three regions.
+   * Sweden — Swedish FHIR developers are typically very comfortable in
+     English; Swedish localisation is mainly a polish / training-aid
+     question, not a comprehension question.
 
-## 2. Current state of the codebase (as of 2026-05)
+3. **Would the affiliate help maintain the translations?**
+   Translation of FHIR-specific terminology ("expression", "bundle",
+   "narrative", "value set", "concept map", "invariant", "slicing") is the
+   hard part, and is exactly where machine translation is weakest. If an
+   affiliate cannot offer at least native-speaker review, a localised
+   build risks being worse than no localisation at all.
 
-### 2.1 Two app code-bases live side by side
+4. **Is there a *training scenario* where English is a blocker today?**
+   Concrete examples are more useful than abstract preference. e.g.
+   "we run a 2-day Questionnaire authoring workshop for hospital IT
+   staff and the UI labels are the bottleneck" is a much stronger
+   signal than "translation would be nice".
 
-* `pages/`, `components/`, `layouts/`, `helpers/` — the **production** app, built on **Nuxt 2 / Vue 2 / Vuetify 2 / bootstrap-vue** (see `package.json`, `nuxt.config.js`).
-* `vue3-src/` — a **migration in progress** to **Nuxt 4 / Vue 3 / Vuetify 3** (`vue3-src/package.json`).
-
-Both code bases are entirely English. A search for `i18n`, `vue-i18n`, `@nuxtjs/i18n`, `@intlify/*` returns no hits, and `nuxt.config.js` does not register any localisation module. The HTML root is hard-coded to English:
-
-```js
-// nuxt.config.js
-head: { htmlAttrs: { lang: 'en' } }
-```
-
-This means **today there is no translation infrastructure at all** — every
-visible string is a literal in a `.vue` template, a `title="…"` attribute, an
-`<v-card-title>`, an `<v-btn>` body, a tooltip, a `console.log`, etc.
-
-### 2.2 Where the user-visible strings live
-
-Rough survey (non-exhaustive):
-
-* `components/HeaderNavbar.vue` — top navigation, menu group names ("Expression Sources", "Structure Definitions", "Test Structure Map", …).
-* `components/UserSettings.vue` — every settings field label and every `title="…"` tooltip.
-* `components/Questionnaire/*.vue` — the largest cluster of strings (renderer section labels, message logs, pre-population / extract panels).
-* `components/DebuggableFhirPathExpression.vue`, `ParseTreeTab.vue`, `TwinPaneTab.vue`, `OperationOutcome*.vue` — diagnostics text.
-* `pages/**/*.vue` — page titles, intro text, column headers for `List` / `Library` / `StructureDefinition` / `SearchParameter` / `Questionnaire` / `StructureMap` / `SubscriptionTopic`.
-* `pages/privacy/` — privacy copy (regulated content).
-* `helpers/openai_*.ts` — system prompts and instruction text fed to the LLM. These are *English by design today* and steer the model's output language.
-* `docs/*.md` — walkthroughs and reference material (separate concern from runtime UI).
-
-### 2.3 Configuration that is already locale-friendly
-
-A few things are already pleasantly factored and would survive an i18n effort
-unchanged:
-
-* **Endpoints** are externalised in `static/config.json` (the various `*_server_r4b/r5/r6` URLs). It is already trivial to point a deployment at a different set of engines.
-* **User-settable servers** in `helpers/user_settings.ts` (`fhirServerUrl`, `fhirServerExamplesUrl`, `fhirTerminologyServerUrl`, `defaultNewCanonicalBase`) are persisted in `localStorage`. A user in Sweden can already set the example server to a Swedish national one and the terminology server to e.g. the Swedish national terminology server.
-* The favourites / library mechanism uses canonical URLs, so national IGs slot in naturally.
-
-### 2.4 Things that are *implicitly* English / en-US today
-
-* All `<title>` attributes (rich tooltips Vuetify renders natively) are English.
-* All Vuetify components inherit the **default Vuetify English locale** (pagination "Next", date pickers, "No data available", etc.) because no `vuetify.lang` block is configured.
-* Date and number formatting in `helpers/datetime.ts` and ad-hoc `toString()` / template interpolation calls do not pass an explicit locale to `Intl.*`.
-* AI prompts (in `helpers/openai_utils.ts`, `openai_form_tester.ts`, `openai_tools.ts`) are written in English and ask for English replies; users in DE / CH / AT / SE will get English explanations even when they ask in German or Swedish, unless we change the prompt scaffolding.
+If the answers across all four affiliates are "English is adequate for
+our audience", we should not localise. The cheap-prep work in §4 still
+makes sense regardless.
 
 ---
 
-## 3. What it would take to add German / Swedish (etc.) UI
+## 2. What an affiliate would be opting into
 
-This is the part of the work that produces the most user-visible value. The
-two app code bases have very different best-practice answers, so the choice of
-**when** to do this matters as much as **how**.
+If an affiliate says yes, here is the realistic shape of the commitment.
 
-### 3.1 Recommended approach for the Vue 3 / Nuxt 4 rewrite (`vue3-src/`)
+### 2.1 What the FHIRPath Lab project would deliver
 
-If the Nuxt 4 rewrite is going to land in any reasonable timeframe, this is
-the natural place to introduce i18n; doing it twice (Nuxt 2 *and* Nuxt 4) is
-expensive.
+* The Vue 3 rewrite (`vue3-src/`) wired for `vue-i18n` + Vuetify 3 locale,
+  with English as the source of truth and a locale switcher in the
+  header.
+* A locale fall-back chain so that regional variants don't multiply
+  effort: `de-AT → de → en`, `de-CH → de → en`, `fr-CH → fr → en`,
+  `it-CH → it → en`, `sv-SE → sv → en`. The vast majority of strings
+  live at the language root; the regional file overrides only what
+  genuinely differs (date format, a handful of region-specific terms).
+* A small per-locale "deployment defaults" mechanism so a German
+  affiliate's preferred example FHIR server, terminology server and
+  `displayLanguage` can be pre-populated.
+* English as the permanent fallback so a missing key never produces a
+  blank UI.
 
-* Add **`@nuxtjs/i18n` v9+** (which wraps **vue-i18n v10**). It is the de-facto Nuxt module: lazy-loaded JSON/YAML message files per locale, automatic `<html lang>`, route-level locale strategy, SEO `<link rel="alternate">` tags, locale switcher composable.
-* Use the `prefix_except_default` strategy (URLs like `/de/FhirPath`, `/sv/FhirPath`) so deep links are language-stable and shareable.
-* Add **Vuetify 3 locale messages** (`vuetify.locale = { locale, fallback: 'en', messages: { en, de, sv } }`) and bridge them to the same locale source so Vuetify's own strings (date pickers, data tables, pagination) follow the user's choice.
-* Locales to seed: `en` (source), `de` (covers DE + AT + de-CH baseline), `sv`. Add `fr` and `it` if Swiss French / Italian users matter — they share the same `de` data model so the marginal cost is just translation.
-* Treat **de-AT** and **de-CH** as *regional overrides* on top of `de`, not full locales. vue-i18n natively supports fallback chains (`de-AT → de → en`). This avoids 3× the translation work for things that are identical in all German-speaking countries.
+### 2.2 What the affiliate would commit to
 
-### 3.2 Recommended approach if we must also do it on the Nuxt 2 app
+* Initial translation pass (or review of a machine-translated seed) for
+  the chrome strings — order of magnitude **a few hundred short
+  strings**, not thousands. The lab is a small surface compared with
+  e.g. an EHR.
+* **Native-speaker review of FHIR terminology choices.** This is the
+  single most important contribution. Aligning with the affiliate's
+  published glossaries (e.g. HL7 Deutschland's German FHIR glossary)
+  matters more than any code we write.
+* Ongoing review when new strings are added — typically a handful per
+  release, surfaced via a CI check that flags missing keys.
+* Pointing us at the right defaults: example FHIR server, terminology
+  server, `displayLanguage` value, canonical base URL for examples.
 
-The Nuxt 2 app would use the matching legacy stack:
+### 2.3 What is explicitly *not* being offered
 
-* `@nuxtjs/i18n` v7 + `vue-i18n` v8 (Vue 2 compatible).
-* Vuetify 2 has built-in `$vuetify.lang` (`vuetify/lib/locale/de`, `…/sv`). Wire it to the same locale switcher.
-* `bootstrap-vue` is also used; its few user-facing strings (`b-pagination`, `b-table` empty-text) need to be passed in via props from the i18n catalogue — there is no global locale registry.
-
-If the rewrite is close to shipping, doing this on Nuxt 2 is largely throw-away
-work. A reasonable middle ground is:
-
-1. Get the **string-extraction discipline** (§4) into the Nuxt 2 code now, *without* yet adding the i18n module. Replace literal strings with `$t('settings.fhirServer.label')` calls that today resolve via a tiny stub that just returns the English default. This keeps PRs small and reviewable, and means the rewrite inherits a ready-to-translate catalogue.
-2. Plug in the real `vue-i18n` only on the rewrite.
-
-### 3.3 Translation production workflow
-
-* **Keys**, not English text, in the source ( `t('library.actions.runExpression')` rather than `t('Run expression')` ). This avoids breaking every translation when an English wording is tweaked.
-* **One JSON / YAML file per locale** under `locales/{en,de,sv}.json` (Nuxt 4) or `lang/` (Nuxt 2). Keep it flat-ish (max 2–3 levels of nesting) — easier to diff, easier for translators.
-* **English is the source of truth.** A small CI check can fail the build if a key exists in `en.json` but is missing in another locale (or vice versa).
-* For initial seeding, an LLM pass is acceptable, but **plan for native-speaker review** of the FHIR-specific terms. Translating "expression", "bundle", "narrative", "value set", "concept map", etc. in a way that matches what local clinicians and implementers actually say is the hardest part of this project, and is exactly where machine translation is weakest. The German FHIR community (HL7 Deutschland) and Swedish (Inera / HL7 Sweden) have published glossaries that should be consulted.
-* Provide a `?lang=` query-string override and a small picker in the header so a user can preview a locale without changing their browser settings — useful for QA and for screenshots.
-
----
-
-## 4. Things to do *now* that make future translation cheap
-
-These are ordered from "almost zero risk" to "small refactor".
-
-1. **Stop adding new hard-coded English text in the Vue 3 rewrite.** Even before
-   `@nuxtjs/i18n` is wired up, route everything through a `t()` helper (it can
-   be a 6-line shim that returns its key for now). This is the single most
-   leveraged habit change available.
-2. **Co-locate strings in `<i18n>` blocks or per-component message objects** in
-   new components, rather than scattering them across `title=`, `placeholder=`,
-   `<span>` text and `console.error`. This is `vue-i18n`'s "single file
-   component messages" feature and makes review trivial.
-3. **Avoid string concatenation for sentences.** `'Loaded ' + n + ' libraries'`
-   cannot be translated correctly into German (verb position) or Swedish
-   (definite-article suffix). Use parameterised messages: `t('library.loadedCount', { n })`.
-4. **Pass an explicit locale to every `Intl.DateTimeFormat`, `Intl.NumberFormat`
-   and `Date.prototype.toLocaleString` call.** Today these pick up the
-   browser locale silently, which means a German user sees `31.12.2024` while
-   a US user sees `12/31/2024` for the *same* underlying FHIR `date` — and
-   we have no control over that. Centralise this in `helpers/datetime.ts`
-   and have it read the active app locale.
-5. **Be explicit about FHIRPath's own locale-independence.** FHIRPath literals
-   (`@2024-12-31`, `1.5`) and the expressions a user types are *not* localised
-   and must not be reformatted by display logic. The tester input/output
-   panels should always render decimals with `.` and dates in `YYYY-MM-DD`,
-   regardless of UI locale. Add a comment to that effect on
-   `components/DebuggableFhirPathExpression.vue` so a future translator does
-   not "helpfully" run results through `toLocaleString`.
-6. **Add a `lang` attribute that follows the active locale.** Today
-   `nuxt.config.js` hard-codes `htmlAttrs: { lang: 'en' }`. Even before any
-   translations exist, expose this through a single source of truth so it can
-   later be `lang: locale.value`.
-7. **Externalise the AI system prompts** in `helpers/openai_*.ts` so they can
-   be swapped per-locale. A short addition to the system prompt of the form
-   "Reply in {{userLocale}} unless the user writes in another language" goes
-   a long way and is essentially free.
-8. **Make the configurable URL defaults in `helpers/user_settings.ts` overridable
-   per deployment** (today the German defaults `https://fhir.forms-lab.com`,
-   `https://hapi.fhir.org/baseR4`, `https://sqlonfhir-r4.azurewebsites.net/fhir`
-   are baked in). A simple read from `static/config.json` (which is already
-   loaded for engine URLs) for `defaultFhirServer`, `defaultExamplesServer`,
-   `defaultTerminologyServer` would let a `de-DE` deployment ship sensible
-   defaults — see §5.
-9. **Use canonical URLs, not display labels, as identifiers.** This is mostly
-   already the case (`url`, `canonical`, `system`) and should stay that way —
-   it's what allows national IGs to slot in cleanly later.
-10. **Document this policy** in `CONTRIBUTING` / PR template once introduced,
-    so reviewers know to flag new hard-coded strings.
-
-None of the above requires committing to an i18n library or a delivery date.
+* No translation of FHIR specification text, value-set displays,
+  StructureDefinition descriptions, or other content that comes from
+  the wire. That is the responsibility of the FHIR server / terminology
+  server the lab is pointed at. (We can pass `displayLanguage` on
+  terminology calls so the *server* returns localised displays — but
+  that is not "the lab being translated".)
+* No translation of the `docs/` walkthroughs in the first round.
+* No translation of user-supplied content (Library names, Questionnaire
+  item text, StructureMap descriptions). That is the publisher's job.
+* No translation of AI-generated explanations as a static catalogue. The
+  right answer there is a one-line addition to the system prompt asking
+  the model to reply in the user's locale.
+* No right-to-left support (none of the candidate locales need it).
 
 ---
 
-## 5. Country-specific considerations
+## 3. Current state of the Vue 3 rewrite (`vue3-src/`)
 
-The FHIRPath Lab is a developer / implementer tool, not an EHR. It does not
-process patient data itself, which removes most regulatory worries (GDPR,
-nFADP, GDPR-AT, GDPR-SE / Patientdatalagen). The privacy page already states
-"Don't enter real patient data" and that wording should be **prominent in the
-target language** in any localised build — that is more important than getting
-the button labels right.
+A quick survey so the affiliate conversation is grounded in what
+actually exists today.
 
-### 5.1 🇩🇪 Germany (`de-DE`)
+* Stack: **Nuxt 4 + Vue 3 + Vuetify 3** via `vuetify-nuxt-module`
+  (`vue3-src/nuxt.config.ts`, `vue3-src/package.json`).
+* **No i18n module is registered.** A search for `vue-i18n`,
+  `@nuxtjs/i18n`, `@intlify/*` returns nothing.
+* The page title in `nuxt.config.ts` is hard-coded English
+  (`'FHIRPath Lab - FHIR Expression Testing Tool'`) and `<html lang>`
+  is implicit-default.
+* Vuetify 3 is configured without a `locale` block, so it falls back
+  to its built-in English messages for date pickers, pagination,
+  `v-data-table` empty states, etc.
+* `vue3-src/app/pages/` currently contains `index`, `fhirpath`, `fml`,
+  `sqlonfhir`, `Questionnaire/*`, `resource-editor-test`. All
+  user-visible strings are inline English literals in `.vue`
+  templates / `title=` attributes.
 
-* **Reference IG:** [Basisprofile DE](https://simplifier.net/basisprofil-de-r4) (HL7 Deutschland), [MII core data set](https://www.medizininformatik-initiative.de/), [KBV / gematik profiles](https://simplifier.net/organization/kassenrztlichebundesvereinigungkbv).
-* **Suggested example FHIR server defaults:** the **gematik** FHIR reference servers (`https://fhir-directory-test.vzd.ti-dienste.de/`), and HAPI test servers loaded with Basisprofile DE. The current default `hapi.fhir.org/baseR4` returns US examples that are confusing in a DE context.
-* **Terminology server:** the **TermServer** operated by BfArM / [Ontoserver instances](https://ontoserver.csiro.au/) loaded with ICD-10-GM, OPS, ATC and the SNOMED CT German edition. SNOMED CT is now licensed in DE (since 2021), so display strings can be returned in German.
-* **Date / number conventions:** `dd.MM.yyyy`, `1.234,56`. Note this **must not** affect FHIR's wire format or FHIRPath display — only chrome.
-* **Language fallback:** `de-DE → de → en`.
-* **Legal:** standard GDPR cookie / analytics banner if the production deployment ships analytics (`@nuxtjs/applicationinsights` is registered in `nuxt.config.js`); needs an opt-in for EU users.
-
-### 5.2 🇨🇭 Switzerland (`de-CH`, `fr-CH`, `it-CH`)
-
-* **Reference IG:** [CH Core](http://fhir.ch/ig/ch-core/index.html), [eCH-FHIR profiles](https://www.ech.ch/), eHealth Suisse exchange formats, and the **EPR (Elektronisches Patientendossier)** profiles.
-* **Suggested example FHIR server defaults:** [test.ahdis.ch/matchbox](https://test.ahdis.ch/matchbox/fhir) — already referenced in `static/config.json` as `mapper_server_matchbox`. Re-use it as the `fhirServerExamplesUrl` for a CH deployment.
-* **Terminology server:** the **CH TermPub / Term-Browser** infrastructure operated by eHealth Suisse, plus SNOMED CT international edition (Switzerland is an SNOMED member).
-* **Date / number conventions:** `dd.MM.yyyy` / `dd.MM.yyyy`; thousands separator `'` (`1'234.56`) — somewhat unusual, vue-i18n's CLDR data handles it.
-* **Multilingual reality:** Switzerland will need at least `de-CH` + `fr-CH`, ideally `it-CH`. Fall-back chains: `de-CH → de → en`, `fr-CH → fr → en`, `it-CH → it → en`. Most strings will live at the language root, with `-CH` overriding only the date/number format and a handful of region-specific terms.
-* The terminology server URL is the *single most important* per-locale default for Switzerland because CH Core valuesets are heavily expansion-driven.
-
-### 5.3 🇦🇹 Austria (`de-AT`)
-
-* **Reference IG:** [ELGA CDA / FHIR mappings](https://www.elga.gv.at/), [Austrian Patient Summary](https://art-decor.org/art-decor/decor-project--at-ips-).
-* **Suggested example FHIR server:** there is no widely-used public AT FHIR server today; in practice DE-flavoured servers + the AT IG is the pragmatic default.
-* **Terminology:** ELGA value sets, plus ICD-10-BMG (Austrian variant), shared SNOMED CT international.
-* **Date / number conventions:** as DE.
-* **Language fallback:** `de-AT → de → en`. The translation effort beyond `de` is limited to a few terms ("Sozialversicherungsnummer" vs "Krankenversichertennummer", units of healthcare organisations like "Krankenanstalt", etc.).
-
-### 5.4 🇸🇪 Sweden (`sv-SE`)
-
-* **Reference IG:** [HL7 Sweden FHIR profiles](https://hl7.se/), [Inera National Services](https://www.inera.se/) (1177, NPÖ), and the emerging **Nationella Läkemedelslistan / Patient Summary** profiles.
-* **Suggested example FHIR server defaults:** Inera's sandbox (where available) or a HAPI server pre-loaded with the SLL profiles.
-* **Terminology server:** Sweden runs a national terminology service; SNOMED CT Swedish edition is available, plus Snomed CT-SE, KVÅ, ATC.
-* **Date / number conventions:** `yyyy-MM-dd` (matches FHIR — convenient!), decimal `,`, thousands ` ` (NBSP).
-* **Sorting:** Swedish collation treats `å`, `ä`, `ö` as letters that come *after* `z`. If the Library / StructureDefinition list views ever do client-side sorting on display names, they need to use `Intl.Collator('sv')`.
-* **Language fallback:** `sv-SE → sv → en`. Many Swedish FHIR developers are perfectly comfortable working in English; the value of `sv-SE` is mainly chrome polish, the privacy/warning copy, and being able to demo to non-developer stakeholders.
-
-### 5.5 Cross-cutting
-
-* All four countries are **SNOMED CT member nations**, so `display` values from a properly-configured terminology server come back in the local language for free — *if* the lab passes `Accept-Language` (or the FHIR equivalent, the `displayLanguage` parameter on `$expand` / `$lookup`). Today the lab does not. Adding this as a per-locale default is one of the highest-leverage small changes available.
-* All four use **UCUM**, which is locale-independent — no work needed.
-* Date pickers and number inputs in **Vuetify 3** support locale natively once the Vuetify locale is wired (§3.1).
-* The `fhirpath` engine itself is locale-independent (FHIRPath spec is). Nothing to do.
+Crucially, **the rewrite is small and not yet feature-complete**. That
+is the *good news* for this exploration: the cost of doing i18n right
+in the rewrite is dramatically lower than it would have been to
+retrofit the Nuxt 2 app, because most of the eventual screens have not
+been written yet. Getting the ground rules in place now (§4) is the
+highest-leverage move available.
 
 ---
 
-## 6. What is explicitly *out of scope* for this exploration
+## 4. What we can do *now* (independent of the affiliate decision)
 
-* Translating the **walkthrough markdown** in `docs/`. These are reference material for implementers; they can stay English in v1. If demand appears, the same `@nuxtjs/i18n` route strategy can serve `/de/docs/...`.
-* Translating **AI-generated explanations**. The right answer is to instruct the LLM to reply in the user's locale, not to translate a static catalogue.
-* Translating **user-supplied content** (Library names, Questionnaire item text, StructureMap descriptions). That is the responsibility of whoever published the resource.
-* Right-to-left support. None of the target locales need it.
-* Server-side rendering of localised content for SEO. The app is already `ssr: false`, and that is fine for a developer tool.
+These items are useful even if every affiliate ultimately says "English
+is fine". They cost very little and they keep the door open. None of
+them require committing to a translation library or a delivery date.
+
+1. **Treat new strings in `vue3-src/` as translatable from day one.**
+   Route them through a `t('some.key')` helper — initially a 6-line
+   shim that returns its argument, later swapped for real `vue-i18n`.
+   This is the single highest-leverage habit change.
+
+2. **Co-locate strings per component**, e.g. a `<i18n>` block or a
+   constant message object at the top of each `.vue` file, rather
+   than scattering literals across `title=`, `placeholder=`, button
+   text, error toasts and `console.error`. Easier to review, easier
+   to extract.
+
+3. **No string concatenation for sentences.** `'Loaded ' + n + ' libraries'`
+   does not survive translation into German (verb position) or
+   Swedish (definite article suffix). Use parameterised messages.
+
+4. **Centralise locale-sensitive formatting.** Provide one
+   `formatDate(d)` / `formatNumber(n)` helper in `vue3-src/app/utils/`
+   that takes an explicit locale. Prevents silent en-US leakage from
+   `Intl.DateTimeFormat` / `toLocaleString` calls picking up the
+   browser locale at random.
+
+5. **Treat FHIRPath payloads as locale-independent.** FHIRPath
+   literals (`@2024-12-31`, decimal `1.5`) and the user's typed
+   expression must always render with `.` decimals and ISO dates in
+   the tester input/output panels regardless of UI locale. A code
+   comment to that effect on the FhirPath tester component prevents
+   a future contributor "helpfully" running results through
+   `toLocaleString`.
+
+6. **Drive `<html lang>` from a single source** instead of relying on
+   the Nuxt default, so flipping it later is one line.
+
+7. **Externalise the OpenAI system prompts** (currently hard-coded
+   English in the legacy `helpers/openai_*.ts` referenced via
+   `@legacy/helpers` from `vue3-src/nuxt.config.ts`). Even before any
+   chrome is translated, appending *"Reply in {{userLocale}} unless
+   the user writes in another language"* to the system prompt is
+   essentially free and immediately useful.
+
+8. **Per-deployment defaults config.** The Nuxt 2 app loads
+   `static/config.json` for engine URLs. The Vue 3 rewrite already
+   prerenders `/config.json` (see `nuxt.config.ts` `prerender.routes`).
+   Extending it with a `defaults` block keyed by locale —
+   `fhirServerExamplesUrl`, `fhirTerminologyServerUrl`,
+   `displayLanguage`, `defaultNewCanonicalBase` — would let an
+   affiliate-branded deployment ship sensible defaults without any
+   chrome translation at all. Several affiliates may find that this
+   alone is enough.
+
+9. **Pass `displayLanguage` on terminology lookups** (`$expand`,
+   `$lookup`). All four candidate jurisdictions are SNOMED CT member
+   nations with localised editions; this single change makes
+   value-set displays appear in the local language *with no
+   translation work*. This is arguably the most valuable single change
+   for European users regardless of whether the chrome is ever
+   localised.
+
+10. **Document the convention.** Once any of the above lands, a
+    one-paragraph note in the Vue 3 rewrite's contributing guide
+    ("new strings go through `t()`, no concatenated sentences,
+    explicit locales on `Intl.*`") keeps it cheap to maintain.
+
+If the affiliate conversation comes back as "English is adequate", we
+still benefit from items 4, 5, 7, 8 and 9 — they are good engineering
+hygiene independent of translation.
 
 ---
 
-## 7. Suggested staged plan (for when implementation does start)
+## 5. Per-jurisdiction notes (input for the affiliate conversations)
 
-Just for orientation — *not* a commitment.
+These are starting points, not commitments. Each affiliate is the
+authority on their own answer.
 
-1. **Foundations (no user-visible change).** Land §4.1–§4.6 in the Nuxt 4 rewrite: `t()` shim, locale-aware date/number helpers, `<html lang>` driven by a single source.
-2. **Wire `@nuxtjs/i18n` + Vuetify 3 locale.** English only. Add the route prefix strategy. Verify nothing changes for existing users.
-3. **Extract strings, ship `de`.** This is the bulk of the effort. Start with the highest-traffic surfaces: header/nav, settings, FhirPath tester, Questionnaire renderer.
-4. **Per-locale defaults config.** Extend `static/config.json` with `defaults: { 'de-DE': { fhirServerExamplesUrl: …, fhirTerminologyServerUrl: …, displayLanguage: 'de' }, 'de-CH': { … }, 'sv-SE': { … } }`.
-5. **Add `Accept-Language` / `displayLanguage` plumbing** to terminology lookups in `helpers/searchFhir.ts` / wherever `$expand` / `$lookup` is called.
-6. **Ship `sv`.**
-7. **Add regional overlays** `de-AT`, `de-CH`, `fr-CH`, `it-CH` as needed.
-8. **Translate the privacy / warning copy** — ideally with legal review for each jurisdiction.
+### 5.1 🇩🇪 Germany — HL7 Deutschland
+
+* **Audience hypothesis:** mixed; FHIR adoption in DE has accelerated
+  with the gematik / MII / KBV programs, pulling in non-developer
+  roles (clinical informaticists, MII data integration centres,
+  KBV implementers). A localised UI is plausibly useful for training
+  in this audience.
+* **Reference IGs:** Basisprofile DE, MII core data set, KBV /
+  gematik profiles.
+* **Suggested deployment defaults:** an HAPI server loaded with
+  Basisprofile DE; an Ontoserver instance with ICD-10-GM / OPS / ATC
+  / SNOMED CT German edition.
+* **Locale chain:** `de-DE → de → en`.
+* **Question to ask:** is HL7 Deutschland already running training
+  events where the English UI is friction, or is it a non-issue?
+
+### 5.2 🇨🇭 Switzerland — HL7 Switzerland / eHealth Suisse
+
+* **Audience hypothesis:** narrower and more developer-skewed than DE;
+  CH Core / EPR work is concentrated in a smaller community. English
+  may be adequate.
+* **Reference IGs:** CH Core, eCH-FHIR, EPR profiles.
+* **Suggested deployment defaults:** `test.ahdis.ch/matchbox` (already
+  referenced in the Nuxt 2 app's `static/config.json` as
+  `mapper_server_matchbox`) for examples; CH TermPub for terminology.
+* **Locale chain:** at minimum `de-CH → de → en` and `fr-CH → fr → en`,
+  optionally `it-CH → it → en`. **Choosing only one language is
+  politically awkward in CH** — this is worth raising explicitly with
+  the affiliate before committing.
+* **Question to ask:** is a single-language localisation acceptable, or
+  does CH require all three at once?
+
+### 5.3 🇦🇹 Austria — HL7 Austria
+
+* **Audience hypothesis:** small community, heavy ELGA focus, mostly
+  developer / consultant. English likely adequate.
+* **Reference IGs:** ELGA CDA / FHIR mappings, AT Patient Summary.
+* **Suggested deployment defaults:** in practice DE-flavoured servers
+  with the AT IG layered on top — there is no widely-used public AT
+  FHIR server today.
+* **Locale chain:** `de-AT → de → en`. The AT-specific delta over `de`
+  is small (a handful of terms — Sozialversicherungsnummer,
+  Krankenanstalt, etc.).
+* **Question to ask:** does HL7 Austria see enough non-developer
+  audience to justify a regional overlay, or is sharing the `de`
+  catalogue with HL7 Deutschland sufficient?
+
+### 5.4 🇸🇪 Sweden — HL7 Sweden / Inera
+
+* **Audience hypothesis:** Swedish FHIR developers are typically very
+  comfortable in English. The case for localisation is mostly the
+  training / classroom scenario and the privacy / safety copy.
+* **Reference IGs:** HL7 Sweden profiles, Inera national services
+  (1177, NPÖ), Nationella Läkemedelslistan.
+* **Suggested deployment defaults:** Inera sandbox (where available),
+  a HAPI server loaded with SLL profiles, the Swedish national
+  terminology service.
+* **Locale chain:** `sv-SE → sv → en`.
+* **Sorting note:** Swedish collation sorts `å`, `ä`, `ö` after `z`.
+  Any client-side sort of display names would need
+  `Intl.Collator('sv')`.
+* **Question to ask:** is there a concrete training / onboarding
+  scenario where the English UI is a blocker, or is the request more
+  aspirational?
+
+### 5.5 Cross-cutting (applies to all four)
+
+* All four are **SNOMED CT member nations**. Passing `displayLanguage`
+  on terminology calls is the single highest-leverage change for the
+  European user experience and is independent of any chrome
+  translation. **Do this regardless of the affiliate decision.**
+* All four use **UCUM** — locale-independent, no work.
+* The `fhirpath` engine itself is locale-independent (per the FHIRPath
+  spec). Nothing to do.
+* If a deployment ships analytics (the Nuxt 2 app uses Application
+  Insights), an EU deployment will need the usual GDPR opt-in. This
+  is a deployment-ops question, not an i18n question, but worth
+  flagging in the affiliate conversation because they may have views
+  on national hosting / data residency.
 
 ---
 
-## 8. Open questions to confirm with the project owner
+## 6. Decision points to take into the affiliate conversation
 
-* Is the Nuxt 4 / Vuetify 3 rewrite in `vue3-src/` the intended long-term home? If so, that drives the entire i18n approach (§3.1 vs §3.2).
-* Is there appetite to bundle **per-deployment defaults** (`fhirpath-lab.de`, `fhirpath-lab.ch`, `fhirpath-lab.se` style sub-sites), or is a single multilingual deployment with a locale switcher preferred? Both are achievable; the answer affects how `static/config.json` is structured.
-* Are there partner organisations (HL7 Deutschland, eHealth Suisse, Inera) who would supply / review translations, or is this a self-serve effort?
-* Does Application Insights need replacing/disabling for EU deployments under GDPR?
+Concrete questions, in priority order:
+
+1. **Is English adequate for your audience today, yes or no?**
+   If yes from all four, we stop here and only do §4 items 4, 5, 7, 8, 9.
+2. **If no, is your affiliate willing to provide / review translations
+   on an ongoing basis?** If no, we should not localise into that
+   language — a stale or wrong translation is worse than no
+   translation.
+3. **Is a per-locale "deployment defaults" config (server URLs +
+   `displayLanguage`) sufficient for your training needs without
+   chrome translation?** This is the cheapest possible win and may be
+   all that is actually required.
+4. **For Switzerland specifically:** is single-language localisation
+   acceptable, or is multi-language a hard requirement?
+5. **Is there a partner deployment** (`fhirpath-lab.de`,
+   `fhirpath-lab.ch`, `fhirpath-lab.se`-style sub-sites) that the
+   affiliate would want to host or co-brand, or do they prefer a
+   single multilingual deployment with a locale switcher? Both are
+   technically achievable; the answer affects the shape of the
+   per-locale defaults config in §4 item 8.
+
+The outcome of these conversations, not this document, should drive
+whether and how implementation proceeds.
 
 ---
 
-*Document author: exploration only — please treat the recommendations in §3
-and §7 as starting points for discussion, not as a design specification.*
+*Document author: exploration only. Recommendations are starting
+points for discussion with European HL7 affiliates, not a design
+specification.*
