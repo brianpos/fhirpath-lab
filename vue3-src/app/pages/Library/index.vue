@@ -98,11 +98,11 @@ tr.v-data-table__tr {
         item-value="id"
         :fixed-header="true"
         :items-per-page="-1"
+        hide-default-footer
         show-expand
         v-model:expanded="expanded"
         @click:row="onRowClick"
       >
-        <template v-slot:bottom><div /></template>
         <template v-slot:item.title="{ item }">
           <a @click.stop="navigateSelection(item, $event)">{{ item.title }}</a>
         </template>
