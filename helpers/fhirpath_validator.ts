@@ -59,6 +59,12 @@ export interface ValidateOptions {
     contextType?: string;
     /** True if the expression is rooted at a collection rather than a single value. */
     contextIsCollection?: boolean;
+    /** Optional FHIRPath context expression. When set the validator first
+     *  evaluates the context expression rooted at `contextType` and feeds its
+     *  resulting types and cardinality in as the starting scope for the main
+     *  expression — mirroring how the engine evaluates `select(<context>)`
+     *  before running the main expression. */
+    contextExpression?: string;
     /** Map of `%var` name -> typed value. */
     environmentVariables?: Record<string, FhirPathValue>;
 }
@@ -77,6 +83,8 @@ export interface ValidationResult {
     /** FHIR OperationOutcome built from the diagnostics. Undefined when there
      *  are no diagnostics. */
     outcome?: fhir4b.OperationOutcome;
+    /** Annotated AST of the context expression, when one was provided. */
+    contextParseDebugTree?: JsonNode;
 }
 
 const VALIDATOR_CODE_SYSTEM = "http://fhirpath-lab.com/CodeSystem/validator-codes";
@@ -132,12 +140,38 @@ export function validateFhirpathExpression(
 ): ValidationResult {
     const provider = getModelProvider(options.fhirVersion ?? "r4");
     const contextType = resolveContextType(provider, options.contextType);
+
+    // If a context expression is supplied, evaluate it first to determine the
+    // starting types/cardinality for the main expression. This mirrors what
+    // the engine does at runtime via `select(<contextExpression>)`.
+    let contextValue: FhirPathValue | undefined;
+    let contextDiagnostics: Diagnostic[] = [];
+    let contextParseDebugTree: JsonNode | undefined;
+    if (options.contextExpression && options.contextExpression.trim().length > 0) {
+        const cv = runVisitor(options.contextExpression, provider, {
+            contextType,
+            contextIsCollection: options.contextIsCollection,
+            environmentVariables: options.environmentVariables,
+        });
+        contextDiagnostics = [...cv.syntaxErrors, ...cv.diagnostics];
+        contextParseDebugTree = cv.parseDebugTree;
+        // Even if the context expression had errors, fall back to its computed
+        // types — they're the best signal we have for the main expression.
+        if (cv.parseDebugTree) {
+            contextValue = {
+                types: collectTypesFromTree(cv.parseDebugTree, provider),
+                isCollection: cv.expectedReturnIsCollection || !!options.contextIsCollection,
+            };
+        }
+    }
+
     const v = runVisitor(expression, provider, {
         contextType,
         contextIsCollection: options.contextIsCollection,
+        contextValue,
         environmentVariables: options.environmentVariables,
     });
-    const allDiag = [...v.syntaxErrors, ...v.diagnostics];
+    const allDiag = [...contextDiagnostics, ...v.syntaxErrors, ...v.diagnostics];
     const outcome = diagnosticsToOperationOutcome(allDiag);
     return {
         parseDebugTree: v.parseDebugTree,
@@ -145,7 +179,32 @@ export function validateFhirpathExpression(
         expectedReturnIsCollection: v.expectedReturnIsCollection,
         diagnostics: allDiag,
         outcome,
+        contextParseDebugTree,
     };
+}
+
+/** Recover the list of TypeModels from the root node's `ReturnType` string.
+ *  Used to seed the main expression's starting scope from a context expression. */
+function collectTypesFromTree(node: JsonNode, provider: ModelProvider): TypeModel[] {
+    if (!node.ReturnType) return [];
+    const out: TypeModel[] = [];
+    for (const part of node.ReturnType.split("|").map((p) => p.trim()).filter((p) => p.length > 0)) {
+        // Try as a System.* primitive first (joined names are lowercased), then
+        // as a FHIR type, then a capitalised System name.
+        const tries = [
+            "System." + part.charAt(0).toUpperCase() + part.substring(1),
+            part,
+            part.charAt(0).toUpperCase() + part.substring(1),
+        ];
+        for (const candidate of tries) {
+            const t = provider.lookupByTypeName(candidate);
+            if (t) {
+                out.push(t);
+                break;
+            }
+        }
+    }
+    return out;
 }
 
 function resolveContextType(provider: ModelProvider, contextType?: string): TypeModel | undefined {

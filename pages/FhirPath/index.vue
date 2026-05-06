@@ -2657,13 +2657,28 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         return;
       }
       try {
-        const contextExpr = this.getContextExpression() ?? this.resourceType ?? undefined;
-        const contextType = contextExpr ? contextExpr.split('.')[0]?.split('(')[0]?.trim() : undefined;
+        // Determine the starting type from the test resource if it parses as
+        // JSON; the validator will further refine via the contextExpression.
+        let contextType: string | undefined = this.resourceType || undefined;
+        if (!contextType) {
+          const json = this.getResourceJson();
+          if (json && !json.startsWith('<')) {
+            try {
+              const parsed = JSON.parse(json);
+              if (parsed && typeof parsed.resourceType === 'string') contextType = parsed.resourceType;
+            } catch { /* ignore */ }
+          }
+        }
         const result = validateFhirpathExpression(expression, {
           fhirVersion,
           contextType: contextType || undefined,
+          contextExpression: this.getContextExpression() || undefined,
         });
         if (result.parseDebugTree) {
+          // Dump the annotated AST to the console to assist with debugging
+          // (mirrors what the .NET engine logs server-side, and makes it
+          // easy to compare against the legacy fhirpath.js AST tree).
+          console.log('FHIRPath validator AST (annotated):', result.parseDebugTree);
           astTab?.displayTree(result.parseDebugTree as any);
         } else {
           // Fall back to the fhirpath.js-derived tree when the validator could

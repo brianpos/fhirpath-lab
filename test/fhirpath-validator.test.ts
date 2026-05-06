@@ -1,4 +1,32 @@
 import { validateFhirpathExpression } from "../helpers/fhirpath_validator";
+import { convertFhirPathJsToAst } from "../helpers/fhirpath_ast_converter";
+import type { JsonNode, fpjsNode } from "../models/FhirpathTesterData";
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const fhirpath = require("fhirpath");
+
+/** Build the legacy (non-annotated) AST tree the same way the lab does for
+ *  fhirpath.js engines: parse with fhirpath.js, convert, peel
+ *  `EntireExpression > Expression`, and take the first child. */
+function legacyTree(expr: string): JsonNode | undefined {
+    const parsed: fpjsNode = fhirpath.parse(expr);
+    if (!parsed.children || parsed.children.length === 0) return undefined;
+    const root = convertFhirPathJsToAst(parsed);
+    const arg0 = root.Arguments?.[0];
+    if (!arg0?.Arguments || arg0.Arguments.length === 0) return undefined;
+    return arg0.Arguments[0];
+}
+
+/** Reduce a JsonNode to its structural shape (ExpressionType + Name + Arguments
+ *  recursively). Drops ReturnType / Position / Length / Line / Column / SpecUrl
+ *  so legacy and annotated trees can be compared node-for-node. */
+function shapeOf(node: JsonNode | undefined): unknown {
+    if (!node) return undefined;
+    return {
+        ExpressionType: node.ExpressionType,
+        Name: node.Name,
+        Arguments: (node.Arguments ?? []).map(shapeOf),
+    };
+}
 
 describe("FHIRPath validator visitor", () => {
     it("annotates types for (1+1).toString()", () => {
@@ -9,15 +37,18 @@ describe("FHIRPath validator visitor", () => {
         expect(r.parseDebugTree?.ExpressionType).toBe("FunctionCallExpression");
         expect(r.parseDebugTree?.Name).toBe("toString");
         expect(r.parseDebugTree?.ReturnType).toBe("string");
-        // The argument tree should contain the +1+1 BinaryExpression with ReturnType integer
+        // ParenthesizedTerm wraps the inner +; this matches the legacy
+        // fhirpath.js-derived AST that ParseTreeTab.vue already renders.
         const args = r.parseDebugTree?.Arguments ?? [];
-        const arg = args[0];
-        expect(arg?.ExpressionType).toBe("BinaryExpression");
+        const parens = args[0];
+        expect(parens?.ExpressionType).toBe("ParenthesizedTerm");
+        const arg = parens?.Arguments?.[0];
+        expect(arg?.ExpressionType).toBe("AdditiveExpression");
         expect(arg?.Name).toBe("+");
         expect(arg?.ReturnType).toBe("integer");
         const subArgs = arg?.Arguments ?? [];
-        expect(subArgs.length).toBeGreaterThanOrEqual(2);
-        for (const literalArg of subArgs.slice(-2)) {
+        expect(subArgs.length).toBe(2);
+        for (const literalArg of subArgs) {
             expect(literalArg.ExpressionType).toBe("ConstantExpression");
             expect(literalArg.ReturnType).toBe("integer");
             expect(literalArg.Name).toBe("1");
@@ -91,4 +122,71 @@ describe("FHIRPath validator visitor", () => {
         expect(r.diagnostics).toEqual([]);
         expect(r.expectedReturnType).toBe("boolean");
     });
+
+    describe("starting scope", () => {
+        it("uses the context expression to widen the starting scope", () => {
+            // Without a context the bare `given` cannot resolve.
+            const noCtx = validateFhirpathExpression("given", {
+                fhirVersion: "r4",
+                contextType: "Patient",
+            });
+            expect(noCtx.diagnostics.some((d) => d.code === "prop-not-found")).toBe(true);
+
+            // With `Patient.name` as the context expression, `given` resolves
+            // against HumanName and returns a string collection.
+            const withCtx = validateFhirpathExpression("given", {
+                fhirVersion: "r4",
+                contextType: "Patient",
+                contextExpression: "Patient.name",
+            });
+            expect(withCtx.diagnostics.filter((d) => d.severity === "error")).toEqual([]);
+            expect(withCtx.expectedReturnType).toBe("string");
+            expect(withCtx.expectedReturnIsCollection).toBe(true);
+        });
+
+        it("emits an Expression Scope axis node at the leftmost member of the chain", () => {
+            // `.given` after a context expression has the Expression Scope axis
+            // as its only argument (matches the legacy ParseTree rendering).
+            const r = validateFhirpathExpression("given", {
+                fhirVersion: "r4",
+                contextType: "Patient",
+                contextExpression: "Patient.name",
+            });
+            expect(r.parseDebugTree?.ExpressionType).toBe("ChildExpression");
+            expect(r.parseDebugTree?.Name).toBe("given");
+            const scope = r.parseDebugTree?.Arguments?.[0];
+            expect(scope?.ExpressionType).toBe("AxisExpression");
+            expect(scope?.Name).toBe("builtin.that");
+        });
+    });
+
+    describe("parity with the legacy fhirpath.js tree", () => {
+        // When stripped of ReturnType + position info, the validator's typed
+        // AST must produce the same tree shape (ExpressionType + Name +
+        // Arguments) as the legacy `convertFhirPathJsToAst` produces from
+        // fhirpath.parse(...). This is the safety net for the typed-AST
+        // tab continuing to render the same nodes the user already expects.
+        const samples = [
+            "Patient.name.given",
+            "Patient.name.where(use = 'official').given",
+            "(1 + 1).toString()",
+            "name.given.first()",
+            "Patient.name.exists()",
+            "1 + 2 * 3",
+            "%resource.id",
+        ];
+        for (const expr of samples) {
+            it(`matches legacy AST for: ${expr}`, () => {
+                const expected = shapeOf(legacyTree(expr));
+                const r = validateFhirpathExpression(expr, {
+                    fhirVersion: "r4",
+                    contextType: "Patient",
+                });
+                expect(r.parseDebugTree).toBeDefined();
+                const actual = shapeOf(r.parseDebugTree);
+                expect(actual).toEqual(expected);
+            });
+        }
+    });
 });
+

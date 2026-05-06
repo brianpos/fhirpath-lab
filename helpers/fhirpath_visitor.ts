@@ -150,6 +150,10 @@ export interface VisitorOptions {
     contextType?: TypeModel;
     /** Whether the root is a collection (default: false — single context node). */
     contextIsCollection?: boolean;
+    /** Pre-computed multi-type context (takes precedence over `contextType`).
+     *  Used by `validateFhirpathExpression` when a context expression has
+     *  already been evaluated through the visitor. */
+    contextValue?: FhirPathValue;
     /** Additional environment variables (canonical name without leading `%`). */
     environmentVariables?: Record<string, FhirPathValue>;
 }
@@ -446,6 +450,9 @@ class FhirPathExpressionVisitor {
     }
 
     private contextValue(): FhirPathValue {
+        if (this.options.contextValue) {
+            return this.options.contextValue;
+        }
         if (this.options.contextType) {
             return { types: [this.options.contextType], isCollection: !!this.options.contextIsCollection };
         }
@@ -474,15 +481,15 @@ class FhirPathExpressionVisitor {
         if (ctx instanceof InvocationExpressionContext) return this.visitInvocationExpression(ctx, input);
         if (ctx instanceof IndexerExpressionContext) return this.visitIndexer(ctx, input);
         if (ctx instanceof PolarityExpressionContext) return this.visitPolarity(ctx, input);
-        if (ctx instanceof MultiplicativeExpressionContext) return this.visitBinaryOp(ctx, input, ctx.expression(0), ctx.expression(1), this.opSymbol(ctx, 1));
-        if (ctx instanceof AdditiveExpressionContext) return this.visitBinaryOp(ctx, input, ctx.expression(0), ctx.expression(1), this.opSymbol(ctx, 1));
-        if (ctx instanceof UnionExpressionContext) return this.visitBinaryOp(ctx, input, ctx.expression(0), ctx.expression(1), "|");
-        if (ctx instanceof InequalityExpressionContext) return this.visitBinaryOp(ctx, input, ctx.expression(0), ctx.expression(1), this.opSymbol(ctx, 1));
-        if (ctx instanceof EqualityExpressionContext) return this.visitBinaryOp(ctx, input, ctx.expression(0), ctx.expression(1), this.opSymbol(ctx, 1));
-        if (ctx instanceof MembershipExpressionContext) return this.visitBinaryOp(ctx, input, ctx.expression(0), ctx.expression(1), this.opSymbol(ctx, 1));
-        if (ctx instanceof AndExpressionContext) return this.visitBinaryOp(ctx, input, ctx.expression(0), ctx.expression(1), "and");
-        if (ctx instanceof OrExpressionContext) return this.visitBinaryOp(ctx, input, ctx.expression(0), ctx.expression(1), this.opSymbol(ctx, 1));
-        if (ctx instanceof ImpliesExpressionContext) return this.visitBinaryOp(ctx, input, ctx.expression(0), ctx.expression(1), "implies");
+        if (ctx instanceof MultiplicativeExpressionContext) return this.visitBinaryOp(ctx, input, ctx.expression(0), ctx.expression(1), this.opSymbol(ctx, 1), "MultiplicativeExpression");
+        if (ctx instanceof AdditiveExpressionContext) return this.visitBinaryOp(ctx, input, ctx.expression(0), ctx.expression(1), this.opSymbol(ctx, 1), "AdditiveExpression");
+        if (ctx instanceof UnionExpressionContext) return this.visitBinaryOp(ctx, input, ctx.expression(0), ctx.expression(1), "|", "UnionExpression");
+        if (ctx instanceof InequalityExpressionContext) return this.visitBinaryOp(ctx, input, ctx.expression(0), ctx.expression(1), this.opSymbol(ctx, 1), "InequalityExpression");
+        if (ctx instanceof EqualityExpressionContext) return this.visitBinaryOp(ctx, input, ctx.expression(0), ctx.expression(1), this.opSymbol(ctx, 1), "EqualityExpression");
+        if (ctx instanceof MembershipExpressionContext) return this.visitBinaryOp(ctx, input, ctx.expression(0), ctx.expression(1), this.opSymbol(ctx, 1), "MembershipExpression");
+        if (ctx instanceof AndExpressionContext) return this.visitBinaryOp(ctx, input, ctx.expression(0), ctx.expression(1), "and", "AndExpression");
+        if (ctx instanceof OrExpressionContext) return this.visitBinaryOp(ctx, input, ctx.expression(0), ctx.expression(1), this.opSymbol(ctx, 1), "OrExpression");
+        if (ctx instanceof ImpliesExpressionContext) return this.visitBinaryOp(ctx, input, ctx.expression(0), ctx.expression(1), "implies", "ImpliesExpression");
         if (ctx instanceof TypeExpressionContext) return this.visitTypeExpression(ctx, input);
 
         // Unknown / unhandled — produce a best-effort placeholder so the tree
@@ -506,7 +513,27 @@ class FhirPathExpressionVisitor {
     private visitTerm(ctx: TermExpressionContext, input: FhirPathValue): { node: JsonNode; value: FhirPathValue } {
         const term = ctx.term();
         if (term instanceof InvocationTermContext) {
-            return this.visitInvocation(term.invocation(), input);
+            const inner = term.invocation();
+            const result = this.visitInvocation(inner, input);
+            // For a root member or function invocation (the leftmost of a `.`-chain),
+            // the legacy `convertFhirPathJsToAst` injects an "Expression Scope" axis
+            // node so the ParseTreeTab.vue marker renders the implicit starting
+            // context. We replicate that here so the annotated AST matches the
+            // non-annotated AST node-for-node.
+            if (
+                inner instanceof MemberInvocationContext ||
+                inner instanceof FunctionInvocationContext
+            ) {
+                const scope: JsonNode = {
+                    ExpressionType: "AxisExpression",
+                    Name: "builtin.that",
+                    Arguments: [],
+                    ReturnType: joinTypeNames(input.types),
+                };
+                result.node.Arguments = result.node.Arguments ?? [];
+                result.node.Arguments.unshift(scope);
+            }
+            return result;
         }
         if (term instanceof LiteralTermContext) {
             return this.visitLiteral(term.literal());
@@ -515,7 +542,14 @@ class FhirPathExpressionVisitor {
             return this.visitExternalConstant(term.externalConstant());
         }
         if (term instanceof ParenthesizedTermContext) {
-            return this.visitExpression(term.expression(), input);
+            const inner = this.visitExpression(term.expression(), input);
+            const node: JsonNode = attachPosition({
+                ExpressionType: "ParenthesizedTerm",
+                Name: "",
+                Arguments: [inner.node],
+                ReturnType: joinTypeNames(inner.value.types),
+            }, term);
+            return { node, value: inner.value };
         }
         const node: JsonNode = attachPosition({ ExpressionType: "Term", Name: term.getText(), Arguments: [], ReturnType: "" }, term);
         return { node, value: EMPTY_VALUE };
@@ -963,6 +997,7 @@ class FhirPathExpressionVisitor {
         leftCtx: ExpressionContext,
         rightCtx: ExpressionContext,
         op: string,
+        nodeType: string,
     ): { node: JsonNode; value: FhirPathValue } {
         const left = this.visitExpression(leftCtx, input);
         const right = this.visitExpression(rightCtx, input);
@@ -983,14 +1018,11 @@ class FhirPathExpressionVisitor {
         }
         const value = this.materialiseOperationResult(resultTypeName, left.value, right.value);
         const node: JsonNode = attachPosition({
-            ExpressionType: "BinaryExpression",
+            ExpressionType: nodeType,
             Name: op,
             Arguments: [left.node, right.node],
             ReturnType: joinTypeNames(value.types),
         }, ctx);
-        // FHIRPath specifies the position of the operator, but we don't have a
-        // direct token reference here; attaching the whole expression range is a
-        // close approximation and matches the .NET validator's behavior.
         return { node, value };
     }
 
