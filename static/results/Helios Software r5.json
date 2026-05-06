@@ -5604,6 +5604,11 @@
           "Result": true
         },
         {
+          "Name": "testStringIntegerLiteralToQuantity",
+          "Expression": "'1'.toQuantity()",
+          "Result": true
+        },
+        {
           "Name": "testStringLiteralConvertsToDecimalFalse",
           "Expression": "'1.a'.convertsToDecimal().not()",
           "Result": true

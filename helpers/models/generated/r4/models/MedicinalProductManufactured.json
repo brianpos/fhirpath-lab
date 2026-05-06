@@ -1,0 +1,75 @@
+{
+  "MedicinalProductManufactured": {
+    "TypeName": "MedicinalProductManufactured",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "manufacturedDoseForm",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "unitOfPresentation",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "quantity",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "manufacturer",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "ingredient",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/MedicinalProductIngredient"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "physicalCharacteristics",
+        "Type": [
+          {
+            "TypeName": "ProdCharacteristic"
+          }
+        ]
+      },
+      {
+        "ElementName": "otherCharacteristics",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  }
+}

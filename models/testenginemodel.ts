@@ -38,5 +38,6 @@ export interface TestFhirMapData {
     resource?: string;
     resourceJson?: string;
     engine?: string;
+    structureMap?: string;
 }
 

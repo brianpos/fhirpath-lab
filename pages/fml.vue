@@ -57,7 +57,13 @@
           <template v-slot:Input>
             <resource-editor label="Test Resource Id" ref="inputResourceEditor" textLabel="Test Resource"
               :resourceUrl="resourceId" @update:resourceUrl="resourceId = $event" :resourceText="resourceText"
-              @update:resourceText="resourceText = $event" />
+              @update:resourceText="resourceText = $event" >
+              <template v-slot:append>
+                <v-btn icon small tile @click="generateLogicalModelFromInputResource" title="generate a logical model from this input resource">
+                  <v-icon> mdi-tree-outline </v-icon>
+                </v-btn>
+              </template>
+            </resource-editor>
           </template>
 
           <template v-slot:Models>
@@ -70,7 +76,29 @@
               @update:resourceUrl="modelsSearch = ($event ?? '')"
               footerLabel="The Model can be either an individual StructureDefinition (e.g. logical model) or a search query for a bundle of models"
               :resourceText="modelsText"
-              @update:resourceText="modelsText = $event" />
+              @update:resourceText="modelsText = $event">
+              <template v-slot:append>
+                <v-btn icon small tile @click="generateLogicalModelFromInputResource" title="generate a logical model from the input resource">
+                  <!-- <v-icon> mdi-tree-outline </v-icon> -->
+                  <template>
+                    <div style="position: relative" class="d-inline-block">
+                      <!-- Base icon -->
+                      <v-icon>mdi-tree-outline</v-icon>
+
+                      <!-- Overlay icon -->
+                      <v-icon
+                        x-small dense
+                        style="position: absolute !important; right: 0; bottom: 0; height: 12px; width: 12px;"
+                        class="bg-white rounded-circle"
+                      >
+                        mdi-refresh
+                      </v-icon>
+                    </div>
+                  </template>
+
+                </v-btn>
+              </template>
+            </resource-editor>
           </template>
 
           <template v-slot:Trace>
@@ -158,6 +186,16 @@
               @apply-suggested-item="copySuggestionToClipboard" @apply-suggested-fhir="copySuggestionToClipboard"
               @apply-suggested-json="copySuggestionToClipboard" @apply-suggested-fsh="copySuggestionToClipboard"
               @apply-suggested-jsonpatch="copySuggestionToClipboard" />
+          </template>
+
+          <template v-slot:Diagram>
+              <div v-if="diagramSvg" v-html="diagramSvg" style="overflow: auto;" @click="handleDiagramClick"></div>
+              <div v-else style="color: #999; font-style: italic;">No diagram available</div>
+          </template>
+
+          <template v-slot:Instance>
+              <div v-if="instanceSvg" v-html="instanceSvg" style="overflow: auto;" @click="handleDiagramClick"></div>
+              <div v-else style="color: #999; font-style: italic;">No instance diagram available</div>
           </template>
 
           <template v-slot:Debug>
@@ -388,7 +426,13 @@ import ResourceEditor from "~/components/ResourceEditor.vue";
 
 import { parseFML } from "~/helpers/fml_parser";
 import type { FmlStructureMap } from "~/helpers/fml_models";
+import { generateInstanceDiagramSvg, fmlToStructureMapForDiagram } from "~/helpers/structuremap_diagram_instance";
+import { highlightDiagramConnection, findConnectionIdsForClick } from "~/helpers/diagram_interaction";
+import { generateStructureMapDiagramSvg } from "~/helpers/structuremap_diagram";
+import { lookupByTypeName as lookupByTypeNameR4B } from "~/helpers/models/generated/r4b";
+import { buildUserModelLookup, composeLookups, type TypeLookup, type UserModelLookup } from "~/helpers/user_models";
 import xmlFormat from 'xml-formatter';
+import { createFhirLogicalModel, CreateLogicalModelOptions } from '~/helpers/logical_model_generator';
 
 import "ace-builds";
 import ace from "ace-builds";
@@ -496,6 +540,7 @@ interface FhirMapData {
   modelsText?: string;
   debugText: string;
   loadingData: boolean;
+  initializing: boolean;
   saveOutcome?: fhir4b.OperationOutcome;
   showOutcome?: boolean;
   helpWithError?: string;
@@ -515,6 +560,14 @@ interface FhirMapData {
   openAILastContext: string;
   openAIexpressionExplanationLoading: boolean;
   parsedFmlMap?: FmlStructureMap;
+  instanceSvg?: string;
+  diagramSvg?: string;
+  diagramDebounceTimer?: ReturnType<typeof setTimeout>;
+  /** Lookup built from the Models tab JSON (Bundle of SDs or a single SD).
+   *  Kept separate from the built-in r4b dictionary — composed at call time
+   *  so the static dictionary is never mutated. Undefined when the Models
+   *  tab is empty or doesn't contain valid SD JSON. */
+  userModelLookup?: UserModelLookup;
 
   // debugger state information
   debugTracePosition: number;
@@ -645,6 +698,7 @@ export default Vue.extend({
 
   beforeDestroy() {
     document.removeEventListener('keydown', this.DebugFunctionKeyHandler);
+    if (this.diagramDebounceTimer) clearTimeout(this.diagramDebounceTimer);
   },
 
   computed: {
@@ -653,13 +707,15 @@ export default Vue.extend({
         return [
           ".NET (brianpos)",
           "java (HAPI)",
-          "matchbox"
+          "matchbox",
+          "Python (MaLaC-HD)"
         ];
       }
       return [
         ".NET (brianpos)",
         "java (HAPI)",
-        "matchbox" // matchbox now released! Thanks Oliver
+        "matchbox", // matchbox now released! Thanks Oliver
+        "Python (MaLaC-HD)"
       ]
     },
 
@@ -714,6 +770,20 @@ export default Vue.extend({
           enabled: true,
         },
         {
+          iconName: "mdi-vector-polygon",
+          tabName: "Diagram",
+          title: "Rule-level view showing source/target type boxes with property mappings",
+          show: true,
+          enabled: true,
+        },
+        {
+          iconName: "mdi-file-document-outline",
+          tabName: "Instance",
+          title: "Instance-level view showing source/target objects with mapped and unmapped properties",
+          show: this.showAdvancedSettings,
+          enabled: true,
+        },
+        {
           iconName: "mdi-brain",
           tabName: "AI Chat",
           tabHeaderName: "FHIRPath AI Chat",
@@ -744,7 +814,32 @@ export default Vue.extend({
       return promptOptions;
     },
   },
+  watch: {
+    modelsText() {
+      // Re-parse the Models tab content into an isolated TypeLookup. We rebuild
+      // the user dictionary lazily here (rather than on every diagram regen) so
+      // the parse cost is paid once per edit instead of once per FML keystroke.
+      this.userModelLookup = buildUserModelLookup(this.modelsText);
+      // Diagrams resolve types through this lookup, so refresh them.
+      this.scheduleDiagramRegen();
+    },
+  },
   methods: {
+    /** Compose the user-supplied model lookup (from the Models tab) with the
+     *  built-in r4b dictionary. User models take precedence. The static
+     *  dictionary is never mutated — composition is by function wrapping. */
+    composedTypeLookup(): TypeLookup {
+      return composeLookups(this.userModelLookup?.lookup, lookupByTypeNameR4B);
+    },
+
+    /** Debounced trigger for instance/structure-map diagram regeneration.
+     *  Mirrors the keystroke-debounce used elsewhere on the page. */
+    scheduleDiagramRegen() {
+      if (this.diagramDebounceTimer) clearTimeout(this.diagramDebounceTimer);
+      this.diagramDebounceTimer = setTimeout(() => {
+        this.regenerateInstanceDiagram();
+      }, 500);
+    },
     async twinPaneMounted(): Promise<void> {
       // Update the editor's Mode
       let editorDiv: any = this.$refs.aceEditorExpression as Element;
@@ -795,8 +890,31 @@ group SetEntryData(source src: Patient, target entry)
         this.expressionEditor.on("change", this.fhirpathExpressionChangedEvent)
       }
 
-      // this.selectTabs(0, 4, 'left');
-      this.selectTab(1);
+      this.selectTab(1); // the second tab should be the input resource (tab parameter processing will overload this if a ?tab= query parameter is present)
+      let tabControl: TwinPaneTab = this.$refs.twinTabControl as TwinPaneTab;
+      if (tabControl) {
+        if (this.$route.query.tab) {
+          this.$nextTick(() => {
+            const tabString = this.$route.query.tab as string;
+            // String tab mode
+            if (tabString.includes(",")) {
+              const tabParts = tabString.split(",");
+              if (tabParts.length == 2) {
+                if (tabControl) {
+                  tabControl.selectTabs(
+                    tabControl.getTabIndex(tabParts[0]),
+                    tabControl.getTabIndex(tabParts[1]),
+                    "left"
+                  );
+                }
+              }
+            } else {
+              tabControl.setSinglePanelMode(true);
+              tabControl.selectTab(tabControl.getTabIndex(tabString));
+            }
+          });
+        }
+      }
 
       // Check for the encoded parameters first
       const parameters = this.$route.query.parameters as string;
@@ -807,6 +925,7 @@ group SetEntryData(source src: Patient, target entry)
       await this.applyParameters(data);
       await this.evaluateFhirPathExpression();
       this.loadingData = false;
+      this.initializing = false;
     },
 
     DebugFunctionKeyHandler(event: KeyboardEvent): void {
@@ -854,6 +973,46 @@ group SetEntryData(source src: Patient, target entry)
 
     updateNow() {
       this.$forceUpdate();
+    },
+
+    generateLogicalModelFromInputResource() {
+      // read the resource, then call the logical model generator for XML or JSON
+      let inputResource = this.resourceText?.trim() ?? '';
+      if (inputResource.startsWith('<') || inputResource.startsWith('{') || inputResource.startsWith('[')) {
+        // this is XML or JSON, so call the logical model generator
+        try {
+          // Try to extract options from the existing model if it exists and is valid
+          let options: CreateLogicalModelOptions = { 
+            publisher: settings.getDefaultProviderField()
+          };
+          let rootTypeName: string | undefined;
+          if (this.modelsText) {
+            try {
+              const existingModel = JSON.parse(this.modelsText);
+              if (existingModel?.resourceType === 'StructureDefinition' && existingModel?.kind === 'logical') {
+                options = {
+                  name: existingModel.name,
+                  title: existingModel.title,
+                  url: existingModel.url,
+                  description: existingModel.description,
+                  publisher: existingModel.publisher ?? settings.getDefaultProviderField(),
+                  version: existingModel.version,
+                  status: existingModel.status
+                };
+                // Use existing name as the rootTypeName for JSON inputs
+                rootTypeName = existingModel.name;
+              }
+            } catch {
+              // Ignore parse errors - will regenerate with defaults
+            }
+          }
+          const sd = createFhirLogicalModel(inputResource, rootTypeName, options);
+          this.modelsText = JSON.stringify(sd, null, 4);
+          this.selectTab(2);
+        } catch (e) {
+          console.error('Failed to generate logical model:', e);
+        }
+      }
     },
 
     clearDebuggerSelectionMarkers() {
@@ -1382,6 +1541,10 @@ group SetEntryData(source src: Patient, target entry)
         if (this.$route.query.engine) {
           data.engine = this.$route.query.engine as string ?? '';
         }
+
+        if (this.$route.query.structureMap) {
+          data.structureMap = this.$route.query.structureMap as string;
+        }
       }
       return data;
     },
@@ -1408,6 +1571,11 @@ group SetEntryData(source src: Patient, target entry)
         this.selectedEngine = p.engine ?? '';
       }
 
+      if (p.structureMap) {
+        this.structureMapId = p.structureMap;
+        await this.downloadStructureMapResource();
+      }
+
       if (p.expression) {
         if (p.resource) {
           this.resourceId = p.resource;
@@ -1421,7 +1589,67 @@ group SetEntryData(source src: Patient, target entry)
     },
 
     fhirpathExpressionChangedEvent() {
+      if (this.diagramDebounceTimer) clearTimeout(this.diagramDebounceTimer);
+      this.diagramDebounceTimer = setTimeout(() => {
+        this.regenerateInstanceDiagram();
+      }, 500);
     },
+
+    regenerateInstanceDiagram() {
+      const fmlText = this.getFhirpathExpression();
+      if (!fmlText) {
+        this.parsedFmlMap = undefined;
+        this.instanceSvg = undefined;
+        this.diagramSvg = undefined;
+        return;
+      }
+      const result = parseFML(fmlText);
+      if ('resourceType' in result && result.resourceType === 'OperationOutcome') {
+        this.parsedFmlMap = undefined;
+        this.instanceSvg = undefined;
+        this.diagramSvg = undefined;
+        return;
+      }
+      const fmlMap = result as FmlStructureMap;
+      this.parsedFmlMap = fmlMap;
+      try {
+        const fhirMap = fmlToStructureMapForDiagram(fmlMap);
+        const lookup = this.composedTypeLookup();
+        this.instanceSvg = generateInstanceDiagramSvg(fhirMap, lookup, true);
+        this.diagramSvg = generateStructureMapDiagramSvg(fhirMap, lookup);
+      } catch (e) {
+        console.error('Failed to generate instance diagram:', e);
+        this.instanceSvg = undefined;
+        this.diagramSvg = undefined;
+      }
+    },
+
+    handleDiagramClick(event: MouseEvent) {
+      // Walk up to find a connection-id-tagged element first so a click
+      // on a row/connector flashes its peers (rows + connectors with the
+      // same connectionId). Then continue walking for the FML position
+      // attribute, which jumps the editor to the corresponding source.
+      const connIds = findConnectionIdsForClick(event.target);
+      if (connIds.length > 0) {
+        const container = event.currentTarget as Element;
+        highlightDiagramConnection(container, connIds);
+      }
+      let el = event.target as Element | null;
+      while (el) {
+        const start = el.getAttribute?.('data-pos-start');
+        const end = el.getAttribute?.('data-pos-end');
+        if (start != null && end != null) {
+          const startPos = parseInt(start, 10);
+          const endPos = parseInt(end, 10);
+          if (!isNaN(startPos) && !isNaN(endPos) && endPos > startPos) {
+            this.highlightText(this.expressionEditor, startPos, endPos - startPos);
+          }
+          return;
+        }
+        el = el.parentElement;
+      }
+    },
+
     tabTitle() {
       if (this.getResourceJson() && this.resourceJsonChanged) return '(local resource JSON)';
       return this.resourceId;
@@ -1684,11 +1912,23 @@ group SetEntryData(source src: Patient, target entry)
           // Store the error but continue execution
           console.log('FML parsing failed:', result);
           this.parsedFmlMap = undefined;
+          this.instanceSvg = undefined;
+          this.diagramSvg = undefined;
         } else {
           // Store the successfully parsed map
           const fmlMap = result as FmlStructureMap;
           console.log('FML map parsed successfully:', JSON.parse(JSON.stringify(fmlMap)));
           this.parsedFmlMap = fmlMap;
+          try {
+            const fhirMap = fmlToStructureMapForDiagram(fmlMap);
+            const lookup = this.composedTypeLookup();
+            this.instanceSvg = generateInstanceDiagramSvg(fhirMap, lookup, true);
+            this.diagramSvg = generateStructureMapDiagramSvg(fhirMap, lookup);
+          } catch (e) {
+            console.error('Failed to generate instance diagram:', e);
+            this.instanceSvg = undefined;
+            this.diagramSvg = undefined;
+          }
         }
       }
 
@@ -1727,6 +1967,10 @@ group SetEntryData(source src: Patient, target entry)
         url = (await settings.getServerEngineUrl("mapper_server_matchbox"));
         (this as any).$appInsights?.trackEvent({ name: 'evaluate matchbox (map)' });
       }
+      else if (this.selectedEngine == "Python (MaLaC-HD)") {
+        url = (await settings.getServerEngineUrl("mapper_server_malac_hd"));
+        (this as any).$appInsights?.trackEvent({ name: 'evaluate malac-hd (map)' });
+      }
       else {
         (this as any).$appInsights?.trackEvent({ name: 'evaluate .NET (map)' });
       }
@@ -1755,7 +1999,7 @@ group SetEntryData(source src: Patient, target entry)
 
       // Show the output tab if it wasn't already visible
       let tabControl: TwinPaneTab = this.$refs.twinTabControl as TwinPaneTab;
-      if (tabControl) {
+      if (tabControl && this.initializing == false) {
         if (!tabControl.tabIsVisible(4))
           tabControl.selectTab(4);
       }
@@ -1780,6 +2024,7 @@ group SetEntryData(source src: Patient, target entry)
       modelsText: '',
       debugText: '',
       loadingData: true,
+      initializing: true,
       saveOutcome: undefined,
       showOutcome: false,
       helpWithError: undefined,
@@ -1797,6 +2042,10 @@ group SetEntryData(source src: Patient, target entry)
       expressionEditor: undefined,
       testResourceFormat: "json",
       parsedFmlMap: undefined,
+      instanceSvg: undefined,
+      diagramSvg: undefined,
+      diagramDebounceTimer: undefined,
+      userModelLookup: undefined,
 
       debugTracePosition: 0,
       debugMapSelectionMarker: [],

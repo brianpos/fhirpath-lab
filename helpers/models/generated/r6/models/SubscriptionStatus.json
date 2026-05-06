@@ -1,0 +1,190 @@
+{
+  "SubscriptionStatus": {
+    "TypeName": "SubscriptionStatus",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "status",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "eventsSinceSubscriptionStart",
+        "Type": [
+          {
+            "TypeName": "integer64"
+          }
+        ]
+      },
+      {
+        "ElementName": "notificationEvent",
+        "Type": [
+          {
+            "TypeName": "subscriptionstatus_notificationEvent"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "subscription",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Subscription"
+            ]
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "topic",
+        "Type": [
+          {
+            "TypeName": "canonical"
+          }
+        ]
+      },
+      {
+        "ElementName": "error",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "subscriptionstatus_notificationEvent": {
+    "TypeName": "subscriptionstatus_notificationEvent",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "eventNumber",
+        "Type": [
+          {
+            "TypeName": "integer64"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "triggerEvent",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "timestamp",
+        "Type": [
+          {
+            "TypeName": "instant"
+          }
+        ]
+      },
+      {
+        "ElementName": "focus",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Resource"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "additionalContext",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Resource"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "relatedQuery",
+        "Type": [
+          {
+            "TypeName": "subscriptionstatus_notificationEvent_relatedQuery"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "authorizationHint",
+        "Type": [
+          {
+            "TypeName": "subscriptionstatus_notificationEvent_authorizationHint"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "subscriptionstatus_notificationEvent_relatedQuery": {
+    "TypeName": "subscriptionstatus_notificationEvent_relatedQuery",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "queryType",
+        "Type": [
+          {
+            "TypeName": "Coding"
+          }
+        ]
+      },
+      {
+        "ElementName": "query",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "Required": true
+      }
+    ]
+  },
+  "subscriptionstatus_notificationEvent_authorizationHint": {
+    "TypeName": "subscriptionstatus_notificationEvent_authorizationHint",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "authorizationType",
+        "Type": [
+          {
+            "TypeName": "Coding"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "value",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,1581 @@
+{
+  "ClaimResponse": {
+    "TypeName": "ClaimResponse",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "traceNumber",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "status",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "statusReason",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "subType",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "use",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "subject",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Group",
+              "http://hl7.org/fhir/StructureDefinition/Patient"
+            ]
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "created",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "insurer",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "requestor",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization",
+              "http://hl7.org/fhir/StructureDefinition/Practitioner",
+              "http://hl7.org/fhir/StructureDefinition/PractitionerRole"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "request",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Claim"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "outcome",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "decision",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "disposition",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "preAuthRef",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "preAuthPeriod",
+        "Type": [
+          {
+            "TypeName": "Period"
+          }
+        ]
+      },
+      {
+        "ElementName": "event",
+        "Type": [
+          {
+            "TypeName": "claimresponse_event"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "payeeType",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "encounter",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Encounter"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "diagnosisRelatedGroup",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "supportingInfo",
+        "Type": [
+          {
+            "TypeName": "claimresponse_supportingInfo"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "item",
+        "Type": [
+          {
+            "TypeName": "claimresponse_item"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "addItem",
+        "Type": [
+          {
+            "TypeName": "claimresponse_addItem"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "adjudication",
+        "Type": [
+          {
+            "TypeName": "claimresponse_item_adjudication"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "total",
+        "Type": [
+          {
+            "TypeName": "claimresponse_total"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "payment",
+        "Type": [
+          {
+            "TypeName": "claimresponse_payment"
+          }
+        ]
+      },
+      {
+        "ElementName": "fundsReserve",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "formCode",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "form",
+        "Type": [
+          {
+            "TypeName": "Attachment"
+          }
+        ]
+      },
+      {
+        "ElementName": "processNote",
+        "Type": [
+          {
+            "TypeName": "claimresponse_processNote"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "communicationRequest",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/CommunicationRequest"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "insurance",
+        "Type": [
+          {
+            "TypeName": "claimresponse_insurance"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "error",
+        "Type": [
+          {
+            "TypeName": "claimresponse_error"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "claimresponse_event": {
+    "TypeName": "claimresponse_event",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "when[x]",
+        "Type": [
+          {
+            "TypeName": "Period"
+          },
+          {
+            "TypeName": "dateTime"
+          }
+        ],
+        "Required": true
+      }
+    ]
+  },
+  "claimresponse_supportingInfo": {
+    "TypeName": "claimresponse_supportingInfo",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "sequence",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "category",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "code",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "timing[x]",
+        "Type": [
+          {
+            "TypeName": "Period"
+          },
+          {
+            "TypeName": "Timing"
+          },
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      },
+      {
+        "ElementName": "value[x]",
+        "Type": [
+          {
+            "TypeName": "Address"
+          },
+          {
+            "TypeName": "Age"
+          },
+          {
+            "TypeName": "Annotation"
+          },
+          {
+            "TypeName": "Attachment"
+          },
+          {
+            "TypeName": "Availability"
+          },
+          {
+            "TypeName": "CodeableConcept"
+          },
+          {
+            "TypeName": "CodeableReference"
+          },
+          {
+            "TypeName": "Coding"
+          },
+          {
+            "TypeName": "ContactDetail"
+          },
+          {
+            "TypeName": "ContactPoint"
+          },
+          {
+            "TypeName": "Count"
+          },
+          {
+            "TypeName": "DataRequirement"
+          },
+          {
+            "TypeName": "Distance"
+          },
+          {
+            "TypeName": "Dosage"
+          },
+          {
+            "TypeName": "Duration"
+          },
+          {
+            "TypeName": "Expression"
+          },
+          {
+            "TypeName": "ExtendedContactDetail"
+          },
+          {
+            "TypeName": "HumanName"
+          },
+          {
+            "TypeName": "Identifier"
+          },
+          {
+            "TypeName": "Meta"
+          },
+          {
+            "TypeName": "Money"
+          },
+          {
+            "TypeName": "ParameterDefinition"
+          },
+          {
+            "TypeName": "Period"
+          },
+          {
+            "TypeName": "Quantity"
+          },
+          {
+            "TypeName": "Range"
+          },
+          {
+            "TypeName": "Ratio"
+          },
+          {
+            "TypeName": "RatioRange"
+          },
+          {
+            "TypeName": "Reference"
+          },
+          {
+            "TypeName": "RelatedArtifact"
+          },
+          {
+            "TypeName": "SampledData"
+          },
+          {
+            "TypeName": "Signature"
+          },
+          {
+            "TypeName": "Timing"
+          },
+          {
+            "TypeName": "TriggerDefinition"
+          },
+          {
+            "TypeName": "UsageContext"
+          },
+          {
+            "TypeName": "VirtualServiceDetail"
+          },
+          {
+            "TypeName": "base64Binary"
+          },
+          {
+            "TypeName": "boolean"
+          },
+          {
+            "TypeName": "canonical"
+          },
+          {
+            "TypeName": "code"
+          },
+          {
+            "TypeName": "date"
+          },
+          {
+            "TypeName": "dateTime"
+          },
+          {
+            "TypeName": "decimal"
+          },
+          {
+            "TypeName": "id"
+          },
+          {
+            "TypeName": "instant"
+          },
+          {
+            "TypeName": "integer"
+          },
+          {
+            "TypeName": "integer64"
+          },
+          {
+            "TypeName": "markdown"
+          },
+          {
+            "TypeName": "oid"
+          },
+          {
+            "TypeName": "positiveInt"
+          },
+          {
+            "TypeName": "string"
+          },
+          {
+            "TypeName": "time"
+          },
+          {
+            "TypeName": "unsignedInt"
+          },
+          {
+            "TypeName": "uri"
+          },
+          {
+            "TypeName": "url"
+          },
+          {
+            "TypeName": "uuid"
+          }
+        ]
+      },
+      {
+        "ElementName": "reason",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      }
+    ]
+  },
+  "claimresponse_item": {
+    "TypeName": "claimresponse_item",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "itemSequence",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "traceNumber",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "informationSequence",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "noteNumber",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "reviewOutcome",
+        "Type": [
+          {
+            "TypeName": "claimresponse_item_reviewOutcome"
+          }
+        ]
+      },
+      {
+        "ElementName": "adjudication",
+        "Type": [
+          {
+            "TypeName": "claimresponse_item_adjudication"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "detail",
+        "Type": [
+          {
+            "TypeName": "claimresponse_item_detail"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "claimresponse_item_reviewOutcome": {
+    "TypeName": "claimresponse_item_reviewOutcome",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "decision",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "reason",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "preAuthRef",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "preAuthPeriod",
+        "Type": [
+          {
+            "TypeName": "Period"
+          }
+        ]
+      }
+    ]
+  },
+  "claimresponse_item_adjudication": {
+    "TypeName": "claimresponse_item_adjudication",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "category",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "reason",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "amount",
+        "Type": [
+          {
+            "TypeName": "Money"
+          }
+        ]
+      },
+      {
+        "ElementName": "quantity",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
+      },
+      {
+        "ElementName": "decisionDate",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      }
+    ]
+  },
+  "claimresponse_item_detail": {
+    "TypeName": "claimresponse_item_detail",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "detailSequence",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "traceNumber",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "noteNumber",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "reviewOutcome",
+        "Type": [
+          {
+            "TypeName": "claimresponse_item_reviewOutcome"
+          }
+        ]
+      },
+      {
+        "ElementName": "adjudication",
+        "Type": [
+          {
+            "TypeName": "claimresponse_item_adjudication"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "subDetail",
+        "Type": [
+          {
+            "TypeName": "claimresponse_item_detail_subDetail"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "claimresponse_item_detail_subDetail": {
+    "TypeName": "claimresponse_item_detail_subDetail",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "subDetailSequence",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "traceNumber",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "noteNumber",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "reviewOutcome",
+        "Type": [
+          {
+            "TypeName": "claimresponse_item_reviewOutcome"
+          }
+        ]
+      },
+      {
+        "ElementName": "adjudication",
+        "Type": [
+          {
+            "TypeName": "claimresponse_item_adjudication"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "claimresponse_addItem": {
+    "TypeName": "claimresponse_addItem",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "itemSequence",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "detailSequence",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "subdetailSequence",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "traceNumber",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "subject",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Group",
+              "http://hl7.org/fhir/StructureDefinition/Patient"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "informationSequence",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "provider",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization",
+              "http://hl7.org/fhir/StructureDefinition/Practitioner",
+              "http://hl7.org/fhir/StructureDefinition/PractitionerRole"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "revenue",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "category",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "productOrService",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "productOrServiceEnd",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "request",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/DeviceRequest",
+              "http://hl7.org/fhir/StructureDefinition/MedicationRequest",
+              "http://hl7.org/fhir/StructureDefinition/NutritionOrder",
+              "http://hl7.org/fhir/StructureDefinition/ServiceRequest",
+              "http://hl7.org/fhir/StructureDefinition/VisionPrescription"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "modifier",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "programCode",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "serviced[x]",
+        "Type": [
+          {
+            "TypeName": "Period"
+          },
+          {
+            "TypeName": "date"
+          }
+        ]
+      },
+      {
+        "ElementName": "location[x]",
+        "Type": [
+          {
+            "TypeName": "Address"
+          },
+          {
+            "TypeName": "CodeableConcept"
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Location"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "quantity",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
+      },
+      {
+        "ElementName": "unitPrice",
+        "Type": [
+          {
+            "TypeName": "Money"
+          }
+        ]
+      },
+      {
+        "ElementName": "factor",
+        "Type": [
+          {
+            "TypeName": "decimal"
+          }
+        ]
+      },
+      {
+        "ElementName": "tax",
+        "Type": [
+          {
+            "TypeName": "Money"
+          }
+        ]
+      },
+      {
+        "ElementName": "net",
+        "Type": [
+          {
+            "TypeName": "Money"
+          }
+        ]
+      },
+      {
+        "ElementName": "bodySite",
+        "Type": [
+          {
+            "TypeName": "claimresponse_addItem_bodySite"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "noteNumber",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "reviewOutcome",
+        "Type": [
+          {
+            "TypeName": "claimresponse_item_reviewOutcome"
+          }
+        ]
+      },
+      {
+        "ElementName": "adjudication",
+        "Type": [
+          {
+            "TypeName": "claimresponse_item_adjudication"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "detail",
+        "Type": [
+          {
+            "TypeName": "claimresponse_addItem_detail"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "claimresponse_addItem_bodySite": {
+    "TypeName": "claimresponse_addItem_bodySite",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "site",
+        "Type": [
+          {
+            "TypeName": "CodeableReference"
+          }
+        ],
+        "IsArray": true,
+        "Required": true
+      },
+      {
+        "ElementName": "subSite",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "claimresponse_addItem_detail": {
+    "TypeName": "claimresponse_addItem_detail",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "traceNumber",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "revenue",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "productOrService",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "productOrServiceEnd",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "modifier",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "quantity",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
+      },
+      {
+        "ElementName": "unitPrice",
+        "Type": [
+          {
+            "TypeName": "Money"
+          }
+        ]
+      },
+      {
+        "ElementName": "factor",
+        "Type": [
+          {
+            "TypeName": "decimal"
+          }
+        ]
+      },
+      {
+        "ElementName": "tax",
+        "Type": [
+          {
+            "TypeName": "Money"
+          }
+        ]
+      },
+      {
+        "ElementName": "net",
+        "Type": [
+          {
+            "TypeName": "Money"
+          }
+        ]
+      },
+      {
+        "ElementName": "noteNumber",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "reviewOutcome",
+        "Type": [
+          {
+            "TypeName": "claimresponse_item_reviewOutcome"
+          }
+        ]
+      },
+      {
+        "ElementName": "adjudication",
+        "Type": [
+          {
+            "TypeName": "claimresponse_item_adjudication"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "subDetail",
+        "Type": [
+          {
+            "TypeName": "claimresponse_addItem_detail_subDetail"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "claimresponse_addItem_detail_subDetail": {
+    "TypeName": "claimresponse_addItem_detail_subDetail",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "traceNumber",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "revenue",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "productOrService",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "productOrServiceEnd",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "modifier",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "quantity",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
+      },
+      {
+        "ElementName": "unitPrice",
+        "Type": [
+          {
+            "TypeName": "Money"
+          }
+        ]
+      },
+      {
+        "ElementName": "factor",
+        "Type": [
+          {
+            "TypeName": "decimal"
+          }
+        ]
+      },
+      {
+        "ElementName": "tax",
+        "Type": [
+          {
+            "TypeName": "Money"
+          }
+        ]
+      },
+      {
+        "ElementName": "net",
+        "Type": [
+          {
+            "TypeName": "Money"
+          }
+        ]
+      },
+      {
+        "ElementName": "noteNumber",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "reviewOutcome",
+        "Type": [
+          {
+            "TypeName": "claimresponse_item_reviewOutcome"
+          }
+        ]
+      },
+      {
+        "ElementName": "adjudication",
+        "Type": [
+          {
+            "TypeName": "claimresponse_item_adjudication"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "claimresponse_total": {
+    "TypeName": "claimresponse_total",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "category",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "amount",
+        "Type": [
+          {
+            "TypeName": "Money"
+          }
+        ],
+        "Required": true
+      }
+    ]
+  },
+  "claimresponse_payment": {
+    "TypeName": "claimresponse_payment",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "adjustment",
+        "Type": [
+          {
+            "TypeName": "Money"
+          }
+        ]
+      },
+      {
+        "ElementName": "adjustmentReason",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "date",
+        "Type": [
+          {
+            "TypeName": "date"
+          }
+        ]
+      },
+      {
+        "ElementName": "amount",
+        "Type": [
+          {
+            "TypeName": "Money"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ]
+      }
+    ]
+  },
+  "claimresponse_processNote": {
+    "TypeName": "claimresponse_processNote",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "class",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "number",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ]
+      },
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "text",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "language",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      }
+    ]
+  },
+  "claimresponse_insurance": {
+    "TypeName": "claimresponse_insurance",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "sequence",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "focal",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "coverage",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Coverage"
+            ]
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "businessArrangement",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "claimResponse",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/ClaimResponse"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "claimresponse_error": {
+    "TypeName": "claimresponse_error",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "itemSequence",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ]
+      },
+      {
+        "ElementName": "detailSequence",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ]
+      },
+      {
+        "ElementName": "subDetailSequence",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ]
+      },
+      {
+        "ElementName": "code",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "expression",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  }
+}

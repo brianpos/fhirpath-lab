@@ -561,7 +561,7 @@ import { CancelTokenSource } from "axios";
 import xmlFormat from 'xml-formatter';
 import { addExtension, addExtensionStringValue, clearExtension, getExtensionCodingValues, getExtensionReferenceValue, getExtensionStringValue, setExtension, setExtensionStringValue } from "fhir-extension-helpers";
 import { fpjsNode, getTraceValue, getValue, JsonNode, ResultData } from "~/models/FhirpathTesterData";
-import { GetExternalVariablesUsed, InvertTree } from "~/components/ParseTreeTab.vue";
+import { GetExternalVariablesUsed, GetExpressionDefinedVariables, InvertTree } from "~/components/ParseTreeTab.vue";
 import { mapFunctionReferences } from "~/helpers/fhirpath_references";
 
 // import { getPreferredTerminologyServerFromSDC } from "fhir-sdc-helpers";
@@ -594,9 +594,10 @@ import { DomainResource, FhirResource, Resource } from "fhir/r4b";
 import { findNodeByPath, IJsonNode, IJsonNodePosition, parseJson } from "~/helpers/json_parser";
 import { parseXml, parseXmlAndObject } from "~/helpers/xml_parser";
 import TwinPaneTab, { TabData } from "~/components/TwinPaneTab.vue";
-import { IFhirPathEngineDetails, registeredEngines } from "~/types/fhirpath_test_engine";
+import { IFhirPathEngineDetails, registeredEngines, applyConfigEngines } from "~/types/fhirpath_test_engine";
 
 import { FhirPathTools, createFhirPathEvaluateTools } from "~/helpers/openai_tools";
+import { Console } from "console";
 
 const shareTooltipText = 'Copy a sharable link to this test expression';
 const shareZulipTooltipText = 'Copy a sharable link for Zulip to this test expression';
@@ -822,6 +823,8 @@ interface FhirPathData {
   debugExpressionSelectionMarker?: number[];
   debugTestResourceSelectionMarker?: number[];
   debugThisSelectionMarker?: number[];
+  /** Local copy of the effective engine registry (baseline + config overrides). */
+  effectiveEngines: Record<string, IFhirPathEngineDetails>;
 }
 
 function fullPropertyName(node: ResourceNode) : string | undefined {
@@ -905,6 +908,83 @@ interface ResourceNode {
   fullPropertyName(): string | undefined;
 }
 
+interface IExpressionEditorToken {
+  type: string;
+  value: string;
+}
+
+function extractStringLiteralValue(value: string): string | undefined {
+  const trimmedValue = value.trim();
+  if (trimmedValue.length < 2) return undefined;
+  if (!trimmedValue.startsWith("'") || !trimmedValue.endsWith("'")) return undefined;
+  return trimmedValue.substring(1, trimmedValue.length - 1).replaceAll("\\'", "'");
+}
+
+function isWhitespaceToken(token: IExpressionEditorToken): boolean {
+  return token.type === "text" && token.value.trim().length === 0;
+}
+
+function isLeftParenToken(token: IExpressionEditorToken): boolean {
+  return token.type === "fhir_paren.lparen" || token.value === "(";
+}
+
+function isRightParenToken(token: IExpressionEditorToken): boolean {
+  return token.type === "fhir_paren.rparen" || token.value === ")";
+}
+
+function flattenEditorTokens(session: ace.Ace.EditSession): IExpressionEditorToken[] {
+  const tokens: IExpressionEditorToken[] = [];
+  const rowCount = session.doc.getLength();
+  for (let row = 0; row < rowCount; row++) {
+    const rowTokens = session.getTokens(row) ?? [];
+    tokens.push(...rowTokens.map((token) => ({ type: token.type, value: token.value })));
+  }
+  return tokens;
+}
+
+function getDefineVariableNameFromTokens(tokens: IExpressionEditorToken[], startIndex: number): string | undefined {
+  let sawOpenParen = false;
+  for (let tokenIndex = startIndex + 1; tokenIndex < tokens.length; tokenIndex++) {
+    const token = tokens[tokenIndex];
+    if (isWhitespaceToken(token)) continue;
+
+    if (!sawOpenParen) {
+      if (isLeftParenToken(token)) {
+        sawOpenParen = true;
+      }
+      continue;
+    }
+
+    if (isRightParenToken(token)) {
+      return undefined;
+    }
+
+    return extractStringLiteralValue(token.value);
+  }
+  return undefined;
+}
+
+function detectVariablesFromEditorTokens(session: ace.Ace.EditSession): { definedVariables: Set<string>, usedVariables: Set<string> } {
+  const definedVariables = new Set<string>();
+  const usedVariables = new Set<string>();
+  const tokens = flattenEditorTokens(session);
+
+  tokens.forEach((token, index) => {
+    if (token.type === "fhir_identifier" && token.value === "defineVariable") {
+      const definedVariableName = getDefineVariableNameFromTokens(tokens, index);
+      if (definedVariableName) {
+        definedVariables.add(definedVariableName);
+      }
+    }
+
+    if (token.type === "fhir_variable") {
+      usedVariables.add(canonicalVariableName(token.value));
+    }
+  });
+
+  return { definedVariables, usedVariables };
+}
+
 function canonicalVariableName(name: string): string {
   if (name.startsWith("%")) name = name.substring(1);
   if (name.startsWith("`")) name = name.substring(1);
@@ -919,6 +999,8 @@ function isSystemVariableName(name: string): boolean {
   if (name === "rootResource") return true;
   if (name === "context") return true;
   if (name === "terminologies") return true;
+  if (name === "factory") return true;
+  if (name === "server") return true;
   return false;
 }
 
@@ -926,6 +1008,7 @@ export interface IFhirPathMethods
 {
   twinPaneMounted(): Promise<void>;
   CtrlEnterHandler(event: KeyboardEvent): void;
+  handleHashChange(): void;
   readParametersFromQuery(): TestFhirpathData;
   applyParameters(p: TestFhirpathData): void;
   variableMessages(variable: VariableData): string | undefined;
@@ -1017,9 +1100,7 @@ interface IFhirPathProps
 export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFhirPathProps>({
   async mounted() {
     window.document.title = "FhirPath Tester";
-    if (!this.selectedEngine2) {
-      this.selectedEngine2 = this.engines[0];
-    }
+
     this.showAdvancedSettings = settings.showAdvancedSettings();
     this.defaultProviderField = settings.getDefaultProviderField();
     this.openAIFeedbackEnabled = settings.getOpenAIFeedbackEnabled();
@@ -1031,11 +1112,13 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
 
     document.addEventListener('keydown', this.CtrlEnterHandler);
     document.addEventListener('keydown', this.DebugFunctionKeyHandler);
+    window.addEventListener('hashchange', this.handleHashChange);
   },
 
   beforeDestroy() {
     document.removeEventListener('keydown', this.CtrlEnterHandler);
     document.removeEventListener('keydown', this.DebugFunctionKeyHandler);
+    window.removeEventListener('hashchange', this.handleHashChange);
   },
 
   computed: {
@@ -1110,14 +1193,15 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       return this.library == undefined && this.showAdvancedSettings && ((this.defaultProviderField?.length ?? 0) > 0);
     },
     engines(): IFhirPathEngineDetails[] {
-      // filter the registeredEngines to only those with the selectedFhirVersion
+      // filter the effectiveEngines to only those with the selectedFhirVersion
       let isLocalEngineSupported = this.showAdvancedSettings
        && (window.location.hostname.startsWith("dev.") || window.location.hostname.startsWith("localhost"))
        && (this.defaultProviderField?.length ?? 0) > 0;
 
-      const filteredEngines = Object.values(registeredEngines)
+      const filteredEngines = Object.values(this.effectiveEngines)
         .filter(engine => engine.fhirVersion === this.selectedFhirVersion
           && (engine.name !== "Localhost" && engine.name !== "CQL-Facade" || isLocalEngineSupported)
+          && (!engine.earlyAdopter || this.showAdvancedSettings)
         );
       return filteredEngines;
     }
@@ -1214,6 +1298,22 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
         this.evaluateFhirPathExpression();
         event.preventDefault();
+      }
+    },
+
+    async handleHashChange(): Promise<void> {
+      // Called when the URL hash changes (e.g., when pasting a new URL with different hash)
+      const hash = window.location.hash ? window.location.hash.substring(1) : undefined;
+      if (hash) {
+        try {
+          const data = DecodeTestFhirpathData(hash);
+          console.log('Hash changed, loading new parameters:', data);
+          await this.applyParameters(data);
+          this.fhirpathExpressionChangedEvent();
+          await this.evaluateFhirPathExpression();
+        } catch (e) {
+          console.error('Failed to decode hash parameters:', e);
+        }
       }
     },
 
@@ -1323,8 +1423,11 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       };
       // await this.applyParameters(p);
     }
-    // Check for the encoded parameters first
-    const parameters = this.$route.query.parameters as string;
+    // Check for the encoded parameters first - try hash/fragment (bookmark) first, then query
+    let parameters = window.location.hash ? window.location.hash.substring(1) : undefined;
+    if (!parameters) {
+      parameters = this.$route.query.parameters as string;
+    }
     let data: TestFhirpathData;
     if (parameters) {
       // special parameter that encodes all the stuff inside
@@ -1340,6 +1443,24 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
     let tabControl: TwinPaneTab = this.$refs.twinTabControl as TwinPaneTab;
     if (tabControl && tabControl.singleTabMode())
       this.selectTab(0);
+
+    // Apply config URL override before any config fetch is triggered
+    const configParam = this.$route?.query?.config as string | undefined;
+    if (configParam) {
+      console.log("Applying config override from URL:", configParam);
+      settings.setConfigUrl(configParam);
+    }
+
+    // Eagerly load config and build the effective engine list (baseline + overrides)
+    const config = await settings.getServerConnectionData();
+
+    // Load config and build the effective engine list (baseline + overrides)
+    this.effectiveEngines = await applyConfigEngines(registeredEngines, config);
+
+    if (!this.selectedEngine2) {
+      this.selectedEngine2 = this.engines[0];
+      console.log("Selected engine", this.selectedEngine2);
+    }
 
     await this.applyParameters(data);
     // refresh the variables
@@ -1569,8 +1690,8 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         }
 
           if (p.engine) {
-            // select the engine from the registeredEngines
-            const engine = Object.values(registeredEngines).find(e => e.legacyName === p.engine);
+            // select the engine from the effectiveEngines
+            const engine = Object.values(this.effectiveEngines).find(e => e.legacyName === p.engine);
             if (engine) {
               this.selectedEngine2 = engine;
               this.selectedFhirVersion = engine.fhirVersion;
@@ -1706,18 +1827,27 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         this.removeMarkers(this.resourceJsonEditor, this.debugThisSelectionMarker);
         this.debugThisSelectionMarker = [];
 
+        const expression = this.getFhirpathExpression() ?? '';
         let ast: fpjsNode | undefined = undefined;
+        try {
+          ast = fhirpath.parse(expression);
+        }
+        catch {
+          ast = undefined;
+        }
+
         if (this.selectedEngine2?.legacyName?.indexOf("fhirpath.js") != -1){
           const astTab2 = this.$refs.astTabComponent2 as ParseTreeTab;
-          ast = astTab2?.displayTreeForExpression(this.getContextExpression() ?? '', this.getFhirpathExpression() ?? '');
+          astTab2?.displayTreeForExpression(this.getContextExpression() ?? '', expression);
         }
 
         // accumulate the variables
         let updatedVariables = new Map<string, any>();
 
         // check if there are any variables in the AST
-        if (ast){
-          let varsUsed = GetExternalVariablesUsed(ast);
+        if (ast) {
+          let dvVars = GetExpressionDefinedVariables(ast);
+          let varsUsed = GetExternalVariablesUsed(ast, dvVars);
           for (const varName of varsUsed){
             if (isSystemVariableName(varName)) continue;
 
@@ -1735,30 +1865,20 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
           }
         }
         else {
-          const count = session.doc.getLength();
-          for (let row = 0; row<= count; row++){
-            if (session.doc.getLine(row).includes("%")){
-              const tkns = this.expressionEditor?.session.getTokens(row);
-              if (tkns){
-                for (const tkn of tkns){
-                  if (tkn.type === "fhir_variable"){
-                    const varName = canonicalVariableName(tkn.value);
-                    if (isSystemVariableName(varName)) continue;
+          console.log('No parse tree - scanning editor tokens for variables');
+          const { definedVariables, usedVariables } = detectVariablesFromEditorTokens(session);
+          for (const varName of usedVariables) {
+            if (isSystemVariableName(varName)) continue;
+            if (definedVariables.has(varName)) continue;
 
-                    if (!this.variables.has(varName)){
-                      // console.log(tkn.value + ' ' + varName);
-                      updatedVariables.set(varName, { name: varName,  data: undefined });
-                      // provide default implementation values for known env vars
-                      switch(varName){
-                        case 'ucum': updatedVariables.set(varName, "http://unitsofmeasure.org"); break;
-                      }
-                    }
-                    else {
-                      updatedVariables.set(varName, this.variables.get(varName));
-                    }
-                  }
-                }
+            if (!this.variables.has(varName)){
+              updatedVariables.set(varName, { name: varName,  data: undefined });
+              switch(varName){
+                case 'ucum': updatedVariables.set(varName, "http://unitsofmeasure.org"); break;
               }
+            }
+            else {
+              updatedVariables.set(varName, this.variables.get(varName));
             }
           }
         }
@@ -2906,7 +3026,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       if (this.showAdvancedSettings){
         let packageData: TestFhirpathData = this.prepareSharePackageData();
         const compressedData = EncodeTestFhirpathData(packageData);
-        shareUrl = `${url.origin}/FhirPath?parameters=${compressedData}`;
+        shareUrl = `${url.origin}/FhirPath#${compressedData}`;
         navigator.clipboard.writeText(shareUrl);
         console.log(DecodeTestFhirpathData(compressedData));
       }
@@ -2947,7 +3067,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       const url = new URL(window.location.href);
       let packageData: TestFhirpathData = this.prepareSharePackageData();
       const compressedData = EncodeTestFhirpathData(packageData);
-      const shareUrl = `\`\`\`fhirpath\n${packageData.expression}\n\`\`\`\n:test_tube: [Test with FHIRPath-Lab](${url.origin}/FhirPath?parameters=${compressedData})`;
+      const shareUrl = `\`\`\`fhirpath\n${packageData.expression}\n\`\`\`\n:test_tube: [Test with FHIRPath-Lab](${url.origin}/FhirPath#${compressedData})`;
       navigator.clipboard.writeText(shareUrl);
       console.log(DecodeTestFhirpathData(compressedData));
     },
@@ -3584,6 +3704,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       debugExpressionSelectionMarker: [],
       debugTestResourceSelectionMarker: [],
       debugThisSelectionMarker: [],
+      effectiveEngines: { },
     };
   },
 });

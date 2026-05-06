@@ -15,7 +15,7 @@ import fhirpath, { AsyncOptions, Model } from "fhirpath";
 import fhirpath_r4_model from "fhirpath/fhir-context/r4";
 import fhirpath_r5_model from "fhirpath/fhir-context/r5";
 // Note: R6 is not yet available in fhirpath.js package
-// import fhirpath_r6_model from "fhirpath/fhir-context/r6";
+import fhirpath_r6_model from "models/r6";
 import { IFhirPathEngineDetails } from "../types/fhirpath_test_engine";
 
 
@@ -525,12 +525,13 @@ export async function evaluateExpressionUsingFhirpathJs(
   fhirVersion: 'R4' | 'R5' | 'R6' = 'R4'
 ): Promise<FhirPathEvaluationResult> {
   const model: Model = fhirVersion === 'R5' ? fhirpath_r5_model
-    : fhirVersion === 'R6' ? fhirpath_r5_model // Use R5 as fallback for R6 until available
+    : fhirVersion === 'R6' ? fhirpath_r6_model // Use R5 as fallback for R6 until available
     : fhirpath_r4_model;
   const versionLabel = fhirVersion === 'R5' ? '(r5)'
-    : fhirVersion === 'R6' ? '(r6 - using r5 model)'
+    : fhirVersion === 'R6' ? '(r6)'
     : '(r4b)';
   
+    console.log('engine selected', fhirVersion, model.version);
   const result: FhirPathEvaluationResult = {
     results: [],
     debugTraceData: [],
@@ -1015,7 +1016,8 @@ export async function evaluateFhirPathExpression(
   
   if (engineInfo.isLocal) {
     // Use local fhirpath.js engine
-    const fhirVersion = selectedEngine.fhirVersion.toLowerCase() === 'r5' ? 'R5' : 'R4';
+    const fhirVersion = selectedEngine.fhirVersion.toLowerCase() === 'r5' ? 'R5' : 
+    selectedEngine.fhirVersion.toLowerCase() === 'r6' ? 'R6' : 'R4';
     return await evaluateExpressionUsingFhirpathJs(options, fhirVersion as 'R4' | 'R5' | 'R6');
   } else {
     // Use RESTful engine

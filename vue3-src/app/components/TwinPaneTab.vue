@@ -92,7 +92,8 @@
       <div class="custom-tab" style="height: calc(100vh - 168px)">
         <template v-for="(tabDetail, index) in tabs" :key="index">
           <div 
-            v-if="tabIsVisible(index)" 
+            v-if="tabShouldRender(index)"
+            v-show="tabIsVisible(index)"
             :style="tabStyleForOrder(index)" 
             class="tab-scroll-parent"
           >
@@ -300,6 +301,8 @@ export interface TabData {
   show: boolean;
   /** Whether the tab is enabled */
   enabled: boolean;
+  /** Keep the tab content mounted even while hidden */
+  keepMounted?: boolean;
 }
 
 // Props interface
@@ -411,6 +414,14 @@ const tabIsVisible = (index: number): boolean => {
     return selectableTab.value === index
   }
   return lockedTab.value === index || (selectableTab.value === index && windowWidth.value > 999)
+}
+
+const tabShouldRender = (index: number): boolean => {
+  const tab = props.tabs[index]
+  if (!tab || !tab.show) {
+    return false
+  }
+  return tab.keepMounted === true || tabIsVisible(index)
 }
 
 const tabIsActiveClass = (index: number): string => {

@@ -70,17 +70,32 @@
       <v-data-table
         :headers="columns"
         :items="tableData"
-        :event-custom-option="eventCustomOption"
-        row-key-field-name="id"
         :fixed-header="true"
         :items-per-page="-1"
         :disable-pagination="true"
         show-expand
-        @row:click="navigateSelection"
         :expanded.sync="expanded"
       >
-        <template v-slot:item.title="{ index, item }">
-          <a @click="navigateSelection(item)">{{ item.title }}</a>
+        <template v-slot:item.title="{ item }">
+          <a :href="questionnaireHref(item)" class="cell-link" @click="onCellLinkClick($event, item)">{{ item.title }}</a>
+        </template>
+        <template v-slot:item.version="{ item }">
+          <a :href="questionnaireHref(item)" class="cell-link" @click="onCellLinkClick($event, item)">{{ item.version }}</a>
+        </template>
+        <template v-slot:item.status="{ item }">
+          <a :href="questionnaireHref(item)" class="cell-link" @click="onCellLinkClick($event, item)">{{ item.status }}</a>
+        </template>
+        <template v-slot:item.useContext="{ item }">
+          <a :href="questionnaireHref(item)" class="cell-link" @click="onCellLinkClick($event, item)">{{ item.useContext }}</a>
+        </template>
+        <template v-slot:item.date="{ item }">
+          <a :href="questionnaireHref(item)" class="cell-link" @click="onCellLinkClick($event, item)">{{ item.date }}</a>
+        </template>
+        <template v-slot:item.publisher="{ item }">
+          <a :href="questionnaireHref(item)" class="cell-link" @click="onCellLinkClick($event, item)">{{ item.publisher }}</a>
+        </template>
+        <template v-slot:item.id="{ item }">
+          <a :href="questionnaireHref(item)" class="cell-link" @click="onCellLinkClick($event, item)">{{ item.id }}</a>
         </template>
         <template v-slot:expanded-item="{ headers, item }">
           <td :colspan="headers.length">
@@ -133,6 +148,42 @@
 }
 .fl-toolbar {
   margin-bottom: 6px;
+}
+
+/* Cell-filling anchor: makes the whole table cell a real link
+   so that long-press (mobile) and right-click (desktop) get the
+   native browser "Open in new tab" menu, while normal clicks are
+   still intercepted for SPA routing. */
+.cell-link {
+  display: flex;
+  align-items: center;
+  margin: 0 -16px;
+  padding: 0 16px;
+  min-height: 48px;
+  color: inherit;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.cell-link:hover {
+  text-decoration: none;
+}
+
+/* In mobile/tile mode Vuetify lays each cell out as:
+     td.v-data-table__mobile-row
+       div.v-data-table__mobile-row__header   <-- the field label on the left
+       div.v-data-table__mobile-row__cell     <-- our slot (anchor) on the right
+   Stretch the anchor across the entire <td> so a tap/long-press anywhere
+   on the row (header label included) hits the real <a href>. */
+::v-deep td.v-data-table__mobile-row {
+  position: relative;
+}
+::v-deep .v-data-table__mobile-row .cell-link {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0 16px;
+  justify-content: flex-end;
+  text-align: right;
 }
 </style>
 
@@ -275,40 +326,32 @@ export default Vue.extend({
       settings.saveSearchData("Questionnaire", searchData);
     },
 
-    navigateSelection(data: QuestionnaireTableData, event: PointerEvent) {
-      const selectedResourceId = settings.getFhirServerUrl() + '/Questionnaire/' + data.id;
-      if (event?.ctrlKey){
-        window.open("/Questionnaire/tester?id=" + selectedResourceId, '_blank'); 
+    /** Build the SPA href for a Questionnaire row. The id is the FHIR server
+     *  full URL to the Questionnaire resource, passed via the `id` query
+     *  parameter. URL-encoded so it parses correctly when the browser handles
+     *  modifier-clicks (open in new tab) directly from the <a href>. */
+    questionnaireHref(data: QuestionnaireTableData): string {
+      const fullUrl = settings.getFhirServerUrl() + '/Questionnaire/' + data.id;
+      return "/Questionnaire/tester?id=" + encodeURIComponent(fullUrl);
+    },
+
+    /** Click handler for the cell-spanning anchors. Lets the browser handle
+     *  modifier-clicks (Ctrl/⌘/Shift) and middle-click natively (so they
+     *  open in a new tab/window via the real href), and intercepts plain
+     *  left-clicks for SPA routing. Right-click and long-press never reach
+     *  this handler — the browser shows its native context menu against the
+     *  real <a href>. */
+    onCellLinkClick(event: MouseEvent, data: QuestionnaireTableData) {
+      if (event.ctrlKey || event.metaKey || event.shiftKey || event.button === 1) {
+        return; // let the browser handle modifier/middle clicks
       }
-      else{
-        this.$router.push("/Questionnaire/tester?id=" + selectedResourceId);
-      }
+      event.preventDefault();
+      const fullUrl = settings.getFhirServerUrl() + '/Questionnaire/' + data.id;
+      this.$router.push("/Questionnaire/tester?id=" + fullUrl);
     }
   },
   data(): QuestionnaireTableDefinition {
     return {
-      eventCustomOption: {
-        bodyRowEvents: ({ row, rowIndex }: any) => {
-          return {
-            click: (event: PointerEvent) => {
-              console.log("click::", row, rowIndex, event);
-              var data: QuestionnaireTableData = row;
-              console.log("row data::", data);
-              const selectedResourceId = settings.getFhirServerUrl() + '/Questionnaire/' + data.id;
-              if (event.ctrlKey){
-                window.open("/Questionnaire/tester?id=" + selectedResourceId, '_blank'); 
-              }
-              else{
-                this.$router.push("/Questionnaire/tester?id=" + selectedResourceId);
-              }
-            },
-            contextmenu: (event: PointerEvent) => {
-              console.log("contextmenu::", row, rowIndex, event);
-              event.preventDefault();
-            },
-          };
-        },
-      },
       columns: [
         { value: "title", key: "a", text: "Name", align: "start", type: "expand", sortable: false },
         { value: "version", key: "v", text: "Version", align: "start", sortable: false },

@@ -45,6 +45,12 @@ To add in another engine into the fhirpath-lab, the VueJS code will need to be u
 * static/config.local.json - Add in the new service URL (for local debugging only)
 * types/fhirpath_test_engine.ts - Add in the new engine details (match the config.json key)
 
+> **Tip:** Before submitting a PR to register your engine, you can test it end-to-end using the `?config=` URL parameter. Create a custom config JSON file that adds your engine and point FHIRPath Lab at it:
+> ```
+> https://fhirpath-lab.com/FhirPath?config=https://your-server.example.com/my-config.json
+> ```
+> This lets you verify that your engine works correctly with the lab — including expression evaluation, trace output, AST display, and debug stepping — without modifying any fhirpath-lab source code. See [docs/custom-configuration.md](docs/custom-configuration.md) for the full config JSON format and a step-by-step walkthrough.
+
 
 ## API Definition
 The API takes a FHIR Parameters resource as the input, and returns a FHIR Parameters resource as the output (unless a critical failure occurs, where OperationOutcome is returned - non-critical failures can be reported inside the output parameters).
