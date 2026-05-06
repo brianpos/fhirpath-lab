@@ -231,6 +231,24 @@ function joinTypeNames(types: TypeModel[]): string {
     return out.join(" | ");
 }
 
+/** Format the displayed `ReturnType` for a JsonNode. Collections are suffixed
+ *  with `[]` (or `(<union>)[]` when more than one type is present) so the
+ *  Parse Tree tab and downstream consumers can see at a glance which nodes
+ *  produce more than one item. Mirrors the convention used by the .NET
+ *  validator's debug output. */
+function formatReturnType(types: TypeModel[], isCollection: boolean): string {
+    const base = joinTypeNames(types);
+    if (!base) return "";
+    if (!isCollection) return base;
+    // Wrap in parens so `string | dateTime` becomes `(string | dateTime)[]`.
+    return base.includes(" | ") ? `(${base})[]` : `${base}[]`;
+}
+
+/** Same as `formatReturnType` but for a `FhirPathValue`. */
+function formatValueType(v: FhirPathValue): string {
+    return formatReturnType(v.types, v.isCollection);
+}
+
 function stripSystemPrefix(name: string): string {
     return name.startsWith("System.") ? name.substring(7) : name;
 }
@@ -386,10 +404,13 @@ function selectOperationOverload(
                 if (!sig) continue;
                 const lhs = sig.left;
                 const rhs = sig.right;
-                if (
-                    leftNames.some((n) => n === lhs || isAssignable(n, lhs)) &&
-                    rightNames.some((n) => n === rhs || isAssignable(n, rhs))
-                ) {
+                // "collection" / "Any" act as wildcards on either side of a
+                // typeMapping row (e.g. the `|` operator's `collection-collection`).
+                const lhsMatch = lhs === "collection" || lhs === "Any" ||
+                    leftNames.some((n) => n === lhs || isAssignable(n, lhs));
+                const rhsMatch = rhs === "collection" || rhs === "Any" ||
+                    rightNames.some((n) => n === rhs || isAssignable(n, rhs));
+                if (lhsMatch && rhsMatch) {
                     rowMatched = true;
                     widenedTo = widerSystemType(lhs, rhs);
                     break;
@@ -528,7 +549,7 @@ class FhirPathExpressionVisitor {
                     ExpressionType: "AxisExpression",
                     Name: "builtin.that",
                     Arguments: [],
-                    ReturnType: joinTypeNames(input.types),
+                    ReturnType: formatValueType(input),
                 };
                 result.node.Arguments = result.node.Arguments ?? [];
                 result.node.Arguments.unshift(scope);
@@ -547,7 +568,7 @@ class FhirPathExpressionVisitor {
                 ExpressionType: "ParenthesizedTerm",
                 Name: "",
                 Arguments: [inner.node],
-                ReturnType: joinTypeNames(inner.value.types),
+                ReturnType: formatValueType(inner.value),
             }, term);
             return { node, value: inner.value };
         }
@@ -582,13 +603,13 @@ class FhirPathExpressionVisitor {
         }
         if (ctx instanceof ThisInvocationContext) {
             const top = this.thisStack[this.thisStack.length - 1] ?? this.contextValue();
-            const node = attachPosition({ ExpressionType: "AxisExpression", Name: "builtin.this", Arguments: [], ReturnType: joinTypeNames(top.types) }, ctx);
+            const node = attachPosition({ ExpressionType: "AxisExpression", Name: "builtin.this", Arguments: [], ReturnType: formatValueType(top) }, ctx);
             return { node, value: top };
         }
         if (ctx instanceof IndexInvocationContext) {
             const t = this.provider.lookupByTypeName("System.Integer");
             const value: FhirPathValue = t ? { types: [t], isCollection: false } : EMPTY_VALUE;
-            const node = attachPosition({ ExpressionType: "AxisExpression", Name: "$index", Arguments: [], ReturnType: joinTypeNames(value.types) }, ctx);
+            const node = attachPosition({ ExpressionType: "AxisExpression", Name: "$index", Arguments: [], ReturnType: formatValueType(value) }, ctx);
             return { node, value };
         }
         if (ctx instanceof TotalInvocationContext) {
@@ -608,7 +629,7 @@ class FhirPathExpressionVisitor {
         // Resource-type self-reference: `Patient.name` when the context already
         // is Patient. The leading `Patient` is a no-op and yields the same value.
         if (input.types.length > 0 && input.types.every((t) => t.TypeName === name || isBaseTypeOf(t, name, this.provider))) {
-            node.ReturnType = joinTypeNames(input.types);
+            node.ReturnType = formatValueType(input);
             return { node, value: input };
         }
 
@@ -617,8 +638,9 @@ class FhirPathExpressionVisitor {
         if (input.types.length === 0) {
             const root = this.provider.lookupByTypeName(name);
             if (root) {
-                node.ReturnType = displayTypeName(root);
-                return { node, value: { types: [root], isCollection: false } };
+                const value: FhirPathValue = { types: [root], isCollection: false };
+                node.ReturnType = formatValueType(value);
+                return { node, value };
             }
             this.addDiagnostic({
                 severity: "error",
@@ -654,7 +676,7 @@ class FhirPathExpressionVisitor {
         }
 
         const value: FhirPathValue = { types: dedupeTypes(resolved), isCollection: input.isCollection || isArray };
-        node.ReturnType = joinTypeNames(value.types);
+        node.ReturnType = formatValueType(value);
         return { node, value };
     }
 
@@ -793,7 +815,7 @@ class FhirPathExpressionVisitor {
 
         // Compute result type.
         const value = this.computeFunctionResultType(def, name, input, argValues, argCtxs);
-        node.ReturnType = joinTypeNames(value.types);
+        node.ReturnType = formatValueType(value);
         return { node, value };
     }
 
@@ -966,7 +988,7 @@ class FhirPathExpressionVisitor {
             }
         }
         const value: FhirPathValue = { types: lhs.value.types, isCollection: false };
-        const node: JsonNode = attachPosition({ ExpressionType: "IndexerExpression", Name: "[]", Arguments: [lhs.node, idx.node], ReturnType: joinTypeNames(value.types) }, ctx);
+        const node: JsonNode = attachPosition({ ExpressionType: "IndexerExpression", Name: "[]", Arguments: [lhs.node, idx.node], ReturnType: formatValueType(value) }, ctx);
         return { node, value };
     }
 
@@ -976,17 +998,18 @@ class FhirPathExpressionVisitor {
         const overloads = operationsByName[opText] ?? [];
         // Prefer the unary overload (leftArgument === "None")
         const unary = overloads.find((o) => !o.leftArgument || o.leftArgument === "None");
-        let resultName = inner.value.types.length > 0 ? joinTypeNames(inner.value.types) : "";
-        if (unary) {
-            resultName = unary.returnType;
-        }
         const types: TypeModel[] = inner.value.types.length > 0 ? inner.value.types : [];
         const value: FhirPathValue = { types, isCollection: inner.value.isCollection };
+        // Display: prefer the spec's declared return type when known (so a unary
+        // `-1` shows as `integer` even if the inner literal had no type), but
+        // still flag collection cardinality from the operand.
+        let display = formatValueType(value);
+        if (!display && unary) display = unary.returnType;
         const node: JsonNode = attachPosition({
             ExpressionType: "UnaryExpression",
             Name: opText,
             Arguments: [inner.node],
-            ReturnType: resultName || joinTypeNames(types),
+            ReturnType: display,
         }, ctx);
         return { node, value };
     }
@@ -1021,7 +1044,7 @@ class FhirPathExpressionVisitor {
             ExpressionType: nodeType,
             Name: op,
             Arguments: [left.node, right.node],
-            ReturnType: joinTypeNames(value.types),
+            ReturnType: formatValueType(value),
         }, ctx);
         return { node, value };
     }
@@ -1073,7 +1096,7 @@ class FhirPathExpressionVisitor {
                 ExpressionType: "BinaryExpression",
                 Name: "as",
                 Arguments: [inner.node, attachPosition({ ExpressionType: "TypeSpecifier", Name: typeName, ReturnType: "" }, typeSpec ?? ctx)],
-                ReturnType: joinTypeNames(value.types),
+                ReturnType: formatValueType(value),
             }, ctx);
             return { node, value };
         }
@@ -1128,7 +1151,7 @@ class FhirPathExpressionVisitor {
 
         const provided = this.options.environmentVariables?.[name];
         if (provided) {
-            node.ReturnType = joinTypeNames(provided.types);
+            node.ReturnType = formatValueType(provided);
             return { node, value: provided };
         }
         const builtin = BUILTIN_ENV_VARS_BY_NAME[name];
@@ -1136,13 +1159,14 @@ class FhirPathExpressionVisitor {
             if (builtin.fixedType) {
                 const t = resolveSpecType(builtin.fixedType, this.provider);
                 if (t) {
-                    node.ReturnType = displayTypeName(t);
-                    return { node, value: { types: [t], isCollection: false } };
+                    const value: FhirPathValue = { types: [t], isCollection: false };
+                    node.ReturnType = formatValueType(value);
+                    return { node, value };
                 }
             }
             // Context-dependent vars take the configured contextType.
             const ctxVal = this.contextValue();
-            node.ReturnType = joinTypeNames(ctxVal.types);
+            node.ReturnType = formatValueType(ctxVal);
             return { node, value: ctxVal };
         }
         this.addDiagnostic({

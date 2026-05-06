@@ -123,6 +123,63 @@ describe("FHIRPath validator visitor", () => {
         expect(r.expectedReturnType).toBe("boolean");
     });
 
+    describe("collection cardinality on ReturnType", () => {
+        it("suffixes `[]` on collection ReturnType (Patient.name.given)", () => {
+            const r = validateFhirpathExpression("Patient.name.given", {
+                fhirVersion: "r4",
+                contextType: "Patient",
+            });
+            expect(r.diagnostics).toEqual([]);
+            // Joined union (without []) — preserved for backward compatibility.
+            expect(r.expectedReturnType).toBe("string");
+            expect(r.expectedReturnIsCollection).toBe(true);
+            // Annotated tree's root node carries the `[]` decoration.
+            expect(r.parseDebugTree?.ReturnType).toBe("string[]");
+        });
+
+        it("propagates collection-ness from input to single-valued child (Patient.name.family)", () => {
+            // `family` itself is not an array, but `name` is — so the chain is
+            // a collection of family strings.
+            const r = validateFhirpathExpression("Patient.name.family", {
+                fhirVersion: "r4",
+                contextType: "Patient",
+            });
+            expect(r.diagnostics).toEqual([]);
+            expect(r.parseDebugTree?.ReturnType).toBe("string[]");
+            expect(r.expectedReturnIsCollection).toBe(true);
+        });
+
+        it("first() reduces a collection back to a single value", () => {
+            const r = validateFhirpathExpression("Patient.name.family.first()", {
+                fhirVersion: "r4",
+                contextType: "Patient",
+            });
+            expect(r.diagnostics).toEqual([]);
+            expect(r.parseDebugTree?.ExpressionType).toBe("FunctionCallExpression");
+            expect(r.parseDebugTree?.Name).toBe("first");
+            expect(r.parseDebugTree?.ReturnType).toBe("string");
+            expect(r.expectedReturnIsCollection).toBe(false);
+        });
+
+        it("the | operator produces a collection", () => {
+            const r = validateFhirpathExpression("Patient.name.given | Patient.name.family", {
+                fhirVersion: "r4",
+                contextType: "Patient",
+            });
+            expect(r.diagnostics).toEqual([]);
+            expect(r.parseDebugTree?.ExpressionType).toBe("UnionExpression");
+            expect(r.parseDebugTree?.Name).toBe("|");
+            expect(r.parseDebugTree?.ReturnType).toBe("string[]");
+            expect(r.expectedReturnIsCollection).toBe(true);
+        });
+
+        it("single-valued literal does not carry the `[]` suffix", () => {
+            const r = validateFhirpathExpression("'hello'", { fhirVersion: "r4" });
+            expect(r.parseDebugTree?.ReturnType).toBe("string");
+            expect(r.expectedReturnIsCollection).toBe(false);
+        });
+    });
+
     describe("starting scope", () => {
         it("uses the context expression to widen the starting scope", () => {
             // Without a context the bare `given` cannot resolve.

@@ -187,8 +187,13 @@ export function validateFhirpathExpression(
  *  Used to seed the main expression's starting scope from a context expression. */
 function collectTypesFromTree(node: JsonNode, provider: ModelProvider): TypeModel[] {
     if (!node.ReturnType) return [];
+    // Strip the collection-cardinality decoration (`[]` suffix and any
+    // wrapping parentheses) so we only feed bare type names to the lookup.
+    let raw = node.ReturnType.trim();
+    if (raw.endsWith("[]")) raw = raw.substring(0, raw.length - 2).trim();
+    if (raw.startsWith("(") && raw.endsWith(")")) raw = raw.substring(1, raw.length - 1).trim();
     const out: TypeModel[] = [];
-    for (const part of node.ReturnType.split("|").map((p) => p.trim()).filter((p) => p.length > 0)) {
+    for (const part of raw.split("|").map((p) => p.trim()).filter((p) => p.length > 0)) {
         // Try as a System.* primitive first (joined names are lowercased), then
         // as a FHIR type, then a capitalised System name.
         const tries = [
