@@ -11,16 +11,14 @@ export interface MergedUseContextsResult {
   changed: boolean;
 }
 
-/** Compare two use contexts treating them as equal when both code and display match.
- * The system is intentionally ignored to avoid duplicate entries appearing when the
- * same logical context is published with different (or missing) system URIs. */
+/** Compare two use contexts treating them as equal when both system and code match.
+ * The display is intentionally ignored — only the canonical (system, code) identifies a coding. */
 function sameUseContext(
-  a: { system?: string; code?: string; display?: string },
-  b: { system?: string; code?: string; display?: string }
+  a: { system?: string; code?: string },
+  b: { system?: string; code?: string }
 ): boolean {
-  if (!a.code || !b.code) return false;
+  if (a.system !== b.system) return false;
   if (a.code !== b.code) return false;
-  if (a.display !== b.display) return false;
   return true;
 }
 
