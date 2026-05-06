@@ -1,0 +1,1 @@
+import{H as r}from"./nKTaOe02.js";import{u as a}from"./DJiA5u-Y.js";import{e as o,c as s,b as n,d as m,o as p}from"./B9A085_h.js";const l=o({__name:"tester",setup(c){return a({title:"Form Tester - FHIRPath Lab"}),(d,e)=>{const t=r;return p(),s("div",null,[n(t),e[0]||(e[0]=m(" Questionnaire Form Tester ",-1))])}}});export{l as default};
