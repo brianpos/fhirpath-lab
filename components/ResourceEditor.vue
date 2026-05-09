@@ -379,7 +379,7 @@ export default class ResourceJsonEditor extends Vue {
       if (results) {
         if (this.aceEditor) {
           let formattedContent = '';
-          const contentType = response.headers['content-type'] || '';
+          const contentType = String(response.headers?.['content-type'] ?? '');
           
           // Detect if the response is XML or JSON based on content type
           if (contentType.includes('xml') || (typeof results === 'string' && results.trim().startsWith('<'))) {
