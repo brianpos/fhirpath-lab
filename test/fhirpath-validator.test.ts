@@ -397,6 +397,41 @@ describe("FHIRPath validator visitor", () => {
             expect(r.expectedReturnType).toBe("string");
             expect(r.expectedReturnIsCollection).toBe(true);
         });
+
+        it("sort() with multiple key selectors produces no arity error", () => {
+            const r = validateFhirpathExpression(
+                "Patient.name.sort(family, given.first())",
+                {
+                    fhirVersion: "r4",
+                    contextType: "Patient",
+                },
+            );
+            expect(r.diagnostics.filter((d) => d.severity === "error")).toEqual([]);
+        });
+
+        it("coalesce() with multiple arguments returns the union of their types", () => {
+            // coalesce(family, text) where input is HumanName: returns string | string = string
+            const r = validateFhirpathExpression(
+                "name.select(coalesce(family, text))",
+                {
+                    fhirVersion: "r4",
+                    contextType: "Patient",
+                },
+            );
+            expect(r.diagnostics.filter((d) => d.severity === "error")).toEqual([]);
+            expect(r.expectedReturnType).toBe("string");
+        });
+
+        it("coalesce() with a string fallback literal accepts arbitrary args without arity error", () => {
+            const r = validateFhirpathExpression(
+                "coalesce(Patient.name.first().family, Patient.name.first().text, 'unknown')",
+                {
+                    fhirVersion: "r4",
+                    contextType: "Patient",
+                },
+            );
+            expect(r.diagnostics.filter((d) => d.severity === "error")).toEqual([]);
+        });
     });
 
     describe("parity with the legacy fhirpath.js tree", () => {

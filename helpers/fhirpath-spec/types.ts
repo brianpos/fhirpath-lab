@@ -10,6 +10,8 @@ export interface FunctionArgumentDef {
     type: string;
     description?: string;
     optional?: boolean;
+    /** When true the function accepts any number of this argument (e.g. sort, coalesce). */
+    variableArgs?: boolean;
 }
 
 export interface FunctionDef {

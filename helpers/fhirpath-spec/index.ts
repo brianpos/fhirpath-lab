@@ -19,7 +19,7 @@ interface RawFunction {
     functionName: string;
     sectionNumber?: string;
     description?: string;
-    arguments?: Array<{ name: string; type: string; description?: string; optional?: boolean }>;
+    arguments?: Array<{ name: string; type: string; description?: string; optional?: boolean; variableArgs?: boolean }>;
     returnType: string;
     emptyInputResult?: string;
     errorOnMultipleInput?: boolean;
@@ -69,6 +69,7 @@ function loadFunctions(): { all: FunctionDef[]; byName: Record<string, FunctionD
                 type: a.type,
                 description: a.description,
                 optional: a.optional,
+                variableArgs: a.variableArgs,
             }));
             const def: FunctionDef = {
                 category: cat.name,

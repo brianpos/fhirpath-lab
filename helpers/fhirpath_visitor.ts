@@ -50,6 +50,7 @@ import Parser, {
     PolarityExpressionContext,
     QuantityContext,
     QuantityLiteralContext,
+    SortDirectionArgumentContext,
     StringLiteralContext,
     TermExpressionContext,
     ThisInvocationContext,
@@ -733,11 +734,19 @@ class FhirPathExpressionVisitor {
 
     private visitFunctionInvocation(ctx: FunctionContext, input: FhirPathValue): { node: JsonNode; value: FhirPathValue } {
         const ident = ctx.identifier();
-        const name = ident ? ident.getText() : ctx.getText();
+        // sort uses a keyword grammar rule (no identifier node); when there is no
+        // identifier it must be `sort` (the only keyword alternative in the grammar).
+        const isSortKeyword = !ident;
+        const sortArgs = isSortKeyword ? ctx.sortArgument_list() : [];
+        const name = ident ? ident.getText() : "sort";
         const node: JsonNode = attachPosition({ ExpressionType: "FunctionCallExpression", Name: name, Arguments: [], ReturnType: "" }, ctx);
 
+        // For sort(), gather expressions from sortArgument nodes (each is expression asc|desc?).
+        // For regular functions, gather expressions from the paramList.
         const params = ctx.paramList?.();
-        const argCtxs: ExpressionContext[] = params ? params.expression_list() : [];
+        const argCtxs: ExpressionContext[] = isSortKeyword
+            ? sortArgs.map((sa) => (sa instanceof SortDirectionArgumentContext ? sa.expression() : null)).filter((e): e is ExpressionContext => e !== null)
+            : params ? params.expression_list() : [];
 
         // Visit arguments. For lambda-arg functions, each argument is evaluated
         // with $this set to the input element type.
@@ -777,6 +786,8 @@ class FhirPathExpressionVisitor {
         node.SpecUrl = def.sectionNumber ? `https://hl7.org/fhirpath/#${def.sectionNumber}` : undefined;
 
         // Validate arity
+        const lastArgDef = def.arguments[def.arguments.length - 1];
+        const isVariadic = lastArgDef?.variableArgs === true;
         const required = def.arguments.filter((a) => !a.optional).length;
         if (argCtxs.length < required) {
             this.addDiagnostic({
@@ -785,7 +796,7 @@ class FhirPathExpressionVisitor {
                 message: `Function '${name}' requires at least ${required} argument(s) but ${argCtxs.length} were provided.`,
                 ...nodeStart(ctx),
             });
-        } else if (argCtxs.length > def.arguments.length) {
+        } else if (!isVariadic && argCtxs.length > def.arguments.length) {
             this.addDiagnostic({
                 severity: "error",
                 code: "func-arity",
@@ -818,8 +829,10 @@ class FhirPathExpressionVisitor {
         }
 
         // Validate argument types against the spec.
-        for (let i = 0; i < Math.min(argCtxs.length, def.arguments.length); i++) {
-            const argSpec = def.arguments[i];
+        // For variadic functions the last declared argument spec applies to all extra args.
+        for (let i = 0; i < argCtxs.length; i++) {
+            const argSpec = def.arguments[Math.min(i, def.arguments.length - 1)];
+            if (!argSpec) continue;
             const got = argValues[i];
             if (got.types.length === 0) continue;
             const accepts = splitTypeUnion(argSpec.type);
@@ -873,6 +886,12 @@ class FhirPathExpressionVisitor {
             case "combine":
             case "sort":
                 return { types: input.types, isCollection: true };
+            case "coalesce": {
+                // Returns the first non-empty argument; type is the union of all argument types.
+                // The receiver (input) does not contribute to the result type.
+                const allTypes = dedupeTypes(argValues.flatMap((v) => v.types));
+                return { types: allTypes.length > 0 ? allTypes : input.types, isCollection: argValues.some((v) => v.isCollection) };
+            }
             case "first":
             case "last":
             case "single":
