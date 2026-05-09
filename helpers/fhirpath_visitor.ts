@@ -409,7 +409,7 @@ function selectOperationOverload(
         // operand pair using the implicit-conversion ladder.
         let rowMatched = def.typeMapping.length === 0;
         let widenedTo: string | undefined;
-        if (def.typeMapping.length > 0 && leftNames.length > 0 && rightNames.length > 0) {
+        if (def.typeMapping.length > 0 && (leftNames.length > 0 || rightNames.length > 0)) {
             for (const tm of def.typeMapping) {
                 const sig = decodeTypeMapping(tm);
                 if (!sig) continue;
@@ -417,9 +417,11 @@ function selectOperationOverload(
                 const rhs = sig.right;
                 // "collection" / "Any" act as wildcards on either side of a
                 // typeMapping row (e.g. the `|` operator's `collection-collection`).
-                const lhsMatch = lhs === "collection" || lhs === "Any" ||
+                // An empty operand (no types known) is also treated as a wildcard
+                // so that e.g. `'a' & {}` still yields String.
+                const lhsMatch = lhs === "collection" || lhs === "Any" || leftNames.length === 0 ||
                     leftNames.some((n) => n === lhs || isAssignable(n, lhs));
-                const rhsMatch = rhs === "collection" || rhs === "Any" ||
+                const rhsMatch = rhs === "collection" || rhs === "Any" || rightNames.length === 0 ||
                     rightNames.some((n) => n === rhs || isAssignable(n, rhs));
                 if (lhsMatch && rhsMatch) {
                     rowMatched = true;

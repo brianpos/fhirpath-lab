@@ -459,6 +459,20 @@ describe("FHIRPath validator visitor", () => {
             expect(r.diagnostics.filter((d) => d.severity === "error")).toEqual([]);
             expect(r.expectedReturnType).toBe("integer");
         });
+
+        it("aggregate() with empty $total: string concat & yields string", () => {
+            // ('a' | 'b').aggregate($this & $total) — no init, so $total is
+            // empty. String concat with an empty operand still yields String.
+            const r = validateFhirpathExpression(
+                "('a' | 'b').aggregate($this & $total)",
+                {
+                    fhirVersion: "r4",
+                    contextType: "Patient",
+                },
+            );
+            expect(r.diagnostics.filter((d) => d.severity === "error")).toEqual([]);
+            expect(r.expectedReturnType).toBe("string");
+        });
     });
 
     describe("parity with the legacy fhirpath.js tree", () => {
