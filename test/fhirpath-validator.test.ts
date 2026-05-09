@@ -432,6 +432,33 @@ describe("FHIRPath validator visitor", () => {
             );
             expect(r.diagnostics.filter((d) => d.severity === "error")).toEqual([]);
         });
+
+        it("aggregate() returns the type of the init/aggregator expression", () => {
+            // (1 | 2 | 3).aggregate($this + $total, 0) => Integer
+            const r = validateFhirpathExpression(
+                "(1 | 2 | 3).aggregate($this + $total, 0)",
+                {
+                    fhirVersion: "r4",
+                    contextType: "Patient",
+                },
+            );
+            expect(r.diagnostics.filter((d) => d.severity === "error")).toEqual([]);
+            expect(r.expectedReturnType).toBe("integer");
+        });
+
+        it("aggregate() without init still yields the aggregator's type", () => {
+            // The aggregator is `$this + $total`. Without init, $total is empty
+            // so the binary + falls back to $this's type (Integer).
+            const r = validateFhirpathExpression(
+                "(1 | 2 | 3).aggregate($this)",
+                {
+                    fhirVersion: "r4",
+                    contextType: "Patient",
+                },
+            );
+            expect(r.diagnostics.filter((d) => d.severity === "error")).toEqual([]);
+            expect(r.expectedReturnType).toBe("integer");
+        });
     });
 
     describe("parity with the legacy fhirpath.js tree", () => {

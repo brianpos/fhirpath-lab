@@ -473,6 +473,9 @@ class FhirPathExpressionVisitor {
     /** Stack of `$this` candidate types — pushed when entering a lambda arg. */
     private thisStack: FhirPathValue[] = [];
 
+    /** Stack of `$total` candidate types — pushed when entering an aggregate. */
+    private totalStack: FhirPathValue[] = [];
+
     constructor(
         private readonly source: string,
         private readonly provider: ModelProvider,
@@ -640,10 +643,12 @@ class FhirPathExpressionVisitor {
             return { node, value };
         }
         if (ctx instanceof TotalInvocationContext) {
-            // $total has the type of the aggregate accumulator — unknown without
-            // tracking; we leave it open.
-            const node = attachPosition({ ExpressionType: "AxisExpression", Name: "$total", Arguments: [], ReturnType: "" }, ctx);
-            return { node, value: EMPTY_VALUE };
+            // $total has the type of the aggregate accumulator. Inside an
+            // aggregate(...) call we push the init type onto totalStack so the
+            // aggregator expression can be type-checked correctly.
+            const top = this.totalStack[this.totalStack.length - 1] ?? EMPTY_VALUE;
+            const node = attachPosition({ ExpressionType: "AxisExpression", Name: "$total", Arguments: [], ReturnType: formatValueType(top) }, ctx);
+            return { node, value: top };
         }
         const node = attachPosition({ ExpressionType: "Invocation", Name: ctx.getText(), Arguments: [], ReturnType: "" }, ctx);
         return { node, value: EMPTY_VALUE };
@@ -752,24 +757,56 @@ class FhirPathExpressionVisitor {
         // with $this set to the input element type.
         const isLambda = LAMBDA_ARG_FUNCTIONS.has(name);
         const argValues: FhirPathValue[] = [];
-        for (let i = 0; i < argCtxs.length; i++) {
-            const argCtx = argCtxs[i];
-            if (isLambda && i >= 0) {
+        if (name === "aggregate") {
+            // aggregate(aggregator, init?):
+            //  - `init` is evaluated in the current lexical scope (not lambda).
+            //  - `aggregator` is a lambda over input elements; $total carries
+            //    the init type so the accumulator expression can be type-checked.
+            let initValue: FhirPathValue = EMPTY_VALUE;
+            let initNode: JsonNode | undefined;
+            if (argCtxs.length >= 2) {
+                const init = this.visitExpression(argCtxs[1], this.currentScopeValue());
+                initValue = init.value;
+                initNode = init.node;
+            }
+            let aggValue: FhirPathValue = EMPTY_VALUE;
+            let aggNode: JsonNode | undefined;
+            if (argCtxs.length >= 1) {
                 const elementType: FhirPathValue = { types: input.types, isCollection: false };
                 this.thisStack.push(elementType);
+                this.totalStack.push(initValue);
                 try {
-                    const arg = this.visitExpression(argCtx, elementType);
-                    node.Arguments!.push(arg.node);
-                    argValues.push(arg.value);
+                    const agg = this.visitExpression(argCtxs[0], elementType);
+                    aggValue = agg.value;
+                    aggNode = agg.node;
                 } finally {
+                    this.totalStack.pop();
                     this.thisStack.pop();
                 }
-            } else {
-                // Non-lambda function arguments are evaluated in the current
-                // lexical scope (`$this`), not the root `%context`.
-                const arg = this.visitExpression(argCtx, this.currentScopeValue());
-                node.Arguments!.push(arg.node);
-                argValues.push(arg.value);
+            }
+            // Push args back onto the AST in source order.
+            if (aggNode) { node.Arguments!.push(aggNode); argValues.push(aggValue); }
+            if (initNode) { node.Arguments!.push(initNode); argValues.push(initValue); }
+        } else {
+            for (let i = 0; i < argCtxs.length; i++) {
+                const argCtx = argCtxs[i];
+                if (isLambda && i >= 0) {
+                    const elementType: FhirPathValue = { types: input.types, isCollection: false };
+                    this.thisStack.push(elementType);
+                    try {
+                        const arg = this.visitExpression(argCtx, elementType);
+                        node.Arguments!.push(arg.node);
+                        argValues.push(arg.value);
+                    } finally {
+                        this.thisStack.pop();
+                    }
+                } else {
+                    // Non-lambda function arguments are evaluated in the current
+                    // lexical scope (`$this`), not the root `%context`.
+                    const arg = this.visitExpression(argCtx, this.currentScopeValue());
+                    node.Arguments!.push(arg.node);
+                    argValues.push(arg.value);
+                }
             }
         }
 
@@ -978,9 +1015,13 @@ class FhirPathExpressionVisitor {
                 const t = this.provider.lookupByTypeName("System.String");
                 return { types: t ? [t] : [], isCollection: false };
             }
-            case "aggregate":
-                if (argValues.length >= 1) return argValues[0];
+            case "aggregate": {
+                // Result type is the type of the aggregator expression (arg 0),
+                // which was visited with $total set to the init's type so that
+                // the accumulator participates in the inferred type.
+                if (argValues[0]) return argValues[0];
                 return EMPTY_VALUE;
+            }
         }
 
         // ---- Fall back to typeMapping ----
