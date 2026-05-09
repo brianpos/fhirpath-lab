@@ -501,6 +501,11 @@ class FhirPathExpressionVisitor {
         return this.contextValue();
     }
 
+    /** The current lexical scope (`$this`) for argument-expression evaluation. */
+    private currentScopeValue(): FhirPathValue {
+        return this.thisStack[this.thisStack.length - 1] ?? this.contextValue();
+    }
+
     private addDiagnostic(d: Omit<Diagnostic, "expression"> & { expression?: string }): void {
         const expression = d.expression ?? this.source.substring(d.position, d.position + d.length);
         this.diagnostics.push({ ...d, expression });
@@ -751,7 +756,9 @@ class FhirPathExpressionVisitor {
                     this.thisStack.pop();
                 }
             } else {
-                const arg = this.visitExpression(argCtx, this.contextValue());
+                // Non-lambda function arguments are evaluated in the current
+                // lexical scope (`$this`), not the root `%context`.
+                const arg = this.visitExpression(argCtx, this.currentScopeValue());
                 node.Arguments!.push(arg.node);
                 argValues.push(arg.value);
             }

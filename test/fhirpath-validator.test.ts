@@ -384,6 +384,19 @@ describe("FHIRPath validator visitor", () => {
             expect(r.expectedReturnType).toBe("code");
             expect(r.expectedReturnIsCollection).toBe(true);
         });
+
+        it("non-lambda function arguments inside select() resolve in the select item scope", () => {
+            const r = validateFhirpathExpression(
+                "name.select(trace('trc').given.join(' ').combine(family).join(', '))",
+                {
+                    fhirVersion: "r4",
+                    contextType: "Patient",
+                },
+            );
+            expect(r.diagnostics.filter((d) => d.severity === "error")).toEqual([]);
+            expect(r.expectedReturnType).toBe("string");
+            expect(r.expectedReturnIsCollection).toBe(true);
+        });
     });
 
     describe("parity with the legacy fhirpath.js tree", () => {
@@ -415,4 +428,3 @@ describe("FHIRPath validator visitor", () => {
         }
     });
 });
-
