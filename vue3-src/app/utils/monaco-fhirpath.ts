@@ -75,9 +75,12 @@ export function setupFhirPathLanguage(monaco: typeof monacoType): void {
         [/\b\d+(?:(?:\.\d*)?(?:[eE][+-]?\d+)?)?\b\s+(?:years|months|weeks|days|hours|minutes|seconds|milliseconds|year|month|week|day|hour|minute|second|millisecond)\b/, 'number.quantity'],
         [/\b\d+L\b/, 'number'],
         [/\b\d+(?:(?:\.\d*)?(?:[eE][+-]?\d+)?)?\b/, 'number.float'],
-        [/@T[0-9][0-9]:[0-9][0-9](?::[0-9][0-9])?(?:\.[0-9]+)?/, 'string.time'],
-        [/@[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}(?::[0-9][0-9])?(?:\.[0-9]+)?(?:Z|[+\-][0-9]{2}:[0-9]{2})/, 'string.datetime'],
-        [/@[0-9]{4}(?:-[0-9]{2}(?:-[0-9]{2})?)?/, 'string.date'],
+        // Use a character class for the leading `@` so Monaco's Monarch tokenizer
+        // does not treat `@T`/`@[`... as an attribute reference (which produces
+        // "language definition does not contain attribute 'T'" errors).
+        [/[@]T[0-9][0-9]:[0-9][0-9](?::[0-9][0-9])?(?:\.[0-9]+)?/, 'string.time'],
+        [/[@][0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}(?::[0-9][0-9])?(?:\.[0-9]+)?(?:Z|[+\-][0-9]{2}:[0-9]{2})/, 'string.datetime'],
+        [/[@][0-9]{4}(?:-[0-9]{2}(?:-[0-9]{2})?)?/, 'string.date'],
 
         // Boolean literals
         [/\b(?:true|false)\b/, 'constant.language'],
