@@ -241,8 +241,8 @@ function extractXmlErrorLocation(err: unknown, value: string): { line: number; c
   // "line N" + "column M" in the message. Extract them best-effort.
   const lineMatch = /[Ll]ine[:\s]+(\d+)/.exec(message)
   const colMatch = /[Cc]olumn[:\s]+(\d+)/.exec(message)
-  if (lineMatch) fallback.line = Math.max(1, parseInt(lineMatch[1]!, 10))
-  if (colMatch) fallback.column = Math.max(1, parseInt(colMatch[1]!, 10))
+  if (lineMatch && lineMatch[1]) fallback.line = Math.max(1, parseInt(lineMatch[1], 10))
+  if (colMatch && colMatch[1]) fallback.column = Math.max(1, parseInt(colMatch[1], 10))
   // Clamp to actual document bounds.
   const totalLines = value.split(/\r\n|\r|\n/).length
   if (fallback.line > totalLines) fallback.line = totalLines
@@ -267,7 +267,7 @@ function walkXmlNodeForDiagnostics(node: IJsonNode, markers: monaco.editor.IMark
       ) {
         markers.push({
           severity: monaco.MarkerSeverity.Warning,
-          message: `Unknown FHIR element '${child.text}' in ${node.DataType ?? 'parent'}`,
+          message: `Unknown FHIR element '${child.text}' in ${node.DataType}`,
           startLineNumber: child.position.line,
           startColumn: Math.max(1, child.position.column),
           endLineNumber: child.position.line,
