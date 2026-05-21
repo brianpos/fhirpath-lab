@@ -627,6 +627,10 @@ const tabDetails = computed<TabData[]>(() => [
     tabName: "DEBUG",
     show: true,
     enabled: true,
+    // The DEBUG tab hosts a Monaco-backed ResourceEditor; keep it mounted
+    // across single-pane tab switches so Monaco isn't disposed/re-created
+    // on every switch (which can crash/hang the UI).
+    keepMounted: true,
   },
 ])
 
