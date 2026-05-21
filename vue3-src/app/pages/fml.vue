@@ -224,6 +224,10 @@ const tabDetails = computed<TabData[]>(() => [
     tabName: "Map",
     show: true,
     enabled: true,
+    // Keep Monaco-backed ResourceEditor tabs mounted across single-pane tab
+    // switches; tearing down and recreating Monaco on every switch is very
+    // expensive (workers + ResizeObserver + DOM) and can crash/hang the UI.
+    keepMounted: true,
   },
   {
     iconName: "mdi-clipboard-text-outline",
@@ -232,6 +236,7 @@ const tabDetails = computed<TabData[]>(() => [
     tabHeaderName: "Test Input Resource",
     show: true,
     enabled: true,
+    keepMounted: true,
   },
   {
     iconName: "mdi-tree-outline",
@@ -240,6 +245,7 @@ const tabDetails = computed<TabData[]>(() => [
     title: "Logical Models Required\n(Structure Definitions)",
     show: true,
     enabled: true,
+    keepMounted: true,
   },
   {
     iconName: "mdi-format-list-bulleted",
@@ -254,6 +260,7 @@ const tabDetails = computed<TabData[]>(() => [
     title: "Map Output",
     show: true,
     enabled: true,
+    keepMounted: true,
   },
   {
     iconName: "mdi-alert-circle-outline",
@@ -275,6 +282,7 @@ const tabDetails = computed<TabData[]>(() => [
     tabName: "Debug",
     show: showAdvancedSettings.value,
     enabled: true,
+    keepMounted: true,
   },
 ])
 
