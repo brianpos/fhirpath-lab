@@ -66,7 +66,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, onBeforeUnmount, type Ref } from 'vue'
+import { ref, shallowRef, markRaw, watch, onMounted, onBeforeUnmount, type ShallowRef } from 'vue'
 import * as monaco from 'monaco-editor/esm/vs/editor/editor.api'
 // Pull in only the languages we need (keeps bundle small vs. importing 'monaco-editor' wholesale).
 import 'monaco-editor/esm/vs/basic-languages/xml/xml.contribution'
@@ -139,7 +139,7 @@ const resourceTextFromFile = ref<string | undefined>(undefined)
 // Mirrors the legacy 'json' | 'xml' | 'fml' values used in the template and watchers.
 const resourceType = ref<string>('json')
 const downloadingInProgress = ref<boolean>(false)
-const monacoEditor: Ref<monaco.editor.IStandaloneCodeEditor | null> = ref(null)
+const monacoEditor: ShallowRef<monaco.editor.IStandaloneCodeEditor | null> = shallowRef(null)
 const cancelSource = ref<CancelTokenSource | undefined>(undefined)
 const resourceTextModified = ref<boolean>(false)
 
@@ -448,7 +448,7 @@ const initializeMonacoEditor = () => {
     renderWhitespace: 'selection',
     fixedOverflowWidgets: true
   })
-  monacoEditor.value = editor
+  monacoEditor.value = markRaw(editor)
 
   editor.onDidChangeModelContent(() => {
     const currentText = editor.getValue()
