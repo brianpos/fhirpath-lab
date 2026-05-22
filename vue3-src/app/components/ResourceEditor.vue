@@ -146,6 +146,36 @@ const resourceTextModified = ref<boolean>(false)
 // Template refs
 const editorContainerRef = ref<HTMLDivElement>()
 
+// --- Narrow / mobile layout --------------------------------------------------
+// When the editor is narrow (e.g. on a phone) we collapse the left gutter
+// (line numbers, folding chevrons, decoration column) so more of the limited
+// horizontal space is used for actual content.
+const NARROW_EDITOR_WIDTH_PX = 480
+let isNarrowLayout = false
+let editorResizeObserver: ResizeObserver | null = null
+
+function applyNarrowLayout(width: number) {
+  const editor = monacoEditor.value
+  if (!editor) return
+  const narrow = width > 0 && width < NARROW_EDITOR_WIDTH_PX
+  if (narrow === isNarrowLayout) return
+  isNarrowLayout = narrow
+  editor.updateOptions(narrow
+    ? { lineNumbers: 'off', folding: false, lineDecorationsWidth: 0 }
+    : { lineNumbers: 'on', folding: true, lineDecorationsWidth: 4 }
+  )
+}
+
+function observeEditorWidth() {
+  if (!editorContainerRef.value || typeof ResizeObserver === 'undefined') return
+  editorResizeObserver = new ResizeObserver((entries) => {
+    for (const entry of entries) {
+      applyNarrowLayout(entry.contentRect.width)
+    }
+  })
+  editorResizeObserver.observe(editorContainerRef.value)
+}
+
 // --- Marker (decoration) bookkeeping -----------------------------------------
 // Existing callers reference markers by numeric id (Ace style). We back them with
 // Monaco decoration collections and keep the public API numeric.
@@ -446,9 +476,15 @@ const initializeMonacoEditor = () => {
     minimap: { enabled: false },
     scrollBeyondLastLine: false,
     renderWhitespace: 'selection',
-    fixedOverflowWidgets: true
+    fixedOverflowWidgets: true,
+    // Keep the left gutter compact — the resources edited here are small,
+    // so we don't need room for 5-digit line numbers or wide decoration space.
+    lineNumbersMinChars: 2,
+    lineDecorationsWidth: 4
   })
   monacoEditor.value = markRaw(editor)
+  applyNarrowLayout(editorContainerRef.value.clientWidth)
+  observeEditorWidth()
 
   editor.onDidChangeModelContent(() => {
     const currentText = editor.getValue()
@@ -671,6 +707,10 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   if (diagnosticsTimer) clearTimeout(diagnosticsTimer)
+  if (editorResizeObserver) {
+    editorResizeObserver.disconnect()
+    editorResizeObserver = null
+  }
   decorationCollections.forEach(c => c.clear())
   decorationCollections.clear()
   const editor = monacoEditor.value
