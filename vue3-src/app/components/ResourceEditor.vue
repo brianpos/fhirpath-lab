@@ -60,6 +60,37 @@
     </v-text-field>
     <label v-show="textLabel">{{ textLabel + ' ' + resourceType }}<i>{{ (resourceTextModified ? ' (modified)' : '') }}</i></label>
     <div ref="editorContainerRef" class="monaco-editor-container" style="flex-grow: 1; width: 100%; height: 100%; min-height: 0;"></div>
+    <div v-if="isTouchDevice" class="monaco-touch-toolbar" :aria-hidden="readOnly ? 'true' : 'false'">
+      <v-btn icon size="small" variant="text" density="comfortable" rounded="0" @click="triggerEditorCommand('undo')" :title="'Undo'">
+        <v-icon>mdi-undo</v-icon>
+      </v-btn>
+      <v-btn icon size="small" variant="text" density="comfortable" rounded="0" @click="triggerEditorCommand('redo')" :title="'Redo'">
+        <v-icon>mdi-redo</v-icon>
+      </v-btn>
+      <span class="monaco-touch-toolbar__sep" aria-hidden="true"></span>
+      <v-btn icon size="small" variant="text" density="comfortable" rounded="0" @click="triggerEditorCommand('cursorUp')" :title="'Cursor up'">
+        <v-icon>mdi-arrow-up</v-icon>
+      </v-btn>
+      <v-btn icon size="small" variant="text" density="comfortable" rounded="0" @click="triggerEditorCommand('cursorDown')" :title="'Cursor down'">
+        <v-icon>mdi-arrow-down</v-icon>
+      </v-btn>
+      <v-btn icon size="small" variant="text" density="comfortable" rounded="0" @click="triggerEditorCommand('cursorLeft')" :title="'Cursor left'">
+        <v-icon>mdi-arrow-left</v-icon>
+      </v-btn>
+      <v-btn icon size="small" variant="text" density="comfortable" rounded="0" @click="triggerEditorCommand('cursorRight')" :title="'Cursor right'">
+        <v-icon>mdi-arrow-right</v-icon>
+      </v-btn>
+      <v-btn icon size="small" variant="text" density="comfortable" rounded="0" @click="triggerTab" :title="'Tab'" :disabled="readOnly">
+        <v-icon>mdi-keyboard-tab</v-icon>
+      </v-btn>
+      <span class="monaco-touch-toolbar__sep" aria-hidden="true"></span>
+      <v-btn icon size="small" variant="text" density="comfortable" rounded="0" @click="runEditorAction('actions.find')" :title="'Find'">
+        <v-icon>mdi-magnify</v-icon>
+      </v-btn>
+      <v-btn icon size="small" variant="text" density="comfortable" rounded="0" @click="runEditorAction('editor.action.formatDocument')" :title="'Format'" :disabled="readOnly">
+        <v-icon>mdi-format-indent-increase</v-icon>
+      </v-btn>
+    </div>
     <div class="monaco_editor_footer"></div>
     <label v-show="footerLabel"><i>{{ footerLabel }}</i></label>
   </div>
@@ -176,7 +207,102 @@ function observeEditorWidth() {
   editorResizeObserver.observe(editorContainerRef.value)
 }
 
-// --- Marker (decoration) bookkeeping -----------------------------------------
+// --- Coarse-pointer / touch detection ---------------------------------------
+// We tweak Monaco options when the primary pointer is coarse (phones, tablets):
+// bigger fonts, fatter scrollbars, no fly-out popups that fight the soft
+// keyboard, and we render a small touch toolbar with the actions that are
+// otherwise awkward to invoke from a touch keyboard (undo/redo, arrows, find,
+// format).
+const isTouchDevice = ref<boolean>(false)
+let touchMediaQuery: MediaQueryList | null = null
+let touchMediaListener: ((e: MediaQueryListEvent) => void) | null = null
+
+function detectTouchDevice(): boolean {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false
+  return window.matchMedia('(pointer: coarse)').matches
+}
+
+function watchTouchDevice() {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return
+  touchMediaQuery = window.matchMedia('(pointer: coarse)')
+  isTouchDevice.value = touchMediaQuery.matches
+  touchMediaListener = (e) => {
+    isTouchDevice.value = e.matches
+    applyTouchOptions()
+  }
+  // addEventListener is the modern API; older Safari versions only expose
+  // addListener — both are guarded.
+  if (typeof touchMediaQuery.addEventListener === 'function') {
+    touchMediaQuery.addEventListener('change', touchMediaListener)
+  } else if (typeof (touchMediaQuery as any).addListener === 'function') {
+    ;(touchMediaQuery as any).addListener(touchMediaListener)
+  }
+}
+
+function applyTouchOptions() {
+  const editor = monacoEditor.value
+  if (!editor) return
+  const touch = isTouchDevice.value
+  editor.updateOptions(touch
+    ? {
+        fontSize: 15,
+        mouseWheelZoom: true,
+        quickSuggestions: false,
+        parameterHints: { enabled: false },
+        hover: { enabled: false },
+        acceptSuggestionOnEnter: 'off',
+        scrollbar: {
+          verticalScrollbarSize: 16,
+          horizontalScrollbarSize: 16,
+          useShadows: false,
+          alwaysConsumeMouseWheel: false
+        }
+      }
+    : {
+        fontSize: 14,
+        mouseWheelZoom: false,
+        quickSuggestions: { other: true, comments: false, strings: false },
+        parameterHints: { enabled: true },
+        hover: { enabled: true },
+        acceptSuggestionOnEnter: 'on',
+        scrollbar: {
+          verticalScrollbarSize: 10,
+          horizontalScrollbarSize: 10,
+          useShadows: true,
+          alwaysConsumeMouseWheel: false
+        }
+      }
+  )
+}
+
+// Trigger a built-in Monaco command (e.g. 'undo', 'cursorUp'). The source
+// string is shown in keybinding telemetry only — any non-empty value is fine.
+function triggerEditorCommand(commandId: string) {
+  const editor = monacoEditor.value
+  if (!editor) return
+  editor.focus()
+  editor.trigger('touch-toolbar', commandId, null)
+}
+
+function triggerTab() {
+  const editor = monacoEditor.value
+  if (!editor) return
+  editor.focus()
+  editor.trigger('touch-toolbar', 'tab', null)
+}
+
+// Run a registered editor action (find, formatDocument, ...). Actions can be
+// missing if the contributing language feature isn't loaded; we silently no-op
+// in that case so the toolbar never throws.
+function runEditorAction(actionId: string) {
+  const editor = monacoEditor.value
+  if (!editor) return
+  editor.focus()
+  const action = editor.getAction(actionId)
+  if (action) action.run()
+}
+
+
 // Existing callers reference markers by numeric id (Ace style). We back them with
 // Monaco decoration collections and keep the public API numeric.
 const decorationCollections = new Map<number, monaco.editor.IEditorDecorationsCollection>()
@@ -465,6 +591,7 @@ const initializeMonacoEditor = () => {
 
   detectResourceType()
 
+  const touch = detectTouchDevice()
   const editor = monaco.editor.create(editorContainerRef.value, {
     value: internalResourceText.value || '',
     language: languageForResourceType(resourceType.value),
@@ -477,10 +604,26 @@ const initializeMonacoEditor = () => {
     scrollBeyondLastLine: false,
     renderWhitespace: 'selection',
     fixedOverflowWidgets: true,
+    // Touch drag should scroll the editor, not drag the selected text.
+    dragAndDrop: false,
     // Keep the left gutter compact — the resources edited here are small,
     // so we don't need room for 5-digit line numbers or wide decoration space.
     lineNumbersMinChars: 3,
-    lineDecorationsWidth: 4
+    lineDecorationsWidth: 4,
+    // Coarse-pointer (touch) tweaks: bigger font, fatter scrollbars, and no
+    // fly-out popups that fight the on-screen keyboard.
+    fontSize: touch ? 15 : 14,
+    mouseWheelZoom: touch,
+    quickSuggestions: touch ? false : { other: true, comments: false, strings: false },
+    parameterHints: { enabled: !touch },
+    hover: { enabled: !touch },
+    acceptSuggestionOnEnter: touch ? 'off' : 'on',
+    scrollbar: {
+      verticalScrollbarSize: touch ? 16 : 10,
+      horizontalScrollbarSize: touch ? 16 : 10,
+      useShadows: !touch,
+      alwaysConsumeMouseWheel: false
+    }
   })
   monacoEditor.value = markRaw(editor)
   applyNarrowLayout(editorContainerRef.value.clientWidth)
@@ -702,6 +845,7 @@ defineExpose({
 
 // Lifecycle
 onMounted(() => {
+  watchTouchDevice()
   initializeMonacoEditor()
 })
 
@@ -711,6 +855,15 @@ onBeforeUnmount(() => {
     editorResizeObserver.disconnect()
     editorResizeObserver = null
   }
+  if (touchMediaQuery && touchMediaListener) {
+    if (typeof touchMediaQuery.removeEventListener === 'function') {
+      touchMediaQuery.removeEventListener('change', touchMediaListener)
+    } else if (typeof (touchMediaQuery as any).removeListener === 'function') {
+      ;(touchMediaQuery as any).removeListener(touchMediaListener)
+    }
+  }
+  touchMediaQuery = null
+  touchMediaListener = null
   decorationCollections.forEach(c => c.clear())
   decorationCollections.clear()
   const editor = monacoEditor.value
@@ -730,11 +883,32 @@ onBeforeUnmount(() => {
   height: 100%;
   min-height: 0;
   overflow: hidden;
+  /* Allow native vertical panning to scroll the editor; horizontal scroll is
+     unnecessary because word-wrap is on. */
+  touch-action: pan-y;
 }
 
 .monaco-editor-container:focus-within + .monaco_editor_footer {
   color: #1976d2;
   transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);
+}
+
+.monaco-touch-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 4px;
+  background: rgba(0, 0, 0, 0.04);
+  border-top: 1px solid rgba(0, 0, 0, 0.12);
+  flex-shrink: 0;
+}
+
+.monaco-touch-toolbar__sep {
+  width: 1px;
+  align-self: stretch;
+  margin: 4px 4px;
+  background: rgba(0, 0, 0, 0.18);
 }
 </style>
 
