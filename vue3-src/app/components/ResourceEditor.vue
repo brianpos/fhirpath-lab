@@ -479,7 +479,7 @@ const initializeMonacoEditor = () => {
     fixedOverflowWidgets: true,
     // Keep the left gutter compact — the resources edited here are small,
     // so we don't need room for 5-digit line numbers or wide decoration space.
-    lineNumbersMinChars: 2,
+    lineNumbersMinChars: 3,
     lineDecorationsWidth: 4
   })
   monacoEditor.value = markRaw(editor)
