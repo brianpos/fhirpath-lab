@@ -27,7 +27,7 @@ export interface IFhirPathEngineDetails {
 
     /** True if this is an external engine (i.e. not running in the same environment as the FHIRPath Lab application */
     external?: boolean;
-   
+
     /** The engine can provide an AST for the expression (otherwise will display that it's not supported) */
     supportsAST: boolean;
 
@@ -317,7 +317,7 @@ export const registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         supportsAST: true,
         supportsXML: false
     },
-    
+
     "toolbox-go (R4)": {
         name: "toolbox-go",
         legacyName: "toolbox-go (R4)",
@@ -397,6 +397,34 @@ export const registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         external: true,
         supportsAST: true,
         supportsXML: false
+    },
+
+    "Kotlin (Open Health Stack)": {
+      name: "kotlin-fhirpath",
+      legacyName: "kotlin-fhirpath (Open Health Stack)",
+      fhirVersion: "R4",
+      appInsightsEngineName: "Kotlin",
+      publisher: "Open Health Stack",
+      configSetting: "kotlin_server_r4",
+      githubRepo: "https://github.com/ohs-foundation/kotlin-fhirpath",
+      description: "A Kotlin implementation of FHIRPath by Open Health Stack.",
+      external: true,
+      supportsAST: false,
+      supportsXML: false
+    },
+
+    "Kotlin R5 (Open Health Stack)": {
+      name: "kotlin-fhirpath",
+      legacyName: "kotlin-fhirpath (Open Health Stack)",
+      fhirVersion: "R5",
+      appInsightsEngineName: "Kotlin",
+      publisher: "Open Health Stack",
+      configSetting: "kotlin_server_r5",
+      githubRepo: "https://github.com/ohs-foundation/kotlin-fhirpath",
+      description: "A Kotlin implementation of FHIRPath for FHIR R5 by Open Health Stack.",
+      external: true,
+      supportsAST: false,
+      supportsXML: false
     },
 };
 

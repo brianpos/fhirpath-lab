@@ -39,5 +39,8 @@
 
 	"ignixa_r4": "https://ignixafhirpath.azurewebsites.net/api/$fhirpath-r4",
 	"ignixa_r5": "https://ignixafhirpath.azurewebsites.net/api/$fhirpath-r5",
-	"ignixa_r6": "https://ignixafhirpath.azurewebsites.net/api/$fhirpath-r6"
+	"ignixa_r6": "https://ignixafhirpath.azurewebsites.net/api/$fhirpath-r6",
+
+  "kotlin_server_r4": "https://kotlin-fhirpath.nawi.ke/fhirpath-r4",
+  "kotlin_server_r5": "https://kotlin-fhirpath.nawi.ke/fhirpath-r5"
 }
