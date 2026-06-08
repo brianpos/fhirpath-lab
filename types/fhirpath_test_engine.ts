@@ -399,12 +399,12 @@ export const registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         supportsXML: false
     },
 
-    "Kotlin (Open Health Stack)": {
+    "Kotlin FHIRPath R4 (Open Health Stack)": {
       name: "kotlin-fhirpath",
       legacyName: "kotlin-fhirpath (Open Health Stack)",
       fhirVersion: "R4",
       appInsightsEngineName: "Kotlin",
-      publisher: "Open Health Stack",
+      publisher: "Open Health Stack Foundation",
       configSetting: "kotlin_server_r4",
       githubRepo: "https://github.com/ohs-foundation/kotlin-fhirpath",
       description: "A Kotlin implementation of FHIRPath by Open Health Stack.",
@@ -413,7 +413,7 @@ export const registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
       supportsXML: false
     },
 
-    "Kotlin R5 (Open Health Stack)": {
+    "Kotlin FHIRPath R5 (Open Health Stack)": {
       name: "kotlin-fhirpath",
       legacyName: "kotlin-fhirpath (Open Health Stack)",
       fhirVersion: "R5",
