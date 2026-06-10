@@ -1458,7 +1458,7 @@
           "typeMapping": [
             "Integer-Integer",
             "Long-Long",
-            "Decimal-Decimal", 
+            "Decimal-Decimal",
             "Quantity-Quantity"
           ],
           "exampleOfUse": "```fhirpath\n(-5).abs() // 5\n(-5.5).abs() // 5.5\n(-5.5 'mg').abs() // 5.5 'mg'\n```",

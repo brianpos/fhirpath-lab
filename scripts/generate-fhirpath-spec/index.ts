@@ -13,7 +13,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as https from "https";
 
-const DEFAULT_REF = "BP-2026-03-quantity-preview";
+const DEFAULT_REF = "master";
 const REPO = "HL7/FHIRPath";
 const FILES = ["functions.json", "operations.json"];
 
