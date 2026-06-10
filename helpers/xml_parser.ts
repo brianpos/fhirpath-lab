@@ -643,6 +643,13 @@ class PathAndObjectListener extends Listener {
     let parentNode = this.parentStack2[this.parentStack2.length - 1];
     let currentObject = this.objectStack[this.objectStack.length - 1];
 
+    // Skip attributes that appear in the XML prolog/processing instruction
+    // (e.g. <?xml version="1.0" encoding="UTF-8"?>) - they fire enterAttribute
+    // before any root element has pushed an object onto objectStack.
+    if (!currentObject) {
+      return;
+    }
+
     const attrName = ctx.children![0].getText();
     const attrValue = ctx.children![2].getText(); // Remove quotes from attribute value
     const cleanValue = attrValue.substring(1, attrValue.length - 1);
