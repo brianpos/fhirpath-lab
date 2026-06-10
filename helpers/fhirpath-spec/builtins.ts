@@ -58,24 +58,6 @@ export const BUILTIN_ENV_VARS_BY_NAME: Readonly<Record<string, EnvVarDef>> = Obj
     }, {} as Record<string, EnvVarDef>),
 );
 
-/** Names of functions whose effective return type is "same as input collection
- *  (filtered)". The visitor short-circuits these and propagates the input type. */
-export const FILTERING_FUNCTIONS: ReadonlySet<string> = new Set([
-    "where",
-    "first",
-    "last",
-    "tail",
-    "skip",
-    "take",
-    "single",
-    "distinct",
-    "intersect",
-    "exclude",
-    "union",
-    "combine",
-    "sort",
-]);
-
 /** Functions whose result type is the same as the input type (passthrough),
  *  but cardinality stays a collection. */
 export const SAME_TYPE_COLLECTION_FUNCTIONS: ReadonlySet<string> = new Set([
