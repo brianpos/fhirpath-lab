@@ -509,4 +509,27 @@ describe("parseXmlAndObject", () => {
     expect(result.object).toEqual(jsonData);
     expect(result.node).toEqual(resultNode);
   });
+
+  test("xml prolog (processing instruction) is ignored", () => {
+    // Regression: <?xml version="1.0" encoding="UTF-8"?> previously fired
+    // enterAttribute before any root element existed, which threw
+    // "Cannot set properties of undefined (setting 'version')".
+    const xmlData = `<?xml version="1.0" encoding="UTF-8"?>
+<Patient xmlns="http://hl7.org/fhir">
+  <id value="123" />
+  <active value="true" />
+</Patient>`;
+
+    const jsonData: fhir4.Patient = {
+      "resourceType": "Patient",
+      "id": "123",
+      "active": true,
+    };
+
+    const result = parseXmlAndObject(xmlData);
+    expect(result.object).toEqual(jsonData);
+    // Prolog attributes (version, encoding) must not appear on the root object.
+    expect(result.object).not.toHaveProperty("version");
+    expect(result.object).not.toHaveProperty("encoding");
+  });
 });
