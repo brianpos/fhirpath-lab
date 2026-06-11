@@ -512,6 +512,63 @@ describe("FHIRPath validator visitor", () => {
             expect(r.diagnostics.filter((d) => d.severity === "error")).toEqual([]);
         });
 
+        it("defineVariable() exposes a variable to subsequent chained expressions", () => {
+            const r = validateFhirpathExpression(
+                "Patient.name.defineVariable('n').where(%n.family.exists()).family",
+                {
+                    fhirVersion: "r4",
+                    contextType: "Patient",
+                },
+            );
+            expect(r.diagnostics.filter((d) => d.severity === "error")).toEqual([]);
+            expect(r.expectedReturnType).toBe("string");
+            expect(r.expectedReturnIsCollection).toBe(true);
+        });
+
+        it("defineVariable() uses projection type for downstream variable references", () => {
+            const r = validateFhirpathExpression(
+                "Patient.name.defineVariable('label', 'official').where(%label = 'official').family",
+                {
+                    fhirVersion: "r4",
+                    contextType: "Patient",
+                },
+            );
+            expect(r.diagnostics.filter((d) => d.severity === "error")).toEqual([]);
+            expect(r.expectedReturnType).toBe("string");
+            expect(r.expectedReturnIsCollection).toBe(true);
+        });
+
+        it("defineVariable() value expression's Expression Scope is the input collection, not the root context", () => {
+            // `name.defineVariable('fn', first())` — the `first()` value
+            // expression operates on the input collection (`name` => HumanName),
+            // not the root `%context` (Patient). Its Expression Scope axis must
+            // therefore report HumanName.
+            const r = validateFhirpathExpression(
+                "name.defineVariable('fn', first()).select(%fn.family & '-' & family)",
+                {
+                    fhirVersion: "r4",
+                    contextType: "Patient",
+                },
+            );
+            expect(r.diagnostics.filter((d) => d.severity === "error")).toEqual([]);
+            // Locate the `first()` FunctionCallExpression anywhere in the tree.
+            function findFunction(node: JsonNode | undefined, name: string): JsonNode | undefined {
+                if (!node) return undefined;
+                if (node.ExpressionType === "FunctionCallExpression" && node.Name === name) return node;
+                for (const a of node.Arguments ?? []) {
+                    const found = findFunction(a, name);
+                    if (found) return found;
+                }
+                return undefined;
+            }
+            const first = findFunction(r.parseDebugTree, "first");
+            expect(first).toBeDefined();
+            const scope = first?.Arguments?.[0];
+            expect(scope?.ExpressionType).toBe("AxisExpression");
+            expect(scope?.Name).toBe("builtin.that");
+            expect(scope?.ReturnType).toBe("HumanName[]");
+        });
+
         it("aggregate() returns the type of the init/aggregator expression", () => {
             // (1 | 2 | 3).aggregate($this + $total, 0) => Integer
             const r = validateFhirpathExpression(
