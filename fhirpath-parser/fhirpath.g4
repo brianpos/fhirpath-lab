@@ -33,6 +33,7 @@ term
         | literal                                               #literalTerm
         | externalConstant                                      #externalConstantTerm
         | '(' expression ')'                                    #parenthesizedTerm
+        | instanceSelector                                      #instanceSelectorTerm
         ;
 
 literal
@@ -70,6 +71,15 @@ sortArgument
 
 paramList
         : expression (',' expression)*
+        ;
+
+// Instance selector (FHIRPath object construction syntax - same as in CQL)
+instanceSelector
+        : qualifiedIdentifier '{' (':' | (instanceElementSelector (',' instanceElementSelector)*)) '}'
+        ;
+
+instanceElementSelector
+        : identifier ':' expression
         ;
 
 quantity
@@ -163,7 +173,7 @@ INTEGER
         ;
 
 DECIMAL
-        : [0-9]* '.' [0-9]+
+        : [0-9]+ '.' [0-9]+
         ;
 
 LONGNUMBER
@@ -184,7 +194,7 @@ LINE_COMMENT
         ;
 
 fragment ESC
-        : '\\' ([`"'\\/fnrt] | UNICODE)    // allow \`, \', \\, \/, \f, etc. and \uXXX
+        : '\\' ([`"'\\/fnrt] | UNICODE)    // allow \`, \", \', \\, \/, \f, etc. and \uXXX
         ;
 
 fragment UNICODE

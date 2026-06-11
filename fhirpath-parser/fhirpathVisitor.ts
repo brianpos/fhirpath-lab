@@ -22,6 +22,7 @@ import { InvocationTermContext } from "./fhirpathParser.js";
 import { LiteralTermContext } from "./fhirpathParser.js";
 import { ExternalConstantTermContext } from "./fhirpathParser.js";
 import { ParenthesizedTermContext } from "./fhirpathParser.js";
+import { InstanceSelectorTermContext } from "./fhirpathParser.js";
 import { NullLiteralContext } from "./fhirpathParser.js";
 import { BooleanLiteralContext } from "./fhirpathParser.js";
 import { StringLiteralContext } from "./fhirpathParser.js";
@@ -40,6 +41,8 @@ import { TotalInvocationContext } from "./fhirpathParser.js";
 import { FunctionContext } from "./fhirpathParser.js";
 import { SortDirectionArgumentContext } from "./fhirpathParser.js";
 import { ParamListContext } from "./fhirpathParser.js";
+import { InstanceSelectorContext } from "./fhirpathParser.js";
+import { InstanceElementSelectorContext } from "./fhirpathParser.js";
 import { QuantityContext } from "./fhirpathParser.js";
 import { UnitContext } from "./fhirpathParser.js";
 import { DateTimePrecisionContext } from "./fhirpathParser.js";
@@ -190,6 +193,13 @@ export default class fhirpathVisitor<Result> extends ParseTreeVisitor<Result> {
 	 */
 	visitParenthesizedTerm?: (ctx: ParenthesizedTermContext) => Result;
 	/**
+	 * Visit a parse tree produced by the `instanceSelectorTerm`
+	 * labeled alternative in `fhirpathParser.term`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitInstanceSelectorTerm?: (ctx: InstanceSelectorTermContext) => Result;
+	/**
 	 * Visit a parse tree produced by the `nullLiteral`
 	 * labeled alternative in `fhirpathParser.literal`.
 	 * @param ctx the parse tree
@@ -312,6 +322,18 @@ export default class fhirpathVisitor<Result> extends ParseTreeVisitor<Result> {
 	 * @return the visitor result
 	 */
 	visitParamList?: (ctx: ParamListContext) => Result;
+	/**
+	 * Visit a parse tree produced by `fhirpathParser.instanceSelector`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitInstanceSelector?: (ctx: InstanceSelectorContext) => Result;
+	/**
+	 * Visit a parse tree produced by `fhirpathParser.instanceElementSelector`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitInstanceElementSelector?: (ctx: InstanceElementSelectorContext) => Result;
 	/**
 	 * Visit a parse tree produced by `fhirpathParser.quantity`.
 	 * @param ctx the parse tree

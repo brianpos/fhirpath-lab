@@ -76,18 +76,19 @@ export default class fhirpathParser extends Parser {
 	public static readonly T__54 = 55;
 	public static readonly T__55 = 56;
 	public static readonly T__56 = 57;
-	public static readonly DATE = 58;
-	public static readonly DATETIME = 59;
-	public static readonly TIME = 60;
-	public static readonly IDENTIFIER = 61;
-	public static readonly DELIMITEDIDENTIFIER = 62;
-	public static readonly STRING = 63;
-	public static readonly INTEGER = 64;
-	public static readonly DECIMAL = 65;
-	public static readonly LONGNUMBER = 66;
-	public static readonly WS = 67;
-	public static readonly COMMENT = 68;
-	public static readonly LINE_COMMENT = 69;
+	public static readonly T__57 = 58;
+	public static readonly DATE = 59;
+	public static readonly DATETIME = 60;
+	public static readonly TIME = 61;
+	public static readonly IDENTIFIER = 62;
+	public static readonly DELIMITEDIDENTIFIER = 63;
+	public static readonly STRING = 64;
+	public static readonly INTEGER = 65;
+	public static readonly DECIMAL = 66;
+	public static readonly LONGNUMBER = 67;
+	public static readonly WS = 68;
+	public static readonly COMMENT = 69;
+	public static readonly LINE_COMMENT = 70;
 	public static override readonly EOF = Token.EOF;
 	public static readonly RULE_entireExpression = 0;
 	public static readonly RULE_expression = 1;
@@ -98,13 +99,15 @@ export default class fhirpathParser extends Parser {
 	public static readonly RULE_function = 6;
 	public static readonly RULE_sortArgument = 7;
 	public static readonly RULE_paramList = 8;
-	public static readonly RULE_quantity = 9;
-	public static readonly RULE_unit = 10;
-	public static readonly RULE_dateTimePrecision = 11;
-	public static readonly RULE_pluralDateTimePrecision = 12;
-	public static readonly RULE_typeSpecifier = 13;
-	public static readonly RULE_qualifiedIdentifier = 14;
-	public static readonly RULE_identifier = 15;
+	public static readonly RULE_instanceSelector = 9;
+	public static readonly RULE_instanceElementSelector = 10;
+	public static readonly RULE_quantity = 11;
+	public static readonly RULE_unit = 12;
+	public static readonly RULE_dateTimePrecision = 13;
+	public static readonly RULE_pluralDateTimePrecision = 14;
+	public static readonly RULE_typeSpecifier = 15;
+	public static readonly RULE_qualifiedIdentifier = 16;
+	public static readonly RULE_identifier = 17;
 	public static readonly literalNames: (string | null)[] = [ null, "'.'", 
                                                             "'['", "']'", 
                                                             "'+'", "'-'", 
@@ -127,9 +130,10 @@ export default class fhirpathParser extends Parser {
                                                             "'$total'", 
                                                             "'sort'", "','", 
                                                             "'asc'", "'desc'", 
-                                                            "'year'", "'month'", 
-                                                            "'week'", "'day'", 
-                                                            "'hour'", "'minute'", 
+                                                            "':'", "'year'", 
+                                                            "'month'", "'week'", 
+                                                            "'day'", "'hour'", 
+                                                            "'minute'", 
                                                             "'second'", 
                                                             "'millisecond'", 
                                                             "'years'", "'months'", 
@@ -166,7 +170,8 @@ export default class fhirpathParser extends Parser {
                                                              null, null, 
                                                              null, null, 
                                                              null, null, 
-                                                             "DATE", "DATETIME", 
+                                                             null, "DATE", 
+                                                             "DATETIME", 
                                                              "TIME", "IDENTIFIER", 
                                                              "DELIMITEDIDENTIFIER", 
                                                              "STRING", "INTEGER", 
@@ -177,9 +182,9 @@ export default class fhirpathParser extends Parser {
 	// tslint:disable:no-trailing-whitespace
 	public static readonly ruleNames: string[] = [
 		"entireExpression", "expression", "term", "literal", "externalConstant", 
-		"invocation", "function", "sortArgument", "paramList", "quantity", "unit", 
-		"dateTimePrecision", "pluralDateTimePrecision", "typeSpecifier", "qualifiedIdentifier", 
-		"identifier",
+		"invocation", "function", "sortArgument", "paramList", "instanceSelector", 
+		"instanceElementSelector", "quantity", "unit", "dateTimePrecision", "pluralDateTimePrecision", 
+		"typeSpecifier", "qualifiedIdentifier", "identifier",
 	];
 	public get grammarFileName(): string { return "fhirpath.g4"; }
 	public get literalNames(): (string | null)[] { return fhirpathParser.literalNames; }
@@ -202,9 +207,9 @@ export default class fhirpathParser extends Parser {
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 32;
+			this.state = 36;
 			this.expression(0);
-			this.state = 33;
+			this.state = 37;
 			this.match(fhirpathParser.EOF);
 			}
 		}
@@ -242,7 +247,7 @@ export default class fhirpathParser extends Parser {
 			let _alt: number;
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 39;
+			this.state = 43;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
 			case 11:
@@ -260,7 +265,6 @@ export default class fhirpathParser extends Parser {
 			case 38:
 			case 40:
 			case 41:
-			case 58:
 			case 59:
 			case 60:
 			case 61:
@@ -269,12 +273,13 @@ export default class fhirpathParser extends Parser {
 			case 64:
 			case 65:
 			case 66:
+			case 67:
 				{
 				localctx = new TermExpressionContext(this, localctx);
 				this._ctx = localctx;
 				_prevctx = localctx;
 
-				this.state = 36;
+				this.state = 40;
 				this.term();
 				}
 				break;
@@ -284,7 +289,7 @@ export default class fhirpathParser extends Parser {
 				localctx = new PolarityExpressionContext(this, localctx);
 				this._ctx = localctx;
 				_prevctx = localctx;
-				this.state = 37;
+				this.state = 41;
 				_la = this._input.LA(1);
 				if(!(_la===4 || _la===5)) {
 				this._errHandler.recoverInline(this);
@@ -293,7 +298,7 @@ export default class fhirpathParser extends Parser {
 					this._errHandler.reportMatch(this);
 				    this.consume();
 				}
-				this.state = 38;
+				this.state = 42;
 				this.expression(11);
 				}
 				break;
@@ -301,7 +306,7 @@ export default class fhirpathParser extends Parser {
 				throw new NoViableAltException(this);
 			}
 			this._ctx.stop = this._input.LT(-1);
-			this.state = 81;
+			this.state = 85;
 			this._errHandler.sync(this);
 			_alt = this._interp.adaptivePredict(this._input, 2, this._ctx);
 			while (_alt !== 2 && _alt !== ATN.INVALID_ALT_NUMBER) {
@@ -311,18 +316,18 @@ export default class fhirpathParser extends Parser {
 					}
 					_prevctx = localctx;
 					{
-					this.state = 79;
+					this.state = 83;
 					this._errHandler.sync(this);
 					switch ( this._interp.adaptivePredict(this._input, 1, this._ctx) ) {
 					case 1:
 						{
 						localctx = new MultiplicativeExpressionContext(this, new ExpressionContext(this, _parentctx, _parentState));
 						this.pushNewRecursionContext(localctx, _startState, fhirpathParser.RULE_expression);
-						this.state = 41;
+						this.state = 45;
 						if (!(this.precpred(this._ctx, 10))) {
 							throw this.createFailedPredicateException("this.precpred(this._ctx, 10)");
 						}
-						this.state = 42;
+						this.state = 46;
 						_la = this._input.LA(1);
 						if(!((((_la) & ~0x1F) === 0 && ((1 << _la) & 960) !== 0))) {
 						this._errHandler.recoverInline(this);
@@ -331,7 +336,7 @@ export default class fhirpathParser extends Parser {
 							this._errHandler.reportMatch(this);
 						    this.consume();
 						}
-						this.state = 43;
+						this.state = 47;
 						this.expression(11);
 						}
 						break;
@@ -339,11 +344,11 @@ export default class fhirpathParser extends Parser {
 						{
 						localctx = new AdditiveExpressionContext(this, new ExpressionContext(this, _parentctx, _parentState));
 						this.pushNewRecursionContext(localctx, _startState, fhirpathParser.RULE_expression);
-						this.state = 44;
+						this.state = 48;
 						if (!(this.precpred(this._ctx, 9))) {
 							throw this.createFailedPredicateException("this.precpred(this._ctx, 9)");
 						}
-						this.state = 45;
+						this.state = 49;
 						_la = this._input.LA(1);
 						if(!((((_la) & ~0x1F) === 0 && ((1 << _la) & 1072) !== 0))) {
 						this._errHandler.recoverInline(this);
@@ -352,7 +357,7 @@ export default class fhirpathParser extends Parser {
 							this._errHandler.reportMatch(this);
 						    this.consume();
 						}
-						this.state = 46;
+						this.state = 50;
 						this.expression(10);
 						}
 						break;
@@ -360,13 +365,13 @@ export default class fhirpathParser extends Parser {
 						{
 						localctx = new UnionExpressionContext(this, new ExpressionContext(this, _parentctx, _parentState));
 						this.pushNewRecursionContext(localctx, _startState, fhirpathParser.RULE_expression);
-						this.state = 47;
+						this.state = 51;
 						if (!(this.precpred(this._ctx, 7))) {
 							throw this.createFailedPredicateException("this.precpred(this._ctx, 7)");
 						}
-						this.state = 48;
+						this.state = 52;
 						this.match(fhirpathParser.T__12);
-						this.state = 49;
+						this.state = 53;
 						this.expression(8);
 						}
 						break;
@@ -374,11 +379,11 @@ export default class fhirpathParser extends Parser {
 						{
 						localctx = new InequalityExpressionContext(this, new ExpressionContext(this, _parentctx, _parentState));
 						this.pushNewRecursionContext(localctx, _startState, fhirpathParser.RULE_expression);
-						this.state = 50;
+						this.state = 54;
 						if (!(this.precpred(this._ctx, 6))) {
 							throw this.createFailedPredicateException("this.precpred(this._ctx, 6)");
 						}
-						this.state = 51;
+						this.state = 55;
 						_la = this._input.LA(1);
 						if(!((((_la) & ~0x1F) === 0 && ((1 << _la) & 245760) !== 0))) {
 						this._errHandler.recoverInline(this);
@@ -387,7 +392,7 @@ export default class fhirpathParser extends Parser {
 							this._errHandler.reportMatch(this);
 						    this.consume();
 						}
-						this.state = 52;
+						this.state = 56;
 						this.expression(7);
 						}
 						break;
@@ -395,11 +400,11 @@ export default class fhirpathParser extends Parser {
 						{
 						localctx = new EqualityExpressionContext(this, new ExpressionContext(this, _parentctx, _parentState));
 						this.pushNewRecursionContext(localctx, _startState, fhirpathParser.RULE_expression);
-						this.state = 53;
+						this.state = 57;
 						if (!(this.precpred(this._ctx, 5))) {
 							throw this.createFailedPredicateException("this.precpred(this._ctx, 5)");
 						}
-						this.state = 54;
+						this.state = 58;
 						_la = this._input.LA(1);
 						if(!((((_la) & ~0x1F) === 0 && ((1 << _la) & 3932160) !== 0))) {
 						this._errHandler.recoverInline(this);
@@ -408,7 +413,7 @@ export default class fhirpathParser extends Parser {
 							this._errHandler.reportMatch(this);
 						    this.consume();
 						}
-						this.state = 55;
+						this.state = 59;
 						this.expression(6);
 						}
 						break;
@@ -416,11 +421,11 @@ export default class fhirpathParser extends Parser {
 						{
 						localctx = new MembershipExpressionContext(this, new ExpressionContext(this, _parentctx, _parentState));
 						this.pushNewRecursionContext(localctx, _startState, fhirpathParser.RULE_expression);
-						this.state = 56;
+						this.state = 60;
 						if (!(this.precpred(this._ctx, 4))) {
 							throw this.createFailedPredicateException("this.precpred(this._ctx, 4)");
 						}
-						this.state = 57;
+						this.state = 61;
 						_la = this._input.LA(1);
 						if(!(_la===22 || _la===23)) {
 						this._errHandler.recoverInline(this);
@@ -429,7 +434,7 @@ export default class fhirpathParser extends Parser {
 							this._errHandler.reportMatch(this);
 						    this.consume();
 						}
-						this.state = 58;
+						this.state = 62;
 						this.expression(5);
 						}
 						break;
@@ -437,13 +442,13 @@ export default class fhirpathParser extends Parser {
 						{
 						localctx = new AndExpressionContext(this, new ExpressionContext(this, _parentctx, _parentState));
 						this.pushNewRecursionContext(localctx, _startState, fhirpathParser.RULE_expression);
-						this.state = 59;
+						this.state = 63;
 						if (!(this.precpred(this._ctx, 3))) {
 							throw this.createFailedPredicateException("this.precpred(this._ctx, 3)");
 						}
-						this.state = 60;
+						this.state = 64;
 						this.match(fhirpathParser.T__23);
-						this.state = 61;
+						this.state = 65;
 						this.expression(4);
 						}
 						break;
@@ -451,11 +456,11 @@ export default class fhirpathParser extends Parser {
 						{
 						localctx = new OrExpressionContext(this, new ExpressionContext(this, _parentctx, _parentState));
 						this.pushNewRecursionContext(localctx, _startState, fhirpathParser.RULE_expression);
-						this.state = 62;
+						this.state = 66;
 						if (!(this.precpred(this._ctx, 2))) {
 							throw this.createFailedPredicateException("this.precpred(this._ctx, 2)");
 						}
-						this.state = 63;
+						this.state = 67;
 						_la = this._input.LA(1);
 						if(!(_la===25 || _la===26)) {
 						this._errHandler.recoverInline(this);
@@ -464,7 +469,7 @@ export default class fhirpathParser extends Parser {
 							this._errHandler.reportMatch(this);
 						    this.consume();
 						}
-						this.state = 64;
+						this.state = 68;
 						this.expression(3);
 						}
 						break;
@@ -472,13 +477,13 @@ export default class fhirpathParser extends Parser {
 						{
 						localctx = new ImpliesExpressionContext(this, new ExpressionContext(this, _parentctx, _parentState));
 						this.pushNewRecursionContext(localctx, _startState, fhirpathParser.RULE_expression);
-						this.state = 65;
+						this.state = 69;
 						if (!(this.precpred(this._ctx, 1))) {
 							throw this.createFailedPredicateException("this.precpred(this._ctx, 1)");
 						}
-						this.state = 66;
+						this.state = 70;
 						this.match(fhirpathParser.T__26);
-						this.state = 67;
+						this.state = 71;
 						this.expression(2);
 						}
 						break;
@@ -486,13 +491,13 @@ export default class fhirpathParser extends Parser {
 						{
 						localctx = new InvocationExpressionContext(this, new ExpressionContext(this, _parentctx, _parentState));
 						this.pushNewRecursionContext(localctx, _startState, fhirpathParser.RULE_expression);
-						this.state = 68;
+						this.state = 72;
 						if (!(this.precpred(this._ctx, 13))) {
 							throw this.createFailedPredicateException("this.precpred(this._ctx, 13)");
 						}
-						this.state = 69;
+						this.state = 73;
 						this.match(fhirpathParser.T__0);
-						this.state = 70;
+						this.state = 74;
 						this.invocation();
 						}
 						break;
@@ -500,15 +505,15 @@ export default class fhirpathParser extends Parser {
 						{
 						localctx = new IndexerExpressionContext(this, new ExpressionContext(this, _parentctx, _parentState));
 						this.pushNewRecursionContext(localctx, _startState, fhirpathParser.RULE_expression);
-						this.state = 71;
+						this.state = 75;
 						if (!(this.precpred(this._ctx, 12))) {
 							throw this.createFailedPredicateException("this.precpred(this._ctx, 12)");
 						}
-						this.state = 72;
+						this.state = 76;
 						this.match(fhirpathParser.T__1);
-						this.state = 73;
+						this.state = 77;
 						this.expression(0);
-						this.state = 74;
+						this.state = 78;
 						this.match(fhirpathParser.T__2);
 						}
 						break;
@@ -516,11 +521,11 @@ export default class fhirpathParser extends Parser {
 						{
 						localctx = new TypeExpressionContext(this, new ExpressionContext(this, _parentctx, _parentState));
 						this.pushNewRecursionContext(localctx, _startState, fhirpathParser.RULE_expression);
-						this.state = 76;
+						this.state = 80;
 						if (!(this.precpred(this._ctx, 8))) {
 							throw this.createFailedPredicateException("this.precpred(this._ctx, 8)");
 						}
-						this.state = 77;
+						this.state = 81;
 						_la = this._input.LA(1);
 						if(!(_la===11 || _la===12)) {
 						this._errHandler.recoverInline(this);
@@ -529,14 +534,14 @@ export default class fhirpathParser extends Parser {
 							this._errHandler.reportMatch(this);
 						    this.consume();
 						}
-						this.state = 78;
+						this.state = 82;
 						this.typeSpecifier();
 						}
 						break;
 					}
 					}
 				}
-				this.state = 83;
+				this.state = 87;
 				this._errHandler.sync(this);
 				_alt = this._interp.adaptivePredict(this._input, 2, this._ctx);
 			}
@@ -561,67 +566,53 @@ export default class fhirpathParser extends Parser {
 		let localctx: TermContext = new TermContext(this, this._ctx, this.state);
 		this.enterRule(localctx, 4, fhirpathParser.RULE_term);
 		try {
-			this.state = 91;
+			this.state = 96;
 			this._errHandler.sync(this);
-			switch (this._input.LA(1)) {
-			case 11:
-			case 12:
-			case 22:
-			case 23:
-			case 35:
-			case 36:
-			case 37:
-			case 38:
-			case 40:
-			case 41:
-			case 61:
-			case 62:
+			switch ( this._interp.adaptivePredict(this._input, 3, this._ctx) ) {
+			case 1:
 				localctx = new InvocationTermContext(this, localctx);
 				this.enterOuterAlt(localctx, 1);
 				{
-				this.state = 84;
+				this.state = 88;
 				this.invocation();
 				}
 				break;
-			case 30:
-			case 32:
-			case 33:
-			case 58:
-			case 59:
-			case 60:
-			case 63:
-			case 64:
-			case 65:
-			case 66:
+			case 2:
 				localctx = new LiteralTermContext(this, localctx);
 				this.enterOuterAlt(localctx, 2);
 				{
-				this.state = 85;
+				this.state = 89;
 				this.literal();
 				}
 				break;
-			case 34:
+			case 3:
 				localctx = new ExternalConstantTermContext(this, localctx);
 				this.enterOuterAlt(localctx, 3);
 				{
-				this.state = 86;
+				this.state = 90;
 				this.externalConstant();
 				}
 				break;
-			case 28:
+			case 4:
 				localctx = new ParenthesizedTermContext(this, localctx);
 				this.enterOuterAlt(localctx, 4);
 				{
-				this.state = 87;
+				this.state = 91;
 				this.match(fhirpathParser.T__27);
-				this.state = 88;
+				this.state = 92;
 				this.expression(0);
-				this.state = 89;
+				this.state = 93;
 				this.match(fhirpathParser.T__28);
 				}
 				break;
-			default:
-				throw new NoViableAltException(this);
+			case 5:
+				localctx = new InstanceSelectorTermContext(this, localctx);
+				this.enterOuterAlt(localctx, 5);
+				{
+				this.state = 95;
+				this.instanceSelector();
+				}
+				break;
 			}
 		}
 		catch (re) {
@@ -644,16 +635,16 @@ export default class fhirpathParser extends Parser {
 		this.enterRule(localctx, 6, fhirpathParser.RULE_literal);
 		let _la: number;
 		try {
-			this.state = 103;
+			this.state = 108;
 			this._errHandler.sync(this);
 			switch ( this._interp.adaptivePredict(this._input, 4, this._ctx) ) {
 			case 1:
 				localctx = new NullLiteralContext(this, localctx);
 				this.enterOuterAlt(localctx, 1);
 				{
-				this.state = 93;
+				this.state = 98;
 				this.match(fhirpathParser.T__29);
-				this.state = 94;
+				this.state = 99;
 				this.match(fhirpathParser.T__30);
 				}
 				break;
@@ -661,7 +652,7 @@ export default class fhirpathParser extends Parser {
 				localctx = new BooleanLiteralContext(this, localctx);
 				this.enterOuterAlt(localctx, 2);
 				{
-				this.state = 95;
+				this.state = 100;
 				_la = this._input.LA(1);
 				if(!(_la===32 || _la===33)) {
 				this._errHandler.recoverInline(this);
@@ -676,7 +667,7 @@ export default class fhirpathParser extends Parser {
 				localctx = new StringLiteralContext(this, localctx);
 				this.enterOuterAlt(localctx, 3);
 				{
-				this.state = 96;
+				this.state = 101;
 				this.match(fhirpathParser.STRING);
 				}
 				break;
@@ -684,9 +675,9 @@ export default class fhirpathParser extends Parser {
 				localctx = new NumberLiteralContext(this, localctx);
 				this.enterOuterAlt(localctx, 4);
 				{
-				this.state = 97;
+				this.state = 102;
 				_la = this._input.LA(1);
-				if(!(_la===64 || _la===65)) {
+				if(!(_la===65 || _la===66)) {
 				this._errHandler.recoverInline(this);
 				}
 				else {
@@ -699,7 +690,7 @@ export default class fhirpathParser extends Parser {
 				localctx = new LongNumberLiteralContext(this, localctx);
 				this.enterOuterAlt(localctx, 5);
 				{
-				this.state = 98;
+				this.state = 103;
 				this.match(fhirpathParser.LONGNUMBER);
 				}
 				break;
@@ -707,7 +698,7 @@ export default class fhirpathParser extends Parser {
 				localctx = new DateLiteralContext(this, localctx);
 				this.enterOuterAlt(localctx, 6);
 				{
-				this.state = 99;
+				this.state = 104;
 				this.match(fhirpathParser.DATE);
 				}
 				break;
@@ -715,7 +706,7 @@ export default class fhirpathParser extends Parser {
 				localctx = new DateTimeLiteralContext(this, localctx);
 				this.enterOuterAlt(localctx, 7);
 				{
-				this.state = 100;
+				this.state = 105;
 				this.match(fhirpathParser.DATETIME);
 				}
 				break;
@@ -723,7 +714,7 @@ export default class fhirpathParser extends Parser {
 				localctx = new TimeLiteralContext(this, localctx);
 				this.enterOuterAlt(localctx, 8);
 				{
-				this.state = 101;
+				this.state = 106;
 				this.match(fhirpathParser.TIME);
 				}
 				break;
@@ -731,7 +722,7 @@ export default class fhirpathParser extends Parser {
 				localctx = new QuantityLiteralContext(this, localctx);
 				this.enterOuterAlt(localctx, 9);
 				{
-				this.state = 102;
+				this.state = 107;
 				this.quantity();
 				}
 				break;
@@ -758,9 +749,9 @@ export default class fhirpathParser extends Parser {
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 105;
+			this.state = 110;
 			this.match(fhirpathParser.T__33);
-			this.state = 108;
+			this.state = 113;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
 			case 11:
@@ -770,16 +761,16 @@ export default class fhirpathParser extends Parser {
 			case 38:
 			case 40:
 			case 41:
-			case 61:
 			case 62:
+			case 63:
 				{
-				this.state = 106;
+				this.state = 111;
 				this.identifier();
 				}
 				break;
-			case 63:
+			case 64:
 				{
-				this.state = 107;
+				this.state = 112;
 				this.match(fhirpathParser.STRING);
 				}
 				break;
@@ -807,14 +798,14 @@ export default class fhirpathParser extends Parser {
 		let localctx: InvocationContext = new InvocationContext(this, this._ctx, this.state);
 		this.enterRule(localctx, 10, fhirpathParser.RULE_invocation);
 		try {
-			this.state = 115;
+			this.state = 120;
 			this._errHandler.sync(this);
 			switch ( this._interp.adaptivePredict(this._input, 6, this._ctx) ) {
 			case 1:
 				localctx = new MemberInvocationContext(this, localctx);
 				this.enterOuterAlt(localctx, 1);
 				{
-				this.state = 110;
+				this.state = 115;
 				this.identifier();
 				}
 				break;
@@ -822,7 +813,7 @@ export default class fhirpathParser extends Parser {
 				localctx = new FunctionInvocationContext(this, localctx);
 				this.enterOuterAlt(localctx, 2);
 				{
-				this.state = 111;
+				this.state = 116;
 				this.function_();
 				}
 				break;
@@ -830,7 +821,7 @@ export default class fhirpathParser extends Parser {
 				localctx = new ThisInvocationContext(this, localctx);
 				this.enterOuterAlt(localctx, 3);
 				{
-				this.state = 112;
+				this.state = 117;
 				this.match(fhirpathParser.T__34);
 				}
 				break;
@@ -838,7 +829,7 @@ export default class fhirpathParser extends Parser {
 				localctx = new IndexInvocationContext(this, localctx);
 				this.enterOuterAlt(localctx, 4);
 				{
-				this.state = 113;
+				this.state = 118;
 				this.match(fhirpathParser.T__35);
 				}
 				break;
@@ -846,7 +837,7 @@ export default class fhirpathParser extends Parser {
 				localctx = new TotalInvocationContext(this, localctx);
 				this.enterOuterAlt(localctx, 5);
 				{
-				this.state = 114;
+				this.state = 119;
 				this.match(fhirpathParser.T__36);
 				}
 				break;
@@ -872,64 +863,64 @@ export default class fhirpathParser extends Parser {
 		this.enterRule(localctx, 12, fhirpathParser.RULE_function);
 		let _la: number;
 		try {
-			this.state = 137;
+			this.state = 142;
 			this._errHandler.sync(this);
 			switch ( this._interp.adaptivePredict(this._input, 10, this._ctx) ) {
 			case 1:
 				this.enterOuterAlt(localctx, 1);
 				{
-				this.state = 117;
+				this.state = 122;
 				this.match(fhirpathParser.T__37);
-				this.state = 118;
+				this.state = 123;
 				this.match(fhirpathParser.T__27);
-				this.state = 127;
+				this.state = 132;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
-				if (((((_la - 4)) & ~0x1F) === 0 && ((1 << (_la - 4)) & 4111204739) !== 0) || ((((_la - 36)) & ~0x1F) === 0 && ((1 << (_la - 36)) & 2143289399) !== 0)) {
+				if (((((_la - 4)) & ~0x1F) === 0 && ((1 << (_la - 4)) & 4111204739) !== 0) || ((((_la - 36)) & ~0x1F) === 0 && ((1 << (_la - 36)) & 4286578743) !== 0)) {
 					{
-					this.state = 119;
-					this.sortArgument();
 					this.state = 124;
+					this.sortArgument();
+					this.state = 129;
 					this._errHandler.sync(this);
 					_la = this._input.LA(1);
 					while (_la===39) {
 						{
 						{
-						this.state = 120;
+						this.state = 125;
 						this.match(fhirpathParser.T__38);
-						this.state = 121;
+						this.state = 126;
 						this.sortArgument();
 						}
 						}
-						this.state = 126;
+						this.state = 131;
 						this._errHandler.sync(this);
 						_la = this._input.LA(1);
 					}
 					}
 				}
 
-				this.state = 129;
+				this.state = 134;
 				this.match(fhirpathParser.T__28);
 				}
 				break;
 			case 2:
 				this.enterOuterAlt(localctx, 2);
 				{
-				this.state = 130;
+				this.state = 135;
 				this.identifier();
-				this.state = 131;
+				this.state = 136;
 				this.match(fhirpathParser.T__27);
-				this.state = 133;
+				this.state = 138;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
-				if (((((_la - 4)) & ~0x1F) === 0 && ((1 << (_la - 4)) & 4111204739) !== 0) || ((((_la - 36)) & ~0x1F) === 0 && ((1 << (_la - 36)) & 2143289399) !== 0)) {
+				if (((((_la - 4)) & ~0x1F) === 0 && ((1 << (_la - 4)) & 4111204739) !== 0) || ((((_la - 36)) & ~0x1F) === 0 && ((1 << (_la - 36)) & 4286578743) !== 0)) {
 					{
-					this.state = 132;
+					this.state = 137;
 					this.paramList();
 					}
 				}
 
-				this.state = 135;
+				this.state = 140;
 				this.match(fhirpathParser.T__28);
 				}
 				break;
@@ -958,14 +949,14 @@ export default class fhirpathParser extends Parser {
 			localctx = new SortDirectionArgumentContext(this, localctx);
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 139;
+			this.state = 144;
 			this.expression(0);
-			this.state = 141;
+			this.state = 146;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
 			if (_la===40 || _la===41) {
 				{
-				this.state = 140;
+				this.state = 145;
 				_la = this._input.LA(1);
 				if(!(_la===40 || _la===41)) {
 				this._errHandler.recoverInline(this);
@@ -1001,21 +992,21 @@ export default class fhirpathParser extends Parser {
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 143;
-			this.expression(0);
 			this.state = 148;
+			this.expression(0);
+			this.state = 153;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
 			while (_la===39) {
 				{
 				{
-				this.state = 144;
+				this.state = 149;
 				this.match(fhirpathParser.T__38);
-				this.state = 145;
+				this.state = 150;
 				this.expression(0);
 				}
 				}
-				this.state = 150;
+				this.state = 155;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
 			}
@@ -1036,28 +1027,131 @@ export default class fhirpathParser extends Parser {
 		return localctx;
 	}
 	// @RuleVersion(0)
-	public quantity(): QuantityContext {
-		let localctx: QuantityContext = new QuantityContext(this, this._ctx, this.state);
-		this.enterRule(localctx, 18, fhirpathParser.RULE_quantity);
+	public instanceSelector(): InstanceSelectorContext {
+		let localctx: InstanceSelectorContext = new InstanceSelectorContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 18, fhirpathParser.RULE_instanceSelector);
 		let _la: number;
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 151;
+			this.state = 156;
+			this.qualifiedIdentifier();
+			this.state = 157;
+			this.match(fhirpathParser.T__29);
+			this.state = 167;
+			this._errHandler.sync(this);
+			switch (this._input.LA(1)) {
+			case 42:
+				{
+				this.state = 158;
+				this.match(fhirpathParser.T__41);
+				}
+				break;
+			case 11:
+			case 12:
+			case 22:
+			case 23:
+			case 38:
+			case 40:
+			case 41:
+			case 62:
+			case 63:
+				{
+				{
+				this.state = 159;
+				this.instanceElementSelector();
+				this.state = 164;
+				this._errHandler.sync(this);
+				_la = this._input.LA(1);
+				while (_la===39) {
+					{
+					{
+					this.state = 160;
+					this.match(fhirpathParser.T__38);
+					this.state = 161;
+					this.instanceElementSelector();
+					}
+					}
+					this.state = 166;
+					this._errHandler.sync(this);
+					_la = this._input.LA(1);
+				}
+				}
+				}
+				break;
+			default:
+				throw new NoViableAltException(this);
+			}
+			this.state = 169;
+			this.match(fhirpathParser.T__30);
+			}
+		}
+		catch (re) {
+			if (re instanceof RecognitionException) {
+				localctx.exception = re;
+				this._errHandler.reportError(this, re);
+				this._errHandler.recover(this, re);
+			} else {
+				throw re;
+			}
+		}
+		finally {
+			this.exitRule();
+		}
+		return localctx;
+	}
+	// @RuleVersion(0)
+	public instanceElementSelector(): InstanceElementSelectorContext {
+		let localctx: InstanceElementSelectorContext = new InstanceElementSelectorContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 20, fhirpathParser.RULE_instanceElementSelector);
+		try {
+			this.enterOuterAlt(localctx, 1);
+			{
+			this.state = 171;
+			this.identifier();
+			this.state = 172;
+			this.match(fhirpathParser.T__41);
+			this.state = 173;
+			this.expression(0);
+			}
+		}
+		catch (re) {
+			if (re instanceof RecognitionException) {
+				localctx.exception = re;
+				this._errHandler.reportError(this, re);
+				this._errHandler.recover(this, re);
+			} else {
+				throw re;
+			}
+		}
+		finally {
+			this.exitRule();
+		}
+		return localctx;
+	}
+	// @RuleVersion(0)
+	public quantity(): QuantityContext {
+		let localctx: QuantityContext = new QuantityContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 22, fhirpathParser.RULE_quantity);
+		let _la: number;
+		try {
+			this.enterOuterAlt(localctx, 1);
+			{
+			this.state = 175;
 			_la = this._input.LA(1);
-			if(!(_la===64 || _la===65)) {
+			if(!(_la===65 || _la===66)) {
 			this._errHandler.recoverInline(this);
 			}
 			else {
 				this._errHandler.reportMatch(this);
 			    this.consume();
 			}
-			this.state = 153;
+			this.state = 177;
 			this._errHandler.sync(this);
-			switch ( this._interp.adaptivePredict(this._input, 13, this._ctx) ) {
+			switch ( this._interp.adaptivePredict(this._input, 15, this._ctx) ) {
 			case 1:
 				{
-				this.state = 152;
+				this.state = 176;
 				this.unit();
 				}
 				break;
@@ -1081,12 +1175,11 @@ export default class fhirpathParser extends Parser {
 	// @RuleVersion(0)
 	public unit(): UnitContext {
 		let localctx: UnitContext = new UnitContext(this, this._ctx, this.state);
-		this.enterRule(localctx, 20, fhirpathParser.RULE_unit);
+		this.enterRule(localctx, 24, fhirpathParser.RULE_unit);
 		try {
-			this.state = 158;
+			this.state = 182;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
-			case 42:
 			case 43:
 			case 44:
 			case 45:
@@ -1094,13 +1187,13 @@ export default class fhirpathParser extends Parser {
 			case 47:
 			case 48:
 			case 49:
+			case 50:
 				this.enterOuterAlt(localctx, 1);
 				{
-				this.state = 155;
+				this.state = 179;
 				this.dateTimePrecision();
 				}
 				break;
-			case 50:
 			case 51:
 			case 52:
 			case 53:
@@ -1108,16 +1201,17 @@ export default class fhirpathParser extends Parser {
 			case 55:
 			case 56:
 			case 57:
+			case 58:
 				this.enterOuterAlt(localctx, 2);
 				{
-				this.state = 156;
+				this.state = 180;
 				this.pluralDateTimePrecision();
 				}
 				break;
-			case 63:
+			case 64:
 				this.enterOuterAlt(localctx, 3);
 				{
-				this.state = 157;
+				this.state = 181;
 				this.match(fhirpathParser.STRING);
 				}
 				break;
@@ -1142,14 +1236,14 @@ export default class fhirpathParser extends Parser {
 	// @RuleVersion(0)
 	public dateTimePrecision(): DateTimePrecisionContext {
 		let localctx: DateTimePrecisionContext = new DateTimePrecisionContext(this, this._ctx, this.state);
-		this.enterRule(localctx, 22, fhirpathParser.RULE_dateTimePrecision);
+		this.enterRule(localctx, 26, fhirpathParser.RULE_dateTimePrecision);
 		let _la: number;
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 160;
+			this.state = 184;
 			_la = this._input.LA(1);
-			if(!(((((_la - 42)) & ~0x1F) === 0 && ((1 << (_la - 42)) & 255) !== 0))) {
+			if(!(((((_la - 43)) & ~0x1F) === 0 && ((1 << (_la - 43)) & 255) !== 0))) {
 			this._errHandler.recoverInline(this);
 			}
 			else {
@@ -1175,14 +1269,14 @@ export default class fhirpathParser extends Parser {
 	// @RuleVersion(0)
 	public pluralDateTimePrecision(): PluralDateTimePrecisionContext {
 		let localctx: PluralDateTimePrecisionContext = new PluralDateTimePrecisionContext(this, this._ctx, this.state);
-		this.enterRule(localctx, 24, fhirpathParser.RULE_pluralDateTimePrecision);
+		this.enterRule(localctx, 28, fhirpathParser.RULE_pluralDateTimePrecision);
 		let _la: number;
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 162;
+			this.state = 186;
 			_la = this._input.LA(1);
-			if(!(((((_la - 50)) & ~0x1F) === 0 && ((1 << (_la - 50)) & 255) !== 0))) {
+			if(!(((((_la - 51)) & ~0x1F) === 0 && ((1 << (_la - 51)) & 255) !== 0))) {
 			this._errHandler.recoverInline(this);
 			}
 			else {
@@ -1208,11 +1302,11 @@ export default class fhirpathParser extends Parser {
 	// @RuleVersion(0)
 	public typeSpecifier(): TypeSpecifierContext {
 		let localctx: TypeSpecifierContext = new TypeSpecifierContext(this, this._ctx, this.state);
-		this.enterRule(localctx, 26, fhirpathParser.RULE_typeSpecifier);
+		this.enterRule(localctx, 30, fhirpathParser.RULE_typeSpecifier);
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 164;
+			this.state = 188;
 			this.qualifiedIdentifier();
 			}
 		}
@@ -1233,30 +1327,30 @@ export default class fhirpathParser extends Parser {
 	// @RuleVersion(0)
 	public qualifiedIdentifier(): QualifiedIdentifierContext {
 		let localctx: QualifiedIdentifierContext = new QualifiedIdentifierContext(this, this._ctx, this.state);
-		this.enterRule(localctx, 28, fhirpathParser.RULE_qualifiedIdentifier);
+		this.enterRule(localctx, 32, fhirpathParser.RULE_qualifiedIdentifier);
 		try {
 			let _alt: number;
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 166;
+			this.state = 190;
 			this.identifier();
-			this.state = 171;
+			this.state = 195;
 			this._errHandler.sync(this);
-			_alt = this._interp.adaptivePredict(this._input, 15, this._ctx);
+			_alt = this._interp.adaptivePredict(this._input, 17, this._ctx);
 			while (_alt !== 2 && _alt !== ATN.INVALID_ALT_NUMBER) {
 				if (_alt === 1) {
 					{
 					{
-					this.state = 167;
+					this.state = 191;
 					this.match(fhirpathParser.T__0);
-					this.state = 168;
+					this.state = 192;
 					this.identifier();
 					}
 					}
 				}
-				this.state = 173;
+				this.state = 197;
 				this._errHandler.sync(this);
-				_alt = this._interp.adaptivePredict(this._input, 15, this._ctx);
+				_alt = this._interp.adaptivePredict(this._input, 17, this._ctx);
 			}
 			}
 		}
@@ -1277,14 +1371,14 @@ export default class fhirpathParser extends Parser {
 	// @RuleVersion(0)
 	public identifier(): IdentifierContext {
 		let localctx: IdentifierContext = new IdentifierContext(this, this._ctx, this.state);
-		this.enterRule(localctx, 30, fhirpathParser.RULE_identifier);
+		this.enterRule(localctx, 34, fhirpathParser.RULE_identifier);
 		let _la: number;
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 174;
+			this.state = 198;
 			_la = this._input.LA(1);
-			if(!((((_la) & ~0x1F) === 0 && ((1 << _la) & 12589056) !== 0) || ((((_la - 38)) & ~0x1F) === 0 && ((1 << (_la - 38)) & 25165837) !== 0))) {
+			if(!((((_la) & ~0x1F) === 0 && ((1 << _la) & 12589056) !== 0) || ((((_la - 38)) & ~0x1F) === 0 && ((1 << (_la - 38)) & 50331661) !== 0))) {
 			this._errHandler.recoverInline(this);
 			}
 			else {
@@ -1345,65 +1439,73 @@ export default class fhirpathParser extends Parser {
 		return true;
 	}
 
-	public static readonly _serializedATN: number[] = [4,1,69,177,2,0,7,0,2,
+	public static readonly _serializedATN: number[] = [4,1,70,201,2,0,7,0,2,
 	1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,6,2,7,7,7,2,8,7,8,2,9,7,9,2,
-	10,7,10,2,11,7,11,2,12,7,12,2,13,7,13,2,14,7,14,2,15,7,15,1,0,1,0,1,0,1,
-	1,1,1,1,1,1,1,3,1,40,8,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+	10,7,10,2,11,7,11,2,12,7,12,2,13,7,13,2,14,7,14,2,15,7,15,2,16,7,16,2,17,
+	7,17,1,0,1,0,1,0,1,1,1,1,1,1,1,1,3,1,44,8,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
 	1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-	1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,5,1,80,8,1,10,1,12,1,83,9,1,1,2,1,2,1,
-	2,1,2,1,2,1,2,1,2,3,2,92,8,2,1,3,1,3,1,3,1,3,1,3,1,3,1,3,1,3,1,3,1,3,3,
-	3,104,8,3,1,4,1,4,1,4,3,4,109,8,4,1,5,1,5,1,5,1,5,1,5,3,5,116,8,5,1,6,1,
-	6,1,6,1,6,1,6,5,6,123,8,6,10,6,12,6,126,9,6,3,6,128,8,6,1,6,1,6,1,6,1,6,
-	3,6,134,8,6,1,6,1,6,3,6,138,8,6,1,7,1,7,3,7,142,8,7,1,8,1,8,1,8,5,8,147,
-	8,8,10,8,12,8,150,9,8,1,9,1,9,3,9,154,8,9,1,10,1,10,1,10,3,10,159,8,10,
-	1,11,1,11,1,12,1,12,1,13,1,13,1,14,1,14,1,14,5,14,170,8,14,10,14,12,14,
-	173,9,14,1,15,1,15,1,15,0,1,2,16,0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,
-	30,0,14,1,0,4,5,1,0,6,9,2,0,4,5,10,10,1,0,14,17,1,0,18,21,1,0,22,23,1,0,
-	25,26,1,0,11,12,1,0,32,33,1,0,64,65,1,0,40,41,1,0,42,49,1,0,50,57,5,0,11,
-	12,22,23,38,38,40,41,61,62,199,0,32,1,0,0,0,2,39,1,0,0,0,4,91,1,0,0,0,6,
-	103,1,0,0,0,8,105,1,0,0,0,10,115,1,0,0,0,12,137,1,0,0,0,14,139,1,0,0,0,
-	16,143,1,0,0,0,18,151,1,0,0,0,20,158,1,0,0,0,22,160,1,0,0,0,24,162,1,0,
-	0,0,26,164,1,0,0,0,28,166,1,0,0,0,30,174,1,0,0,0,32,33,3,2,1,0,33,34,5,
-	0,0,1,34,1,1,0,0,0,35,36,6,1,-1,0,36,40,3,4,2,0,37,38,7,0,0,0,38,40,3,2,
-	1,11,39,35,1,0,0,0,39,37,1,0,0,0,40,81,1,0,0,0,41,42,10,10,0,0,42,43,7,
-	1,0,0,43,80,3,2,1,11,44,45,10,9,0,0,45,46,7,2,0,0,46,80,3,2,1,10,47,48,
-	10,7,0,0,48,49,5,13,0,0,49,80,3,2,1,8,50,51,10,6,0,0,51,52,7,3,0,0,52,80,
-	3,2,1,7,53,54,10,5,0,0,54,55,7,4,0,0,55,80,3,2,1,6,56,57,10,4,0,0,57,58,
-	7,5,0,0,58,80,3,2,1,5,59,60,10,3,0,0,60,61,5,24,0,0,61,80,3,2,1,4,62,63,
-	10,2,0,0,63,64,7,6,0,0,64,80,3,2,1,3,65,66,10,1,0,0,66,67,5,27,0,0,67,80,
-	3,2,1,2,68,69,10,13,0,0,69,70,5,1,0,0,70,80,3,10,5,0,71,72,10,12,0,0,72,
-	73,5,2,0,0,73,74,3,2,1,0,74,75,5,3,0,0,75,80,1,0,0,0,76,77,10,8,0,0,77,
-	78,7,7,0,0,78,80,3,26,13,0,79,41,1,0,0,0,79,44,1,0,0,0,79,47,1,0,0,0,79,
-	50,1,0,0,0,79,53,1,0,0,0,79,56,1,0,0,0,79,59,1,0,0,0,79,62,1,0,0,0,79,65,
-	1,0,0,0,79,68,1,0,0,0,79,71,1,0,0,0,79,76,1,0,0,0,80,83,1,0,0,0,81,79,1,
-	0,0,0,81,82,1,0,0,0,82,3,1,0,0,0,83,81,1,0,0,0,84,92,3,10,5,0,85,92,3,6,
-	3,0,86,92,3,8,4,0,87,88,5,28,0,0,88,89,3,2,1,0,89,90,5,29,0,0,90,92,1,0,
-	0,0,91,84,1,0,0,0,91,85,1,0,0,0,91,86,1,0,0,0,91,87,1,0,0,0,92,5,1,0,0,
-	0,93,94,5,30,0,0,94,104,5,31,0,0,95,104,7,8,0,0,96,104,5,63,0,0,97,104,
-	7,9,0,0,98,104,5,66,0,0,99,104,5,58,0,0,100,104,5,59,0,0,101,104,5,60,0,
-	0,102,104,3,18,9,0,103,93,1,0,0,0,103,95,1,0,0,0,103,96,1,0,0,0,103,97,
-	1,0,0,0,103,98,1,0,0,0,103,99,1,0,0,0,103,100,1,0,0,0,103,101,1,0,0,0,103,
-	102,1,0,0,0,104,7,1,0,0,0,105,108,5,34,0,0,106,109,3,30,15,0,107,109,5,
-	63,0,0,108,106,1,0,0,0,108,107,1,0,0,0,109,9,1,0,0,0,110,116,3,30,15,0,
-	111,116,3,12,6,0,112,116,5,35,0,0,113,116,5,36,0,0,114,116,5,37,0,0,115,
-	110,1,0,0,0,115,111,1,0,0,0,115,112,1,0,0,0,115,113,1,0,0,0,115,114,1,0,
-	0,0,116,11,1,0,0,0,117,118,5,38,0,0,118,127,5,28,0,0,119,124,3,14,7,0,120,
-	121,5,39,0,0,121,123,3,14,7,0,122,120,1,0,0,0,123,126,1,0,0,0,124,122,1,
-	0,0,0,124,125,1,0,0,0,125,128,1,0,0,0,126,124,1,0,0,0,127,119,1,0,0,0,127,
-	128,1,0,0,0,128,129,1,0,0,0,129,138,5,29,0,0,130,131,3,30,15,0,131,133,
-	5,28,0,0,132,134,3,16,8,0,133,132,1,0,0,0,133,134,1,0,0,0,134,135,1,0,0,
-	0,135,136,5,29,0,0,136,138,1,0,0,0,137,117,1,0,0,0,137,130,1,0,0,0,138,
-	13,1,0,0,0,139,141,3,2,1,0,140,142,7,10,0,0,141,140,1,0,0,0,141,142,1,0,
-	0,0,142,15,1,0,0,0,143,148,3,2,1,0,144,145,5,39,0,0,145,147,3,2,1,0,146,
-	144,1,0,0,0,147,150,1,0,0,0,148,146,1,0,0,0,148,149,1,0,0,0,149,17,1,0,
-	0,0,150,148,1,0,0,0,151,153,7,9,0,0,152,154,3,20,10,0,153,152,1,0,0,0,153,
-	154,1,0,0,0,154,19,1,0,0,0,155,159,3,22,11,0,156,159,3,24,12,0,157,159,
-	5,63,0,0,158,155,1,0,0,0,158,156,1,0,0,0,158,157,1,0,0,0,159,21,1,0,0,0,
-	160,161,7,11,0,0,161,23,1,0,0,0,162,163,7,12,0,0,163,25,1,0,0,0,164,165,
-	3,28,14,0,165,27,1,0,0,0,166,171,3,30,15,0,167,168,5,1,0,0,168,170,3,30,
-	15,0,169,167,1,0,0,0,170,173,1,0,0,0,171,169,1,0,0,0,171,172,1,0,0,0,172,
-	29,1,0,0,0,173,171,1,0,0,0,174,175,7,13,0,0,175,31,1,0,0,0,16,39,79,81,
-	91,103,108,115,124,127,133,137,141,148,153,158,171];
+	1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,5,1,84,8,1,10,1,12,
+	1,87,9,1,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,3,2,97,8,2,1,3,1,3,1,3,1,3,1,3,
+	1,3,1,3,1,3,1,3,1,3,3,3,109,8,3,1,4,1,4,1,4,3,4,114,8,4,1,5,1,5,1,5,1,5,
+	1,5,3,5,121,8,5,1,6,1,6,1,6,1,6,1,6,5,6,128,8,6,10,6,12,6,131,9,6,3,6,133,
+	8,6,1,6,1,6,1,6,1,6,3,6,139,8,6,1,6,1,6,3,6,143,8,6,1,7,1,7,3,7,147,8,7,
+	1,8,1,8,1,8,5,8,152,8,8,10,8,12,8,155,9,8,1,9,1,9,1,9,1,9,1,9,1,9,5,9,163,
+	8,9,10,9,12,9,166,9,9,3,9,168,8,9,1,9,1,9,1,10,1,10,1,10,1,10,1,11,1,11,
+	3,11,178,8,11,1,12,1,12,1,12,3,12,183,8,12,1,13,1,13,1,14,1,14,1,15,1,15,
+	1,16,1,16,1,16,5,16,194,8,16,10,16,12,16,197,9,16,1,17,1,17,1,17,0,1,2,
+	18,0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,0,14,1,0,4,5,1,0,6,
+	9,2,0,4,5,10,10,1,0,14,17,1,0,18,21,1,0,22,23,1,0,25,26,1,0,11,12,1,0,32,
+	33,1,0,65,66,1,0,40,41,1,0,43,50,1,0,51,58,5,0,11,12,22,23,38,38,40,41,
+	62,63,224,0,36,1,0,0,0,2,43,1,0,0,0,4,96,1,0,0,0,6,108,1,0,0,0,8,110,1,
+	0,0,0,10,120,1,0,0,0,12,142,1,0,0,0,14,144,1,0,0,0,16,148,1,0,0,0,18,156,
+	1,0,0,0,20,171,1,0,0,0,22,175,1,0,0,0,24,182,1,0,0,0,26,184,1,0,0,0,28,
+	186,1,0,0,0,30,188,1,0,0,0,32,190,1,0,0,0,34,198,1,0,0,0,36,37,3,2,1,0,
+	37,38,5,0,0,1,38,1,1,0,0,0,39,40,6,1,-1,0,40,44,3,4,2,0,41,42,7,0,0,0,42,
+	44,3,2,1,11,43,39,1,0,0,0,43,41,1,0,0,0,44,85,1,0,0,0,45,46,10,10,0,0,46,
+	47,7,1,0,0,47,84,3,2,1,11,48,49,10,9,0,0,49,50,7,2,0,0,50,84,3,2,1,10,51,
+	52,10,7,0,0,52,53,5,13,0,0,53,84,3,2,1,8,54,55,10,6,0,0,55,56,7,3,0,0,56,
+	84,3,2,1,7,57,58,10,5,0,0,58,59,7,4,0,0,59,84,3,2,1,6,60,61,10,4,0,0,61,
+	62,7,5,0,0,62,84,3,2,1,5,63,64,10,3,0,0,64,65,5,24,0,0,65,84,3,2,1,4,66,
+	67,10,2,0,0,67,68,7,6,0,0,68,84,3,2,1,3,69,70,10,1,0,0,70,71,5,27,0,0,71,
+	84,3,2,1,2,72,73,10,13,0,0,73,74,5,1,0,0,74,84,3,10,5,0,75,76,10,12,0,0,
+	76,77,5,2,0,0,77,78,3,2,1,0,78,79,5,3,0,0,79,84,1,0,0,0,80,81,10,8,0,0,
+	81,82,7,7,0,0,82,84,3,30,15,0,83,45,1,0,0,0,83,48,1,0,0,0,83,51,1,0,0,0,
+	83,54,1,0,0,0,83,57,1,0,0,0,83,60,1,0,0,0,83,63,1,0,0,0,83,66,1,0,0,0,83,
+	69,1,0,0,0,83,72,1,0,0,0,83,75,1,0,0,0,83,80,1,0,0,0,84,87,1,0,0,0,85,83,
+	1,0,0,0,85,86,1,0,0,0,86,3,1,0,0,0,87,85,1,0,0,0,88,97,3,10,5,0,89,97,3,
+	6,3,0,90,97,3,8,4,0,91,92,5,28,0,0,92,93,3,2,1,0,93,94,5,29,0,0,94,97,1,
+	0,0,0,95,97,3,18,9,0,96,88,1,0,0,0,96,89,1,0,0,0,96,90,1,0,0,0,96,91,1,
+	0,0,0,96,95,1,0,0,0,97,5,1,0,0,0,98,99,5,30,0,0,99,109,5,31,0,0,100,109,
+	7,8,0,0,101,109,5,64,0,0,102,109,7,9,0,0,103,109,5,67,0,0,104,109,5,59,
+	0,0,105,109,5,60,0,0,106,109,5,61,0,0,107,109,3,22,11,0,108,98,1,0,0,0,
+	108,100,1,0,0,0,108,101,1,0,0,0,108,102,1,0,0,0,108,103,1,0,0,0,108,104,
+	1,0,0,0,108,105,1,0,0,0,108,106,1,0,0,0,108,107,1,0,0,0,109,7,1,0,0,0,110,
+	113,5,34,0,0,111,114,3,34,17,0,112,114,5,64,0,0,113,111,1,0,0,0,113,112,
+	1,0,0,0,114,9,1,0,0,0,115,121,3,34,17,0,116,121,3,12,6,0,117,121,5,35,0,
+	0,118,121,5,36,0,0,119,121,5,37,0,0,120,115,1,0,0,0,120,116,1,0,0,0,120,
+	117,1,0,0,0,120,118,1,0,0,0,120,119,1,0,0,0,121,11,1,0,0,0,122,123,5,38,
+	0,0,123,132,5,28,0,0,124,129,3,14,7,0,125,126,5,39,0,0,126,128,3,14,7,0,
+	127,125,1,0,0,0,128,131,1,0,0,0,129,127,1,0,0,0,129,130,1,0,0,0,130,133,
+	1,0,0,0,131,129,1,0,0,0,132,124,1,0,0,0,132,133,1,0,0,0,133,134,1,0,0,0,
+	134,143,5,29,0,0,135,136,3,34,17,0,136,138,5,28,0,0,137,139,3,16,8,0,138,
+	137,1,0,0,0,138,139,1,0,0,0,139,140,1,0,0,0,140,141,5,29,0,0,141,143,1,
+	0,0,0,142,122,1,0,0,0,142,135,1,0,0,0,143,13,1,0,0,0,144,146,3,2,1,0,145,
+	147,7,10,0,0,146,145,1,0,0,0,146,147,1,0,0,0,147,15,1,0,0,0,148,153,3,2,
+	1,0,149,150,5,39,0,0,150,152,3,2,1,0,151,149,1,0,0,0,152,155,1,0,0,0,153,
+	151,1,0,0,0,153,154,1,0,0,0,154,17,1,0,0,0,155,153,1,0,0,0,156,157,3,32,
+	16,0,157,167,5,30,0,0,158,168,5,42,0,0,159,164,3,20,10,0,160,161,5,39,0,
+	0,161,163,3,20,10,0,162,160,1,0,0,0,163,166,1,0,0,0,164,162,1,0,0,0,164,
+	165,1,0,0,0,165,168,1,0,0,0,166,164,1,0,0,0,167,158,1,0,0,0,167,159,1,0,
+	0,0,168,169,1,0,0,0,169,170,5,31,0,0,170,19,1,0,0,0,171,172,3,34,17,0,172,
+	173,5,42,0,0,173,174,3,2,1,0,174,21,1,0,0,0,175,177,7,9,0,0,176,178,3,24,
+	12,0,177,176,1,0,0,0,177,178,1,0,0,0,178,23,1,0,0,0,179,183,3,26,13,0,180,
+	183,3,28,14,0,181,183,5,64,0,0,182,179,1,0,0,0,182,180,1,0,0,0,182,181,
+	1,0,0,0,183,25,1,0,0,0,184,185,7,11,0,0,185,27,1,0,0,0,186,187,7,12,0,0,
+	187,29,1,0,0,0,188,189,3,32,16,0,189,31,1,0,0,0,190,195,3,34,17,0,191,192,
+	5,1,0,0,192,194,3,34,17,0,193,191,1,0,0,0,194,197,1,0,0,0,195,193,1,0,0,
+	0,195,196,1,0,0,0,196,33,1,0,0,0,197,195,1,0,0,0,198,199,7,13,0,0,199,35,
+	1,0,0,0,18,43,83,85,96,108,113,120,129,132,138,142,146,153,164,167,177,
+	182,195];
 
 	private static __ATN: ATN;
 	public static get _ATN(): ATN {
@@ -2002,6 +2104,33 @@ export class InvocationTermContext extends TermContext {
 		}
 	}
 }
+export class InstanceSelectorTermContext extends TermContext {
+	constructor(parser: fhirpathParser, ctx: TermContext) {
+		super(parser, ctx.parentCtx, ctx.invokingState);
+		super.copyFrom(ctx);
+	}
+	public instanceSelector(): InstanceSelectorContext {
+		return this.getTypedRuleContext(InstanceSelectorContext, 0) as InstanceSelectorContext;
+	}
+	public enterRule(listener: fhirpathListener): void {
+	    if(listener.enterInstanceSelectorTerm) {
+	 		listener.enterInstanceSelectorTerm(this);
+		}
+	}
+	public exitRule(listener: fhirpathListener): void {
+	    if(listener.exitInstanceSelectorTerm) {
+	 		listener.exitInstanceSelectorTerm(this);
+		}
+	}
+	// @Override
+	public accept<Result>(visitor: fhirpathVisitor<Result>): Result {
+		if (visitor.visitInstanceSelectorTerm) {
+			return visitor.visitInstanceSelectorTerm(this);
+		} else {
+			return visitor.visitChildren(this);
+		}
+	}
+}
 
 
 export class LiteralContext extends ParserRuleContext {
@@ -2543,6 +2672,79 @@ export class ParamListContext extends ParserRuleContext {
 	public accept<Result>(visitor: fhirpathVisitor<Result>): Result {
 		if (visitor.visitParamList) {
 			return visitor.visitParamList(this);
+		} else {
+			return visitor.visitChildren(this);
+		}
+	}
+}
+
+
+export class InstanceSelectorContext extends ParserRuleContext {
+	constructor(parser?: fhirpathParser, parent?: ParserRuleContext, invokingState?: number) {
+		super(parent, invokingState);
+    	this.parser = parser;
+	}
+	public qualifiedIdentifier(): QualifiedIdentifierContext {
+		return this.getTypedRuleContext(QualifiedIdentifierContext, 0) as QualifiedIdentifierContext;
+	}
+	public instanceElementSelector_list(): InstanceElementSelectorContext[] {
+		return this.getTypedRuleContexts(InstanceElementSelectorContext) as InstanceElementSelectorContext[];
+	}
+	public instanceElementSelector(i: number): InstanceElementSelectorContext {
+		return this.getTypedRuleContext(InstanceElementSelectorContext, i) as InstanceElementSelectorContext;
+	}
+    public get ruleIndex(): number {
+    	return fhirpathParser.RULE_instanceSelector;
+	}
+	public enterRule(listener: fhirpathListener): void {
+	    if(listener.enterInstanceSelector) {
+	 		listener.enterInstanceSelector(this);
+		}
+	}
+	public exitRule(listener: fhirpathListener): void {
+	    if(listener.exitInstanceSelector) {
+	 		listener.exitInstanceSelector(this);
+		}
+	}
+	// @Override
+	public accept<Result>(visitor: fhirpathVisitor<Result>): Result {
+		if (visitor.visitInstanceSelector) {
+			return visitor.visitInstanceSelector(this);
+		} else {
+			return visitor.visitChildren(this);
+		}
+	}
+}
+
+
+export class InstanceElementSelectorContext extends ParserRuleContext {
+	constructor(parser?: fhirpathParser, parent?: ParserRuleContext, invokingState?: number) {
+		super(parent, invokingState);
+    	this.parser = parser;
+	}
+	public identifier(): IdentifierContext {
+		return this.getTypedRuleContext(IdentifierContext, 0) as IdentifierContext;
+	}
+	public expression(): ExpressionContext {
+		return this.getTypedRuleContext(ExpressionContext, 0) as ExpressionContext;
+	}
+    public get ruleIndex(): number {
+    	return fhirpathParser.RULE_instanceElementSelector;
+	}
+	public enterRule(listener: fhirpathListener): void {
+	    if(listener.enterInstanceElementSelector) {
+	 		listener.enterInstanceElementSelector(this);
+		}
+	}
+	public exitRule(listener: fhirpathListener): void {
+	    if(listener.exitInstanceElementSelector) {
+	 		listener.exitInstanceElementSelector(this);
+		}
+	}
+	// @Override
+	public accept<Result>(visitor: fhirpathVisitor<Result>): Result {
+		if (visitor.visitInstanceElementSelector) {
+			return visitor.visitInstanceElementSelector(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
