@@ -33,6 +33,8 @@ import Parser, {
     IndexerExpressionContext,
     IndexInvocationContext,
     InequalityExpressionContext,
+    InstanceSelectorContext,
+    InstanceSelectorTermContext,
     InvocationContext,
     InvocationExpressionContext,
     InvocationTermContext,
@@ -61,7 +63,7 @@ import Parser, {
     UnionExpressionContext,
 } from "../fhirpath-parser/fhirpathParser";
 
-import type { TypeModel, ElementModel } from "./custom_model";
+import type { TypeModel, ElementModel, ElementTypeModel } from "./custom_model";
 import {
     functionsByName,
     operationsByName,
@@ -640,6 +642,9 @@ class FhirPathExpressionVisitor {
                 ReturnType: formatValueType(inner.value),
             }, term);
             return { node, value: inner.value };
+        }
+        if (term instanceof InstanceSelectorTermContext) {
+            return this.visitInstanceSelector(term.instanceSelector(), input);
         }
         const node: JsonNode = attachPosition({ ExpressionType: "Term", Name: term.getText(), Arguments: [], ReturnType: "" }, term);
         return { node, value: EMPTY_VALUE };
@@ -1253,6 +1258,136 @@ class FhirPathExpressionVisitor {
             }, ctx);
             return { node, value };
         }
+    }
+
+    /** Validate and type a FHIRPath instance selector (object construction):
+     *  `«typename» { element : value, ... }` — see the FHIRPath spec
+     *  https://build.fhir.org/ig/HL7/FHIRPath/en/index.html#instance-selector.
+     *  Checks that the constructed type is known, that each named element exists
+     *  on that type, and that each value expression's type is assignable to the
+     *  element it populates. */
+    private visitInstanceSelector(ctx: InstanceSelectorContext, input: FhirPathValue): { node: JsonNode; value: FhirPathValue } {
+        const typeNameCtx = ctx.qualifiedIdentifier();
+        const typeName = typeNameCtx.getText();
+        const node: JsonNode = attachPosition({
+            ExpressionType: "NewNodeExpression",
+            Name: typeName,
+            Arguments: [],
+            ReturnType: "",
+        }, ctx);
+        node.SpecUrl = "https://build.fhir.org/ig/HL7/FHIRPath/en/index.html#instance-selector";
+
+        // Resolve the constructed type (namespace-aware: FHIR.Identifier, System.String, ...).
+        const targetType =
+            this.provider.lookupByTypeName(typeName) ??
+            this.provider.lookupByTypeName(stripNamespacePrefix(typeName));
+        if (!targetType) {
+            this.addDiagnostic({
+                severity: "error",
+                code: "unknown-type",
+                message: `Cannot construct unknown type '${typeName}'.`,
+                ...nodeStart(typeNameCtx),
+            });
+        }
+
+        // Per spec: constructing from a collection of more than one input item
+        // signals an error at runtime. Surface as a warning so authoring the
+        // expression standalone (single/empty focus) is not blocked.
+        if (input.isCollection) {
+            this.addDiagnostic({
+                severity: "warning",
+                code: "instance-multi-input",
+                message: `Instance selector '${typeName}' will throw at runtime if the input collection has more than one item.`,
+                ...nodeStart(ctx),
+            });
+        }
+
+        const elementSelectors = ctx.instanceElementSelector_list();
+        for (const sel of elementSelectors) {
+            const elementName = sel.identifier().getText();
+            const valueCtx = sel.expression();
+            const valueResult = this.visitExpression(valueCtx, input);
+
+            const elementNode: JsonNode = attachPosition({
+                ExpressionType: "InstanceElementSelector",
+                Name: elementName,
+                Arguments: [valueResult.node],
+                ReturnType: formatValueType(valueResult.value),
+            }, sel);
+            node.Arguments!.push(elementNode);
+
+            if (!targetType) continue;
+
+            const element = this.findElement(targetType, elementName);
+            if (!element) {
+                this.addDiagnostic({
+                    severity: "error",
+                    code: "instance-element-not-found",
+                    message: `Element '${elementName}' not found on type '${displayTypeName(targetType)}'.`,
+                    ...nodeStart(sel.identifier()),
+                });
+                continue;
+            }
+
+            // Cardinality: a single-valued element cannot be populated from a
+            // collection (collection elements can be — see spec).
+            if (valueResult.value.isCollection && !element.IsArray) {
+                this.addDiagnostic({
+                    severity: "warning",
+                    code: "instance-element-cardinality",
+                    message: `Element '${elementName}' on '${displayTypeName(targetType)}' is not a collection but the value expression may return multiple items.`,
+                    ...nodeStart(sel),
+                });
+            }
+
+            // Value type: each value type must be assignable to one of the
+            // element's declared types. Skip when the value type is unknown
+            // (already diagnosed elsewhere) so we don't double-report.
+            if (valueResult.value.types.length > 0) {
+                const ok = valueResult.value.types.some((vt) =>
+                    element.Type.some((et) => this.valueAssignableToElementType(et, vt)),
+                );
+                if (!ok) {
+                    const expected = element.Type.map((et) => et.TypeName).join(" | ");
+                    this.addDiagnostic({
+                        severity: "error",
+                        code: "instance-element-type-mismatch",
+                        message: `Element '${elementName}' on '${displayTypeName(targetType)}' expects ${expected} but the value is ${joinTypeNames(valueResult.value.types)}.`,
+                        ...nodeStart(valueCtx),
+                    });
+                }
+            }
+        }
+
+        const value: FhirPathValue = targetType
+            ? { types: [targetType], isCollection: input.isCollection }
+            : EMPTY_VALUE;
+        node.ReturnType = formatValueType(value);
+        return { node, value };
+    }
+
+    /** True when a value of TypeModel `vt` can be assigned to an element whose
+     *  declared type is `et`. Handles exact matches, subtype (is-a)
+     *  relationships, and the System.* ↔ FHIR-primitive-container mapping
+     *  (e.g. a `System.String` literal assigned to a `uri`/`code` element). */
+    private valueAssignableToElementType(et: ElementTypeModel, vt: TypeModel): boolean {
+        const etName = et.TypeName;
+        // Exact name match (treating System.X and X equivalently).
+        if (stripSystemPrefix(vt.TypeName) === stripSystemPrefix(etName)) return true;
+        // The value is a subtype of the declared element type (e.g. a Coding
+        // assigned to an `Element`-typed element).
+        if (isBaseTypeOf(vt, etName, this.provider)) return true;
+        // System primitive ↔ FHIR primitive container mapping.
+        const etModel = this.provider.lookupByTypeName(etName);
+        const etSys = etModel
+            ? systemNameOfFhirPrimitive(etModel, this.provider)
+            : (isSpecSystemType(etName) ? etName : undefined);
+        const vtSys = systemNameOfFhirPrimitive(vt, this.provider);
+        if (etSys && vtSys && etSys === vtSys) return true;
+        // The element is declared with a System.* type and the value is the
+        // matching System primitive.
+        if (isSpecSystemType(etName) && vtSys === etName) return true;
+        return false;
     }
 
     private visitLiteral(ctx: LiteralContext): { node: JsonNode; value: FhirPathValue } {

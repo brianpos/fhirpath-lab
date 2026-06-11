@@ -640,3 +640,104 @@ describe("FHIRPath validator visitor", () => {
         }
     });
 });
+
+describe("FHIRPath validator — instance selector (object construction)", () => {
+    it("types a static Coding construction and validates its elements", () => {
+        const r = validateFhirpathExpression(
+            "Coding { system : 'http://example.org/demo', code : 'c1' }",
+            { fhirVersion: "r4" },
+        );
+        expect(r.diagnostics).toEqual([]);
+        expect(r.expectedReturnType).toBe("Coding");
+        expect(r.expectedReturnIsCollection).toBe(false);
+        expect(r.parseDebugTree?.ExpressionType).toBe("NewNodeExpression");
+        expect(r.parseDebugTree?.Name).toBe("Coding");
+        const elementNodes = r.parseDebugTree?.Arguments ?? [];
+        expect(elementNodes.map((n) => n.Name)).toEqual(["system", "code"]);
+        expect(elementNodes[0].ExpressionType).toBe("InstanceElementSelector");
+    });
+
+    it("accepts an empty object construction { : }", () => {
+        const r = validateFhirpathExpression("Period {:}", { fhirVersion: "r4" });
+        expect(r.diagnostics).toEqual([]);
+        expect(r.expectedReturnType).toBe("Period");
+        expect(r.parseDebugTree?.Arguments).toEqual([]);
+    });
+
+    it("resolves a namespace-prefixed type name (FHIR.Identifier)", () => {
+        const r = validateFhirpathExpression(
+            "FHIR.Identifier { system : 'urn:oid:1.2.3', value : 'N1' }",
+            { fhirVersion: "r4" },
+        );
+        expect(r.diagnostics).toEqual([]);
+        expect(r.expectedReturnType).toBe("Identifier");
+    });
+
+    it("validates nested constructions and complex element types", () => {
+        const r = validateFhirpathExpression(
+            "CodeableConcept { coding : Coding { system : 'http://x', code : 'y' }, text : 'hi' }",
+            { fhirVersion: "r4" },
+        );
+        expect(r.diagnostics).toEqual([]);
+        expect(r.expectedReturnType).toBe("CodeableConcept");
+    });
+
+    it("flags an unknown construction type", () => {
+        const r = validateFhirpathExpression("NotAType { a : 1 }", { fhirVersion: "r4" });
+        const errors = r.diagnostics.filter((d) => d.severity === "error");
+        expect(errors.some((d) => d.code === "unknown-type")).toBe(true);
+        expect(errors[0].message).toContain("NotAType");
+    });
+
+    it("flags an element that does not exist on the constructed type", () => {
+        const r = validateFhirpathExpression(
+            "Coding { notARealElement : 'x' }",
+            { fhirVersion: "r4" },
+        );
+        const errors = r.diagnostics.filter((d) => d.severity === "error");
+        expect(errors.some((d) => d.code === "instance-element-not-found")).toBe(true);
+        const err = errors.find((d) => d.code === "instance-element-not-found")!;
+        expect(err.message).toContain("notARealElement");
+        expect(err.message).toContain("Coding");
+        expect(err.length).toBeGreaterThan(0);
+    });
+
+    it("flags a value whose type is not assignable to the element", () => {
+        // `period` on Identifier expects a Period; a string literal is wrong.
+        const r = validateFhirpathExpression(
+            "Identifier { period : 'not-a-period' }",
+            { fhirVersion: "r4" },
+        );
+        const errors = r.diagnostics.filter((d) => d.severity === "error");
+        expect(errors.some((d) => d.code === "instance-element-type-mismatch")).toBe(true);
+        const err = errors.find((d) => d.code === "instance-element-type-mismatch")!;
+        expect(err.message).toContain("period");
+        expect(err.message).toContain("Period");
+    });
+
+    it("accepts a System primitive value assigned to a FHIR primitive element", () => {
+        // `value: 'final'` on the `code` primitive (special value element).
+        const r = validateFhirpathExpression("code { value : 'final' }", { fhirVersion: "r4" });
+        expect(r.diagnostics.filter((d) => d.severity === "error")).toEqual([]);
+        expect(r.expectedReturnType).toBe("code");
+    });
+
+    it("validates element value expressions against the input focus", () => {
+        // `code : gender` resolves `gender` against the Patient focus.
+        const r = validateFhirpathExpression(
+            "Coding { system : 'http://x', code : gender }",
+            { fhirVersion: "r4", contextType: "Patient" },
+        );
+        expect(r.diagnostics.filter((d) => d.severity === "error")).toEqual([]);
+        expect(r.expectedReturnType).toBe("Coding");
+    });
+
+    it("reports unresolved properties used inside element values", () => {
+        const r = validateFhirpathExpression(
+            "Coding { code : notAPatientProperty }",
+            { fhirVersion: "r4", contextType: "Patient" },
+        );
+        const errors = r.diagnostics.filter((d) => d.severity === "error");
+        expect(errors.some((d) => d.code === "prop-not-found")).toBe(true);
+    });
+});
