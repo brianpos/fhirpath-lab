@@ -489,12 +489,16 @@ class FhirPathExpressionVisitor {
     /** Stack of `$total` candidate types — pushed when entering an aggregate. */
     private totalStack: FhirPathValue[] = [];
 
+    /** Environment variables available at the current point in expression evaluation. */
+    private dynamicEnvironmentVariables: Record<string, FhirPathValue>;
+
     constructor(
         private readonly source: string,
         private readonly provider: ModelProvider,
         private readonly options: VisitorOptions,
     ) {
         this.thisStack.push(this.contextValue());
+        this.dynamicEnvironmentVariables = { ...(this.options.environmentVariables ?? {}) };
     }
 
     private contextValue(): FhirPathValue {
@@ -521,6 +525,28 @@ class FhirPathExpressionVisitor {
     /** The current lexical scope (`$this`) for argument-expression evaluation. */
     private currentScopeValue(): FhirPathValue {
         return this.thisStack[this.thisStack.length - 1] ?? this.contextValue();
+    }
+
+    private extractStringLiteralArg(ctx: ExpressionContext | undefined): string | undefined {
+        if (!ctx) return undefined;
+        if (!(ctx instanceof TermExpressionContext)) return undefined;
+        const term = ctx.term();
+        if (!(term instanceof LiteralTermContext)) return undefined;
+        const lit = term.literal();
+        if (!(lit instanceof StringLiteralContext)) return undefined;
+        const raw = lit.getText();
+        return raw.length >= 2 ? raw.substring(1, raw.length - 1) : raw;
+    }
+
+    private registerDefineVariable(
+        input: FhirPathValue,
+        argValues: FhirPathValue[],
+        argCtxs: ExpressionContext[],
+    ): void {
+        const name = this.extractStringLiteralArg(argCtxs[0]);
+        if (!name) return;
+        const value = argValues[1] ?? input;
+        this.dynamicEnvironmentVariables[name] = value;
     }
 
     private addDiagnostic(d: Omit<Diagnostic, "expression"> & { expression?: string }): void {
@@ -917,6 +943,9 @@ class FhirPathExpressionVisitor {
 
         // Compute result type.
         const value = this.computeFunctionResultType(def, name, input, argValues, argCtxs);
+        if (name === "defineVariable") {
+            this.registerDefineVariable(input, argValues, argCtxs);
+        }
         node.ReturnType = formatValueType(value);
         return { node, value };
     }
@@ -1261,7 +1290,7 @@ class FhirPathExpressionVisitor {
         const name = ident ? ident.getText() : (str ? str.getText().slice(1, -1) : ctx.getText());
         const node: JsonNode = attachPosition({ ExpressionType: "VariableRefExpression", Name: name, ReturnType: "" }, ctx);
 
-        const provided = this.options.environmentVariables?.[name];
+        const provided = this.dynamicEnvironmentVariables[name];
         if (provided) {
             node.ReturnType = formatValueType(provided);
             return { node, value: provided };

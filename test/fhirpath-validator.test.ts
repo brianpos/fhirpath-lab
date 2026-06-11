@@ -512,6 +512,32 @@ describe("FHIRPath validator visitor", () => {
             expect(r.diagnostics.filter((d) => d.severity === "error")).toEqual([]);
         });
 
+        it("defineVariable() exposes a variable to subsequent chained expressions", () => {
+            const r = validateFhirpathExpression(
+                "Patient.name.defineVariable('n').where(%n.family.exists()).family",
+                {
+                    fhirVersion: "r4",
+                    contextType: "Patient",
+                },
+            );
+            expect(r.diagnostics.filter((d) => d.severity === "error")).toEqual([]);
+            expect(r.expectedReturnType).toBe("string");
+            expect(r.expectedReturnIsCollection).toBe(true);
+        });
+
+        it("defineVariable() uses projection type for downstream variable references", () => {
+            const r = validateFhirpathExpression(
+                "Patient.name.defineVariable('label', 'official').where(%label = 'official').family",
+                {
+                    fhirVersion: "r4",
+                    contextType: "Patient",
+                },
+            );
+            expect(r.diagnostics.filter((d) => d.severity === "error")).toEqual([]);
+            expect(r.expectedReturnType).toBe("string");
+            expect(r.expectedReturnIsCollection).toBe(true);
+        });
+
         it("aggregate() returns the type of the init/aggregator expression", () => {
             // (1 | 2 | 3).aggregate($this + $total, 0) => Integer
             const r = validateFhirpathExpression(
