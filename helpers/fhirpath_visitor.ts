@@ -851,6 +851,18 @@ class FhirPathExpressionVisitor {
                     } finally {
                         this.thisStack.pop();
                     }
+                } else if (name === "defineVariable" && i === 1) {
+                    // Special case: `defineVariable`'s value expression is
+                    // evaluated against the input collection (the LHS of the
+                    // chain), not the lexical `$this`. The spec types it as
+                    // `value : collection` rather than `expression`, so it is
+                    // not a scoped lambda, but its Expression Scope is still the
+                    // input collection. e.g. in
+                    // `name.defineVariable('fn', first())` the `first()` operates
+                    // on `name` (HumanName), not the root `%context` (Patient).
+                    const arg = this.visitExpression(argCtx, input);
+                    node.Arguments!.push(arg.node);
+                    argValues.push(arg.value);
                 } else {
                     // Non-scoped arguments are evaluated in the current
                     // lexical scope (`$this`), not the root `%context`.
