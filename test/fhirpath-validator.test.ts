@@ -398,8 +398,51 @@ describe("FHIRPath validator visitor", () => {
             expect(r.expectedReturnIsCollection).toBe(true);
         });
 
-        it("sort() with multiple key selectors produces no arity error", () => {
+        it("trace()'s name argument is evaluated in the outer scope, not against input elements", () => {
+            // Per the FHIRPath spec, `trace(name : String, projection : Expression)`
+            // is a scoped function only for the `projection` argument; the
+            // `name` is a regular String evaluated in the current lexical
+            // scope. Here `family` is used as the trace label and must resolve
+            // against the outer Patient (not against each HumanName), so it
+            // produces a prop-not-found error because Patient has no `family`.
             const r = validateFhirpathExpression(
+                "Patient.name.trace(family, given)",
+                { fhirVersion: "r4", contextType: "Patient" },
+            );
+            expect(
+                r.diagnostics.some(
+                    (d) => d.severity === "error" && d.code === "prop-not-found",
+                ),
+            ).toBe(true);
+        });
+
+        it("trace()'s projection argument is a scoped lambda over input elements", () => {
+            // `given` resolves against each HumanName because `projection` is
+            // typed Expression — a scoped argument.
+            const r = validateFhirpathExpression(
+                "Patient.name.trace('label', given)",
+                { fhirVersion: "r4", contextType: "Patient" },
+            );
+            expect(r.diagnostics.filter((d) => d.severity === "error")).toEqual([]);
+        });
+
+        it("aggregate()'s init argument is evaluated in the outer scope, not against input elements", () => {
+            // Per the spec, `aggregate(aggregator : expression, init : value)`
+            // evaluates `init` in the current lexical scope. `family` must
+            // therefore resolve against the outer Patient and produce a
+            // prop-not-found error.
+            const r = validateFhirpathExpression(
+                "Patient.name.aggregate($this & ',' & $total, family)",
+                { fhirVersion: "r4", contextType: "Patient" },
+            );
+            expect(
+                r.diagnostics.some(
+                    (d) => d.severity === "error" && d.code === "prop-not-found",
+                ),
+            ).toBe(true);
+        });
+
+        it("sort() with multiple key selectors produces no arity error", () => {            const r = validateFhirpathExpression(
                 "Patient.name.sort(family, given.first())",
                 {
                     fhirVersion: "r4",

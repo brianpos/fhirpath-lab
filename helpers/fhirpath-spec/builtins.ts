@@ -82,23 +82,6 @@ export const SAME_TYPE_SINGLE_FUNCTIONS: ReadonlySet<string> = new Set([
     "single",
 ]);
 
-/** Functions where the second-and-subsequent arguments are evaluated lazily in
- *  the scope of *each* element of the input collection (i.e. the argument's
- *  `$this` is each input item, not the whole collection). */
-export const LAMBDA_ARG_FUNCTIONS: ReadonlySet<string> = new Set([
-    "where",
-    "select",
-    "all",
-    "exists",
-    "repeat",
-    "repeatAll",
-    "aggregate",
-    "iif",
-    "trace",
-    "sort",
-    "defineVariable",
-]);
-
 /** True if `name` is the name of a System.* primitive type (per the spec). */
 export function isSystemType(name: string): boolean {
     return SYSTEM_TYPE_NAMES.has(name);

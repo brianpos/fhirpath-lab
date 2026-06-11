@@ -69,16 +69,27 @@ import {
     splitTypeUnion,
     isSpecSystemType,
 } from "./fhirpath-spec";
-import type { FunctionDef, OperationDef } from "./fhirpath-spec/types";
+import type { FunctionArgumentDef, FunctionDef, OperationDef } from "./fhirpath-spec/types";
 import {
     BUILTIN_ENV_VARS_BY_NAME,
     IMPLICIT_CONVERSIONS,
     isAssignable,
     isSystemType,
-    LAMBDA_ARG_FUNCTIONS,
     SAME_TYPE_COLLECTION_FUNCTIONS,
     SAME_TYPE_SINGLE_FUNCTIONS,
 } from "./fhirpath-spec/builtins";
+
+/** A function argument is evaluated as a scoped lambda (with `$this` rebound to
+ *  each input element) iff the spec declares its type as "expression" — see
+ *  https://hl7.org/fhirpath/#scoped-functions. The spec uses both lower-case
+ *  ("expression") and capitalised ("Expression") spellings, so match
+ *  case-insensitively. Non-expression arguments (e.g. `trace`'s `name : String`,
+ *  `aggregate`'s `init : value`, `defineVariable`'s `value : collection`,
+ *  `iif`'s branches typed as `collection`) are evaluated in the current
+ *  lexical scope without rebinding `$this`. */
+function isScopedExpressionArg(argDef: FunctionArgumentDef | undefined): boolean {
+    return !!argDef && argDef.type.toLowerCase() === "expression";
+}
 
 // ---- Public types ----------------------------------------------------------
 
@@ -755,12 +766,18 @@ class FhirPathExpressionVisitor {
             ? sortArgs.map((sa) => (sa instanceof SortDirectionArgumentContext ? sa.expression() : null)).filter((e): e is ExpressionContext => e !== null)
             : params ? params.expression_list() : [];
 
-        // Visit arguments. For lambda-arg functions, each argument is evaluated
-        // with $this set to the input element type.
-        const isLambda = LAMBDA_ARG_FUNCTIONS.has(name);
+        // Look up the spec definition early so per-argument scope decisions
+        // (whether to rebind `$this` for a scoped expression argument) can be
+        // driven by `argument.type` rather than a hard-coded function list.
+        const def = functionsByName[name];
+
+        // Visit arguments. For each declared `expression` argument (per the
+        // spec's "scoped functions" definition), evaluate with $this rebound
+        // to each input element; everything else is evaluated in the current
+        // lexical scope.
         const argValues: FhirPathValue[] = [];
         if (name === "aggregate") {
-            // aggregate(aggregator, init?):
+            // aggregate(aggregator : expression, init : value):
             //  - `init` is evaluated in the current lexical scope (not lambda).
             //  - `aggregator` is a lambda over input elements; $total carries
             //    the init type so the accumulator expression can be type-checked.
@@ -790,9 +807,15 @@ class FhirPathExpressionVisitor {
             if (aggNode) { node.Arguments!.push(aggNode); argValues.push(aggValue); }
             if (initNode) { node.Arguments!.push(initNode); argValues.push(initValue); }
         } else {
+            const declared = def?.arguments ?? [];
             for (let i = 0; i < argCtxs.length; i++) {
                 const argCtx = argCtxs[i];
-                if (isLambda && i >= 0) {
+                // For variadic functions the last declared argument applies to
+                // all extra positional args (e.g. sort(keySelector...)).
+                const argDef = declared.length > 0
+                    ? declared[Math.min(i, declared.length - 1)]
+                    : undefined;
+                if (isScopedExpressionArg(argDef)) {
                     const elementType: FhirPathValue = { types: input.types, isCollection: false };
                     this.thisStack.push(elementType);
                     try {
@@ -803,7 +826,7 @@ class FhirPathExpressionVisitor {
                         this.thisStack.pop();
                     }
                 } else {
-                    // Non-lambda function arguments are evaluated in the current
+                    // Non-scoped arguments are evaluated in the current
                     // lexical scope (`$this`), not the root `%context`.
                     const arg = this.visitExpression(argCtx, this.currentScopeValue());
                     node.Arguments!.push(arg.node);
@@ -812,7 +835,6 @@ class FhirPathExpressionVisitor {
             }
         }
 
-        const def = functionsByName[name];
         if (!def) {
             this.addDiagnostic({
                 severity: "error",
