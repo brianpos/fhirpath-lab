@@ -1,0 +1,211 @@
+{
+  "ArtifactAssessment": {
+    "TypeName": "ArtifactAssessment",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "title",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "citeAs[x]",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Citation"
+            ]
+          },
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      },
+      {
+        "ElementName": "date",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      },
+      {
+        "ElementName": "copyright",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      },
+      {
+        "ElementName": "approvalDate",
+        "Type": [
+          {
+            "TypeName": "date"
+          }
+        ]
+      },
+      {
+        "ElementName": "lastReviewDate",
+        "Type": [
+          {
+            "TypeName": "date"
+          }
+        ]
+      },
+      {
+        "ElementName": "artifact[x]",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Resource"
+            ]
+          },
+          {
+            "TypeName": "canonical"
+          },
+          {
+            "TypeName": "uri"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "content",
+        "Type": [
+          {
+            "TypeName": "artifactassessment_content"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "workflowStatus",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "disposition",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      }
+    ]
+  },
+  "artifactassessment_content": {
+    "TypeName": "artifactassessment_content",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "informationType",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "summary",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      },
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "classifier",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "quantity",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
+      },
+      {
+        "ElementName": "author",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Device",
+              "http://hl7.org/fhir/StructureDefinition/Organization",
+              "http://hl7.org/fhir/StructureDefinition/Patient",
+              "http://hl7.org/fhir/StructureDefinition/Practitioner",
+              "http://hl7.org/fhir/StructureDefinition/PractitionerRole"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "path",
+        "Type": [
+          {
+            "TypeName": "uri"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "relatedArtifact",
+        "Type": [
+          {
+            "TypeName": "RelatedArtifact"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "freeToShare",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "component",
+        "Type": [
+          {
+            "TypeName": "artifactassessment_content"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  }
+}

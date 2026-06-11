@@ -1,0 +1,237 @@
+{
+  "BiologicallyDerivedProduct": {
+    "TypeName": "BiologicallyDerivedProduct",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "productCategory",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "productCode",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "parent",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/BiologicallyDerivedProduct"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "request",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/ServiceRequest"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "biologicalSourceEvent",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ]
+      },
+      {
+        "ElementName": "processingFacility",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "division",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "productStatus",
+        "Type": [
+          {
+            "TypeName": "Coding"
+          }
+        ]
+      },
+      {
+        "ElementName": "expirationDate",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      },
+      {
+        "ElementName": "collection",
+        "Type": [
+          {
+            "TypeName": "biologicallyderivedproduct_collection"
+          }
+        ]
+      },
+      {
+        "ElementName": "storageTempRequirements",
+        "Type": [
+          {
+            "TypeName": "Range"
+          }
+        ]
+      },
+      {
+        "ElementName": "property",
+        "Type": [
+          {
+            "TypeName": "biologicallyderivedproduct_property"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "biologicallyderivedproduct_collection": {
+    "TypeName": "biologicallyderivedproduct_collection",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "collector",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Practitioner",
+              "http://hl7.org/fhir/StructureDefinition/PractitionerRole"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "sourcePatient",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Patient"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "sourceOrganization",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "collected[x]",
+        "Type": [
+          {
+            "TypeName": "Period"
+          },
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      },
+      {
+        "ElementName": "procedure",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Procedure"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "biologicallyderivedproduct_property": {
+    "TypeName": "biologicallyderivedproduct_property",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "value[x]",
+        "Type": [
+          {
+            "TypeName": "Attachment"
+          },
+          {
+            "TypeName": "CodeableConcept"
+          },
+          {
+            "TypeName": "Period"
+          },
+          {
+            "TypeName": "Quantity"
+          },
+          {
+            "TypeName": "Range"
+          },
+          {
+            "TypeName": "Ratio"
+          },
+          {
+            "TypeName": "boolean"
+          },
+          {
+            "TypeName": "integer"
+          },
+          {
+            "TypeName": "string"
+          }
+        ],
+        "Required": true
+      }
+    ]
+  }
+}

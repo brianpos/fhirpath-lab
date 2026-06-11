@@ -11,6 +11,17 @@ export interface MergedUseContextsResult {
   changed: boolean;
 }
 
+/** Compare two use contexts treating them as equal when both system and code match.
+ * The display is intentionally ignored — only the canonical (system, code) identifies a coding. */
+function sameUseContext(
+  a: { system?: string; code?: string },
+  b: { system?: string; code?: string }
+): boolean {
+  if (a.system !== b.system) return false;
+  if (a.code !== b.code) return false;
+  return true;
+}
+
 /** Return a new array containing the initial list, plus the includeContexts (excluding any duplicates) */
 export function mergeUseContexts(initial: FhirpathLabUseContexts[], includeContexts?: UsageContext[]): MergedUseContextsResult {
   if (!includeContexts) return { contexts: initial, changed: false };
@@ -23,11 +34,7 @@ export function mergeUseContexts(initial: FhirpathLabUseContexts[], includeConte
 
     for (let coding of val.valueCodeableConcept.coding) {
       if (
-        initial?.filter((value, index, array) => {
-          if (value.system !== coding.system) return false;
-          if (value.code !== coding.code) return false;
-          return true;
-        }).length === 0
+        newCodings.filter((value) => sameUseContext(value, coding)).length === 0
       ) {
         // add this item to the orgTypes
         if (coding.code && coding.display) {
@@ -51,14 +58,10 @@ export function mergeUseContexts(initial: FhirpathLabUseContexts[], includeConte
 export function mergeCustomUseContexts(initial: FhirpathLabUseContexts[], includeContexts?: FhirpathLabUseContexts[]): FhirpathLabUseContexts[] {
   if (!includeContexts) return initial;
 
-  var newCodings = [ ... initial] ?? [];
+  var newCodings = [ ... initial];
   for (let coding of includeContexts) {
     if (
-      initial?.filter((value, index, array) => {
-        if (value.system !== coding.system) return false;
-        if (value.code !== coding.code) return false;
-        return true;
-      }).length === 0
+      newCodings.filter((value) => sameUseContext(value, coding)).length === 0
     ) {
       // add this item to the orgTypes
       if (coding.code && coding.display) {
@@ -91,12 +94,8 @@ export function saveCustomUseContexts(suffix: string, contexts: FhirpathLabUseCo
   console.log("Updating custom Use Contexts list (based on content)");
 
   // remove any default contexts
-  const storeContexts = contexts.filter((value, index, array) => {
-    return excludingDefaults?.filter((exValue, exIndex, exArray) => {
-      if (value.system !== exValue.system) return false;
-      if (value.code !== exValue.code) return false;
-      return true;
-    }).length === 0;
+  const storeContexts = contexts.filter((value) => {
+    return excludingDefaults?.filter((exValue) => sameUseContext(value, exValue)).length === 0;
   });
 
   localStorage.setItem(

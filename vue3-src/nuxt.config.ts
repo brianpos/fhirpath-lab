@@ -17,7 +17,7 @@ export default defineNuxtConfig({
   alias: {
     '@legacy/helpers': resolve(currentDir, '../helpers'),
     '@legacy/types': resolve(currentDir, '../types'),
-    '@legacy/models': resolve(currentDir, '../models'),
+    'models': resolve(currentDir, '../models'),
   },
   
   modules: [
@@ -29,6 +29,15 @@ export default defineNuxtConfig({
     '~/assets/vuetify/main.scss', // If customizing Vuetify global sass variables, ensure disableVuetifyStyles: true with Nuxt Vuetity module
     '~/assets/variables.scss'
   ],
+  vite: {
+    optimizeDeps: {
+      include: [
+        '@vue/devtools-core',
+        '@vue/devtools-kit',
+        '@microsoft/applicationinsights-web',
+      ]
+    }
+  },
   vuetify: {
     moduleOptions: {
       /* module specific options */

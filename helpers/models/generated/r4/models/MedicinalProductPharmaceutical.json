@@ -1,0 +1,220 @@
+{
+  "MedicinalProductPharmaceutical": {
+    "TypeName": "MedicinalProductPharmaceutical",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "administrableDoseForm",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "unitOfPresentation",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "ingredient",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/MedicinalProductIngredient"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "device",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/DeviceDefinition"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "characteristics",
+        "Type": [
+          {
+            "TypeName": "medicinalproductpharmaceutical_characteristics"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "routeOfAdministration",
+        "Type": [
+          {
+            "TypeName": "medicinalproductpharmaceutical_routeOfAdministration"
+          }
+        ],
+        "IsArray": true,
+        "Required": true
+      }
+    ]
+  },
+  "medicinalproductpharmaceutical_characteristics": {
+    "TypeName": "medicinalproductpharmaceutical_characteristics",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "code",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "status",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      }
+    ]
+  },
+  "medicinalproductpharmaceutical_routeOfAdministration": {
+    "TypeName": "medicinalproductpharmaceutical_routeOfAdministration",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "code",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "firstDose",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
+      },
+      {
+        "ElementName": "maxSingleDose",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
+      },
+      {
+        "ElementName": "maxDosePerDay",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
+      },
+      {
+        "ElementName": "maxDosePerTreatmentPeriod",
+        "Type": [
+          {
+            "TypeName": "Ratio"
+          }
+        ]
+      },
+      {
+        "ElementName": "maxTreatmentPeriod",
+        "Type": [
+          {
+            "TypeName": "Duration"
+          }
+        ]
+      },
+      {
+        "ElementName": "targetSpecies",
+        "Type": [
+          {
+            "TypeName": "medicinalproductpharmaceutical_routeOfAdministration_targetSpecies"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "medicinalproductpharmaceutical_routeOfAdministration_targetSpecies": {
+    "TypeName": "medicinalproductpharmaceutical_routeOfAdministration_targetSpecies",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "code",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "withdrawalPeriod",
+        "Type": [
+          {
+            "TypeName": "medicinalproductpharmaceutical_routeOfAdministration_targetSpecies_withdrawalPeriod"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "medicinalproductpharmaceutical_routeOfAdministration_targetSpecies_withdrawalPeriod": {
+    "TypeName": "medicinalproductpharmaceutical_routeOfAdministration_targetSpecies_withdrawalPeriod",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "tissue",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "value",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "supportingInformation",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      }
+    ]
+  }
+}

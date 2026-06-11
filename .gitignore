@@ -67,9 +67,13 @@ typings/
 
 # nuxt.js build output
 .nuxt
+.output
 
 # Nuxt generate
 dist
+
+# Vue3/Nuxt3 build output
+vue3-src/.output/
 
 # vuepress build output
 .vuepress/dist
@@ -91,3 +95,6 @@ sw.*
 
 # Visual Studio User Workspace
 .vs
+
+# Custom-model generator cache (downloaded HL7 bundles)
+scripts/generate-models/.cache/

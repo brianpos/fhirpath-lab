@@ -1,0 +1,205 @@
+{
+  "ImmunizationRecommendation": {
+    "TypeName": "ImmunizationRecommendation",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "patient",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Patient"
+            ]
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "date",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "authority",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "recommendation",
+        "Type": [
+          {
+            "TypeName": "immunizationrecommendation_recommendation"
+          }
+        ],
+        "IsArray": true,
+        "Required": true
+      }
+    ]
+  },
+  "immunizationrecommendation_recommendation": {
+    "TypeName": "immunizationrecommendation_recommendation",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "vaccineCode",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "targetDisease",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "contraindicatedVaccineCode",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "forecastStatus",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "forecastReason",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "dateCriterion",
+        "Type": [
+          {
+            "TypeName": "immunizationrecommendation_recommendation_dateCriterion"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "description",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "series",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "doseNumber[x]",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          },
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "seriesDoses[x]",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          },
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "supportingImmunization",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Immunization",
+              "http://hl7.org/fhir/StructureDefinition/ImmunizationEvaluation"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "supportingPatientInformation",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Resource"
+            ]
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "immunizationrecommendation_recommendation_dateCriterion": {
+    "TypeName": "immunizationrecommendation_recommendation_dateCriterion",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "code",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "value",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ],
+        "Required": true
+      }
+    ]
+  }
+}

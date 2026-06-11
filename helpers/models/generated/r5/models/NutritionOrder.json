@@ -1,0 +1,615 @@
+{
+  "NutritionOrder": {
+    "TypeName": "NutritionOrder",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "instantiatesCanonical",
+        "Type": [
+          {
+            "TypeName": "canonical"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "instantiatesUri",
+        "Type": [
+          {
+            "TypeName": "uri"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "instantiates",
+        "Type": [
+          {
+            "TypeName": "uri"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "basedOn",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/CarePlan",
+              "http://hl7.org/fhir/StructureDefinition/NutritionOrder",
+              "http://hl7.org/fhir/StructureDefinition/ServiceRequest"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "groupIdentifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ]
+      },
+      {
+        "ElementName": "status",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "intent",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "priority",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "subject",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Group",
+              "http://hl7.org/fhir/StructureDefinition/Patient"
+            ]
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "encounter",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Encounter"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "supportingInformation",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Resource"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "dateTime",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "orderer",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Practitioner",
+              "http://hl7.org/fhir/StructureDefinition/PractitionerRole"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "performer",
+        "Type": [
+          {
+            "TypeName": "CodeableReference"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "allergyIntolerance",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/AllergyIntolerance"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "foodPreferenceModifier",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "excludeFoodModifier",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "outsideFoodAllowed",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "oralDiet",
+        "Type": [
+          {
+            "TypeName": "nutritionorder_oralDiet"
+          }
+        ]
+      },
+      {
+        "ElementName": "supplement",
+        "Type": [
+          {
+            "TypeName": "nutritionorder_supplement"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "enteralFormula",
+        "Type": [
+          {
+            "TypeName": "nutritionorder_enteralFormula"
+          }
+        ]
+      },
+      {
+        "ElementName": "note",
+        "Type": [
+          {
+            "TypeName": "Annotation"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "nutritionorder_oralDiet": {
+    "TypeName": "nutritionorder_oralDiet",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "schedule",
+        "Type": [
+          {
+            "TypeName": "nutritionorder_oralDiet_schedule"
+          }
+        ]
+      },
+      {
+        "ElementName": "nutrient",
+        "Type": [
+          {
+            "TypeName": "nutritionorder_oralDiet_nutrient"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "texture",
+        "Type": [
+          {
+            "TypeName": "nutritionorder_oralDiet_texture"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "fluidConsistencyType",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "instruction",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      }
+    ]
+  },
+  "nutritionorder_oralDiet_schedule": {
+    "TypeName": "nutritionorder_oralDiet_schedule",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "timing",
+        "Type": [
+          {
+            "TypeName": "Timing"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "asNeeded",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "asNeededFor",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      }
+    ]
+  },
+  "nutritionorder_oralDiet_nutrient": {
+    "TypeName": "nutritionorder_oralDiet_nutrient",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "modifier",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "amount",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
+      }
+    ]
+  },
+  "nutritionorder_oralDiet_texture": {
+    "TypeName": "nutritionorder_oralDiet_texture",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "modifier",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "foodType",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      }
+    ]
+  },
+  "nutritionorder_supplement": {
+    "TypeName": "nutritionorder_supplement",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableReference"
+          }
+        ]
+      },
+      {
+        "ElementName": "productName",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "schedule",
+        "Type": [
+          {
+            "TypeName": "nutritionorder_supplement_schedule"
+          }
+        ]
+      },
+      {
+        "ElementName": "quantity",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
+      },
+      {
+        "ElementName": "instruction",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      }
+    ]
+  },
+  "nutritionorder_supplement_schedule": {
+    "TypeName": "nutritionorder_supplement_schedule",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "timing",
+        "Type": [
+          {
+            "TypeName": "Timing"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "asNeeded",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "asNeededFor",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      }
+    ]
+  },
+  "nutritionorder_enteralFormula": {
+    "TypeName": "nutritionorder_enteralFormula",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "baseFormulaType",
+        "Type": [
+          {
+            "TypeName": "CodeableReference"
+          }
+        ]
+      },
+      {
+        "ElementName": "baseFormulaProductName",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "deliveryDevice",
+        "Type": [
+          {
+            "TypeName": "CodeableReference"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "additive",
+        "Type": [
+          {
+            "TypeName": "nutritionorder_enteralFormula_additive"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "caloricDensity",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
+      },
+      {
+        "ElementName": "routeOfAdministration",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "administration",
+        "Type": [
+          {
+            "TypeName": "nutritionorder_enteralFormula_administration"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "maxVolumeToDeliver",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
+      },
+      {
+        "ElementName": "administrationInstruction",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      }
+    ]
+  },
+  "nutritionorder_enteralFormula_additive": {
+    "TypeName": "nutritionorder_enteralFormula_additive",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableReference"
+          }
+        ]
+      },
+      {
+        "ElementName": "productName",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "quantity",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
+      }
+    ]
+  },
+  "nutritionorder_enteralFormula_administration": {
+    "TypeName": "nutritionorder_enteralFormula_administration",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "schedule",
+        "Type": [
+          {
+            "TypeName": "nutritionorder_enteralFormula_administration_schedule"
+          }
+        ]
+      },
+      {
+        "ElementName": "quantity",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
+      },
+      {
+        "ElementName": "rate[x]",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          },
+          {
+            "TypeName": "Ratio"
+          }
+        ]
+      }
+    ]
+  },
+  "nutritionorder_enteralFormula_administration_schedule": {
+    "TypeName": "nutritionorder_enteralFormula_administration_schedule",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "timing",
+        "Type": [
+          {
+            "TypeName": "Timing"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "asNeeded",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "asNeededFor",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      }
+    ]
+  }
+}

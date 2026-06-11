@@ -1,0 +1,246 @@
+{
+  "Ingredient": {
+    "TypeName": "Ingredient",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ]
+      },
+      {
+        "ElementName": "status",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "for",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/AdministrableProductDefinition",
+              "http://hl7.org/fhir/StructureDefinition/ManufacturedItemDefinition",
+              "http://hl7.org/fhir/StructureDefinition/MedicinalProductDefinition"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "role",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "function",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "allergenicIndicator",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "manufacturer",
+        "Type": [
+          {
+            "TypeName": "ingredient_manufacturer"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "substance",
+        "Type": [
+          {
+            "TypeName": "ingredient_substance"
+          }
+        ],
+        "Required": true
+      }
+    ]
+  },
+  "ingredient_manufacturer": {
+    "TypeName": "ingredient_manufacturer",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "role",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "manufacturer",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          }
+        ],
+        "Required": true
+      }
+    ]
+  },
+  "ingredient_substance": {
+    "TypeName": "ingredient_substance",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "code",
+        "Type": [
+          {
+            "TypeName": "CodeableReference"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "strength",
+        "Type": [
+          {
+            "TypeName": "ingredient_substance_strength"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "ingredient_substance_strength": {
+    "TypeName": "ingredient_substance_strength",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "presentation[x]",
+        "Type": [
+          {
+            "TypeName": "Ratio"
+          },
+          {
+            "TypeName": "RatioRange"
+          }
+        ]
+      },
+      {
+        "ElementName": "textPresentation",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "concentration[x]",
+        "Type": [
+          {
+            "TypeName": "Ratio"
+          },
+          {
+            "TypeName": "RatioRange"
+          }
+        ]
+      },
+      {
+        "ElementName": "textConcentration",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "measurementPoint",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "country",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "referenceStrength",
+        "Type": [
+          {
+            "TypeName": "ingredient_substance_strength_referenceStrength"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "ingredient_substance_strength_referenceStrength": {
+    "TypeName": "ingredient_substance_strength_referenceStrength",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "substance",
+        "Type": [
+          {
+            "TypeName": "CodeableReference"
+          }
+        ]
+      },
+      {
+        "ElementName": "strength[x]",
+        "Type": [
+          {
+            "TypeName": "Ratio"
+          },
+          {
+            "TypeName": "RatioRange"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "measurementPoint",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "country",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  }
+}

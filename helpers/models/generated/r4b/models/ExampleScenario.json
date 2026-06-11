@@ -1,0 +1,505 @@
+{
+  "ExampleScenario": {
+    "TypeName": "ExampleScenario",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "url",
+        "Type": [
+          {
+            "TypeName": "uri"
+          }
+        ]
+      },
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "version",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "name",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "status",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "experimental",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "date",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      },
+      {
+        "ElementName": "publisher",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "contact",
+        "Type": [
+          {
+            "TypeName": "ContactDetail"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "useContext",
+        "Type": [
+          {
+            "TypeName": "UsageContext"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "jurisdiction",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "copyright",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      },
+      {
+        "ElementName": "purpose",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      },
+      {
+        "ElementName": "actor",
+        "Type": [
+          {
+            "TypeName": "examplescenario_actor"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "instance",
+        "Type": [
+          {
+            "TypeName": "examplescenario_instance"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "process",
+        "Type": [
+          {
+            "TypeName": "examplescenario_process"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "workflow",
+        "Type": [
+          {
+            "TypeName": "canonical"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "examplescenario_actor": {
+    "TypeName": "examplescenario_actor",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "actorId",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "name",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "description",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      }
+    ]
+  },
+  "examplescenario_instance": {
+    "TypeName": "examplescenario_instance",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "resourceId",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "resourceType",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "name",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "description",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      },
+      {
+        "ElementName": "version",
+        "Type": [
+          {
+            "TypeName": "examplescenario_instance_version"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "containedInstance",
+        "Type": [
+          {
+            "TypeName": "examplescenario_instance_containedInstance"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "examplescenario_instance_version": {
+    "TypeName": "examplescenario_instance_version",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "versionId",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "description",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ],
+        "Required": true
+      }
+    ]
+  },
+  "examplescenario_instance_containedInstance": {
+    "TypeName": "examplescenario_instance_containedInstance",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "resourceId",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "versionId",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      }
+    ]
+  },
+  "examplescenario_process": {
+    "TypeName": "examplescenario_process",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "title",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "description",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      },
+      {
+        "ElementName": "preConditions",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      },
+      {
+        "ElementName": "postConditions",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      },
+      {
+        "ElementName": "step",
+        "Type": [
+          {
+            "TypeName": "examplescenario_process_step"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "examplescenario_process_step": {
+    "TypeName": "examplescenario_process_step",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "process",
+        "Type": [
+          {
+            "TypeName": "examplescenario_process"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "pause",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "operation",
+        "Type": [
+          {
+            "TypeName": "examplescenario_process_step_operation"
+          }
+        ]
+      },
+      {
+        "ElementName": "alternative",
+        "Type": [
+          {
+            "TypeName": "examplescenario_process_step_alternative"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "examplescenario_process_step_operation": {
+    "TypeName": "examplescenario_process_step_operation",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "number",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "name",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "initiator",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "receiver",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "description",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      },
+      {
+        "ElementName": "initiatorActive",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "receiverActive",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "request",
+        "Type": [
+          {
+            "TypeName": "examplescenario_instance_containedInstance"
+          }
+        ]
+      },
+      {
+        "ElementName": "response",
+        "Type": [
+          {
+            "TypeName": "examplescenario_instance_containedInstance"
+          }
+        ]
+      }
+    ]
+  },
+  "examplescenario_process_step_alternative": {
+    "TypeName": "examplescenario_process_step_alternative",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "title",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "description",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      },
+      {
+        "ElementName": "step",
+        "Type": [
+          {
+            "TypeName": "examplescenario_process_step"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  }
+}

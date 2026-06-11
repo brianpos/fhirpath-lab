@@ -1,0 +1,421 @@
+{
+  "TestPlan": {
+    "TypeName": "TestPlan",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "url",
+        "Type": [
+          {
+            "TypeName": "uri"
+          }
+        ]
+      },
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "version",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "versionAlgorithm[x]",
+        "Type": [
+          {
+            "TypeName": "Coding"
+          },
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "name",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "title",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "status",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "experimental",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "date",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      },
+      {
+        "ElementName": "publisher",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "contact",
+        "Type": [
+          {
+            "TypeName": "ContactDetail"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "description",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      },
+      {
+        "ElementName": "useContext",
+        "Type": [
+          {
+            "TypeName": "UsageContext"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "jurisdiction",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "purpose",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      },
+      {
+        "ElementName": "copyright",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      },
+      {
+        "ElementName": "copyrightLabel",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "category",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "scope",
+        "Type": [
+          {
+            "TypeName": "Reference"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "testTools",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      },
+      {
+        "ElementName": "dependency",
+        "Type": [
+          {
+            "TypeName": "testplan_dependency"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "exitCriteria",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      },
+      {
+        "ElementName": "testCase",
+        "Type": [
+          {
+            "TypeName": "testplan_testCase"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "testplan_dependency": {
+    "TypeName": "testplan_dependency",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "description",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      },
+      {
+        "ElementName": "predecessor",
+        "Type": [
+          {
+            "TypeName": "Reference"
+          }
+        ]
+      }
+    ]
+  },
+  "testplan_testCase": {
+    "TypeName": "testplan_testCase",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "sequence",
+        "Type": [
+          {
+            "TypeName": "integer"
+          }
+        ]
+      },
+      {
+        "ElementName": "scope",
+        "Type": [
+          {
+            "TypeName": "Reference"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "dependency",
+        "Type": [
+          {
+            "TypeName": "testplan_testCase_dependency"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "testRun",
+        "Type": [
+          {
+            "TypeName": "testplan_testCase_testRun"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "testData",
+        "Type": [
+          {
+            "TypeName": "testplan_testCase_testData"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "assertion",
+        "Type": [
+          {
+            "TypeName": "testplan_testCase_assertion"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "testplan_testCase_dependency": {
+    "TypeName": "testplan_testCase_dependency",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "description",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      },
+      {
+        "ElementName": "predecessor",
+        "Type": [
+          {
+            "TypeName": "Reference"
+          }
+        ]
+      }
+    ]
+  },
+  "testplan_testCase_testRun": {
+    "TypeName": "testplan_testCase_testRun",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "narrative",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      },
+      {
+        "ElementName": "script",
+        "Type": [
+          {
+            "TypeName": "testplan_testCase_testRun_script"
+          }
+        ]
+      }
+    ]
+  },
+  "testplan_testCase_testRun_script": {
+    "TypeName": "testplan_testCase_testRun_script",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "language",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "source[x]",
+        "Type": [
+          {
+            "TypeName": "Reference"
+          },
+          {
+            "TypeName": "string"
+          }
+        ]
+      }
+    ]
+  },
+  "testplan_testCase_testData": {
+    "TypeName": "testplan_testCase_testData",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "Coding"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "content",
+        "Type": [
+          {
+            "TypeName": "Reference"
+          }
+        ]
+      },
+      {
+        "ElementName": "source[x]",
+        "Type": [
+          {
+            "TypeName": "Reference"
+          },
+          {
+            "TypeName": "string"
+          }
+        ]
+      }
+    ]
+  },
+  "testplan_testCase_assertion": {
+    "TypeName": "testplan_testCase_assertion",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "object",
+        "Type": [
+          {
+            "TypeName": "CodeableReference"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "result",
+        "Type": [
+          {
+            "TypeName": "CodeableReference"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  }
+}

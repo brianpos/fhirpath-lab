@@ -1,0 +1,43 @@
+{
+  "DomainResource": {
+    "TypeName": "DomainResource",
+    "BaseTypeName": "Resource",
+    "Elements": [
+      {
+        "ElementName": "text",
+        "Type": [
+          {
+            "TypeName": "Narrative"
+          }
+        ]
+      },
+      {
+        "ElementName": "contained",
+        "Type": [
+          {
+            "TypeName": "Resource"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "extension",
+        "Type": [
+          {
+            "TypeName": "Extension"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "modifierExtension",
+        "Type": [
+          {
+            "TypeName": "Extension"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  }
+}

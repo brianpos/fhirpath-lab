@@ -1,0 +1,341 @@
+{
+  "CoverageEligibilityRequest": {
+    "TypeName": "CoverageEligibilityRequest",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "status",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "priority",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "purpose",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "IsArray": true,
+        "Required": true
+      },
+      {
+        "ElementName": "patient",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Patient"
+            ]
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "serviced[x]",
+        "Type": [
+          {
+            "TypeName": "Period"
+          },
+          {
+            "TypeName": "date"
+          }
+        ]
+      },
+      {
+        "ElementName": "created",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "enterer",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Practitioner",
+              "http://hl7.org/fhir/StructureDefinition/PractitionerRole"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "provider",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization",
+              "http://hl7.org/fhir/StructureDefinition/Practitioner",
+              "http://hl7.org/fhir/StructureDefinition/PractitionerRole"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "insurer",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "facility",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Location"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "supportingInfo",
+        "Type": [
+          {
+            "TypeName": "coverageeligibilityrequest_supportingInfo"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "insurance",
+        "Type": [
+          {
+            "TypeName": "coverageeligibilityrequest_insurance"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "item",
+        "Type": [
+          {
+            "TypeName": "coverageeligibilityrequest_item"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "coverageeligibilityrequest_supportingInfo": {
+    "TypeName": "coverageeligibilityrequest_supportingInfo",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "sequence",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "information",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Resource"
+            ]
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "appliesToAll",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      }
+    ]
+  },
+  "coverageeligibilityrequest_insurance": {
+    "TypeName": "coverageeligibilityrequest_insurance",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "focal",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "coverage",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Coverage"
+            ]
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "businessArrangement",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      }
+    ]
+  },
+  "coverageeligibilityrequest_item": {
+    "TypeName": "coverageeligibilityrequest_item",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "supportingInfoSequence",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "category",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "productOrService",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "modifier",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "provider",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Practitioner",
+              "http://hl7.org/fhir/StructureDefinition/PractitionerRole"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "quantity",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
+      },
+      {
+        "ElementName": "unitPrice",
+        "Type": [
+          {
+            "TypeName": "Money"
+          }
+        ]
+      },
+      {
+        "ElementName": "facility",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Location",
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "diagnosis",
+        "Type": [
+          {
+            "TypeName": "coverageeligibilityrequest_item_diagnosis"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "detail",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Resource"
+            ]
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "coverageeligibilityrequest_item_diagnosis": {
+    "TypeName": "coverageeligibilityrequest_item_diagnosis",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "diagnosis[x]",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Condition"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

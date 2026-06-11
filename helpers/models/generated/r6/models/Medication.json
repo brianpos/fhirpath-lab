@@ -1,0 +1,189 @@
+{
+  "Medication": {
+    "TypeName": "Medication",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "code",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "status",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "marketingAuthorizationHolder",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "doseForm",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "packageSize",
+        "Type": [
+          {
+            "TypeName": "medication_packageSize"
+          }
+        ]
+      },
+      {
+        "ElementName": "ingredient",
+        "Type": [
+          {
+            "TypeName": "medication_ingredient"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "instance",
+        "Type": [
+          {
+            "TypeName": "medication_instance"
+          }
+        ]
+      },
+      {
+        "ElementName": "definition",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/AdministrableProductDefinition",
+              "http://hl7.org/fhir/StructureDefinition/ManufacturedItemDefinition",
+              "http://hl7.org/fhir/StructureDefinition/MedicinalProductDefinition",
+              "http://hl7.org/fhir/StructureDefinition/PackagedProductDefinition"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "medication_packageSize": {
+    "TypeName": "medication_packageSize",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "numberOfItems",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
+      },
+      {
+        "ElementName": "amountPerItem",
+        "Type": [
+          {
+            "TypeName": "Ratio"
+          }
+        ]
+      }
+    ]
+  },
+  "medication_ingredient": {
+    "TypeName": "medication_ingredient",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "item",
+        "Type": [
+          {
+            "TypeName": "CodeableReference"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "isActive",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "role",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "strength[x]",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          },
+          {
+            "TypeName": "Quantity"
+          },
+          {
+            "TypeName": "Ratio"
+          }
+        ]
+      }
+    ]
+  },
+  "medication_instance": {
+    "TypeName": "medication_instance",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "lotNumber",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "expirationDate",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      }
+    ]
+  }
+}

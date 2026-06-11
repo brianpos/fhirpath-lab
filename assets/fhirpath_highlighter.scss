@@ -143,3 +143,20 @@
   border-width: 1px 0 thin 1px;
   transform: scaleX(0);
 }
+
+// Ace marker classes used by ResourceEditor.highlightText /
+// navigateToPosition / navigateToContext and by pages/fml.vue's
+// highlightText. Defined here (globally) because Ace inserts the
+// marker DOM at runtime and Vue's `<style scoped>` rewrites selectors
+// with a `[data-v-xxx]` attribute the marker element doesn't carry.
+.debugSelection {
+  position: absolute;
+  z-index: 20;
+  background-color: #fbff82b1;
+}
+
+.resultSelection {
+  position: absolute;
+  z-index: 20;
+  background-color: #5240ef65;
+}

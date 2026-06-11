@@ -1,0 +1,138 @@
+{
+  "RelatedPerson": {
+    "TypeName": "RelatedPerson",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "active",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "patient",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Patient"
+            ]
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "relationship",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "name",
+        "Type": [
+          {
+            "TypeName": "HumanName"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "telecom",
+        "Type": [
+          {
+            "TypeName": "ContactPoint"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "gender",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "birthDate",
+        "Type": [
+          {
+            "TypeName": "date"
+          }
+        ]
+      },
+      {
+        "ElementName": "address",
+        "Type": [
+          {
+            "TypeName": "Address"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "photo",
+        "Type": [
+          {
+            "TypeName": "Attachment"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "period",
+        "Type": [
+          {
+            "TypeName": "Period"
+          }
+        ]
+      },
+      {
+        "ElementName": "communication",
+        "Type": [
+          {
+            "TypeName": "relatedperson_communication"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "relatedperson_communication": {
+    "TypeName": "relatedperson_communication",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "language",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "preferred",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,249 @@
+{
+  "NutritionProduct": {
+    "TypeName": "NutritionProduct",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "code",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "status",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "category",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "manufacturer",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "nutrient",
+        "Type": [
+          {
+            "TypeName": "nutritionproduct_nutrient"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "ingredient",
+        "Type": [
+          {
+            "TypeName": "nutritionproduct_ingredient"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "knownAllergen",
+        "Type": [
+          {
+            "TypeName": "CodeableReference"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "characteristic",
+        "Type": [
+          {
+            "TypeName": "nutritionproduct_characteristic"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "instance",
+        "Type": [
+          {
+            "TypeName": "nutritionproduct_instance"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "note",
+        "Type": [
+          {
+            "TypeName": "Annotation"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "nutritionproduct_nutrient": {
+    "TypeName": "nutritionproduct_nutrient",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "item",
+        "Type": [
+          {
+            "TypeName": "CodeableReference"
+          }
+        ]
+      },
+      {
+        "ElementName": "amount",
+        "Type": [
+          {
+            "TypeName": "Ratio"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "nutritionproduct_ingredient": {
+    "TypeName": "nutritionproduct_ingredient",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "item",
+        "Type": [
+          {
+            "TypeName": "CodeableReference"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "amount",
+        "Type": [
+          {
+            "TypeName": "Ratio"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "nutritionproduct_characteristic": {
+    "TypeName": "nutritionproduct_characteristic",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "value[x]",
+        "Type": [
+          {
+            "TypeName": "Attachment"
+          },
+          {
+            "TypeName": "CodeableConcept"
+          },
+          {
+            "TypeName": "Quantity"
+          },
+          {
+            "TypeName": "base64Binary"
+          },
+          {
+            "TypeName": "boolean"
+          },
+          {
+            "TypeName": "string"
+          }
+        ],
+        "Required": true
+      }
+    ]
+  },
+  "nutritionproduct_instance": {
+    "TypeName": "nutritionproduct_instance",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "quantity",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
+      },
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "name",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "lotNumber",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "expiry",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      },
+      {
+        "ElementName": "useBy",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      },
+      {
+        "ElementName": "biologicalSourceEvent",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ]
+      }
+    ]
+  }
+}

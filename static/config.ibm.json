@@ -1,0 +1,18 @@
+{
+	"comment": "This engine was retired, but keeping the config in case it ever comes back",
+	"engines": {
+		"java (IBM)": {
+			"name": "java-ibm",
+			"legacyName": "java (IBM)",
+			"fhirVersion": "R4",
+			"appInsightsEngineName": "IBM",
+			"publisher": "Linux for health (formerly IBM FHIR Server)",
+			"configSetting": "ibm_server_r4b",
+			"githubRepo": "https://github.com/LinuxForHealth/FHIR",
+			"description": "A Java FHIRPath engine from Linux for health (formerly IBM FHIR Server).",
+			"supportsAST": true,
+			"external": false
+		}
+	},
+	"ibm_server_r4b": "https://fhirpath-lab-java2.azurewebsites.net/fhir/$fhirpath-ibm"
+}

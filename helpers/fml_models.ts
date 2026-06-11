@@ -331,8 +331,9 @@ export interface RuleTarget {
   /** Source position information */
   position?: SourcePosition;
   
-  /** Context identifier */
-  context: string;
+  /** Context identifier (omitted for variable-only targets like
+   *  `uuid() as fullUrl` or `(expression) as v`). */
+  context?: string;
   
   /** Element name (may include sub-elements with dots) */
   element?: string;

@@ -74,10 +74,10 @@ export async function EvaluateChatPrompt(
       store: false,
       tools: tools,
     };
-    if (settings.openAIModel === "gpt-5") {
+    if (settings.openAIModel?.startsWith("gpt-5")) {
       reqBody.temperature = 1;
     }
-    if (settings.openAIModel === "gpt-5" || settings.openAIModel?.endsWith("o")) {
+    if (settings.openAIModel?.startsWith("gpt-5") || settings.openAIModel?.endsWith("o")) {
       reqBody.max_completion_tokens = max_tokens;
     } else {
       reqBody.max_tokens = max_tokens;

@@ -9,6 +9,7 @@
       "DOM"
     ],
     "esModuleInterop": true,
+    "resolveJsonModule": true,
     "allowJs": true,
     "jsx": "preserve",
     "sourceMap": true,
@@ -39,6 +40,7 @@
     "fhirpath-ai",
     "vue3-src",
     ".nuxt",
-    "dist"
+    "dist",
+    "test"
   ]
 }

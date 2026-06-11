@@ -38,6 +38,7 @@ export default {
 
   // Plugins to run before rendering page: https://go.nuxtjs.dev/config-plugins
   plugins: [
+    { src: '~/plugins/applicationinsights.client.ts', mode: 'client' },
   ],
 
   // Auto import components: https://go.nuxtjs.dev/config-components
@@ -62,14 +63,7 @@ export default {
   modules: [
     // https://go.nuxtjs.dev/bootstrap
     'bootstrap-vue/nuxt',
-    // https://github.com/nuxt-community/applicationinsights-module
-    '@nuxtjs/applicationinsights',
   ],
-
-  // https://github.com/nuxt-community/applicationinsights-module
-  appInsights: {
-    instrumentationKey: '6734f815-da7c-4b6d-b532-90d1421dd2b8' //  your project's Instrumentation Key here
-  },
 
   // Build Configuration: https://go.nuxtjs.dev/config-build
   build: {
@@ -89,6 +83,9 @@ export default {
       "marked",
       "antlr4",
       "sql-on-fhir-v2",
+      /* axios 1.x ships its adapter using nullish-coalescing (`??`); webpack 4 in
+         Nuxt 2 needs us to transpile it through Babel. */
+      "axios",
       /* Need to transpile CSIRO renderer and dependencies containing modern ES syntax (`?.`, `??`, etc.) */
       "@aehrc/smart-forms-renderer",
       "@mui",
