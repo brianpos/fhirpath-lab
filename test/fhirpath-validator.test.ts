@@ -699,6 +699,7 @@ describe("FHIRPath validator — instance selector (object construction)", () =>
         const err = errors.find((d) => d.code === "instance-element-not-found")!;
         expect(err.message).toContain("notARealElement");
         expect(err.message).toContain("Coding");
+        // The diagnostic carries the character span of the offending element.
         expect(err.length).toBeGreaterThan(0);
     });
 
@@ -739,5 +740,23 @@ describe("FHIRPath validator — instance selector (object construction)", () =>
         );
         const errors = r.diagnostics.filter((d) => d.severity === "error");
         expect(errors.some((d) => d.code === "prop-not-found")).toBe(true);
+    });
+
+    it("constructs a single object; collection cardinality comes from select()", () => {
+        // Standalone construction is a single object.
+        const single = validateFhirpathExpression(
+            "Coding { system : 'http://x', code : gender }",
+            { fhirVersion: "r4", contextType: "Patient" },
+        );
+        expect(single.expectedReturnIsCollection).toBe(false);
+
+        // Inside select() over a collection, the result is a collection of Codings.
+        const projected = validateFhirpathExpression(
+            "Patient.identifier.select(Coding { system : system, code : value })",
+            { fhirVersion: "r4", contextType: "Patient" },
+        );
+        expect(projected.diagnostics.filter((d) => d.severity === "error")).toEqual([]);
+        expect(projected.expectedReturnType).toBe("Coding");
+        expect(projected.expectedReturnIsCollection).toBe(true);
     });
 });

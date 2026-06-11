@@ -1359,8 +1359,11 @@ class FhirPathExpressionVisitor {
             }
         }
 
+        // An instance selector always constructs exactly one object; per spec it
+        // errors on multi-item input (warned above) and the collection-ness of a
+        // surrounding `select()`/`where()` is applied by that enclosing call.
         const value: FhirPathValue = targetType
-            ? { types: [targetType], isCollection: input.isCollection }
+            ? { types: [targetType], isCollection: false }
             : EMPTY_VALUE;
         node.ReturnType = formatValueType(value);
         return { node, value };
