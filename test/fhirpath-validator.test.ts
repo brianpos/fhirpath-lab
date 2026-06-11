@@ -204,19 +204,21 @@ describe("FHIRPath validator visitor", () => {
         it("treats a collection context expression as a per-item singular input", () => {
             // `Patient.name` is a collection of HumanName; the engine evaluates
             // the main expression against each item individually. The validator
-            // must therefore see a *singular* HumanName as input — but the
-            // outer collection-ness must still flat-map into the final result.
+            // therefore sees a *singular* HumanName as input, and the returned
+            // AST/cardinality describe the per-item evaluation in isolation —
+            // they are NOT widened by the outer contextExpression.
             const r = validateFhirpathExpression("use", {
                 fhirVersion: "r4",
                 contextType: "Patient",
                 contextExpression: "Patient.name",
             });
             expect(r.diagnostics.filter((d) => d.severity === "error")).toEqual([]);
-            // `use` is a single value on HumanName; per-item it is single,
-            // but flat-mapped over the name collection it becomes a collection.
+            // `use` is a single value on HumanName; per-item the result is a
+            // single `code`, regardless of how many names the outer
+            // contextExpression yields.
             expect(r.expectedReturnType).toBe("code");
-            expect(r.expectedReturnIsCollection).toBe(true);
-            expect(r.parseDebugTree?.ReturnType).toBe("code[]");
+            expect(r.expectedReturnIsCollection).toBe(false);
+            expect(r.parseDebugTree?.ReturnType).toBe("code");
         });
 
         it("does not error on .exists() against a collection context expression", () => {
@@ -247,6 +249,40 @@ describe("FHIRPath validator visitor", () => {
             expect(scope?.ExpressionType).toBe("AxisExpression");
             expect(scope?.Name).toBe("builtin.that");
         });
+
+        it("does not widen any node's ReturnType by the contextExpression's cardinality", () => {
+            // Regression: a chain whose tail naturally returns a singular
+            // value (e.g. `join`) was previously being decorated with `[]` on
+            // the *root* node when the contextExpression returned a collection,
+            // because the result described the flat-mapped overall expression
+            // rather than the per-item evaluation. The AST should now describe
+            // the per-item evaluation in isolation.
+            const r = validateFhirpathExpression(
+                "trace('trc').given.join(' ').combine(family).join(', ')",
+                {
+                    fhirVersion: "r4",
+                    contextType: "Patient",
+                    contextExpression: "name",
+                },
+            );
+            expect(r.diagnostics.filter((d) => d.severity === "error")).toEqual([]);
+            expect(r.expectedReturnType).toBe("string");
+            expect(r.expectedReturnIsCollection).toBe(false);
+            expect(r.parseDebugTree?.ReturnType).toBe("string");
+            // Appending a further single-valued function must not "move" the
+            // bug to the new tail.
+            const r2 = validateFhirpathExpression(
+                "trace('trc').given.join(' ').combine(family).join(', ').substring(2)",
+                {
+                    fhirVersion: "r4",
+                    contextType: "Patient",
+                    contextExpression: "name",
+                },
+            );
+            expect(r2.diagnostics.filter((d) => d.severity === "error")).toEqual([]);
+            expect(r2.parseDebugTree?.ReturnType).toBe("string");
+            expect(r2.expectedReturnIsCollection).toBe(false);
+        });
     });
 
     describe("environment variable semantics (%context, %resource, %rootResource)", () => {
@@ -268,10 +304,10 @@ describe("FHIRPath validator visitor", () => {
             // %resource must remain Patient.
             expect(r.diagnostics.filter((d) => d.severity === "error")).toEqual([]);
             expect(r.expectedReturnType).toBe("Patient");
-            // Note: cardinality reflects the outer flat-map of the
-            // contextExpression — semantically equivalent to
-            // `Patient.name.select(%resource)`, which is one Patient per name.
-            expect(r.expectedReturnIsCollection).toBe(true);
+            // The result describes the per-item evaluation in isolation —
+            // singular `%resource` per HumanName item — and is not widened by
+            // the outer contextExpression's collection-ness.
+            expect(r.expectedReturnIsCollection).toBe(false);
         });
 
         it("%context is the initial scope of the expression being evaluated", () => {
