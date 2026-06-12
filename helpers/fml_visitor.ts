@@ -255,13 +255,19 @@ export class FmlModelBuilder {
   visitMapDeclaration(ctx: MapDeclarationContext): MapDeclaration | null {
     const urlNode = ctx.url();
     const idNode = ctx.identifier();
-    
-    if (!urlNode || !idNode) return null;
-    
+    // The name can also be a double quoted string (a legacy format tolerated by the HAPI engine)
+    const quotedNameNode = ctx.DOUBLE_QUOTED_STRING();
+
+    if (!urlNode || (!idNode && !quotedNameNode)) return null;
+
+    const identifier = idNode
+      ? this.visitIdentifier(idNode)
+      : this.removeQuotes(quotedNameNode.getText());
+
     return {
       position: this.getPosition(ctx),
       url: this.visitUrl(urlNode),
-      identifier: this.visitIdentifier(idNode)
+      identifier
     };
   }
   

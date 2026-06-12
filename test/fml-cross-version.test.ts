@@ -199,4 +199,24 @@ group g(source src : Patient, target tgt : Bundle) {
       "http://hl7.org/fhir/StructureDefinition/Patient"
     );
   });
+
+  test("accepts a legacy double quoted map name (tolerated by the HAPI engine)", () => {
+    const fml = `map "http://github.com/FHIR/fhir-test-cases/r5/fml/syntax" = "Syntax"
+
+uses "http://hl7.org/fhir/StructureDefinition/Patient" alias Patient as source
+uses "http://hl7.org/fhir/StructureDefinition/Basic" alias Basic as target
+
+group Patient(source src : Patient, target tgt : Basic) {
+  src.identifier -> tgt.identifier;
+}
+`;
+    const result = parseFML(fml);
+    // Should be a successful parse, not an OperationOutcome
+    expect((result as any).resourceType).toBeUndefined();
+    const map = result as FmlStructureMap;
+
+    // The surrounding double quotes should be stripped from the name
+    expect(map.mapDeclaration?.identifier).toBe("Syntax");
+    expect(map.groups.map((g) => g.name)).toEqual(["Patient"]);
+  });
 });
