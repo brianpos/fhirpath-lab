@@ -70,8 +70,35 @@ describe("FHIRPath validator visitor", () => {
             fhirVersion: "r4",
             contextType: "Patient",
         });
-        expect(r.diagnostics).toEqual([]);
         expect(r.expectedReturnType).toBe("boolean");
+        // Using a concrete-typed suffix on a choice element resolves, but is
+        // flagged with a warning recommending the bare choice name.
+        const warnings = r.diagnostics.filter((d) => d.code === "choice-type-suffix");
+        expect(warnings.length).toBe(1);
+        expect(warnings[0].severity).toBe("warning");
+        expect(warnings[0].message).toContain("deceasedBoolean");
+        expect(warnings[0].message).toContain("deceased");
+        expect(r.diagnostics.filter((d) => d.severity === "error")).toEqual([]);
+    });
+
+    it("resolves a bare choice base name to the union of permitted types", () => {
+        const r = validateFhirpathExpression("Observation.effective", {
+            fhirVersion: "r4",
+            contextType: "Observation",
+        });
+        expect(r.diagnostics).toEqual([]);
+        // effective[x] permits dateTime | Period | Timing | instant.
+        expect(r.expectedReturnType).toContain("dateTime");
+        expect(r.expectedReturnType).toContain("Period");
+    });
+
+    it("navigates through a bare choice base name without a prop-not-found error", () => {
+        const r = validateFhirpathExpression(
+            "Observation.effective.toString().substring(0,10).toDate()",
+            { fhirVersion: "r4", contextType: "Observation" },
+        );
+        expect(r.diagnostics.filter((d) => d.code === "prop-not-found")).toEqual([]);
+        expect(r.expectedReturnType).toBe("date");
     });
 
     it("flags an unknown property as an error with location", () => {

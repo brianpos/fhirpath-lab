@@ -730,15 +730,18 @@ class FhirPathExpressionVisitor {
         const resolved: TypeModel[] = [];
         let isArray = false;
         let anyMatched = false;
+        let choiceSuffixBase: string | undefined;
         for (const t of input.types) {
-            const elt = this.findElement(t, name);
-            if (elt) {
+            const found = this.findElement(t, name);
+            if (found) {
                 anyMatched = true;
+                const elt = found.element;
                 if (elt.IsArray) isArray = true;
                 for (const tref of elt.Type) {
                     const target = this.provider.lookupByTypeName(tref.TypeName);
                     if (target) resolved.push(target);
                 }
+                if (found.choiceSuffixBase) choiceSuffixBase = found.choiceSuffixBase;
             }
         }
         if (!anyMatched) {
@@ -749,6 +752,18 @@ class FhirPathExpressionVisitor {
                 message: `Property '${name}' not found on type '${tNames}'.`,
                 ...nodeStart(ctx),
             });
+        } else if (choiceSuffixBase) {
+            // The user appended a concrete type to a choice element (e.g.
+            // `effectiveDateTime` for the `effective[x]` choice). The engine
+            // still resolves it, but recommends using the bare choice name so
+            // navigation works across every permitted type. Mirrors the .NET
+            // engine's guidance.
+            this.addDiagnostic({
+                severity: "warning",
+                code: "choice-type-suffix",
+                message: `prop '${name}' is the choice type, remove the type from the end - ${choiceSuffixBase}`,
+                ...nodeStart(ctx),
+            });
         }
 
         const value: FhirPathValue = { types: dedupeTypes(resolved), isCollection: input.isCollection || isArray };
@@ -757,21 +772,30 @@ class FhirPathExpressionVisitor {
     }
 
     /** Find an element by name on a TypeModel, walking up BaseTypeName for
-     *  inherited elements and expanding `[x]` choice members against their suffix. */
-    private findElement(t: TypeModel, name: string): ElementModel | undefined {
+     *  inherited elements and expanding `[x]` choice members. Handles two choice
+     *  forms: the bare choice name (`effective` -> union of all permitted types)
+     *  and a concrete-typed suffix (`effectiveDateTime` -> the single matched
+     *  type, flagged via `choiceSuffixBase` so the caller can warn). */
+    private findElement(t: TypeModel, name: string): { element: ElementModel; choiceSuffixBase?: string } | undefined {
         let cur: TypeModel | undefined = t;
         while (cur) {
             for (const e of cur.Elements) {
-                if (e.ElementName === name) return e;
+                if (e.ElementName === name) return { element: e };
                 if (e.ElementName.endsWith("[x]")) {
                     const base = e.ElementName.substring(0, e.ElementName.length - 3);
+                    // Bare choice name (e.g. `effective`): resolve to the union
+                    // of every permitted choice type so navigation continues
+                    // across all of them.
+                    if (name === base) {
+                        return { element: { ElementName: name, Type: e.Type, IsArray: e.IsArray } };
+                    }
                     if (name.startsWith(base) && name.length > base.length) {
                         // valueQuantity, valueString...
                         const suffix = name.substring(base.length);
                         const suffixLower = suffix.charAt(0).toLowerCase() + suffix.substring(1);
                         const matched = e.Type.find((tt) => tt.TypeName === suffixLower || tt.TypeName === suffix);
                         if (matched) {
-                            return { ElementName: name, Type: [matched], IsArray: e.IsArray };
+                            return { element: { ElementName: name, Type: [matched], IsArray: e.IsArray }, choiceSuffixBase: base };
                         }
                     }
                 }
@@ -1318,8 +1342,8 @@ class FhirPathExpressionVisitor {
 
             if (!targetType) continue;
 
-            const element = this.findElement(targetType, elementName);
-            if (!element) {
+            const found = this.findElement(targetType, elementName);
+            if (!found) {
                 this.addDiagnostic({
                     severity: "error",
                     code: "instance-element-not-found",
@@ -1328,6 +1352,7 @@ class FhirPathExpressionVisitor {
                 });
                 continue;
             }
+            const element = found.element;
 
             // Cardinality: a single-valued element cannot be populated from a
             // collection (collection elements can be — see spec).
