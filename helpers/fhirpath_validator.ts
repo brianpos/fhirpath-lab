@@ -103,6 +103,7 @@ const SEVERITY_TO_FHIR_CODE: Record<string, fhir4b.OperationOutcomeIssue["code"]
     "func-multi-input": "invalid",
     "op-overload-mismatch": "invalid",
     "prop-not-found": "invalid",
+    "choice-type-suffix": "value",
     "indexer-type": "invalid",
     "unknown-type": "invalid",
     "env-var-unknown": "invalid",
