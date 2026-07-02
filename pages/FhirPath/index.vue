@@ -1847,7 +1847,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
       const resourceJson = this.getResourceJson();
       if (!resourceJson) return;
       try {
-        if (resourceJson.trim().startsWith('<')) {
+        if (resourceJson.trimStart().charAt(0) === '<') {
           const data = parseXmlAndObject(resourceJson, this.getCurrentModelInfo());
           if (data?.object?.resourceType) {
             this.resourceType = data.object.resourceType;
