@@ -954,6 +954,7 @@ export interface IFhirPathMethods
   getContextExpression(): string | undefined;
   getFhirpathExpression(): string | undefined;
   getResourceJson(): string | undefined;
+  detectResourceType(): void;
 
   hasTraceData(): boolean;
   clearOutcome(): void;
@@ -1662,6 +1663,10 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
           this.resourceJsonEditor?.getSession().setMode(`ace/mode/json`);
         }
       }
+
+      // Keep the detected resource type in sync as the resource is edited/pasted
+      // so it does not lag a step behind when the next evaluation runs.
+      this.detectResourceType();
     },
     updateVariableValue(name: string): void{
       const ie: InputEvent = event as InputEvent;
@@ -1832,6 +1837,32 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         return json;
       }
       return undefined;
+    },
+
+    // Detect the FHIR resource type from the current test resource content.
+    // This must run before the static parse/type-check step (and is also run
+    // when the resource is edited/pasted) so that the detected resource type
+    // is never a step behind the resource that is actually being tested.
+    detectResourceType(): void {
+      const resourceJson = this.getResourceJson();
+      if (!resourceJson) return;
+      try {
+        if (resourceJson.trim().startsWith('<')) {
+          const data = parseXmlAndObject(resourceJson, this.getCurrentModelInfo());
+          if (data?.object?.resourceType) {
+            this.resourceType = data.object.resourceType;
+          }
+        }
+        else {
+          const parsed = JSON.parse(resourceJson);
+          if (parsed?.resourceType) {
+            this.resourceType = parsed.resourceType;
+          }
+        }
+      }
+      catch {
+        // ignore parse errors here - they are surfaced by the evaluation flow
+      }
     },
 
     hasTraceData(): boolean {
@@ -3195,6 +3226,10 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
         this.showOutcome = true;
         return;
       }
+
+      // Ensure the detected resource type reflects the current test resource
+      // before the static parse/type-check step runs below.
+      this.detectResourceType();
 
       if (!this.getResourceJson() && this.resourceId && this.selectedEngine2?.name === ".NET SDK") {
         // The .net SDK is the only one that can download it's own resources
