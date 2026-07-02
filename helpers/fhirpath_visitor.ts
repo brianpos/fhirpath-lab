@@ -761,7 +761,7 @@ class FhirPathExpressionVisitor {
             this.addDiagnostic({
                 severity: "warning",
                 code: "choice-type-suffix",
-                message: `prop '${name}' is the choice type, remove the type from the end - ${choiceSuffixBase}`,
+                message: `Property '${name}' is a choice type element; remove the type suffix and use '${choiceSuffixBase}' to navigate across all permitted types.`,
                 ...nodeStart(ctx),
             });
         }
