@@ -59,41 +59,51 @@
       </template>
     </v-text-field>
     <label v-show="textLabel">{{ textLabel + ' ' + resourceType }}<i>{{ (resourceTextModified ? ' (modified)' : '') }}</i></label>
-    <div ref="aceEditorRef" class="ace-editor" style="flex-grow: 1; width: 100%; height: 100%;"></div>
-    <div class="ace_editor_footer"></div>
+    <div ref="editorContainerRef" class="monaco-editor-container" style="flex-grow: 1; width: 100%; height: 100%; min-height: 0;"></div>
+    <div v-if="isTouchDevice" class="monaco-touch-toolbar" :aria-hidden="readOnly ? 'true' : 'false'">
+      <v-btn icon size="small" variant="text" density="comfortable" rounded="0" @click="triggerEditorCommand('undo')" :title="'Undo'">
+        <v-icon>mdi-undo</v-icon>
+      </v-btn>
+      <v-btn icon size="small" variant="text" density="comfortable" rounded="0" @click="triggerEditorCommand('redo')" :title="'Redo'">
+        <v-icon>mdi-redo</v-icon>
+      </v-btn>
+      <span class="monaco-touch-toolbar__sep" aria-hidden="true"></span>
+      <v-btn icon size="small" variant="text" density="comfortable" rounded="0" @click="triggerEditorCommand('cursorUp')" :title="'Cursor up'">
+        <v-icon>mdi-arrow-up</v-icon>
+      </v-btn>
+      <v-btn icon size="small" variant="text" density="comfortable" rounded="0" @click="triggerEditorCommand('cursorDown')" :title="'Cursor down'">
+        <v-icon>mdi-arrow-down</v-icon>
+      </v-btn>
+      <v-btn icon size="small" variant="text" density="comfortable" rounded="0" @click="triggerEditorCommand('cursorLeft')" :title="'Cursor left'">
+        <v-icon>mdi-arrow-left</v-icon>
+      </v-btn>
+      <v-btn icon size="small" variant="text" density="comfortable" rounded="0" @click="triggerEditorCommand('cursorRight')" :title="'Cursor right'">
+        <v-icon>mdi-arrow-right</v-icon>
+      </v-btn>
+      <v-btn icon size="small" variant="text" density="comfortable" rounded="0" @click="triggerTab" :title="'Tab'" :disabled="readOnly">
+        <v-icon>mdi-keyboard-tab</v-icon>
+      </v-btn>
+      <span class="monaco-touch-toolbar__sep" aria-hidden="true"></span>
+      <v-btn icon size="small" variant="text" density="comfortable" rounded="0" @click="runEditorAction('actions.find')" :title="'Find'">
+        <v-icon>mdi-magnify</v-icon>
+      </v-btn>
+      <v-btn icon size="small" variant="text" density="comfortable" rounded="0" @click="runEditorAction('editor.action.formatDocument')" :title="'Format'" :disabled="readOnly">
+        <v-icon>mdi-format-indent-increase</v-icon>
+      </v-btn>
+    </div>
+    <div class="monaco_editor_footer"></div>
     <label v-show="footerLabel"><i>{{ footerLabel }}</i></label>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, type Ref } from 'vue'
-import ace from 'ace-builds'
-
-// https://github.com/CarterLi/vue3-ace-editor/blob/gh-pages/demo-source/src/ace-config.ts
-import themeChromeUrl from 'ace-builds/src-noconflict/theme-chrome?url';
-ace.config.setModuleUrl('ace/theme/chrome', themeChromeUrl);
-
-import modeTextUrl from 'ace-builds/src-noconflict/mode-text?url';
-ace.config.setModuleUrl('ace/mode/text', modeTextUrl);
-
-import modeJsonUrl from 'ace-builds/src-noconflict/mode-json?url';
-ace.config.setModuleUrl('ace/mode/json', modeJsonUrl);
-import workerJsonUrl from 'ace-builds/src-noconflict/worker-json?url';
-ace.config.setModuleUrl('ace/mode/json_worker', workerJsonUrl);
-
-import modeXmlUrl from 'ace-builds/src-noconflict/mode-xml?url';
-ace.config.setModuleUrl('ace/mode/xml', modeXmlUrl);
-import workerXmlUrl from 'ace-builds/src-noconflict/worker-xml?url';
-ace.config.setModuleUrl('ace/mode/xml_worker', workerXmlUrl);
-
-import workerBaseUrl from 'ace-builds/src-noconflict/worker-base?url';
-ace.config.setModuleUrl('ace/mode/base', workerBaseUrl);
-
-import extSearchboxUrl from 'ace-builds/src-noconflict/ext-searchbox?url';
-ace.config.setModuleUrl('ace/ext/searchbox', extSearchboxUrl);
-
-import 'ace-builds/src-noconflict/ext-language_tools';
-ace.require("ace/ext/language_tools");
+import { ref, shallowRef, markRaw, watch, onMounted, onBeforeUnmount, type ShallowRef } from 'vue'
+import * as monaco from 'monaco-editor/esm/vs/editor/editor.api'
+// Pull in only the languages we need (keeps bundle small vs. importing 'monaco-editor' wholesale).
+import 'monaco-editor/esm/vs/basic-languages/xml/xml.contribution'
+import 'monaco-editor/esm/vs/language/json/monaco.contribution'
+import EditorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker'
+import JsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker'
 
 import axios, { type AxiosError, type CancelTokenSource } from 'axios'
 import xmlFormat from 'xml-formatter'
@@ -103,8 +113,23 @@ import type { Resource, OperationOutcome } from 'fhir/r4'
 import { findNodeByPath, type IJsonNode, parseJson } from '@legacy/helpers/json_parser'
 import { parseXml } from '@legacy/helpers/xml_parser'
 import type { Model } from 'fhirpath'
-import "ace-builds/src-noconflict/mode-json"
-import "ace-builds/src-noconflict/mode-xml"
+import { setupFhirPathLanguage } from '~/utils/monaco-fhirpath'
+
+// Configure Monaco web workers exactly once per session. The app is client-only
+// (Nuxt ssr:false) so it is safe to run this at module init in a component file,
+// but we still guard against re-assignment in case the component mounts more than
+// once.
+if (typeof window !== 'undefined' && !(self as any).MonacoEnvironment) {
+  ;(self as any).MonacoEnvironment = {
+    getWorker(_workerId: string, label: string) {
+      if (label === 'json') return new JsonWorker()
+      return new EditorWorker()
+    }
+  }
+}
+
+// Register the FHIRPath/FML Monarch language once.
+setupFhirPathLanguage(monaco)
 
 // Props interface
 interface Props {
@@ -142,16 +167,275 @@ const emit = defineEmits<{
 const internalResourceUrl = ref<string>(props.resourceUrl ?? '')
 const internalResourceText = ref<string>(props.resourceText)
 const resourceTextFromFile = ref<string | undefined>(undefined)
-const resourceType = ref<string>('json') // Assume JSON by default
+// Mirrors the legacy 'json' | 'xml' | 'fml' values used in the template and watchers.
+const resourceType = ref<string>('json')
 const downloadingInProgress = ref<boolean>(false)
-const aceEditor: Ref<any> = ref(null)
+const monacoEditor: ShallowRef<monaco.editor.IStandaloneCodeEditor | null> = shallowRef(null)
 const cancelSource = ref<CancelTokenSource | undefined>(undefined)
 const resourceTextModified = ref<boolean>(false)
 
 // Template refs
-const aceEditorRef = ref<HTMLDivElement>()
+const editorContainerRef = ref<HTMLDivElement>()
 
-// Public methods
+// --- Narrow / mobile layout --------------------------------------------------
+// When the editor is narrow (e.g. on a phone) we collapse the left gutter
+// (line numbers, folding chevrons, decoration column) so more of the limited
+// horizontal space is used for actual content.
+const NARROW_EDITOR_WIDTH_PX = 480
+let isNarrowLayout = false
+let editorResizeObserver: ResizeObserver | null = null
+
+function applyNarrowLayout(width: number) {
+  const editor = monacoEditor.value
+  if (!editor) return
+  const narrow = width > 0 && width < NARROW_EDITOR_WIDTH_PX
+  if (narrow === isNarrowLayout) return
+  isNarrowLayout = narrow
+  editor.updateOptions(narrow
+    ? { lineNumbers: 'off', folding: false, lineDecorationsWidth: 0 }
+    : { lineNumbers: 'on', folding: true, lineDecorationsWidth: 4 }
+  )
+}
+
+function observeEditorWidth() {
+  if (!editorContainerRef.value || typeof ResizeObserver === 'undefined') return
+  editorResizeObserver = new ResizeObserver((entries) => {
+    for (const entry of entries) {
+      applyNarrowLayout(entry.contentRect.width)
+    }
+  })
+  editorResizeObserver.observe(editorContainerRef.value)
+}
+
+// --- Coarse-pointer / touch detection ---------------------------------------
+// We tweak Monaco options when the primary pointer is coarse (phones, tablets):
+// bigger fonts, fatter scrollbars, no fly-out popups that fight the soft
+// keyboard, and we render a small touch toolbar with the actions that are
+// otherwise awkward to invoke from a touch keyboard (undo/redo, arrows, find,
+// format).
+const isTouchDevice = ref<boolean>(false)
+let touchMediaQuery: MediaQueryList | null = null
+let touchMediaListener: ((e: MediaQueryListEvent) => void) | null = null
+
+function detectTouchDevice(): boolean {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false
+  return window.matchMedia('(pointer: coarse)').matches
+}
+
+function watchTouchDevice() {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return
+  touchMediaQuery = window.matchMedia('(pointer: coarse)')
+  isTouchDevice.value = touchMediaQuery.matches
+  touchMediaListener = (e) => {
+    isTouchDevice.value = e.matches
+    applyTouchOptions()
+  }
+  // addEventListener is the modern API; older Safari versions only expose
+  // addListener — both are guarded.
+  if (typeof touchMediaQuery.addEventListener === 'function') {
+    touchMediaQuery.addEventListener('change', touchMediaListener)
+  } else if (typeof (touchMediaQuery as any).addListener === 'function') {
+    ;(touchMediaQuery as any).addListener(touchMediaListener)
+  }
+}
+
+function applyTouchOptions() {
+  const editor = monacoEditor.value
+  if (!editor) return
+  const touch = isTouchDevice.value
+  editor.updateOptions(touch
+    ? {
+        fontSize: 15,
+        mouseWheelZoom: true,
+        quickSuggestions: false,
+        parameterHints: { enabled: false },
+        hover: { enabled: false },
+        acceptSuggestionOnEnter: 'off',
+        scrollbar: {
+          verticalScrollbarSize: 16,
+          horizontalScrollbarSize: 16,
+          useShadows: false,
+          alwaysConsumeMouseWheel: false
+        }
+      }
+    : {
+        fontSize: 14,
+        mouseWheelZoom: false,
+        quickSuggestions: { other: true, comments: false, strings: false },
+        parameterHints: { enabled: true },
+        hover: { enabled: true },
+        acceptSuggestionOnEnter: 'on',
+        scrollbar: {
+          verticalScrollbarSize: 10,
+          horizontalScrollbarSize: 10,
+          useShadows: true,
+          alwaysConsumeMouseWheel: false
+        }
+      }
+  )
+}
+
+// Trigger a built-in Monaco command (e.g. 'undo', 'cursorUp'). The source
+// string is shown in keybinding telemetry only — any non-empty value is fine.
+function triggerEditorCommand(commandId: string) {
+  const editor = monacoEditor.value
+  if (!editor) return
+  editor.focus()
+  editor.trigger('touch-toolbar', commandId, null)
+}
+
+function triggerTab() {
+  const editor = monacoEditor.value
+  if (!editor) return
+  editor.focus()
+  editor.trigger('touch-toolbar', 'tab', null)
+}
+
+// Run a registered editor action (find, formatDocument, ...). Actions can be
+// missing if the contributing language feature isn't loaded; we silently no-op
+// in that case so the toolbar never throws.
+function runEditorAction(actionId: string) {
+  const editor = monacoEditor.value
+  if (!editor) return
+  editor.focus()
+  const action = editor.getAction(actionId)
+  if (action) action.run()
+}
+
+
+// Existing callers reference markers by numeric id (Ace style). We back them with
+// Monaco decoration collections and keep the public API numeric.
+const decorationCollections = new Map<number, monaco.editor.IEditorDecorationsCollection>()
+let nextMarkerId = 1
+
+function trackDecorations(decorations: monaco.editor.IModelDeltaDecoration[]): number {
+  const editor = monacoEditor.value
+  if (!editor) return 0
+  const collection = editor.createDecorationsCollection(decorations)
+  const id = nextMarkerId++
+  decorationCollections.set(id, collection)
+  return id
+}
+
+function clearMarker(id: number): void {
+  const collection = decorationCollections.get(id)
+  if (collection) {
+    collection.clear()
+    decorationCollections.delete(id)
+  }
+}
+
+// --- Diagnostics (model markers) ---------------------------------------------
+const DIAGNOSTIC_OWNER = 'fhirpath-lab'
+let diagnosticsTimer: ReturnType<typeof setTimeout> | null = null
+
+function scheduleDiagnostics(): void {
+  if (diagnosticsTimer) clearTimeout(diagnosticsTimer)
+  diagnosticsTimer = setTimeout(runDiagnostics, 300)
+}
+
+function runDiagnostics(): void {
+  const editor = monacoEditor.value
+  const model = editor?.getModel()
+  if (!editor || !model) return
+
+  if (resourceType.value !== 'xml') {
+    // JSON markers are produced by Monaco's JSON worker; for FML/text we have no
+    // structural diagnostics to add. Clear any leftover XML diagnostics.
+    monaco.editor.setModelMarkers(model, DIAGNOSTIC_OWNER, [])
+    return
+  }
+
+  const markers: monaco.editor.IMarkerData[] = []
+  const value = model.getValue()
+
+  if (value.trim().length === 0) {
+    monaco.editor.setModelMarkers(model, DIAGNOSTIC_OWNER, [])
+    return
+  }
+
+  // --- 1) Well-formedness via xml-formatter ---
+  let wellFormed = true
+  try {
+    xmlFormat(value, {
+      indentation: ' '.repeat(props.tabSpaces),
+      collapseContent: true,
+      lineSeparator: '\n'
+    })
+  } catch (e) {
+    wellFormed = false
+    const { line, column, message } = extractXmlErrorLocation(e, value)
+    markers.push({
+      severity: monaco.MarkerSeverity.Error,
+      message: `XML: ${message}`,
+      startLineNumber: line,
+      startColumn: column,
+      endLineNumber: line,
+      endColumn: Math.max(column + 1, model.getLineMaxColumn(Math.min(line, model.getLineCount())))
+    })
+  }
+
+  // --- 2) FHIR-aware diagnostics on syntactically valid XML ---
+  if (wellFormed) {
+    try {
+      const ast = parseXml(value)
+      if (ast && ast.DataType) {
+        walkXmlNodeForDiagnostics(ast, markers)
+      }
+    } catch {
+      // parseXml is best-effort; swallow to avoid masking the underlying editor.
+    }
+  }
+
+  monaco.editor.setModelMarkers(model, DIAGNOSTIC_OWNER, markers)
+}
+
+function extractXmlErrorLocation(err: unknown, value: string): { line: number; column: number; message: string } {
+  const fallback = { line: 1, column: 1, message: err instanceof Error ? err.message : String(err) }
+  const message = fallback.message
+  // xml-formatter surfaces SAX-style errors that often contain "Line: N Column: M" or
+  // "line N" + "column M" in the message. Extract them best-effort.
+  const lineMatch = /[Ll]ine[:\s]+(\d+)/.exec(message)
+  const colMatch = /[Cc]olumn[:\s]+(\d+)/.exec(message)
+  if (lineMatch && lineMatch[1]) fallback.line = Math.max(1, parseInt(lineMatch[1], 10))
+  if (colMatch && colMatch[1]) fallback.column = Math.max(1, parseInt(colMatch[1], 10))
+  // Clamp to actual document bounds.
+  const totalLines = value.split(/\r\n|\r|\n/).length
+  if (fallback.line > totalLines) fallback.line = totalLines
+  return fallback
+}
+
+function walkXmlNodeForDiagnostics(node: IJsonNode, markers: monaco.editor.IMarkerData[]): void {
+  // Emit a warning for any child element whose data type could not be resolved
+  // against the FHIR model -- catches typos in element names and choice-type
+  // suffixes (e.g. <valueStringg> instead of <valueString>). We only emit when the
+  // *parent* type is known so we don't drown the user in noise on unknown roots.
+  if (node.children) {
+    const parentTypeKnown = !!node.DataType
+    for (const child of node.children) {
+      if (
+        parentTypeKnown &&
+        child.text &&
+        !child.DataType &&
+        child.position &&
+        !child.text.startsWith('xmlns') &&
+        child.text !== '#text'
+      ) {
+        markers.push({
+          severity: monaco.MarkerSeverity.Warning,
+          message: `Unknown FHIR element '${child.text}' in ${node.DataType}`,
+          startLineNumber: child.position.line,
+          startColumn: Math.max(1, child.position.column),
+          endLineNumber: child.position.line,
+          endColumn: Math.max(2, child.position.column + child.text.length)
+        })
+      }
+      walkXmlNodeForDiagnostics(child, markers)
+    }
+  }
+}
+
+// --- Public methods ----------------------------------------------------------
 const DownloadResource = async (url?: string) => {
   if (url) {
     internalResourceUrl.value = url
@@ -160,127 +444,115 @@ const DownloadResource = async (url?: string) => {
 }
 
 const handleEnterKey = (event: KeyboardEvent) => {
-  // Only download if Ctrl key (Windows/Linux) or Cmd key (Mac) is not pressed
   if (!event.ctrlKey && !event.metaKey) {
     downloadResource()
   }
 }
 
-const navigateToPosition = (position: IJsonNodePosition) => {
-  // Move the cursor in the resource editor to the position information
-  aceEditor.value.clearSelection()
-  aceEditor.value.focus()
-  aceEditor.value.gotoLine(
-    position.line,
-    position.column,
-    true
-  )
-
-  if (position.value_stop_pos) {
-    let substr = internalResourceText.value.substring(position.prop_start_pos, position.value_stop_pos + 1)
+function positionToMonaco(position: IJsonNodePosition, text: string): {
+  line: number
+  column: number
+  endLine: number
+  endColumn: number
+} {
+  // Replicates the legacy Ace range math: highlight from the property's start
+  // line/column to either value_stop_pos (preferred) or prop_stop_pos.
+  const stop = position.value_stop_pos ?? position.prop_stop_pos
+  if (typeof stop === 'number' && stop >= position.prop_start_pos) {
+    const substr = text.substring(position.prop_start_pos, stop + 1)
     const lines = substr.split(/\r\n|\r|\n/)
     const endRowOffset = lines.length
-    const endRow = position.line + endRowOffset - 1
-    const lastLine = lines[endRowOffset - 1]
-    const endCollOffset = lastLine ? lastLine.length : 0
-    const endCol = position.column + (endCollOffset > 1 ? endCollOffset + 1 : endCollOffset)
-    const range = new ace.Range(position.line - 1, position.column, endRow - 1, endCol)
-
-    const selectionMarker = aceEditor.value.session.addMarker(range, "resultSelection", "fullLine", true)
-    // after 1.5 seconds remove the highlight.
-    setTimeout(() => {
-      aceEditor.value?.session.removeMarker(selectionMarker)
-    }, 1500)
+    const endLine = position.line + endRowOffset - 1
+    const lastLine = lines[endRowOffset - 1] ?? ''
+    const endColOffset = lastLine.length
+    const endColumn = endRowOffset === 1
+      ? position.column + endColOffset
+      : endColOffset + 1
+    return {
+      line: position.line,
+      column: Math.max(1, position.column),
+      endLine,
+      endColumn: Math.max(endColumn, position.column + 1)
+    }
   }
+  return {
+    line: position.line,
+    column: Math.max(1, position.column),
+    endLine: position.line,
+    endColumn: Math.max(position.column + 1, 2)
+  }
+}
+
+const navigateToPosition = (position: IJsonNodePosition) => {
+  const editor = monacoEditor.value
+  if (!editor) return
+  const { line, column, endLine, endColumn } = positionToMonaco(position, internalResourceText.value)
+
+  editor.focus()
+  editor.setPosition({ lineNumber: line, column })
+  editor.revealPositionInCenter({ lineNumber: line, column })
+
+  const id = trackDecorations([{
+    range: new monaco.Range(line, 1, endLine, endColumn),
+    options: {
+      isWholeLine: true,
+      className: 'resultSelection'
+    }
+  }])
+  setTimeout(() => clearMarker(id), 1500)
 }
 
 const navigateToContext = (model: Model, elementPath: string, variableName?: string, debugMode?: boolean): number | void => {
-  // Move the cursor in the test resource JSON editor to the element
-  if (internalResourceText.value) {
-    // Select the model to use, r5 or r4b
-    // console.log("Using "+modelInfo.version+" model for navigation");
-    let ast: IJsonNode | undefined
-    if (internalResourceText.value.startsWith('<')) {
-      ast = parseXml(internalResourceText.value, model)
-    } else {
-      ast = parseJson(internalResourceText.value, model)
-    }
-    console.log(ast)
-    if (ast) {
-      const node = findNodeByPath(ast, elementPath)
-      if (node) {
-        // inject the position information onto the issue
-        // so that UI can use it
-        aceEditor.value.clearSelection()
-        if (node.position) {
-          aceEditor.value.focus()
-          aceEditor.value.gotoLine(
-            node.position.line,
-            node.position.column,
-            true
-          )
+  void variableName // accepted for API parity; the legacy implementation also ignored it
+  const editor = monacoEditor.value
+  if (!editor || !internalResourceText.value) return
 
-          if (node.position.value_stop_pos) {
-            let substr = internalResourceText.value.substring(node.position.prop_start_pos, node.position.value_stop_pos + 1)
-            const endRowOffset = substr.split(/\r\n|\r|\n/).length
-            const endRow = node.position.line + endRowOffset - 1
-            const endCollOffset = substr.split(/\r\n|\r|\n/)[endRowOffset - 1].length
-            const endCol = node.position.column + (endCollOffset > 1 ? endCollOffset + 1 : endCollOffset)
-            const range = new ace.Range(node.position.line - 1, node.position.column, endRow - 1, endCol)
-            console.log("context", range)
-
-            if (debugMode) {
-              const selectionMarker = aceEditor.value.session.addMarker(range, "debugSelection", "text", false)
-              return selectionMarker
-            } else {
-              const selectionMarker = aceEditor.value.session.addMarker(range, "resultSelection", "fullLine", true)
-              // after 1.5 seconds remove the highlight.
-              setTimeout(() => {
-                aceEditor.value?.session.removeMarker(selectionMarker)
-              }, 1500)
-            }
-          } else if (node.position.prop_stop_pos) {
-            // prop based stuff
-            let substr = internalResourceText.value.substring(node.position.prop_start_pos, node.position.prop_stop_pos + 1)
-            const endRowOffset = substr.split(/\r\n|\r|\n/).length
-            const endRow = node.position.line + endRowOffset - 1
-            const endCollOffset = substr.split(/\r\n|\r|\n/)[endRowOffset - 1].length
-            const endCol = node.position.column + (endCollOffset > 1 ? endCollOffset + 1 : endCollOffset)
-            const range = new ace.Range(node.position.line - 1, node.position.column, endRow - 1, endCol)
-            console.log("context prop", range)
-
-            if (debugMode) {
-              const selectionMarker = aceEditor.value.session.addMarker(range, "debugSelection", "text", false)
-              return selectionMarker
-            } else {
-              const selectionMarker = aceEditor.value.session.addMarker(range, "resultSelection", "fullLine", true)
-              // after 1.5 seconds remove the highlight.
-              setTimeout(() => {
-                aceEditor.value?.session.removeMarker(selectionMarker)
-              }, 1500)
-            }
-          }
-        }
-      }
-    }
+  let ast: IJsonNode | undefined
+  if (internalResourceText.value.startsWith('<')) {
+    ast = parseXml(internalResourceText.value, model)
+  } else {
+    ast = parseJson(internalResourceText.value, model)
   }
+  if (!ast) return
+
+  const node = findNodeByPath(ast, elementPath)
+  if (!node?.position) return
+
+  const { line, column, endLine, endColumn } = positionToMonaco(node.position, internalResourceText.value)
+
+  editor.focus()
+  editor.setPosition({ lineNumber: line, column })
+  editor.revealPositionInCenter({ lineNumber: line, column })
+
+  if (debugMode) {
+    return trackDecorations([{
+      range: new monaco.Range(line, column, endLine, endColumn),
+      options: {
+        className: 'debugSelection'
+      }
+    }])
+  }
+
+  const id = trackDecorations([{
+    range: new monaco.Range(line, 1, endLine, endColumn),
+    options: {
+      isWholeLine: true,
+      className: 'resultSelection'
+    }
+  }])
+  setTimeout(() => clearMarker(id), 1500)
 }
 
 const removeMarker = (markerId: number): void => {
-  if (aceEditor.value && markerId) {
-    aceEditor.value.session.removeMarker(markerId)
-  }
+  if (markerId) clearMarker(markerId)
 }
 
 const removeMarkers = (markerIds: number[]): void => {
-  if (aceEditor.value && markerIds && markerIds.length > 0) {
-    for (const markerId of markerIds) {
-      aceEditor.value.session.removeMarker(markerId)
-    }
-  }
+  if (!markerIds?.length) return
+  for (const id of markerIds) clearMarker(id)
 }
 
-// Watch for prop changes
+// --- Watchers ----------------------------------------------------------------
 watch(() => props.resourceUrl, (newUrl: string) => {
   internalResourceUrl.value = newUrl
 })
@@ -288,8 +560,17 @@ watch(() => props.resourceUrl, (newUrl: string) => {
 watch(() => props.resourceText, (newText: string) => {
   if (internalResourceText.value !== newText) {
     internalResourceText.value = newText
-    aceEditor.value?.session.setValue(newText || '')
+    const editor = monacoEditor.value
+    if (editor) {
+      const model = editor.getModel()
+      if (model && model.getValue() !== (newText || '')) {
+        // Preserve cursor by using executeEdits/setValue; setValue is simpler and
+        // matches the legacy Ace behaviour.
+        editor.setValue(newText || '')
+      }
+    }
     detectResourceType()
+    scheduleDiagnostics()
   }
 })
 
@@ -297,55 +578,88 @@ watch(internalResourceUrl, (newUrl: string) => {
   emit('update:resourceUrl', newUrl)
 })
 
-// Initialize Ace Editor
-const initializeAceEditor = () => {
-  if (aceEditorRef.value) {
-    aceEditor.value = ace.edit(aceEditorRef.value, {
-      wrap: "free",
-      highlightActiveLine: true,
-      showGutter: true,
-      tabSize: props.tabSpaces,
-      showPrintMargin: false,
-      theme: "ace/theme/chrome",
-      wrapBehavioursEnabled: true
-    })
-    
-    aceEditor.value.getSession().setMode(`ace/mode/${resourceType.value}`)
-    aceEditor.value.setValue(internalResourceText.value || '', -1)
-    aceEditor.value.setReadOnly(props.readOnly)
-    detectResourceType()
+// --- Editor lifecycle --------------------------------------------------------
+function languageForResourceType(type: string): string {
+  if (type === 'xml') return 'xml'
+  if (type === 'json') return 'json'
+  if (type === 'fml') return 'fhirpath'
+  return 'plaintext'
+}
 
-    // Watch for changes in the editor and update the internalResourceText
-    aceEditor.value.getSession().on('change', () => {
-      const currentText = aceEditor.value.getValue()
-      if (currentText !== internalResourceText.value) {
-        internalResourceText.value = currentText
-        resourceTextModified.value = (resourceTextFromFile.value !== undefined && internalResourceText.value !== resourceTextFromFile.value)
-        
-        detectResourceType()
-        emit('update:resourceText', internalResourceText.value)
-      }
-    })
-  }
+const initializeMonacoEditor = () => {
+  if (!editorContainerRef.value) return
+
+  detectResourceType()
+
+  const touch = detectTouchDevice()
+  const editor = monaco.editor.create(editorContainerRef.value, {
+    value: internalResourceText.value || '',
+    language: languageForResourceType(resourceType.value),
+    theme: 'fhirpath-lab',
+    tabSize: props.tabSpaces,
+    readOnly: props.readOnly,
+    automaticLayout: true,
+    wordWrap: 'on',
+    minimap: { enabled: false },
+    scrollBeyondLastLine: false,
+    renderWhitespace: 'selection',
+    fixedOverflowWidgets: true,
+    // Touch drag should scroll the editor, not drag the selected text.
+    dragAndDrop: false,
+    // Keep the left gutter compact — the resources edited here are small,
+    // so we don't need room for 5-digit line numbers or wide decoration space.
+    lineNumbersMinChars: 3,
+    lineDecorationsWidth: 4,
+    // Coarse-pointer (touch) tweaks: bigger font, fatter scrollbars, and no
+    // fly-out popups that fight the on-screen keyboard.
+    fontSize: touch ? 15 : 14,
+    mouseWheelZoom: touch,
+    quickSuggestions: touch ? false : { other: true, comments: false, strings: false },
+    parameterHints: { enabled: !touch },
+    hover: { enabled: !touch },
+    acceptSuggestionOnEnter: touch ? 'off' : 'on',
+    scrollbar: {
+      verticalScrollbarSize: touch ? 16 : 10,
+      horizontalScrollbarSize: touch ? 16 : 10,
+      useShadows: !touch,
+      alwaysConsumeMouseWheel: false
+    }
+  })
+  monacoEditor.value = markRaw(editor)
+  applyNarrowLayout(editorContainerRef.value.clientWidth)
+  observeEditorWidth()
+
+  editor.onDidChangeModelContent(() => {
+    const currentText = editor.getValue()
+    if (currentText !== internalResourceText.value) {
+      internalResourceText.value = currentText
+      resourceTextModified.value = (resourceTextFromFile.value !== undefined && internalResourceText.value !== resourceTextFromFile.value)
+      detectResourceType()
+      emit('update:resourceText', internalResourceText.value)
+      scheduleDiagnostics()
+    }
+  })
+
+  scheduleDiagnostics()
 }
 
 const detectResourceType = () => {
   const content = internalResourceText.value.trim()
+  let newType = resourceType.value
   if (content.startsWith('<')) {
-    if (resourceType.value !== 'xml') {
-      resourceType.value = 'xml'
-      aceEditor.value?.getSession().setMode('ace/mode/xml')
-    }
+    newType = 'xml'
   } else if (content.startsWith('///') || content.startsWith('map ')) {
-    if (resourceType.value !== 'fml') {
-      resourceType.value = 'fml'
-      aceEditor.value?.getSession().setMode('ace/mode/text')
-      // setCustomHighlightRules(aceEditor.value, FhirPathHightlighter_Rules)
-    }
+    newType = 'fml'
   } else {
-    if (resourceType.value !== 'json') {
-      resourceType.value = 'json'
-      aceEditor.value?.getSession().setMode('ace/mode/json')
+    newType = 'json'
+  }
+
+  if (newType !== resourceType.value) {
+    resourceType.value = newType
+    const editor = monacoEditor.value
+    const model = editor?.getModel()
+    if (model) {
+      monaco.editor.setModelLanguage(model, languageForResourceType(newType))
     }
   }
 }
@@ -362,7 +676,6 @@ const downloadResource = async () => {
       url = props.fhirServerExamplesUrl + "/" + internalResourceUrl.value
     }
 
-    // if trying to use the hl7 example servers, that should be over https
     if (
       url.startsWith("http://build.fhir.org/") ||
       url.startsWith("http://hl7.org/fhir/")
@@ -370,8 +683,6 @@ const downloadResource = async () => {
       url = "https://" + url.substring(7)
     }
 
-    // If this is trying to download a hl7 example, run it through the downloader proxy
-    // as the HL7 servers don't have CORS for us
     if (
       url.startsWith("https://build.fhir.org/") ||
       url.startsWith("https://hl7.org/fhir/")
@@ -383,36 +694,34 @@ const downloadResource = async () => {
     cancelSource.value = axios.CancelToken.source()
     downloadingInProgress.value = true
     let token = cancelSource.value.token
-    
-    // Use combined accept headers to support both JSON and XML
+
     let headers = {
       "Cache-Control": "no-cache",
       Accept: `${requestFhirAcceptFmlHeaders}, ${requestFhirAcceptHeaders}, ${requestFhirAcceptXmlHeaders}`,
     }
-    
+
     const response = await axios.get<Resource | string>(url, {
       cancelToken: token,
       headers: headers,
-      responseType: 'text', // Get as text first to handle both JSON and XML
+      responseType: 'text',
     })
-    
+
     if (token.reason) {
       console.log(token.reason)
       return
     }
-    
+
     cancelSource.value = undefined
     downloadingInProgress.value = false
 
     const results = response.data
     if (results) {
-      if (aceEditor.value) {
+      const editor = monacoEditor.value
+      if (editor) {
         let formattedContent = ''
         const contentType = response.headers['content-type'] || ''
-        
-        // Detect if the response is XML or JSON based on content type
+
         if (contentType.includes('xml') || (typeof results === 'string' && results.trim().startsWith('<'))) {
-          // Handle XML response
           try {
             formattedContent = xmlFormat(results as string, {
               indentation: ' '.repeat(props.tabSpaces),
@@ -420,35 +729,34 @@ const downloadResource = async () => {
               lineSeparator: '\n'
             })
           } catch (e) {
-            // If XML formatting fails, use the raw content
             formattedContent = results as string
           }
           resourceType.value = 'xml'
-          aceEditor.value.getSession().setMode('ace/mode/xml')
+          const model = editor.getModel()
+          if (model) monaco.editor.setModelLanguage(model, 'xml')
         } else {
-          // Handle JSON response
           try {
             const parsedJson = typeof results === 'string' ? JSON.parse(results) : results
             formattedContent = JSON.stringify(parsedJson, null, props.tabSpaces)
             resourceType.value = 'json'
-            aceEditor.value.getSession().setMode('ace/mode/json')
+            const model = editor.getModel()
+            if (model) monaco.editor.setModelLanguage(model, 'json')
           } catch (e) {
-            // If JSON parsing fails, treat as plain text
             formattedContent = results as string
           }
         }
-        
+
         resourceTextFromFile.value = formattedContent
         if (formattedContent) {
-          aceEditor.value.setValue(formattedContent)
+          editor.setValue(formattedContent)
         }
-        aceEditor.value.clearSelection()
+        editor.setPosition({ lineNumber: 1, column: 1 })
       }
     }
   } catch (err) {
     downloadingInProgress.value = false
     let saveOutcome: OperationOutcome | undefined = undefined
-    
+
     if (axios.isAxiosError(err)) {
       const serverError = err as AxiosError<OperationOutcome>
       if (serverError && serverError.response) {
@@ -487,28 +795,29 @@ const downloadResource = async () => {
 }
 
 const reformatResource = () => {
+  const editor = monacoEditor.value
+  if (!editor) return
   const oldResourceTextModified = resourceTextModified.value
   if (resourceType.value === 'json') {
     try {
-      const parsedJson = JSON.parse(aceEditor.value.getValue())
-      aceEditor.value.setValue(JSON.stringify(parsedJson, null, props.tabSpaces), -1)
-      aceEditor.value.clearSelection()
-      aceEditor.value.renderer.updateFull(true)
+      const parsedJson = JSON.parse(editor.getValue())
+      editor.setValue(JSON.stringify(parsedJson, null, props.tabSpaces))
     } catch (e) {
+      // The JSON worker already shows red squigglies; surface a brief alert too
+      // so the toolbar button still gives explicit feedback.
       alert('Invalid JSON')
     }
   }
   if (resourceType.value === 'xml') {
     try {
-      let formattedXml = xmlFormat(aceEditor.value.getValue(), {
-        indentation: '\t', // Tab for indentation
-        collapseContent: true, // Keep content in the same line as the element
-        lineSeparator: '\n' // Use newline as line separator
+      let formattedXml = xmlFormat(editor.getValue(), {
+        indentation: '\t',
+        collapseContent: true,
+        lineSeparator: '\n'
       })
-      aceEditor.value.setValue(formattedXml)
-      aceEditor.value.clearSelection()
-      aceEditor.value.renderer.updateFull(true)
+      editor.setValue(formattedXml)
     } catch (e) {
+      // Diagnostics already show the precise location in the gutter; just notify.
       alert('Invalid XML')
     }
   }
@@ -525,7 +834,7 @@ const clearUrl = () => {
   resourceTextFromFile.value = undefined
 }
 
-// Expose public methods
+// Expose public methods (signature matches the legacy Ace-based component).
 defineExpose({
   DownloadResource,
   navigateToPosition,
@@ -536,35 +845,81 @@ defineExpose({
 
 // Lifecycle
 onMounted(() => {
-  initializeAceEditor()
-  detectResourceType()
+  watchTouchDevice()
+  initializeMonacoEditor()
+})
+
+onBeforeUnmount(() => {
+  if (diagnosticsTimer) clearTimeout(diagnosticsTimer)
+  if (editorResizeObserver) {
+    editorResizeObserver.disconnect()
+    editorResizeObserver = null
+  }
+  if (touchMediaQuery && touchMediaListener) {
+    if (typeof touchMediaQuery.removeEventListener === 'function') {
+      touchMediaQuery.removeEventListener('change', touchMediaListener)
+    } else if (typeof (touchMediaQuery as any).removeListener === 'function') {
+      ;(touchMediaQuery as any).removeListener(touchMediaListener)
+    }
+  }
+  touchMediaQuery = null
+  touchMediaListener = null
+  decorationCollections.forEach(c => c.clear())
+  decorationCollections.clear()
+  const editor = monacoEditor.value
+  if (editor) {
+    const model = editor.getModel()
+    if (model) monaco.editor.setModelMarkers(model, DIAGNOSTIC_OWNER, [])
+    editor.dispose()
+    monacoEditor.value = null
+  }
 })
 </script>
 
 <style scoped>
-.ace-editor {
+.monaco-editor-container {
   flex-grow: 1;
   width: 100%;
   height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  /* Allow native vertical panning to scroll the editor; horizontal scroll is
+     unnecessary because word-wrap is on. */
+  touch-action: pan-y;
 }
 
-.ace_editor:focus-within+.ace_editor_footer {
+.monaco-editor-container:focus-within + .monaco_editor_footer {
   color: #1976d2;
   transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);
+}
+
+.monaco-touch-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 4px;
+  background: rgba(0, 0, 0, 0.04);
+  border-top: 1px solid rgba(0, 0, 0, 0.12);
+  flex-shrink: 0;
+}
+
+.monaco-touch-toolbar__sep {
+  width: 1px;
+  align-self: stretch;
+  margin: 4px 4px;
+  background: rgba(0, 0, 0, 0.18);
 }
 </style>
 
 <style>
-/* Unscoped styles for Ace editor markers (dynamically added to Ace DOM) */
+/* Unscoped styles for Monaco decoration classes (Monaco appends these to the
+   editor DOM and they need to escape Vue's scoped style hashing). */
 .debugSelection {
-  position: absolute;
-  z-index: 20;
   background-color: #fbff82b1;
 }
 
 .resultSelection {
-  position: absolute;
-  z-index: 20;
   background-color: #5240ef65;
 }
 </style>

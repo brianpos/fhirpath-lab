@@ -589,6 +589,10 @@ const tabDetails = computed<TabData[]>(() => [
     tabSubName: "(test input)",
     show: true,
     enabled: true,
+    // Keep the Monaco-backed ResourceEditor mounted across single-pane tab
+    // switches; tearing it down and re-creating it on every switch is very
+    // expensive (workers + ResizeObserver + DOM) and can crash/hang the UI.
+    keepMounted: true,
   },
   {
     iconName: "mdi-chart-box-multiple-outline",
@@ -623,6 +627,10 @@ const tabDetails = computed<TabData[]>(() => [
     tabName: "DEBUG",
     show: true,
     enabled: true,
+    // The DEBUG tab hosts a Monaco-backed ResourceEditor; keep it mounted
+    // across single-pane tab switches so Monaco isn't disposed/re-created
+    // on every switch (which can crash/hang the UI).
+    keepMounted: true,
   },
 ])
 
