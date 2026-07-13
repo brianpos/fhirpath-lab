@@ -216,6 +216,19 @@ tr.v-data-table__expanded__content > td {
   display: none;
 }
 
+// Hide the cursor and bracket matching when an Ace editor does not have focus.
+.ace_hidden-cursors {
+  opacity: 0;
+}
+
+.ace_editor .ace_bracket {
+  display: none;
+}
+
+.ace_editor:focus-within .ace_bracket {
+  display: block;
+}
+
 // --------------------------------------------------------------------------
 // Editor footer line (Material UI focus display)
 // --------------------------------------------------------------------------

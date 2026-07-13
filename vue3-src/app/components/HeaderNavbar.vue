@@ -1,7 +1,7 @@
 <template>
   <div class="header" data-app>
     <v-app-bar fixed app elevate-on-scroll theme="dark">
-      <v-app-bar-nav-icon class="logo" @click="navigateTo('/')" title="Fhirpath Lab Home">
+      <v-app-bar-nav-icon class="logo" to="/" title="Fhirpath Lab Home">
         <img alt="" style="margin-top:-15px;margin-bottom:-10px;" src="/Square44x44Logo.scale-150.png"/>
       </v-app-bar-nav-icon>
       <v-toolbar-title>Fhirpath Lab</v-toolbar-title>
@@ -32,50 +32,50 @@
             class="fl-nav dots"
             title="Expression Sources"
           >
-            <span class="fl-refdata">Expression Sources</span
+            <span class="fl-refdata">EXPRESSION SOURCES</span
             ><v-icon class="fl-refdata2">mdi-dots-vertical</v-icon>
           </v-btn>
         </template>
         <v-list theme="light">
-          <v-list-item @click="navigateTo('/FhirPath')" :active="isActive('/FhirPath')">
+          <v-list-item to="/FhirPath" :active="isActive('/FhirPath')">
             <template v-slot:prepend>
               <v-icon> mdi-bug-outline </v-icon>
             </template>
             <v-list-item-title>Test FhirPath</v-list-item-title>
           </v-list-item>
-          <v-list-item @click="navigateTo('/fml')" :active="isActive('/fml')">
+          <v-list-item to="/fml" :active="isActive('/fml')">
             <template v-slot:prepend>
               <v-icon> mdi-chart-gantt </v-icon>
             </template>
             <v-list-item-title>Test Structure Map</v-list-item-title>
           </v-list-item>
-          <v-list-item @click="navigateTo('/cql')" :active="isActive('/cql')">
+          <v-list-item to="/cql" :active="isActive('/cql')">
             <template v-slot:prepend>
               <v-icon>mdi-code-braces</v-icon>
             </template>
             <v-list-item-title>Test CQL</v-list-item-title>
           </v-list-item>
           <v-divider></v-divider>
-          <v-list-item @click="navigateTo('/Library')" :active="isActive('/Library')">
+          <v-list-item to="/Library" :active="isActive('/Library')">
             <template v-slot:prepend>
               <v-icon> mdi-library-outline </v-icon>
             </template>
             <v-list-item-title>Expression Library</v-list-item-title>
           </v-list-item>
           <v-divider></v-divider>
-          <v-list-item @click="navigateTo('/StructureDefinition')" :active="isActive('/StructureDefinition')">
+          <v-list-item to="/StructureDefinition" :active="isActive('/StructureDefinition')">
             <v-list-item-title>Structure Definitions</v-list-item-title>
           </v-list-item>
-          <v-list-item @click="navigateTo('/SearchParameter')" :active="isActive('/SearchParameter')">
+          <v-list-item to="/SearchParameter" :active="isActive('/SearchParameter')">
             <v-list-item-title>Search Parameters</v-list-item-title>
           </v-list-item>
-          <v-list-item @click="navigateTo('/Questionnaire')" :active="isActive('/Questionnaire')">
+          <v-list-item to="/Questionnaire" :active="isActive('/Questionnaire')">
             <v-list-item-title>Questionnaires</v-list-item-title>
           </v-list-item>
-          <v-list-item @click="navigateTo('/SubscriptionTopic')" :active="isActive('/SubscriptionTopic')">
+          <v-list-item to="/SubscriptionTopic" :active="isActive('/SubscriptionTopic')">
             <v-list-item-title>Subscription Topics</v-list-item-title>
           </v-list-item>
-          <v-list-item @click="navigateTo('/StructureMap')" :active="isActive('/StructureMap')">
+          <v-list-item to="/StructureMap" :active="isActive('/StructureMap')">
             <v-list-item-title>Structure Maps</v-list-item-title>
           </v-list-item>
         </v-list>
@@ -147,7 +147,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { useRoute } from 'vue-router'
 import UserSettings from './UserSettings.vue'
 
 // Props interface
@@ -169,8 +169,6 @@ const emit = defineEmits<{
   'close-settings': []
 }>()
 
-// Vue Router
-const router = useRouter()
 const route = useRoute()
 
 // TypeScript reactive data
@@ -194,9 +192,5 @@ const clickToggleFavourite = () => {
 const closeSettings = () => {
   overlay.value = false
   emit('close-settings')
-}
-
-const navigateTo = (path: string) => {
-  router.push(path)
 }
 </script>

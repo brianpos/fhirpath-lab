@@ -24,7 +24,7 @@
             :to="primaryTestPath"
             title="Open in tester"
           >
-            <v-icon>mdi-bug-outline</v-icon>
+            <v-icon color="white">mdi-bug-outline</v-icon>
           </v-btn>
           <v-btn
             v-if="canSave"
@@ -106,14 +106,15 @@
                     </v-btn>
                   </v-col>
                 </v-row>
-                <v-textarea
-                  v-model="entry.text"
-                  label="Logic"
-                  rows="10"
-                  auto-grow
-                  :readonly="!canEdit"
-                  spellcheck="false"
-                  @update:model-value="contentChanged(entry)"
+                <ResourceEditor
+                  :resource-text="entry.text"
+                  text-label="Logic"
+                  :language="logicEditorLanguage(entry)"
+                  :read-only="!canEdit"
+                  :tab-spaces="tabSpaces"
+                  :min-lines="6"
+                  :max-lines="30"
+                  @update:resource-text="contentChanged(entry, $event)"
                 />
               </v-card>
 
@@ -347,7 +348,12 @@ function nextDraftVersion(current?: string): string {
   return numeric.join('.')
 }
 
-function contentChanged(entry: LogicEntry) {
+function logicEditorLanguage(entry: LogicEntry): 'cql' | 'fhirpath' {
+  return entry.attachment.contentType === 'text/fhirpath' ? 'fhirpath' : 'cql'
+}
+
+function contentChanged(entry: LogicEntry, text?: string) {
+  if (text !== undefined) entry.text = text
   entry.attachment.data = encodeLibraryContent(entry.text)
   dirty.value = true
 }

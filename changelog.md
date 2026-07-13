@@ -3,6 +3,12 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+# 13 July 2026 (hackweek only - all Vue3 port changes)
+* Added prototype support for a CQL editor
+* Added the syntax highlighting for the Fhirpath Test page
+* Added navigation from the AST to the appropriate part of the expression
+* fixed bug in layout of the fhirpath page results table
+
 # 30 April 2026
 * Modified AppInsights configuration, added to the Vue3 migration, and updated to latest version
 * Added settings configuration support to the Vue3 port
