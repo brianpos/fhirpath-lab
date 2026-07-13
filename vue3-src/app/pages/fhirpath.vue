@@ -400,7 +400,9 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import axios from 'axios'
 import { useRoute } from 'vue-router'
+import type { Library } from 'fhir/r4b'
 import type { TabData } from '~/components/TwinPaneTab.vue'
 import ResourceEditor from '~/components/ResourceEditor.vue'
 import { type IFhirPathEngineDetails, registeredEngines, applyConfigEngines } from '@legacy/types/fhirpath_test_engine'
@@ -416,6 +418,7 @@ import AbstractSyntaxTreeTab from '~/components/AbstractSyntaxTreeTab.vue'
 import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from 'lz-string'
 import { EncodeTestFhirpathData, DecodeTestFhirpathData, type TestFhirpathData } from 'models/testenginemodel'
 import { settings } from '@legacy/helpers/user_settings'
+import { decodeLibraryContent } from '@legacy/helpers/library_content'
 import type { IApplicationInsights } from '@microsoft/applicationinsights-web'
 
 const { $appInsights } = useNuxtApp() as unknown as { $appInsights?: IApplicationInsights }
@@ -502,6 +505,7 @@ const shareToolTipMessage = ref<string>('Copy a sharable link to this test expre
 const shareZulipToolTipMessage = ref<string>('Copy a sharable link for Zulip to this test expression')
 const resourceJsonChanged = ref<boolean>(false)
 const showAdvancedSettings = ref<boolean>(settings.showAdvancedSettings())
+const loadedLibraryReference = ref<string>()
 // Local copy of the effective engine registry (baseline + config overrides)
 const effectiveEngines = ref<Record<string, IFhirPathEngineDetails>>({ })
 
@@ -562,10 +566,16 @@ onMounted(async () => {
   } else {
     // Check for query parameters
     const params = readParametersFromQuery()
-    if (params.expression) {
-      await applyParameters(params)
-      // Run evaluation after applying parameters
-      await evaluateExpression()
+    if (params.expression || params.libraryId) {
+      try {
+        await applyParameters(params)
+        // Run evaluation after applying parameters
+        await evaluateExpression()
+      } catch (caught) {
+        error.value = axios.isAxiosError(caught)
+          ? caught.response?.data?.issue?.[0]?.diagnostics || caught.message
+          : caught instanceof Error ? caught.message : 'Unable to load the FHIRPath test.'
+      }
     }
   }
 })
@@ -718,6 +728,9 @@ const handleHashChange = async () => {
       await evaluateExpression()
     } catch (e) {
       console.error('Failed to decode hash parameters:', e)
+      error.value = axios.isAxiosError(e)
+        ? e.response?.data?.issue?.[0]?.diagnostics || e.message
+        : e instanceof Error ? e.message : 'Unable to load the shared FHIRPath test.'
     }
   }
 }
@@ -774,7 +787,10 @@ const readParametersFromQuery = (): TestFhirpathData => {
 
 // Apply parameters from URL
 const applyParameters = async (p: TestFhirpathData) => {
-  if (p.expression) {
+  if (p.libraryId) {
+    await loadFhirPathLibrary(p.libraryId)
+  }
+  if (p.expression !== undefined) {
     fhirpathExpression.value = p.expression
   }
   
@@ -783,6 +799,21 @@ const applyParameters = async (p: TestFhirpathData) => {
   
   if (p.resource) {
     resourceUrl.value = p.resource
+  }
+
+  async function loadFhirPathLibrary(libraryId: string) {
+    const url = libraryId.startsWith('http')
+      ? libraryId
+      : `${settings.getFhirServerUrl()}/Library/${libraryId}`
+    const response = await axios.get<Library>(url, {
+      headers: { Accept: 'application/fhir+json, application/json' },
+    })
+    const content = response.data.content?.find(content =>
+      content.contentType === 'text/fhirpath' && content.data,
+    )
+    if (!content?.data) throw new Error('The selected Library has no FHIRPath source content.')
+    loadedLibraryReference.value = url
+    fhirpathExpression.value = decodeLibraryContent(content.data)
   }
   
   const resourceJson = p.resourceJson
@@ -848,6 +879,7 @@ const prepareSharePackageData = (): TestFhirpathData => {
     context: fhirpathContextExpression.value || undefined,
     resource: resourceUrl.value || undefined,
     engine: selectedEngine.value?.legacyName,
+    libraryId: loadedLibraryReference.value,
   }
   
   if (variables.value.length > 0) {

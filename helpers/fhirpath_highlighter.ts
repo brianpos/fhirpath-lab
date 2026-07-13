@@ -9,7 +9,11 @@ export function setAcePaths(config: ace.Ace.Config): void {
   config.set('workerPath', CDN);
 }
 
-export function setCustomHighlightRules(editor: ace.Ace.Editor, rules: Record<string, any[]>): void {
+export function setCustomHighlightRules(
+  editor: ace.Ace.Editor,
+  rules: Record<string, any[]>,
+  preserveTabKey = false,
+): void {
   var modeFhir: ace.Ace.SyntaxMode = editor.session.getMode();
   (modeFhir as any).$highlightRules.addRules(rules);
   editor.session.getUseWorker();
@@ -20,8 +24,10 @@ export function setCustomHighlightRules(editor: ace.Ace.Editor, rules: Record<st
   (editor.session as any).bgTokenizer.start(0);
 
   // cast as any to ignore the undefined typing error message
-  (editor.commands as any).bindKey("Tab", undefined);
-  (editor.commands as any).bindKey("Shift-Tab", undefined);
+  if (!preserveTabKey) {
+    (editor.commands as any).bindKey("Tab", undefined);
+    (editor.commands as any).bindKey("Shift-Tab", undefined);
+  }
 }
 
 export const Rules: Record<string, TextHighlightToken[]> = {

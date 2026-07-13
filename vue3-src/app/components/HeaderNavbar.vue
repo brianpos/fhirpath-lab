@@ -49,6 +49,12 @@
             </template>
             <v-list-item-title>Test Structure Map</v-list-item-title>
           </v-list-item>
+          <v-list-item @click="navigateTo('/cql')" :active="isActive('/cql')">
+            <template v-slot:prepend>
+              <v-icon>mdi-code-braces</v-icon>
+            </template>
+            <v-list-item-title>Test CQL</v-list-item-title>
+          </v-list-item>
           <v-divider></v-divider>
           <v-list-item @click="navigateTo('/Library')" :active="isActive('/Library')">
             <template v-slot:prepend>

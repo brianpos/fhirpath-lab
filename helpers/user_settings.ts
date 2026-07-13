@@ -135,6 +135,20 @@ export namespace settings {
         return serverData[configName];
     }
 
+    /**
+     * Resolve a named connection without falling back to an unrelated engine.
+     * Built-in keys always come from the default config; custom config files may add new keys.
+     */
+    export async function getConfiguredServerUrl(configName: string): Promise<string | undefined> {
+        const serverData = await getServerConnectionData();
+        const configuredValue = configName in defaultServerConnectionsData
+            ? defaultServerConnectionsData[configName]
+            : serverData[configName];
+        return typeof configuredValue === "string" && configuredValue.trim()
+            ? configuredValue
+            : undefined;
+    }
+
     export function getSearchData(type: string): ConformanceSearchData | undefined {
         const sdJson = localStorage.getItem(`search_${type}`);
         if (sdJson){

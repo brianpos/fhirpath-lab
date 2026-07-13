@@ -22,16 +22,25 @@
             Quick Test page for testing any FHIRPath expressions
           </div>
         </NuxtLink>
-        <!-- <v-btn dark color="#3F81AE" class="link-item text-decoration-none" to="/Library">
+        <v-btn dark color="#3F81AE" class="link-item text-decoration-none" to="/cql">
+          <v-icon start>mdi-code-braces</v-icon>
+          CQL Tester
+        </v-btn>
+        <NuxtLink to="/cql" class="link-plain-text">
+          <div>
+            Run CQL text against configurable FHIR <code>$cql</code> operation engines
+          </div>
+        </NuxtLink>
+        <v-btn dark color="#3F81AE" class="link-item text-decoration-none" to="/Library">
           <v-icon start> mdi-library-outline </v-icon>
             Library
         </v-btn>
         <NuxtLink to="/Library" class="link-plain-text">
           <div>
             A library of FHIRPath expressions for sharing between other resources, to
-            maintain the logic more easily
+            maintain FHIRPath and CQL logic more easily
           </div>
-        </NuxtLink> -->
+        </NuxtLink>
         <v-btn dark color="#3F81AE" class="link-item text-decoration-none" to="/fml">
           <v-icon start> mdi-chart-gantt </v-icon>
             Mapper
