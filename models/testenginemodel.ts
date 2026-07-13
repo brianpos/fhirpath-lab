@@ -40,4 +40,3 @@ export interface TestFhirMapData {
     engine?: string;
     structureMap?: string;
 }
-

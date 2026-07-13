@@ -1,5 +1,8 @@
 <template>
-  <div style="display: flex; flex-direction: column; height: 100%;">
+  <div
+    class="resource-editor"
+    :class="{ 'resource-editor--auto-height': usesContentHeight }"
+  >
     <v-text-field 
       v-if="label && label.length > 0" 
       :label="label" 
@@ -59,14 +62,14 @@
       </template>
     </v-text-field>
     <label v-show="textLabel">{{ textLabel + ' ' + resourceType }}<i>{{ (resourceTextModified ? ' (modified)' : '') }}</i></label>
-    <div ref="aceEditorRef" class="ace-editor" style="flex-grow: 1; width: 100%; height: 100%;"></div>
+    <div ref="aceEditorRef" class="ace-editor"></div>
     <div class="ace_editor_footer"></div>
     <label v-show="footerLabel"><i>{{ footerLabel }}</i></label>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, type Ref } from 'vue'
+import { computed, ref, watch, onMounted, type Ref } from 'vue'
 import ace from 'ace-builds'
 
 // https://github.com/CarterLi/vue3-ace-editor/blob/gh-pages/demo-source/src/ace-config.ts
@@ -103,7 +106,10 @@ import type { Resource, OperationOutcome } from 'fhir/r4'
 import { findNodeByPath, type IJsonNode, parseJson } from '@legacy/helpers/json_parser'
 import { parseXml } from '@legacy/helpers/xml_parser'
 import type { Model } from 'fhirpath'
+import { CqlHighlightRules } from '@legacy/helpers/cql_highlighter'
+import { setCustomHighlightRules } from '@legacy/helpers/fhirpath_highlighter'
 import "ace-builds/src-noconflict/mode-json"
+import "ace-builds/src-noconflict/mode-text"
 import "ace-builds/src-noconflict/mode-xml"
 
 // Props interface
@@ -117,6 +123,9 @@ interface Props {
   tabSpaces?: number
   fhirServerExamplesUrl?: string
   dotnetServerDownloader?: string
+  language?: 'auto' | 'cql' | 'json' | 'text' | 'xml'
+  minLines?: number
+  maxLines?: number
 }
 
 // Define props with defaults
@@ -129,7 +138,8 @@ const props = withDefaults(defineProps<Props>(), {
   footerLabel: undefined,
   tabSpaces: 2,
   fhirServerExamplesUrl: 'https://hapi.fhir.org/baseR4',
-  dotnetServerDownloader: ''
+  dotnetServerDownloader: '',
+  language: 'auto',
 })
 
 // Define emits
@@ -147,6 +157,9 @@ const downloadingInProgress = ref<boolean>(false)
 const aceEditor: Ref<any> = ref(null)
 const cancelSource = ref<CancelTokenSource | undefined>(undefined)
 const resourceTextModified = ref<boolean>(false)
+const usesContentHeight = computed(() =>
+  props.minLines !== undefined || props.maxLines !== undefined,
+)
 
 // Template refs
 const aceEditorRef = ref<HTMLDivElement>()
@@ -293,6 +306,11 @@ watch(() => props.resourceText, (newText: string) => {
   }
 })
 
+watch(() => props.language, () => {
+  resourceType.value = ''
+  detectResourceType()
+})
+
 watch(internalResourceUrl, (newUrl: string) => {
   emit('update:resourceUrl', newUrl)
 })
@@ -300,7 +318,7 @@ watch(internalResourceUrl, (newUrl: string) => {
 // Initialize Ace Editor
 const initializeAceEditor = () => {
   if (aceEditorRef.value) {
-    aceEditor.value = ace.edit(aceEditorRef.value, {
+    const editorOptions: Partial<ace.Ace.EditorOptions> = {
       wrap: "free",
       highlightActiveLine: true,
       showGutter: true,
@@ -308,7 +326,10 @@ const initializeAceEditor = () => {
       showPrintMargin: false,
       theme: "ace/theme/chrome",
       wrapBehavioursEnabled: true
-    })
+    }
+    if (props.minLines !== undefined) editorOptions.minLines = props.minLines
+    if (props.maxLines !== undefined) editorOptions.maxLines = props.maxLines
+    aceEditor.value = ace.edit(aceEditorRef.value, editorOptions)
     
     aceEditor.value.getSession().setMode(`ace/mode/${resourceType.value}`)
     aceEditor.value.setValue(internalResourceText.value || '', -1)
@@ -330,6 +351,17 @@ const initializeAceEditor = () => {
 }
 
 const detectResourceType = () => {
+  if (props.language !== 'auto') {
+    if (resourceType.value === props.language) return
+    resourceType.value = props.language
+    const aceMode = props.language === 'cql' ? 'text' : props.language
+    aceEditor.value?.getSession().setMode(`ace/mode/${aceMode}`)
+    if (props.language === 'cql' && aceEditor.value) {
+      setCustomHighlightRules(aceEditor.value, CqlHighlightRules, true)
+    }
+    return
+  }
+
   const content = internalResourceText.value.trim()
   if (content.startsWith('<')) {
     if (resourceType.value !== 'xml') {
@@ -525,13 +557,16 @@ const clearUrl = () => {
   resourceTextFromFile.value = undefined
 }
 
+const focus = () => aceEditor.value?.focus()
+
 // Expose public methods
 defineExpose({
   DownloadResource,
   navigateToPosition,
   navigateToContext,
   removeMarker,
-  removeMarkers
+  removeMarkers,
+  focus,
 })
 
 // Lifecycle
@@ -542,10 +577,25 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.resource-editor {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.resource-editor--auto-height {
+  height: auto;
+}
+
 .ace-editor {
   flex-grow: 1;
   width: 100%;
   height: 100%;
+}
+
+.resource-editor--auto-height .ace-editor {
+  flex-grow: 0;
+  height: auto;
 }
 
 .ace_editor:focus-within+.ace_editor_footer {
