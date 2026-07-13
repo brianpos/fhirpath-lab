@@ -22,15 +22,6 @@
             Quick Test page for testing any FHIRPath expressions
           </div>
         </NuxtLink>
-        <v-btn dark color="#3F81AE" class="link-item text-decoration-none" to="/cql">
-          <v-icon start>mdi-code-braces</v-icon>
-          CQL Tester
-        </v-btn>
-        <NuxtLink to="/cql" class="link-plain-text">
-          <div>
-            Run CQL text against configurable FHIR <code>$cql</code> operation engines
-          </div>
-        </NuxtLink>
         <v-btn dark color="#3F81AE" class="link-item text-decoration-none" to="/Library">
           <v-icon start> mdi-library-outline </v-icon>
             Library
@@ -68,6 +59,15 @@
             Test page for testing FHIR Questionnaires using the <a href="https://build.fhir.org/ig/HL7/sdc">SDC</a> specification
           </div>
         </NuxtLink>
+        <v-btn dark color="#3F81AE" class="link-item text-decoration-none" to="/cql">
+          <v-icon start>mdi-code-braces</v-icon>
+          CQL Tester
+        </v-btn>
+        <NuxtLink to="/cql" class="link-plain-text">
+          <div>
+            Quick Test page for testing CQL expressions
+          </div>
+        </NuxtLink>
       </div>
       <br />
       <p>
@@ -76,7 +76,7 @@
         (defaulting test resource ID "example")
       </p>
       <p>
-        <b>Note:</b> As the .net, java, python and closure fhirpath engines don't run in the browser this data is sent to a cloud
+        <b>Note:</b> Only the fhirpath.js engine runs in browser, all other fhirpath/cql engines thus test data is sent to a cloud
         service to process these requests. None of this data is persisted outside the call itself.
         <v-alert
           type="error"
@@ -89,19 +89,6 @@
           Externally hosted services are indicated with a <v-icon size="small" color="grey-darken-1">mdi-web</v-icon> icon, do not select these if you do not want to use those services.
         </v-alert>
       </p>
-      <p>
-        These are the versions of each of the fhirpath engines in use:
-      </p>
-      <ul style="padding-left: 40px">
-        <li>Firely SDK FHIRPath Engine v5.11.4 <i>(server side)</i></li>
-        <li>FHIRPath.js v{{ fhirpathVersion }}</li>
-        <li>HAPI FHIRPath v6.5.20 <i>(server side)</i></li>
-        <li>IBM FHIRPath v4.11.1 (LinuxForHealth)<i> (server side)</i></li>
-        <li>Dotnet FHIRMappingLanguage Engine v5.10.0<i> (server side)</i></li>
-        <li>FHIRPath-py <i>(server side - externally hosted by Beda Software)</i></li>
-        <li>Aidbox FHIRPath Engine (Health Samurai)<i> (server side - externally hosted by Health Samurai)</i></li>
-      </ul>
-      <br />
       <h5>Disclaimers:</h5>
       <p>
         Written by Brian Postlethwaite to support the FHIR community and is provided AS-IS<br />
@@ -293,7 +280,17 @@ hr {
   }
 }
 
+.link-item, .link-item:visited {
+  text-transform: uppercase;
+  text-decoration: initial;
+  color: white;
+}
 
+h5 {
+  margin-block-end: 0;
+}
 
-
+.link-item:hover {
+  text-decoration: initial;
+}
 </style>

@@ -35,6 +35,10 @@ export default defineNuxtConfig({
         '@vue/devtools-core',
         '@vue/devtools-kit',
         '@microsoft/applicationinsights-web',
+        'fhirpath',
+        'fhirpath/fhir-context/general-additions.js',
+        'fhirpath/fhir-context/r4',
+        'fhirpath/fhir-context/r5',
       ]
     }
   },

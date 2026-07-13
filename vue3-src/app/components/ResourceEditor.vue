@@ -61,7 +61,9 @@
         <slot name="append"></slot>
       </template>
     </v-text-field>
-    <label v-show="textLabel">{{ textLabel + ' ' + resourceType }}<i>{{ (resourceTextModified ? ' (modified)' : '') }}</i></label>
+    <label v-show="textLabel" class="resource-editor__text-label">
+      {{ textLabel }}{{ language === 'auto' ? ` ${resourceType}` : '' }}<i>{{ resourceTextModified ? ' (modified)' : '' }}</i>
+    </label>
     <div ref="aceEditorRef" class="ace-editor"></div>
     <div class="ace_editor_footer"></div>
     <label v-show="footerLabel"><i>{{ footerLabel }}</i></label>
@@ -107,7 +109,7 @@ import { findNodeByPath, type IJsonNode, parseJson } from '@legacy/helpers/json_
 import { parseXml } from '@legacy/helpers/xml_parser'
 import type { Model } from 'fhirpath'
 import { CqlHighlightRules } from '@legacy/helpers/cql_highlighter'
-import { setCustomHighlightRules } from '@legacy/helpers/fhirpath_highlighter'
+import { Rules as FhirPathHighlightRules, setCustomHighlightRules } from '@legacy/helpers/fhirpath_highlighter'
 import "ace-builds/src-noconflict/mode-json"
 import "ace-builds/src-noconflict/mode-text"
 import "ace-builds/src-noconflict/mode-xml"
@@ -123,9 +125,17 @@ interface Props {
   tabSpaces?: number
   fhirServerExamplesUrl?: string
   dotnetServerDownloader?: string
-  language?: 'auto' | 'cql' | 'json' | 'text' | 'xml'
+  language?: 'auto' | 'cql' | 'fhirpath' | 'json' | 'text' | 'xml'
   minLines?: number
   maxLines?: number
+  expressionEditor?: boolean
+}
+
+interface TextRangeLocation {
+  position?: number
+  line?: number
+  column?: number
+  length: number
 }
 
 // Define props with defaults
@@ -140,6 +150,7 @@ const props = withDefaults(defineProps<Props>(), {
   fhirServerExamplesUrl: 'https://hapi.fhir.org/baseR4',
   dotnetServerDownloader: '',
   language: 'auto',
+  expressionEditor: false,
 })
 
 // Define emits
@@ -163,6 +174,8 @@ const usesContentHeight = computed(() =>
 
 // Template refs
 const aceEditorRef = ref<HTMLDivElement>()
+let textRangeMarker: number | undefined
+let textRangeMarkerTimeout: ReturnType<typeof setTimeout> | undefined
 
 // Public methods
 const DownloadResource = async (url?: string) => {
@@ -205,6 +218,71 @@ const navigateToPosition = (position: IJsonNodePosition) => {
       aceEditor.value?.session.removeMarker(selectionMarker)
     }, 1500)
   }
+}
+
+const navigateToTextRange = (location: TextRangeLocation): boolean => {
+  const editor = aceEditor.value
+  if (!editor || !Number.isInteger(location.length) || location.length < 0) return false
+
+  const document = editor.session.getDocument()
+  const textLength = document.getValue().length
+  let startIndex: number
+
+  if (location.position !== undefined) {
+    if (!Number.isInteger(location.position) || location.position < 0 || location.position > textLength) {
+      return false
+    }
+    startIndex = location.position
+  } else {
+    if (
+      location.line === undefined
+      || location.column === undefined
+      || !Number.isInteger(location.line)
+      || !Number.isInteger(location.column)
+    ) {
+      return false
+    }
+
+    const start = {
+      row: location.line - 1,
+      column: location.column - 1,
+    }
+    if (
+      start.row < 0
+      || start.row >= document.getLength()
+      || start.column < 0
+      || start.column > document.getLine(start.row).length
+    ) {
+      return false
+    }
+    startIndex = document.positionToIndex(start, 0)
+  }
+
+  const start = document.indexToPosition(startIndex, 0)
+  const end = document.indexToPosition(Math.min(startIndex + location.length, textLength), 0)
+  const range = new ace.Range(start.row, start.column, end.row, end.column)
+
+  if (textRangeMarker !== undefined) {
+    editor.session.removeMarker(textRangeMarker)
+  }
+  if (textRangeMarkerTimeout !== undefined) {
+    clearTimeout(textRangeMarkerTimeout)
+  }
+
+  editor.clearSelection()
+  editor.moveCursorToPosition(start)
+  editor.scrollToLine(start.row, true, true)
+  editor.focus()
+  textRangeMarker = editor.session.addMarker(range, "resultSelection", "text", false)
+  textRangeMarkerTimeout = setTimeout(() => {
+    if (textRangeMarker !== undefined) {
+      aceEditor.value?.session.removeMarker(textRangeMarker)
+      textRangeMarker = undefined
+    }
+    textRangeMarkerTimeout = undefined
+  }, 1500)
+
+  return true
 }
 
 const navigateToContext = (model: Model, elementPath: string, variableName?: string, debugMode?: boolean): number | void => {
@@ -320,7 +398,6 @@ const initializeAceEditor = () => {
   if (aceEditorRef.value) {
     const editorOptions: Partial<ace.Ace.EditorOptions> = {
       wrap: "free",
-      highlightActiveLine: true,
       showGutter: true,
       tabSize: props.tabSpaces,
       showPrintMargin: false,
@@ -329,6 +406,12 @@ const initializeAceEditor = () => {
     }
     if (props.minLines !== undefined) editorOptions.minLines = props.minLines
     if (props.maxLines !== undefined) editorOptions.maxLines = props.maxLines
+    if (props.expressionEditor) {
+      editorOptions.showGutter = false
+      editorOptions.highlightActiveLine = false
+      editorOptions.fontSize = 16
+      // editorOptions.cursorStyle = 'slim'
+    }
     aceEditor.value = ace.edit(aceEditorRef.value, editorOptions)
     
     aceEditor.value.getSession().setMode(`ace/mode/${resourceType.value}`)
@@ -354,10 +437,14 @@ const detectResourceType = () => {
   if (props.language !== 'auto') {
     if (resourceType.value === props.language) return
     resourceType.value = props.language
-    const aceMode = props.language === 'cql' ? 'text' : props.language
+    const aceMode = props.language === 'cql' || props.language === 'fhirpath'
+      ? 'text'
+      : props.language
     aceEditor.value?.getSession().setMode(`ace/mode/${aceMode}`)
     if (props.language === 'cql' && aceEditor.value) {
       setCustomHighlightRules(aceEditor.value, CqlHighlightRules, true)
+    } else if (props.language === 'fhirpath' && aceEditor.value) {
+      setCustomHighlightRules(aceEditor.value, FhirPathHighlightRules)
     }
     return
   }
@@ -563,6 +650,7 @@ const focus = () => aceEditor.value?.focus()
 defineExpose({
   DownloadResource,
   navigateToPosition,
+  navigateToTextRange,
   navigateToContext,
   removeMarker,
   removeMarkers,
@@ -598,6 +686,12 @@ onMounted(() => {
   height: auto;
 }
 
+.resource-editor__text-label {
+  color: rgba(var(--v-theme-on-surface), var(--v-medium-emphasis-opacity));
+  font-size: 12px;
+  line-height: 18px;
+}
+
 .ace_editor:focus-within+.ace_editor_footer {
   color: #1976d2;
   transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);
@@ -606,6 +700,60 @@ onMounted(() => {
 
 <style>
 /* Unscoped styles for Ace editor markers (dynamically added to Ace DOM) */
+.ace-chrome .ace_fhir_date,
+.ace-chrome .ace_fhir_datetime,
+.ace-chrome .ace_fhir_time,
+.ace-chrome .ace_fhir_string,
+.ace-chrome .ace_cql_constant.ace_date,
+.ace-chrome .ace_cql_constant.ace_string {
+  color: #a31515;
+}
+
+.ace-chrome .ace_cql_constant.ace_numeric {
+  color: rgb(0, 0, 205);
+}
+
+.ace-chrome .ace_cql_constant.ace_boolean {
+  color: rgb(88, 92, 246);
+}
+
+.ace-chrome .ace_fhir_quantity {
+  color: #a31515;
+  font-style: italic;
+}
+
+.ace-chrome .ace_fhir_paren,
+.ace-chrome .ace_cql_paren {
+  color: green;
+  font-weight: bold;
+}
+
+.ace-chrome .ace_fhir_keyword,
+.ace-chrome .ace_cql_keyword {
+  color: #0000ff;
+  font-weight: bold;
+}
+
+.ace-chrome .ace_fhir_variable {
+  color: #b255a5;
+  font-weight: bold;
+}
+
+.ace-chrome .ace_bstring {
+  color: green;
+  font-weight: bold;
+}
+
+.ace-chrome .ace_fhir_identifier,
+.ace-chrome .ace_cql_identifier {
+  color: #318495;
+}
+
+.ace-chrome .ace_fhir_function,
+.ace-chrome .ace_cql_function {
+  color: #74531f;
+}
+
 .debugSelection {
   position: absolute;
   z-index: 20;

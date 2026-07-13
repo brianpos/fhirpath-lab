@@ -1,4 +1,4 @@
-import { Model } from "fhirpath";
+import type { Model } from "fhirpath";
 import { updateWithGeneratedData, arrToHash } from 'fhirpath/fhir-context/general-additions.js';
 import { choiceTypePaths} from './choiceTypePaths';
 import { path2Type } from './path2Type';

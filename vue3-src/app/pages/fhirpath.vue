@@ -147,21 +147,24 @@
                   <span>Reset Expression and context</span>
                 </v-tooltip>
               </span>
-              <v-textarea 
-                v-model="fhirpathContextExpression"
-                label="Context Expression (optional)"
-                rows="1"
-                outlined
-                hide-details="auto"
-                persistent-placeholder
+              <ResourceEditor
+                :resource-text="fhirpathContextExpression"
+                text-label="Context Expression (optional)"
+                language="fhirpath"
+                expression-editor
+                :min-lines="1"
+                :max-lines="6"
+                @update:resource-text="fhirpathContextExpression = $event"
               />
-              <v-textarea
+              <ResourceEditor
                 ref="fhirpathExpressionInput"
-                v-model="fhirpathExpression"
-                label="FHIRPath Expression"
-                rows="3"
-                outlined
-                hide-details="auto"
+                :resource-text="fhirpathExpression"
+                text-label="FHIRPath Expression"
+                language="fhirpath"
+                expression-editor
+                :min-lines="3"
+                :max-lines="12"
+                @update:resource-text="fhirpathExpression = $event"
               />
               
               <div class="mt-4">
@@ -183,7 +186,7 @@
                   </template>
                   <template v-else-if="singleEngineResult.results">
                     <template v-for="(resultItem, idx) in singleEngineResult.results" :key="idx">
-                      <table class="v-table v-table--density-default" style="flex-shrink: 1; width: 100%; border: solid thin #eee; border-spacing: 0;">
+                      <table class="v-table v-table--density-default" style="display: table; flex-shrink: 1; width: 100%; border: solid thin #eee; border-spacing: 0;">
                         <tr v-if="resultItem.context">
                           <td class="context" colspan="2">
                             <v-btn v-if="resultItem.position" color="transparent" density="compact" size="small" style="float:right;" icon flat title="Goto context" @click="navigateToResourcePath(resultItem.context)">
@@ -399,7 +402,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import axios from 'axios'
 import { useRoute } from 'vue-router'
 import type { Library } from 'fhir/r4b'
@@ -408,8 +411,8 @@ import ResourceEditor from '~/components/ResourceEditor.vue'
 import { type IFhirPathEngineDetails, registeredEngines, applyConfigEngines } from '@legacy/types/fhirpath_test_engine'
 import { evaluateFhirPathExpression, type FhirPathEvaluationOptions, type FhirPathEvaluationResult } from '@legacy/helpers/fhirpath_api_engine'
 import type { VariableData } from 'models/testenginemodel'
-import type { ParseTreeNode } from 'models/FhirpathTesterData'
-import { Model } from "fhirpath";
+import type { JsonNode } from 'models/FhirpathTesterData'
+import type { Model } from "fhirpath";
 import fhirpath_r4_model from 'fhirpath/fhir-context/r4'
 import fhirpath_r5_model from 'fhirpath/fhir-context/r5'
 // Note: R6 is not yet available in fhirpath.js package
@@ -430,13 +433,13 @@ useHead({
 
 // Reactive data
 const fhirpathContextExpression = ref<string>('name')
-const fhirpathExpression = ref<string>('trace(\'trc\').given.join(\' \').combine(family).join(\', \')')
+const fhirpathExpression = ref<string>('trace(\'trc\').given.join(\' \')\n.combine(family).join(\', \')')
 const loading = ref<boolean>(false)
 const loadingAll = ref<boolean>(false)
 const error = ref<string>('')
 const singleEngineResult = ref<FhirPathEvaluationResult | null>(null)
 const allEngineResults = ref<Map<string, FhirPathEvaluationResult>>(new Map())
-const astData = ref<ParseTreeNode | null>(null)
+const astData = ref<JsonNode | null>(null)
 // Tracks which engine in the multi-engine Results tab has been selected for the
 // Expression / AST / DEBUG views. Cleared on every fresh evaluation.
 const selectedEngineName = ref<string | null>(null)
@@ -484,7 +487,7 @@ const dotnetServerDownloader = ref<string>('https://proxy.fhir.forms-lab.com/dow
 
 // Template ref
 const resourceEditor = ref<InstanceType<typeof ResourceEditor>>()
-const fhirpathExpressionInput = ref()
+const fhirpathExpressionInput = ref<InstanceType<typeof ResourceEditor>>()
 
 // Event handlers
 const onResourceUrlUpdate = (newUrl: string) => {
@@ -666,10 +669,17 @@ const resetExpression = () => {
 }
 
 // Navigate to expression node from AST
-const navigateToExpressionNode = (node: ParseTreeNode) => {
-  console.log('Navigate to expression node:', node)
-  // TODO: Highlight the expression text in the editor
-  // This would need the expression editor to support highlighting
+const navigateToExpressionNode = (node: JsonNode) => {
+  twinTabControl.value?.selectTab(0)
+
+  nextTick(() => {
+    fhirpathExpressionInput.value?.navigateToTextRange({
+      position: node.Position,
+      line: node.Line,
+      column: node.Column,
+      length: node.Length ?? node.Name.length,
+    })
+  })
 }
 
 // Navigate to a resource path in the test resource editor

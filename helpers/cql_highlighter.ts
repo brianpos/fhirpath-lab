@@ -10,37 +10,37 @@ export const CqlHighlightRules: Record<string, TextHighlightToken[]> = {
             next: "comment",
         },
         {
-            token: "string",
+            token: "cql_constant.string",
             regex: /'/,
             next: "cql_string",
         },
         {
-            token: "variable",
+            token: "cql_identifier",
             regex: /"/,
             next: "quoted_identifier",
         },
         {
-            token: "constant.numeric",
+            token: "cql_constant.numeric",
             regex: /\b\d+(?:(?:\.\d*)?(?:[eE][+-]?\d+)?)?\b/,
         },
         {
-            token: "constant.language.boolean",
+            token: "cql_constant.boolean",
             regex: /\b(?:true|false|null)\b/i,
         },
         {
-            token: "constant.language.date",
+            token: "cql_constant.date",
             regex: /@\d{4}(?:-\d{2}(?:-\d{2})?)?(?:T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2})?)?/,
         },
         {
-            token: ["keyword", "text", "entity.name.function"],
+            token: ["cql_keyword", "text", "cql_function"],
             regex: /\b(define)(\s+)([A-Za-z_][A-Za-z0-9_]*)\b/i,
         },
         {
-            token: ["keyword", "text", "entity.name.type"],
+            token: ["cql_keyword", "text", "entity.name.type"],
             regex: /\b(library|include|using|codesystem|valueset|code|concept|parameter|context)(\s+)([A-Za-z_][A-Za-z0-9_]*)\b/i,
         },
         {
-            token: "keyword",
+            token: "cql_keyword",
             regex: /\b(?:aggregate|all|and|as|ascending|before|between|by|called|case|contains|default|descending|distinct|div|during|else|end|ends|except|exists|fluent|from|if|implies|in|included|includes|intersect|is|let|meets|mod|not|null|occurs|of|on|or|overlaps|per|predecessor|private|properly|public|return|same|singleton|sort|starts|successor|such|then|times|union|version|when|where|with|within|without|xor)\b/i,
         },
         {
@@ -48,7 +48,7 @@ export const CqlHighlightRules: Record<string, TextHighlightToken[]> = {
             regex: /\b(?:Any|Boolean|Choice|Code|Concept|Date|DateTime|Decimal|Integer|Interval|List|Long|Quantity|Ratio|String|Time|Tuple)\b/,
         },
         {
-            token: ["support.function", "text", "paren.lparen"],
+            token: ["cql_function", "text", "cql_paren.lparen"],
             regex: /\b([A-Za-z_][A-Za-z0-9_]*)(\s*)(\()/,
         },
         {
@@ -56,11 +56,11 @@ export const CqlHighlightRules: Record<string, TextHighlightToken[]> = {
             regex: /!=|<=|>=|~|!~|\+|-|\*|\/|=|<|>/,
         },
         {
-            token: "paren.lparen",
+            token: "cql_paren.lparen",
             regex: /[\[({]/,
         },
         {
-            token: "paren.rparen",
+            token: "cql_paren.rparen",
             regex: /[\])}]/,
         },
     ],
@@ -70,12 +70,12 @@ export const CqlHighlightRules: Record<string, TextHighlightToken[]> = {
             regex: /\\(?:u[0-9a-fA-F]{4}|['"\\\/bfnrt])/,
         },
         {
-            token: "string",
+            token: "cql_constant.string",
             regex: /'|$/,
             next: "start",
         },
         {
-            defaultToken: "string",
+            defaultToken: "cql_constant.string",
         },
     ],
     quoted_identifier: [
@@ -84,12 +84,12 @@ export const CqlHighlightRules: Record<string, TextHighlightToken[]> = {
             regex: /\\"/,
         },
         {
-            token: "variable",
+            token: "cql_identifier",
             regex: /"|$/,
             next: "start",
         },
         {
-            defaultToken: "variable",
+            defaultToken: "cql_identifier",
         },
     ],
     comment: [

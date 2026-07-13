@@ -109,12 +109,13 @@
                   <v-icon>mdi-broom</v-icon>
                 </v-btn>
               </div>
-              <label class="v-label">CQL Expression</label>
               <ResourceEditor
                 ref="cqlInput"
                 class="cql-editor"
                 :resource-text="cqlText"
+                text-label="CQL Expression"
                 language="cql"
+                expression-editor
                 :tab-spaces="tabSpaces"
                 :min-lines="12"
                 :max-lines="30"
