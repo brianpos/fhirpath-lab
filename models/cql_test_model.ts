@@ -28,6 +28,7 @@ export interface TestCqlData {
     libraryId?: string;
     libraryUrl?: string;
     libraryName?: string;
+    selectedExpressions?: string[];
 }
 
 export function encodeTestCqlData(data: TestCqlData): string {

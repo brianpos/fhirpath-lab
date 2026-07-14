@@ -18,6 +18,16 @@ describe("CQL endpoint handling", () => {
             .toBe("https://example.test/fhir/$cql");
     });
 
+    test("selects the Library evaluate operation for library content", () => {
+        expect(normalizeCqlEndpointUrl(
+            "https://example.test/fhir/$cql",
+            "library",
+        )).toBe("https://example.test/fhir/Library/$evaluate");
+        expect(normalizeCqlEndpointUrl(
+            "https://example.test/fhir/Library/$evaluate",
+        )).toBe("https://example.test/fhir/$cql");
+    });
+
     test("creates a FHIR REST Endpoint resource", () => {
         expect(createFhirEndpoint("https://example.test/fhir").address)
             .toBe("https://example.test/fhir");
@@ -67,6 +77,7 @@ describe("CQL request construction", () => {
             "subject",
             "parameters",
             "library",
+            "useServerData",
             "data",
             "dataEndpoint",
             "contentEndpoint",
@@ -80,7 +91,7 @@ describe("CQL request construction", () => {
             resourceType: "Patient",
             id: "example",
         });
-        expect(request.parameter).not.toContainEqual({
+        expect(request.parameter).toContainEqual({
             name: "useServerData",
             valueBoolean: false,
         });
@@ -94,7 +105,7 @@ describe("CQL request construction", () => {
         })).toThrow("mutually exclusive");
     });
 
-    test("includes useServerData only when enabled", () => {
+    test("includes an explicit useServerData choice", () => {
         expect(buildCqlParameters({
             cql: "define One: 1",
             useServerData: true,
@@ -105,6 +116,12 @@ describe("CQL request construction", () => {
         expect(buildCqlParameters({
             cql: "define One: 1",
             useServerData: false,
+        }).parameter).toContainEqual({
+            name: "useServerData",
+            valueBoolean: false,
+        });
+        expect(buildCqlParameters({
+            cql: "define One: 1",
         }).parameter?.some(parameter => parameter.name === "useServerData")).toBe(false);
     });
 
@@ -116,6 +133,46 @@ describe("CQL request construction", () => {
         const endpoint = request.parameter?.find(parameter => parameter.name === "dataEndpoint")
             ?.resource as unknown as { connectionType: unknown[] };
         expect(endpoint.connectionType).toHaveLength(1);
+    });
+
+    test("builds an inline Library evaluate request with selected expressions", () => {
+        const cql = `library Example version '1.0.0'
+define PublicAnswer: 42
+define private PrivateAnswer: 7`;
+        const request = buildCqlParameters({
+            cql,
+            mode: "library",
+            libraryName: "Example",
+            libraryVersion: "1.0.0",
+            selectedExpressions: ["PublicAnswer", "PrivateAnswer"],
+            subject: "Patient/123",
+            libraries: [{ url: "http://example.org/Library/Ignored" }],
+        });
+
+        expect(request.parameter?.map(parameter => parameter.name)).toEqual([
+            "library",
+            "expression",
+            "expression",
+            "subject",
+        ]);
+        const inlineLibrary = request.parameter?.[0].resource;
+        expect(inlineLibrary).toMatchObject({
+            resourceType: "Library",
+            status: "draft",
+            url: "http://fhirpath-lab.com/cql/Library/Example",
+            version: "1.0.0",
+            name: "Example",
+            type: {
+                coding: [{
+                    system: "http://terminology.hl7.org/CodeSystem/library-type",
+                    code: "logic-library",
+                }],
+            },
+        });
+        const encodedCql = (inlineLibrary as {
+            content: Array<{ data: string }>;
+        }).content[0].data;
+        expect(Buffer.from(encodedCql, "base64").toString("utf8")).toBe(cql);
     });
 });
 
@@ -153,5 +210,35 @@ describe("CQL response normalization", () => {
         const result = normalizeCqlResponse(response, "Test", "https://example/$cql");
         expect(result.outcomes).toEqual([outcome]);
         expect(result.results[0].type).toBe("OperationOutcome");
+    });
+
+    test("expands a Library evaluate return Parameters resource", () => {
+        const response: Parameters = {
+            resourceType: "Parameters",
+            parameter: [{
+                name: "return",
+                resource: {
+                    resourceType: "Parameters",
+                    parameter: [
+                        { name: "Answer", valueInteger: 42 },
+                        { name: "Greeting", valueString: "Hello" },
+                    ],
+                },
+            }],
+        };
+
+        const result = normalizeCqlResponse(
+            response,
+            "Test",
+            "https://example/Library/$evaluate",
+        );
+        expect(result.results[0]).toMatchObject({
+            name: "return",
+            type: "Parameters",
+        });
+        expect(result.results[0].children).toEqual([
+            expect.objectContaining({ name: "Answer", display: "42" }),
+            expect.objectContaining({ name: "Greeting", display: "Hello" }),
+        ]);
     });
 });

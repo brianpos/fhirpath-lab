@@ -40,6 +40,14 @@
 
           <v-btn
             icon
+            title="Validate CQL"
+            :disabled="loading || loadingAll"
+            @click="validateCqlContent"
+          >
+            <v-icon>mdi-note-check-outline</v-icon>
+          </v-btn>
+          <v-btn
+            icon
             title="Run CQL (Ctrl+Enter)"
             :loading="loading"
             :disabled="loadingAll"
@@ -113,7 +121,7 @@
                 ref="cqlInput"
                 class="cql-editor"
                 :resource-text="cqlText"
-                text-label="CQL Expression"
+                :text-label="cqlContentLabel"
                 language="cql"
                 expression-editor
                 :tab-spaces="tabSpaces"
@@ -122,8 +130,27 @@
                 @update:resource-text="updateCqlText"
               />
 
+              <div v-if="isLibrary" class="library-expression-selector mt-3">
+                <v-select
+                  v-model="selectedExpressions"
+                  :items="selectableExpressions"
+                  item-title="title"
+                  item-value="name"
+                  label="Expressions to evaluate"
+                  hint="Leave empty to evaluate every public top-level expression."
+                  persistent-hint
+                  multiple
+                  chips
+                  closable-chips
+                  clearable
+                  :no-data-text="cqlAnalysis.outcome
+                    ? 'Fix CQL syntax errors to discover expressions'
+                    : 'No expression declarations found'"
+                />
+              </div>
+
               <div class="results-heading mt-4">
-                EXPRESSION RESULT
+                {{ isLibrary ? 'LIBRARY EVALUATION RESULT' : 'EXPRESSION RESULT' }}
                 <span v-if="singleEngineResult" class="processed-by">
                   {{ singleEngineResult.processedByEngine }}
                 </span>
@@ -207,7 +234,8 @@
             <div class="tab-content">
               <h4>Named CQL Parameters</h4>
               <p class="text-medium-emphasis">
-                Repeating a name supplies a CQL List. Types loaded from Library.parameter remain editable.
+                Parameters declared in CQL or Library.parameter are added automatically.
+                Repeating a name supplies a CQL List, and types remain editable.
               </p>
               <v-row v-for="(parameter, index) in namedParameters" :key="index" dense align="center">
                 <v-col cols="3">
@@ -291,8 +319,8 @@
               <v-text-field
                 v-if="selectedEngine?.custom"
                 v-model="customUrl"
-                label="Custom FHIR Base or $cql URL"
-                hint="Accepts https://server.example/fhir or https://server.example/fhir/$cql"
+                label="Custom FHIR Base or operation URL"
+                hint="Accepts a FHIR base URL, /$cql, or /Library/$evaluate URL"
                 persistent-hint
               />
               <v-text-field v-model="subject" label="Subject (for example Patient/123)" />
@@ -319,7 +347,7 @@
               >
                 <strong>{{ engineKey }}</strong>
                 <span class="ml-2 text-medium-emphasis">
-                  Expression result
+                  {{ isLibrary ? 'Library evaluation result' : 'Expression result' }}
                 </span>
                 <v-alert
                   v-for="(message, index) in outcomeMessages(result)"
@@ -383,20 +411,41 @@
               @update="libraryDirty = true"
             />
           </template>
+
+          <template #Errors>
+            <OperationOutcomePanel
+              title="CQL Errors"
+              issue-link-title="Go to the CQL source location"
+              :outcome="errorOutcome"
+              @navigate-to-issue="navigateToIssue"
+              @close="clearErrorOutcome"
+            />
+          </template>
         </TwinPaneTab>
       </v-card>
     </div>
+
+    <v-snackbar v-model="showSuccess" color="success" :timeout="2500">
+      {{ successMessage }}
+    </v-snackbar>
   </div>
 </template>
 
 <script setup lang="ts">
 import axios from 'axios'
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import type { Bundle, DataRequirement, Library } from 'fhir/r4b'
+import type {
+  Bundle,
+  DataRequirement,
+  Library,
+  OperationOutcome,
+  OperationOutcomeIssue,
+} from 'fhir/r4b'
 import type { IApplicationInsights } from '@microsoft/applicationinsights-web'
 import type { TabData } from '~/components/TwinPaneTab.vue'
 import ResourceEditor from '~/components/ResourceEditor.vue'
+import OperationOutcomePanel from '~/components/OperationOutcomePanel.vue'
 import ConformanceResourceDetailsTab from '~/components/ConformanceResourceDetailsTab.vue'
 import ConformanceResourcePublishingTab from '~/components/ConformanceResourcePublishingTab.vue'
 import {
@@ -421,15 +470,31 @@ import {
   type TestCqlData,
 } from 'models/cql_test_model'
 import { settings } from '@legacy/helpers/user_settings'
+import {
+  analyzeCql,
+  type CqlAnalysis,
+  type CqlIssuePosition,
+} from '@legacy/helpers/cql_validator'
 
 useHead({ title: 'CQL Tester - FHIRPath Lab' })
 
 const { $appInsights } = useNuxtApp() as unknown as { $appInsights?: IApplicationInsights }
 const route = useRoute()
 
+interface TwinPaneControl {
+  selectTab(tabIndex: number): void
+}
+
+interface CqlEditorControl {
+  focus(): void
+  navigateToTextRange(location: CqlIssuePosition): boolean
+}
+
 const cqlText = ref(`'Hello World'
 | (1 + 1).toString()
 | today().toString()`)
+const cqlAnalysis = ref<CqlAnalysis>(analyzeCql(cqlText.value))
+const selectedExpressions = ref<string[]>([])
 const selectedFhirVersion = ref('R4')
 const selectedEngine = ref<ICqlEngineDetails>()
 const effectiveEngines = ref<Record<string, ICqlEngineDetails>>({})
@@ -442,6 +507,9 @@ const allEngineResults = ref<Map<string, CqlEvaluationResult>>(new Map())
 const selectedEngineResultKey = ref<string | null>(null)
 const shareMessage = ref('Copy a shareable CQL test link')
 const zulipShareMessage = ref('Copy a Zulip-friendly CQL test link')
+const errorOutcome = ref<OperationOutcome>()
+const showSuccess = ref(false)
+const successMessage = ref('')
 
 const subject = ref('')
 const useServerData = ref(false)
@@ -465,12 +533,27 @@ const libraryEditAllowed = ref(false)
 const savingLibrary = ref(false)
 const showAdvancedSettings = ref(settings.showAdvancedSettings())
 let evaluationGeneration = 0
+let analysisTimer: ReturnType<typeof setTimeout> | undefined
 
 const tabSpaces = settings.getTabSpaces()
 const fhirServerExamplesUrl = ref(settings.getFhirServerExamplesUrl())
 const dotnetServerDownloader = ref('')
-const twinTabControl = ref()
-const cqlInput = ref()
+const twinTabControl = ref<TwinPaneControl>()
+const cqlInput = ref<CqlEditorControl>()
+
+const ERRORS_TAB = 8
+const isLibrary = computed(() => cqlAnalysis.value.kind === 'library')
+const cqlContentLabel = computed(() =>
+  isLibrary.value ? 'CQL Library' : 'CQL Expression',
+)
+const selectableExpressions = computed(() =>
+  cqlAnalysis.value.expressions.map(expression => ({
+    name: expression.name,
+    title: expression.access === 'private'
+      ? `${expression.name} (private)`
+      : expression.name,
+  })),
+)
 
 const parameterTypes = [
   'boolean', 'integer', 'decimal', 'string', 'date', 'dateTime', 'time',
@@ -521,6 +604,12 @@ const tabDetails = computed<TabData[]>(() => [
     show: library.value !== null,
     enabled: true,
   },
+  {
+    iconName: 'mdi-alert-circle-outline',
+    tabName: 'Errors',
+    show: errorOutcome.value !== undefined,
+    enabled: true,
+  },
 ])
 
 interface DisplayResult {
@@ -528,6 +617,110 @@ interface DisplayResult {
   depth: number
   label: string
   item: CqlResultItem
+}
+
+function showSuccessMessage(message: string): void {
+  successMessage.value = message
+  showSuccess.value = true
+}
+
+function issuePosition(issue: OperationOutcomeIssue): CqlIssuePosition | undefined {
+  if ('__position' in issue) {
+    const position = issue.__position
+    if (
+      typeof position === 'object'
+      && position !== null
+      && 'line' in position
+      && typeof position.line === 'number'
+      && 'column' in position
+      && typeof position.column === 'number'
+      && 'length' in position
+      && typeof position.length === 'number'
+    ) {
+      return position as CqlIssuePosition
+    }
+  }
+
+  const details = [
+    ...(issue.expression ?? []),
+    ...(issue.location ?? []),
+    issue.details?.text,
+    issue.diagnostics,
+  ].filter((value): value is string => !!value)
+
+  for (const detail of details) {
+    const range = /\[(\d+):(\d+)(?:,\s*(\d+):(\d+))?\]/.exec(detail)
+    if (range) {
+      const line = Number(range[1])
+      const column = Number(range[2])
+      const endLine = Number(range[3] ?? range[1])
+      const endColumn = Number(range[4] ?? range[2])
+      return {
+        line,
+        column,
+        length: endLine === line ? Math.max(1, endColumn - column + 1) : 1,
+      }
+    }
+    const location = /@(\d+):(\d+)/.exec(detail)
+      ?? /\bline\s+(\d+)\D+column\s+(\d+)/i.exec(detail)
+    if (location) {
+      return {
+        line: Number(location[1]),
+        column: Number(location[2]),
+        length: 1,
+      }
+    }
+  }
+  return undefined
+}
+
+function navigableOutcome(outcome: OperationOutcome): OperationOutcome {
+  return {
+    ...outcome,
+    issue: outcome.issue.map(issue => {
+      const position = issuePosition(issue)
+      if (!position) return issue
+      return {
+        ...issue,
+        expression: issue.expression ?? [`@${position.line}:${position.column}`],
+        __position: position,
+      }
+    }),
+  }
+}
+
+function showErrorOutcome(outcome: OperationOutcome, selectTab = true): void {
+  errorOutcome.value = navigableOutcome(outcome)
+  showSuccess.value = false
+  if (selectTab) nextTick(() => twinTabControl.value?.selectTab(ERRORS_TAB))
+}
+
+function showEvaluationOutcomes(
+  outcomes: OperationOutcome[],
+  selectTab = true,
+): void {
+  if (outcomes.length === 0) {
+    errorOutcome.value = undefined
+    return
+  }
+  showErrorOutcome({
+    resourceType: 'OperationOutcome',
+    issue: outcomes.flatMap(outcome => outcome.issue),
+  }, selectTab)
+}
+
+function clearErrorOutcome(): void {
+  // Restore the editable panes in both dual-pane and single-pane layouts.
+  twinTabControl.value?.selectTab(1)
+  twinTabControl.value?.selectTab(0)
+  errorOutcome.value = undefined
+}
+
+function navigateToIssue(issue: OperationOutcomeIssue): void {
+  const position = issuePosition(issue)
+  if (!position) return
+  twinTabControl.value?.selectTab(0)
+  nextTick(() => cqlInput.value?.navigateToTextRange(position))
 }
 
 function flattenStructuredResult(
@@ -582,6 +775,81 @@ const canSaveLibrary = computed(() => !!library.value && libraryEditAllowed.valu
 function outcomeMessages(result: CqlEvaluationResult): string[] {
   return result.outcomes.flatMap(outcome =>
     outcome.issue.map(issue => issue.details?.text || issue.diagnostics || issue.code),
+  )
+}
+
+function applyCqlAnalysis(analysis: CqlAnalysis): CqlAnalysis {
+  cqlAnalysis.value = analysis
+  const availableExpressions = new Set(
+    analysis.expressions.map(expression => expression.name),
+  )
+  selectedExpressions.value = selectedExpressions.value
+    .filter(expression => availableExpressions.has(expression))
+  const existingParameters = new Set(
+    namedParameters.value.map(parameter => parameter.name),
+  )
+  for (const parameter of analysis.parameters) {
+    if (!existingParameters.has(parameter.name)) {
+      namedParameters.value.push({
+        name: parameter.name,
+        type: cqlTypeToFhirType(parameter.type),
+        value: '',
+      })
+      existingParameters.add(parameter.name)
+    }
+  }
+  return analysis
+}
+
+function cqlTypeToFhirType(cqlType: string | undefined): string {
+  if (!cqlType) return 'string'
+  const listMatch = /^List<(.+)>$/i.exec(cqlType)
+  if (listMatch) return cqlTypeToFhirType(listMatch[1])
+  if (/^Interval<.+>$/i.test(cqlType)) return 'Period'
+
+  const typeName = cqlType.split('.').at(-1) ?? cqlType
+  const mappings: Record<string, string> = {
+    boolean: 'boolean',
+    code: 'Coding',
+    concept: 'CodeableConcept',
+    date: 'date',
+    datetime: 'dateTime',
+    decimal: 'decimal',
+    integer: 'integer',
+    quantity: 'Quantity',
+    ratio: 'Ratio',
+    string: 'string',
+    time: 'time',
+  }
+  return mappings[typeName.toLowerCase()] ?? typeName
+}
+
+function refreshCqlAnalysis(): CqlAnalysis {
+  return applyCqlAnalysis(analyzeCql(cqlText.value))
+}
+
+function scheduleCqlAnalysis(): void {
+  if (analysisTimer) clearTimeout(analysisTimer)
+  analysisTimer = setTimeout(() => {
+    refreshCqlAnalysis()
+    analysisTimer = undefined
+  }, 300)
+}
+
+watch(cqlText, scheduleCqlAnalysis)
+
+function validateCqlContent(): void {
+  const analysis = refreshCqlAnalysis()
+  if (analysis.outcome) {
+    showErrorOutcome(analysis.outcome)
+    return
+  }
+
+  errorOutcome.value = undefined
+  showSuccessMessage(
+    analysis.kind === 'library'
+      ? `CQL library syntax is valid (${analysis.expressions.length} expression declarations).`
+      : 'CQL expression syntax is valid.',
   )
 }
 
@@ -651,6 +919,12 @@ function createEvaluationOptions(): CqlEvaluationOptions {
 
   return {
     cql: cqlText.value,
+    mode: cqlAnalysis.value.kind,
+    libraryName: cqlAnalysis.value.libraryName,
+    libraryVersion: cqlAnalysis.value.libraryVersion,
+    selectedExpressions: isLibrary.value && selectedExpressions.value.length
+      ? [...selectedExpressions.value]
+      : undefined,
     subject: subject.value || undefined,
     parameters: namedParameters.value
       .filter(parameter => parameter.name.trim() && parameter.value.trim())
@@ -669,27 +943,40 @@ function createEvaluationOptions(): CqlEvaluationOptions {
 
 function engineForRun(engine: ICqlEngineDetails): ICqlEngineDetails {
   if (!engine.custom) return engine
-  if (!customUrl.value.trim()) throw new Error('Enter a custom FHIR base or $cql URL on the Config tab.')
+  if (!customUrl.value.trim()) throw new Error('Enter a custom FHIR base or operation URL on the Config tab.')
   return createCustomCqlEngine(customUrl.value, selectedFhirVersion.value)
 }
 
-async function evaluateSelectedEngine() {
-  if (!selectedEngine.value) {
-    error.value = 'Select a CQL engine.'
-    return
-  }
+function resetEvaluationState() {
   const generation = ++evaluationGeneration
-  loading.value = true
+  loading.value = false
   loadingAll.value = false
   error.value = ''
   singleEngineResult.value = null
   allEngineResults.value.clear()
   selectedEngineResultKey.value = null
+  errorOutcome.value = undefined
+  return generation
+}
+
+async function evaluateSelectedEngine() {
+  const generation = resetEvaluationState()
+  if (!selectedEngine.value) {
+    error.value = 'Select a CQL engine.'
+    return
+  }
+  const analysis = refreshCqlAnalysis()
+  if (analysis.outcome) {
+    showErrorOutcome(analysis.outcome)
+    return
+  }
+  loading.value = true
   try {
     const engine = engineForRun(selectedEngine.value)
     const result = await evaluateCql(createEvaluationOptions(), engine)
     if (generation !== evaluationGeneration) return
     singleEngineResult.value = result
+    showEvaluationOutcomes(result.outcomes)
     if (settings.load().defaultProviderField !== 'Brian Postlethwaite') {
       $appInsights?.trackEvent({ name: `evaluate ${engine.appInsightsEngineName}` })
     }
@@ -702,13 +989,13 @@ async function evaluateSelectedEngine() {
 }
 
 async function evaluateAllEngines() {
-  const generation = ++evaluationGeneration
+  const generation = resetEvaluationState()
+  const analysis = refreshCqlAnalysis()
+  if (analysis.outcome) {
+    showErrorOutcome(analysis.outcome)
+    return
+  }
   loadingAll.value = true
-  loading.value = false
-  error.value = ''
-  singleEngineResult.value = null
-  selectedEngineResultKey.value = null
-  allEngineResults.value.clear()
   try {
     const options = createEvaluationOptions()
     const runEngines = engines.value.filter(engine => !engine.custom || customUrl.value.trim())
@@ -733,6 +1020,7 @@ async function evaluateAllEngines() {
 function selectEngineResult(engineKey: string, result: CqlEvaluationResult) {
   selectedEngineResultKey.value = engineKey
   singleEngineResult.value = result
+  showEvaluationOutcomes(result.outcomes, false)
 }
 
 function changeFhirVersion() {
@@ -762,6 +1050,9 @@ function prepareShareData(): TestCqlData {
     libraryId: loadedLibraryReference.value || library.value?.id,
     libraryUrl: libraryUrl.value || undefined,
     libraryName: libraryName.value || undefined,
+    selectedExpressions: selectedExpressions.value.length
+      ? [...selectedExpressions.value]
+      : undefined,
   }
 }
 
@@ -800,6 +1091,9 @@ function applyShareData(data: TestCqlData) {
   terminologyEndpoint.value = data.terminologyEndpoint ?? ''
   libraryUrl.value = data.libraryUrl ?? ''
   libraryName.value = data.libraryName ?? ''
+  selectedExpressions.value = data.selectedExpressions
+    ? [...data.selectedExpressions]
+    : []
   if (data.engine === 'Custom URL') {
     selectedFhirVersion.value = data.fhirVersion ?? 'R4'
     selectedEngine.value = engines.value.find(engine => engine.custom)
@@ -956,7 +1250,10 @@ onMounted(async () => {
   }
 })
 
-onBeforeUnmount(() => document.removeEventListener('keydown', keyHandler))
+onBeforeUnmount(() => {
+  document.removeEventListener('keydown', keyHandler)
+  if (analysisTimer) clearTimeout(analysisTimer)
+})
 </script>
 
 <style scoped lang="scss">
