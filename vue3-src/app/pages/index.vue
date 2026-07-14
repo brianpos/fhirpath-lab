@@ -68,6 +68,15 @@
             Quick Test page for testing CQL expressions
           </div>
         </NuxtLink>
+        <v-btn dark color="#3F81AE" class="link-item text-decoration-none" to="/fhir-liquid">
+          <v-icon start>mdi-water-outline</v-icon>
+          FHIR Liquid
+        </v-btn>
+        <NuxtLink to="/fhir-liquid" class="link-plain-text">
+          <div>
+            Edit and validate FHIR Liquid templates with test FHIR resources
+          </div>
+        </NuxtLink>
       </div>
       <br />
       <p>

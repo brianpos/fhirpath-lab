@@ -55,6 +55,12 @@
             </template>
             <v-list-item-title>Test CQL</v-list-item-title>
           </v-list-item>
+          <v-list-item to="/fhir-liquid" :active="isActive('/fhir-liquid')">
+            <template v-slot:prepend>
+              <v-icon>mdi-water-outline</v-icon>
+            </template>
+            <v-list-item-title>Test FHIR Liquid</v-list-item-title>
+          </v-list-item>
           <v-divider></v-divider>
           <v-list-item to="/Library" :active="isActive('/Library')">
             <template v-slot:prepend>
