@@ -184,6 +184,13 @@ $ antlr4 -Dlanguage=TypeScript JSON5.g4
 java -cp ../antlr-4.13.2-complete.jar  org.antlr.v4.Tool -Dlanguage=TypeScript XMLParser.g4 XMLLexer.g4 -visitor
 ```
 
+### `fhir-liquid-parser`
+The FHIR Liquid grammar imports the shared FHIRPath grammar from `fhirpath-parser`.
+
+``` bash
+java -cp ../antlr-4.13.2-complete.jar org.antlr.v4.Tool -Dlanguage=TypeScript -visitor -lib ../fhirpath-parser fhirliquid.g4
+```
+
 ## Fhirpath Lab Special Features/Notes
 
 ### An expression that tests out most of the syntax highlighter cases

@@ -3,6 +3,9 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+# 14 July 2026 (hackweek only)
+* Add a FHIR Liquid test page
+
 # 13 July 2026 (hackweek only - all Vue3 port changes)
 * Added prototype support for a CQL editor
 * Added the syntax highlighting for the Fhirpath Test page

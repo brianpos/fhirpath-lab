@@ -60,7 +60,8 @@ export default defineNuxtConfig({
             colors: {
               primary: '#3F81AE',
               secondary: '#79B6E6',
-              error: '#ff5252'
+              error: '#ff5252',
+              'surface-hover': '#D2F5FF'
             },
             variables: {
               //'theme-on-surface': '#1976d2'

@@ -110,6 +110,7 @@ import { parseXml } from '@legacy/helpers/xml_parser'
 import type { Model } from 'fhirpath'
 import { CqlHighlightRules } from '@legacy/helpers/cql_highlighter'
 import { Rules as FhirPathHighlightRules, setCustomHighlightRules } from '@legacy/helpers/fhirpath_highlighter'
+import { FhirLiquidHighlightRules } from '@legacy/helpers/fhirliquid_highlighter'
 import "ace-builds/src-noconflict/mode-json"
 import "ace-builds/src-noconflict/mode-text"
 import "ace-builds/src-noconflict/mode-xml"
@@ -125,7 +126,7 @@ interface Props {
   tabSpaces?: number
   fhirServerExamplesUrl?: string
   dotnetServerDownloader?: string
-  language?: 'auto' | 'cql' | 'fhirpath' | 'json' | 'text' | 'xml'
+  language?: 'auto' | 'cql' | 'fhir-liquid' | 'fhirpath' | 'json' | 'text' | 'xml'
   minLines?: number
   maxLines?: number
   expressionEditor?: boolean
@@ -437,12 +438,16 @@ const detectResourceType = () => {
   if (props.language !== 'auto') {
     if (resourceType.value === props.language) return
     resourceType.value = props.language
-    const aceMode = props.language === 'cql' || props.language === 'fhirpath'
+    const aceMode = props.language === 'cql'
+      || props.language === 'fhir-liquid'
+      || props.language === 'fhirpath'
       ? 'text'
       : props.language
     aceEditor.value?.getSession().setMode(`ace/mode/${aceMode}`)
     if (props.language === 'cql' && aceEditor.value) {
       setCustomHighlightRules(aceEditor.value, CqlHighlightRules, true)
+    } else if (props.language === 'fhir-liquid' && aceEditor.value) {
+      setCustomHighlightRules(aceEditor.value, FhirLiquidHighlightRules, true)
     } else if (props.language === 'fhirpath' && aceEditor.value) {
       setCustomHighlightRules(aceEditor.value, FhirPathHighlightRules)
     }
@@ -752,6 +757,16 @@ onMounted(() => {
 .ace-chrome .ace_fhir_function,
 .ace-chrome .ace_cql_function {
   color: #74531f;
+}
+
+.ace-chrome .ace_liquid_token {
+  color: purple;
+  font-weight: bold;
+}
+
+.ace-chrome .ace_liquid_template {
+  color: #6b7280;
+  font-size: 95%;
 }
 
 .debugSelection {

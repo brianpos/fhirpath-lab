@@ -52,6 +52,16 @@ $tab-color: rgba(0, 0, 0, 0.87);
   margin-bottom: 0;
 }
 
+.v-field:focus-within:not(.v-field--error):not(.v-field--disabled) {
+  .v-field__outline::after {
+    border-color: rgb(var(--v-theme-primary));
+  }
+
+  .v-label.v-field-label {
+    color: rgb(var(--v-theme-primary));
+  }
+}
+
 .v-application--wrap:has(div.retired-page-background) {
   background-color: thistle;
 }
