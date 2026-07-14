@@ -5,6 +5,10 @@
 
 # 14 July 2026 (hackweek only)
 * Add a FHIR Liquid test page
+* Added local CQL syntax validation with navigable source diagnostics
+* Added automatic CQL expression/library detection and operation selection
+* Added inline `Library/$evaluate` support with multi-select expression execution and result display
+* Added automatic named-parameter rows for parameter declarations in CQL library source
 
 # 13 July 2026 (hackweek only - all Vue3 port changes)
 * Added prototype support for a CQL editor

@@ -64,9 +64,11 @@ describe("CQL engine configuration", () => {
             cql: "define Answer: 42",
             engine: "Configured R5 engine",
             fhirVersion: "R5",
+            selectedExpressions: ["Answer"],
         }));
         expect(state.fhirVersion).toBe("R5");
         expect(state.engine).toBe("Configured R5 engine");
+        expect(state.selectedExpressions).toEqual(["Answer"]);
     });
 
     test("formats a Zulip-friendly CQL share link", () => {

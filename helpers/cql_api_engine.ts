@@ -4,6 +4,7 @@ import type {
     DataRequirement,
     Endpoint,
     FhirResource,
+    Library,
     OperationOutcome,
     Parameters,
     ParametersParameter,
@@ -30,6 +31,10 @@ export interface CqlLibraryReference {
 
 export interface CqlEvaluationOptions {
     cql: string;
+    mode?: "expression" | "library";
+    libraryName?: string;
+    libraryVersion?: string;
+    selectedExpressions?: string[];
     subject?: string;
     parameters?: CqlNamedParameter[];
     libraries?: CqlLibraryReference[];
@@ -94,7 +99,10 @@ const primitiveValueTypes = new Map<string, string>([
     ["uuid", "Uuid"],
 ]);
 
-export function normalizeCqlEndpointUrl(input: string): string {
+export function normalizeCqlEndpointUrl(
+    input: string,
+    mode: "expression" | "library" = "expression",
+): string {
     const value = input.trim();
     if (!value) throw new Error("A CQL server URL is required.");
 
@@ -108,10 +116,12 @@ export function normalizeCqlEndpointUrl(input: string): string {
         throw new Error("The CQL server URL must use HTTP or HTTPS.");
     }
 
-    url.pathname = url.pathname.replace(/\/+$/, "");
-    if (!url.pathname.toLowerCase().endsWith("/$cql")) {
-        url.pathname += "/$cql";
-    }
+    const operationSuffix = mode === "library" ? "/Library/$evaluate" : "/$cql";
+    url.pathname = url.pathname
+        .replace(/\/+$/, "")
+        .replace(/\/Library\/\$evaluate$/i, "")
+        .replace(/\/\$cql$/i, "");
+    url.pathname += operationSuffix;
     return url.toString();
 }
 
@@ -241,6 +251,36 @@ function addEndpointParameter(
     });
 }
 
+function encodeBase64Utf8(value: string): string {
+    const bytes = new TextEncoder().encode(value);
+    let binary = "";
+    bytes.forEach(byte => {
+        binary += String.fromCharCode(byte);
+    });
+    return btoa(binary);
+}
+
+function createInlineCqlLibrary(options: CqlEvaluationOptions): Library {
+    const libraryName = options.libraryName || "InlineCqlLibrary";
+    return {
+        resourceType: "Library",
+        url: `http://fhirpath-lab.com/cql/Library/${encodeURIComponent(libraryName)}`,
+        version: options.libraryVersion,
+        status: "draft",
+        name: libraryName,
+        type: {
+            coding: [{
+                system: "http://terminology.hl7.org/CodeSystem/library-type",
+                code: "logic-library",
+            }],
+        },
+        content: [{
+            contentType: "text/cql",
+            data: encodeBase64Utf8(options.cql),
+        }],
+    };
+}
+
 export function buildCqlParameters(
     options: CqlEvaluationOptions,
     fhirVersion = "R4",
@@ -252,11 +292,27 @@ export function buildCqlParameters(
 
     const request: Parameters = {
         resourceType: "Parameters",
-        parameter: [{
-            name: "expression",
-            valueString: options.cql,
-        }],
+        parameter: options.mode === "library"
+            ? [{
+                name: "library",
+                resource: createInlineCqlLibrary(options),
+            }]
+            : [{
+                name: "expression",
+                valueString: options.cql,
+            }],
     };
+
+    if (options.mode === "library") {
+        for (const expression of options.selectedExpressions ?? []) {
+            if (expression.trim()) {
+                request.parameter!.push({
+                    name: "expression",
+                    valueString: expression.trim(),
+                });
+            }
+        }
+    }
 
     if (options.subject?.trim()) {
         request.parameter!.push({ name: "subject", valueString: options.subject.trim() });
@@ -267,7 +323,7 @@ export function buildCqlParameters(
             resource: createNamedParametersResource(options.parameters),
         });
     }
-    for (const library of options.libraries ?? []) {
+    for (const library of options.mode === "library" ? [] : options.libraries ?? []) {
         if (!library.url.trim()) continue;
         const part: ParametersParameter[] = [{
             name: "url",
@@ -278,8 +334,11 @@ export function buildCqlParameters(
         }
         request.parameter!.push({ name: "library", part });
     }
-    if (options.useServerData) {
-        request.parameter!.push({ name: "useServerData", valueBoolean: true });
+    if (options.useServerData !== undefined) {
+        request.parameter!.push({
+            name: "useServerData",
+            valueBoolean: options.useServerData,
+        });
     }
     if (options.data) {
         request.parameter!.push({ name: "data", resource: options.data });
@@ -318,6 +377,9 @@ function parameterValue(parameter: ParametersParameter): { type: string; value?:
 
 function normalizeParameter(parameter: ParametersParameter, index: number): CqlResultItem {
     const extracted = parameterValue(parameter);
+    const nestedParameters = parameter.resource?.resourceType === "Parameters"
+        ? parameter.resource.parameter ?? []
+        : parameter.part ?? [];
     return {
         index,
         name: parameter.name,
@@ -325,7 +387,7 @@ function normalizeParameter(parameter: ParametersParameter, index: number): CqlR
         value: extracted.value,
         resource: parameter.resource,
         display: displayValue(extracted.value),
-        children: (parameter.part ?? []).map(normalizeParameter),
+        children: nestedParameters.map(normalizeParameter),
         raw: parameter,
     };
 }
@@ -336,6 +398,8 @@ function collectOutcomes(resource: Parameters | OperationOutcome): OperationOutc
     const visit = (parameter: ParametersParameter): void => {
         if (parameter.resource?.resourceType === "OperationOutcome") {
             outcomes.push(parameter.resource);
+        } else if (parameter.resource?.resourceType === "Parameters") {
+            parameter.resource.parameter?.forEach(visit);
         }
         parameter.part?.forEach(visit);
     };
@@ -373,8 +437,9 @@ function networkOutcome(message: string): OperationOutcome {
 export async function resolveCqlEngineUrl(
     engine: ICqlEngineDetails,
     config?: Record<string, unknown>,
+    mode: "expression" | "library" = "expression",
 ): Promise<string> {
-    if (engine.endpointUrl) return normalizeCqlEndpointUrl(engine.endpointUrl);
+    if (engine.endpointUrl) return normalizeCqlEndpointUrl(engine.endpointUrl, mode);
 
     const configuredUrl = engine.configSetting
         ? config
@@ -384,7 +449,7 @@ export async function resolveCqlEngineUrl(
     if (typeof configuredUrl !== "string" || !configuredUrl.trim()) {
         throw new Error(`No URL is configured for CQL engine: ${engine.name}.`);
     }
-    return normalizeCqlEndpointUrl(configuredUrl);
+    return normalizeCqlEndpointUrl(configuredUrl, mode);
 }
 
 export async function evaluateCql(
@@ -392,7 +457,7 @@ export async function evaluateCql(
     engine: ICqlEngineDetails,
     config?: Record<string, unknown>,
 ): Promise<CqlEvaluationResult> {
-    const endpointUrl = await resolveCqlEngineUrl(engine, config);
+    const endpointUrl = await resolveCqlEngineUrl(engine, config, options.mode);
     const request = buildCqlParameters(options, engine.fhirVersion);
     try {
         const response = await axios.post<Parameters | OperationOutcome>(endpointUrl, request, {
