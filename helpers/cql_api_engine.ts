@@ -334,7 +334,7 @@ export function buildCqlParameters(
         }
         request.parameter!.push({ name: "library", part });
     }
-    if (options.useServerData !== undefined) {
+    if (options.useServerData === true) {
         request.parameter!.push({
             name: "useServerData",
             valueBoolean: options.useServerData,
