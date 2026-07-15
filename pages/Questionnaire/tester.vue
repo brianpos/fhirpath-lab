@@ -38,7 +38,12 @@
           </v-btn>
         </v-toolbar>
 
-        <twin-pane-tab :tabs="tabDetails" @change="tabChanged" :eager="true" ref="twinTabControl"
+        <v-alert v-if="formsConfigError" type="error" dense class="ma-3">
+          {{ formsConfigError }}
+        </v-alert>
+        <v-progress-linear v-if="!formsConfigLoaded" indeterminate color="primary" />
+
+        <twin-pane-tab v-if="formsConfigLoaded" :tabs="tabDetails" @change="tabChanged" :eager="true" ref="twinTabControl"
           @mounted="twinPaneMounted">
           <template v-slot:Questionnaire>
             <v-text-field style="flex-grow: 0;" label="Test Resource Id" v-model="resourceId" hide-details="auto" autocomplete="off"
@@ -176,6 +181,33 @@
               title="Embedded Mode Messages"
               @clear="embeddedMessageLog = []"
             />
+          </template>
+
+          <template
+            v-for="renderer in configuredRenderers"
+            v-slot:[rendererSlotName(renderer)]
+          >
+            <ExternalRenderingEngineHost
+              :key="renderer.tabName"
+              :engine-name="renderer.tabName"
+              :title="renderer.title"
+              :publisher="renderer.organization"
+              :consent="configuredRendererConsent[renderer.tabName]"
+              :external="isConfiguredRendererExternal(renderer)"
+              @consent-changed="handleConfiguredRendererConsentChange"
+            >
+              <SmartWebMessagingRendererTab
+                v-if="raw && configuredRendererConsent[renderer.tabName]"
+                ref="configuredSwmRenderers"
+                :renderer="renderer"
+                :questionnaire="raw"
+                :questionnaire-response="currentQuestionnaireResponse"
+                :context="contextData"
+                :data-server="dataServerBaseUrl"
+                @response="processUpdatedQuestionnaireResponse"
+                @highlight-path="highlightPath"
+              />
+            </ExternalRenderingEngineHost>
           </template>
 
           <template v-slot:Response>
@@ -386,6 +418,7 @@ import EditorNLMRendererSection from "~/components/Questionnaire/EditorNLMRender
 import EditorRendererSection from "~/components/Questionnaire/EditorRendererSection.vue";
 import EditorAidboxFormsSection from "~/components/Questionnaire/EditorAidboxFormsSection.vue";
 import SmartWMFormsSection from "~/components/Questionnaire/SmartWMFormSection.vue";
+import SmartWebMessagingRendererTab from "~/components/Questionnaire/SmartWebMessagingRendererTab.vue";
 import MessageLog from "~/components/Questionnaire/MessageLog.vue";
 import ResourceEditor from "~/components/ResourceEditor.vue";
 import { structuredDataCaptureHelpers as sdc } from "~/helpers/structureddatacapture-helpers";
@@ -423,6 +456,10 @@ import * as jsonpatch from "fast-json-patch";
 import { ContextData } from "~/components/QuestionnaireContext.vue";
 import QuestionnairePrepopulateTest from "~/components/QuestionnairePrepopTest.vue";
 import { MessageLogEntry } from "~/helpers/message-logger";
+import {
+  FormsRendererConfiguration,
+  parseFormsConfiguration
+} from "~/helpers/forms_config";
 
 // import "fhirclient";
 // import { FHIR } from "fhirclient";
@@ -456,6 +493,10 @@ interface IQuestionnaireTesterData extends QuestionnaireData {
   // External renderers enabled
   aidboxApproved: boolean;
   smartWMFormApproved: boolean;
+  configuredRenderers: FormsRendererConfiguration[];
+  configuredRendererConsent: Record<string, boolean>;
+  formsConfigLoaded: boolean;
+  formsConfigError?: string;
 
   // Reverse integration (embedded mode)
   embeddedMode: boolean;
@@ -502,10 +543,30 @@ const resourceEditorSettings: Partial<ace.Ace.EditorOptions> = {
 };
 
 const aidboxConsentVersion = 1;
+const reservedTesterTabNames = [
+  "Questionnaire",
+  "Debug",
+  "Details",
+  "Publishing",
+  "Fields",
+  "Context",
+  "Pre-Population",
+  "Variables",
+  "PrePop",
+  "CSIRO Renderer",
+  "LHC-Forms",
+  "Aidbox Forms",
+  "SmartWM Forms",
+  "Smart WM",
+  "Response",
+  "Extract",
+  "Models",
+  "AI Chat"
+];
 
 export default Vue.extend({
   //   components: { fhirqItem },
-  mounted() {
+  async mounted() {
     window.document.title = "Questionnaire Tester";
     // this.ensureEditorIsCreated();
     setAcePaths(ace.config);
@@ -521,6 +582,7 @@ export default Vue.extend({
     
     // Check if we're running in embedded mode (reverse integration)
     this.initializeEmbeddedMode();
+    await this.loadFormsConfiguration();
   },
 
   destroyed() {
@@ -593,11 +655,30 @@ export default Vue.extend({
     hasPrePop(): boolean {
       return sdc.hasPrePopulation(this.raw);
     },
+    currentQuestionnaireResponse(): fhir4b.QuestionnaireResponse | undefined {
+      if (!this.questionnaireResponseJson) {
+        return undefined;
+      }
+      try {
+        const response = JSON.parse(this.questionnaireResponseJson);
+        return response.resourceType === "QuestionnaireResponse"
+          ? response as fhir4b.QuestionnaireResponse
+          : undefined;
+      } catch {
+        return undefined;
+      }
+    },
     hasExtract(): boolean {
       let tabControl: TwinPaneTab = this.$refs.twinTabControl as TwinPaneTab;
       if (tabControl) {
         let activeTabs: TabData[] = tabControl.getActiveTabs();
-        const extractFromTabs = ["CSIRO Renderer", "LHC-Forms", "Aidbox Forms", "Response"];
+        const extractFromTabs = [
+          "CSIRO Renderer",
+          "LHC-Forms",
+          "Aidbox Forms",
+          "Response",
+          ...this.configuredRenderers.map(renderer => renderer.tabName)
+        ];
         console.log("Active tabs: ", activeTabs);
         if (activeTabs.length == 1 && !extractFromTabs.includes(activeTabs[0].tabName)) {
           return false;
@@ -705,6 +786,18 @@ export default Vue.extend({
           show: (this.showAdvancedSettings ?? false),
           enabled: true,
         },
+        ...this.configuredRenderers.map(renderer => ({
+          iconName: this.configuredRendererConsent[renderer.tabName]
+            ? "mdi-bug-play-outline"
+            : "mdi-bug-stop-outline",
+          tabName: renderer.tabName,
+          tabSubName: this.isConfiguredRendererExternal(renderer)
+            ? "(external)"
+            : "(local)",
+          title: this.configuredRendererTooltip(renderer),
+          show: (this.showAdvancedSettings ?? false),
+          enabled: true,
+        })),
         {
           iconName: "mdi-clipboard-text-outline",
           tabName: "Response",
@@ -760,6 +853,74 @@ export default Vue.extend({
     },
   },
   methods: {
+    async loadFormsConfiguration(): Promise<void> {
+      if (this.embeddedMode) {
+        this.formsConfigLoaded = true;
+        return;
+      }
+
+      const configQuery = this.$route.query.config;
+      const configuredUrl = Array.isArray(configQuery) ? configQuery[0] : configQuery;
+      let configUrl = configuredUrl || "/forms-config.json";
+
+      try {
+        configUrl = new URL(configUrl, window.location.href).toString();
+        const response = await fetch(configUrl, {
+          headers: { Accept: "application/json" }
+        });
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status} ${response.statusText}`);
+        }
+
+        const configuration = parseFormsConfiguration(
+          await response.json(),
+          window.location.origin,
+          reservedTesterTabNames
+        );
+        this.configuredRenderers = configuration.renderers;
+        configuration.renderers.forEach(renderer => {
+          this.$set(
+            this.configuredRendererConsent,
+            renderer.tabName,
+            settings.getExternalFormsConsent(
+              this.configuredRendererConsentKey(renderer),
+              aidboxConsentVersion
+            )
+          );
+        });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        this.formsConfigError = `Unable to load forms renderer configuration from ${configUrl}: ${message}`;
+        console.error(this.formsConfigError, error);
+      } finally {
+        this.formsConfigLoaded = true;
+      }
+    },
+
+    rendererSlotName(renderer: FormsRendererConfiguration): string {
+      return renderer.tabName.replace(" ", "_");
+    },
+
+    configuredRendererConsentKey(renderer: FormsRendererConfiguration): string {
+      return `${renderer.tabName} [${renderer.smartWebMessagingUrl}]`;
+    },
+
+    isConfiguredRendererExternal(renderer: FormsRendererConfiguration): boolean {
+      return new URL(renderer.smartWebMessagingUrl, window.location.href).origin !==
+        window.location.origin;
+    },
+
+    configuredRendererTooltip(renderer: FormsRendererConfiguration): string {
+      const lines = [
+        renderer.title,
+        `By ${renderer.organization}`
+      ];
+      if (this.isConfiguredRendererExternal(renderer)) {
+        lines.push("(Rendered by external service)");
+      }
+      return lines.join("\n");
+    },
+
     // ======================================================================
     // Reverse Integration (Embedded Mode) Methods
     // ======================================================================
@@ -1650,6 +1811,26 @@ export default Vue.extend({
         // Save to user settings
         console.log(`Saving preference for ${event.engineName}: ${event.consented}`);
         settings.setExternalFormsConsent(event.engineName, aidboxConsentVersion, event.consented);
+      }
+    },
+
+    handleConfiguredRendererConsentChange(
+      event: { engineName: string, consented: boolean, remember: boolean }
+    ) {
+      this.$set(this.configuredRendererConsent, event.engineName, event.consented);
+      if (event.remember) {
+        const renderer = this.configuredRenderers.find(
+          item => item.tabName === event.engineName
+        );
+        if (!renderer) {
+          console.error(`Unable to save consent for unknown renderer ${event.engineName}`);
+          return;
+        }
+        settings.setExternalFormsConsent(
+          this.configuredRendererConsentKey(renderer),
+          aidboxConsentVersion,
+          event.consented
+        );
       }
     },
 
@@ -3062,6 +3243,10 @@ export default Vue.extend({
       // External renderers
       aidboxApproved: false,
       smartWMFormApproved: false,
+      configuredRenderers: [],
+      configuredRendererConsent: {},
+      formsConfigLoaded: false,
+      formsConfigError: undefined,
 
       // Reverse integration (embedded mode)
       embeddedMode: false,

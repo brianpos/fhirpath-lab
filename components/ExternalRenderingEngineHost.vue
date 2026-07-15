@@ -75,9 +75,10 @@
       <!-- Footer with revoke controls -->
       <div class="engine-footer">
         <div class="d-flex align-center justify-space-between">
-          <span class="text-caption text--secondary" style="font-style: italic;">
+          <span v-if="external" class="text-caption text--secondary" style="font-style: italic;">
             (external rendering engine)
           </span>
+          <span v-else></span>
           <v-btn
             class="disable-btn"
             small
@@ -104,6 +105,7 @@ export default class ExternalRenderingEngineHost extends Vue {
   @Prop() readonly title?: string;
   @Prop() readonly publisher?: string;
   @Prop({ default: false }) readonly consent?: boolean;
+  @Prop({ default: true }) readonly external?: boolean;
 
   // Internal state for form inputs in consent dialog
   private consentGiven: boolean = false;
