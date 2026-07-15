@@ -571,7 +571,9 @@ export class FhirLiquidEngine {
     expression: ExpressionContext,
     state: EvaluationState,
   ): boolean {
-    const values = this.evaluateExpression(expression, state);
+    const values = this.evaluateExpression(expression, state)
+      .map(value => fhirpath.resolveInternalTypes(value))
+      .filter(value => value !== null && value !== undefined);
     if (values.length === 0) return false;
     if (values.length !== 1 || typeof values[0] !== "boolean") {
       throw new Error(
@@ -599,7 +601,7 @@ export class FhirLiquidEngine {
       expressionText,
       variables,
       this.model,
-      { async: false },
+      { async: false, resolveInternalTypes: false },
     );
   }
 
@@ -616,13 +618,14 @@ export class FhirLiquidEngine {
   ): string {
     const context: FhirLiquidRenderContext = {
       resource: state.resource,
-      variables: variablesFromState(state),
+      variables: resolvedVariablesFromState(state),
     };
     const rendered: string[] = [];
     for (const value of values) {
-      if (value === null || value === undefined) continue;
-      const custom = this.renderValue?.(value, context);
-      rendered.push(custom ?? defaultValueToString(value));
+      const resolvedValue = fhirpath.resolveInternalTypes(value);
+      if (resolvedValue === null || resolvedValue === undefined) continue;
+      const custom = this.renderValue?.(resolvedValue, context);
+      rendered.push(custom ?? defaultValueToString(resolvedValue));
     }
     return rendered.join(", ");
   }
@@ -642,6 +645,15 @@ function variablesFromState(state: EvaluationState): Record<string, unknown> {
     ...Object.fromEntries(state.globals),
     ...Object.fromEntries(state.loopVariables),
   };
+}
+
+function resolvedVariablesFromState(
+  state: EvaluationState,
+): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(variablesFromState(state))
+      .map(([name, value]) => [name, fhirpath.resolveInternalTypes(value)]),
+  );
 }
 
 function itemsBetween<TItem extends ParserRuleContext>(

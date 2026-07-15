@@ -16,6 +16,22 @@ const patient = {
   ],
 };
 
+const patientWithExtensions = {
+  ...patient,
+  meta: {
+    extension: [
+      {
+        url: "u1",
+        valueString: "sample extension string",
+      },
+      {
+        url: "u12",
+        valueMarkdown: "### a simple header",
+      },
+    ],
+  },
+};
+
 describe("FhirLiquidEngine", () => {
   it("renders FHIRPath output and Liquid filters", () => {
     const engine = new FhirLiquidEngine();
@@ -59,6 +75,18 @@ describe("FhirLiquidEngine", () => {
     expect(evaluateFhirLiquid(template, patient)).toBe("1=Chalmers,3=Jones;");
   });
 
+  it("retains FHIR type information for loop variables", () => {
+    const template = "{% for i in Patient.meta.extension %}"
+      + "[{{ i.value }}|{{ %i.value }}|"
+      + "{{ i.valueString }}|{{ i.valueMarkdown }}]"
+      + "{% endfor %}";
+
+    expect(evaluateFhirLiquid(template, patientWithExtensions)).toBe(
+      "[sample extension string|sample extension string|sample extension string|]"
+      + "[### a simple header|### a simple header||### a simple header]",
+    );
+  });
+
   it("applies loop modifiers and renders the empty branch", () => {
     expect(evaluateFhirLiquid(
       "{% for name in Patient.name reversed offset: 1 limit: 2 %}"
@@ -90,6 +118,24 @@ describe("FhirLiquidEngine", () => {
       "{{ '**Important**' || markdownify }}",
       patient,
     )).toContain("<strong>Important</strong>");
+  });
+
+  it("passes resolved values to custom renderers", () => {
+    const renderValue = jest.fn(() => undefined);
+    const engine = new FhirLiquidEngine({ renderValue });
+
+    expect(engine.evaluate(
+      "{% for name in Patient.name limit: 1 %}{{ name }}{% endfor %}",
+      patient,
+    ))
+      .toContain("\"family\":\"Chalmers\"");
+    expect(renderValue).toHaveBeenCalledWith(
+      patient.name[0],
+      expect.objectContaining({
+        resource: patient,
+        variables: expect.objectContaining({ name: patient.name[0] }),
+      }),
+    );
   });
 
   it("rejects invalid templates and multi-value assignments", () => {
