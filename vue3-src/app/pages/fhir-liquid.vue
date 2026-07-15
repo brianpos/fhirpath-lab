@@ -102,6 +102,7 @@ useHead({
 
 interface TwinPaneControl {
   selectTab(tabIndex: number): void;
+  getActiveTabs(): TabData[];
 }
 
 interface ResourceEditorControl {
@@ -119,6 +120,7 @@ const tabSpaces = 2;
 const TEMPLATE_TAB = 0;
 const RESOURCE_TAB = 1;
 const OUTPUT_TAB = 2;
+const OUTPUT_HTML_TAB = 3;
 const ERRORS_TAB = 4;
 const twinTabControl = ref<TwinPaneControl>();
 const templateEditor = ref<ResourceEditorControl>();
@@ -235,8 +237,12 @@ function evaluateTemplate(): void {
   }
 
   errorOutcome.value = undefined;
-  twinTabControl.value?.selectTab(OUTPUT_TAB);
-  showSuccessMessage("Template evaluated successfully.");
+  var activeTabs = twinTabControl.value?.getActiveTabs() ?? [];
+  // only switch tabs if either of the output tabs are not currently active
+  if (!activeTabs.some(tab => tab.tabName === "Output" || tab.tabName === "Output HTML")) {
+    twinTabControl.value?.selectTab(hasHtmlOutput.value ? OUTPUT_HTML_TAB : OUTPUT_TAB);
+  }
+  // twinTabControl.value?.selectTab(OUTPUT_TAB);
 }
 
 function ctrlEnterHandler(event: KeyboardEvent): void {
