@@ -343,8 +343,8 @@ const getActiveTabs = (): TabData[] => {
   } else {
     const lockedTabData = props.tabs[lockedTab.value]
     const selectableTabData = props.tabs[selectableTab.value]
-    if (lockedTabData) result.push(lockedTabData)
-    if (selectableTabData) result.push(selectableTabData)
+    if (lockedTabData && lockedTabData.show) result.push(lockedTabData)
+    if (selectableTabData && selectableTabData.show) result.push(selectableTabData)
   }
   return result
 }
