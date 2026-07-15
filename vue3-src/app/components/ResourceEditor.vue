@@ -766,7 +766,7 @@ onMounted(() => {
 
 .ace-chrome .ace_liquid_template {
   color: #6b7280;
-  font-size: 95%;
+  font-weight: 100;
 }
 
 .debugSelection {

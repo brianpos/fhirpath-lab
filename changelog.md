@@ -3,6 +3,9 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+# 15 July 2026
+* Update fhirpath.js to 5.0.0
+
 # 14 July 2026 (hackweek only)
 * Add a FHIR Liquid test page
 * Added local CQL syntax validation with navigable source diagnostics

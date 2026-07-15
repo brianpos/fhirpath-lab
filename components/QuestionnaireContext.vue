@@ -65,7 +65,8 @@ import { getExtension, getExtensionCodeValue, getExtensionCodingValue, getExtens
 import { structuredDataCapture } from "fhir-sdc-helpers";
 import { Practitioner } from "fhir/r4";
 import { Questionnaire, QuestionnaireResponse, Parameters, Reference, FhirResource, Patient, HumanName, RelatedPerson, Encounter } from "fhir/r4b";
-import { Context } from "fhirpath";
+// Context type was removed from fhirpath v5 exports
+type Context = Record<string, any>;
 import { Component, Prop, Vue, Watch } from "vue-property-decorator";
 import { CreateOperationOutcome, errorCodingSearch, requestFhirAcceptHeaders } from "~/helpers/searchFhir";
 
