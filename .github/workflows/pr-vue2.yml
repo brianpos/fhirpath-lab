@@ -17,6 +17,7 @@ on:
       - develop
     paths-ignore:
       - 'vue3-src/**'
+      - 'fml-vscode-extension/**'
       - '.github/workflows/pr-vue3.yml'
 
 permissions:
