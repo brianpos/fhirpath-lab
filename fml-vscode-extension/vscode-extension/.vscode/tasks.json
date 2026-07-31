@@ -1,0 +1,14 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build FHIR Mapping Language Tools Extension",
+      "type": "npm",
+      "script": "compile",
+      "problemMatcher": [
+        "$tsc"
+      ],
+      "group": "build"
+    }
+  ]
+}

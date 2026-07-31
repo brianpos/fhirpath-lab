@@ -98,3 +98,9 @@ sw.*
 
 # Custom-model generator cache (downloaded HL7 bundles)
 scripts/generate-models/.cache/
+fhirpath-ai/
+fml-vscode-extension/vscode-extension/.vscode-test/
+fml-vscode-extension/vscode-extension/out/
+
+# The output packages
+fml-vscode-extension/vscode-extension/*.vsix

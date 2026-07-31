@@ -1,0 +1,130 @@
+# FHIR Mapping Language Tools
+
+Developer tools for working with the FHIR Mapping Language (FML) in Visual Studio Code.
+
+FHIR® is the registered trademark of HL7 and is used with permission. Use of the FHIR trademark does not constitute endorsement of this repository by HL7.
+
+## Features
+
+- FML syntax highlighting
+- FHIR-aware autocompletion
+- FML snippets and templates
+- Real-time syntax and transform validation
+- Go to Definition navigation for group invocations and `extends` references
+- Workspace indexing across imported maps
+- Live map preview beside the editor
+- Trace replay debugging with forward and reverse stepping
+
+## Getting started
+
+Open a file with the `.fml` extension. Syntax highlighting, completion, validation, and navigation activate automatically.
+
+Use the Command Palette or editor context menu to access:
+
+- **Validate FML**
+- **Insert template FML**
+- **Open FML Preview to the Side**
+- **Show FML Language Server Status**
+- **Re-index FML Workspace**
+- **Restart FML Language Server**
+
+## FML validation
+
+Run **Validate FML** from the command palette or the editor context menu while an FML document is active.
+
+The extension starts the bundled FML language server and synchronizes open documents incrementally. After a short debounce, the editor-independent language service parses the current text and validates standard transform parameters without requiring the file to be saved.
+
+Errors and warnings appear as editor squiggles and clickable entries in the **Problems** panel.
+
+Unknown transforms produce warnings so custom or newer functions remain usable. Invalid standard transform parameters are errors, and FHIRPath expression parameters are only permitted for `evaluate`.
+
+At startup, workspace FML files are indexed by canonical URL. Cross-file group navigation follows each source map's wildcard-capable `imports` declarations. Missing group references are reported as warnings.
+
+## Language server status and recovery
+
+The status bar displays `FML: <map count>` after the workspace index is ready.
+Click it, or run **Show FML Language Server Status**, to view:
+
+- server state;
+- workspace file, canonical URL, group, and import counts;
+- open-document and failed-file counts;
+- last index time and duration.
+
+The status menu provides:
+
+- **Re-index workspace** — clear and rebuild the canonical/group index;
+- **Restart language server** — restart the LSP process and rebuild its index;
+- **Open language-server logs**;
+- **Show failed files** — inspect and open files that could not be indexed;
+- **Copy diagnostics summary**.
+
+**Re-index FML Workspace** and **Restart FML Language Server** are also
+available directly from the command palette.
+
+## Live map preview
+
+Run **Open FML Preview to the Side** from the editor title, context menu, or command palette. A preview panel opens beside the active FML editor and refreshes from unsaved edits.
+
+The current diagram is a placeholder for the planned production FML-to-SVG renderer.
+
+## Trace replay debugger
+
+The **FML Debug** adapter calls a remote `StructureMap/$transform?debug=true` endpoint and replays the returned trace through Visual Studio Code's native debugger.
+
+Create a `.vscode/launch.json` configuration:
+
+```json
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "fml",
+      "request": "launch",
+      "name": "Debug FML Map",
+      "program": "${file}",
+      "input": "${workspaceFolder}/input.json",
+      "stopOnEntry": true
+    }
+  ]
+}
+```
+
+Start debugging with `F5`. If `input` is missing, the extension prompts for a JSON file.
+
+- `F11`: step into the next trace event;
+- `F10`: step over nested trace events;
+- `Shift+F11`: step out;
+- **Step Back** and **Reverse Continue**: move backward through the completed trace;
+- **Variables** and **Watch** inspect the initial state, trace variables, optional per-step state, and final result;
+- **Debug Console** shows evaluator and trace output;
+- breakpoints continue to executable trace events mapped to FML source locations.
+
+Runtime engine failures pause with reason **exception** and are shown in the
+Debug Console. Static syntax and semantic issues remain in the Problems panel.
+The endpoint can be changed with `fmlTools.debug.serverUrl` or a
+`serverUrl` launch override.
+
+## Templates
+
+Use **Insert template FML** from the editor context menu, or choose the FML snippet from Visual Studio Code's snippet picker.
+
+## Autocompletion
+
+Autocompletion uses FHIR core and project definitions. Suggestions for FHIR attributes appear after a mapped object followed by a dot, such as `Patient.`.
+
+## Current validation scope
+
+The current validator checks FML syntax and standard transform parameters. It does not yet:
+
+- compile FML into a FHIR `StructureMap`;
+- validate references or types against FHIR definitions;
+- execute transformations locally; or
+- load implementation guide packages.
+
+## Feedback and source
+
+Source code and issue tracking are available in the [FHIRPath Lab repository](https://github.com/brianpos/fhirpath-lab).
+
+## License
+
+This project is licensed under the [MIT License](LICENSE.md).

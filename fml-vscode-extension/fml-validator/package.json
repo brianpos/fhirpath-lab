@@ -1,0 +1,32 @@
+{
+  "name": "@fhirpath-lab/validator",
+  "version": "0.1.0",
+  "private": true,
+  "description": "TypeScript validation API for FHIR Mapping Language",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "grammar"
+  ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "packageManager": "npm@10.9.2",
+  "scripts": {
+    "clean": "node -e \"const fs=require('node:fs'); for (const path of ['dist','src/generated']) fs.rmSync(path,{recursive:true,force:true})\"",
+    "generate": "antlr-ng -D language=TypeScript -o src/generated --generate-listener true grammar/mapping.g4",
+    "build": "npm run clean && npm run generate && tsc -p tsconfig.json",
+    "check-types": "npm run generate && tsc --noEmit -p tsconfig.json",
+    "test": "npm run build && node --test dist/test/FmlValidatorApi.test.js",
+    "validate-examples": "npm run build && node dist/cli/validate-examples.js"
+  },
+  "dependencies": {
+    "antlr4ng": "^3.0.16"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.1",
+    "antlr-ng": "^1.0.10",
+    "typescript": "^7.0.2"
+  }
+}

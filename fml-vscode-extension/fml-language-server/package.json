@@ -1,0 +1,31 @@
+{
+  "name": "@fhirpath-lab/language-server",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Language Server Protocol implementation for FHIR Mapping Language",
+  "main": "dist/server.js",
+  "types": "dist/server.d.ts",
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "packageManager": "npm@10.9.2",
+  "scripts": {
+    "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
+    "build": "npm run clean && tsc -p tsconfig.json",
+    "check-types": "tsc --noEmit -p tsconfig.json",
+    "test": "npm run build && node --test dist/test/lspMapper.test.js dist/test/groupDefinitionProvider.test.js dist/test/WorkspaceFmlIndex.test.js dist/test/FmlServerStatusStore.test.js",
+    "watch": "tsc --watch -p tsconfig.json"
+  },
+  "dependencies": {
+    "@fhirpath-lab/language-service": "file:../fml-language-service",
+    "vscode-languageserver": "^10.1.0",
+    "vscode-languageserver-textdocument": "^1.0.12"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.1",
+    "typescript": "^7.0.2"
+  }
+}

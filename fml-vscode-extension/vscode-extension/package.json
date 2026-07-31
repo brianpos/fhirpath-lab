@@ -1,0 +1,263 @@
+{
+  "name": "fml-tools",
+  "displayName": "FHIR Mapping Language Tools",
+  "description": "Developer tools by Brian Postlethwaite for working with the FHIR Mapping Language (FML), including syntax highlighting, validation, and a trace replay debugger",
+  "icon": "ext-images/icon.ico",
+  "version": "0.2.0",
+  "publisher": "fhirpath-lab",
+  "readme": "README.md",
+  "author": {
+    "name": "Brian Postlethwaite"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/brianpos/fhirpath-lab.git"
+  },
+  "engines": {
+    "vscode": "^1.91.0",
+    "node": ">=20.0.0"
+  },
+  "packageManager": "npm@10.9.2",
+  "categories": [
+    "Programming Languages",
+    "Linters"
+  ],
+  "keywords": [
+    "FHIR",
+    "StructureMap",
+    "Validation",
+    "Syntax Highlighting",
+    "Debugger",
+    "FHIR Mapping Language",
+    "FML",
+    "Autocompletion"
+  ],
+  "activationEvents": [
+    "onLanguage:fml",
+    "onDebug:fml"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "FHIR Mapping Language Tools",
+      "properties": {
+        "fmlTools.debug.serverUrl": {
+          "type": "string",
+          "default": "https://fhir-mapping-lab2.azurewebsites.net/StructureMap/$transform?debug=true",
+          "description": "Remote FML execution endpoint used by the trace replay debugger."
+        }
+      }
+    },
+    "debuggers": [
+      {
+        "type": "fml",
+        "label": "FML Debug",
+        "languages": [
+          "fml"
+        ],
+        "configurationAttributes": {
+          "launch": {
+            "required": [
+              "program",
+              "input"
+            ],
+            "properties": {
+              "program": {
+                "type": "string",
+                "description": "FML source file to execute."
+              },
+              "input": {
+                "type": "string",
+                "description": "FHIR JSON input resource file."
+              },
+              "model": {
+                "type": "string",
+                "description": "Optional JSON model or bundle file."
+              },
+              "serverUrl": {
+                "type": "string",
+                "description": "Optional override for the remote debug engine URL."
+              },
+              "stopOnEntry": {
+                "type": "boolean",
+                "default": true,
+                "description": "Pause on the first trace event."
+              }
+            }
+          }
+        },
+        "configurationSnippets": [
+          {
+            "label": "FML: Debug current map",
+            "description": "Run the active FML map against an input resource and replay its trace.",
+            "body": {
+              "type": "fml",
+              "request": "launch",
+              "name": "Debug FML Map",
+              "program": "^\"${file}\"",
+              "input": "^\"${workspaceFolder}/input.json\"",
+              "stopOnEntry": true
+            }
+          }
+        ],
+        "initialConfigurations": [
+          {
+            "type": "fml",
+            "request": "launch",
+            "name": "Debug FML Map",
+            "program": "${file}",
+            "input": "${workspaceFolder}/input.json",
+            "stopOnEntry": true
+          }
+        ]
+      }
+    ],
+    "breakpoints": [
+      {
+        "language": "fml"
+      }
+    ],
+    "languages": [
+      {
+        "id": "fml",
+        "aliases": [
+          "FHIR Mapping Language - FHIRPath Lab",
+          "fml"
+        ],
+        "extensions": [
+          ".fml"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "fml",
+        "scopeName": "source.fml",
+        "path": "./syntaxes/fml.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "fml",
+        "path": "./snippets/fml-snippets.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "fmlTools.Validation",
+        "title": "Validate FML",
+        "category": "Files"
+      },
+      {
+        "command": "fmlTools.InsertTemplate",
+        "title": "Insert template FML",
+        "category": "Files"
+      },
+      {
+        "command": "fmlTools.OpenPreviewToSide",
+        "title": "Open FML Preview to the Side",
+        "category": "Files",
+        "icon": "$(open-preview)"
+      },
+      {
+        "command": "fmlTools.ShowLanguageServerStatus",
+        "title": "Show FML Language Server Status",
+        "category": "FHIR Mapping Language Tools"
+      },
+      {
+        "command": "fmlTools.ReindexLanguageServer",
+        "title": "Re-index FML Workspace",
+        "category": "FHIR Mapping Language Tools"
+      },
+      {
+        "command": "fmlTools.RestartLanguageServer",
+        "title": "Restart FML Language Server",
+        "category": "FHIR Mapping Language Tools"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "fmlTools.OpenPreviewToSide",
+          "group": "navigation@1",
+          "when": "resourceLangId == fml"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "fmlTools.Validation",
+          "group": "navigation@1",
+          "when": "editorLangId == fml"
+        },
+        {
+          "command": "fmlTools.InsertTemplate",
+          "group": "navigation@2"
+        },
+        {
+          "command": "fmlTools.OpenPreviewToSide",
+          "group": "navigation@3",
+          "when": "editorLangId == fml"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "build:validator": "npm --prefix ../fml-validator run build",
+    "build:language-service": "npm --prefix ../fml-language-service run build",
+    "build:language-server": "npm --prefix ../fml-language-server run build",
+    "build:debug-service": "npm --prefix ../fml-debug-service run build",
+    "build:dependencies": "npm run build:validator && npm run build:language-service && npm run build:language-server && npm run build:debug-service",
+    "compile": "npm run build:dependencies && npm run check-types && npm run lint && node esbuild.js",
+    "watch": "npm-run-all -p watch:*",
+    "watch:esbuild": "node esbuild.js --watch",
+    "watch:language-service": "npm --prefix ../fml-language-service run watch",
+    "watch:language-server": "npm --prefix ../fml-language-server run watch",
+    "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
+    "package": "npm run build:dependencies && npm run check-types && npm run lint && node esbuild.js --production",
+    "vsix:build": "npm run package && npx @vscode/vsce package --no-dependencies",
+    "vsix:install": "node scripts/install-vsix.js stable",
+    "vsix:install:insiders": "node scripts/install-vsix.js insiders",
+    "vsix:deploy": "npm run vsix:build && npm run vsix:install",
+    "vsix:deploy:insiders": "npm run vsix:build && npm run vsix:install:insiders",
+    "vsix:deploy:all": "npm run vsix:build && npm run vsix:install && npm run vsix:install:insiders",
+    "compile-tests": "npm run clean:tests && tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "pretest": "npm run compile-tests && npm run compile && npm run lint",
+    "check-types": "tsc --noEmit",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "clean:tests": "node -e \"require('node:fs').rmSync('out',{recursive:true,force:true})\"",
+    "clean": "node -e \"const fs=require('node:fs'); for (const path of ['dist','out']) fs.rmSync(path,{recursive:true,force:true})\"",
+    "test": "vscode-test"
+  },
+  "dependencies": {
+    "@fhirpath-lab/debug-service": "file:../fml-debug-service",
+    "@fhirpath-lab/language-service": "file:../fml-language-service",
+    "@vscode/debugadapter": "^1.68.0",
+    "@vscode/debugprotocol": "^1.68.0",
+    "axios": "^1.18.1",
+    "semver": "^7.8.5",
+    "tar": "^7.5.20",
+    "vscode-languageclient": "^10.1.0",
+    "yaml": "^2.9.0"
+  },
+  "devDependencies": {
+    "@typescript/native": "npm:typescript@^7.0.2",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^22.20.1",
+    "@types/semver": "^7.7.1",
+    "@types/vscode": "1.91.0",
+    "@vscode/test-cli": "^0.0.12",
+    "@vscode/test-electron": "^2.5.2",
+    "@vscode/vsce": "^3.9.2",
+    "esbuild": "^0.25.12",
+    "eslint": "^9.39.5",
+    "npm-run-all": "^4.1.5",
+    "prettier": "^3.9.5",
+    "typescript": "npm:@typescript/typescript6@^6.0.2",
+    "typescript-eslint": "^8.64.0"
+  }
+}

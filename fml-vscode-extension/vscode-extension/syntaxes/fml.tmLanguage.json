@@ -1,0 +1,517 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "FHIR Mapping Language",
+	"scopeName": "source.fml",
+	"fileTypes": [
+		"fml"
+	],
+	"patterns": [
+		{
+			"include": "#metadata-declaration"
+		},
+		{
+			"include": "#comments"
+		},
+		{
+			"include": "#strings"
+		},
+		{
+			"include": "#declarations"
+		},
+		{
+			"include": "#type-identifier"
+		},
+		{
+			"include": "#empty-block"
+		},
+		{
+			"include": "#literals"
+		},
+		{
+			"include": "#variables"
+		},
+		{
+			"include": "#group-type-mode"
+		},
+		{
+			"include": "#keywords"
+		},
+		{
+			"include": "#function-call"
+		},
+		{
+			"include": "#member-access"
+		},
+		{
+			"include": "#operators"
+		},
+		{
+			"include": "#punctuation"
+		},
+		{
+			"include": "#identifier"
+		}
+	],
+	"repository": {
+		"metadata-declaration": {
+			"name": "meta.declaration.metadata.fml",
+			"begin": "^(\\s*)(///)([ \\t]+)((?:`(?:\\\\.|[^`\\\\])*`|[A-Za-z_][A-Za-z0-9_]*)(?:\\s*\\.\\s*(?:`(?:\\\\.|[^`\\\\])*`|[A-Za-z_][A-Za-z0-9_]*))*)",
+			"beginCaptures": {
+				"2": {
+					"name": "punctuation.definition.metadata.fml"
+				},
+				"4": {
+					"name": "entity.other.attribute-name.metadata.fml"
+				}
+			},
+			"end": "$",
+			"patterns": [
+				{
+					"include": "#strings"
+				},
+				{
+					"include": "#literals"
+				},
+				{
+					"include": "#variables"
+				},
+				{
+					"include": "#keywords"
+				},
+				{
+					"include": "#function-call"
+				},
+				{
+					"include": "#member-access"
+				},
+				{
+					"include": "#operators"
+				},
+				{
+					"include": "#punctuation"
+				},
+				{
+					"include": "#identifier"
+				}
+			]
+		},
+		"comments": {
+			"patterns": [
+				{
+					"name": "comment.block.fml",
+					"begin": "/\\*",
+					"beginCaptures": {
+						"0": {
+							"name": "punctuation.definition.comment.begin.fml"
+						}
+					},
+					"end": "\\*/",
+					"endCaptures": {
+						"0": {
+							"name": "punctuation.definition.comment.end.fml"
+						}
+					}
+				},
+				{
+					"name": "comment.line.double-slash.fml",
+					"begin": "//(?!/)",
+					"beginCaptures": {
+						"0": {
+							"name": "punctuation.definition.comment.fml"
+						}
+					},
+					"end": "$"
+				}
+			]
+		},
+		"strings": {
+			"patterns": [
+				{
+					"name": "string.quoted.triple.fml",
+					"contentName": "markup.raw.block.markdown.fml",
+					"begin": "\"\"\"",
+					"beginCaptures": {
+						"0": {
+							"name": "punctuation.definition.string.begin.fml"
+						}
+					},
+					"end": "\"\"\"",
+					"endCaptures": {
+						"0": {
+							"name": "punctuation.definition.string.end.fml"
+						}
+					}
+				},
+				{
+					"name": "string.quoted.single.fml",
+					"begin": "'",
+					"beginCaptures": {
+						"0": {
+							"name": "punctuation.definition.string.begin.fml"
+						}
+					},
+					"end": "'",
+					"endCaptures": {
+						"0": {
+							"name": "punctuation.definition.string.end.fml"
+						}
+					},
+					"patterns": [
+						{
+							"include": "#string-escapes"
+						}
+					]
+				},
+				{
+					"name": "string.quoted.double.fml",
+					"begin": "\"",
+					"beginCaptures": {
+						"0": {
+							"name": "punctuation.definition.string.begin.fml"
+						}
+					},
+					"end": "\"",
+					"endCaptures": {
+						"0": {
+							"name": "punctuation.definition.string.end.fml"
+						}
+					},
+					"patterns": [
+						{
+							"include": "#string-escapes"
+						}
+					]
+				},
+				{
+					"name": "entity.name.type.delimited.fml",
+					"begin": "`",
+					"beginCaptures": {
+						"0": {
+							"name": "punctuation.definition.identifier.begin.fml"
+						}
+					},
+					"end": "`",
+					"endCaptures": {
+						"0": {
+							"name": "punctuation.definition.identifier.end.fml"
+						}
+					},
+					"patterns": [
+						{
+							"include": "#string-escapes"
+						}
+					]
+				}
+			]
+		},
+		"string-escapes": {
+			"patterns": [
+				{
+					"name": "constant.character.escape.fml",
+					"match": "\\\\(?:[`\"'\\\\/fnrt]|u[0-9A-Fa-f]{4})"
+				},
+				{
+					"name": "invalid.illegal.escape.fml",
+					"match": "\\\\."
+				}
+			]
+		},
+		"declarations": {
+			"patterns": [
+				{
+					"match": "\\b(group)\\b(\\s+)([A-Za-z][A-Za-z0-9]*)",
+					"captures": {
+						"1": {
+							"name": "keyword.declaration.group.fml"
+						},
+						"3": {
+							"name": "entity.name.function.group.fml"
+						}
+					}
+				},
+				{
+					"match": "\\b(let)\\b(\\s+)([A-Za-z][A-Za-z0-9]*)",
+					"captures": {
+						"1": {
+							"name": "keyword.declaration.constant.fml"
+						},
+						"3": {
+							"name": "variable.other.constant.fml"
+						}
+					}
+				},
+				{
+					"match": "\\b(prefix)\\b(\\s+)([A-Za-z][A-Za-z0-9]*)",
+					"captures": {
+						"1": {
+							"name": "keyword.declaration.prefix.fml"
+						},
+						"3": {
+							"name": "entity.name.namespace.fml"
+						}
+					}
+				},
+				{
+					"match": "\\b(source|target)\\b(\\s+)([A-Za-z][A-Za-z0-9]*)(?:\\s*(:)\\s*(`(?:\\\\.|[^`\\\\])*`|[A-Za-z_][A-Za-z0-9_]*))?",
+					"captures": {
+						"1": {
+							"name": "storage.modifier.parameter.fml"
+						},
+						"3": {
+							"name": "variable.parameter.fml"
+						},
+						"4": {
+							"name": "punctuation.separator.type.fml"
+						},
+						"5": {
+							"name": "entity.name.type.declaration.fml"
+						}
+					}
+				},
+				{
+					"match": "\\b(alias)\\b(\\s+)(`(?:\\\\.|[^`\\\\])*`|[A-Za-z_][A-Za-z0-9_]*)",
+					"captures": {
+						"1": {
+							"name": "keyword.declaration.alias.fml"
+						},
+						"3": {
+							"name": "entity.name.type.alias.fml"
+						}
+					}
+				}
+			]
+		},
+		"type-identifier": {
+			"patterns": [
+				{
+					"match": "^(\\s*)((?:`(?:\\\\.|[^`\\\\])*`|[A-Za-z_][A-Za-z0-9_]*)(?:\\s*\\.\\s*(?:`(?:\\\\.|[^`\\\\])*`|[A-Za-z_][A-Za-z0-9_]*))*)(\\s*)(:)(\\s*)(`(?:\\\\.|[^`\\\\])*`|[A-Za-z_][A-Za-z0-9_]*)(?=\\s*(?:as\\b|[0-9]|default\\b|first\\b|not_first\\b|last\\b|not_last\\b|only_one\\b|where\\b|check\\b|log\\b|->|,|$))",
+					"captures": {
+						"2": {
+							"name": "variable.other.readwrite.fml"
+						},
+						"4": {
+							"name": "punctuation.separator.type.fml"
+						},
+						"6": {
+							"name": "entity.name.type.declaration.fml"
+						}
+					}
+				},
+				{
+					"match": "(:)(\\s*)(`(?:\\\\.|[^`\\\\])*`|[A-Za-z_][A-Za-z0-9_]*)(?=[^;\\r\\n]*->)",
+					"captures": {
+						"1": {
+							"name": "punctuation.separator.type.fml"
+						},
+						"3": {
+							"name": "entity.name.type.declaration.fml"
+						}
+					}
+				}
+			]
+		},
+		"empty-block": {
+			"match": "(?:(?<=\\))|(?<=>>)|(?<=[A-Za-z0-9_]))(\\s*)(\\{)(\\})",
+			"captures": {
+				"2": {
+					"name": "punctuation.section.block.begin.fml"
+				},
+				"3": {
+					"name": "punctuation.section.block.end.fml"
+				}
+			}
+		},
+		"literals": {
+			"patterns": [
+				{
+					"name": "constant.other.datetime.fml",
+					"match": "(?<![A-Za-z0-9_])@[0-9]{4}(?:-[0-9]{2}(?:-[0-9]{2})?)?T(?:[0-9]{2}(?::[0-9]{2}(?::[0-9]{2}(?:\\.[0-9]+)?)?)?(?:Z|[+-][0-9]{2}:[0-9]{2})?)?(?![A-Za-z0-9_])"
+				},
+				{
+					"name": "constant.other.time.fml",
+					"match": "(?<![A-Za-z0-9_])@T[0-9]{2}(?::[0-9]{2}(?::[0-9]{2}(?:\\.[0-9]+)?)?)?(?![A-Za-z0-9_])"
+				},
+				{
+					"name": "constant.other.date.fml",
+					"match": "(?<![A-Za-z0-9_])@[0-9]{4}(?:-[0-9]{2}(?:-[0-9]{2})?)?(?!T)(?![A-Za-z0-9_])"
+				},
+				{
+					"match": "(?<![A-Za-z0-9_])([0-9]*\\.[0-9]+|[0-9]+)(\\s*)(milliseconds?|seconds?|minutes?|hours?|days?|weeks?|months?|years?)(?![A-Za-z0-9_])",
+					"captures": {
+						"1": {
+							"name": "constant.numeric.fml"
+						},
+						"3": {
+							"name": "constant.other.unit.date.fml"
+						}
+					}
+				},
+				{
+					"match": "(?<![A-Za-z0-9_])([0-9]*\\.[0-9]+|[0-9]+)(\\s*)('(?:\\\\(?:[`\"'\\\\/fnrt]|u[0-9A-Fa-f]{4})|[^'\\\\])*')",
+					"captures": {
+						"1": {
+							"name": "constant.numeric.fml"
+						},
+						"3": {
+							"name": "string.quoted.single.unit.fhirpath.fml"
+						}
+					}
+				},
+				{
+					"name": "constant.language.null.fml",
+					"match": "\\{\\}"
+				},
+				{
+					"name": "constant.language.boolean.fml",
+					"match": "\\b(?:true|false)\\b"
+				},
+				{
+					"name": "constant.numeric.long.fml",
+					"match": "(?<![A-Za-z0-9_])[0-9]+L(?![A-Za-z0-9_])"
+				},
+				{
+					"name": "constant.numeric.decimal.fml",
+					"match": "(?<![A-Za-z0-9_])[0-9]*\\.[0-9]+(?![A-Za-z0-9_])"
+				},
+				{
+					"name": "constant.numeric.integer.fml",
+					"match": "(?<![A-Za-z0-9_])[0-9]+(?![A-Za-z0-9_])"
+				}
+			]
+		},
+		"variables": {
+			"patterns": [
+				{
+					"name": "variable.language.fhirpath.fml",
+					"match": "\\$(?:this|index|total)\\b"
+				},
+				{
+					"name": "variable.other.external.fhirpath.fml",
+					"match": "%[A-Za-z_][A-Za-z0-9_]*\\b"
+				},
+				{
+					"name": "variable.other.external.fhirpath.fml",
+					"match": "%('(?:\\\\(?:[`\"'\\\\/fnrt]|u[0-9A-Fa-f]{4})|[^'\\\\])*')"
+				}
+			]
+		},
+		"group-type-mode": {
+			"patterns": [
+				{
+					"name": "punctuation.definition.type-mode.fml",
+					"match": "<<|>>"
+				},
+				{
+					"name": "storage.modifier.type-mode.fml",
+					"match": "(?<![A-Za-z0-9_])(?:types|type\\+)(?![A-Za-z0-9_])"
+				}
+			]
+		},
+		"keywords": {
+			"patterns": [
+				{
+					"name": "keyword.declaration.fml",
+					"match": "\\b(?:conceptmap|map|prefix|uses|alias|let|group|imports|extends)\\b"
+				},
+				{
+					"name": "keyword.control.fml",
+					"match": "\\b(?:then|default|where|check|log)\\b"
+				},
+				{
+					"name": "storage.modifier.model.fml",
+					"match": "\\b(?:source|target|queried|produced)\\b"
+				},
+				{
+					"name": "storage.modifier.list.fml",
+					"match": "\\b(?:first|not_first|last|not_last|only_one|share|single)\\b"
+				},
+				{
+					"name": "storage.type.fml",
+					"match": "\\btypes\\b"
+				},
+				{
+					"name": "keyword.operator.word.fhirpath.fml",
+					"match": "\\b(?:as|is|in|contains|and|or|xor|implies|div|mod)\\b"
+				},
+				{
+					"name": "keyword.other.sort.fhirpath.fml",
+					"match": "\\b(?:sort|asc|desc)\\b"
+				}
+			]
+		},
+		"function-call": {
+			"match": "(?:(\\.)(\\s*))?(`(?:\\\\.|[^`\\\\])*`|[A-Za-z_][A-Za-z0-9_]*)(?=\\s*\\()",
+			"captures": {
+				"1": {
+					"name": "punctuation.accessor.dot.fml"
+				},
+				"3": {
+					"name": "support.function.fml"
+				}
+			}
+		},
+		"member-access": {
+			"match": "(\\.)(\\s*)(`(?:\\\\.|[^`\\\\])*`|[A-Za-z_][A-Za-z0-9_]*)",
+			"captures": {
+				"1": {
+					"name": "punctuation.accessor.dot.fml"
+				},
+				"3": {
+					"name": "variable.other.member.fml"
+				}
+			}
+		},
+		"operators": {
+			"name": "keyword.operator.fml",
+			"match": "->|\\.\\.|<=|>=|!=|!~|=|~|<|>|\\||\\+|-|\\*|/|&"
+		},
+		"punctuation": {
+			"patterns": [
+				{
+					"name": "punctuation.separator.comma.fml",
+					"match": ","
+				},
+				{
+					"name": "punctuation.separator.colon.fml",
+					"match": ":"
+				},
+				{
+					"name": "punctuation.terminator.statement.fml",
+					"match": ";"
+				},
+				{
+					"name": "punctuation.accessor.dot.fml",
+					"match": "\\."
+				},
+				{
+					"name": "punctuation.section.block.begin.fml",
+					"match": "\\{"
+				},
+				{
+					"name": "punctuation.section.block.end.fml",
+					"match": "\\}"
+				},
+				{
+					"name": "punctuation.section.brackets.begin.fml",
+					"match": "\\["
+				},
+				{
+					"name": "punctuation.section.brackets.end.fml",
+					"match": "\\]"
+				},
+				{
+					"name": "punctuation.section.parens.begin.fml",
+					"match": "\\("
+				},
+				{
+					"name": "punctuation.section.parens.end.fml",
+					"match": "\\)"
+				}
+			]
+		},
+		"identifier": {
+			"name": "variable.other.readwrite.fml",
+			"match": "\\b[A-Za-z_][A-Za-z0-9_]*\\b"
+		}
+	}
+}

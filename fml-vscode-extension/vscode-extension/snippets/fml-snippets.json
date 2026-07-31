@@ -1,0 +1,68 @@
+{
+	"Template" : {
+		"isFileTemplate": true,
+		"prefix" : "FML Template",
+		"body" : [
+			"/* Template FML */",
+			"map ${1:/*<TODO : \" url \">*/} = ${2:/*<TODO : alias>*/} // ${3:/*<TODO : comment>*/}",
+			"",
+			"uses ${4:/*<TODO : \" url \">*/} alias ${5:/*<TODO : alias>*/} as ${6|/*<TODO : as>*/,source,target|} // ${7:/*<TODO : comment>*/}",
+			"",
+			"imports ${8:/*<TODO : \" url \">*/} // ${9:/*<TODO : comment>*/}",
+			"",
+			"group ${10:/*<TODO : group name>*/}(source src : ${11:/*<TODO : source type>*/}, target tgt : ${12:/*<TODO : target type>*/}) { // ${13:/*<TODO : comment>*/}",
+            "   ${14:src} -> ${15:tgt} ${16:\"rule0\"}; // ${17:/*<TODO : comment>*/}",
+            "}$0"
+		],
+		"description" : "FML template"
+	},
+    "FML map": {
+		"prefix": [
+			"map"
+		],
+		"body": [
+			"map ${1:/*<TODO : \" url \">*/} = ${2:/*<TODO : alias>*/} // ${3:/*<TODO : comment>*/}"
+        ],
+		"description": "Create a FML map"
+	},
+    "FML uses": {
+		"prefix": [
+            "uses"
+		],
+		"body": [
+			"uses ${1:/*<TODO : \" url \">*/} alias ${2:/*<TODO : alias>*/} as ${3:/*<TODO : as>*/} // ${4:/*<TODO : comment>*/}"
+        ],
+		"description": "Create a FML uses"
+	},
+    "FML imports": {
+		"prefix": [
+			"imports"
+		],
+		"body": [
+			"imports ${1:/*<TODO : \" url \">*/} // ${2:/*<TODO : comment>*/}"
+        ],
+		"description": "Create a FML imports"
+	},
+	"FML Group": {
+		"prefix": [
+			"group"
+		],
+		"body": [
+			"group ${1:/*<TODO : group name>*/}(source src : ${2:/*<TODO : source type>*/}, target tgt : ${3:/*<TODO : target type>*/}) { // ${4:/*<TODO : comment>*/}",
+            "   ${5:src} -> ${6:tgt} ${7:\"rule0\"}; // ${8:/*<TODO : comment>*/}",
+            "}$0"
+        ],
+		"description": "Create a FML group"
+	},
+	"FML then": {
+		"prefix": [
+			"then"
+		],
+		"body": [
+			"then {",
+            "   src$2",
+            "} ${1:/*<TODO : \" object name \" >*/} ;"
+        ],
+		"description": "Create a FML then"
+	}
+}

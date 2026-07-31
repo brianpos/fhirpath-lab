@@ -1,0 +1,29 @@
+{
+	"compilerOptions": {
+		"module": "NodeNext",
+		"moduleResolution": "NodeNext",
+		"target": "ES2022",
+		"lib": [
+			"ES2022"
+		],
+		"sourceMap": true,
+		"rootDir": "src",
+		"types": [
+			"mocha",
+			"node",
+			"vscode"
+		],
+		"strict": true,   /* enable all strict type-checking options */
+		// skipLibCheck permet d'ignorer la vérification des types dans les fichiers .d.ts
+		// des dépendances (node_modules). Cela améliore les performances de compilation
+		// et évite les erreurs de compatibilité entre différentes versions de types
+		// (ex : @types/node v20 vs v22). Cette option est recommandée par la documentation
+		// officielle de TypeScript pour les projets utilisant des bibliothèques tierces.
+		// Elle n'affecte pas la vérification de types de votre propre code.
+		"skipLibCheck": true
+		/* Additional Checks */
+		// "noImplicitReturns": true, /* Report error when not all code paths in function return a value. */
+		// "noFallthroughCasesInSwitch": true, /* Report errors for fallthrough cases in switch statement. */
+		// "noUnusedParameters": true,  /* Report errors on unused parameters. */
+	}
+}
