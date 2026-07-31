@@ -38,7 +38,7 @@ code
   ;
 
 mapDeclaration
-  : 'map' url '=' identifier
+  : 'map' url '=' (identifier | DOUBLE_QUOTED_STRING) // double quoting is a legacy format, and tollerant of content handled by the HAPI engine
   ;
 
 metadataDeclaration

@@ -1,13 +1,22 @@
 import { StructureMap, StructureMapGroupRule } from "fhir/r4b";
-import type { FmlStructureMap, Rule as FmlRule, RuleDependent } from "./fml_models";
+import type { FmlStructureMap, Rule as FmlRule, RuleDependent, FhirVersion } from "./fml_models";
 import type { TypeModel, ElementModel } from "./custom_model";
 import { lookupByTypeName as lookupByTypeNameR4B } from "./models/generated/r4b";
+import { parseCanonicalVersion } from "./fml_cross_version";
 
 /**
  * Function used to resolve a TypeModel by its TypeName. Pass any per-version
  * dictionary's `lookupByTypeName` function (e.g. from `helpers/models/generated/r4b`).
  */
 export type TypeLookup = (typeName: string) => TypeModel | undefined;
+
+/**
+ * Resolver that returns the {@link TypeLookup} for a given FHIR version. Used
+ * for cross-version maps where source and target structures belong to
+ * different FHIR releases (e.g. an R4B → R5 transform). Return `undefined` to
+ * fall back to the default lookup.
+ */
+export type LookupForVersion = (version: FhirVersion | undefined) => TypeLookup | undefined;
 
 // ===== Exported Data Types =====
 
@@ -32,6 +41,10 @@ export interface DiagramType {
   properties: PropertyEntry[];
   /** Source position in the FML text for click-to-select on the type header */
   fmlPosition?: { startIndex: number; endIndex: number };
+  /** Detected FHIR version of the structure backing this box (cross-version
+   *  maps). When set, the type model for this box is resolved against the
+   *  matching per-version dictionary rather than the default. */
+  fhirVersion?: FhirVersion;
   /** When true, this DiagramType represents a "computed value" source
    *  produced by a variable-only target rule (e.g. `uuid() as fullUrl`,
    *  `cc('http://loinc.org', '8302-2', 'Body height') as coding`). It
@@ -127,7 +140,7 @@ interface VarInfo {
  * renderer can append `[]` for arrays and show the type in a tooltip. If
  * omitted, the bundled R4B dictionary is used as a sensible default.
  */
-export function extractStructureMapDiagram(map: StructureMap, typeLookup?: TypeLookup, showMissingProperties?: boolean): StructureMapDiagram {
+export function extractStructureMapDiagram(map: StructureMap, typeLookup?: TypeLookup, showMissingProperties?: boolean, lookupForVersion?: LookupForVersion): StructureMapDiagram {
   const groups: DiagramGroup[] = [];
   nextRuleId = 0;
   nextConnectionId = 0;
@@ -174,6 +187,7 @@ export function extractStructureMapDiagram(map: StructureMap, typeLookup?: TypeL
         properties: entries,
       };
       if ((input as any)._fmlPosition) dt.fmlPosition = (input as any)._fmlPosition;
+      if ((input as any)._fmlVersion) dt.fhirVersion = (input as any)._fmlVersion;
       if (input.mode === "source") sourceTypes.push(dt);
       else targetTypes.push(dt);
     }
@@ -286,9 +300,12 @@ export function extractStructureMapDiagram(map: StructureMap, typeLookup?: TypeL
       // path is the literal rule text — there's no element to resolve
       // against the type model, so skip the annotation pass entirely.
       if (dt.isComputed) continue;
+      // For cross-version maps, resolve this box against the type model for
+      // its detected FHIR version; otherwise fall back to the default lookup.
+      const boxLookup = (lookupForVersion && lookupForVersion(dt.fhirVersion)) || lookup;
       // Either no declared type, or the declared type isn't in the model:
       // every property on this box is therefore unverifiable — flag them all.
-      const rootKnown = !!dt.typeName && !!lookup(dt.typeName);
+      const rootKnown = !!dt.typeName && !!boxLookup(dt.typeName);
       // Build a map of paths within this box that re-root to a created
       // type — so deeper properties like `entry.resource.status` resolve
       // against the created type (e.g. Observation) rather than the
@@ -306,7 +323,7 @@ export function extractStructureMapDiagram(map: StructureMap, typeLookup?: TypeL
         }
         // Skip the root-context placeholder ("." path) which has no element.
         if (!p.path || p.path === ".") continue;
-        const resolved = resolvePathInModel(dt.typeName, p.path, lookup, createBoundaries);
+        const resolved = resolvePathInModel(dt.typeName, p.path, boxLookup, createBoundaries);
         if (resolved) {
           if (resolved.isCollection) p.isCollection = true;
           if (resolved.elementTypeName) p.elementTypeName = resolved.elementTypeName;
@@ -320,7 +337,7 @@ export function extractStructureMapDiagram(map: StructureMap, typeLookup?: TypeL
         if (p.createdType) {
           p.elementTypeName = p.createdType;
           if (resolved && resolved.element) {
-            if (!isCreatedTypeAllowed(resolved.element, p.createdType, lookup)) {
+            if (!isCreatedTypeAllowed(resolved.element, p.createdType, boxLookup)) {
               const allowed = describeAllowedTypes(resolved.element);
               const displayPath = stripPathDiscriminators(p.path);
               const msg = `created type "${p.createdType}" is not allowed at ${dt.typeName}.${displayPath} (allowed: ${allowed})`;
@@ -1508,8 +1525,8 @@ function renderSankeyRibbon(
  * Each group is rendered as a box containing source and target type boxes
  * with the properties read/written listed inside each type box.
  */
-export function generateInstanceDiagramSvg(map: StructureMap, typeLookup?: TypeLookup, showMissingProperties?: boolean): string {
-  const data = extractStructureMapDiagram(map, typeLookup, showMissingProperties);
+export function generateInstanceDiagramSvg(map: StructureMap, typeLookup?: TypeLookup, showMissingProperties?: boolean, lookupForVersion?: LookupForVersion): string {
+  const data = extractStructureMapDiagram(map, typeLookup, showMissingProperties, lookupForVersion);
 
   if (data.groups.length === 0) {
     return [
@@ -2266,8 +2283,45 @@ function convertFmlRules(rules: FmlRule[]): StructureMapGroupRule[] {
  * Convert an FmlStructureMap (from the local FML parser) into a minimal FHIR
  * StructureMap resource — just enough for `extractStructureMapDiagram` /
  * `generateInstanceDiagramSvg` to work.
+ *
+ * Group input types in FML often reference a `uses ... alias X` declaration
+ * rather than a bare FHIR type name. For (cross-version) maps the alias hides
+ * both the real type (e.g. `Appointment`) and the FHIR version segment in the
+ * canonical (e.g. `http://hl7.org/fhir/4.3/StructureDefinition/Appointment`).
+ * This resolves each input's declared type back through the `uses` structures
+ * so the diagram can (a) look the type up in the model by its real name and
+ * (b) pick the right per-version model. The resolved version is stashed on
+ * `input._fmlVersion` for the diagram extractor.
  */
 export function fmlToStructureMapForDiagram(fml: FmlStructureMap): StructureMap {
+  // Index the `uses` declarations by their alias and by their resolved type
+  // name so a group input's declared type can be traced back to the structure
+  // (and hence canonical + FHIR version) that introduced it.
+  interface ResolvedStructure { typeName: string; version?: FhirVersion; mode: string; }
+  const byAlias = new Map<string, ResolvedStructure>();
+  const byTypeName = new Map<string, ResolvedStructure>();
+  for (const s of fml.structures || []) {
+    const parsed = parseCanonicalVersion(s.url);
+    const canonical = s.canonical ?? parsed.canonical;
+    const version = s.fhirVersion ?? parsed.version;
+    // The version-neutral canonical ends in `.../StructureDefinition/<Type>`.
+    const typeName = canonical.split("/").pop() || canonical;
+    const resolved: ResolvedStructure = { typeName, version, mode: s.mode };
+    if (s.alias) byAlias.set(s.alias, resolved);
+    if (!byTypeName.has(typeName)) byTypeName.set(typeName, resolved);
+  }
+
+  const resolveInput = (declaredType: string | undefined, mode: "source" | "target") => {
+    if (!declaredType) return { type: declaredType, version: undefined as FhirVersion | undefined };
+    const match = byAlias.get(declaredType) ?? byTypeName.get(declaredType);
+    const type = match?.typeName ?? declaredType;
+    // Per-structure version wins; otherwise fall back to the map-level
+    // auto-detected source/target model version.
+    const version = match?.version
+      ?? (mode === "source" ? fml.sourceModelVersion : fml.targetModelVersion);
+    return { type, version };
+  };
+
   return {
     resourceType: "StructureMap",
     status: "draft",
@@ -2278,11 +2332,13 @@ export function fmlToStructureMapForDiagram(fml: FmlStructureMap): StructureMap 
         name: g.name,
         typeMode: "none" as any,
         input: g.parameters.map((p) => {
+          const { type, version } = resolveInput(p.type, p.mode);
           const inp: any = {
             name: p.name,
-            type: p.type,
+            type,
             mode: p.mode as any,
           };
+          if (version) inp._fmlVersion = version;
           if (p.position) inp._fmlPosition = { startIndex: p.position.startIndex, endIndex: p.position.endIndex };
           return inp;
         }),
