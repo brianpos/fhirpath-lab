@@ -65,7 +65,7 @@ available directly from the command palette.
 
 Run **Open FML Preview to the Side** from the editor title, context menu, or command palette. A preview panel opens beside the active FML editor and refreshes from unsaved edits.
 
-The current diagram is a placeholder for the planned production FML-to-SVG renderer.
+The instance diagram shows source and target types, the properties read and written by each rule, and the connections between them. Select a diagram row or header to navigate back to the corresponding FML source.
 
 ## Trace replay debugger
 

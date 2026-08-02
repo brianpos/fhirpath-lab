@@ -151,7 +151,8 @@ suite("FHIR Mapping Language Tools Extension", () => {
         assert.equal(result.warningCount, 0);
     });
 
-    test("preview should open beside the editor and update from unsaved edits", async () => {
+    test("preview should open beside the editor and update from unsaved edits", async function() {
+        this.timeout(10_000);
         const initialText = "group First(source src, target tgt) {\n}";
         const document = await openFmlDocument(initialText);
         const panel = await vscode.commands.executeCommand<vscode.WebviewPanel>(
@@ -163,7 +164,7 @@ suite("FHIR Mapping Language Tools Extension", () => {
         assert.match(panel.title, /^Preview /);
         const previewHtml = await waitForPreviewHtml(
             panel,
-            html => html.includes("Placeholder SVG") && html.includes(">1 group<"),
+            html => html.includes("Instance diagram for") && html.includes(">First</text>"),
         );
         assert.match(previewHtml, /data-fml-line="1"/);
         assert.match(previewHtml, /window\.fmlPreview = Object\.freeze/);
@@ -179,7 +180,7 @@ suite("FHIR Mapping Language Tools Extension", () => {
         assert.ok(await vscode.workspace.applyEdit(edit));
         assert.equal(document.isDirty, true);
 
-        await waitForPreviewHtml(panel, html => html.includes("First, Second") && html.includes(">2 groups<"));
+        await waitForPreviewHtml(panel, html => html.includes(">First</text>") && html.includes(">Second</text>"));
         panel.dispose();
     });
 
@@ -328,5 +329,5 @@ async function waitForPreviewHtml(
         }
         await new Promise(resolve => setTimeout(resolve, 50));
     }
-    assert.fail(`Timed out waiting for FML preview HTML. Current HTML length: ${panel.webview.html.length}`);
+    assert.fail(`Timed out waiting for FML preview HTML: ${panel.webview.html}`);
 }

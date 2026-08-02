@@ -1,7 +1,30 @@
 const esbuild = require("esbuild");
+const path = require("node:path");
 
 const production = process.argv.includes('--production');
 const watch = process.argv.includes('--watch');
+
+const labInstanceDiagramModule = '@fhirpath-lab/lab-instance-diagram';
+
+/**
+ * Resolves the extension-facing diagram contract to the canonical renderer
+ * used by the FHIRPath Lab application. The implementation is bundled into
+ * dist/extension.js, so the published VSIX has no runtime dependency on the
+ * repository source tree.
+ *
+ * @type {import('esbuild').Plugin}
+ */
+const labInstanceDiagramPlugin = {
+	name: 'lab-instance-diagram',
+	setup(build) {
+		build.onResolve({filter: /^@fhirpath-lab\/lab-instance-diagram$/}, () => ({
+			path: path.resolve(__dirname, 'build/fml-instance-diagram-entry.ts'),
+		}));
+		build.onResolve({filter: /^antlr4$/}, () => ({
+			path: require.resolve('antlr4'),
+		}));
+	},
+};
 
 /**
  * @type {import('esbuild').Plugin}
@@ -36,10 +59,11 @@ async function main() {
 		sourcesContent: false,
 		platform: 'node',
 		outdir: 'dist',
+		nodePaths: [path.resolve(__dirname, 'node_modules')],
 		external: ['vscode'],
 		logLevel: 'silent',
 		plugins: [
-			/* add to the end of plugins array */
+			labInstanceDiagramPlugin,
 			esbuildProblemMatcherPlugin,
 		],
 	});

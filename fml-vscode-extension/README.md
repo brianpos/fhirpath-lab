@@ -162,3 +162,21 @@ The API contracts for the following capabilities are present but return `not-imp
 ## License
 
 This project is licensed under the [MIT License](LICENSE.md).
+
+## Issues in vscode extension to resolve
+* SVG Preview Diagram Generation issues
+    * Long source entries in the diagram should be truncated with ellipsis and the full name should be available on hover.
+    * When a target is populated via a fhirpath expression, any source variable referenced should be included via a dotted line from the source variable to the target variable. (need a fhirpath visitor that tracks property references to use here)
+    * If a node could have multiple types (choice properties), these should all be listed as possible types. When navigating to a child node, then this will impact what types are available above.
+      If a child rule references a property that is only available in a subset of types, then the parent rule should be filtered to only those types that are compatible with the child rule. (but still show that the other types could have been available somehow)
+    * 
+* SVG preview rendering issues
+    * Preview pane scroll bars need to be consistent. horizontal scrollbar is off the screen and need to get to the bottom to be able to see it
+* FML validation issues:
+    * Should use the fml models/parser from the lab main project and not use the antlr-ng project at all.
+        * remove the antlr-ng dependency from the vscode extension and fml-validator projects.
+        * Use the intermediate model from the lab project to validate the fml text and generate the structure map, this gives us a single source of truth for the fml model and parser, and will enable more features
+    * transform functions are validating as group dependencies and thus searching for then incorrectly, and also I'd assume aren't validating the parameter types either.
+    * validator should use the models from the core lab project
+    * validator and diagraming should use the same internal testing/validation rules.
+    * 

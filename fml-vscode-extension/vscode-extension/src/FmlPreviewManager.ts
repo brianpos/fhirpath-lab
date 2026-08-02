@@ -18,7 +18,7 @@ import {
     FmlPreviewNavigationTarget,
     FmlPreviewSource,
     FmlSvgRenderer,
-    PlaceholderFmlSvgRenderer,
+    InstanceDiagramFmlSvgRenderer,
 } from "./FmlPreviewRenderer";
 
 interface PreviewEntry {
@@ -42,7 +42,7 @@ export class FmlPreviewManager implements Disposable {
     private readonly disposables: Disposable[] = [];
 
     public constructor(
-        private readonly renderer: FmlSvgRenderer = new PlaceholderFmlSvgRenderer(),
+        private readonly renderer: FmlSvgRenderer = new InstanceDiagramFmlSvgRenderer(),
     ) {
         this.disposables.push(workspace.onDidChangeTextDocument(event => {
             const preview = this.previews.get(event.document.uri.toString());
@@ -262,33 +262,16 @@ function createPreviewHtml(
             font-family: var(--vscode-font-family);
         }
         .preview-shell {
-            display: grid;
             min-height: calc(100vh - 48px);
-            place-items: center;
+            overflow: auto;
         }
         .fml-preview-svg {
             display: block;
-            width: min(100%, 1120px);
+            width: auto;
+            max-width: none;
             height: auto;
+            margin: 0 auto;
         }
-        .preview-background { fill: var(--vscode-sideBar-background); stroke: var(--vscode-panel-border); }
-        .preview-card { fill: var(--vscode-editorWidget-background); stroke: var(--vscode-editorWidget-border); }
-        .preview-card-accent { stroke: var(--vscode-focusBorder); stroke-width: 2; }
-        .preview-heading { fill: var(--vscode-editor-foreground); font-size: 28px; font-weight: 650; }
-        .preview-subheading, .preview-card-copy, .preview-note-copy {
-            fill: var(--vscode-descriptionForeground);
-            font-size: 16px;
-        }
-        .preview-card-title, .preview-note-heading {
-            fill: var(--vscode-editor-foreground);
-            font-size: 19px;
-            font-weight: 600;
-        }
-        .preview-arrow { stroke: var(--vscode-focusBorder); stroke-width: 4; }
-        .preview-arrow-head { fill: none; stroke: var(--vscode-focusBorder); stroke-width: 4; }
-        .preview-output-node { fill: var(--vscode-testing-iconPassed); opacity: 0.18; stroke: var(--vscode-testing-iconPassed); stroke-width: 3; }
-        .preview-output-mark { fill: none; stroke: var(--vscode-testing-iconPassed); stroke-linecap: round; stroke-linejoin: round; stroke-width: 6; }
-        .preview-note { fill: var(--vscode-textBlockQuote-background); stroke: var(--vscode-textBlockQuote-border); }
         [data-fml-line][data-fml-column][data-fml-length] { cursor: pointer; }
         [data-fml-line][data-fml-column][data-fml-length]:focus {
             outline: 2px solid var(--vscode-focusBorder);
