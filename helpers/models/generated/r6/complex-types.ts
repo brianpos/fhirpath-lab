@@ -1,5 +1,5 @@
 // THIS FILE IS GENERATED — DO NOT EDIT BY HAND.
-// Run `npm run generate:models -- --version <r4|r4b|r5|r6>` to regenerate.
+// Run `npm run generate:models -- --version <stu3|r4|r4b|r5|r6>` to regenerate.
 // See docs/custom-model-generator-plan.md.
 
 import type { TypeModel } from "../../../custom_model";
@@ -211,7 +211,7 @@ export const datarequirement_valueFilter: TypeModel = {
         { ElementName: "path", Type: [{ TypeName: "string" }] },
         { ElementName: "searchParam", Type: [{ TypeName: "string" }] },
         { ElementName: "comparator", Type: [{ TypeName: "code" }] },
-        { ElementName: "value[x]", Type: [{ TypeName: "Duration" }, { TypeName: "Period" }, { TypeName: "dateTime" }] },
+        { ElementName: "value[x]", Type: [{ TypeName: "Quantity" }, { TypeName: "Range" }, { TypeName: "Ratio" }, { TypeName: "RatioRange" }, { TypeName: "boolean" }, { TypeName: "integer" }, { TypeName: "string" }] },
     ],
 };
 
@@ -247,7 +247,7 @@ export const Dosage: TypeModel = {
         { ElementName: "timing", Type: [{ TypeName: "Timing" }] },
         { ElementName: "asNeeded", Type: [{ TypeName: "boolean" }] },
         { ElementName: "asNeededFor", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
-        { ElementName: "site", Type: [{ TypeName: "CodeableConcept" }] },
+        { ElementName: "site", Type: [{ TypeName: "CodeableReference" }] },
         { ElementName: "route", Type: [{ TypeName: "CodeableConcept" }] },
         { ElementName: "method", Type: [{ TypeName: "CodeableConcept" }] },
         { ElementName: "doseAndRate", Type: [{ TypeName: "dosage_doseAndRate" }], IsArray: true },
@@ -281,8 +281,7 @@ export const DosageDetails: TypeModel = {
     TypeName: "DosageDetails",
     BaseTypeName: "BackboneType",
     Elements: [
-        { ElementName: "renderedInstruction", Type: [{ TypeName: "markdown" }] },
-        { ElementName: "simple", Type: [{ TypeName: "Dosage" }] },
+        { ElementName: "renderedInstruction", Type: [{ TypeName: "markdown" }], Required: true },
         { ElementName: "step", Type: [{ TypeName: "dosagedetails_step" }], IsArray: true },
         { ElementName: "safety", Type: [{ TypeName: "DosageSafety" }] },
     ],
@@ -692,10 +691,10 @@ export const RelatedArtifact: TypeModel = {
         { ElementName: "label", Type: [{ TypeName: "string" }] },
         { ElementName: "display", Type: [{ TypeName: "string" }] },
         { ElementName: "citation", Type: [{ TypeName: "markdown" }] },
+        { ElementName: "url", Type: [{ TypeName: "url" }] },
         { ElementName: "document", Type: [{ TypeName: "Attachment" }] },
         { ElementName: "resource", Type: [{ TypeName: "canonical" }] },
         { ElementName: "resourceReference", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Resource"] }] },
-        { ElementName: "artifact[x]", Type: [{ TypeName: "Attachment" }, { TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Resource"] }, { TypeName: "canonical" }, { TypeName: "markdown" }] },
     ],
 };
 
@@ -796,7 +795,7 @@ export const UsageContext: TypeModel = {
     BaseTypeName: "DataType",
     Elements: [
         { ElementName: "code", Type: [{ TypeName: "Coding" }], Required: true },
-        { ElementName: "value[x]", Type: [{ TypeName: "CodeableConcept" }, { TypeName: "Quantity" }, { TypeName: "Range" }, { TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Group", "http://hl7.org/fhir/StructureDefinition/HealthcareService", "http://hl7.org/fhir/StructureDefinition/InsurancePlan", "http://hl7.org/fhir/StructureDefinition/Location", "http://hl7.org/fhir/StructureDefinition/Organization", "http://hl7.org/fhir/StructureDefinition/PlanDefinition", "http://hl7.org/fhir/StructureDefinition/ResearchStudy"] }], Required: true },
+        { ElementName: "value[x]", Type: [{ TypeName: "CodeableConcept" }, { TypeName: "Quantity" }, { TypeName: "Range" }, { TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Group", "http://hl7.org/fhir/StructureDefinition/HealthcareService", "http://hl7.org/fhir/StructureDefinition/Location", "http://hl7.org/fhir/StructureDefinition/Organization", "http://hl7.org/fhir/StructureDefinition/PlanDefinition", "http://hl7.org/fhir/StructureDefinition/ResearchStudy"] }, { TypeName: "canonical" }], Required: true },
     ],
 };
 

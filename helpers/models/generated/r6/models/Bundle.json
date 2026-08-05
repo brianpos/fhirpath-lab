@@ -55,14 +55,6 @@
         "IsArray": true
       },
       {
-        "ElementName": "signature",
-        "Type": [
-          {
-            "TypeName": "Signature"
-          }
-        ]
-      },
-      {
         "ElementName": "issues",
         "Type": [
           {

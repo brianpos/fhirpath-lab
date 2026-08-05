@@ -37,6 +37,14 @@
         "Required": true
       },
       {
+        "ElementName": "statusReason",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
         "ElementName": "category",
         "Type": [
           {
@@ -252,7 +260,7 @@
         "IsArray": true
       },
       {
-        "ElementName": "recomendation",
+        "ElementName": "recommendation",
         "Type": [
           {
             "TypeName": "CodeableReference"

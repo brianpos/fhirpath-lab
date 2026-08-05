@@ -1,0 +1,116 @@
+{
+  "Schedule": {
+    "TypeName": "Schedule",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "active",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "serviceCategory",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "serviceType",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "specialty",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "actor",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Patient"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Practitioner"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/PractitionerRole"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/RelatedPerson"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Device"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/HealthcareService"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Location"
+            ]
+          }
+        ],
+        "IsArray": true,
+        "Required": true
+      },
+      {
+        "ElementName": "planningHorizon",
+        "Type": [
+          {
+            "TypeName": "Period"
+          }
+        ]
+      },
+      {
+        "ElementName": "comment",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      }
+    ]
+  }
+}

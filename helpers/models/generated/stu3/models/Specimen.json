@@ -1,0 +1,296 @@
+{
+  "Specimen": {
+    "TypeName": "Specimen",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "accessionIdentifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ]
+      },
+      {
+        "ElementName": "status",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "subject",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Patient"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Group"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Device"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Substance"
+            ]
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "receivedTime",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      },
+      {
+        "ElementName": "parent",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Specimen"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "request",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/ProcedureRequest"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "collection",
+        "Type": [
+          {
+            "TypeName": "specimen_collection"
+          }
+        ]
+      },
+      {
+        "ElementName": "processing",
+        "Type": [
+          {
+            "TypeName": "specimen_processing"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "container",
+        "Type": [
+          {
+            "TypeName": "specimen_container"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "note",
+        "Type": [
+          {
+            "TypeName": "Annotation"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "specimen_collection": {
+    "TypeName": "specimen_collection",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "collector",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Practitioner"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "collected[x]",
+        "Type": [
+          {
+            "TypeName": "Period"
+          },
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      },
+      {
+        "ElementName": "quantity",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
+      },
+      {
+        "ElementName": "method",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "bodySite",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      }
+    ]
+  },
+  "specimen_processing": {
+    "TypeName": "specimen_processing",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "description",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "procedure",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "additive",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Substance"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "time[x]",
+        "Type": [
+          {
+            "TypeName": "Period"
+          },
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      }
+    ]
+  },
+  "specimen_container": {
+    "TypeName": "specimen_container",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "description",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "capacity",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
+      },
+      {
+        "ElementName": "specimenQuantity",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
+      },
+      {
+        "ElementName": "additive[x]",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Substance"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

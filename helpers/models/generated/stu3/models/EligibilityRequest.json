@@ -1,0 +1,153 @@
+{
+  "EligibilityRequest": {
+    "TypeName": "EligibilityRequest",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "status",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "priority",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "patient",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Patient"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "serviced[x]",
+        "Type": [
+          {
+            "TypeName": "Period"
+          },
+          {
+            "TypeName": "date"
+          }
+        ]
+      },
+      {
+        "ElementName": "created",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      },
+      {
+        "ElementName": "enterer",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Practitioner"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "provider",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Practitioner"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "organization",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "insurer",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "facility",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Location"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "coverage",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Coverage"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "businessArrangement",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "benefitCategory",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "benefitSubCategory",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -4,21 +4,20 @@
     "BaseTypeName": "DomainResource",
     "Elements": [
       {
+        "ElementName": "status",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
         "ElementName": "code",
         "Type": [
           {
             "TypeName": "CodeableConcept"
           }
         ]
-      },
-      {
-        "ElementName": "status",
-        "Type": [
-          {
-            "TypeName": "code"
-          }
-        ],
-        "Required": true
       },
       {
         "ElementName": "category",

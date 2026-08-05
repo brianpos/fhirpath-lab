@@ -31,10 +31,8 @@
               "http://hl7.org/fhir/StructureDefinition/CarePlan",
               "http://hl7.org/fhir/StructureDefinition/Claim",
               "http://hl7.org/fhir/StructureDefinition/CommunicationRequest",
-              "http://hl7.org/fhir/StructureDefinition/Contract",
               "http://hl7.org/fhir/StructureDefinition/CoverageEligibilityRequest",
               "http://hl7.org/fhir/StructureDefinition/DeviceRequest",
-              "http://hl7.org/fhir/StructureDefinition/EnrollmentRequest",
               "http://hl7.org/fhir/StructureDefinition/MedicationRequest",
               "http://hl7.org/fhir/StructureDefinition/NutritionOrder",
               "http://hl7.org/fhir/StructureDefinition/RequestOrchestration",
@@ -126,10 +124,7 @@
         "ElementName": "related",
         "Type": [
           {
-            "TypeName": "Reference",
-            "TargetProfile": [
-              "http://hl7.org/fhir/StructureDefinition/Resource"
-            ]
+            "TypeName": "documentreference_related"
           }
         ],
         "IsArray": true
@@ -248,6 +243,32 @@
           }
         ],
         "IsArray": true,
+        "Required": true
+      }
+    ]
+  },
+  "documentreference_related": {
+    "TypeName": "documentreference_related",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "code",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "target",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Resource"
+            ]
+          }
+        ],
         "Required": true
       }
     ]

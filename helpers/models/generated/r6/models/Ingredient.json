@@ -9,7 +9,8 @@
           {
             "TypeName": "Identifier"
           }
-        ]
+        ],
+        "IsArray": true
       },
       {
         "ElementName": "status",

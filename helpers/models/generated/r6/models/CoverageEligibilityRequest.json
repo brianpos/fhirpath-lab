@@ -367,16 +367,10 @@
     "BaseTypeName": "BackboneElement",
     "Elements": [
       {
-        "ElementName": "diagnosis[x]",
+        "ElementName": "diagnosis",
         "Type": [
           {
-            "TypeName": "CodeableConcept"
-          },
-          {
-            "TypeName": "Reference",
-            "TargetProfile": [
-              "http://hl7.org/fhir/StructureDefinition/Condition"
-            ]
+            "TypeName": "CodeableReference"
           }
         ]
       }

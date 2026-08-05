@@ -31,7 +31,7 @@
             "TypeName": "CodeableConcept"
           }
         ],
-        "IsArray": true
+        "Required": true
       },
       {
         "ElementName": "status",
@@ -48,11 +48,10 @@
           {
             "TypeName": "CodeableConcept"
           }
-        ],
-        "IsArray": true
+        ]
       },
       {
-        "ElementName": "associationStatus",
+        "ElementName": "relationshipStatus",
         "Type": [
           {
             "TypeName": "CodeableConcept"
@@ -76,12 +75,12 @@
               "http://hl7.org/fhir/StructureDefinition/Patient",
               "http://hl7.org/fhir/StructureDefinition/Practitioner",
               "http://hl7.org/fhir/StructureDefinition/PractitionerRole",
-              "http://hl7.org/fhir/StructureDefinition/RelatedPerson",
               "http://hl7.org/fhir/StructureDefinition/Specimen",
               "http://hl7.org/fhir/StructureDefinition/Substance"
             ]
           }
-        ]
+        ],
+        "Required": true
       },
       {
         "ElementName": "focus",
@@ -111,12 +110,10 @@
         "ElementName": "bodyStructure",
         "Type": [
           {
-            "TypeName": "Reference",
-            "TargetProfile": [
-              "http://hl7.org/fhir/StructureDefinition/BodyStructure"
-            ]
+            "TypeName": "CodeableReference"
           }
-        ]
+        ],
+        "IsArray": true
       },
       {
         "ElementName": "period",

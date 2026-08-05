@@ -1,0 +1,286 @@
+{
+  "Coverage": {
+    "TypeName": "Coverage",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "status",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "policyHolder",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Patient"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/RelatedPerson"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "subscriber",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Patient"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/RelatedPerson"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "subscriberId",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "beneficiary",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Patient"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "relationship",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "period",
+        "Type": [
+          {
+            "TypeName": "Period"
+          }
+        ]
+      },
+      {
+        "ElementName": "payor",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Patient"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/RelatedPerson"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "grouping",
+        "Type": [
+          {
+            "TypeName": "coverage_grouping"
+          }
+        ]
+      },
+      {
+        "ElementName": "dependent",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "sequence",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "order",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ]
+      },
+      {
+        "ElementName": "network",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "contract",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Contract"
+            ]
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "coverage_grouping": {
+    "TypeName": "coverage_grouping",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "group",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "groupDisplay",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "subGroup",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "subGroupDisplay",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "plan",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "planDisplay",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "subPlan",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "subPlanDisplay",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "class",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "classDisplay",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "subClass",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "subClassDisplay",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      }
+    ]
+  }
+}

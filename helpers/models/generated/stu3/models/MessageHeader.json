@@ -1,0 +1,261 @@
+{
+  "MessageHeader": {
+    "TypeName": "MessageHeader",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "event",
+        "Type": [
+          {
+            "TypeName": "Coding"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "destination",
+        "Type": [
+          {
+            "TypeName": "messageheader_destination"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "receiver",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Practitioner"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "sender",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Practitioner"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "timestamp",
+        "Type": [
+          {
+            "TypeName": "instant"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "enterer",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Practitioner"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "author",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Practitioner"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "source",
+        "Type": [
+          {
+            "TypeName": "messageheader_source"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "responsible",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Practitioner"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "reason",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "response",
+        "Type": [
+          {
+            "TypeName": "messageheader_response"
+          }
+        ]
+      },
+      {
+        "ElementName": "focus",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Resource"
+            ]
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "messageheader_destination": {
+    "TypeName": "messageheader_destination",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "name",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "target",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Device"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "endpoint",
+        "Type": [
+          {
+            "TypeName": "uri"
+          }
+        ],
+        "Required": true
+      }
+    ]
+  },
+  "messageheader_source": {
+    "TypeName": "messageheader_source",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "name",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "software",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "version",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "contact",
+        "Type": [
+          {
+            "TypeName": "ContactPoint"
+          }
+        ]
+      },
+      {
+        "ElementName": "endpoint",
+        "Type": [
+          {
+            "TypeName": "uri"
+          }
+        ],
+        "Required": true
+      }
+    ]
+  },
+  "messageheader_response": {
+    "TypeName": "messageheader_response",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "id"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "code",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "details",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/OperationOutcome"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,168 @@
+{
+  "Parameters": {
+    "TypeName": "Parameters",
+    "BaseTypeName": "Resource",
+    "Elements": [
+      {
+        "ElementName": "parameter",
+        "Type": [
+          {
+            "TypeName": "parameters_parameter"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "parameters_parameter": {
+    "TypeName": "parameters_parameter",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "name",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "value[x]",
+        "Type": [
+          {
+            "TypeName": "Address"
+          },
+          {
+            "TypeName": "Age"
+          },
+          {
+            "TypeName": "Annotation"
+          },
+          {
+            "TypeName": "Attachment"
+          },
+          {
+            "TypeName": "CodeableConcept"
+          },
+          {
+            "TypeName": "Coding"
+          },
+          {
+            "TypeName": "ContactPoint"
+          },
+          {
+            "TypeName": "Count"
+          },
+          {
+            "TypeName": "Distance"
+          },
+          {
+            "TypeName": "Duration"
+          },
+          {
+            "TypeName": "HumanName"
+          },
+          {
+            "TypeName": "Identifier"
+          },
+          {
+            "TypeName": "Meta"
+          },
+          {
+            "TypeName": "Money"
+          },
+          {
+            "TypeName": "Period"
+          },
+          {
+            "TypeName": "Quantity"
+          },
+          {
+            "TypeName": "Range"
+          },
+          {
+            "TypeName": "Ratio"
+          },
+          {
+            "TypeName": "Reference"
+          },
+          {
+            "TypeName": "SampledData"
+          },
+          {
+            "TypeName": "Signature"
+          },
+          {
+            "TypeName": "Timing"
+          },
+          {
+            "TypeName": "base64Binary"
+          },
+          {
+            "TypeName": "boolean"
+          },
+          {
+            "TypeName": "code"
+          },
+          {
+            "TypeName": "date"
+          },
+          {
+            "TypeName": "dateTime"
+          },
+          {
+            "TypeName": "decimal"
+          },
+          {
+            "TypeName": "id"
+          },
+          {
+            "TypeName": "instant"
+          },
+          {
+            "TypeName": "integer"
+          },
+          {
+            "TypeName": "markdown"
+          },
+          {
+            "TypeName": "oid"
+          },
+          {
+            "TypeName": "positiveInt"
+          },
+          {
+            "TypeName": "string"
+          },
+          {
+            "TypeName": "time"
+          },
+          {
+            "TypeName": "unsignedInt"
+          },
+          {
+            "TypeName": "uri"
+          }
+        ]
+      },
+      {
+        "ElementName": "resource",
+        "Type": [
+          {
+            "TypeName": "Resource"
+          }
+        ]
+      },
+      {
+        "ElementName": "part",
+        "Type": [
+          {
+            "TypeName": "parameters_parameter"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  }
+}

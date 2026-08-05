@@ -1,0 +1,162 @@
+{
+  "ProcessRequest": {
+    "TypeName": "ProcessRequest",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "status",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "action",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "target",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "created",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      },
+      {
+        "ElementName": "provider",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Practitioner"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "organization",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "request",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Resource"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "response",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Resource"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "nullify",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "reference",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "item",
+        "Type": [
+          {
+            "TypeName": "processrequest_item"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "include",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "exclude",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "period",
+        "Type": [
+          {
+            "TypeName": "Period"
+          }
+        ]
+      }
+    ]
+  },
+  "processrequest_item": {
+    "TypeName": "processrequest_item",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "sequenceLinkId",
+        "Type": [
+          {
+            "TypeName": "integer"
+          }
+        ],
+        "Required": true
+      }
+    ]
+  }
+}

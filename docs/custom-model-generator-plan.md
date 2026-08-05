@@ -15,8 +15,8 @@ Stage 1 is complete; Stage 2 has had its JSON outputs prepared as a size-preview
   `System.*` TypeModels and `fhirPrimitiveToSystemTypeName` map.
 - [x] Generator at `scripts/generate-models/` (`fetch-bundles`, `build-type-model`,
   `emit`, `index`, `sd-types`).
-- [x] CLI: `npm run generate:models -- --version <r4|r4b|r5|r6>` (repeatable; default
-  = all four). Flags `--from-dir`, `--base-url`, `--force`, `--no-write`.
+- [x] CLI: `npm run generate:models -- --version <stu3|r4|r4b|r5|r6>` (repeatable;
+  default = all five). Flags `--from-dir`, `--base-url`, `--force`, `--no-write`.
 - [x] Bundle fetching with on-disk cache under `scripts/generate-models/.cache/<version>/`
   (gitignored).
 - [x] Pass 1 — collect & classify SDs by `kind`; skip `derivation === "constraint"`
@@ -35,8 +35,8 @@ Stage 1 is complete; Stage 2 has had its JSON outputs prepared as a size-preview
   primitives carrying Elements).
 - [x] Resolve System.* type-code URLs via `structuredefinition-fhir-type` extension
   (`Resource.id`, `string.value`, etc. — real HL7 SDs use the System URL).
-- [x] R4 / R4B / R5 / R6 dictionaries generated and committed (R6 sourced from
-  `https://hl7.org/fhir/6.0.0-ballot4/` since `/R6/` 404s).
+- [x] STU3 / R4 / R4B / R5 / R6 dictionaries generated and committed (R6 sourced
+  from `https://hl7.org/fhir/6.0.0-ballot4/` since `/R6/` 404s).
 - [x] **Differential walk** — generator reads `sd.differential.element[]`, not the
   snapshot. Inherited elements live on the BaseTypeName chain only; consumers walk
   inheritance.
@@ -100,7 +100,7 @@ files are in the single-digit-KB range — small enough that lazy-load is cheap.
 
 - Produce read-only, immutable, per-FHIR-version dictionaries of `TypeModel`s, indexed by
   canonical URL (and a secondary `TypeName` index).
-- Cover R4, R4B, R5, R6 core types in stage 1 — no profiles, slices, discriminators,
+- Cover STU3, R4, R4B, R5, R6 core types in stage 1 — no profiles, slices, discriminators,
   fixed/pattern values, or terminology bindings.
 - Share `System.*` primitive types across all version dictionaries by reference (single
   source module, multiple indexes).
@@ -127,6 +127,7 @@ extraction required. For each version, three Bundles cover everything stage 1 ne
 URLs follow the form (examples):
 
 - R4:  `https://hl7.org/fhir/R4/profiles-resources.json`, `…/profiles-types.json`
+- STU3: `https://hl7.org/fhir/STU3/profiles-resources.json`, `…/profiles-types.json`
 - R4B: `https://hl7.org/fhir/R4B/profiles-resources.json`, `…/profiles-types.json`
 - R5:  `https://hl7.org/fhir/R5/profiles-resources.json`, `…/profiles-types.json`
 - R6:  `https://hl7.org/fhir/R6/profiles-resources.json`, `…/profiles-types.json`
@@ -149,6 +150,7 @@ version-independent and total ~8 entries.
 ```
 helpers/models/generated/
   system-types.ts           // hand-authored, NOT generated — System.* TypeModels
+  stu3/  (same shape as r4 below)
   r4/
     index.ts                // public surface: re-exports byUrl/byTypeName + lookup helpers
     dictionary.ts           // generated — combined byUrl/byTypeName indexes
@@ -461,5 +463,5 @@ choices keep the door wide open:
 
 - [helpers/custom_model.ts](../helpers/custom_model.ts) — interface definitions and
   conventions consumed by this generator.
-- [models/r6/index.ts](../models/r6/index.ts) — example of the *fhirpath.js* runtime
-  model (different shape, different purpose, kept alongside).
+- [FHIRPath runtime models](fhirpath-runtime-models.md) — generation instructions for
+  `models/r6/`, the *fhirpath.js* runtime model (different shape and purpose).

@@ -77,8 +77,7 @@
           {
             "TypeName": "code"
           }
-        ],
-        "Required": true
+        ]
       },
       {
         "ElementName": "experimental",

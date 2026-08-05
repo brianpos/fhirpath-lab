@@ -1,0 +1,211 @@
+{
+  "Medication": {
+    "TypeName": "Medication",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "code",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "status",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "isBrand",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "isOverTheCounter",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "manufacturer",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "form",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "ingredient",
+        "Type": [
+          {
+            "TypeName": "medication_ingredient"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "package",
+        "Type": [
+          {
+            "TypeName": "medication_package"
+          }
+        ]
+      },
+      {
+        "ElementName": "image",
+        "Type": [
+          {
+            "TypeName": "Attachment"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "medication_ingredient": {
+    "TypeName": "medication_ingredient",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "item[x]",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Substance"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Medication"
+            ]
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "isActive",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "amount",
+        "Type": [
+          {
+            "TypeName": "Ratio"
+          }
+        ]
+      }
+    ]
+  },
+  "medication_package": {
+    "TypeName": "medication_package",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "container",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "content",
+        "Type": [
+          {
+            "TypeName": "medication_package_content"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "batch",
+        "Type": [
+          {
+            "TypeName": "medication_package_batch"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "medication_package_content": {
+    "TypeName": "medication_package_content",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "item[x]",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Medication"
+            ]
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "amount",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
+      }
+    ]
+  },
+  "medication_package_batch": {
+    "TypeName": "medication_package_batch",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "lotNumber",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "expirationDate",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      }
+    ]
+  }
+}

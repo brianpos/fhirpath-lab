@@ -51,18 +51,6 @@
         ]
       },
       {
-        "ElementName": "network",
-        "Type": [
-          {
-            "TypeName": "Reference",
-            "TargetProfile": [
-              "http://hl7.org/fhir/StructureDefinition/Organization"
-            ]
-          }
-        ],
-        "IsArray": true
-      },
-      {
         "ElementName": "code",
         "Type": [
           {

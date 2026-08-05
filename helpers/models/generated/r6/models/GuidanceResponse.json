@@ -36,6 +36,15 @@
         "Required": true
       },
       {
+        "ElementName": "topic",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
         "ElementName": "status",
         "Type": [
           {
@@ -124,6 +133,18 @@
               "http://hl7.org/fhir/StructureDefinition/OperationOutcome"
             ]
           }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "inputParameters",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Parameters"
+            ]
+          }
         ]
       },
       {
@@ -138,6 +159,14 @@
         ]
       },
       {
+        "ElementName": "indicator",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
         "ElementName": "result",
         "Type": [
           {
@@ -148,10 +177,8 @@
               "http://hl7.org/fhir/StructureDefinition/CarePlan",
               "http://hl7.org/fhir/StructureDefinition/Claim",
               "http://hl7.org/fhir/StructureDefinition/CommunicationRequest",
-              "http://hl7.org/fhir/StructureDefinition/Contract",
               "http://hl7.org/fhir/StructureDefinition/CoverageEligibilityRequest",
               "http://hl7.org/fhir/StructureDefinition/DeviceRequest",
-              "http://hl7.org/fhir/StructureDefinition/EnrollmentRequest",
               "http://hl7.org/fhir/StructureDefinition/MedicationRequest",
               "http://hl7.org/fhir/StructureDefinition/NutritionOrder",
               "http://hl7.org/fhir/StructureDefinition/RequestOrchestration",

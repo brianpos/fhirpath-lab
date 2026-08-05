@@ -1,0 +1,801 @@
+{
+  "Contract": {
+    "TypeName": "Contract",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ]
+      },
+      {
+        "ElementName": "status",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "issued",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      },
+      {
+        "ElementName": "applies",
+        "Type": [
+          {
+            "TypeName": "Period"
+          }
+        ]
+      },
+      {
+        "ElementName": "subject",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Resource"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "topic",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Resource"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "authority",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "domain",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Location"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "subType",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "action",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "actionReason",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "decisionType",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "contentDerivative",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "securityLabel",
+        "Type": [
+          {
+            "TypeName": "Coding"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "agent",
+        "Type": [
+          {
+            "TypeName": "contract_agent"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "signer",
+        "Type": [
+          {
+            "TypeName": "contract_signer"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "valuedItem",
+        "Type": [
+          {
+            "TypeName": "contract_valuedItem"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "term",
+        "Type": [
+          {
+            "TypeName": "contract_term"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "binding[x]",
+        "Type": [
+          {
+            "TypeName": "Attachment"
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Composition"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/DocumentReference"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/QuestionnaireResponse"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "friendly",
+        "Type": [
+          {
+            "TypeName": "contract_friendly"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "legal",
+        "Type": [
+          {
+            "TypeName": "contract_legal"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "rule",
+        "Type": [
+          {
+            "TypeName": "contract_rule"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "contract_agent": {
+    "TypeName": "contract_agent",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "actor",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Contract"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Device"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Group"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Location"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Patient"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Practitioner"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/RelatedPerson"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Substance"
+            ]
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "role",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "contract_signer": {
+    "TypeName": "contract_signer",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "Coding"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "party",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Patient"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Practitioner"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/RelatedPerson"
+            ]
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "signature",
+        "Type": [
+          {
+            "TypeName": "Signature"
+          }
+        ],
+        "IsArray": true,
+        "Required": true
+      }
+    ]
+  },
+  "contract_valuedItem": {
+    "TypeName": "contract_valuedItem",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "entity[x]",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Resource"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ]
+      },
+      {
+        "ElementName": "effectiveTime",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      },
+      {
+        "ElementName": "quantity",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
+      },
+      {
+        "ElementName": "unitPrice",
+        "Type": [
+          {
+            "TypeName": "Money"
+          }
+        ]
+      },
+      {
+        "ElementName": "factor",
+        "Type": [
+          {
+            "TypeName": "decimal"
+          }
+        ]
+      },
+      {
+        "ElementName": "points",
+        "Type": [
+          {
+            "TypeName": "decimal"
+          }
+        ]
+      },
+      {
+        "ElementName": "net",
+        "Type": [
+          {
+            "TypeName": "Money"
+          }
+        ]
+      }
+    ]
+  },
+  "contract_term": {
+    "TypeName": "contract_term",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ]
+      },
+      {
+        "ElementName": "issued",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      },
+      {
+        "ElementName": "applies",
+        "Type": [
+          {
+            "TypeName": "Period"
+          }
+        ]
+      },
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "subType",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "topic",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Resource"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "action",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "actionReason",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "securityLabel",
+        "Type": [
+          {
+            "TypeName": "Coding"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "agent",
+        "Type": [
+          {
+            "TypeName": "contract_term_agent"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "text",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "valuedItem",
+        "Type": [
+          {
+            "TypeName": "contract_term_valuedItem"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "group",
+        "Type": [
+          {
+            "TypeName": "contract_term"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "contract_term_agent": {
+    "TypeName": "contract_term_agent",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "actor",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Contract"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Device"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Group"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Location"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Patient"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Practitioner"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/RelatedPerson"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Substance"
+            ]
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "role",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "contract_term_valuedItem": {
+    "TypeName": "contract_term_valuedItem",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "entity[x]",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Resource"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ]
+      },
+      {
+        "ElementName": "effectiveTime",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      },
+      {
+        "ElementName": "quantity",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
+      },
+      {
+        "ElementName": "unitPrice",
+        "Type": [
+          {
+            "TypeName": "Money"
+          }
+        ]
+      },
+      {
+        "ElementName": "factor",
+        "Type": [
+          {
+            "TypeName": "decimal"
+          }
+        ]
+      },
+      {
+        "ElementName": "points",
+        "Type": [
+          {
+            "TypeName": "decimal"
+          }
+        ]
+      },
+      {
+        "ElementName": "net",
+        "Type": [
+          {
+            "TypeName": "Money"
+          }
+        ]
+      }
+    ]
+  },
+  "contract_friendly": {
+    "TypeName": "contract_friendly",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "content[x]",
+        "Type": [
+          {
+            "TypeName": "Attachment"
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Composition"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/DocumentReference"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/QuestionnaireResponse"
+            ]
+          }
+        ],
+        "Required": true
+      }
+    ]
+  },
+  "contract_legal": {
+    "TypeName": "contract_legal",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "content[x]",
+        "Type": [
+          {
+            "TypeName": "Attachment"
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Composition"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/DocumentReference"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/QuestionnaireResponse"
+            ]
+          }
+        ],
+        "Required": true
+      }
+    ]
+  },
+  "contract_rule": {
+    "TypeName": "contract_rule",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "content[x]",
+        "Type": [
+          {
+            "TypeName": "Attachment"
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/DocumentReference"
+            ]
+          }
+        ],
+        "Required": true
+      }
+    ]
+  }
+}

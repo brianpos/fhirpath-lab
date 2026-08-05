@@ -64,6 +64,14 @@
         "Required": true
       },
       {
+        "ElementName": "statusReason",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
         "ElementName": "category",
         "Type": [
           {
@@ -236,7 +244,7 @@
         "IsArray": true
       },
       {
-        "ElementName": "interpretationContext",
+        "ElementName": "context",
         "Type": [
           {
             "TypeName": "CodeableReference"
@@ -267,7 +275,8 @@
           {
             "TypeName": "CodeableReference"
           }
-        ]
+        ],
+        "IsArray": true
       },
       {
         "ElementName": "method",
@@ -300,6 +309,15 @@
             ]
           }
         ]
+      },
+      {
+        "ElementName": "supportingDevice",
+        "Type": [
+          {
+            "TypeName": "CodeableReference"
+          }
+        ],
+        "IsArray": true
       },
       {
         "ElementName": "referenceRange",

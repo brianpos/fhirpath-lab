@@ -1,0 +1,365 @@
+{
+  "ChargeItem": {
+    "TypeName": "ChargeItem",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ]
+      },
+      {
+        "ElementName": "definition",
+        "Type": [
+          {
+            "TypeName": "uri"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "status",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "partOf",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/ChargeItem"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "code",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "subject",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Patient"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Group"
+            ]
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "context",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Encounter"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/EpisodeOfCare"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "occurrence[x]",
+        "Type": [
+          {
+            "TypeName": "Period"
+          },
+          {
+            "TypeName": "Timing"
+          },
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      },
+      {
+        "ElementName": "participant",
+        "Type": [
+          {
+            "TypeName": "chargeitem_participant"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "performingOrganization",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "requestingOrganization",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "quantity",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
+      },
+      {
+        "ElementName": "bodysite",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "factorOverride",
+        "Type": [
+          {
+            "TypeName": "decimal"
+          }
+        ]
+      },
+      {
+        "ElementName": "priceOverride",
+        "Type": [
+          {
+            "TypeName": "Money"
+          }
+        ]
+      },
+      {
+        "ElementName": "overrideReason",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "enterer",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Practitioner"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Patient"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Device"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/RelatedPerson"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "enteredDate",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      },
+      {
+        "ElementName": "reason",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "service",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/DiagnosticReport"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/ImagingStudy"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Immunization"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/MedicationAdministration"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/MedicationDispense"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Observation"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Procedure"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/SupplyDelivery"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "account",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Account"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "note",
+        "Type": [
+          {
+            "TypeName": "Annotation"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "supportingInformation",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Resource"
+            ]
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "chargeitem_participant": {
+    "TypeName": "chargeitem_participant",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "role",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "actor",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Practitioner"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Patient"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Device"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/RelatedPerson"
+            ]
+          }
+        ],
+        "Required": true
+      }
+    ]
+  }
+}

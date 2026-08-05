@@ -17,7 +17,8 @@
           {
             "TypeName": "Identifier"
           }
-        ]
+        ],
+        "IsArray": true
       },
       {
         "ElementName": "version",
@@ -90,11 +91,8 @@
         ]
       },
       {
-        "ElementName": "subject[x]",
+        "ElementName": "subjectReference",
         "Type": [
-          {
-            "TypeName": "CodeableConcept"
-          },
           {
             "TypeName": "Reference",
             "TargetProfile": [
@@ -342,42 +340,13 @@
     "BaseTypeName": "BackboneElement",
     "Elements": [
       {
-        "ElementName": "material",
+        "ElementName": "device[x]",
         "Type": [
           {
             "TypeName": "CodeableConcept"
-          }
-        ]
-      },
-      {
-        "ElementName": "type",
-        "Type": [
+          },
           {
-            "TypeName": "CodeableConcept"
-          }
-        ]
-      },
-      {
-        "ElementName": "cap",
-        "Type": [
-          {
-            "TypeName": "CodeableConcept"
-          }
-        ]
-      },
-      {
-        "ElementName": "description",
-        "Type": [
-          {
-            "TypeName": "markdown"
-          }
-        ]
-      },
-      {
-        "ElementName": "capacity",
-        "Type": [
-          {
-            "TypeName": "Quantity"
+            "TypeName": "canonical"
           }
         ]
       },
@@ -416,19 +385,21 @@
     "BaseTypeName": "BackboneElement",
     "Elements": [
       {
-        "ElementName": "additive[x]",
+        "ElementName": "type",
         "Type": [
           {
-            "TypeName": "CodeableConcept"
-          },
-          {
-            "TypeName": "Reference",
-            "TargetProfile": [
-              "http://hl7.org/fhir/StructureDefinition/SubstanceDefinition"
-            ]
+            "TypeName": "CodeableReference"
           }
         ],
         "Required": true
+      },
+      {
+        "ElementName": "quantity",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
       }
     ]
   },

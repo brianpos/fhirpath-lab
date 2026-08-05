@@ -1,0 +1,294 @@
+{
+  "QuestionnaireResponse": {
+    "TypeName": "QuestionnaireResponse",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ]
+      },
+      {
+        "ElementName": "basedOn",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/ReferralRequest"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/CarePlan"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/ProcedureRequest"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "parent",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Observation"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Procedure"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "questionnaire",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Questionnaire"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "status",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "subject",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Resource"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "context",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Encounter"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/EpisodeOfCare"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "authored",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      },
+      {
+        "ElementName": "author",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Device"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Practitioner"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Patient"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/RelatedPerson"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "source",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Patient"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Practitioner"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/RelatedPerson"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "item",
+        "Type": [
+          {
+            "TypeName": "questionnaireresponse_item"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "questionnaireresponse_item": {
+    "TypeName": "questionnaireresponse_item",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "linkId",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "definition",
+        "Type": [
+          {
+            "TypeName": "uri"
+          }
+        ]
+      },
+      {
+        "ElementName": "text",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "subject",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Resource"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "answer",
+        "Type": [
+          {
+            "TypeName": "questionnaireresponse_item_answer"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "item",
+        "Type": [
+          {
+            "TypeName": "questionnaireresponse_item"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "questionnaireresponse_item_answer": {
+    "TypeName": "questionnaireresponse_item_answer",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "value[x]",
+        "Type": [
+          {
+            "TypeName": "Attachment"
+          },
+          {
+            "TypeName": "Coding"
+          },
+          {
+            "TypeName": "Quantity"
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Resource"
+            ]
+          },
+          {
+            "TypeName": "boolean"
+          },
+          {
+            "TypeName": "date"
+          },
+          {
+            "TypeName": "dateTime"
+          },
+          {
+            "TypeName": "decimal"
+          },
+          {
+            "TypeName": "integer"
+          },
+          {
+            "TypeName": "string"
+          },
+          {
+            "TypeName": "time"
+          },
+          {
+            "TypeName": "uri"
+          }
+        ]
+      },
+      {
+        "ElementName": "item",
+        "Type": [
+          {
+            "TypeName": "questionnaireresponse_item"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  }
+}

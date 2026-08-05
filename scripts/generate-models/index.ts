@@ -1,7 +1,7 @@
-// CLI entry: `npm run generate:models -- --version <r4|r4b|r5|r6>` (one or more).
+// CLI entry: `npm run generate:models -- --version <stu3|r4|r4b|r5|r6>` (one or more).
 //
 // Flags:
-//   --version <key>      repeatable; if omitted, runs all four versions.
+//   --version <key>      repeatable; if omitted, runs all five versions.
 //   --from-dir <path>    use pre-downloaded bundles in <path>/<version>/profiles-*.json
 //                        instead of fetching from hl7.org. Useful for offline / air-gapped runs.
 //   --base-url <url>     override fetch base URL (default https://hl7.org/fhir/).
@@ -13,7 +13,7 @@ import { buildVersion, type FhirVersionKey } from "./build-type-model";
 import { fetchAllBundles, loadBundlesFromDir } from "./fetch-bundles";
 import { emit } from "./emit";
 
-const ALL_VERSIONS: FhirVersionKey[] = ["r4", "r4b", "r5", "r6"];
+const ALL_VERSIONS: FhirVersionKey[] = ["stu3", "r4", "r4b", "r5", "r6"];
 
 interface CliArgs {
     versions: FhirVersionKey[];
@@ -64,7 +64,7 @@ function printUsage(): void {
             "Usage: npm run generate:models -- [options]",
             "",
             "Options:",
-            "  --version <r4|r4b|r5|r6>   FHIR version (repeatable; default: all four)",
+            "  --version <stu3|r4|r4b|r5|r6> FHIR version (repeatable; default: all five)",
             "  --from-dir <path>          load pre-downloaded bundles from <path>/<version>/",
             "  --base-url <url>           override HL7 base URL (default https://hl7.org/fhir/)",
             "  --force                    ignore cache and re-download bundles",

@@ -1,0 +1,514 @@
+{
+  "Consent": {
+    "TypeName": "Consent",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ]
+      },
+      {
+        "ElementName": "status",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "category",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "patient",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Patient"
+            ]
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "period",
+        "Type": [
+          {
+            "TypeName": "Period"
+          }
+        ]
+      },
+      {
+        "ElementName": "dateTime",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      },
+      {
+        "ElementName": "consentingParty",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Patient"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Practitioner"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/RelatedPerson"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "actor",
+        "Type": [
+          {
+            "TypeName": "consent_actor"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "action",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "organization",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "source[x]",
+        "Type": [
+          {
+            "TypeName": "Attachment"
+          },
+          {
+            "TypeName": "Identifier"
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Consent"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/DocumentReference"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Contract"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/QuestionnaireResponse"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "policy",
+        "Type": [
+          {
+            "TypeName": "consent_policy"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "policyRule",
+        "Type": [
+          {
+            "TypeName": "uri"
+          }
+        ]
+      },
+      {
+        "ElementName": "securityLabel",
+        "Type": [
+          {
+            "TypeName": "Coding"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "purpose",
+        "Type": [
+          {
+            "TypeName": "Coding"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "dataPeriod",
+        "Type": [
+          {
+            "TypeName": "Period"
+          }
+        ]
+      },
+      {
+        "ElementName": "data",
+        "Type": [
+          {
+            "TypeName": "consent_data"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "except",
+        "Type": [
+          {
+            "TypeName": "consent_except"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "consent_actor": {
+    "TypeName": "consent_actor",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "role",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "reference",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Device"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Group"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/CareTeam"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Patient"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Practitioner"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/RelatedPerson"
+            ]
+          }
+        ],
+        "Required": true
+      }
+    ]
+  },
+  "consent_policy": {
+    "TypeName": "consent_policy",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "authority",
+        "Type": [
+          {
+            "TypeName": "uri"
+          }
+        ]
+      },
+      {
+        "ElementName": "uri",
+        "Type": [
+          {
+            "TypeName": "uri"
+          }
+        ]
+      }
+    ]
+  },
+  "consent_data": {
+    "TypeName": "consent_data",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "meaning",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "reference",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Resource"
+            ]
+          }
+        ],
+        "Required": true
+      }
+    ]
+  },
+  "consent_except": {
+    "TypeName": "consent_except",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "period",
+        "Type": [
+          {
+            "TypeName": "Period"
+          }
+        ]
+      },
+      {
+        "ElementName": "actor",
+        "Type": [
+          {
+            "TypeName": "consent_except_actor"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "action",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "securityLabel",
+        "Type": [
+          {
+            "TypeName": "Coding"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "purpose",
+        "Type": [
+          {
+            "TypeName": "Coding"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "class",
+        "Type": [
+          {
+            "TypeName": "Coding"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "code",
+        "Type": [
+          {
+            "TypeName": "Coding"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "dataPeriod",
+        "Type": [
+          {
+            "TypeName": "Period"
+          }
+        ]
+      },
+      {
+        "ElementName": "data",
+        "Type": [
+          {
+            "TypeName": "consent_except_data"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "consent_except_actor": {
+    "TypeName": "consent_except_actor",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "role",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "reference",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Device"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Group"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/CareTeam"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Patient"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Practitioner"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/RelatedPerson"
+            ]
+          }
+        ],
+        "Required": true
+      }
+    ]
+  },
+  "consent_except_data": {
+    "TypeName": "consent_except_data",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "meaning",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "reference",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Resource"
+            ]
+          }
+        ],
+        "Required": true
+      }
+    ]
+  }
+}

@@ -641,7 +641,7 @@
         "ElementName": "site",
         "Type": [
           {
-            "TypeName": "CodeableConcept"
+            "TypeName": "CodeableReference"
           }
         ]
       },
@@ -899,15 +899,8 @@
           {
             "TypeName": "markdown"
           }
-        ]
-      },
-      {
-        "ElementName": "simple",
-        "Type": [
-          {
-            "TypeName": "Dosage"
-          }
-        ]
+        ],
+        "Required": true
       },
       {
         "ElementName": "step",
@@ -2745,6 +2738,14 @@
         ]
       },
       {
+        "ElementName": "url",
+        "Type": [
+          {
+            "TypeName": "url"
+          }
+        ]
+      },
+      {
         "ElementName": "document",
         "Type": [
           {
@@ -2768,26 +2769,6 @@
             "TargetProfile": [
               "http://hl7.org/fhir/StructureDefinition/Resource"
             ]
-          }
-        ]
-      },
-      {
-        "ElementName": "artifact[x]",
-        "Type": [
-          {
-            "TypeName": "Attachment"
-          },
-          {
-            "TypeName": "Reference",
-            "TargetProfile": [
-              "http://hl7.org/fhir/StructureDefinition/Resource"
-            ]
-          },
-          {
-            "TypeName": "canonical"
-          },
-          {
-            "TypeName": "markdown"
           }
         ]
       }
@@ -3152,12 +3133,14 @@
             "TargetProfile": [
               "http://hl7.org/fhir/StructureDefinition/Group",
               "http://hl7.org/fhir/StructureDefinition/HealthcareService",
-              "http://hl7.org/fhir/StructureDefinition/InsurancePlan",
               "http://hl7.org/fhir/StructureDefinition/Location",
               "http://hl7.org/fhir/StructureDefinition/Organization",
               "http://hl7.org/fhir/StructureDefinition/PlanDefinition",
               "http://hl7.org/fhir/StructureDefinition/ResearchStudy"
             ]
+          },
+          {
+            "TypeName": "canonical"
           }
         ],
         "Required": true
@@ -3468,13 +3451,25 @@
         "ElementName": "value[x]",
         "Type": [
           {
-            "TypeName": "Duration"
+            "TypeName": "Quantity"
           },
           {
-            "TypeName": "Period"
+            "TypeName": "Range"
           },
           {
-            "TypeName": "dateTime"
+            "TypeName": "Ratio"
+          },
+          {
+            "TypeName": "RatioRange"
+          },
+          {
+            "TypeName": "boolean"
+          },
+          {
+            "TypeName": "integer"
+          },
+          {
+            "TypeName": "string"
           }
         ]
       }
@@ -4539,7 +4534,7 @@
   },
   "xhtml": {
     "TypeName": "xhtml",
-    "BaseTypeName": "Element",
+    "BaseTypeName": "PrimitiveType",
     "Elements": [
       {
         "ElementName": "value",

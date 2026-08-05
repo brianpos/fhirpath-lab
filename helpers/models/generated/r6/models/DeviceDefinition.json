@@ -334,6 +334,15 @@
         "IsArray": true
       },
       {
+        "ElementName": "additive",
+        "Type": [
+          {
+            "TypeName": "devicedefinition_additive"
+          }
+        ],
+        "IsArray": true
+      },
+      {
         "ElementName": "productionIdentifierInUDI",
         "Type": [
           {
@@ -451,7 +460,7 @@
         "ElementName": "type",
         "Type": [
           {
-            "TypeName": "code"
+            "TypeName": "CodeableConcept"
           }
         ],
         "Required": true
@@ -618,7 +627,8 @@
           {
             "TypeName": "Identifier"
           }
-        ]
+        ],
+        "IsArray": true
       },
       {
         "ElementName": "type",
@@ -817,6 +827,29 @@
         "Type": [
           {
             "TypeName": "boolean"
+          }
+        ]
+      }
+    ]
+  },
+  "devicedefinition_additive": {
+    "TypeName": "devicedefinition_additive",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableReference"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "quantity",
+        "Type": [
+          {
+            "TypeName": "Quantity"
           }
         ]
       }

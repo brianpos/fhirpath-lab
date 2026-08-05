@@ -22,10 +22,27 @@
         "Required": true
       },
       {
+        "ElementName": "lifecycleStatusReason",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
         "ElementName": "achievementStatus",
         "Type": [
           {
             "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "achievementStatusDate",
+        "Type": [
+          {
+            "TypeName": "date"
           }
         ]
       },
@@ -102,23 +119,6 @@
         "Type": [
           {
             "TypeName": "goal_target"
-          }
-        ],
-        "IsArray": true
-      },
-      {
-        "ElementName": "statusDate",
-        "Type": [
-          {
-            "TypeName": "date"
-          }
-        ]
-      },
-      {
-        "ElementName": "statusReason",
-        "Type": [
-          {
-            "TypeName": "CodeableConcept"
           }
         ],
         "IsArray": true

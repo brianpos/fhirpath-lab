@@ -242,7 +242,8 @@
           {
             "TypeName": "CodeableReference"
           }
-        ]
+        ],
+        "IsArray": true
       },
       {
         "ElementName": "specimen",
@@ -341,6 +342,14 @@
       },
       {
         "ElementName": "number",
+        "Type": [
+          {
+            "TypeName": "unsignedInt"
+          }
+        ]
+      },
+      {
+        "ElementName": "numberOfFrames",
         "Type": [
           {
             "TypeName": "unsignedInt"

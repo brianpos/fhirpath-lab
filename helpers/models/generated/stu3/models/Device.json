@@ -1,0 +1,219 @@
+{
+  "Device": {
+    "TypeName": "Device",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "udi",
+        "Type": [
+          {
+            "TypeName": "device_udi"
+          }
+        ]
+      },
+      {
+        "ElementName": "status",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "lotNumber",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "manufacturer",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "manufactureDate",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      },
+      {
+        "ElementName": "expirationDate",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      },
+      {
+        "ElementName": "model",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "version",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "patient",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Patient"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "owner",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "contact",
+        "Type": [
+          {
+            "TypeName": "ContactPoint"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "location",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Location"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "url",
+        "Type": [
+          {
+            "TypeName": "uri"
+          }
+        ]
+      },
+      {
+        "ElementName": "note",
+        "Type": [
+          {
+            "TypeName": "Annotation"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "safety",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "device_udi": {
+    "TypeName": "device_udi",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "deviceIdentifier",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "name",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "jurisdiction",
+        "Type": [
+          {
+            "TypeName": "uri"
+          }
+        ]
+      },
+      {
+        "ElementName": "carrierHRF",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "carrierAIDC",
+        "Type": [
+          {
+            "TypeName": "base64Binary"
+          }
+        ]
+      },
+      {
+        "ElementName": "issuer",
+        "Type": [
+          {
+            "TypeName": "uri"
+          }
+        ]
+      },
+      {
+        "ElementName": "entryType",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      }
+    ]
+  }
+}

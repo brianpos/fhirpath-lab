@@ -180,7 +180,7 @@
         "ElementName": "base",
         "Type": [
           {
-            "TypeName": "code"
+            "TypeName": "uri"
           }
         ],
         "IsArray": true,
@@ -223,7 +223,7 @@
         "ElementName": "target",
         "Type": [
           {
-            "TypeName": "code"
+            "TypeName": "uri"
           }
         ],
         "IsArray": true

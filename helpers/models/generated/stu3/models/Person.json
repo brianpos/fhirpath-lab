@@ -1,0 +1,140 @@
+{
+  "Person": {
+    "TypeName": "Person",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "name",
+        "Type": [
+          {
+            "TypeName": "HumanName"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "telecom",
+        "Type": [
+          {
+            "TypeName": "ContactPoint"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "gender",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "birthDate",
+        "Type": [
+          {
+            "TypeName": "date"
+          }
+        ]
+      },
+      {
+        "ElementName": "address",
+        "Type": [
+          {
+            "TypeName": "Address"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "photo",
+        "Type": [
+          {
+            "TypeName": "Attachment"
+          }
+        ]
+      },
+      {
+        "ElementName": "managingOrganization",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "active",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "link",
+        "Type": [
+          {
+            "TypeName": "person_link"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "person_link": {
+    "TypeName": "person_link",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "target",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Patient"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Practitioner"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/RelatedPerson"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Person"
+            ]
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "assurance",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      }
+    ]
+  }
+}

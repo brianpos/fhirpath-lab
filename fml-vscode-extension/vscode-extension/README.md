@@ -17,9 +17,8 @@ FHIR® is the registered trademark of HL7 and is used with permission. Use of th
 - Live map preview beside the editor
 - Workspace indexing across imported maps
 - FHIR-aware autocompletion
-- FML snippets and templates
 - Trace replay debugging with forward and reverse stepping
-- Cross FHIR Version maps (R4+)
+- Cross FHIR Version maps (STU3 - R6-ballot5) with logical model support
 
 ## Getting started
 
@@ -28,7 +27,6 @@ Open a file with the `.fml` extension. Syntax highlighting, completion, validati
 Use the Command Palette or editor context menu to access:
 
 - **Validate FML**
-- **Insert template FML**
 - **Open FML Preview to the Side**
 - **Show FML Language Server Status**
 - **Re-index FML Workspace**

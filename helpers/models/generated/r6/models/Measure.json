@@ -322,14 +322,6 @@
         "IsArray": true
       },
       {
-        "ElementName": "guidance",
-        "Type": [
-          {
-            "TypeName": "markdown"
-          }
-        ]
-      },
-      {
         "ElementName": "group",
         "Type": [
           {

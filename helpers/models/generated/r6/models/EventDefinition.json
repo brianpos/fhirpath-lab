@@ -256,6 +256,15 @@
         "IsArray": true
       },
       {
+        "ElementName": "library",
+        "Type": [
+          {
+            "TypeName": "canonical"
+          }
+        ],
+        "IsArray": true
+      },
+      {
         "ElementName": "trigger",
         "Type": [
           {

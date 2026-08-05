@@ -1,6 +1,7 @@
 import type { Model } from "fhirpath";
 import { updateWithGeneratedData, arrToHash } from 'fhirpath/fhir-context/general-additions.js';
 import { choiceTypePaths} from './choiceTypePaths';
+import { path2Repeating } from './path2Repeating';
 import { path2Type } from './path2Type';
 import { type2Parent } from './type2Parent';
 import { resourcesWithUrlParam } from './resourcesWithUrlParam';
@@ -42,6 +43,10 @@ let tempModel:any = {
    * Mapping paths to data types.
    */
   path2Type: path2Type,
+  /**
+   * Mapping paths to true for repeating elements.
+   */
+  path2Repeating: arrToHash(path2Repeating),
   /**
    * A hash with FHIR resource types that support the 'url' search parameter.
    * The data is loaded from the resourcesWithUrlParam.json file.

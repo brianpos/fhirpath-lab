@@ -469,7 +469,10 @@ function extractDiagramInput(map: DiagramMapInput, typeLookup?: TypeLookup, show
         }
         // Skip the root-context placeholder ("." path) which has no element.
         if (!p.path || p.path === ".") continue;
-        const resolved = resolvePathInModel(dt.typeName, resolutionPath, boxLookup, createBoundaries);
+        const propertyCreateBoundaries = p.createdType
+          ? new Map(createBoundaries).set(p.path, p.createdType)
+          : createBoundaries;
+        const resolved = resolvePathInModel(dt.typeName, resolutionPath, boxLookup, propertyCreateBoundaries);
         if (resolved) {
           resolutions.set(p, resolved);
           p.pathSteps = resolved.steps.map((step, index) => ({

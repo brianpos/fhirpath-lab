@@ -167,7 +167,8 @@
           {
             "TypeName": "Identifier"
           }
-        ]
+        ],
+        "IsArray": true
       },
       {
         "ElementName": "type",

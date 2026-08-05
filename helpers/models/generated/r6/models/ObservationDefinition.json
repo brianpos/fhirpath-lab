@@ -17,7 +17,8 @@
           {
             "TypeName": "Identifier"
           }
-        ]
+        ],
+        "IsArray": true
       },
       {
         "ElementName": "version",
@@ -246,7 +247,8 @@
           {
             "TypeName": "CodeableReference"
           }
-        ]
+        ],
+        "IsArray": true
       },
       {
         "ElementName": "method",
@@ -281,6 +283,15 @@
             "TypeName": "canonical"
           }
         ]
+      },
+      {
+        "ElementName": "supportingDevice",
+        "Type": [
+          {
+            "TypeName": "CodeableReference"
+          }
+        ],
+        "IsArray": true
       },
       {
         "ElementName": "preferredReportName",

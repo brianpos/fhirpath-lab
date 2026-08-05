@@ -1,0 +1,393 @@
+{
+  "AuditEvent": {
+    "TypeName": "AuditEvent",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "Coding"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "subtype",
+        "Type": [
+          {
+            "TypeName": "Coding"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "action",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "recorded",
+        "Type": [
+          {
+            "TypeName": "instant"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "outcome",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "outcomeDesc",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "purposeOfEvent",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "agent",
+        "Type": [
+          {
+            "TypeName": "auditevent_agent"
+          }
+        ],
+        "IsArray": true,
+        "Required": true
+      },
+      {
+        "ElementName": "source",
+        "Type": [
+          {
+            "TypeName": "auditevent_source"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "entity",
+        "Type": [
+          {
+            "TypeName": "auditevent_entity"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "auditevent_agent": {
+    "TypeName": "auditevent_agent",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "role",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "reference",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Practitioner"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Device"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Patient"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/RelatedPerson"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "userId",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ]
+      },
+      {
+        "ElementName": "altId",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "name",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "requestor",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "location",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Location"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "policy",
+        "Type": [
+          {
+            "TypeName": "uri"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "media",
+        "Type": [
+          {
+            "TypeName": "Coding"
+          }
+        ]
+      },
+      {
+        "ElementName": "network",
+        "Type": [
+          {
+            "TypeName": "auditevent_agent_network"
+          }
+        ]
+      },
+      {
+        "ElementName": "purposeOfUse",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "auditevent_agent_network": {
+    "TypeName": "auditevent_agent_network",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "address",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      }
+    ]
+  },
+  "auditevent_source": {
+    "TypeName": "auditevent_source",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "site",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "Coding"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "auditevent_entity": {
+    "TypeName": "auditevent_entity",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ]
+      },
+      {
+        "ElementName": "reference",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Resource"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "Coding"
+          }
+        ]
+      },
+      {
+        "ElementName": "role",
+        "Type": [
+          {
+            "TypeName": "Coding"
+          }
+        ]
+      },
+      {
+        "ElementName": "lifecycle",
+        "Type": [
+          {
+            "TypeName": "Coding"
+          }
+        ]
+      },
+      {
+        "ElementName": "securityLabel",
+        "Type": [
+          {
+            "TypeName": "Coding"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "name",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "description",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "query",
+        "Type": [
+          {
+            "TypeName": "base64Binary"
+          }
+        ]
+      },
+      {
+        "ElementName": "detail",
+        "Type": [
+          {
+            "TypeName": "auditevent_entity_detail"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "auditevent_entity_detail": {
+    "TypeName": "auditevent_entity_detail",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "value",
+        "Type": [
+          {
+            "TypeName": "base64Binary"
+          }
+        ],
+        "Required": true
+      }
+    ]
+  }
+}

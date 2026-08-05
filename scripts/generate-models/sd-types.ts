@@ -35,7 +35,8 @@ export interface SDElement {
 export interface SDElementType {
     code: string;
     profile?: string[];
-    targetProfile?: string[];
+    /** STU3 uses a scalar canonical; R4 and later use a collection. */
+    targetProfile?: string | string[];
     extension?: SDExtension[];
 }
 

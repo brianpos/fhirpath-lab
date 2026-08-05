@@ -71,7 +71,7 @@
         "ElementName": "color",
         "Type": [
           {
-            "TypeName": "code"
+            "TypeName": "CodeableConcept"
           }
         ]
       },
@@ -118,7 +118,7 @@
         "ElementName": "state",
         "Type": [
           {
-            "TypeName": "code"
+            "TypeName": "CodeableConcept"
           }
         ]
       },

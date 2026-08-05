@@ -1,0 +1,416 @@
+{
+  "MedicationRequest": {
+    "TypeName": "MedicationRequest",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "definition",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/ActivityDefinition"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/PlanDefinition"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "basedOn",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/CarePlan"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/MedicationRequest"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/ProcedureRequest"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/ReferralRequest"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "groupIdentifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ]
+      },
+      {
+        "ElementName": "status",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "intent",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "category",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "priority",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "medication[x]",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Medication"
+            ]
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "subject",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Patient"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Group"
+            ]
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "context",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Encounter"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/EpisodeOfCare"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "supportingInformation",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Resource"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "authoredOn",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      },
+      {
+        "ElementName": "requester",
+        "Type": [
+          {
+            "TypeName": "medicationrequest_requester"
+          }
+        ]
+      },
+      {
+        "ElementName": "recorder",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Practitioner"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "reasonCode",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "reasonReference",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Condition"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Observation"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "note",
+        "Type": [
+          {
+            "TypeName": "Annotation"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "dosageInstruction",
+        "Type": [
+          {
+            "TypeName": "Dosage"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "dispenseRequest",
+        "Type": [
+          {
+            "TypeName": "medicationrequest_dispenseRequest"
+          }
+        ]
+      },
+      {
+        "ElementName": "substitution",
+        "Type": [
+          {
+            "TypeName": "medicationrequest_substitution"
+          }
+        ]
+      },
+      {
+        "ElementName": "priorPrescription",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/MedicationRequest"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "detectedIssue",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/DetectedIssue"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "eventHistory",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Provenance"
+            ]
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "medicationrequest_requester": {
+    "TypeName": "medicationrequest_requester",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "agent",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Practitioner"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Patient"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/RelatedPerson"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Device"
+            ]
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "onBehalfOf",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "medicationrequest_dispenseRequest": {
+    "TypeName": "medicationrequest_dispenseRequest",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "validityPeriod",
+        "Type": [
+          {
+            "TypeName": "Period"
+          }
+        ]
+      },
+      {
+        "ElementName": "numberOfRepeatsAllowed",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ]
+      },
+      {
+        "ElementName": "quantity",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
+      },
+      {
+        "ElementName": "expectedSupplyDuration",
+        "Type": [
+          {
+            "TypeName": "Duration"
+          }
+        ]
+      },
+      {
+        "ElementName": "performer",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "medicationrequest_substitution": {
+    "TypeName": "medicationrequest_substitution",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "allowed",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "reason",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      }
+    ]
+  }
+}

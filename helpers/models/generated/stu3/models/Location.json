@@ -1,0 +1,173 @@
+{
+  "Location": {
+    "TypeName": "Location",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "status",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "operationalStatus",
+        "Type": [
+          {
+            "TypeName": "Coding"
+          }
+        ]
+      },
+      {
+        "ElementName": "name",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "alias",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "description",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "mode",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "telecom",
+        "Type": [
+          {
+            "TypeName": "ContactPoint"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "address",
+        "Type": [
+          {
+            "TypeName": "Address"
+          }
+        ]
+      },
+      {
+        "ElementName": "physicalType",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "position",
+        "Type": [
+          {
+            "TypeName": "location_position"
+          }
+        ]
+      },
+      {
+        "ElementName": "managingOrganization",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "partOf",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Location"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "endpoint",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Endpoint"
+            ]
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "location_position": {
+    "TypeName": "location_position",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "longitude",
+        "Type": [
+          {
+            "TypeName": "decimal"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "latitude",
+        "Type": [
+          {
+            "TypeName": "decimal"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "altitude",
+        "Type": [
+          {
+            "TypeName": "decimal"
+          }
+        ]
+      }
+    ]
+  }
+}

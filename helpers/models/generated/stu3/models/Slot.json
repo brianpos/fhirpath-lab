@@ -1,0 +1,106 @@
+{
+  "Slot": {
+    "TypeName": "Slot",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "serviceCategory",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "serviceType",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "specialty",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "appointmentType",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "schedule",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Schedule"
+            ]
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "status",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "start",
+        "Type": [
+          {
+            "TypeName": "instant"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "end",
+        "Type": [
+          {
+            "TypeName": "instant"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "overbooked",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "comment",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      }
+    ]
+  }
+}

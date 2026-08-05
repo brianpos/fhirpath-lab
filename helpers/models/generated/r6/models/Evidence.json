@@ -69,8 +69,7 @@
           {
             "TypeName": "code"
           }
-        ],
-        "Required": true
+        ]
       },
       {
         "ElementName": "experimental",
@@ -234,6 +233,15 @@
         "IsArray": true
       },
       {
+        "ElementName": "classification",
+        "Type": [
+          {
+            "TypeName": "evidence_classification"
+          }
+        ],
+        "IsArray": true
+      },
+      {
         "ElementName": "variableDefinition",
         "Type": [
           {
@@ -316,6 +324,29 @@
           }
         ],
         "Required": true
+      }
+    ]
+  },
+  "evidence_classification": {
+    "TypeName": "evidence_classification",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "classifier",
+        "Type": [
+          {
+            "TypeName": "CodeableReference"
+          }
+        ],
+        "IsArray": true
       }
     ]
   },

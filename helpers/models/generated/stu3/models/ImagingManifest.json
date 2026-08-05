@@ -1,0 +1,198 @@
+{
+  "ImagingManifest": {
+    "TypeName": "ImagingManifest",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ]
+      },
+      {
+        "ElementName": "patient",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Patient"
+            ]
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "authoringTime",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      },
+      {
+        "ElementName": "author",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Practitioner"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Device"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Patient"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/RelatedPerson"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "description",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "study",
+        "Type": [
+          {
+            "TypeName": "imagingmanifest_study"
+          }
+        ],
+        "IsArray": true,
+        "Required": true
+      }
+    ]
+  },
+  "imagingmanifest_study": {
+    "TypeName": "imagingmanifest_study",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "uid",
+        "Type": [
+          {
+            "TypeName": "oid"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "imagingStudy",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/ImagingStudy"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "endpoint",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Endpoint"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "series",
+        "Type": [
+          {
+            "TypeName": "imagingmanifest_study_series"
+          }
+        ],
+        "IsArray": true,
+        "Required": true
+      }
+    ]
+  },
+  "imagingmanifest_study_series": {
+    "TypeName": "imagingmanifest_study_series",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "uid",
+        "Type": [
+          {
+            "TypeName": "oid"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "endpoint",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Endpoint"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "instance",
+        "Type": [
+          {
+            "TypeName": "imagingmanifest_study_series_instance"
+          }
+        ],
+        "IsArray": true,
+        "Required": true
+      }
+    ]
+  },
+  "imagingmanifest_study_series_instance": {
+    "TypeName": "imagingmanifest_study_series_instance",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "sopClass",
+        "Type": [
+          {
+            "TypeName": "oid"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "uid",
+        "Type": [
+          {
+            "TypeName": "oid"
+          }
+        ],
+        "Required": true
+      }
+    ]
+  }
+}

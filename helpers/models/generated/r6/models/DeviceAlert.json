@@ -98,24 +98,13 @@
         ]
       },
       {
-        "ElementName": "presence",
-        "Type": [
-          {
-            "TypeName": "boolean"
-          }
-        ],
-        "Required": true
-      },
-      {
-        "ElementName": "occurrence[x]",
+        "ElementName": "occurrence",
         "Type": [
           {
             "TypeName": "Period"
-          },
-          {
-            "TypeName": "dateTime"
           }
-        ]
+        ],
+        "Required": true
       },
       {
         "ElementName": "device",
@@ -230,6 +219,15 @@
     "BaseTypeName": "BackboneElement",
     "Elements": [
       {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
         "ElementName": "activationState",
         "Type": [
           {
@@ -272,7 +270,7 @@
         "IsArray": true
       },
       {
-        "ElementName": "indication",
+        "ElementName": "period",
         "Type": [
           {
             "TypeName": "Period"

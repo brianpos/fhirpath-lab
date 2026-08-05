@@ -388,8 +388,7 @@
           {
             "TypeName": "CodeableConcept"
           }
-        ],
-        "Required": true
+        ]
       }
     ]
   },

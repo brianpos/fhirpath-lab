@@ -1,0 +1,263 @@
+{
+  "Bundle": {
+    "TypeName": "Bundle",
+    "BaseTypeName": "Resource",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ]
+      },
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "total",
+        "Type": [
+          {
+            "TypeName": "unsignedInt"
+          }
+        ]
+      },
+      {
+        "ElementName": "link",
+        "Type": [
+          {
+            "TypeName": "bundle_link"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "entry",
+        "Type": [
+          {
+            "TypeName": "bundle_entry"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "signature",
+        "Type": [
+          {
+            "TypeName": "Signature"
+          }
+        ]
+      }
+    ]
+  },
+  "bundle_link": {
+    "TypeName": "bundle_link",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "relation",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "url",
+        "Type": [
+          {
+            "TypeName": "uri"
+          }
+        ],
+        "Required": true
+      }
+    ]
+  },
+  "bundle_entry": {
+    "TypeName": "bundle_entry",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "link",
+        "Type": [
+          {
+            "TypeName": "bundle_link"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "fullUrl",
+        "Type": [
+          {
+            "TypeName": "uri"
+          }
+        ]
+      },
+      {
+        "ElementName": "resource",
+        "Type": [
+          {
+            "TypeName": "Resource"
+          }
+        ]
+      },
+      {
+        "ElementName": "search",
+        "Type": [
+          {
+            "TypeName": "bundle_entry_search"
+          }
+        ]
+      },
+      {
+        "ElementName": "request",
+        "Type": [
+          {
+            "TypeName": "bundle_entry_request"
+          }
+        ]
+      },
+      {
+        "ElementName": "response",
+        "Type": [
+          {
+            "TypeName": "bundle_entry_response"
+          }
+        ]
+      }
+    ]
+  },
+  "bundle_entry_search": {
+    "TypeName": "bundle_entry_search",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "mode",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "score",
+        "Type": [
+          {
+            "TypeName": "decimal"
+          }
+        ]
+      }
+    ]
+  },
+  "bundle_entry_request": {
+    "TypeName": "bundle_entry_request",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "method",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "url",
+        "Type": [
+          {
+            "TypeName": "uri"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "ifNoneMatch",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "ifModifiedSince",
+        "Type": [
+          {
+            "TypeName": "instant"
+          }
+        ]
+      },
+      {
+        "ElementName": "ifMatch",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "ifNoneExist",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      }
+    ]
+  },
+  "bundle_entry_response": {
+    "TypeName": "bundle_entry_response",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "status",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "location",
+        "Type": [
+          {
+            "TypeName": "uri"
+          }
+        ]
+      },
+      {
+        "ElementName": "etag",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "lastModified",
+        "Type": [
+          {
+            "TypeName": "instant"
+          }
+        ]
+      },
+      {
+        "ElementName": "outcome",
+        "Type": [
+          {
+            "TypeName": "Resource"
+          }
+        ]
+      }
+    ]
+  }
+}

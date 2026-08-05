@@ -301,9 +301,9 @@
             "TargetProfile": [
               "http://hl7.org/fhir/StructureDefinition/Account",
               "http://hl7.org/fhir/StructureDefinition/Claim",
-              "http://hl7.org/fhir/StructureDefinition/Contract",
               "http://hl7.org/fhir/StructureDefinition/Encounter",
-              "http://hl7.org/fhir/StructureDefinition/Invoice"
+              "http://hl7.org/fhir/StructureDefinition/Group",
+              "http://hl7.org/fhir/StructureDefinition/Patient"
             ]
           }
         ]
@@ -319,6 +319,17 @@
           },
           {
             "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "characteristics",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Observation"
+            ]
           }
         ]
       },

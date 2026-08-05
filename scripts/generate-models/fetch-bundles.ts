@@ -9,15 +9,16 @@ import * as path from "path";
 import type { SDBundle } from "./sd-types";
 import type { TaggedBundle } from "./build-type-model";
 
-export type FhirVersion = "r4" | "r4b" | "r5" | "r6";
+export type FhirVersion = "stu3" | "r4" | "r4b" | "r5" | "r6";
 
 const VERSION_PATHS: Record<FhirVersion, string> = {
+    stu3: "STU3",
     r4: "R4",
     r4b: "R4B",
     r5: "R5",
     // R6 is still in ballot — `https://hl7.org/fhir/R6/` 404s. Point at the latest
     // published ballot instead. Override with `--base-url` if a newer ballot ships.
-    r6: "6.0.0-ballot4",
+    r6: "6.0.0-ballot5",
 };
 
 export const BUNDLE_NAMES = ["profiles-resources.json", "profiles-types.json"] as const;
@@ -38,7 +39,9 @@ function defaultCacheDir(version: FhirVersion): string {
 
 function httpsGet(url: string): Promise<string> {
     return new Promise((resolve, reject) => {
-        const req = https.get(url, (res) => {
+        const req = https.get(url, {
+            headers: { "User-Agent": "fhirpath-lab-model-generator/1.0" },
+        }, (res) => {
             // Follow simple redirects.
             if (res.statusCode && res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
                 res.resume();

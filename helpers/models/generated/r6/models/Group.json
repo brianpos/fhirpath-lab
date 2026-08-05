@@ -151,8 +151,7 @@
           {
             "TypeName": "code"
           }
-        ],
-        "Required": true
+        ]
       },
       {
         "ElementName": "code",
@@ -348,7 +347,7 @@
         ]
       },
       {
-        "ElementName": "timing",
+        "ElementName": "relativeTime",
         "Type": [
           {
             "TypeName": "RelativeTime"

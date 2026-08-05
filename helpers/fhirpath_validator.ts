@@ -21,13 +21,14 @@ import {
     type ModelProvider,
 } from "./fhirpath_visitor";
 
+import { byTypeName as stu3ByTypeName, byUrl as stu3ByUrl } from "./models/generated/stu3/dictionary";
 import { byTypeName as r4ByTypeName, byUrl as r4ByUrl } from "./models/generated/r4/dictionary";
 import { byTypeName as r4bByTypeName, byUrl as r4bByUrl } from "./models/generated/r4b/dictionary";
 import { byTypeName as r5ByTypeName, byUrl as r5ByUrl } from "./models/generated/r5/dictionary";
 import { byTypeName as r6ByTypeName, byUrl as r6ByUrl } from "./models/generated/r6/dictionary";
 import { fhirPrimitiveToSystemTypeName } from "./models/generated/system-types";
 
-export type FhirVersionKey = "r4" | "r4b" | "r5" | "r6";
+export type FhirVersionKey = "stu3" | "r4" | "r4b" | "r5" | "r6";
 
 interface VersionDicts {
     byTypeName: Record<string, TypeModel>;
@@ -35,6 +36,7 @@ interface VersionDicts {
 }
 
 const VERSION_DICTS: Readonly<Record<FhirVersionKey, VersionDicts>> = Object.freeze({
+    stu3: { byTypeName: stu3ByTypeName, byUrl: stu3ByUrl },
     r4: { byTypeName: r4ByTypeName, byUrl: r4ByUrl },
     r4b: { byTypeName: r4bByTypeName, byUrl: r4bByUrl },
     r5: { byTypeName: r5ByTypeName, byUrl: r5ByUrl },

@@ -6,6 +6,7 @@ fhirpath execution engines available - dotnet (Firely), java (HAPI), javascript 
 
 Consult the walkthrough documentation for more details:
 * [Walkthrough - Debugging FHIRPath expression](docs/debugging-fhirpath-expressions.md)
+* [Generating FHIRPath runtime models](docs/fhirpath-runtime-models.md)
 
 
 It also has support for browsing StructureDefinitions, SearchParameters and Questionnaires to be able to test out the various expressions in those contexts.

@@ -1,0 +1,464 @@
+{
+  "Encounter": {
+    "TypeName": "Encounter",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "status",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "statusHistory",
+        "Type": [
+          {
+            "TypeName": "encounter_statusHistory"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "class",
+        "Type": [
+          {
+            "TypeName": "Coding"
+          }
+        ]
+      },
+      {
+        "ElementName": "classHistory",
+        "Type": [
+          {
+            "TypeName": "encounter_classHistory"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "priority",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "subject",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Patient"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Group"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "episodeOfCare",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/EpisodeOfCare"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "incomingReferral",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/ReferralRequest"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "participant",
+        "Type": [
+          {
+            "TypeName": "encounter_participant"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "appointment",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Appointment"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "period",
+        "Type": [
+          {
+            "TypeName": "Period"
+          }
+        ]
+      },
+      {
+        "ElementName": "length",
+        "Type": [
+          {
+            "TypeName": "Duration"
+          }
+        ]
+      },
+      {
+        "ElementName": "reason",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "diagnosis",
+        "Type": [
+          {
+            "TypeName": "encounter_diagnosis"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "account",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Account"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "hospitalization",
+        "Type": [
+          {
+            "TypeName": "encounter_hospitalization"
+          }
+        ]
+      },
+      {
+        "ElementName": "location",
+        "Type": [
+          {
+            "TypeName": "encounter_location"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "serviceProvider",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "partOf",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Encounter"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "encounter_statusHistory": {
+    "TypeName": "encounter_statusHistory",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "status",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "period",
+        "Type": [
+          {
+            "TypeName": "Period"
+          }
+        ],
+        "Required": true
+      }
+    ]
+  },
+  "encounter_classHistory": {
+    "TypeName": "encounter_classHistory",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "class",
+        "Type": [
+          {
+            "TypeName": "Coding"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "period",
+        "Type": [
+          {
+            "TypeName": "Period"
+          }
+        ],
+        "Required": true
+      }
+    ]
+  },
+  "encounter_participant": {
+    "TypeName": "encounter_participant",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "period",
+        "Type": [
+          {
+            "TypeName": "Period"
+          }
+        ]
+      },
+      {
+        "ElementName": "individual",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Practitioner"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/RelatedPerson"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "encounter_diagnosis": {
+    "TypeName": "encounter_diagnosis",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "condition",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Condition"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Procedure"
+            ]
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "role",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "rank",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ]
+      }
+    ]
+  },
+  "encounter_hospitalization": {
+    "TypeName": "encounter_hospitalization",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "preAdmissionIdentifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ]
+      },
+      {
+        "ElementName": "origin",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Location"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "admitSource",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "reAdmission",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "dietPreference",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "specialCourtesy",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "specialArrangement",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "destination",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Location"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "dischargeDisposition",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      }
+    ]
+  },
+  "encounter_location": {
+    "TypeName": "encounter_location",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "location",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Location"
+            ]
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "status",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "period",
+        "Type": [
+          {
+            "TypeName": "Period"
+          }
+        ]
+      }
+    ]
+  }
+}

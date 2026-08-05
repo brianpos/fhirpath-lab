@@ -1,0 +1,76 @@
+{
+  "OperationOutcome": {
+    "TypeName": "OperationOutcome",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "issue",
+        "Type": [
+          {
+            "TypeName": "operationoutcome_issue"
+          }
+        ],
+        "IsArray": true,
+        "Required": true
+      }
+    ]
+  },
+  "operationoutcome_issue": {
+    "TypeName": "operationoutcome_issue",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "severity",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "code",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "details",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "diagnostics",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "location",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "expression",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  }
+}

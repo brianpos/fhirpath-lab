@@ -17,7 +17,7 @@ import { systemTypesByTypeName, systemTypesByUrl } from "../../helpers/models/ge
 import type { BuildResult, TypeModelEntry } from "./build-type-model";
 
 const HEADER = `// THIS FILE IS GENERATED — DO NOT EDIT BY HAND.
-// Run \`npm run generate:models -- --version <r4|r4b|r5|r6>\` to regenerate.
+// Run \`npm run generate:models -- --version <stu3|r4|r4b|r5|r6>\` to regenerate.
 // See docs/custom-model-generator-plan.md.
 
 import type { TypeModel } from "../../../custom_model";
@@ -168,7 +168,7 @@ function emitDictionaryFile(allExports: { categoryFile: string; name: string; en
     }
     const out: string[] = [];
     out.push(`// THIS FILE IS GENERATED — DO NOT EDIT BY HAND.`);
-    out.push(`// Run \`npm run generate:models -- --version <r4|r4b|r5|r6>\` to regenerate.`);
+    out.push(`// Run \`npm run generate:models -- --version <stu3|r4|r4b|r5|r6>\` to regenerate.`);
     out.push(`// See docs/custom-model-generator-plan.md.`);
     out.push("");
     out.push(`import type { TypeModel } from "../../../custom_model";`);
@@ -199,7 +199,7 @@ function emitDictionaryFile(allExports: { categoryFile: string; name: string; en
  *  and the lookup helpers. Keeps the dictionary's churn-prone bulk in its own file. */
 function emitIndexFile(): string {
     return `// THIS FILE IS GENERATED — DO NOT EDIT BY HAND.
-// Run \`npm run generate:models -- --version <r4|r4b|r5|r6>\` to regenerate.
+// Run \`npm run generate:models -- --version <stu3|r4|r4b|r5|r6>\` to regenerate.
 // See docs/custom-model-generator-plan.md.
 
 import type { TypeModel } from "../../../custom_model";

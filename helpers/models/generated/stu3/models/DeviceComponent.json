@@ -1,0 +1,128 @@
+{
+  "DeviceComponent": {
+    "TypeName": "DeviceComponent",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "lastSystemChange",
+        "Type": [
+          {
+            "TypeName": "instant"
+          }
+        ]
+      },
+      {
+        "ElementName": "source",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Device"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "parent",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/DeviceComponent"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "operationalStatus",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "parameterGroup",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "measurementPrinciple",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "productionSpecification",
+        "Type": [
+          {
+            "TypeName": "devicecomponent_productionSpecification"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "languageCode",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      }
+    ]
+  },
+  "devicecomponent_productionSpecification": {
+    "TypeName": "devicecomponent_productionSpecification",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "specType",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "componentId",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ]
+      },
+      {
+        "ElementName": "productionSpec",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      }
+    ]
+  }
+}

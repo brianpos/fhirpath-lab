@@ -1,0 +1,449 @@
+{
+  "Questionnaire": {
+    "TypeName": "Questionnaire",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "url",
+        "Type": [
+          {
+            "TypeName": "uri"
+          }
+        ]
+      },
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "version",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "name",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "title",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "status",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "experimental",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "date",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      },
+      {
+        "ElementName": "publisher",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "description",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      },
+      {
+        "ElementName": "purpose",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      },
+      {
+        "ElementName": "approvalDate",
+        "Type": [
+          {
+            "TypeName": "date"
+          }
+        ]
+      },
+      {
+        "ElementName": "lastReviewDate",
+        "Type": [
+          {
+            "TypeName": "date"
+          }
+        ]
+      },
+      {
+        "ElementName": "effectivePeriod",
+        "Type": [
+          {
+            "TypeName": "Period"
+          }
+        ]
+      },
+      {
+        "ElementName": "useContext",
+        "Type": [
+          {
+            "TypeName": "UsageContext"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "jurisdiction",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "contact",
+        "Type": [
+          {
+            "TypeName": "ContactDetail"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "copyright",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      },
+      {
+        "ElementName": "code",
+        "Type": [
+          {
+            "TypeName": "Coding"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "subjectType",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "item",
+        "Type": [
+          {
+            "TypeName": "questionnaire_item"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "questionnaire_item": {
+    "TypeName": "questionnaire_item",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "linkId",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "definition",
+        "Type": [
+          {
+            "TypeName": "uri"
+          }
+        ]
+      },
+      {
+        "ElementName": "code",
+        "Type": [
+          {
+            "TypeName": "Coding"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "prefix",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "text",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "enableWhen",
+        "Type": [
+          {
+            "TypeName": "questionnaire_item_enableWhen"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "required",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "repeats",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "readOnly",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "maxLength",
+        "Type": [
+          {
+            "TypeName": "integer"
+          }
+        ]
+      },
+      {
+        "ElementName": "options",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/ValueSet"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "option",
+        "Type": [
+          {
+            "TypeName": "questionnaire_item_option"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "initial[x]",
+        "Type": [
+          {
+            "TypeName": "Attachment"
+          },
+          {
+            "TypeName": "Coding"
+          },
+          {
+            "TypeName": "Quantity"
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Resource"
+            ]
+          },
+          {
+            "TypeName": "boolean"
+          },
+          {
+            "TypeName": "date"
+          },
+          {
+            "TypeName": "dateTime"
+          },
+          {
+            "TypeName": "decimal"
+          },
+          {
+            "TypeName": "integer"
+          },
+          {
+            "TypeName": "string"
+          },
+          {
+            "TypeName": "time"
+          },
+          {
+            "TypeName": "uri"
+          }
+        ]
+      },
+      {
+        "ElementName": "item",
+        "Type": [
+          {
+            "TypeName": "questionnaire_item"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "questionnaire_item_enableWhen": {
+    "TypeName": "questionnaire_item_enableWhen",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "question",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "hasAnswer",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "answer[x]",
+        "Type": [
+          {
+            "TypeName": "Attachment"
+          },
+          {
+            "TypeName": "Coding"
+          },
+          {
+            "TypeName": "Quantity"
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Resource"
+            ]
+          },
+          {
+            "TypeName": "boolean"
+          },
+          {
+            "TypeName": "date"
+          },
+          {
+            "TypeName": "dateTime"
+          },
+          {
+            "TypeName": "decimal"
+          },
+          {
+            "TypeName": "integer"
+          },
+          {
+            "TypeName": "string"
+          },
+          {
+            "TypeName": "time"
+          },
+          {
+            "TypeName": "uri"
+          }
+        ]
+      }
+    ]
+  },
+  "questionnaire_item_option": {
+    "TypeName": "questionnaire_item_option",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "value[x]",
+        "Type": [
+          {
+            "TypeName": "Coding"
+          },
+          {
+            "TypeName": "date"
+          },
+          {
+            "TypeName": "integer"
+          },
+          {
+            "TypeName": "string"
+          },
+          {
+            "TypeName": "time"
+          }
+        ],
+        "Required": true
+      }
+    ]
+  }
+}

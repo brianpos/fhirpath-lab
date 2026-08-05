@@ -3,6 +3,9 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+# 6 August 2026
+* Update the fhirpath.js interim R6 support to ballot5
+
 # 15 July 2026
 * Update fhirpath.js to 5.0.0
 

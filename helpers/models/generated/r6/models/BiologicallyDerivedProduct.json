@@ -54,6 +54,15 @@
         "IsArray": true
       },
       {
+        "ElementName": "therapyIdentifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
         "ElementName": "biologicalSourceEvent",
         "Type": [
           {

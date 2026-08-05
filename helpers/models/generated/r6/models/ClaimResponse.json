@@ -367,6 +367,14 @@
         "Required": true
       },
       {
+        "ElementName": "subCategory",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
         "ElementName": "code",
         "Type": [
           {

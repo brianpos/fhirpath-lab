@@ -365,8 +365,7 @@
           {
             "TypeName": "code"
           }
-        ],
-        "Required": true
+        ]
       }
     ]
   },
@@ -465,60 +464,14 @@
     "BaseTypeName": "BackboneElement",
     "Elements": [
       {
-        "ElementName": "monday",
+        "ElementName": "daysOfWeek",
         "Type": [
           {
-            "TypeName": "boolean"
+            "TypeName": "code"
           }
-        ]
-      },
-      {
-        "ElementName": "tuesday",
-        "Type": [
-          {
-            "TypeName": "boolean"
-          }
-        ]
-      },
-      {
-        "ElementName": "wednesday",
-        "Type": [
-          {
-            "TypeName": "boolean"
-          }
-        ]
-      },
-      {
-        "ElementName": "thursday",
-        "Type": [
-          {
-            "TypeName": "boolean"
-          }
-        ]
-      },
-      {
-        "ElementName": "friday",
-        "Type": [
-          {
-            "TypeName": "boolean"
-          }
-        ]
-      },
-      {
-        "ElementName": "saturday",
-        "Type": [
-          {
-            "TypeName": "boolean"
-          }
-        ]
-      },
-      {
-        "ElementName": "sunday",
-        "Type": [
-          {
-            "TypeName": "boolean"
-          }
-        ]
+        ],
+        "IsArray": true,
+        "Required": true
       },
       {
         "ElementName": "weekInterval",
@@ -546,7 +499,7 @@
         "ElementName": "nthWeekOfMonth",
         "Type": [
           {
-            "TypeName": "Coding"
+            "TypeName": "code"
           }
         ]
       },
@@ -554,7 +507,7 @@
         "ElementName": "dayOfWeek",
         "Type": [
           {
-            "TypeName": "Coding"
+            "TypeName": "code"
           }
         ]
       },

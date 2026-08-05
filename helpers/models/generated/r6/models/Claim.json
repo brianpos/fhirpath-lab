@@ -158,13 +158,15 @@
         "IsArray": true
       },
       {
-        "ElementName": "prescription",
+        "ElementName": "request",
         "Type": [
           {
             "TypeName": "Reference",
             "TargetProfile": [
               "http://hl7.org/fhir/StructureDefinition/DeviceRequest",
               "http://hl7.org/fhir/StructureDefinition/MedicationRequest",
+              "http://hl7.org/fhir/StructureDefinition/NutritionOrder",
+              "http://hl7.org/fhir/StructureDefinition/RequestOrchestration",
               "http://hl7.org/fhir/StructureDefinition/ServiceRequest",
               "http://hl7.org/fhir/StructureDefinition/VisionPrescription"
             ]
@@ -706,16 +708,10 @@
         "Required": true
       },
       {
-        "ElementName": "diagnosis[x]",
+        "ElementName": "diagnosis",
         "Type": [
           {
-            "TypeName": "CodeableConcept"
-          },
-          {
-            "TypeName": "Reference",
-            "TargetProfile": [
-              "http://hl7.org/fhir/StructureDefinition/Condition"
-            ]
+            "TypeName": "CodeableReference"
           }
         ],
         "Required": true
@@ -770,16 +766,10 @@
         ]
       },
       {
-        "ElementName": "procedure[x]",
+        "ElementName": "procedure",
         "Type": [
           {
-            "TypeName": "CodeableConcept"
-          },
-          {
-            "TypeName": "Reference",
-            "TargetProfile": [
-              "http://hl7.org/fhir/StructureDefinition/Procedure"
-            ]
+            "TypeName": "CodeableReference"
           }
         ],
         "Required": true

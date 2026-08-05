@@ -458,8 +458,16 @@
           {
             "TypeName": "string"
           }
+        ]
+      },
+      {
+        "ElementName": "filter",
+        "Type": [
+          {
+            "TypeName": "valueset_compose_include_filter"
+          }
         ],
-        "Required": true
+        "IsArray": true
       }
     ]
   },

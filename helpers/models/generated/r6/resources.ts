@@ -1,5 +1,5 @@
 // THIS FILE IS GENERATED — DO NOT EDIT BY HAND.
-// Run `npm run generate:models -- --version <r4|r4b|r5|r6>` to regenerate.
+// Run `npm run generate:models -- --version <stu3|r4|r4b|r5|r6>` to regenerate.
 // See docs/custom-model-generator-plan.md.
 
 import type { TypeModel } from "../../../custom_model";
@@ -137,7 +137,7 @@ export const ActivityDefinition: TypeModel = {
         { ElementName: "participant", Type: [{ TypeName: "activitydefinition_participant" }], IsArray: true },
         { ElementName: "product[x]", Type: [{ TypeName: "CodeableConcept" }, { TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Ingredient", "http://hl7.org/fhir/StructureDefinition/Medication", "http://hl7.org/fhir/StructureDefinition/MedicinalProductDefinition", "http://hl7.org/fhir/StructureDefinition/SubstanceDefinition"] }] },
         { ElementName: "quantity", Type: [{ TypeName: "Quantity" }] },
-        { ElementName: "dosage", Type: [{ TypeName: "Dosage" }], IsArray: true },
+        { ElementName: "dosageInstruction", Type: [{ TypeName: "DosageDetails" }] },
         { ElementName: "bodySite", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
         { ElementName: "specimenRequirement", Type: [{ TypeName: "canonical" }], IsArray: true },
         { ElementName: "observationRequirement", Type: [{ TypeName: "canonical" }], IsArray: true },
@@ -327,7 +327,7 @@ export const AllergyIntolerance: TypeModel = {
         { ElementName: "clinicalStatus", Type: [{ TypeName: "CodeableConcept" }] },
         { ElementName: "verificationStatus", Type: [{ TypeName: "CodeableConcept" }] },
         { ElementName: "type", Type: [{ TypeName: "CodeableConcept" }] },
-        { ElementName: "category", Type: [{ TypeName: "code" }], IsArray: true },
+        { ElementName: "category", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
         { ElementName: "criticality", Type: [{ TypeName: "code" }] },
         { ElementName: "code", Type: [{ TypeName: "CodeableConcept" }] },
         { ElementName: "patient", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Patient"] }], Required: true },
@@ -336,7 +336,7 @@ export const AllergyIntolerance: TypeModel = {
         { ElementName: "recordedDate", Type: [{ TypeName: "dateTime" }] },
         { ElementName: "recorder", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Organization", "http://hl7.org/fhir/StructureDefinition/Patient", "http://hl7.org/fhir/StructureDefinition/Practitioner", "http://hl7.org/fhir/StructureDefinition/PractitionerRole", "http://hl7.org/fhir/StructureDefinition/RelatedPerson"] }] },
         { ElementName: "asserter", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Patient", "http://hl7.org/fhir/StructureDefinition/Practitioner", "http://hl7.org/fhir/StructureDefinition/PractitionerRole", "http://hl7.org/fhir/StructureDefinition/RelatedPerson"] }] },
-        { ElementName: "lastReactionOccurrence", Type: [{ TypeName: "dateTime" }] },
+        { ElementName: "lastOccurrence", Type: [{ TypeName: "dateTime" }] },
         { ElementName: "note", Type: [{ TypeName: "Annotation" }], IsArray: true },
         { ElementName: "reaction", Type: [{ TypeName: "allergyintolerance_reaction" }], IsArray: true },
     ],
@@ -403,7 +403,7 @@ export const appointment_participant: TypeModel = {
         { ElementName: "period", Type: [{ TypeName: "Period" }] },
         { ElementName: "actor", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/CareTeam", "http://hl7.org/fhir/StructureDefinition/Device", "http://hl7.org/fhir/StructureDefinition/Group", "http://hl7.org/fhir/StructureDefinition/HealthcareService", "http://hl7.org/fhir/StructureDefinition/Location", "http://hl7.org/fhir/StructureDefinition/Patient", "http://hl7.org/fhir/StructureDefinition/Practitioner", "http://hl7.org/fhir/StructureDefinition/PractitionerRole", "http://hl7.org/fhir/StructureDefinition/RelatedPerson"] }] },
         { ElementName: "required", Type: [{ TypeName: "boolean" }] },
-        { ElementName: "status", Type: [{ TypeName: "code" }], Required: true },
+        { ElementName: "status", Type: [{ TypeName: "code" }] },
     ],
 };
 
@@ -428,13 +428,7 @@ export const appointment_recurrenceTemplate_weeklyTemplate: TypeModel = {
     TypeName: "appointment_recurrenceTemplate_weeklyTemplate",
     BaseTypeName: "BackboneElement",
     Elements: [
-        { ElementName: "monday", Type: [{ TypeName: "boolean" }] },
-        { ElementName: "tuesday", Type: [{ TypeName: "boolean" }] },
-        { ElementName: "wednesday", Type: [{ TypeName: "boolean" }] },
-        { ElementName: "thursday", Type: [{ TypeName: "boolean" }] },
-        { ElementName: "friday", Type: [{ TypeName: "boolean" }] },
-        { ElementName: "saturday", Type: [{ TypeName: "boolean" }] },
-        { ElementName: "sunday", Type: [{ TypeName: "boolean" }] },
+        { ElementName: "daysOfWeek", Type: [{ TypeName: "code" }], IsArray: true, Required: true },
         { ElementName: "weekInterval", Type: [{ TypeName: "positiveInt" }] },
     ],
 };
@@ -444,8 +438,8 @@ export const appointment_recurrenceTemplate_monthlyTemplate: TypeModel = {
     BaseTypeName: "BackboneElement",
     Elements: [
         { ElementName: "dayOfMonth", Type: [{ TypeName: "positiveInt" }] },
-        { ElementName: "nthWeekOfMonth", Type: [{ TypeName: "Coding" }] },
-        { ElementName: "dayOfWeek", Type: [{ TypeName: "Coding" }] },
+        { ElementName: "nthWeekOfMonth", Type: [{ TypeName: "code" }] },
+        { ElementName: "dayOfWeek", Type: [{ TypeName: "code" }] },
         { ElementName: "monthInterval", Type: [{ TypeName: "positiveInt" }], Required: true },
     ],
 };
@@ -630,6 +624,7 @@ export const BiologicallyDerivedProduct: TypeModel = {
         { ElementName: "parent", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/BiologicallyDerivedProduct"] }], IsArray: true },
         { ElementName: "request", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/ServiceRequest"] }], IsArray: true },
         { ElementName: "identifier", Type: [{ TypeName: "Identifier" }], IsArray: true },
+        { ElementName: "therapyIdentifier", Type: [{ TypeName: "Identifier" }], IsArray: true },
         { ElementName: "biologicalSourceEvent", Type: [{ TypeName: "Identifier" }] },
         { ElementName: "processingFacility", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Organization"] }], IsArray: true },
         { ElementName: "division", Type: [{ TypeName: "string" }] },
@@ -672,7 +667,7 @@ export const BodyStructure: TypeModel = {
         { ElementName: "excludedStructure", Type: [{ TypeName: "bodystructure_includedStructure" }], IsArray: true },
         { ElementName: "description", Type: [{ TypeName: "markdown" }] },
         { ElementName: "image", Type: [{ TypeName: "Attachment" }], IsArray: true },
-        { ElementName: "patient", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Patient"] }], Required: true },
+        { ElementName: "patient", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Patient"] }] },
     ],
 };
 
@@ -686,7 +681,8 @@ export const bodystructure_includedStructure: TypeModel = {
         { ElementName: "spatialReference", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/ImagingSelection"] }], IsArray: true },
         { ElementName: "image", Type: [{ TypeName: "Attachment" }], IsArray: true },
         { ElementName: "qualifier", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
-        { ElementName: "morphology", Type: [{ TypeName: "CodeableConcept" }] },
+        { ElementName: "morphology", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
+        { ElementName: "origin", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
     ],
 };
 
@@ -720,7 +716,6 @@ export const Bundle: TypeModel = {
         { ElementName: "total", Type: [{ TypeName: "unsignedInt" }] },
         { ElementName: "link", Type: [{ TypeName: "bundle_link" }], IsArray: true },
         { ElementName: "entry", Type: [{ TypeName: "bundle_entry" }], IsArray: true },
-        { ElementName: "signature", Type: [{ TypeName: "Signature" }] },
         { ElementName: "issues", Type: [{ TypeName: "Resource" }] },
     ],
 };
@@ -1080,7 +1075,7 @@ export const Claim: TypeModel = {
         { ElementName: "priority", Type: [{ TypeName: "CodeableConcept" }] },
         { ElementName: "fundsReserve", Type: [{ TypeName: "CodeableConcept" }] },
         { ElementName: "related", Type: [{ TypeName: "claim_related" }], IsArray: true },
-        { ElementName: "prescription", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/DeviceRequest", "http://hl7.org/fhir/StructureDefinition/MedicationRequest", "http://hl7.org/fhir/StructureDefinition/ServiceRequest", "http://hl7.org/fhir/StructureDefinition/VisionPrescription"] }] },
+        { ElementName: "request", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/DeviceRequest", "http://hl7.org/fhir/StructureDefinition/MedicationRequest", "http://hl7.org/fhir/StructureDefinition/NutritionOrder", "http://hl7.org/fhir/StructureDefinition/RequestOrchestration", "http://hl7.org/fhir/StructureDefinition/ServiceRequest", "http://hl7.org/fhir/StructureDefinition/VisionPrescription"] }] },
         { ElementName: "originalPrescription", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/DeviceRequest", "http://hl7.org/fhir/StructureDefinition/MedicationRequest", "http://hl7.org/fhir/StructureDefinition/ServiceRequest", "http://hl7.org/fhir/StructureDefinition/VisionPrescription"] }] },
         { ElementName: "payee", Type: [{ TypeName: "claim_payee" }] },
         { ElementName: "referral", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/ServiceRequest"] }] },
@@ -1158,7 +1153,7 @@ export const claim_diagnosis: TypeModel = {
     BaseTypeName: "BackboneElement",
     Elements: [
         { ElementName: "sequence", Type: [{ TypeName: "positiveInt" }], Required: true },
-        { ElementName: "diagnosis[x]", Type: [{ TypeName: "CodeableConcept" }, { TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Condition"] }], Required: true },
+        { ElementName: "diagnosis", Type: [{ TypeName: "CodeableReference" }], Required: true },
         { ElementName: "type", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
         { ElementName: "onAdmission", Type: [{ TypeName: "CodeableConcept" }] },
     ],
@@ -1171,7 +1166,7 @@ export const claim_procedure: TypeModel = {
         { ElementName: "sequence", Type: [{ TypeName: "positiveInt" }], Required: true },
         { ElementName: "type", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
         { ElementName: "date", Type: [{ TypeName: "dateTime" }] },
-        { ElementName: "procedure[x]", Type: [{ TypeName: "CodeableConcept" }, { TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Procedure"] }], Required: true },
+        { ElementName: "procedure", Type: [{ TypeName: "CodeableReference" }], Required: true },
         { ElementName: "udi", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Device"] }], IsArray: true },
     ],
 };
@@ -1343,6 +1338,7 @@ export const claimresponse_supportingInfo: TypeModel = {
     Elements: [
         { ElementName: "sequence", Type: [{ TypeName: "positiveInt" }], Required: true },
         { ElementName: "category", Type: [{ TypeName: "CodeableConcept" }], Required: true },
+        { ElementName: "subCategory", Type: [{ TypeName: "CodeableConcept" }] },
         { ElementName: "code", Type: [{ TypeName: "CodeableConcept" }] },
         { ElementName: "timing[x]", Type: [{ TypeName: "Period" }, { TypeName: "Timing" }, { TypeName: "dateTime" }] },
         { ElementName: "value[x]", Type: [{ TypeName: "Address" }, { TypeName: "Age" }, { TypeName: "Annotation" }, { TypeName: "Attachment" }, { TypeName: "Availability" }, { TypeName: "CodeableConcept" }, { TypeName: "CodeableReference" }, { TypeName: "Coding" }, { TypeName: "ContactDetail" }, { TypeName: "ContactPoint" }, { TypeName: "Count" }, { TypeName: "DataRequirement" }, { TypeName: "Distance" }, { TypeName: "Dosage" }, { TypeName: "Duration" }, { TypeName: "Expression" }, { TypeName: "ExtendedContactDetail" }, { TypeName: "HumanName" }, { TypeName: "Identifier" }, { TypeName: "Meta" }, { TypeName: "Money" }, { TypeName: "ParameterDefinition" }, { TypeName: "Period" }, { TypeName: "Quantity" }, { TypeName: "Range" }, { TypeName: "Ratio" }, { TypeName: "RatioRange" }, { TypeName: "Reference" }, { TypeName: "RelatedArtifact" }, { TypeName: "SampledData" }, { TypeName: "Signature" }, { TypeName: "Timing" }, { TypeName: "TriggerDefinition" }, { TypeName: "UsageContext" }, { TypeName: "VirtualServiceDetail" }, { TypeName: "base64Binary" }, { TypeName: "boolean" }, { TypeName: "canonical" }, { TypeName: "code" }, { TypeName: "date" }, { TypeName: "dateTime" }, { TypeName: "decimal" }, { TypeName: "id" }, { TypeName: "instant" }, { TypeName: "integer" }, { TypeName: "integer64" }, { TypeName: "markdown" }, { TypeName: "oid" }, { TypeName: "positiveInt" }, { TypeName: "string" }, { TypeName: "time" }, { TypeName: "unsignedInt" }, { TypeName: "uri" }, { TypeName: "url" }, { TypeName: "uuid" }] },
@@ -1782,7 +1778,7 @@ export const communication_payload: TypeModel = {
     TypeName: "communication_payload",
     BaseTypeName: "BackboneElement",
     Elements: [
-        { ElementName: "content[x]", Type: [{ TypeName: "Attachment" }, { TypeName: "CodeableConcept" }, { TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Resource"] }], Required: true },
+        { ElementName: "content[x]", Type: [{ TypeName: "Attachment" }, { TypeName: "CodeableConcept" }, { TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Resource"] }, { TypeName: "string" }], Required: true },
     ],
 };
 
@@ -1819,7 +1815,7 @@ export const communicationrequest_payload: TypeModel = {
     TypeName: "communicationrequest_payload",
     BaseTypeName: "BackboneElement",
     Elements: [
-        { ElementName: "content[x]", Type: [{ TypeName: "Attachment" }, { TypeName: "CodeableConcept" }, { TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Resource"] }], Required: true },
+        { ElementName: "content[x]", Type: [{ TypeName: "Attachment" }, { TypeName: "CodeableConcept" }, { TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Resource"] }, { TypeName: "string" }], Required: true },
     ],
 };
 
@@ -1865,7 +1861,7 @@ export const Composition: TypeModel = {
         { ElementName: "identifier", Type: [{ TypeName: "Identifier" }], IsArray: true },
         { ElementName: "version", Type: [{ TypeName: "string" }] },
         { ElementName: "consent", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Consent"] }], IsArray: true },
-        { ElementName: "basedOn", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Appointment", "http://hl7.org/fhir/StructureDefinition/AppointmentResponse", "http://hl7.org/fhir/StructureDefinition/CarePlan", "http://hl7.org/fhir/StructureDefinition/Claim", "http://hl7.org/fhir/StructureDefinition/CommunicationRequest", "http://hl7.org/fhir/StructureDefinition/CoverageEligibilityRequest", "http://hl7.org/fhir/StructureDefinition/DeviceRequest", "http://hl7.org/fhir/StructureDefinition/EnrollmentRequest", "http://hl7.org/fhir/StructureDefinition/MedicationRequest", "http://hl7.org/fhir/StructureDefinition/NutritionOrder", "http://hl7.org/fhir/StructureDefinition/RequestOrchestration", "http://hl7.org/fhir/StructureDefinition/ServiceRequest", "http://hl7.org/fhir/StructureDefinition/Task", "http://hl7.org/fhir/StructureDefinition/VisionPrescription"] }], IsArray: true },
+        { ElementName: "basedOn", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Appointment", "http://hl7.org/fhir/StructureDefinition/AppointmentResponse", "http://hl7.org/fhir/StructureDefinition/CarePlan", "http://hl7.org/fhir/StructureDefinition/Claim", "http://hl7.org/fhir/StructureDefinition/CommunicationRequest", "http://hl7.org/fhir/StructureDefinition/CoverageEligibilityRequest", "http://hl7.org/fhir/StructureDefinition/DeviceRequest", "http://hl7.org/fhir/StructureDefinition/MedicationRequest", "http://hl7.org/fhir/StructureDefinition/NutritionOrder", "http://hl7.org/fhir/StructureDefinition/RequestOrchestration", "http://hl7.org/fhir/StructureDefinition/ServiceRequest", "http://hl7.org/fhir/StructureDefinition/Task", "http://hl7.org/fhir/StructureDefinition/VisionPrescription"] }], IsArray: true },
         { ElementName: "status", Type: [{ TypeName: "code" }], Required: true },
         { ElementName: "type", Type: [{ TypeName: "CodeableConcept" }], Required: true },
         { ElementName: "category", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
@@ -1878,6 +1874,7 @@ export const Composition: TypeModel = {
         { ElementName: "name", Type: [{ TypeName: "string" }] },
         { ElementName: "title", Type: [{ TypeName: "string" }] },
         { ElementName: "note", Type: [{ TypeName: "Annotation" }], IsArray: true },
+        { ElementName: "classification", Type: [{ TypeName: "composition_classification" }], IsArray: true },
         { ElementName: "attester", Type: [{ TypeName: "composition_attester" }], IsArray: true },
         { ElementName: "custodian", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Group", "http://hl7.org/fhir/StructureDefinition/Organization", "http://hl7.org/fhir/StructureDefinition/Patient"] }] },
         { ElementName: "relatesTo", Type: [{ TypeName: "composition_relatesTo" }], IsArray: true },
@@ -1893,7 +1890,16 @@ export const composition_participant: TypeModel = {
         { ElementName: "type", Type: [{ TypeName: "CodeableConcept" }], IsArray: true, Required: true },
         { ElementName: "function", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
         { ElementName: "time", Type: [{ TypeName: "Period" }] },
-        { ElementName: "party", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Device", "http://hl7.org/fhir/StructureDefinition/Organization", "http://hl7.org/fhir/StructureDefinition/Patient", "http://hl7.org/fhir/StructureDefinition/Practitioner", "http://hl7.org/fhir/StructureDefinition/PractitionerRole", "http://hl7.org/fhir/StructureDefinition/RelatedPerson"] }], Required: true },
+        { ElementName: "party", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/CareTeam", "http://hl7.org/fhir/StructureDefinition/Device", "http://hl7.org/fhir/StructureDefinition/Group", "http://hl7.org/fhir/StructureDefinition/Organization", "http://hl7.org/fhir/StructureDefinition/Patient", "http://hl7.org/fhir/StructureDefinition/Practitioner", "http://hl7.org/fhir/StructureDefinition/PractitionerRole", "http://hl7.org/fhir/StructureDefinition/RelatedPerson"] }], Required: true },
+    ],
+};
+
+export const composition_classification: TypeModel = {
+    TypeName: "composition_classification",
+    BaseTypeName: "BackboneElement",
+    Elements: [
+        { ElementName: "type", Type: [{ TypeName: "CodeableConcept" }] },
+        { ElementName: "classifier", Type: [{ TypeName: "CodeableReference" }], IsArray: true },
     ],
 };
 
@@ -1974,6 +1980,7 @@ export const ConceptMap: TypeModel = {
         { ElementName: "relatedArtifact", Type: [{ TypeName: "RelatedArtifact" }], IsArray: true },
         { ElementName: "property", Type: [{ TypeName: "conceptmap_property" }], IsArray: true },
         { ElementName: "additionalAttribute", Type: [{ TypeName: "conceptmap_additionalAttribute" }], IsArray: true },
+        { ElementName: "allowedRelationship", Type: [{ TypeName: "code" }], IsArray: true },
         { ElementName: "sourceScope[x]", Type: [{ TypeName: "canonical" }, { TypeName: "uri" }] },
         { ElementName: "targetScope[x]", Type: [{ TypeName: "canonical" }, { TypeName: "uri" }] },
         { ElementName: "group", Type: [{ TypeName: "conceptmap_group" }], IsArray: true },
@@ -2085,8 +2092,7 @@ export const Condition: TypeModel = {
         { ElementName: "category", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
         { ElementName: "severity", Type: [{ TypeName: "CodeableConcept" }] },
         { ElementName: "code", Type: [{ TypeName: "CodeableConcept" }] },
-        { ElementName: "bodySite", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
-        { ElementName: "bodyStructure", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/BodyStructure"] }] },
+        { ElementName: "bodyStructure", Type: [{ TypeName: "CodeableReference" }], IsArray: true },
         { ElementName: "subject", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Group", "http://hl7.org/fhir/StructureDefinition/Patient"] }], Required: true },
         { ElementName: "encounter", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Encounter"] }] },
         { ElementName: "onset[x]", Type: [{ TypeName: "Age" }, { TypeName: "Period" }, { TypeName: "Range" }, { TypeName: "dateTime" }, { TypeName: "string" }] },
@@ -2125,7 +2131,7 @@ export const Consent: TypeModel = {
         { ElementName: "manager", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/HealthcareService", "http://hl7.org/fhir/StructureDefinition/Organization", "http://hl7.org/fhir/StructureDefinition/Patient", "http://hl7.org/fhir/StructureDefinition/Practitioner"] }], IsArray: true },
         { ElementName: "controller", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/HealthcareService", "http://hl7.org/fhir/StructureDefinition/Organization", "http://hl7.org/fhir/StructureDefinition/Patient", "http://hl7.org/fhir/StructureDefinition/Practitioner"] }], IsArray: true },
         { ElementName: "sourceAttachment", Type: [{ TypeName: "Attachment" }], IsArray: true },
-        { ElementName: "sourceReference", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Consent", "http://hl7.org/fhir/StructureDefinition/Contract", "http://hl7.org/fhir/StructureDefinition/DocumentReference", "http://hl7.org/fhir/StructureDefinition/QuestionnaireResponse"] }], IsArray: true },
+        { ElementName: "sourceReference", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Consent", "http://hl7.org/fhir/StructureDefinition/DocumentReference", "http://hl7.org/fhir/StructureDefinition/QuestionnaireResponse"] }], IsArray: true },
         { ElementName: "regulatoryBasis", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
         { ElementName: "policyBasis", Type: [{ TypeName: "consent_policyBasis" }] },
         { ElementName: "policyText", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/DocumentReference"] }], IsArray: true },
@@ -2170,7 +2176,6 @@ export const consent_provision: TypeModel = {
         { ElementName: "code", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
         { ElementName: "dataPeriod", Type: [{ TypeName: "Period" }] },
         { ElementName: "data", Type: [{ TypeName: "consent_provision_data" }], IsArray: true },
-        { ElementName: "expression", Type: [{ TypeName: "Expression" }] },
         { ElementName: "provision", Type: [{ TypeName: "consent_provision" }], IsArray: true },
     ],
 };
@@ -2193,252 +2198,13 @@ export const consent_provision_data: TypeModel = {
     ],
 };
 
-export const Contract: TypeModel = {
-    TypeName: "Contract",
-    BaseTypeName: "DomainResource",
-    Elements: [
-        { ElementName: "identifier", Type: [{ TypeName: "Identifier" }], IsArray: true },
-        { ElementName: "url", Type: [{ TypeName: "uri" }] },
-        { ElementName: "version", Type: [{ TypeName: "string" }] },
-        { ElementName: "status", Type: [{ TypeName: "code" }] },
-        { ElementName: "legalState", Type: [{ TypeName: "CodeableConcept" }] },
-        { ElementName: "instantiatesCanonical", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Contract"] }] },
-        { ElementName: "instantiatesUri", Type: [{ TypeName: "uri" }] },
-        { ElementName: "contentDerivative", Type: [{ TypeName: "CodeableConcept" }] },
-        { ElementName: "issued", Type: [{ TypeName: "dateTime" }] },
-        { ElementName: "applies", Type: [{ TypeName: "Period" }] },
-        { ElementName: "expirationType", Type: [{ TypeName: "CodeableConcept" }] },
-        { ElementName: "subject", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Resource"] }], IsArray: true },
-        { ElementName: "authority", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Organization"] }], IsArray: true },
-        { ElementName: "domain", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Location"] }], IsArray: true },
-        { ElementName: "site", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Location"] }], IsArray: true },
-        { ElementName: "name", Type: [{ TypeName: "string" }] },
-        { ElementName: "title", Type: [{ TypeName: "string" }] },
-        { ElementName: "subtitle", Type: [{ TypeName: "string" }] },
-        { ElementName: "alias", Type: [{ TypeName: "string" }], IsArray: true },
-        { ElementName: "author", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Organization", "http://hl7.org/fhir/StructureDefinition/Patient", "http://hl7.org/fhir/StructureDefinition/Practitioner", "http://hl7.org/fhir/StructureDefinition/PractitionerRole", "http://hl7.org/fhir/StructureDefinition/RelatedPerson"] }] },
-        { ElementName: "scope", Type: [{ TypeName: "CodeableConcept" }] },
-        { ElementName: "topic[x]", Type: [{ TypeName: "CodeableConcept" }, { TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Resource"] }] },
-        { ElementName: "type", Type: [{ TypeName: "CodeableConcept" }] },
-        { ElementName: "subType", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
-        { ElementName: "contentDefinition", Type: [{ TypeName: "contract_contentDefinition" }] },
-        { ElementName: "term", Type: [{ TypeName: "contract_term" }], IsArray: true },
-        { ElementName: "supportingInfo", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Resource"] }], IsArray: true },
-        { ElementName: "relevantHistory", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Provenance"] }], IsArray: true },
-        { ElementName: "signer", Type: [{ TypeName: "contract_signer" }], IsArray: true },
-        { ElementName: "friendly", Type: [{ TypeName: "contract_friendly" }], IsArray: true },
-        { ElementName: "legal", Type: [{ TypeName: "contract_legal" }], IsArray: true },
-        { ElementName: "rule", Type: [{ TypeName: "contract_rule" }], IsArray: true },
-        { ElementName: "legallyBinding[x]", Type: [{ TypeName: "Attachment" }, { TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Composition", "http://hl7.org/fhir/StructureDefinition/Contract", "http://hl7.org/fhir/StructureDefinition/DocumentReference", "http://hl7.org/fhir/StructureDefinition/QuestionnaireResponse"] }] },
-    ],
-};
-
-export const contract_contentDefinition: TypeModel = {
-    TypeName: "contract_contentDefinition",
-    BaseTypeName: "BackboneElement",
-    Elements: [
-        { ElementName: "type", Type: [{ TypeName: "CodeableConcept" }], Required: true },
-        { ElementName: "subType", Type: [{ TypeName: "CodeableConcept" }] },
-        { ElementName: "publisher", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Organization", "http://hl7.org/fhir/StructureDefinition/Practitioner", "http://hl7.org/fhir/StructureDefinition/PractitionerRole"] }] },
-        { ElementName: "publicationDate", Type: [{ TypeName: "dateTime" }] },
-        { ElementName: "publicationStatus", Type: [{ TypeName: "code" }], Required: true },
-        { ElementName: "copyright", Type: [{ TypeName: "markdown" }] },
-    ],
-};
-
-export const contract_term: TypeModel = {
-    TypeName: "contract_term",
-    BaseTypeName: "BackboneElement",
-    Elements: [
-        { ElementName: "identifier", Type: [{ TypeName: "Identifier" }] },
-        { ElementName: "issued", Type: [{ TypeName: "dateTime" }] },
-        { ElementName: "applies", Type: [{ TypeName: "Period" }] },
-        { ElementName: "topic[x]", Type: [{ TypeName: "CodeableConcept" }, { TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Resource"] }] },
-        { ElementName: "type", Type: [{ TypeName: "CodeableConcept" }] },
-        { ElementName: "subType", Type: [{ TypeName: "CodeableConcept" }] },
-        { ElementName: "text", Type: [{ TypeName: "markdown" }] },
-        { ElementName: "securityLabel", Type: [{ TypeName: "contract_term_securityLabel" }], IsArray: true },
-        { ElementName: "offer", Type: [{ TypeName: "contract_term_offer" }], Required: true },
-        { ElementName: "asset", Type: [{ TypeName: "contract_term_asset" }], IsArray: true },
-        { ElementName: "action", Type: [{ TypeName: "contract_term_action" }], IsArray: true },
-        { ElementName: "group", Type: [{ TypeName: "contract_term" }], IsArray: true },
-    ],
-};
-
-export const contract_term_securityLabel: TypeModel = {
-    TypeName: "contract_term_securityLabel",
-    BaseTypeName: "BackboneElement",
-    Elements: [
-        { ElementName: "number", Type: [{ TypeName: "unsignedInt" }], IsArray: true },
-        { ElementName: "classification", Type: [{ TypeName: "Coding" }], Required: true },
-        { ElementName: "category", Type: [{ TypeName: "Coding" }], IsArray: true },
-        { ElementName: "control", Type: [{ TypeName: "Coding" }], IsArray: true },
-    ],
-};
-
-export const contract_term_offer: TypeModel = {
-    TypeName: "contract_term_offer",
-    BaseTypeName: "BackboneElement",
-    Elements: [
-        { ElementName: "identifier", Type: [{ TypeName: "Identifier" }], IsArray: true },
-        { ElementName: "party", Type: [{ TypeName: "contract_term_offer_party" }], IsArray: true },
-        { ElementName: "topic", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Resource"] }] },
-        { ElementName: "type", Type: [{ TypeName: "CodeableConcept" }] },
-        { ElementName: "decision", Type: [{ TypeName: "CodeableConcept" }] },
-        { ElementName: "decisionMode", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
-        { ElementName: "answer", Type: [{ TypeName: "contract_term_offer_answer" }], IsArray: true },
-        { ElementName: "text", Type: [{ TypeName: "string" }] },
-        { ElementName: "linkId", Type: [{ TypeName: "string" }], IsArray: true },
-        { ElementName: "securityLabelNumber", Type: [{ TypeName: "unsignedInt" }], IsArray: true },
-    ],
-};
-
-export const contract_term_offer_party: TypeModel = {
-    TypeName: "contract_term_offer_party",
-    BaseTypeName: "BackboneElement",
-    Elements: [
-        { ElementName: "reference", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Device", "http://hl7.org/fhir/StructureDefinition/Group", "http://hl7.org/fhir/StructureDefinition/Organization", "http://hl7.org/fhir/StructureDefinition/Patient", "http://hl7.org/fhir/StructureDefinition/Practitioner", "http://hl7.org/fhir/StructureDefinition/PractitionerRole", "http://hl7.org/fhir/StructureDefinition/RelatedPerson"] }], IsArray: true, Required: true },
-        { ElementName: "role", Type: [{ TypeName: "CodeableConcept" }], Required: true },
-    ],
-};
-
-export const contract_term_offer_answer: TypeModel = {
-    TypeName: "contract_term_offer_answer",
-    BaseTypeName: "BackboneElement",
-    Elements: [
-        { ElementName: "value[x]", Type: [{ TypeName: "Attachment" }, { TypeName: "Coding" }, { TypeName: "Quantity" }, { TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Resource"] }, { TypeName: "boolean" }, { TypeName: "date" }, { TypeName: "dateTime" }, { TypeName: "decimal" }, { TypeName: "integer" }, { TypeName: "string" }, { TypeName: "time" }, { TypeName: "uri" }], Required: true },
-    ],
-};
-
-export const contract_term_asset: TypeModel = {
-    TypeName: "contract_term_asset",
-    BaseTypeName: "BackboneElement",
-    Elements: [
-        { ElementName: "scope", Type: [{ TypeName: "CodeableConcept" }] },
-        { ElementName: "type", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
-        { ElementName: "typeReference", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Resource"] }], IsArray: true },
-        { ElementName: "subtype", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
-        { ElementName: "relationship", Type: [{ TypeName: "Coding" }] },
-        { ElementName: "context", Type: [{ TypeName: "contract_term_asset_context" }], IsArray: true },
-        { ElementName: "condition", Type: [{ TypeName: "string" }] },
-        { ElementName: "periodType", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
-        { ElementName: "period", Type: [{ TypeName: "Period" }], IsArray: true },
-        { ElementName: "usePeriod", Type: [{ TypeName: "Period" }], IsArray: true },
-        { ElementName: "text", Type: [{ TypeName: "string" }] },
-        { ElementName: "linkId", Type: [{ TypeName: "string" }], IsArray: true },
-        { ElementName: "answer", Type: [{ TypeName: "contract_term_offer_answer" }], IsArray: true },
-        { ElementName: "securityLabelNumber", Type: [{ TypeName: "unsignedInt" }], IsArray: true },
-        { ElementName: "valuedItem", Type: [{ TypeName: "contract_term_asset_valuedItem" }], IsArray: true },
-    ],
-};
-
-export const contract_term_asset_context: TypeModel = {
-    TypeName: "contract_term_asset_context",
-    BaseTypeName: "BackboneElement",
-    Elements: [
-        { ElementName: "reference", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Resource"] }] },
-        { ElementName: "code", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
-        { ElementName: "text", Type: [{ TypeName: "string" }] },
-    ],
-};
-
-export const contract_term_asset_valuedItem: TypeModel = {
-    TypeName: "contract_term_asset_valuedItem",
-    BaseTypeName: "BackboneElement",
-    Elements: [
-        { ElementName: "entity[x]", Type: [{ TypeName: "CodeableConcept" }, { TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Resource"] }] },
-        { ElementName: "identifier", Type: [{ TypeName: "Identifier" }] },
-        { ElementName: "effectiveTime", Type: [{ TypeName: "dateTime" }] },
-        { ElementName: "quantity", Type: [{ TypeName: "Quantity" }] },
-        { ElementName: "unitPrice", Type: [{ TypeName: "Money" }] },
-        { ElementName: "factor", Type: [{ TypeName: "decimal" }] },
-        { ElementName: "points", Type: [{ TypeName: "decimal" }] },
-        { ElementName: "net", Type: [{ TypeName: "Money" }] },
-        { ElementName: "payment", Type: [{ TypeName: "string" }] },
-        { ElementName: "paymentDate", Type: [{ TypeName: "dateTime" }] },
-        { ElementName: "responsible", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Organization", "http://hl7.org/fhir/StructureDefinition/Patient", "http://hl7.org/fhir/StructureDefinition/Practitioner", "http://hl7.org/fhir/StructureDefinition/PractitionerRole", "http://hl7.org/fhir/StructureDefinition/RelatedPerson"] }] },
-        { ElementName: "recipient", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Organization", "http://hl7.org/fhir/StructureDefinition/Patient", "http://hl7.org/fhir/StructureDefinition/Practitioner", "http://hl7.org/fhir/StructureDefinition/PractitionerRole", "http://hl7.org/fhir/StructureDefinition/RelatedPerson"] }] },
-        { ElementName: "linkId", Type: [{ TypeName: "string" }], IsArray: true },
-        { ElementName: "securityLabelNumber", Type: [{ TypeName: "unsignedInt" }], IsArray: true },
-    ],
-};
-
-export const contract_term_action: TypeModel = {
-    TypeName: "contract_term_action",
-    BaseTypeName: "BackboneElement",
-    Elements: [
-        { ElementName: "doNotPerform", Type: [{ TypeName: "boolean" }] },
-        { ElementName: "type", Type: [{ TypeName: "CodeableConcept" }], Required: true },
-        { ElementName: "subject", Type: [{ TypeName: "contract_term_action_subject" }], IsArray: true },
-        { ElementName: "intent", Type: [{ TypeName: "CodeableConcept" }], Required: true },
-        { ElementName: "linkId", Type: [{ TypeName: "string" }], IsArray: true },
-        { ElementName: "status", Type: [{ TypeName: "CodeableConcept" }], Required: true },
-        { ElementName: "context", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Encounter", "http://hl7.org/fhir/StructureDefinition/EpisodeOfCare"] }] },
-        { ElementName: "contextLinkId", Type: [{ TypeName: "string" }], IsArray: true },
-        { ElementName: "occurrence[x]", Type: [{ TypeName: "Period" }, { TypeName: "Timing" }, { TypeName: "dateTime" }] },
-        { ElementName: "requester", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Device", "http://hl7.org/fhir/StructureDefinition/Group", "http://hl7.org/fhir/StructureDefinition/Organization", "http://hl7.org/fhir/StructureDefinition/Patient", "http://hl7.org/fhir/StructureDefinition/Practitioner", "http://hl7.org/fhir/StructureDefinition/PractitionerRole", "http://hl7.org/fhir/StructureDefinition/RelatedPerson"] }], IsArray: true },
-        { ElementName: "requesterLinkId", Type: [{ TypeName: "string" }], IsArray: true },
-        { ElementName: "performerType", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
-        { ElementName: "performerRole", Type: [{ TypeName: "CodeableConcept" }] },
-        { ElementName: "performer", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/CareTeam", "http://hl7.org/fhir/StructureDefinition/Device", "http://hl7.org/fhir/StructureDefinition/Location", "http://hl7.org/fhir/StructureDefinition/Organization", "http://hl7.org/fhir/StructureDefinition/Patient", "http://hl7.org/fhir/StructureDefinition/Practitioner", "http://hl7.org/fhir/StructureDefinition/PractitionerRole", "http://hl7.org/fhir/StructureDefinition/RelatedPerson", "http://hl7.org/fhir/StructureDefinition/Substance"] }] },
-        { ElementName: "performerLinkId", Type: [{ TypeName: "string" }], IsArray: true },
-        { ElementName: "reason", Type: [{ TypeName: "CodeableReference" }], IsArray: true },
-        { ElementName: "reasonLinkId", Type: [{ TypeName: "string" }], IsArray: true },
-        { ElementName: "note", Type: [{ TypeName: "Annotation" }], IsArray: true },
-        { ElementName: "securityLabelNumber", Type: [{ TypeName: "unsignedInt" }], IsArray: true },
-    ],
-};
-
-export const contract_term_action_subject: TypeModel = {
-    TypeName: "contract_term_action_subject",
-    BaseTypeName: "BackboneElement",
-    Elements: [
-        { ElementName: "reference", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Device", "http://hl7.org/fhir/StructureDefinition/Group", "http://hl7.org/fhir/StructureDefinition/Organization", "http://hl7.org/fhir/StructureDefinition/Patient", "http://hl7.org/fhir/StructureDefinition/Practitioner", "http://hl7.org/fhir/StructureDefinition/PractitionerRole", "http://hl7.org/fhir/StructureDefinition/RelatedPerson"] }], IsArray: true, Required: true },
-        { ElementName: "role", Type: [{ TypeName: "CodeableConcept" }] },
-    ],
-};
-
-export const contract_signer: TypeModel = {
-    TypeName: "contract_signer",
-    BaseTypeName: "BackboneElement",
-    Elements: [
-        { ElementName: "type", Type: [{ TypeName: "Coding" }], Required: true },
-        { ElementName: "party", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Organization", "http://hl7.org/fhir/StructureDefinition/Patient", "http://hl7.org/fhir/StructureDefinition/Practitioner", "http://hl7.org/fhir/StructureDefinition/PractitionerRole", "http://hl7.org/fhir/StructureDefinition/RelatedPerson"] }], Required: true },
-        { ElementName: "signature", Type: [{ TypeName: "Signature" }], IsArray: true, Required: true },
-    ],
-};
-
-export const contract_friendly: TypeModel = {
-    TypeName: "contract_friendly",
-    BaseTypeName: "BackboneElement",
-    Elements: [
-        { ElementName: "content[x]", Type: [{ TypeName: "Attachment" }, { TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Composition", "http://hl7.org/fhir/StructureDefinition/DocumentReference", "http://hl7.org/fhir/StructureDefinition/QuestionnaireResponse"] }], Required: true },
-    ],
-};
-
-export const contract_legal: TypeModel = {
-    TypeName: "contract_legal",
-    BaseTypeName: "BackboneElement",
-    Elements: [
-        { ElementName: "content[x]", Type: [{ TypeName: "Attachment" }, { TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Composition", "http://hl7.org/fhir/StructureDefinition/DocumentReference", "http://hl7.org/fhir/StructureDefinition/QuestionnaireResponse"] }], Required: true },
-    ],
-};
-
-export const contract_rule: TypeModel = {
-    TypeName: "contract_rule",
-    BaseTypeName: "BackboneElement",
-    Elements: [
-        { ElementName: "content[x]", Type: [{ TypeName: "Attachment" }, { TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/DocumentReference"] }], Required: true },
-    ],
-};
-
 export const Coverage: TypeModel = {
     TypeName: "Coverage",
     BaseTypeName: "DomainResource",
     Elements: [
         { ElementName: "identifier", Type: [{ TypeName: "Identifier" }], IsArray: true },
         { ElementName: "status", Type: [{ TypeName: "code" }], Required: true },
-        { ElementName: "statusReason", Type: [{ TypeName: "string" }] },
+        { ElementName: "statusReason", Type: [{ TypeName: "CodeableConcept" }] },
         { ElementName: "kind", Type: [{ TypeName: "code" }], Required: true },
         { ElementName: "paymentBy", Type: [{ TypeName: "coverage_paymentBy" }], IsArray: true },
         { ElementName: "type", Type: [{ TypeName: "CodeableConcept" }] },
@@ -2452,11 +2218,9 @@ export const Coverage: TypeModel = {
         { ElementName: "insurer", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Organization"] }] },
         { ElementName: "class", Type: [{ TypeName: "coverage_class" }], IsArray: true },
         { ElementName: "order", Type: [{ TypeName: "positiveInt" }] },
-        { ElementName: "network", Type: [{ TypeName: "string" }] },
+        { ElementName: "network", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Organization"] }] },
         { ElementName: "costToBeneficiary", Type: [{ TypeName: "coverage_costToBeneficiary" }], IsArray: true },
         { ElementName: "subrogation", Type: [{ TypeName: "boolean" }] },
-        { ElementName: "contract", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Contract"] }], IsArray: true },
-        { ElementName: "insurancePlan", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/InsurancePlan"] }] },
     ],
 };
 
@@ -2474,7 +2238,8 @@ export const coverage_class: TypeModel = {
     BaseTypeName: "BackboneElement",
     Elements: [
         { ElementName: "type", Type: [{ TypeName: "CodeableConcept" }], Required: true },
-        { ElementName: "value", Type: [{ TypeName: "Identifier" }], Required: true },
+        { ElementName: "value", Type: [{ TypeName: "Identifier" }] },
+        { ElementName: "code", Type: [{ TypeName: "Coding" }] },
         { ElementName: "name", Type: [{ TypeName: "string" }] },
     ],
 };
@@ -2575,7 +2340,7 @@ export const coverageeligibilityrequest_item_diagnosis: TypeModel = {
     TypeName: "coverageeligibilityrequest_item_diagnosis",
     BaseTypeName: "BackboneElement",
     Elements: [
-        { ElementName: "diagnosis[x]", Type: [{ TypeName: "CodeableConcept" }, { TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Condition"] }] },
+        { ElementName: "diagnosis", Type: [{ TypeName: "CodeableReference" }] },
     ],
 };
 
@@ -2816,8 +2581,7 @@ export const DeviceAlert: TypeModel = {
         { ElementName: "code", Type: [{ TypeName: "CodeableConcept" }], Required: true },
         { ElementName: "subject", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/BiologicallyDerivedProduct", "http://hl7.org/fhir/StructureDefinition/Device", "http://hl7.org/fhir/StructureDefinition/Group", "http://hl7.org/fhir/StructureDefinition/Location", "http://hl7.org/fhir/StructureDefinition/Medication", "http://hl7.org/fhir/StructureDefinition/NutritionProduct", "http://hl7.org/fhir/StructureDefinition/Patient", "http://hl7.org/fhir/StructureDefinition/Specimen"] }], Required: true },
         { ElementName: "encounter", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Encounter"] }] },
-        { ElementName: "presence", Type: [{ TypeName: "boolean" }], Required: true },
-        { ElementName: "occurrence[x]", Type: [{ TypeName: "Period" }, { TypeName: "dateTime" }] },
+        { ElementName: "occurrence", Type: [{ TypeName: "Period" }], Required: true },
         { ElementName: "device", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Device", "http://hl7.org/fhir/StructureDefinition/DeviceMetric"] }] },
         { ElementName: "acknowledged", Type: [{ TypeName: "boolean" }] },
         { ElementName: "acknowledgedBy", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Device", "http://hl7.org/fhir/StructureDefinition/Patient", "http://hl7.org/fhir/StructureDefinition/Practitioner", "http://hl7.org/fhir/StructureDefinition/PractitionerRole", "http://hl7.org/fhir/StructureDefinition/RelatedPerson"] }] },
@@ -2842,12 +2606,13 @@ export const devicealert_signal: TypeModel = {
     TypeName: "devicealert_signal",
     BaseTypeName: "BackboneElement",
     Elements: [
+        { ElementName: "identifier", Type: [{ TypeName: "Identifier" }], IsArray: true },
         { ElementName: "activationState", Type: [{ TypeName: "CodeableConcept" }], Required: true },
         { ElementName: "presence", Type: [{ TypeName: "CodeableConcept" }] },
         { ElementName: "annunciator", Type: [{ TypeName: "CodeableReference" }] },
         { ElementName: "manifestation", Type: [{ TypeName: "CodeableConcept" }] },
         { ElementName: "type", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
-        { ElementName: "indication", Type: [{ TypeName: "Period" }] },
+        { ElementName: "period", Type: [{ TypeName: "Period" }] },
     ],
 };
 
@@ -2857,13 +2622,13 @@ export const DeviceAssociation: TypeModel = {
     Elements: [
         { ElementName: "identifier", Type: [{ TypeName: "Identifier" }], IsArray: true },
         { ElementName: "device", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Device"] }], Required: true },
-        { ElementName: "relationship", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
+        { ElementName: "relationship", Type: [{ TypeName: "CodeableConcept" }], Required: true },
         { ElementName: "status", Type: [{ TypeName: "code" }], Required: true },
-        { ElementName: "statusReason", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
-        { ElementName: "associationStatus", Type: [{ TypeName: "CodeableConcept" }] },
-        { ElementName: "subject", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/BiologicallyDerivedProduct", "http://hl7.org/fhir/StructureDefinition/CareTeam", "http://hl7.org/fhir/StructureDefinition/Device", "http://hl7.org/fhir/StructureDefinition/Group", "http://hl7.org/fhir/StructureDefinition/Location", "http://hl7.org/fhir/StructureDefinition/Medication", "http://hl7.org/fhir/StructureDefinition/NutritionProduct", "http://hl7.org/fhir/StructureDefinition/Organization", "http://hl7.org/fhir/StructureDefinition/Patient", "http://hl7.org/fhir/StructureDefinition/Practitioner", "http://hl7.org/fhir/StructureDefinition/PractitionerRole", "http://hl7.org/fhir/StructureDefinition/RelatedPerson", "http://hl7.org/fhir/StructureDefinition/Specimen", "http://hl7.org/fhir/StructureDefinition/Substance"] }] },
+        { ElementName: "statusReason", Type: [{ TypeName: "CodeableConcept" }] },
+        { ElementName: "relationshipStatus", Type: [{ TypeName: "CodeableConcept" }] },
+        { ElementName: "subject", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/BiologicallyDerivedProduct", "http://hl7.org/fhir/StructureDefinition/CareTeam", "http://hl7.org/fhir/StructureDefinition/Device", "http://hl7.org/fhir/StructureDefinition/Group", "http://hl7.org/fhir/StructureDefinition/Location", "http://hl7.org/fhir/StructureDefinition/Medication", "http://hl7.org/fhir/StructureDefinition/NutritionProduct", "http://hl7.org/fhir/StructureDefinition/Organization", "http://hl7.org/fhir/StructureDefinition/Patient", "http://hl7.org/fhir/StructureDefinition/Practitioner", "http://hl7.org/fhir/StructureDefinition/PractitionerRole", "http://hl7.org/fhir/StructureDefinition/Specimen", "http://hl7.org/fhir/StructureDefinition/Substance"] }], Required: true },
         { ElementName: "focus", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/BiologicallyDerivedProduct", "http://hl7.org/fhir/StructureDefinition/CareTeam", "http://hl7.org/fhir/StructureDefinition/Device", "http://hl7.org/fhir/StructureDefinition/Group", "http://hl7.org/fhir/StructureDefinition/Location", "http://hl7.org/fhir/StructureDefinition/Medication", "http://hl7.org/fhir/StructureDefinition/NutritionProduct", "http://hl7.org/fhir/StructureDefinition/Organization", "http://hl7.org/fhir/StructureDefinition/Patient", "http://hl7.org/fhir/StructureDefinition/Practitioner", "http://hl7.org/fhir/StructureDefinition/PractitionerRole", "http://hl7.org/fhir/StructureDefinition/RelatedPerson", "http://hl7.org/fhir/StructureDefinition/Specimen", "http://hl7.org/fhir/StructureDefinition/Substance"] }] },
-        { ElementName: "bodyStructure", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/BodyStructure"] }] },
+        { ElementName: "bodyStructure", Type: [{ TypeName: "CodeableReference" }], IsArray: true },
         { ElementName: "period", Type: [{ TypeName: "Period" }] },
     ],
 };
@@ -2910,6 +2675,7 @@ export const DeviceDefinition: TypeModel = {
         { ElementName: "link", Type: [{ TypeName: "devicedefinition_link" }], IsArray: true },
         { ElementName: "note", Type: [{ TypeName: "Annotation" }], IsArray: true },
         { ElementName: "material", Type: [{ TypeName: "devicedefinition_material" }], IsArray: true },
+        { ElementName: "additive", Type: [{ TypeName: "devicedefinition_additive" }], IsArray: true },
         { ElementName: "productionIdentifierInUDI", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
         { ElementName: "guideline", Type: [{ TypeName: "devicedefinition_guideline" }] },
         { ElementName: "correctiveAction", Type: [{ TypeName: "devicedefinition_correctiveAction" }] },
@@ -2942,7 +2708,7 @@ export const devicedefinition_regulatoryIdentifier: TypeModel = {
     TypeName: "devicedefinition_regulatoryIdentifier",
     BaseTypeName: "BackboneElement",
     Elements: [
-        { ElementName: "type", Type: [{ TypeName: "code" }], Required: true },
+        { ElementName: "type", Type: [{ TypeName: "CodeableConcept" }], Required: true },
         { ElementName: "identifier", Type: [{ TypeName: "string" }], Required: true },
         { ElementName: "issuer", Type: [{ TypeName: "uri" }], Required: true },
         { ElementName: "jurisdiction", Type: [{ TypeName: "uri" }], Required: true },
@@ -2992,7 +2758,7 @@ export const devicedefinition_packaging: TypeModel = {
     TypeName: "devicedefinition_packaging",
     BaseTypeName: "BackboneElement",
     Elements: [
-        { ElementName: "identifier", Type: [{ TypeName: "Identifier" }] },
+        { ElementName: "identifier", Type: [{ TypeName: "Identifier" }], IsArray: true },
         { ElementName: "type", Type: [{ TypeName: "CodeableConcept" }] },
         { ElementName: "count", Type: [{ TypeName: "integer" }] },
         { ElementName: "distributor", Type: [{ TypeName: "devicedefinition_packaging_distributor" }], IsArray: true },
@@ -3048,6 +2814,15 @@ export const devicedefinition_material: TypeModel = {
     ],
 };
 
+export const devicedefinition_additive: TypeModel = {
+    TypeName: "devicedefinition_additive",
+    BaseTypeName: "BackboneElement",
+    Elements: [
+        { ElementName: "type", Type: [{ TypeName: "CodeableReference" }], Required: true },
+        { ElementName: "quantity", Type: [{ TypeName: "Quantity" }] },
+    ],
+};
+
 export const devicedefinition_guideline: TypeModel = {
     TypeName: "devicedefinition_guideline",
     BaseTypeName: "BackboneElement",
@@ -3094,7 +2869,7 @@ export const DeviceMetric: TypeModel = {
         { ElementName: "type", Type: [{ TypeName: "CodeableConcept" }], Required: true },
         { ElementName: "device", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Device"] }], Required: true },
         { ElementName: "unit", Type: [{ TypeName: "CodeableConcept" }] },
-        { ElementName: "color", Type: [{ TypeName: "code" }] },
+        { ElementName: "color", Type: [{ TypeName: "CodeableConcept" }] },
         { ElementName: "measurementFrequency", Type: [{ TypeName: "Quantity" }] },
         { ElementName: "availability", Type: [{ TypeName: "CodeableConcept" }] },
         { ElementName: "calibration", Type: [{ TypeName: "devicemetric_calibration" }], IsArray: true },
@@ -3106,7 +2881,7 @@ export const devicemetric_calibration: TypeModel = {
     BaseTypeName: "BackboneElement",
     Elements: [
         { ElementName: "type", Type: [{ TypeName: "CodeableConcept" }] },
-        { ElementName: "state", Type: [{ TypeName: "code" }] },
+        { ElementName: "state", Type: [{ TypeName: "CodeableConcept" }] },
         { ElementName: "time", Type: [{ TypeName: "instant" }] },
     ],
 };
@@ -3159,6 +2934,7 @@ export const DiagnosticReport: TypeModel = {
         { ElementName: "identifier", Type: [{ TypeName: "Identifier" }], IsArray: true },
         { ElementName: "basedOn", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/CarePlan", "http://hl7.org/fhir/StructureDefinition/MedicationRequest", "http://hl7.org/fhir/StructureDefinition/NutritionOrder", "http://hl7.org/fhir/StructureDefinition/ServiceRequest"] }], IsArray: true },
         { ElementName: "status", Type: [{ TypeName: "code" }], Required: true },
+        { ElementName: "statusReason", Type: [{ TypeName: "CodeableConcept" }] },
         { ElementName: "category", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
         { ElementName: "code", Type: [{ TypeName: "CodeableConcept" }], Required: true },
         { ElementName: "subject", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/BiologicallyDerivedProduct", "http://hl7.org/fhir/StructureDefinition/Device", "http://hl7.org/fhir/StructureDefinition/Group", "http://hl7.org/fhir/StructureDefinition/Location", "http://hl7.org/fhir/StructureDefinition/Medication", "http://hl7.org/fhir/StructureDefinition/Organization", "http://hl7.org/fhir/StructureDefinition/Patient", "http://hl7.org/fhir/StructureDefinition/Practitioner", "http://hl7.org/fhir/StructureDefinition/Substance"] }] },
@@ -3178,7 +2954,7 @@ export const DiagnosticReport: TypeModel = {
         { ElementName: "composition", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Composition"] }] },
         { ElementName: "conclusion", Type: [{ TypeName: "markdown" }] },
         { ElementName: "conclusionCode", Type: [{ TypeName: "CodeableReference" }], IsArray: true },
-        { ElementName: "recomendation", Type: [{ TypeName: "CodeableReference" }], IsArray: true },
+        { ElementName: "recommendation", Type: [{ TypeName: "CodeableReference" }], IsArray: true },
         { ElementName: "presentedForm", Type: [{ TypeName: "Attachment" }], IsArray: true },
         { ElementName: "communication", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Communication"] }], IsArray: true },
         { ElementName: "comparison", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/List"] }] },
@@ -3209,7 +2985,7 @@ export const DocumentReference: TypeModel = {
     Elements: [
         { ElementName: "identifier", Type: [{ TypeName: "Identifier" }], IsArray: true },
         { ElementName: "version", Type: [{ TypeName: "string" }] },
-        { ElementName: "basedOn", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Appointment", "http://hl7.org/fhir/StructureDefinition/AppointmentResponse", "http://hl7.org/fhir/StructureDefinition/CarePlan", "http://hl7.org/fhir/StructureDefinition/Claim", "http://hl7.org/fhir/StructureDefinition/CommunicationRequest", "http://hl7.org/fhir/StructureDefinition/Contract", "http://hl7.org/fhir/StructureDefinition/CoverageEligibilityRequest", "http://hl7.org/fhir/StructureDefinition/DeviceRequest", "http://hl7.org/fhir/StructureDefinition/EnrollmentRequest", "http://hl7.org/fhir/StructureDefinition/MedicationRequest", "http://hl7.org/fhir/StructureDefinition/NutritionOrder", "http://hl7.org/fhir/StructureDefinition/RequestOrchestration", "http://hl7.org/fhir/StructureDefinition/ServiceRequest", "http://hl7.org/fhir/StructureDefinition/VisionPrescription"] }], IsArray: true },
+        { ElementName: "basedOn", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Appointment", "http://hl7.org/fhir/StructureDefinition/AppointmentResponse", "http://hl7.org/fhir/StructureDefinition/CarePlan", "http://hl7.org/fhir/StructureDefinition/Claim", "http://hl7.org/fhir/StructureDefinition/CommunicationRequest", "http://hl7.org/fhir/StructureDefinition/CoverageEligibilityRequest", "http://hl7.org/fhir/StructureDefinition/DeviceRequest", "http://hl7.org/fhir/StructureDefinition/MedicationRequest", "http://hl7.org/fhir/StructureDefinition/NutritionOrder", "http://hl7.org/fhir/StructureDefinition/RequestOrchestration", "http://hl7.org/fhir/StructureDefinition/ServiceRequest", "http://hl7.org/fhir/StructureDefinition/VisionPrescription"] }], IsArray: true },
         { ElementName: "status", Type: [{ TypeName: "code" }], Required: true },
         { ElementName: "docStatus", Type: [{ TypeName: "code" }] },
         { ElementName: "modality", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
@@ -3218,7 +2994,7 @@ export const DocumentReference: TypeModel = {
         { ElementName: "subject", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Resource"] }] },
         { ElementName: "context", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Appointment", "http://hl7.org/fhir/StructureDefinition/Encounter", "http://hl7.org/fhir/StructureDefinition/EpisodeOfCare"] }], IsArray: true },
         { ElementName: "event", Type: [{ TypeName: "CodeableReference" }], IsArray: true },
-        { ElementName: "related", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Resource"] }], IsArray: true },
+        { ElementName: "related", Type: [{ TypeName: "documentreference_related" }], IsArray: true },
         { ElementName: "bodyStructure", Type: [{ TypeName: "CodeableReference" }], IsArray: true },
         { ElementName: "facilityType", Type: [{ TypeName: "CodeableConcept" }] },
         { ElementName: "practiceSetting", Type: [{ TypeName: "CodeableConcept" }] },
@@ -3231,6 +3007,15 @@ export const DocumentReference: TypeModel = {
         { ElementName: "description", Type: [{ TypeName: "markdown" }] },
         { ElementName: "securityLabel", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
         { ElementName: "content", Type: [{ TypeName: "documentreference_content" }], IsArray: true, Required: true },
+    ],
+};
+
+export const documentreference_related: TypeModel = {
+    TypeName: "documentreference_related",
+    BaseTypeName: "BackboneElement",
+    Elements: [
+        { ElementName: "code", Type: [{ TypeName: "CodeableConcept" }] },
+        { ElementName: "target", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Resource"] }], Required: true },
     ],
 };
 
@@ -3322,7 +3107,7 @@ export const encounter_businessStatus: TypeModel = {
     BaseTypeName: "BackboneElement",
     Elements: [
         { ElementName: "code", Type: [{ TypeName: "CodeableConcept" }], Required: true },
-        { ElementName: "type", Type: [{ TypeName: "Coding" }] },
+        { ElementName: "type", Type: [{ TypeName: "CodeableConcept" }] },
         { ElementName: "effectiveDate", Type: [{ TypeName: "dateTime" }] },
     ],
 };
@@ -3410,36 +3195,6 @@ export const endpoint_payload: TypeModel = {
     ],
 };
 
-export const EnrollmentRequest: TypeModel = {
-    TypeName: "EnrollmentRequest",
-    BaseTypeName: "DomainResource",
-    Elements: [
-        { ElementName: "identifier", Type: [{ TypeName: "Identifier" }], IsArray: true },
-        { ElementName: "status", Type: [{ TypeName: "code" }] },
-        { ElementName: "created", Type: [{ TypeName: "dateTime" }] },
-        { ElementName: "insurer", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Organization"] }] },
-        { ElementName: "provider", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Organization", "http://hl7.org/fhir/StructureDefinition/Practitioner", "http://hl7.org/fhir/StructureDefinition/PractitionerRole"] }] },
-        { ElementName: "candidate", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Group", "http://hl7.org/fhir/StructureDefinition/Patient"] }] },
-        { ElementName: "coverage", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Coverage"] }] },
-    ],
-};
-
-export const EnrollmentResponse: TypeModel = {
-    TypeName: "EnrollmentResponse",
-    BaseTypeName: "DomainResource",
-    Elements: [
-        { ElementName: "identifier", Type: [{ TypeName: "Identifier" }], IsArray: true },
-        { ElementName: "status", Type: [{ TypeName: "code" }] },
-        { ElementName: "request", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/EnrollmentRequest"] }] },
-        { ElementName: "outcome", Type: [{ TypeName: "code" }] },
-        { ElementName: "disposition", Type: [{ TypeName: "string" }] },
-        { ElementName: "created", Type: [{ TypeName: "dateTime" }] },
-        { ElementName: "organization", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Organization"] }] },
-        { ElementName: "requestProvider", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Organization", "http://hl7.org/fhir/StructureDefinition/Practitioner", "http://hl7.org/fhir/StructureDefinition/PractitionerRole"] }] },
-        { ElementName: "candidate", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Group", "http://hl7.org/fhir/StructureDefinition/Patient"] }] },
-    ],
-};
-
 export const EpisodeOfCare: TypeModel = {
     TypeName: "EpisodeOfCare",
     BaseTypeName: "DomainResource",
@@ -3520,6 +3275,7 @@ export const EventDefinition: TypeModel = {
         { ElementName: "reviewer", Type: [{ TypeName: "ContactDetail" }], IsArray: true },
         { ElementName: "endorser", Type: [{ TypeName: "ContactDetail" }], IsArray: true },
         { ElementName: "relatedArtifact", Type: [{ TypeName: "RelatedArtifact" }], IsArray: true },
+        { ElementName: "library", Type: [{ TypeName: "canonical" }], IsArray: true },
         { ElementName: "trigger", Type: [{ TypeName: "TriggerDefinition" }], IsArray: true, Required: true },
     ],
 };
@@ -3535,7 +3291,7 @@ export const Evidence: TypeModel = {
         { ElementName: "name", Type: [{ TypeName: "string" }] },
         { ElementName: "title", Type: [{ TypeName: "string" }] },
         { ElementName: "citeAs", Type: [{ TypeName: "markdown" }] },
-        { ElementName: "status", Type: [{ TypeName: "code" }], Required: true },
+        { ElementName: "status", Type: [{ TypeName: "code" }] },
         { ElementName: "experimental", Type: [{ TypeName: "boolean" }] },
         { ElementName: "date", Type: [{ TypeName: "dateTime" }] },
         { ElementName: "approvalDate", Type: [{ TypeName: "date" }] },
@@ -3555,6 +3311,7 @@ export const Evidence: TypeModel = {
         { ElementName: "description", Type: [{ TypeName: "markdown" }] },
         { ElementName: "assertion", Type: [{ TypeName: "markdown" }] },
         { ElementName: "note", Type: [{ TypeName: "Annotation" }], IsArray: true },
+        { ElementName: "classification", Type: [{ TypeName: "evidence_classification" }], IsArray: true },
         { ElementName: "variableDefinition", Type: [{ TypeName: "evidence_variableDefinition" }], IsArray: true },
         { ElementName: "synthesisType", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
         { ElementName: "studyDesign", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
@@ -3569,6 +3326,15 @@ export const evidence_relatesTo: TypeModel = {
     Elements: [
         { ElementName: "type", Type: [{ TypeName: "CodeableConcept" }], Required: true },
         { ElementName: "target[x]", Type: [{ TypeName: "Attachment" }, { TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Resource"] }, { TypeName: "canonical" }, { TypeName: "markdown" }, { TypeName: "uri" }], Required: true },
+    ],
+};
+
+export const evidence_classification: TypeModel = {
+    TypeName: "evidence_classification",
+    BaseTypeName: "BackboneElement",
+    Elements: [
+        { ElementName: "type", Type: [{ TypeName: "CodeableConcept" }] },
+        { ElementName: "classifier", Type: [{ TypeName: "CodeableReference" }], IsArray: true },
     ],
 };
 
@@ -3681,7 +3447,7 @@ export const EvidenceVariable: TypeModel = {
         { ElementName: "title", Type: [{ TypeName: "string" }] },
         { ElementName: "shortTitle", Type: [{ TypeName: "string" }] },
         { ElementName: "citeAs", Type: [{ TypeName: "markdown" }] },
-        { ElementName: "status", Type: [{ TypeName: "code" }], Required: true },
+        { ElementName: "status", Type: [{ TypeName: "code" }] },
         { ElementName: "experimental", Type: [{ TypeName: "boolean" }] },
         { ElementName: "date", Type: [{ TypeName: "dateTime" }] },
         { ElementName: "author", Type: [{ TypeName: "ContactDetail" }], IsArray: true },
@@ -3880,6 +3646,7 @@ export const examplescenario_process_step_operation: TypeModel = {
     Elements: [
         { ElementName: "type", Type: [{ TypeName: "Coding" }] },
         { ElementName: "title", Type: [{ TypeName: "string" }], Required: true },
+        { ElementName: "definition", Type: [{ TypeName: "canonical" }] },
         { ElementName: "initiator", Type: [{ TypeName: "string" }] },
         { ElementName: "receiver", Type: [{ TypeName: "string" }] },
         { ElementName: "description", Type: [{ TypeName: "markdown" }] },
@@ -3921,8 +3688,7 @@ export const ExplanationOfBenefit: TypeModel = {
         { ElementName: "fundsReserveRequested", Type: [{ TypeName: "CodeableConcept" }] },
         { ElementName: "fundsReserve", Type: [{ TypeName: "CodeableConcept" }] },
         { ElementName: "related", Type: [{ TypeName: "explanationofbenefit_related" }], IsArray: true },
-        { ElementName: "prescription", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/DeviceRequest", "http://hl7.org/fhir/StructureDefinition/MedicationRequest", "http://hl7.org/fhir/StructureDefinition/ServiceRequest", "http://hl7.org/fhir/StructureDefinition/VisionPrescription"] }] },
-        { ElementName: "originalPrescription", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/DeviceRequest", "http://hl7.org/fhir/StructureDefinition/MedicationRequest", "http://hl7.org/fhir/StructureDefinition/ServiceRequest", "http://hl7.org/fhir/StructureDefinition/VisionPrescription"] }] },
+        { ElementName: "request", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/DeviceRequest", "http://hl7.org/fhir/StructureDefinition/MedicationRequest", "http://hl7.org/fhir/StructureDefinition/NutritionOrder", "http://hl7.org/fhir/StructureDefinition/RequestOrchestration", "http://hl7.org/fhir/StructureDefinition/ServiceRequest", "http://hl7.org/fhir/StructureDefinition/VisionPrescription"] }] },
         { ElementName: "event", Type: [{ TypeName: "explanationofbenefit_event" }], IsArray: true },
         { ElementName: "payee", Type: [{ TypeName: "explanationofbenefit_payee" }] },
         { ElementName: "referral", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/ServiceRequest"] }] },
@@ -4002,6 +3768,7 @@ export const explanationofbenefit_supportingInfo: TypeModel = {
     Elements: [
         { ElementName: "sequence", Type: [{ TypeName: "positiveInt" }], Required: true },
         { ElementName: "category", Type: [{ TypeName: "CodeableConcept" }], Required: true },
+        { ElementName: "subCategory", Type: [{ TypeName: "CodeableConcept" }] },
         { ElementName: "code", Type: [{ TypeName: "CodeableConcept" }] },
         { ElementName: "timing[x]", Type: [{ TypeName: "Period" }, { TypeName: "Timing" }, { TypeName: "dateTime" }] },
         { ElementName: "value[x]", Type: [{ TypeName: "Address" }, { TypeName: "Age" }, { TypeName: "Annotation" }, { TypeName: "Attachment" }, { TypeName: "Availability" }, { TypeName: "CodeableConcept" }, { TypeName: "CodeableReference" }, { TypeName: "Coding" }, { TypeName: "ContactDetail" }, { TypeName: "ContactPoint" }, { TypeName: "Count" }, { TypeName: "DataRequirement" }, { TypeName: "Distance" }, { TypeName: "Dosage" }, { TypeName: "Duration" }, { TypeName: "Expression" }, { TypeName: "ExtendedContactDetail" }, { TypeName: "HumanName" }, { TypeName: "Identifier" }, { TypeName: "Meta" }, { TypeName: "Money" }, { TypeName: "ParameterDefinition" }, { TypeName: "Period" }, { TypeName: "Quantity" }, { TypeName: "Range" }, { TypeName: "Ratio" }, { TypeName: "RatioRange" }, { TypeName: "Reference" }, { TypeName: "RelatedArtifact" }, { TypeName: "SampledData" }, { TypeName: "Signature" }, { TypeName: "Timing" }, { TypeName: "TriggerDefinition" }, { TypeName: "UsageContext" }, { TypeName: "VirtualServiceDetail" }, { TypeName: "base64Binary" }, { TypeName: "boolean" }, { TypeName: "canonical" }, { TypeName: "code" }, { TypeName: "date" }, { TypeName: "dateTime" }, { TypeName: "decimal" }, { TypeName: "id" }, { TypeName: "instant" }, { TypeName: "integer" }, { TypeName: "integer64" }, { TypeName: "markdown" }, { TypeName: "oid" }, { TypeName: "positiveInt" }, { TypeName: "string" }, { TypeName: "time" }, { TypeName: "unsignedInt" }, { TypeName: "uri" }, { TypeName: "url" }, { TypeName: "uuid" }] },
@@ -4014,7 +3781,7 @@ export const explanationofbenefit_diagnosis: TypeModel = {
     BaseTypeName: "BackboneElement",
     Elements: [
         { ElementName: "sequence", Type: [{ TypeName: "positiveInt" }], Required: true },
-        { ElementName: "diagnosis[x]", Type: [{ TypeName: "CodeableConcept" }, { TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Condition"] }], Required: true },
+        { ElementName: "diagnosis", Type: [{ TypeName: "CodeableReference" }], Required: true },
         { ElementName: "type", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
         { ElementName: "onAdmission", Type: [{ TypeName: "CodeableConcept" }] },
     ],
@@ -4027,7 +3794,7 @@ export const explanationofbenefit_procedure: TypeModel = {
         { ElementName: "sequence", Type: [{ TypeName: "positiveInt" }], Required: true },
         { ElementName: "type", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
         { ElementName: "date", Type: [{ TypeName: "dateTime" }] },
-        { ElementName: "procedure[x]", Type: [{ TypeName: "CodeableConcept" }, { TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Procedure"] }], Required: true },
+        { ElementName: "procedure", Type: [{ TypeName: "CodeableReference" }], Required: true },
         { ElementName: "udi", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Device"] }], IsArray: true },
     ],
 };
@@ -4332,7 +4099,6 @@ export const FamilyMemberHistory: TypeModel = {
         { ElementName: "sex", Type: [{ TypeName: "CodeableConcept" }] },
         { ElementName: "born[x]", Type: [{ TypeName: "Period" }, { TypeName: "date" }, { TypeName: "string" }] },
         { ElementName: "age[x]", Type: [{ TypeName: "Age" }, { TypeName: "Range" }, { TypeName: "string" }] },
-        { ElementName: "estimatedAge", Type: [{ TypeName: "boolean" }] },
         { ElementName: "deceased[x]", Type: [{ TypeName: "Age" }, { TypeName: "Range" }, { TypeName: "boolean" }, { TypeName: "date" }, { TypeName: "string" }] },
         { ElementName: "reason", Type: [{ TypeName: "CodeableReference" }], IsArray: true },
         { ElementName: "note", Type: [{ TypeName: "Annotation" }], IsArray: true },
@@ -4377,7 +4143,7 @@ export const Flag: TypeModel = {
         { ElementName: "period", Type: [{ TypeName: "Period" }] },
         { ElementName: "encounter", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Encounter"] }] },
         { ElementName: "author", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Device", "http://hl7.org/fhir/StructureDefinition/Organization", "http://hl7.org/fhir/StructureDefinition/Patient", "http://hl7.org/fhir/StructureDefinition/Practitioner", "http://hl7.org/fhir/StructureDefinition/PractitionerRole", "http://hl7.org/fhir/StructureDefinition/RelatedPerson"] }] },
-        { ElementName: "supportingInfo", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/AllergyIntolerance", "http://hl7.org/fhir/StructureDefinition/Condition", "http://hl7.org/fhir/StructureDefinition/Observation", "http://hl7.org/fhir/StructureDefinition/Procedure", "http://hl7.org/fhir/StructureDefinition/RiskAssessment"] }], IsArray: true },
+        { ElementName: "supportingInfo", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/AllergyIntolerance", "http://hl7.org/fhir/StructureDefinition/Condition", "http://hl7.org/fhir/StructureDefinition/DiagnosticReport", "http://hl7.org/fhir/StructureDefinition/DocumentReference", "http://hl7.org/fhir/StructureDefinition/Observation", "http://hl7.org/fhir/StructureDefinition/Procedure", "http://hl7.org/fhir/StructureDefinition/RiskAssessment"] }], IsArray: true },
     ],
 };
 
@@ -4387,7 +4153,9 @@ export const Goal: TypeModel = {
     Elements: [
         { ElementName: "identifier", Type: [{ TypeName: "Identifier" }], IsArray: true },
         { ElementName: "lifecycleStatus", Type: [{ TypeName: "code" }], Required: true },
+        { ElementName: "lifecycleStatusReason", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
         { ElementName: "achievementStatus", Type: [{ TypeName: "CodeableConcept" }] },
+        { ElementName: "achievementStatusDate", Type: [{ TypeName: "date" }] },
         { ElementName: "category", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
         { ElementName: "continuous", Type: [{ TypeName: "boolean" }] },
         { ElementName: "priority", Type: [{ TypeName: "CodeableConcept" }] },
@@ -4396,8 +4164,6 @@ export const Goal: TypeModel = {
         { ElementName: "start[x]", Type: [{ TypeName: "CodeableConcept" }, { TypeName: "date" }] },
         { ElementName: "acceptance", Type: [{ TypeName: "goal_acceptance" }], IsArray: true },
         { ElementName: "target", Type: [{ TypeName: "goal_target" }], IsArray: true },
-        { ElementName: "statusDate", Type: [{ TypeName: "date" }] },
-        { ElementName: "statusReason", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
         { ElementName: "recorder", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Group", "http://hl7.org/fhir/StructureDefinition/Patient", "http://hl7.org/fhir/StructureDefinition/Practitioner", "http://hl7.org/fhir/StructureDefinition/PractitionerRole", "http://hl7.org/fhir/StructureDefinition/RelatedPerson"] }] },
         { ElementName: "source", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/CareTeam", "http://hl7.org/fhir/StructureDefinition/Group", "http://hl7.org/fhir/StructureDefinition/Patient", "http://hl7.org/fhir/StructureDefinition/Practitioner", "http://hl7.org/fhir/StructureDefinition/PractitionerRole", "http://hl7.org/fhir/StructureDefinition/RelatedPerson"] }] },
         { ElementName: "addresses", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Condition", "http://hl7.org/fhir/StructureDefinition/MedicationRequest", "http://hl7.org/fhir/StructureDefinition/MedicationStatement", "http://hl7.org/fhir/StructureDefinition/NutritionIntake", "http://hl7.org/fhir/StructureDefinition/NutritionOrder", "http://hl7.org/fhir/StructureDefinition/Observation", "http://hl7.org/fhir/StructureDefinition/Procedure", "http://hl7.org/fhir/StructureDefinition/RiskAssessment", "http://hl7.org/fhir/StructureDefinition/ServiceRequest"] }], IsArray: true },
@@ -4446,7 +4212,7 @@ export const Group: TypeModel = {
         { ElementName: "copyright", Type: [{ TypeName: "markdown" }] },
         { ElementName: "copyrightLabel", Type: [{ TypeName: "string" }] },
         { ElementName: "type", Type: [{ TypeName: "code" }] },
-        { ElementName: "membership", Type: [{ TypeName: "code" }], Required: true },
+        { ElementName: "membership", Type: [{ TypeName: "code" }] },
         { ElementName: "code", Type: [{ TypeName: "CodeableConcept" }] },
         { ElementName: "quantity", Type: [{ TypeName: "unsignedInt" }] },
         { ElementName: "managingEntity", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Organization", "http://hl7.org/fhir/StructureDefinition/Practitioner", "http://hl7.org/fhir/StructureDefinition/PractitionerRole", "http://hl7.org/fhir/StructureDefinition/RelatedPerson"] }] },
@@ -4472,7 +4238,7 @@ export const group_characteristic: TypeModel = {
         { ElementName: "instances[x]", Type: [{ TypeName: "Range" }, { TypeName: "unsignedInt" }] },
         { ElementName: "duration[x]", Type: [{ TypeName: "Duration" }, { TypeName: "Range" }] },
         { ElementName: "period", Type: [{ TypeName: "Period" }] },
-        { ElementName: "timing", Type: [{ TypeName: "RelativeTime" }], IsArray: true },
+        { ElementName: "relativeTime", Type: [{ TypeName: "RelativeTime" }], IsArray: true },
     ],
 };
 
@@ -4494,6 +4260,7 @@ export const GuidanceResponse: TypeModel = {
         { ElementName: "requestIdentifier", Type: [{ TypeName: "Identifier" }] },
         { ElementName: "identifier", Type: [{ TypeName: "Identifier" }], IsArray: true },
         { ElementName: "module[x]", Type: [{ TypeName: "CodeableConcept" }, { TypeName: "canonical" }, { TypeName: "uri" }], Required: true },
+        { ElementName: "topic", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
         { ElementName: "status", Type: [{ TypeName: "code" }], Required: true },
         { ElementName: "subject", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Group", "http://hl7.org/fhir/StructureDefinition/Patient"] }] },
         { ElementName: "encounter", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Encounter"] }] },
@@ -4502,9 +4269,11 @@ export const GuidanceResponse: TypeModel = {
         { ElementName: "location", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Location"] }] },
         { ElementName: "reason", Type: [{ TypeName: "CodeableReference" }], IsArray: true },
         { ElementName: "note", Type: [{ TypeName: "Annotation" }], IsArray: true },
-        { ElementName: "evaluationMessage", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/OperationOutcome"] }] },
+        { ElementName: "evaluationMessage", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/OperationOutcome"] }], IsArray: true },
+        { ElementName: "inputParameters", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Parameters"] }] },
         { ElementName: "outputParameters", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Parameters"] }] },
-        { ElementName: "result", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Appointment", "http://hl7.org/fhir/StructureDefinition/AppointmentResponse", "http://hl7.org/fhir/StructureDefinition/CarePlan", "http://hl7.org/fhir/StructureDefinition/Claim", "http://hl7.org/fhir/StructureDefinition/CommunicationRequest", "http://hl7.org/fhir/StructureDefinition/Contract", "http://hl7.org/fhir/StructureDefinition/CoverageEligibilityRequest", "http://hl7.org/fhir/StructureDefinition/DeviceRequest", "http://hl7.org/fhir/StructureDefinition/EnrollmentRequest", "http://hl7.org/fhir/StructureDefinition/MedicationRequest", "http://hl7.org/fhir/StructureDefinition/NutritionOrder", "http://hl7.org/fhir/StructureDefinition/RequestOrchestration", "http://hl7.org/fhir/StructureDefinition/ServiceRequest", "http://hl7.org/fhir/StructureDefinition/Task", "http://hl7.org/fhir/StructureDefinition/VisionPrescription"] }], IsArray: true },
+        { ElementName: "indicator", Type: [{ TypeName: "CodeableConcept" }] },
+        { ElementName: "result", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Appointment", "http://hl7.org/fhir/StructureDefinition/AppointmentResponse", "http://hl7.org/fhir/StructureDefinition/CarePlan", "http://hl7.org/fhir/StructureDefinition/Claim", "http://hl7.org/fhir/StructureDefinition/CommunicationRequest", "http://hl7.org/fhir/StructureDefinition/CoverageEligibilityRequest", "http://hl7.org/fhir/StructureDefinition/DeviceRequest", "http://hl7.org/fhir/StructureDefinition/MedicationRequest", "http://hl7.org/fhir/StructureDefinition/NutritionOrder", "http://hl7.org/fhir/StructureDefinition/RequestOrchestration", "http://hl7.org/fhir/StructureDefinition/ServiceRequest", "http://hl7.org/fhir/StructureDefinition/Task", "http://hl7.org/fhir/StructureDefinition/VisionPrescription"] }], IsArray: true },
         { ElementName: "dataRequirement", Type: [{ TypeName: "DataRequirement" }], IsArray: true },
     ],
 };
@@ -4654,7 +4423,7 @@ export const imagingstudy_series: TypeModel = {
         { ElementName: "description", Type: [{ TypeName: "string" }] },
         { ElementName: "numberOfInstances", Type: [{ TypeName: "unsignedInt" }] },
         { ElementName: "endpoint", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Endpoint"] }], IsArray: true },
-        { ElementName: "bodySite", Type: [{ TypeName: "CodeableReference" }] },
+        { ElementName: "bodySite", Type: [{ TypeName: "CodeableReference" }], IsArray: true },
         { ElementName: "specimen", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Specimen"] }], IsArray: true },
         { ElementName: "started", Type: [{ TypeName: "dateTime" }] },
         { ElementName: "performer", Type: [{ TypeName: "imagingstudy_series_performer" }], IsArray: true },
@@ -4678,6 +4447,7 @@ export const imagingstudy_series_instance: TypeModel = {
         { ElementName: "uid", Type: [{ TypeName: "id" }], Required: true },
         { ElementName: "sopClass", Type: [{ TypeName: "oid" }], Required: true },
         { ElementName: "number", Type: [{ TypeName: "unsignedInt" }] },
+        { ElementName: "numberOfFrames", Type: [{ TypeName: "unsignedInt" }] },
         { ElementName: "title", Type: [{ TypeName: "string" }] },
     ],
 };
@@ -4803,7 +4573,7 @@ export const implementationguide_global: TypeModel = {
     TypeName: "implementationguide_global",
     BaseTypeName: "BackboneElement",
     Elements: [
-        { ElementName: "type", Type: [{ TypeName: "code" }], Required: true },
+        { ElementName: "type", Type: [{ TypeName: "uri" }], Required: true },
         { ElementName: "profile", Type: [{ TypeName: "canonical" }], Required: true },
     ],
 };
@@ -4911,7 +4681,7 @@ export const Ingredient: TypeModel = {
     TypeName: "Ingredient",
     BaseTypeName: "DomainResource",
     Elements: [
-        { ElementName: "identifier", Type: [{ TypeName: "Identifier" }] },
+        { ElementName: "identifier", Type: [{ TypeName: "Identifier" }], IsArray: true },
         { ElementName: "status", Type: [{ TypeName: "code" }], Required: true },
         { ElementName: "for", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/AdministrableProductDefinition", "http://hl7.org/fhir/StructureDefinition/ManufacturedItemDefinition", "http://hl7.org/fhir/StructureDefinition/MedicinalProductDefinition"] }], IsArray: true },
         { ElementName: "role", Type: [{ TypeName: "CodeableConcept" }], Required: true },
@@ -4968,164 +4738,6 @@ export const ingredient_substance_strength_referenceStrength: TypeModel = {
     ],
 };
 
-export const InsurancePlan: TypeModel = {
-    TypeName: "InsurancePlan",
-    BaseTypeName: "DomainResource",
-    Elements: [
-        { ElementName: "identifier", Type: [{ TypeName: "Identifier" }], IsArray: true },
-        { ElementName: "type", Type: [{ TypeName: "CodeableConcept" }] },
-        { ElementName: "product", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/InsuranceProduct"] }] },
-        { ElementName: "coverageArea", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Location"] }], IsArray: true },
-        { ElementName: "network", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Organization"] }], IsArray: true },
-        { ElementName: "generalCost", Type: [{ TypeName: "insuranceplan_generalCost" }], IsArray: true },
-        { ElementName: "specificCost", Type: [{ TypeName: "insuranceplan_specificCost" }], IsArray: true },
-    ],
-};
-
-export const insuranceplan_generalCost: TypeModel = {
-    TypeName: "insuranceplan_generalCost",
-    BaseTypeName: "BackboneElement",
-    Elements: [
-        { ElementName: "type", Type: [{ TypeName: "CodeableConcept" }] },
-        { ElementName: "groupSize", Type: [{ TypeName: "positiveInt" }] },
-        { ElementName: "cost", Type: [{ TypeName: "Money" }] },
-        { ElementName: "comment", Type: [{ TypeName: "string" }] },
-    ],
-};
-
-export const insuranceplan_specificCost: TypeModel = {
-    TypeName: "insuranceplan_specificCost",
-    BaseTypeName: "BackboneElement",
-    Elements: [
-        { ElementName: "category", Type: [{ TypeName: "CodeableConcept" }], Required: true },
-        { ElementName: "benefit", Type: [{ TypeName: "insuranceplan_specificCost_benefit" }], IsArray: true },
-    ],
-};
-
-export const insuranceplan_specificCost_benefit: TypeModel = {
-    TypeName: "insuranceplan_specificCost_benefit",
-    BaseTypeName: "BackboneElement",
-    Elements: [
-        { ElementName: "type", Type: [{ TypeName: "CodeableConcept" }], Required: true },
-        { ElementName: "cost", Type: [{ TypeName: "insuranceplan_specificCost_benefit_cost" }], IsArray: true },
-    ],
-};
-
-export const insuranceplan_specificCost_benefit_cost: TypeModel = {
-    TypeName: "insuranceplan_specificCost_benefit_cost",
-    BaseTypeName: "BackboneElement",
-    Elements: [
-        { ElementName: "type", Type: [{ TypeName: "CodeableConcept" }], Required: true },
-        { ElementName: "applicability", Type: [{ TypeName: "CodeableConcept" }] },
-        { ElementName: "qualifier", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
-        { ElementName: "value", Type: [{ TypeName: "Quantity" }] },
-    ],
-};
-
-export const InsuranceProduct: TypeModel = {
-    TypeName: "InsuranceProduct",
-    BaseTypeName: "DomainResource",
-    Elements: [
-        { ElementName: "identifier", Type: [{ TypeName: "Identifier" }], IsArray: true },
-        { ElementName: "status", Type: [{ TypeName: "code" }] },
-        { ElementName: "type", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
-        { ElementName: "name", Type: [{ TypeName: "string" }] },
-        { ElementName: "alias", Type: [{ TypeName: "string" }], IsArray: true },
-        { ElementName: "period", Type: [{ TypeName: "Period" }] },
-        { ElementName: "ownedBy", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Organization"] }] },
-        { ElementName: "administeredBy", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Organization"] }] },
-        { ElementName: "coverageArea", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Location"] }], IsArray: true },
-        { ElementName: "contact", Type: [{ TypeName: "ExtendedContactDetail" }], IsArray: true },
-        { ElementName: "endpoint", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Endpoint"] }], IsArray: true },
-        { ElementName: "network", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Organization"] }], IsArray: true },
-        { ElementName: "coverage", Type: [{ TypeName: "insuranceproduct_coverage" }], IsArray: true },
-        { ElementName: "related", Type: [{ TypeName: "insuranceproduct_related" }], IsArray: true },
-    ],
-};
-
-export const insuranceproduct_coverage: TypeModel = {
-    TypeName: "insuranceproduct_coverage",
-    BaseTypeName: "BackboneElement",
-    Elements: [
-        { ElementName: "type", Type: [{ TypeName: "CodeableConcept" }], Required: true },
-        { ElementName: "network", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Organization"] }], IsArray: true },
-        { ElementName: "benefit", Type: [{ TypeName: "insuranceproduct_coverage_benefit" }], IsArray: true, Required: true },
-    ],
-};
-
-export const insuranceproduct_coverage_benefit: TypeModel = {
-    TypeName: "insuranceproduct_coverage_benefit",
-    BaseTypeName: "BackboneElement",
-    Elements: [
-        { ElementName: "type", Type: [{ TypeName: "CodeableConcept" }], Required: true },
-        { ElementName: "requirement", Type: [{ TypeName: "string" }] },
-        { ElementName: "limit", Type: [{ TypeName: "insuranceproduct_coverage_benefit_limit" }], IsArray: true },
-    ],
-};
-
-export const insuranceproduct_coverage_benefit_limit: TypeModel = {
-    TypeName: "insuranceproduct_coverage_benefit_limit",
-    BaseTypeName: "BackboneElement",
-    Elements: [
-        { ElementName: "value", Type: [{ TypeName: "Quantity" }] },
-        { ElementName: "code", Type: [{ TypeName: "CodeableConcept" }] },
-    ],
-};
-
-export const insuranceproduct_related: TypeModel = {
-    TypeName: "insuranceproduct_related",
-    BaseTypeName: "BackboneElement",
-    Elements: [
-        { ElementName: "product", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/InsuranceProduct"] }] },
-        { ElementName: "relationship", Type: [{ TypeName: "CodeableConcept" }] },
-        { ElementName: "period", Type: [{ TypeName: "Period" }] },
-    ],
-};
-
-export const Invoice: TypeModel = {
-    TypeName: "Invoice",
-    BaseTypeName: "DomainResource",
-    Elements: [
-        { ElementName: "identifier", Type: [{ TypeName: "Identifier" }], IsArray: true },
-        { ElementName: "status", Type: [{ TypeName: "code" }], Required: true },
-        { ElementName: "cancelledReason", Type: [{ TypeName: "string" }] },
-        { ElementName: "type", Type: [{ TypeName: "CodeableConcept" }] },
-        { ElementName: "subject", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Group", "http://hl7.org/fhir/StructureDefinition/Patient"] }] },
-        { ElementName: "recipient", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Organization", "http://hl7.org/fhir/StructureDefinition/Patient", "http://hl7.org/fhir/StructureDefinition/RelatedPerson"] }] },
-        { ElementName: "creation", Type: [{ TypeName: "dateTime" }] },
-        { ElementName: "period[x]", Type: [{ TypeName: "Period" }, { TypeName: "date" }] },
-        { ElementName: "participant", Type: [{ TypeName: "invoice_participant" }], IsArray: true },
-        { ElementName: "issuer", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Organization", "http://hl7.org/fhir/StructureDefinition/Practitioner", "http://hl7.org/fhir/StructureDefinition/PractitionerRole"] }] },
-        { ElementName: "account", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Account"] }] },
-        { ElementName: "lineItem", Type: [{ TypeName: "invoice_lineItem" }], IsArray: true },
-        { ElementName: "totalPriceComponent", Type: [{ TypeName: "MonetaryComponent" }], IsArray: true },
-        { ElementName: "totalNet", Type: [{ TypeName: "Money" }] },
-        { ElementName: "totalGross", Type: [{ TypeName: "Money" }] },
-        { ElementName: "paymentTerms", Type: [{ TypeName: "markdown" }] },
-        { ElementName: "note", Type: [{ TypeName: "Annotation" }], IsArray: true },
-    ],
-};
-
-export const invoice_participant: TypeModel = {
-    TypeName: "invoice_participant",
-    BaseTypeName: "BackboneElement",
-    Elements: [
-        { ElementName: "role", Type: [{ TypeName: "CodeableConcept" }] },
-        { ElementName: "actor", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Device", "http://hl7.org/fhir/StructureDefinition/Organization", "http://hl7.org/fhir/StructureDefinition/Patient", "http://hl7.org/fhir/StructureDefinition/Practitioner", "http://hl7.org/fhir/StructureDefinition/PractitionerRole", "http://hl7.org/fhir/StructureDefinition/RelatedPerson"] }], Required: true },
-    ],
-};
-
-export const invoice_lineItem: TypeModel = {
-    TypeName: "invoice_lineItem",
-    BaseTypeName: "BackboneElement",
-    Elements: [
-        { ElementName: "sequence", Type: [{ TypeName: "positiveInt" }] },
-        { ElementName: "serviced[x]", Type: [{ TypeName: "Period" }, { TypeName: "date" }] },
-        { ElementName: "chargeItem[x]", Type: [{ TypeName: "CodeableConcept" }, { TypeName: "Reference" }], Required: true },
-        { ElementName: "priceComponent", Type: [{ TypeName: "MonetaryComponent" }], IsArray: true },
-    ],
-};
-
 export const Library: TypeModel = {
     TypeName: "Library",
     BaseTypeName: "DomainResource",
@@ -5179,6 +4791,7 @@ export const List: TypeModel = {
         { ElementName: "encounter", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Encounter"] }] },
         { ElementName: "date", Type: [{ TypeName: "dateTime" }] },
         { ElementName: "source", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/CareTeam", "http://hl7.org/fhir/StructureDefinition/Device", "http://hl7.org/fhir/StructureDefinition/Group", "http://hl7.org/fhir/StructureDefinition/Organization", "http://hl7.org/fhir/StructureDefinition/Patient", "http://hl7.org/fhir/StructureDefinition/Practitioner", "http://hl7.org/fhir/StructureDefinition/PractitionerRole", "http://hl7.org/fhir/StructureDefinition/RelatedPerson"] }] },
+        { ElementName: "contributor", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/CareTeam", "http://hl7.org/fhir/StructureDefinition/Device", "http://hl7.org/fhir/StructureDefinition/Group", "http://hl7.org/fhir/StructureDefinition/Organization", "http://hl7.org/fhir/StructureDefinition/Patient", "http://hl7.org/fhir/StructureDefinition/Practitioner", "http://hl7.org/fhir/StructureDefinition/PractitionerRole", "http://hl7.org/fhir/StructureDefinition/RelatedPerson"] }], IsArray: true },
         { ElementName: "orderedBy", Type: [{ TypeName: "CodeableConcept" }] },
         { ElementName: "note", Type: [{ TypeName: "Annotation" }], IsArray: true },
         { ElementName: "entry", Type: [{ TypeName: "list_entry" }], IsArray: true },
@@ -5324,7 +4937,6 @@ export const Measure: TypeModel = {
         { ElementName: "rationale", Type: [{ TypeName: "markdown" }] },
         { ElementName: "clinicalRecommendationStatement", Type: [{ TypeName: "markdown" }] },
         { ElementName: "term", Type: [{ TypeName: "measure_term" }], IsArray: true },
-        { ElementName: "guidance", Type: [{ TypeName: "markdown" }] },
         { ElementName: "group", Type: [{ TypeName: "measure_group" }], IsArray: true },
         { ElementName: "supplementalData", Type: [{ TypeName: "measure_supplementalData" }], IsArray: true },
     ],
@@ -5440,7 +5052,7 @@ export const MeasureReport: TypeModel = {
         { ElementName: "category", Type: [{ TypeName: "CodeableConcept" }] },
         { ElementName: "messages", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/OperationOutcome"] }] },
         { ElementName: "status", Type: [{ TypeName: "code" }], Required: true },
-        { ElementName: "type", Type: [{ TypeName: "code" }], Required: true },
+        { ElementName: "type", Type: [{ TypeName: "code" }] },
         { ElementName: "dataUpdateType", Type: [{ TypeName: "code" }] },
         { ElementName: "measure", Type: [{ TypeName: "canonical" }] },
         { ElementName: "subject", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/CareTeam", "http://hl7.org/fhir/StructureDefinition/Device", "http://hl7.org/fhir/StructureDefinition/Group", "http://hl7.org/fhir/StructureDefinition/HealthcareService", "http://hl7.org/fhir/StructureDefinition/Location", "http://hl7.org/fhir/StructureDefinition/Organization", "http://hl7.org/fhir/StructureDefinition/Patient", "http://hl7.org/fhir/StructureDefinition/Practitioner", "http://hl7.org/fhir/StructureDefinition/PractitionerRole", "http://hl7.org/fhir/StructureDefinition/RelatedPerson"] }] },
@@ -5468,6 +5080,7 @@ export const measurereport_group: TypeModel = {
         { ElementName: "type", Type: [{ TypeName: "CodeableConcept" }] },
         { ElementName: "subject", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/CareTeam", "http://hl7.org/fhir/StructureDefinition/Device", "http://hl7.org/fhir/StructureDefinition/Group", "http://hl7.org/fhir/StructureDefinition/HealthcareService", "http://hl7.org/fhir/StructureDefinition/Location", "http://hl7.org/fhir/StructureDefinition/Organization", "http://hl7.org/fhir/StructureDefinition/Patient", "http://hl7.org/fhir/StructureDefinition/Practitioner", "http://hl7.org/fhir/StructureDefinition/PractitionerRole", "http://hl7.org/fhir/StructureDefinition/RelatedPerson"] }] },
         { ElementName: "scoring", Type: [{ TypeName: "CodeableConcept" }] },
+        { ElementName: "compositeScoring", Type: [{ TypeName: "CodeableConcept" }] },
         { ElementName: "improvementNotation", Type: [{ TypeName: "CodeableConcept" }] },
         { ElementName: "improvementNotationGuidance", Type: [{ TypeName: "markdown" }] },
         { ElementName: "population", Type: [{ TypeName: "measurereport_group_population" }], IsArray: true },
@@ -5508,7 +5121,7 @@ export const measurereport_group_stratifier_stratum: TypeModel = {
     TypeName: "measurereport_group_stratifier_stratum",
     BaseTypeName: "BackboneElement",
     Elements: [
-        { ElementName: "value[x]", Type: [{ TypeName: "CodeableConcept" }, { TypeName: "Quantity" }, { TypeName: "Range" }, { TypeName: "Reference" }, { TypeName: "boolean" }] },
+        { ElementName: "value[x]", Type: [{ TypeName: "CodeableConcept" }, { TypeName: "Period" }, { TypeName: "Quantity" }, { TypeName: "Range" }, { TypeName: "Reference" }, { TypeName: "boolean" }, { TypeName: "string" }] },
         { ElementName: "component", Type: [{ TypeName: "measurereport_group_stratifier_stratum_component" }], IsArray: true },
         { ElementName: "population", Type: [{ TypeName: "measurereport_group_stratifier_stratum_population" }], IsArray: true },
         { ElementName: "measureScore[x]", Type: [{ TypeName: "CodeableConcept" }, { TypeName: "Duration" }, { TypeName: "Period" }, { TypeName: "Quantity" }, { TypeName: "Range" }, { TypeName: "Ratio" }, { TypeName: "boolean" }, { TypeName: "dateTime" }] },
@@ -5522,7 +5135,7 @@ export const measurereport_group_stratifier_stratum_component: TypeModel = {
         { ElementName: "linkId", Type: [{ TypeName: "string" }] },
         { ElementName: "code", Type: [{ TypeName: "CodeableConcept" }], Required: true },
         { ElementName: "description", Type: [{ TypeName: "markdown" }] },
-        { ElementName: "value[x]", Type: [{ TypeName: "CodeableConcept" }, { TypeName: "Quantity" }, { TypeName: "Range" }, { TypeName: "Reference" }, { TypeName: "boolean" }], Required: true },
+        { ElementName: "value[x]", Type: [{ TypeName: "CodeableConcept" }, { TypeName: "Period" }, { TypeName: "Quantity" }, { TypeName: "Range" }, { TypeName: "Reference" }, { TypeName: "boolean" }, { TypeName: "string" }], Required: true },
     ],
 };
 
@@ -5869,7 +5482,7 @@ export const medicinalproductdefinition_name_usage: TypeModel = {
     Elements: [
         { ElementName: "country", Type: [{ TypeName: "CodeableConcept" }], Required: true },
         { ElementName: "jurisdiction", Type: [{ TypeName: "CodeableConcept" }] },
-        { ElementName: "language", Type: [{ TypeName: "CodeableConcept" }], Required: true },
+        { ElementName: "language", Type: [{ TypeName: "CodeableConcept" }] },
     ],
 };
 
@@ -5938,7 +5551,7 @@ export const messagedefinition_focus: TypeModel = {
     TypeName: "messagedefinition_focus",
     BaseTypeName: "BackboneElement",
     Elements: [
-        { ElementName: "code", Type: [{ TypeName: "code" }], Required: true },
+        { ElementName: "code", Type: [{ TypeName: "uri" }], Required: true },
         { ElementName: "profile", Type: [{ TypeName: "canonical" }] },
         { ElementName: "min", Type: [{ TypeName: "unsignedInt" }], Required: true },
         { ElementName: "max", Type: [{ TypeName: "string" }] },
@@ -6009,7 +5622,6 @@ export const MetadataResource: TypeModel = {
         { ElementName: "approvalDate", Type: [{ TypeName: "date" }] },
         { ElementName: "lastReviewDate", Type: [{ TypeName: "date" }] },
         { ElementName: "effectivePeriod", Type: [{ TypeName: "Period" }] },
-        { ElementName: "topic", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
         { ElementName: "author", Type: [{ TypeName: "ContactDetail" }], IsArray: true },
         { ElementName: "editor", Type: [{ TypeName: "ContactDetail" }], IsArray: true },
         { ElementName: "reviewer", Type: [{ TypeName: "ContactDetail" }], IsArray: true },
@@ -6286,8 +5898,8 @@ export const NutritionProduct: TypeModel = {
     TypeName: "NutritionProduct",
     BaseTypeName: "DomainResource",
     Elements: [
+        { ElementName: "status", Type: [{ TypeName: "code" }] },
         { ElementName: "code", Type: [{ TypeName: "CodeableConcept" }] },
-        { ElementName: "status", Type: [{ TypeName: "code" }], Required: true },
         { ElementName: "category", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
         { ElementName: "manufacturer", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Organization", "http://hl7.org/fhir/StructureDefinition/RelatedPerson"] }], IsArray: true },
         { ElementName: "nutrient", Type: [{ TypeName: "nutritionproduct_nutrient" }], IsArray: true },
@@ -6351,6 +5963,7 @@ export const Observation: TypeModel = {
         { ElementName: "triggeredBy", Type: [{ TypeName: "observation_triggeredBy" }], IsArray: true },
         { ElementName: "partOf", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/ImagingStudy", "http://hl7.org/fhir/StructureDefinition/Immunization", "http://hl7.org/fhir/StructureDefinition/MedicationAdministration", "http://hl7.org/fhir/StructureDefinition/MedicationDispense", "http://hl7.org/fhir/StructureDefinition/MedicationStatement", "http://hl7.org/fhir/StructureDefinition/Procedure"] }], IsArray: true },
         { ElementName: "status", Type: [{ TypeName: "code" }], Required: true },
+        { ElementName: "statusReason", Type: [{ TypeName: "CodeableConcept" }] },
         { ElementName: "category", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
         { ElementName: "code", Type: [{ TypeName: "CodeableConcept" }], Required: true },
         { ElementName: "subject", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/BiologicallyDerivedProduct", "http://hl7.org/fhir/StructureDefinition/Device", "http://hl7.org/fhir/StructureDefinition/Group", "http://hl7.org/fhir/StructureDefinition/Location", "http://hl7.org/fhir/StructureDefinition/Medication", "http://hl7.org/fhir/StructureDefinition/NutritionProduct", "http://hl7.org/fhir/StructureDefinition/Organization", "http://hl7.org/fhir/StructureDefinition/Patient", "http://hl7.org/fhir/StructureDefinition/Practitioner", "http://hl7.org/fhir/StructureDefinition/Procedure", "http://hl7.org/fhir/StructureDefinition/Substance"] }] },
@@ -6363,13 +5976,14 @@ export const Observation: TypeModel = {
         { ElementName: "value[x]", Type: [{ TypeName: "Attachment" }, { TypeName: "CodeableConcept" }, { TypeName: "Period" }, { TypeName: "Quantity" }, { TypeName: "Range" }, { TypeName: "Ratio" }, { TypeName: "SampledData" }, { TypeName: "boolean" }, { TypeName: "dateTime" }, { TypeName: "integer" }, { TypeName: "string" }, { TypeName: "time" }] },
         { ElementName: "dataAbsentReason", Type: [{ TypeName: "CodeableConcept" }] },
         { ElementName: "interpretation", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
-        { ElementName: "interpretationContext", Type: [{ TypeName: "CodeableReference" }], IsArray: true },
+        { ElementName: "context", Type: [{ TypeName: "CodeableReference" }], IsArray: true },
         { ElementName: "note", Type: [{ TypeName: "Annotation" }], IsArray: true },
         { ElementName: "bodySite", Type: [{ TypeName: "CodeableConcept" }] },
-        { ElementName: "bodyStructure", Type: [{ TypeName: "CodeableReference" }] },
+        { ElementName: "bodyStructure", Type: [{ TypeName: "CodeableReference" }], IsArray: true },
         { ElementName: "method", Type: [{ TypeName: "CodeableConcept" }] },
         { ElementName: "specimen", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Group", "http://hl7.org/fhir/StructureDefinition/Specimen"] }] },
         { ElementName: "device", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Device", "http://hl7.org/fhir/StructureDefinition/DeviceMetric"] }] },
+        { ElementName: "supportingDevice", Type: [{ TypeName: "CodeableReference" }], IsArray: true },
         { ElementName: "referenceRange", Type: [{ TypeName: "observation_referenceRange" }], IsArray: true },
         { ElementName: "hasMember", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Observation", "http://hl7.org/fhir/StructureDefinition/QuestionnaireResponse"] }], IsArray: true },
         { ElementName: "derivedFrom", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/DocumentReference", "http://hl7.org/fhir/StructureDefinition/ImagingSelection", "http://hl7.org/fhir/StructureDefinition/ImagingStudy", "http://hl7.org/fhir/StructureDefinition/Observation", "http://hl7.org/fhir/StructureDefinition/QuestionnaireResponse"] }], IsArray: true },
@@ -6418,7 +6032,7 @@ export const ObservationDefinition: TypeModel = {
     BaseTypeName: "DomainResource",
     Elements: [
         { ElementName: "url", Type: [{ TypeName: "uri" }] },
-        { ElementName: "identifier", Type: [{ TypeName: "Identifier" }] },
+        { ElementName: "identifier", Type: [{ TypeName: "Identifier" }], IsArray: true },
         { ElementName: "version", Type: [{ TypeName: "string" }] },
         { ElementName: "versionAlgorithm[x]", Type: [{ TypeName: "Coding" }, { TypeName: "string" }] },
         { ElementName: "name", Type: [{ TypeName: "string" }] },
@@ -6445,10 +6059,11 @@ export const ObservationDefinition: TypeModel = {
         { ElementName: "code", Type: [{ TypeName: "CodeableConcept" }], Required: true },
         { ElementName: "permittedDataType", Type: [{ TypeName: "code" }], IsArray: true },
         { ElementName: "multipleResultsAllowed", Type: [{ TypeName: "boolean" }] },
-        { ElementName: "bodyStructure", Type: [{ TypeName: "CodeableReference" }] },
+        { ElementName: "bodyStructure", Type: [{ TypeName: "CodeableReference" }], IsArray: true },
         { ElementName: "method", Type: [{ TypeName: "CodeableConcept" }] },
         { ElementName: "specimen", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/SpecimenDefinition"] }], IsArray: true },
         { ElementName: "device[x]", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Device"] }, { TypeName: "canonical" }] },
+        { ElementName: "supportingDevice", Type: [{ TypeName: "CodeableReference" }], IsArray: true },
         { ElementName: "preferredReportName", Type: [{ TypeName: "string" }] },
         { ElementName: "permittedUnit", Type: [{ TypeName: "Coding" }], IsArray: true },
         { ElementName: "qualifiedValue", Type: [{ TypeName: "observationdefinition_qualifiedValue" }], IsArray: true },
@@ -6515,7 +6130,7 @@ export const OperationDefinition: TypeModel = {
         { ElementName: "code", Type: [{ TypeName: "code" }], Required: true },
         { ElementName: "comment", Type: [{ TypeName: "markdown" }] },
         { ElementName: "base", Type: [{ TypeName: "canonical" }] },
-        { ElementName: "resource", Type: [{ TypeName: "code" }], IsArray: true },
+        { ElementName: "resource", Type: [{ TypeName: "uri" }], IsArray: true },
         { ElementName: "system", Type: [{ TypeName: "boolean" }], Required: true },
         { ElementName: "type", Type: [{ TypeName: "boolean" }], Required: true },
         { ElementName: "instance", Type: [{ TypeName: "boolean" }], Required: true },
@@ -6536,7 +6151,7 @@ export const operationdefinition_parameter: TypeModel = {
         { ElementName: "min", Type: [{ TypeName: "unsignedInt" }], Required: true },
         { ElementName: "max", Type: [{ TypeName: "string" }], Required: true },
         { ElementName: "documentation", Type: [{ TypeName: "markdown" }] },
-        { ElementName: "type", Type: [{ TypeName: "code" }] },
+        { ElementName: "type", Type: [{ TypeName: "uri" }] },
         { ElementName: "allowedType", Type: [{ TypeName: "code" }], IsArray: true },
         { ElementName: "targetProfile", Type: [{ TypeName: "canonical" }], IsArray: true },
         { ElementName: "searchType", Type: [{ TypeName: "code" }] },
@@ -6589,7 +6204,6 @@ export const operationoutcome_issue: TypeModel = {
         { ElementName: "code", Type: [{ TypeName: "code" }], Required: true },
         { ElementName: "details", Type: [{ TypeName: "CodeableConcept" }] },
         { ElementName: "diagnostics", Type: [{ TypeName: "string" }] },
-        { ElementName: "location", Type: [{ TypeName: "string" }], IsArray: true },
         { ElementName: "expression", Type: [{ TypeName: "string" }], IsArray: true },
     ],
 };
@@ -6632,7 +6246,6 @@ export const OrganizationAffiliation: TypeModel = {
         { ElementName: "period", Type: [{ TypeName: "Period" }] },
         { ElementName: "organization", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Organization"] }] },
         { ElementName: "participatingOrganization", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Organization"] }] },
-        { ElementName: "network", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Organization"] }], IsArray: true },
         { ElementName: "code", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
         { ElementName: "specialty", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
         { ElementName: "location", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Location"] }], IsArray: true },
@@ -6799,8 +6412,10 @@ export const PaymentNotice: TypeModel = {
         { ElementName: "reporter", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Organization", "http://hl7.org/fhir/StructureDefinition/Practitioner", "http://hl7.org/fhir/StructureDefinition/PractitionerRole"] }] },
         { ElementName: "payment", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/PaymentReconciliation"] }] },
         { ElementName: "paymentDate", Type: [{ TypeName: "date" }] },
-        { ElementName: "payee", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Organization", "http://hl7.org/fhir/StructureDefinition/Practitioner", "http://hl7.org/fhir/StructureDefinition/PractitionerRole"] }] },
-        { ElementName: "recipient", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Organization"] }], Required: true },
+        { ElementName: "claimIdentifier", Type: [{ TypeName: "Identifier" }], IsArray: true },
+        { ElementName: "payee", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Organization", "http://hl7.org/fhir/StructureDefinition/Patient", "http://hl7.org/fhir/StructureDefinition/Practitioner", "http://hl7.org/fhir/StructureDefinition/PractitionerRole", "http://hl7.org/fhir/StructureDefinition/RelatedPerson"] }] },
+        { ElementName: "recipient", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Organization", "http://hl7.org/fhir/StructureDefinition/Patient", "http://hl7.org/fhir/StructureDefinition/RelatedPerson"] }], Required: true },
+        { ElementName: "patient", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Patient"] }] },
         { ElementName: "amount", Type: [{ TypeName: "Money" }], Required: true },
         { ElementName: "paymentStatus", Type: [{ TypeName: "CodeableConcept" }] },
     ],
@@ -6849,8 +6464,9 @@ export const paymentreconciliation_allocation: TypeModel = {
     Elements: [
         { ElementName: "identifier", Type: [{ TypeName: "Identifier" }] },
         { ElementName: "predecessor", Type: [{ TypeName: "Identifier" }] },
-        { ElementName: "target", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Account", "http://hl7.org/fhir/StructureDefinition/Claim", "http://hl7.org/fhir/StructureDefinition/Contract", "http://hl7.org/fhir/StructureDefinition/Encounter", "http://hl7.org/fhir/StructureDefinition/Invoice"] }] },
+        { ElementName: "target", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Account", "http://hl7.org/fhir/StructureDefinition/Claim", "http://hl7.org/fhir/StructureDefinition/Encounter", "http://hl7.org/fhir/StructureDefinition/Group", "http://hl7.org/fhir/StructureDefinition/Patient"] }] },
         { ElementName: "targetItem[x]", Type: [{ TypeName: "Identifier" }, { TypeName: "positiveInt" }, { TypeName: "string" }] },
+        { ElementName: "characteristics", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Observation"] }] },
         { ElementName: "encounter", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Encounter"] }] },
         { ElementName: "account", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Account"] }] },
         { ElementName: "type", Type: [{ TypeName: "CodeableConcept" }] },
@@ -7147,7 +6763,6 @@ export const PractitionerRole: TypeModel = {
         { ElementName: "period", Type: [{ TypeName: "Period" }] },
         { ElementName: "practitioner", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Practitioner"] }] },
         { ElementName: "organization", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Organization"] }] },
-        { ElementName: "network", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Organization"] }], IsArray: true },
         { ElementName: "code", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
         { ElementName: "display", Type: [{ TypeName: "string" }] },
         { ElementName: "specialty", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
@@ -7182,8 +6797,7 @@ export const Procedure: TypeModel = {
         { ElementName: "performer", Type: [{ TypeName: "procedure_performer" }], IsArray: true },
         { ElementName: "location", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Location"] }] },
         { ElementName: "reason", Type: [{ TypeName: "CodeableReference" }], IsArray: true },
-        { ElementName: "bodySite", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
-        { ElementName: "bodyStructure", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/BodyStructure"] }] },
+        { ElementName: "bodyStructure", Type: [{ TypeName: "CodeableReference" }], IsArray: true },
         { ElementName: "outcome", Type: [{ TypeName: "CodeableReference" }], IsArray: true },
         { ElementName: "report", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Bundle", "http://hl7.org/fhir/StructureDefinition/Composition", "http://hl7.org/fhir/StructureDefinition/DiagnosticReport", "http://hl7.org/fhir/StructureDefinition/DocumentReference"] }], IsArray: true },
         { ElementName: "complication", Type: [{ TypeName: "CodeableReference" }], IsArray: true },
@@ -7224,7 +6838,7 @@ export const Provenance: TypeModel = {
         { ElementName: "recorded", Type: [{ TypeName: "instant" }] },
         { ElementName: "policy", Type: [{ TypeName: "uri" }], IsArray: true },
         { ElementName: "location", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Location"] }] },
-        { ElementName: "authorization", Type: [{ TypeName: "CodeableReference" }], IsArray: true },
+        { ElementName: "authorization", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
         { ElementName: "why", Type: [{ TypeName: "markdown" }] },
         { ElementName: "activity", Type: [{ TypeName: "CodeableConcept" }] },
         { ElementName: "basedOn", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Resource"] }], IsArray: true },
@@ -7243,7 +6857,7 @@ export const provenance_agent: TypeModel = {
         { ElementName: "type", Type: [{ TypeName: "CodeableConcept" }] },
         { ElementName: "role", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
         { ElementName: "who", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/CareTeam", "http://hl7.org/fhir/StructureDefinition/Device", "http://hl7.org/fhir/StructureDefinition/Group", "http://hl7.org/fhir/StructureDefinition/HealthcareService", "http://hl7.org/fhir/StructureDefinition/Organization", "http://hl7.org/fhir/StructureDefinition/Patient", "http://hl7.org/fhir/StructureDefinition/Practitioner", "http://hl7.org/fhir/StructureDefinition/PractitionerRole", "http://hl7.org/fhir/StructureDefinition/RelatedPerson"] }], Required: true },
-        { ElementName: "onBehalfOf", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/CareTeam", "http://hl7.org/fhir/StructureDefinition/Group", "http://hl7.org/fhir/StructureDefinition/HealthcareService", "http://hl7.org/fhir/StructureDefinition/Organization", "http://hl7.org/fhir/StructureDefinition/Patient", "http://hl7.org/fhir/StructureDefinition/Practitioner", "http://hl7.org/fhir/StructureDefinition/PractitionerRole"] }] },
+        { ElementName: "onBehalfOf", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/CareTeam", "http://hl7.org/fhir/StructureDefinition/Group", "http://hl7.org/fhir/StructureDefinition/HealthcareService", "http://hl7.org/fhir/StructureDefinition/Organization", "http://hl7.org/fhir/StructureDefinition/Patient", "http://hl7.org/fhir/StructureDefinition/Practitioner", "http://hl7.org/fhir/StructureDefinition/PractitionerRole", "http://hl7.org/fhir/StructureDefinition/RelatedPerson"] }] },
     ],
 };
 
@@ -7405,7 +7019,7 @@ export const regulatedauthorization_case: TypeModel = {
     TypeName: "regulatedauthorization_case",
     BaseTypeName: "BackboneElement",
     Elements: [
-        { ElementName: "identifier", Type: [{ TypeName: "Identifier" }] },
+        { ElementName: "identifier", Type: [{ TypeName: "Identifier" }], IsArray: true },
         { ElementName: "type", Type: [{ TypeName: "CodeableConcept" }] },
         { ElementName: "status", Type: [{ TypeName: "CodeableConcept" }] },
         { ElementName: "date[x]", Type: [{ TypeName: "Period" }, { TypeName: "dateTime" }] },
@@ -7664,7 +7278,7 @@ export const ResearchStudy: TypeModel = {
         { ElementName: "relatesTo", Type: [{ TypeName: "researchstudy_relatesTo" }], IsArray: true },
         { ElementName: "date", Type: [{ TypeName: "dateTime" }] },
         { ElementName: "status", Type: [{ TypeName: "code" }], Required: true },
-        { ElementName: "primaryPurposeType", Type: [{ TypeName: "CodeableConcept" }] },
+        { ElementName: "purposeType", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
         { ElementName: "phase", Type: [{ TypeName: "CodeableConcept" }] },
         { ElementName: "studyDesign", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
         { ElementName: "focus", Type: [{ TypeName: "CodeableReference" }], IsArray: true },
@@ -7683,7 +7297,7 @@ export const ResearchStudy: TypeModel = {
         { ElementName: "recruitment", Type: [{ TypeName: "researchstudy_recruitment" }] },
         { ElementName: "comparisonGroup", Type: [{ TypeName: "researchstudy_comparisonGroup" }], IsArray: true },
         { ElementName: "objective", Type: [{ TypeName: "researchstudy_objective" }], IsArray: true },
-        { ElementName: "result", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Composition", "http://hl7.org/fhir/StructureDefinition/DiagnosticReport", "http://hl7.org/fhir/StructureDefinition/Evidence"] }], IsArray: true },
+        { ElementName: "result", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Composition", "http://hl7.org/fhir/StructureDefinition/DiagnosticReport", "http://hl7.org/fhir/StructureDefinition/DocumentReference", "http://hl7.org/fhir/StructureDefinition/Evidence"] }], IsArray: true },
     ],
 };
 
@@ -7748,6 +7362,7 @@ export const researchstudy_comparisonGroup: TypeModel = {
         { ElementName: "actualNumber", Type: [{ TypeName: "unsignedInt" }] },
         { ElementName: "eligibility", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Group"] }] },
         { ElementName: "observedGroup", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Group"] }] },
+        { ElementName: "name", Type: [{ TypeName: "string" }] },
         { ElementName: "description", Type: [{ TypeName: "markdown" }] },
     ],
 };
@@ -7915,12 +7530,12 @@ export const SearchParameter: TypeModel = {
         { ElementName: "copyrightLabel", Type: [{ TypeName: "string" }] },
         { ElementName: "code", Type: [{ TypeName: "code" }], Required: true },
         { ElementName: "aliasCode", Type: [{ TypeName: "code" }], IsArray: true },
-        { ElementName: "base", Type: [{ TypeName: "code" }], IsArray: true, Required: true },
+        { ElementName: "base", Type: [{ TypeName: "uri" }], IsArray: true, Required: true },
         { ElementName: "type", Type: [{ TypeName: "code" }], Required: true },
         { ElementName: "expression", Type: [{ TypeName: "string" }] },
         { ElementName: "processingMode", Type: [{ TypeName: "code" }] },
         { ElementName: "constraint", Type: [{ TypeName: "string" }] },
-        { ElementName: "target", Type: [{ TypeName: "code" }], IsArray: true },
+        { ElementName: "target", Type: [{ TypeName: "uri" }], IsArray: true },
         { ElementName: "multipleOr", Type: [{ TypeName: "boolean" }] },
         { ElementName: "multipleAnd", Type: [{ TypeName: "boolean" }] },
         { ElementName: "comparator", Type: [{ TypeName: "code" }], IsArray: true },
@@ -7944,8 +7559,8 @@ export const ServiceRequest: TypeModel = {
     BaseTypeName: "DomainResource",
     Elements: [
         { ElementName: "identifier", Type: [{ TypeName: "Identifier" }], IsArray: true },
-        { ElementName: "basedOn", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/CarePlan", "http://hl7.org/fhir/StructureDefinition/DocumentReference", "http://hl7.org/fhir/StructureDefinition/DocumentReference", "http://hl7.org/fhir/StructureDefinition/MedicationRequest", "http://hl7.org/fhir/StructureDefinition/NutritionOrder", "http://hl7.org/fhir/StructureDefinition/RequestOrchestration", "http://hl7.org/fhir/StructureDefinition/ServiceRequest"] }], IsArray: true },
-        { ElementName: "replaces", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/CarePlan", "http://hl7.org/fhir/StructureDefinition/CommunicationRequest", "http://hl7.org/fhir/StructureDefinition/DeviceRequest", "http://hl7.org/fhir/StructureDefinition/MedicationRequest", "http://hl7.org/fhir/StructureDefinition/NutritionOrder", "http://hl7.org/fhir/StructureDefinition/RequestOrchestration", "http://hl7.org/fhir/StructureDefinition/ServiceRequest", "http://hl7.org/fhir/StructureDefinition/VisionPrescription"] }], IsArray: true },
+        { ElementName: "basedOn", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/CarePlan", "http://hl7.org/fhir/StructureDefinition/CommunicationRequest", "http://hl7.org/fhir/StructureDefinition/DeviceRequest", "http://hl7.org/fhir/StructureDefinition/DocumentReference", "http://hl7.org/fhir/StructureDefinition/MedicationRequest", "http://hl7.org/fhir/StructureDefinition/NutritionOrder", "http://hl7.org/fhir/StructureDefinition/RequestOrchestration", "http://hl7.org/fhir/StructureDefinition/ServiceRequest", "http://hl7.org/fhir/StructureDefinition/VisionPrescription"] }], IsArray: true },
+        { ElementName: "replaces", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/CarePlan", "http://hl7.org/fhir/StructureDefinition/CommunicationRequest", "http://hl7.org/fhir/StructureDefinition/DeviceRequest", "http://hl7.org/fhir/StructureDefinition/DocumentReference", "http://hl7.org/fhir/StructureDefinition/MedicationRequest", "http://hl7.org/fhir/StructureDefinition/NutritionOrder", "http://hl7.org/fhir/StructureDefinition/RequestOrchestration", "http://hl7.org/fhir/StructureDefinition/ServiceRequest", "http://hl7.org/fhir/StructureDefinition/VisionPrescription"] }], IsArray: true },
         { ElementName: "requisition", Type: [{ TypeName: "Identifier" }] },
         { ElementName: "status", Type: [{ TypeName: "code" }], Required: true },
         { ElementName: "statusReason", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
@@ -7970,8 +7585,7 @@ export const ServiceRequest: TypeModel = {
         { ElementName: "reason", Type: [{ TypeName: "CodeableReference" }], IsArray: true },
         { ElementName: "insurance", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/ClaimResponse", "http://hl7.org/fhir/StructureDefinition/Coverage"] }], IsArray: true },
         { ElementName: "supportingInfo", Type: [{ TypeName: "CodeableReference" }], IsArray: true },
-        { ElementName: "specimen", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Specimen"] }], IsArray: true },
-        { ElementName: "bodyStructure", Type: [{ TypeName: "CodeableReference" }] },
+        { ElementName: "bodyStructure", Type: [{ TypeName: "CodeableReference" }], IsArray: true },
         { ElementName: "note", Type: [{ TypeName: "Annotation" }], IsArray: true },
         { ElementName: "patientInstruction", Type: [{ TypeName: "servicerequest_patientInstruction" }], IsArray: true },
         { ElementName: "relevantHistory", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Provenance"] }], IsArray: true },
@@ -8030,6 +7644,7 @@ export const Specimen: TypeModel = {
         { ElementName: "status", Type: [{ TypeName: "code" }] },
         { ElementName: "type", Type: [{ TypeName: "CodeableConcept" }] },
         { ElementName: "subject", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/BiologicallyDerivedProduct", "http://hl7.org/fhir/StructureDefinition/Device", "http://hl7.org/fhir/StructureDefinition/Group", "http://hl7.org/fhir/StructureDefinition/Location", "http://hl7.org/fhir/StructureDefinition/NutritionProduct", "http://hl7.org/fhir/StructureDefinition/Patient", "http://hl7.org/fhir/StructureDefinition/Substance"] }] },
+        { ElementName: "focus", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/BiologicallyDerivedProduct", "http://hl7.org/fhir/StructureDefinition/Device", "http://hl7.org/fhir/StructureDefinition/Group", "http://hl7.org/fhir/StructureDefinition/Location", "http://hl7.org/fhir/StructureDefinition/NutritionProduct", "http://hl7.org/fhir/StructureDefinition/Patient", "http://hl7.org/fhir/StructureDefinition/RelatedPerson", "http://hl7.org/fhir/StructureDefinition/Substance"] }] },
         { ElementName: "receivedTime", Type: [{ TypeName: "dateTime" }] },
         { ElementName: "parent", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Specimen"] }], IsArray: true },
         { ElementName: "request", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/ServiceRequest"] }], IsArray: true },
@@ -8062,9 +7677,9 @@ export const specimen_collection: TypeModel = {
         { ElementName: "duration", Type: [{ TypeName: "Duration" }] },
         { ElementName: "quantity", Type: [{ TypeName: "Quantity" }] },
         { ElementName: "method", Type: [{ TypeName: "CodeableConcept" }] },
-        { ElementName: "device[x]", Type: [{ TypeName: "CodeableConcept" }, { TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Device"] }, { TypeName: "canonical" }] },
+        { ElementName: "device", Type: [{ TypeName: "CodeableReference" }] },
         { ElementName: "procedure", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Procedure"] }] },
-        { ElementName: "bodySite", Type: [{ TypeName: "CodeableReference" }] },
+        { ElementName: "bodyStructure", Type: [{ TypeName: "CodeableReference" }], IsArray: true },
         { ElementName: "fastingStatus[x]", Type: [{ TypeName: "CodeableConcept" }, { TypeName: "Duration" }] },
     ],
 };
@@ -8076,9 +7691,18 @@ export const specimen_processing: TypeModel = {
         { ElementName: "description", Type: [{ TypeName: "string" }] },
         { ElementName: "method", Type: [{ TypeName: "CodeableConcept" }] },
         { ElementName: "performer", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Patient", "http://hl7.org/fhir/StructureDefinition/Practitioner", "http://hl7.org/fhir/StructureDefinition/PractitionerRole", "http://hl7.org/fhir/StructureDefinition/RelatedPerson"] }] },
-        { ElementName: "device[x]", Type: [{ TypeName: "CodeableConcept" }, { TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Device"] }, { TypeName: "canonical" }] },
-        { ElementName: "additive", Type: [{ TypeName: "CodeableReference" }], IsArray: true },
+        { ElementName: "device", Type: [{ TypeName: "CodeableReference" }] },
+        { ElementName: "additive", Type: [{ TypeName: "specimen_processing_additive" }], IsArray: true },
         { ElementName: "time[x]", Type: [{ TypeName: "Duration" }, { TypeName: "Period" }, { TypeName: "dateTime" }] },
+    ],
+};
+
+export const specimen_processing_additive: TypeModel = {
+    TypeName: "specimen_processing_additive",
+    BaseTypeName: "BackboneElement",
+    Elements: [
+        { ElementName: "type", Type: [{ TypeName: "CodeableReference" }], Required: true },
+        { ElementName: "quantity", Type: [{ TypeName: "Quantity" }] },
     ],
 };
 
@@ -8086,7 +7710,7 @@ export const specimen_container: TypeModel = {
     TypeName: "specimen_container",
     BaseTypeName: "BackboneElement",
     Elements: [
-        { ElementName: "device[x]", Type: [{ TypeName: "CodeableConcept" }, { TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Device"] }, { TypeName: "canonical" }], Required: true },
+        { ElementName: "device", Type: [{ TypeName: "CodeableReference" }], Required: true },
         { ElementName: "specimenQuantity", Type: [{ TypeName: "Quantity" }] },
     ],
 };
@@ -8096,7 +7720,7 @@ export const SpecimenDefinition: TypeModel = {
     BaseTypeName: "DomainResource",
     Elements: [
         { ElementName: "url", Type: [{ TypeName: "uri" }] },
-        { ElementName: "identifier", Type: [{ TypeName: "Identifier" }] },
+        { ElementName: "identifier", Type: [{ TypeName: "Identifier" }], IsArray: true },
         { ElementName: "version", Type: [{ TypeName: "string" }] },
         { ElementName: "versionAlgorithm[x]", Type: [{ TypeName: "Coding" }, { TypeName: "string" }] },
         { ElementName: "name", Type: [{ TypeName: "string" }] },
@@ -8105,7 +7729,7 @@ export const SpecimenDefinition: TypeModel = {
         { ElementName: "derivedFromUri", Type: [{ TypeName: "uri" }], IsArray: true },
         { ElementName: "status", Type: [{ TypeName: "code" }], Required: true },
         { ElementName: "experimental", Type: [{ TypeName: "boolean" }] },
-        { ElementName: "subject[x]", Type: [{ TypeName: "CodeableConcept" }, { TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Group"] }] },
+        { ElementName: "subjectReference", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Group"] }] },
         { ElementName: "date", Type: [{ TypeName: "dateTime" }] },
         { ElementName: "publisher", Type: [{ TypeName: "string" }] },
         { ElementName: "contact", Type: [{ TypeName: "ContactDetail" }], IsArray: true },
@@ -8147,11 +7771,7 @@ export const specimendefinition_typeTested_container: TypeModel = {
     TypeName: "specimendefinition_typeTested_container",
     BaseTypeName: "BackboneElement",
     Elements: [
-        { ElementName: "material", Type: [{ TypeName: "CodeableConcept" }] },
-        { ElementName: "type", Type: [{ TypeName: "CodeableConcept" }] },
-        { ElementName: "cap", Type: [{ TypeName: "CodeableConcept" }] },
-        { ElementName: "description", Type: [{ TypeName: "markdown" }] },
-        { ElementName: "capacity", Type: [{ TypeName: "Quantity" }] },
+        { ElementName: "device[x]", Type: [{ TypeName: "CodeableConcept" }, { TypeName: "canonical" }] },
         { ElementName: "minimumVolume[x]", Type: [{ TypeName: "Quantity" }, { TypeName: "string" }] },
         { ElementName: "additive", Type: [{ TypeName: "specimendefinition_typeTested_container_additive" }], IsArray: true },
         { ElementName: "preparation", Type: [{ TypeName: "markdown" }] },
@@ -8162,7 +7782,8 @@ export const specimendefinition_typeTested_container_additive: TypeModel = {
     TypeName: "specimendefinition_typeTested_container_additive",
     BaseTypeName: "BackboneElement",
     Elements: [
-        { ElementName: "additive[x]", Type: [{ TypeName: "CodeableConcept" }, { TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/SubstanceDefinition"] }], Required: true },
+        { ElementName: "type", Type: [{ TypeName: "CodeableReference" }], Required: true },
+        { ElementName: "quantity", Type: [{ TypeName: "Quantity" }] },
     ],
 };
 
@@ -8246,140 +7867,6 @@ export const structuredefinition_differential: TypeModel = {
     BaseTypeName: "BackboneElement",
     Elements: [
         { ElementName: "element", Type: [{ TypeName: "ElementDefinition" }], IsArray: true, Required: true },
-    ],
-};
-
-export const StructureMap: TypeModel = {
-    TypeName: "StructureMap",
-    BaseTypeName: "DomainResource",
-    Elements: [
-        { ElementName: "url", Type: [{ TypeName: "uri" }], Required: true },
-        { ElementName: "identifier", Type: [{ TypeName: "Identifier" }], IsArray: true },
-        { ElementName: "version", Type: [{ TypeName: "string" }] },
-        { ElementName: "versionAlgorithm[x]", Type: [{ TypeName: "Coding" }, { TypeName: "string" }] },
-        { ElementName: "name", Type: [{ TypeName: "string" }], Required: true },
-        { ElementName: "title", Type: [{ TypeName: "string" }] },
-        { ElementName: "status", Type: [{ TypeName: "code" }], Required: true },
-        { ElementName: "experimental", Type: [{ TypeName: "boolean" }] },
-        { ElementName: "date", Type: [{ TypeName: "dateTime" }] },
-        { ElementName: "publisher", Type: [{ TypeName: "string" }] },
-        { ElementName: "contact", Type: [{ TypeName: "ContactDetail" }], IsArray: true },
-        { ElementName: "description", Type: [{ TypeName: "markdown" }] },
-        { ElementName: "useContext", Type: [{ TypeName: "UsageContext" }], IsArray: true },
-        { ElementName: "jurisdiction", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
-        { ElementName: "purpose", Type: [{ TypeName: "markdown" }] },
-        { ElementName: "copyright", Type: [{ TypeName: "markdown" }] },
-        { ElementName: "copyrightLabel", Type: [{ TypeName: "string" }] },
-        { ElementName: "structure", Type: [{ TypeName: "structuremap_structure" }], IsArray: true },
-        { ElementName: "import", Type: [{ TypeName: "canonical" }], IsArray: true },
-        { ElementName: "const", Type: [{ TypeName: "structuremap_const" }], IsArray: true },
-        { ElementName: "group", Type: [{ TypeName: "structuremap_group" }], IsArray: true, Required: true },
-    ],
-};
-
-export const structuremap_structure: TypeModel = {
-    TypeName: "structuremap_structure",
-    BaseTypeName: "BackboneElement",
-    Elements: [
-        { ElementName: "url", Type: [{ TypeName: "canonical" }], Required: true },
-        { ElementName: "mode", Type: [{ TypeName: "code" }], Required: true },
-        { ElementName: "alias", Type: [{ TypeName: "string" }] },
-        { ElementName: "documentation", Type: [{ TypeName: "string" }] },
-    ],
-};
-
-export const structuremap_const: TypeModel = {
-    TypeName: "structuremap_const",
-    BaseTypeName: "BackboneElement",
-    Elements: [
-        { ElementName: "name", Type: [{ TypeName: "id" }] },
-        { ElementName: "value", Type: [{ TypeName: "string" }] },
-    ],
-};
-
-export const structuremap_group: TypeModel = {
-    TypeName: "structuremap_group",
-    BaseTypeName: "BackboneElement",
-    Elements: [
-        { ElementName: "name", Type: [{ TypeName: "id" }], Required: true },
-        { ElementName: "extends", Type: [{ TypeName: "id" }] },
-        { ElementName: "typeMode", Type: [{ TypeName: "code" }] },
-        { ElementName: "documentation", Type: [{ TypeName: "string" }] },
-        { ElementName: "input", Type: [{ TypeName: "structuremap_group_input" }], IsArray: true, Required: true },
-        { ElementName: "rule", Type: [{ TypeName: "structuremap_group_rule" }], IsArray: true },
-    ],
-};
-
-export const structuremap_group_input: TypeModel = {
-    TypeName: "structuremap_group_input",
-    BaseTypeName: "BackboneElement",
-    Elements: [
-        { ElementName: "name", Type: [{ TypeName: "id" }], Required: true },
-        { ElementName: "type", Type: [{ TypeName: "string" }] },
-        { ElementName: "mode", Type: [{ TypeName: "code" }], Required: true },
-        { ElementName: "documentation", Type: [{ TypeName: "string" }] },
-    ],
-};
-
-export const structuremap_group_rule: TypeModel = {
-    TypeName: "structuremap_group_rule",
-    BaseTypeName: "BackboneElement",
-    Elements: [
-        { ElementName: "name", Type: [{ TypeName: "id" }] },
-        { ElementName: "source", Type: [{ TypeName: "structuremap_group_rule_source" }], IsArray: true, Required: true },
-        { ElementName: "target", Type: [{ TypeName: "structuremap_group_rule_target" }], IsArray: true },
-        { ElementName: "rule", Type: [{ TypeName: "structuremap_group_rule" }], IsArray: true },
-        { ElementName: "dependent", Type: [{ TypeName: "structuremap_group_rule_dependent" }], IsArray: true },
-        { ElementName: "documentation", Type: [{ TypeName: "string" }] },
-    ],
-};
-
-export const structuremap_group_rule_source: TypeModel = {
-    TypeName: "structuremap_group_rule_source",
-    BaseTypeName: "BackboneElement",
-    Elements: [
-        { ElementName: "context", Type: [{ TypeName: "id" }], Required: true },
-        { ElementName: "min", Type: [{ TypeName: "unsignedInt" }] },
-        { ElementName: "max", Type: [{ TypeName: "string" }] },
-        { ElementName: "type", Type: [{ TypeName: "string" }] },
-        { ElementName: "defaultValue", Type: [{ TypeName: "string" }] },
-        { ElementName: "element", Type: [{ TypeName: "string" }] },
-        { ElementName: "listMode", Type: [{ TypeName: "code" }] },
-        { ElementName: "variable", Type: [{ TypeName: "id" }] },
-        { ElementName: "condition", Type: [{ TypeName: "string" }] },
-        { ElementName: "check", Type: [{ TypeName: "string" }] },
-        { ElementName: "logMessage", Type: [{ TypeName: "string" }] },
-    ],
-};
-
-export const structuremap_group_rule_target: TypeModel = {
-    TypeName: "structuremap_group_rule_target",
-    BaseTypeName: "BackboneElement",
-    Elements: [
-        { ElementName: "context", Type: [{ TypeName: "string" }] },
-        { ElementName: "element", Type: [{ TypeName: "string" }] },
-        { ElementName: "variable", Type: [{ TypeName: "id" }] },
-        { ElementName: "listMode", Type: [{ TypeName: "code" }], IsArray: true },
-        { ElementName: "listRuleId", Type: [{ TypeName: "id" }] },
-        { ElementName: "transform", Type: [{ TypeName: "code" }] },
-        { ElementName: "parameter", Type: [{ TypeName: "structuremap_group_rule_target_parameter" }], IsArray: true },
-    ],
-};
-
-export const structuremap_group_rule_target_parameter: TypeModel = {
-    TypeName: "structuremap_group_rule_target_parameter",
-    BaseTypeName: "BackboneElement",
-    Elements: [
-        { ElementName: "value[x]", Type: [{ TypeName: "boolean" }, { TypeName: "date" }, { TypeName: "dateTime" }, { TypeName: "decimal" }, { TypeName: "id" }, { TypeName: "integer" }, { TypeName: "string" }, { TypeName: "time" }], Required: true },
-    ],
-};
-
-export const structuremap_group_rule_dependent: TypeModel = {
-    TypeName: "structuremap_group_rule_dependent",
-    BaseTypeName: "BackboneElement",
-    Elements: [
-        { ElementName: "name", Type: [{ TypeName: "id" }], Required: true },
-        { ElementName: "parameter", Type: [{ TypeName: "structuremap_group_rule_target_parameter" }], IsArray: true, Required: true },
     ],
 };
 
@@ -8588,6 +8075,7 @@ export const SubstanceDefinition: TypeModel = {
         { ElementName: "classification", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
         { ElementName: "domain", Type: [{ TypeName: "CodeableConcept" }] },
         { ElementName: "grade", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
+        { ElementName: "glycosylationType", Type: [{ TypeName: "CodeableConcept" }] },
         { ElementName: "description", Type: [{ TypeName: "markdown" }] },
         { ElementName: "note", Type: [{ TypeName: "Annotation" }], IsArray: true },
         { ElementName: "manufacturer", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Organization"] }], IsArray: true },
@@ -8601,6 +8089,9 @@ export const SubstanceDefinition: TypeModel = {
         { ElementName: "name", Type: [{ TypeName: "substancedefinition_name" }], IsArray: true },
         { ElementName: "relationship", Type: [{ TypeName: "substancedefinition_relationship" }], IsArray: true },
         { ElementName: "sourceMaterial", Type: [{ TypeName: "substancedefinition_sourceMaterial" }] },
+        { ElementName: "nucleicAcid", Type: [{ TypeName: "substancedefinition_nucleicAcid" }] },
+        { ElementName: "polymer", Type: [{ TypeName: "substancedefinition_polymer" }] },
+        { ElementName: "protein", Type: [{ TypeName: "substancedefinition_protein" }] },
     ],
 };
 
@@ -8609,7 +8100,7 @@ export const substancedefinition_moiety: TypeModel = {
     BaseTypeName: "BackboneElement",
     Elements: [
         { ElementName: "role", Type: [{ TypeName: "CodeableConcept" }] },
-        { ElementName: "identifier", Type: [{ TypeName: "Identifier" }] },
+        { ElementName: "identifier", Type: [{ TypeName: "Identifier" }], IsArray: true },
         { ElementName: "name", Type: [{ TypeName: "string" }] },
         { ElementName: "stereochemistry", Type: [{ TypeName: "CodeableConcept" }] },
         { ElementName: "opticalActivity", Type: [{ TypeName: "CodeableConcept" }] },
@@ -8722,9 +8213,12 @@ export const substancedefinition_relationship: TypeModel = {
         { ElementName: "substanceDefinition[x]", Type: [{ TypeName: "CodeableConcept" }, { TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/SubstanceDefinition"] }] },
         { ElementName: "type", Type: [{ TypeName: "CodeableConcept" }], Required: true },
         { ElementName: "isDefining", Type: [{ TypeName: "boolean" }] },
-        { ElementName: "amount[x]", Type: [{ TypeName: "Quantity" }, { TypeName: "Ratio" }, { TypeName: "string" }] },
-        { ElementName: "ratioHighLimitAmount", Type: [{ TypeName: "Ratio" }] },
+        { ElementName: "amount[x]", Type: [{ TypeName: "Quantity" }, { TypeName: "Range" }, { TypeName: "Ratio" }, { TypeName: "RatioRange" }, { TypeName: "string" }] },
         { ElementName: "comparator", Type: [{ TypeName: "CodeableConcept" }] },
+        { ElementName: "measurementType", Type: [{ TypeName: "CodeableConcept" }] },
+        { ElementName: "interaction", Type: [{ TypeName: "CodeableConcept" }] },
+        { ElementName: "organism", Type: [{ TypeName: "CodeableConcept" }] },
+        { ElementName: "organismType", Type: [{ TypeName: "CodeableConcept" }] },
         { ElementName: "source", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/DocumentReference"] }], IsArray: true },
     ],
 };
@@ -8738,6 +8232,166 @@ export const substancedefinition_sourceMaterial: TypeModel = {
         { ElementName: "species", Type: [{ TypeName: "CodeableConcept" }] },
         { ElementName: "part", Type: [{ TypeName: "CodeableConcept" }] },
         { ElementName: "countryOfOrigin", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
+    ],
+};
+
+export const substancedefinition_nucleicAcid: TypeModel = {
+    TypeName: "substancedefinition_nucleicAcid",
+    BaseTypeName: "BackboneElement",
+    Elements: [
+        { ElementName: "sequenceType", Type: [{ TypeName: "CodeableConcept" }] },
+        { ElementName: "numberOfSubunits", Type: [{ TypeName: "integer" }] },
+        { ElementName: "areaOfHybridisation", Type: [{ TypeName: "string" }] },
+        { ElementName: "oligoNucleotideType", Type: [{ TypeName: "CodeableConcept" }] },
+        { ElementName: "subunit", Type: [{ TypeName: "substancedefinition_nucleicAcid_subunit" }], IsArray: true },
+        { ElementName: "gene", Type: [{ TypeName: "substancedefinition_nucleicAcid_gene" }], IsArray: true },
+        { ElementName: "geneElement", Type: [{ TypeName: "substancedefinition_nucleicAcid_geneElement" }], IsArray: true },
+    ],
+};
+
+export const substancedefinition_nucleicAcid_subunit: TypeModel = {
+    TypeName: "substancedefinition_nucleicAcid_subunit",
+    BaseTypeName: "BackboneElement",
+    Elements: [
+        { ElementName: "subunit", Type: [{ TypeName: "integer" }] },
+        { ElementName: "sequence", Type: [{ TypeName: "string" }] },
+        { ElementName: "length", Type: [{ TypeName: "integer" }] },
+        { ElementName: "sequenceAttachment", Type: [{ TypeName: "Attachment" }] },
+        { ElementName: "fivePrime", Type: [{ TypeName: "CodeableConcept" }] },
+        { ElementName: "threePrime", Type: [{ TypeName: "CodeableConcept" }] },
+        { ElementName: "linkage", Type: [{ TypeName: "substancedefinition_nucleicAcid_subunit_linkage" }], IsArray: true },
+        { ElementName: "sugar", Type: [{ TypeName: "substancedefinition_nucleicAcid_subunit_sugar" }], IsArray: true },
+    ],
+};
+
+export const substancedefinition_nucleicAcid_subunit_linkage: TypeModel = {
+    TypeName: "substancedefinition_nucleicAcid_subunit_linkage",
+    BaseTypeName: "BackboneElement",
+    Elements: [
+        { ElementName: "connectivity", Type: [{ TypeName: "string" }] },
+        { ElementName: "substance", Type: [{ TypeName: "CodeableReference" }] },
+        { ElementName: "residueSite", Type: [{ TypeName: "string" }] },
+    ],
+};
+
+export const substancedefinition_nucleicAcid_subunit_sugar: TypeModel = {
+    TypeName: "substancedefinition_nucleicAcid_subunit_sugar",
+    BaseTypeName: "BackboneElement",
+    Elements: [
+        { ElementName: "substance", Type: [{ TypeName: "CodeableReference" }] },
+        { ElementName: "residueSite", Type: [{ TypeName: "string" }] },
+    ],
+};
+
+export const substancedefinition_nucleicAcid_gene: TypeModel = {
+    TypeName: "substancedefinition_nucleicAcid_gene",
+    BaseTypeName: "BackboneElement",
+    Elements: [
+        { ElementName: "sequenceOrigin", Type: [{ TypeName: "CodeableConcept" }] },
+        { ElementName: "gene", Type: [{ TypeName: "CodeableReference" }] },
+        { ElementName: "source", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/DocumentReference"] }], IsArray: true },
+    ],
+};
+
+export const substancedefinition_nucleicAcid_geneElement: TypeModel = {
+    TypeName: "substancedefinition_nucleicAcid_geneElement",
+    BaseTypeName: "BackboneElement",
+    Elements: [
+        { ElementName: "type", Type: [{ TypeName: "CodeableConcept" }] },
+        { ElementName: "element", Type: [{ TypeName: "CodeableReference" }] },
+        { ElementName: "source", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/DocumentReference"] }], IsArray: true },
+    ],
+};
+
+export const substancedefinition_polymer: TypeModel = {
+    TypeName: "substancedefinition_polymer",
+    BaseTypeName: "BackboneElement",
+    Elements: [
+        { ElementName: "class", Type: [{ TypeName: "CodeableConcept" }] },
+        { ElementName: "geometry", Type: [{ TypeName: "CodeableConcept" }] },
+        { ElementName: "copolymerConnectivity", Type: [{ TypeName: "CodeableConcept" }], IsArray: true },
+        { ElementName: "modification", Type: [{ TypeName: "string" }] },
+        { ElementName: "monomerSet", Type: [{ TypeName: "substancedefinition_polymer_monomerSet" }], IsArray: true },
+        { ElementName: "repeat", Type: [{ TypeName: "substancedefinition_polymer_repeat" }], IsArray: true },
+    ],
+};
+
+export const substancedefinition_polymer_monomerSet: TypeModel = {
+    TypeName: "substancedefinition_polymer_monomerSet",
+    BaseTypeName: "BackboneElement",
+    Elements: [
+        { ElementName: "ratioType", Type: [{ TypeName: "CodeableConcept" }] },
+        { ElementName: "startingMaterial", Type: [{ TypeName: "substancedefinition_polymer_monomerSet_startingMaterial" }], IsArray: true },
+    ],
+};
+
+export const substancedefinition_polymer_monomerSet_startingMaterial: TypeModel = {
+    TypeName: "substancedefinition_polymer_monomerSet_startingMaterial",
+    BaseTypeName: "BackboneElement",
+    Elements: [
+        { ElementName: "code", Type: [{ TypeName: "CodeableReference" }] },
+        { ElementName: "category", Type: [{ TypeName: "CodeableConcept" }] },
+        { ElementName: "isDefining", Type: [{ TypeName: "boolean" }] },
+        { ElementName: "amount", Type: [{ TypeName: "Quantity" }] },
+    ],
+};
+
+export const substancedefinition_polymer_repeat: TypeModel = {
+    TypeName: "substancedefinition_polymer_repeat",
+    BaseTypeName: "BackboneElement",
+    Elements: [
+        { ElementName: "averageMolecularFormula", Type: [{ TypeName: "string" }] },
+        { ElementName: "repeatUnitAmountType", Type: [{ TypeName: "CodeableConcept" }] },
+        { ElementName: "repeatUnit", Type: [{ TypeName: "substancedefinition_polymer_repeat_repeatUnit" }], IsArray: true },
+    ],
+};
+
+export const substancedefinition_polymer_repeat_repeatUnit: TypeModel = {
+    TypeName: "substancedefinition_polymer_repeat_repeatUnit",
+    BaseTypeName: "BackboneElement",
+    Elements: [
+        { ElementName: "unit", Type: [{ TypeName: "string" }] },
+        { ElementName: "orientation", Type: [{ TypeName: "CodeableConcept" }] },
+        { ElementName: "amount", Type: [{ TypeName: "integer" }] },
+        { ElementName: "degreeOfPolymerisation", Type: [{ TypeName: "substancedefinition_polymer_repeat_repeatUnit_degreeOfPolymerisation" }], IsArray: true },
+        { ElementName: "structuralRepresentation", Type: [{ TypeName: "substancedefinition_structure_representation" }], IsArray: true },
+    ],
+};
+
+export const substancedefinition_polymer_repeat_repeatUnit_degreeOfPolymerisation: TypeModel = {
+    TypeName: "substancedefinition_polymer_repeat_repeatUnit_degreeOfPolymerisation",
+    BaseTypeName: "BackboneElement",
+    Elements: [
+        { ElementName: "type", Type: [{ TypeName: "CodeableConcept" }] },
+        { ElementName: "average", Type: [{ TypeName: "integer" }] },
+        { ElementName: "low", Type: [{ TypeName: "integer" }] },
+        { ElementName: "high", Type: [{ TypeName: "integer" }] },
+    ],
+};
+
+export const substancedefinition_protein: TypeModel = {
+    TypeName: "substancedefinition_protein",
+    BaseTypeName: "BackboneElement",
+    Elements: [
+        { ElementName: "sequenceType", Type: [{ TypeName: "CodeableConcept" }] },
+        { ElementName: "numberOfSubunits", Type: [{ TypeName: "integer" }] },
+        { ElementName: "disulfideLinkage", Type: [{ TypeName: "string" }], IsArray: true },
+        { ElementName: "subunit", Type: [{ TypeName: "substancedefinition_protein_subunit" }], IsArray: true },
+        { ElementName: "gene", Type: [{ TypeName: "substancedefinition_nucleicAcid_gene" }], IsArray: true },
+        { ElementName: "modificationType", Type: [{ TypeName: "CodeableConcept" }] },
+    ],
+};
+
+export const substancedefinition_protein_subunit: TypeModel = {
+    TypeName: "substancedefinition_protein_subunit",
+    BaseTypeName: "BackboneElement",
+    Elements: [
+        { ElementName: "subunit", Type: [{ TypeName: "integer" }] },
+        { ElementName: "sequence", Type: [{ TypeName: "string" }] },
+        { ElementName: "length", Type: [{ TypeName: "integer" }] },
+        { ElementName: "sequenceAttachment", Type: [{ TypeName: "Attachment" }] },
+        { ElementName: "nTerminalModification", Type: [{ TypeName: "CodeableReference" }] },
+        { ElementName: "cTerminalModification", Type: [{ TypeName: "CodeableReference" }] },
     ],
 };
 
@@ -8873,6 +8527,8 @@ export const terminologycapabilities_implementation: TypeModel = {
     Elements: [
         { ElementName: "description", Type: [{ TypeName: "markdown" }], Required: true },
         { ElementName: "url", Type: [{ TypeName: "url" }] },
+        { ElementName: "fragmentSupport", Type: [{ TypeName: "markdown" }] },
+        { ElementName: "supplementSupport", Type: [{ TypeName: "markdown" }] },
     ],
 };
 
@@ -8882,8 +8538,9 @@ export const terminologycapabilities_codeSystem: TypeModel = {
     Elements: [
         { ElementName: "uri", Type: [{ TypeName: "canonical" }] },
         { ElementName: "supplement", Type: [{ TypeName: "canonical" }], IsArray: true },
+        { ElementName: "versionAlgorithm[x]", Type: [{ TypeName: "Coding" }, { TypeName: "string" }] },
         { ElementName: "version", Type: [{ TypeName: "terminologycapabilities_codeSystem_version" }], IsArray: true },
-        { ElementName: "content", Type: [{ TypeName: "code" }], Required: true },
+        { ElementName: "content", Type: [{ TypeName: "code" }] },
         { ElementName: "subsumption", Type: [{ TypeName: "boolean" }] },
     ],
 };
@@ -8892,8 +8549,9 @@ export const terminologycapabilities_codeSystem_version: TypeModel = {
     TypeName: "terminologycapabilities_codeSystem_version",
     BaseTypeName: "BackboneElement",
     Elements: [
-        { ElementName: "code", Type: [{ TypeName: "string" }] },
+        { ElementName: "value", Type: [{ TypeName: "string" }] },
         { ElementName: "isDefault", Type: [{ TypeName: "boolean" }] },
+        { ElementName: "content", Type: [{ TypeName: "code" }] },
         { ElementName: "supplement", Type: [{ TypeName: "canonical" }], IsArray: true },
         { ElementName: "compositional", Type: [{ TypeName: "boolean" }] },
         { ElementName: "language", Type: [{ TypeName: "code" }], IsArray: true },
@@ -9044,7 +8702,8 @@ export const valueset_compose_include_filter: TypeModel = {
     Elements: [
         { ElementName: "property", Type: [{ TypeName: "code" }], Required: true },
         { ElementName: "op", Type: [{ TypeName: "code" }], Required: true },
-        { ElementName: "value", Type: [{ TypeName: "string" }], Required: true },
+        { ElementName: "value", Type: [{ TypeName: "string" }] },
+        { ElementName: "filter", Type: [{ TypeName: "valueset_compose_include_filter" }], IsArray: true },
     ],
 };
 
@@ -9121,14 +8780,16 @@ export const VisionPrescription: TypeModel = {
     BaseTypeName: "DomainResource",
     Elements: [
         { ElementName: "identifier", Type: [{ TypeName: "Identifier" }], IsArray: true },
-        { ElementName: "basedOn", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/CarePlan", "http://hl7.org/fhir/StructureDefinition/NutritionOrder", "http://hl7.org/fhir/StructureDefinition/RequestOrchestration", "http://hl7.org/fhir/StructureDefinition/ServiceRequest"] }], IsArray: true },
+        { ElementName: "basedOn", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/CarePlan", "http://hl7.org/fhir/StructureDefinition/NutritionOrder", "http://hl7.org/fhir/StructureDefinition/RequestOrchestration", "http://hl7.org/fhir/StructureDefinition/ServiceRequest", "http://hl7.org/fhir/StructureDefinition/VisionPrescription"] }], IsArray: true },
         { ElementName: "groupIdentifier", Type: [{ TypeName: "Identifier" }] },
         { ElementName: "status", Type: [{ TypeName: "code" }], Required: true },
+        { ElementName: "intent", Type: [{ TypeName: "code" }], Required: true },
         { ElementName: "priority", Type: [{ TypeName: "code" }] },
         { ElementName: "created", Type: [{ TypeName: "dateTime" }], Required: true },
         { ElementName: "patient", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Patient"] }], Required: true },
         { ElementName: "encounter", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Encounter"] }] },
         { ElementName: "dateWritten", Type: [{ TypeName: "dateTime" }], Required: true },
+        { ElementName: "effectiveEndDate", Type: [{ TypeName: "dateTime" }] },
         { ElementName: "prescriber", Type: [{ TypeName: "Reference", TargetProfile: ["http://hl7.org/fhir/StructureDefinition/Practitioner", "http://hl7.org/fhir/StructureDefinition/PractitionerRole"] }], Required: true },
         { ElementName: "lensSpecification", Type: [{ TypeName: "visionprescription_lensSpecification" }], IsArray: true, Required: true },
     ],

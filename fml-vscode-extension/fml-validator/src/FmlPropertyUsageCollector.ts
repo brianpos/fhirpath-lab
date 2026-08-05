@@ -8,6 +8,7 @@ import {
 import type {ElementModel, TypeModel} from "../../../helpers/custom_model";
 import {resolveTransformResultTypes} from "../../../helpers/fml_transform_signatures";
 import {getFhirPathVariableReferences} from "../../../helpers/fhirpath_validator";
+import {lookupByTypeName as lookupByTypeNameSTU3} from "../../../helpers/models/generated/stu3";
 import {lookupByTypeName as lookupByTypeNameR4} from "../../../helpers/models/generated/r4";
 import {lookupByTypeName as lookupByTypeNameR4B} from "../../../helpers/models/generated/r4b";
 import {lookupByTypeName as lookupByTypeNameR5} from "../../../helpers/models/generated/r5";
@@ -16,6 +17,7 @@ import {FmlPropertyAnalysis, FmlPropertyCompletion, FmlPropertyUsage, FmlSource,
 import {applyFmlModelConfiguration} from "./FmlModelConfiguration";
 
 const lookups: Partial<Record<FhirVersion, TypeLookup>> = {
+    STU3: lookupByTypeNameSTU3,
     R4: lookupByTypeNameR4,
     R4B: lookupByTypeNameR4B,
     R5: lookupByTypeNameR5,

@@ -138,14 +138,6 @@
         ]
       },
       {
-        "ElementName": "estimatedAge",
-        "Type": [
-          {
-            "TypeName": "boolean"
-          }
-        ]
-      },
-      {
         "ElementName": "deceased[x]",
         "Type": [
           {

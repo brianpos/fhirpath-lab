@@ -1,0 +1,287 @@
+{
+  "HealthcareService": {
+    "TypeName": "HealthcareService",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "active",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "providedBy",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "category",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "specialty",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "location",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Location"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "name",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "comment",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "extraDetails",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "photo",
+        "Type": [
+          {
+            "TypeName": "Attachment"
+          }
+        ]
+      },
+      {
+        "ElementName": "telecom",
+        "Type": [
+          {
+            "TypeName": "ContactPoint"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "coverageArea",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Location"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "serviceProvisionCode",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "eligibility",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "eligibilityNote",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "programName",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "characteristic",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "referralMethod",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "appointmentRequired",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "availableTime",
+        "Type": [
+          {
+            "TypeName": "healthcareservice_availableTime"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "notAvailable",
+        "Type": [
+          {
+            "TypeName": "healthcareservice_notAvailable"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "availabilityExceptions",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "endpoint",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Endpoint"
+            ]
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "healthcareservice_availableTime": {
+    "TypeName": "healthcareservice_availableTime",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "daysOfWeek",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "allDay",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "availableStartTime",
+        "Type": [
+          {
+            "TypeName": "time"
+          }
+        ]
+      },
+      {
+        "ElementName": "availableEndTime",
+        "Type": [
+          {
+            "TypeName": "time"
+          }
+        ]
+      }
+    ]
+  },
+  "healthcareservice_notAvailable": {
+    "TypeName": "healthcareservice_notAvailable",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "description",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "during",
+        "Type": [
+          {
+            "TypeName": "Period"
+          }
+        ]
+      }
+    ]
+  }
+}

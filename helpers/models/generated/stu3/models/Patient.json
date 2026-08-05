@@ -1,0 +1,325 @@
+{
+  "Patient": {
+    "TypeName": "Patient",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "active",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "name",
+        "Type": [
+          {
+            "TypeName": "HumanName"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "telecom",
+        "Type": [
+          {
+            "TypeName": "ContactPoint"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "gender",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "birthDate",
+        "Type": [
+          {
+            "TypeName": "date"
+          }
+        ]
+      },
+      {
+        "ElementName": "deceased[x]",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          },
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      },
+      {
+        "ElementName": "address",
+        "Type": [
+          {
+            "TypeName": "Address"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "maritalStatus",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "multipleBirth[x]",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          },
+          {
+            "TypeName": "integer"
+          }
+        ]
+      },
+      {
+        "ElementName": "photo",
+        "Type": [
+          {
+            "TypeName": "Attachment"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "contact",
+        "Type": [
+          {
+            "TypeName": "patient_contact"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "animal",
+        "Type": [
+          {
+            "TypeName": "patient_animal"
+          }
+        ]
+      },
+      {
+        "ElementName": "communication",
+        "Type": [
+          {
+            "TypeName": "patient_communication"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "generalPractitioner",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Practitioner"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "managingOrganization",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "link",
+        "Type": [
+          {
+            "TypeName": "patient_link"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "patient_contact": {
+    "TypeName": "patient_contact",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "relationship",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "name",
+        "Type": [
+          {
+            "TypeName": "HumanName"
+          }
+        ]
+      },
+      {
+        "ElementName": "telecom",
+        "Type": [
+          {
+            "TypeName": "ContactPoint"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "address",
+        "Type": [
+          {
+            "TypeName": "Address"
+          }
+        ]
+      },
+      {
+        "ElementName": "gender",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "organization",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "period",
+        "Type": [
+          {
+            "TypeName": "Period"
+          }
+        ]
+      }
+    ]
+  },
+  "patient_animal": {
+    "TypeName": "patient_animal",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "species",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "breed",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "genderStatus",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      }
+    ]
+  },
+  "patient_communication": {
+    "TypeName": "patient_communication",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "language",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "preferred",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      }
+    ]
+  },
+  "patient_link": {
+    "TypeName": "patient_link",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "other",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Patient"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/RelatedPerson"
+            ]
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      }
+    ]
+  }
+}

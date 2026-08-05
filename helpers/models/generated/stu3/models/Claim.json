@@ -1,0 +1,1103 @@
+{
+  "Claim": {
+    "TypeName": "Claim",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "status",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "subType",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "use",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "patient",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Patient"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "billablePeriod",
+        "Type": [
+          {
+            "TypeName": "Period"
+          }
+        ]
+      },
+      {
+        "ElementName": "created",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      },
+      {
+        "ElementName": "enterer",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Practitioner"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "insurer",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "provider",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Practitioner"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "organization",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "priority",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "fundsReserve",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "related",
+        "Type": [
+          {
+            "TypeName": "claim_related"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "prescription",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/MedicationRequest"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/VisionPrescription"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "originalPrescription",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/MedicationRequest"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "payee",
+        "Type": [
+          {
+            "TypeName": "claim_payee"
+          }
+        ]
+      },
+      {
+        "ElementName": "referral",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/ReferralRequest"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "facility",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Location"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "careTeam",
+        "Type": [
+          {
+            "TypeName": "claim_careTeam"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "information",
+        "Type": [
+          {
+            "TypeName": "claim_information"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "diagnosis",
+        "Type": [
+          {
+            "TypeName": "claim_diagnosis"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "procedure",
+        "Type": [
+          {
+            "TypeName": "claim_procedure"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "insurance",
+        "Type": [
+          {
+            "TypeName": "claim_insurance"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "accident",
+        "Type": [
+          {
+            "TypeName": "claim_accident"
+          }
+        ]
+      },
+      {
+        "ElementName": "employmentImpacted",
+        "Type": [
+          {
+            "TypeName": "Period"
+          }
+        ]
+      },
+      {
+        "ElementName": "hospitalization",
+        "Type": [
+          {
+            "TypeName": "Period"
+          }
+        ]
+      },
+      {
+        "ElementName": "item",
+        "Type": [
+          {
+            "TypeName": "claim_item"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "total",
+        "Type": [
+          {
+            "TypeName": "Money"
+          }
+        ]
+      }
+    ]
+  },
+  "claim_related": {
+    "TypeName": "claim_related",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "claim",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Claim"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "relationship",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "reference",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ]
+      }
+    ]
+  },
+  "claim_payee": {
+    "TypeName": "claim_payee",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "resourceType",
+        "Type": [
+          {
+            "TypeName": "Coding"
+          }
+        ]
+      },
+      {
+        "ElementName": "party",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Practitioner"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Patient"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/RelatedPerson"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "claim_careTeam": {
+    "TypeName": "claim_careTeam",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "sequence",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "provider",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Practitioner"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "responsible",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "role",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "qualification",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      }
+    ]
+  },
+  "claim_information": {
+    "TypeName": "claim_information",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "sequence",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "category",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "code",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "timing[x]",
+        "Type": [
+          {
+            "TypeName": "Period"
+          },
+          {
+            "TypeName": "date"
+          }
+        ]
+      },
+      {
+        "ElementName": "value[x]",
+        "Type": [
+          {
+            "TypeName": "Attachment"
+          },
+          {
+            "TypeName": "Quantity"
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Resource"
+            ]
+          },
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "reason",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      }
+    ]
+  },
+  "claim_diagnosis": {
+    "TypeName": "claim_diagnosis",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "sequence",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "diagnosis[x]",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Condition"
+            ]
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "packageCode",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      }
+    ]
+  },
+  "claim_procedure": {
+    "TypeName": "claim_procedure",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "sequence",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "date",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      },
+      {
+        "ElementName": "procedure[x]",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Procedure"
+            ]
+          }
+        ],
+        "Required": true
+      }
+    ]
+  },
+  "claim_insurance": {
+    "TypeName": "claim_insurance",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "sequence",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "focal",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "coverage",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Coverage"
+            ]
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "businessArrangement",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "preAuthRef",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "claimResponse",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/ClaimResponse"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "claim_accident": {
+    "TypeName": "claim_accident",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "date",
+        "Type": [
+          {
+            "TypeName": "date"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "location[x]",
+        "Type": [
+          {
+            "TypeName": "Address"
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Location"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "claim_item": {
+    "TypeName": "claim_item",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "sequence",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "careTeamLinkId",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "diagnosisLinkId",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "procedureLinkId",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "informationLinkId",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "revenue",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "category",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "service",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "modifier",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "programCode",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "serviced[x]",
+        "Type": [
+          {
+            "TypeName": "Period"
+          },
+          {
+            "TypeName": "date"
+          }
+        ]
+      },
+      {
+        "ElementName": "location[x]",
+        "Type": [
+          {
+            "TypeName": "Address"
+          },
+          {
+            "TypeName": "CodeableConcept"
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Location"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "quantity",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
+      },
+      {
+        "ElementName": "unitPrice",
+        "Type": [
+          {
+            "TypeName": "Money"
+          }
+        ]
+      },
+      {
+        "ElementName": "factor",
+        "Type": [
+          {
+            "TypeName": "decimal"
+          }
+        ]
+      },
+      {
+        "ElementName": "net",
+        "Type": [
+          {
+            "TypeName": "Money"
+          }
+        ]
+      },
+      {
+        "ElementName": "udi",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Device"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "bodySite",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "subSite",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "encounter",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Encounter"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "detail",
+        "Type": [
+          {
+            "TypeName": "claim_item_detail"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "claim_item_detail": {
+    "TypeName": "claim_item_detail",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "sequence",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "revenue",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "category",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "service",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "modifier",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "programCode",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "quantity",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
+      },
+      {
+        "ElementName": "unitPrice",
+        "Type": [
+          {
+            "TypeName": "Money"
+          }
+        ]
+      },
+      {
+        "ElementName": "factor",
+        "Type": [
+          {
+            "TypeName": "decimal"
+          }
+        ]
+      },
+      {
+        "ElementName": "net",
+        "Type": [
+          {
+            "TypeName": "Money"
+          }
+        ]
+      },
+      {
+        "ElementName": "udi",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Device"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "subDetail",
+        "Type": [
+          {
+            "TypeName": "claim_item_detail_subDetail"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "claim_item_detail_subDetail": {
+    "TypeName": "claim_item_detail_subDetail",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "sequence",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "revenue",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "category",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "service",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "modifier",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "programCode",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "quantity",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
+      },
+      {
+        "ElementName": "unitPrice",
+        "Type": [
+          {
+            "TypeName": "Money"
+          }
+        ]
+      },
+      {
+        "ElementName": "factor",
+        "Type": [
+          {
+            "TypeName": "decimal"
+          }
+        ]
+      },
+      {
+        "ElementName": "net",
+        "Type": [
+          {
+            "TypeName": "Money"
+          }
+        ]
+      },
+      {
+        "ElementName": "udi",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Device"
+            ]
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  }
+}

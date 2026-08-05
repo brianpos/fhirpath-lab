@@ -1,0 +1,362 @@
+{
+  "ImagingStudy": {
+    "TypeName": "ImagingStudy",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "uid",
+        "Type": [
+          {
+            "TypeName": "oid"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "accession",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ]
+      },
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "availability",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "modalityList",
+        "Type": [
+          {
+            "TypeName": "Coding"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "patient",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Patient"
+            ]
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "context",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Encounter"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/EpisodeOfCare"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "started",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      },
+      {
+        "ElementName": "basedOn",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/ReferralRequest"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/CarePlan"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/ProcedureRequest"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "referrer",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Practitioner"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "interpreter",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Practitioner"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "endpoint",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Endpoint"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "numberOfSeries",
+        "Type": [
+          {
+            "TypeName": "unsignedInt"
+          }
+        ]
+      },
+      {
+        "ElementName": "numberOfInstances",
+        "Type": [
+          {
+            "TypeName": "unsignedInt"
+          }
+        ]
+      },
+      {
+        "ElementName": "procedureReference",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Procedure"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "procedureCode",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "reason",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "description",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "series",
+        "Type": [
+          {
+            "TypeName": "imagingstudy_series"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "imagingstudy_series": {
+    "TypeName": "imagingstudy_series",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "uid",
+        "Type": [
+          {
+            "TypeName": "oid"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "number",
+        "Type": [
+          {
+            "TypeName": "unsignedInt"
+          }
+        ]
+      },
+      {
+        "ElementName": "modality",
+        "Type": [
+          {
+            "TypeName": "Coding"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "description",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "numberOfInstances",
+        "Type": [
+          {
+            "TypeName": "unsignedInt"
+          }
+        ]
+      },
+      {
+        "ElementName": "availability",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "endpoint",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Endpoint"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "bodySite",
+        "Type": [
+          {
+            "TypeName": "Coding"
+          }
+        ]
+      },
+      {
+        "ElementName": "laterality",
+        "Type": [
+          {
+            "TypeName": "Coding"
+          }
+        ]
+      },
+      {
+        "ElementName": "started",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      },
+      {
+        "ElementName": "performer",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Practitioner"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "instance",
+        "Type": [
+          {
+            "TypeName": "imagingstudy_series_instance"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "imagingstudy_series_instance": {
+    "TypeName": "imagingstudy_series_instance",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "uid",
+        "Type": [
+          {
+            "TypeName": "oid"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "number",
+        "Type": [
+          {
+            "TypeName": "unsignedInt"
+          }
+        ]
+      },
+      {
+        "ElementName": "sopClass",
+        "Type": [
+          {
+            "TypeName": "oid"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "title",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,199 @@
+{
+  "ImmunizationRecommendation": {
+    "TypeName": "ImmunizationRecommendation",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "patient",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Patient"
+            ]
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "recommendation",
+        "Type": [
+          {
+            "TypeName": "immunizationrecommendation_recommendation"
+          }
+        ],
+        "IsArray": true,
+        "Required": true
+      }
+    ]
+  },
+  "immunizationrecommendation_recommendation": {
+    "TypeName": "immunizationrecommendation_recommendation",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "date",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "vaccineCode",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "targetDisease",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "doseNumber",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ]
+      },
+      {
+        "ElementName": "forecastStatus",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "dateCriterion",
+        "Type": [
+          {
+            "TypeName": "immunizationrecommendation_recommendation_dateCriterion"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "protocol",
+        "Type": [
+          {
+            "TypeName": "immunizationrecommendation_recommendation_protocol"
+          }
+        ]
+      },
+      {
+        "ElementName": "supportingImmunization",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Immunization"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "supportingPatientInformation",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Observation"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/AllergyIntolerance"
+            ]
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "immunizationrecommendation_recommendation_dateCriterion": {
+    "TypeName": "immunizationrecommendation_recommendation_dateCriterion",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "code",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "value",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ],
+        "Required": true
+      }
+    ]
+  },
+  "immunizationrecommendation_recommendation_protocol": {
+    "TypeName": "immunizationrecommendation_recommendation_protocol",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "doseSequence",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ]
+      },
+      {
+        "ElementName": "description",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "authority",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "series",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -394,13 +394,12 @@
         ]
       },
       {
-        "ElementName": "dosage",
+        "ElementName": "dosageInstruction",
         "Type": [
           {
-            "TypeName": "Dosage"
+            "TypeName": "DosageDetails"
           }
-        ],
-        "IsArray": true
+        ]
       },
       {
         "ElementName": "bodySite",

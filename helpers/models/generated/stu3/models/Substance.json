@@ -1,0 +1,128 @@
+{
+  "Substance": {
+    "TypeName": "Substance",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "status",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "category",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "code",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "description",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "instance",
+        "Type": [
+          {
+            "TypeName": "substance_instance"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "ingredient",
+        "Type": [
+          {
+            "TypeName": "substance_ingredient"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "substance_instance": {
+    "TypeName": "substance_instance",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ]
+      },
+      {
+        "ElementName": "expiry",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      },
+      {
+        "ElementName": "quantity",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
+      }
+    ]
+  },
+  "substance_ingredient": {
+    "TypeName": "substance_ingredient",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "quantity",
+        "Type": [
+          {
+            "TypeName": "Ratio"
+          }
+        ]
+      },
+      {
+        "ElementName": "substance[x]",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Substance"
+            ]
+          }
+        ],
+        "Required": true
+      }
+    ]
+  }
+}

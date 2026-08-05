@@ -112,12 +112,13 @@
         "Required": true
       },
       {
-        "ElementName": "primaryPurposeType",
+        "ElementName": "purposeType",
         "Type": [
           {
             "TypeName": "CodeableConcept"
           }
-        ]
+        ],
+        "IsArray": true
       },
       {
         "ElementName": "phase",
@@ -288,6 +289,7 @@
             "TargetProfile": [
               "http://hl7.org/fhir/StructureDefinition/Composition",
               "http://hl7.org/fhir/StructureDefinition/DiagnosticReport",
+              "http://hl7.org/fhir/StructureDefinition/DocumentReference",
               "http://hl7.org/fhir/StructureDefinition/Evidence"
             ]
           }
@@ -541,6 +543,14 @@
             "TargetProfile": [
               "http://hl7.org/fhir/StructureDefinition/Group"
             ]
+          }
+        ]
+      },
+      {
+        "ElementName": "name",
+        "Type": [
+          {
+            "TypeName": "string"
           }
         ]
       },

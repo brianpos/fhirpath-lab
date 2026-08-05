@@ -202,7 +202,7 @@
         "ElementName": "resource",
         "Type": [
           {
-            "TypeName": "code"
+            "TypeName": "uri"
           }
         ],
         "IsArray": true
@@ -331,7 +331,7 @@
         "ElementName": "type",
         "Type": [
           {
-            "TypeName": "code"
+            "TypeName": "uri"
           }
         ]
       },

@@ -1,0 +1,299 @@
+{
+  "EligibilityResponse": {
+    "TypeName": "EligibilityResponse",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "status",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "created",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      },
+      {
+        "ElementName": "requestProvider",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Practitioner"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "requestOrganization",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "request",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/EligibilityRequest"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "outcome",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "disposition",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "insurer",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "inforce",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "insurance",
+        "Type": [
+          {
+            "TypeName": "eligibilityresponse_insurance"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "form",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "error",
+        "Type": [
+          {
+            "TypeName": "eligibilityresponse_error"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "eligibilityresponse_insurance": {
+    "TypeName": "eligibilityresponse_insurance",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "coverage",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Coverage"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "contract",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Contract"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "benefitBalance",
+        "Type": [
+          {
+            "TypeName": "eligibilityresponse_insurance_benefitBalance"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "eligibilityresponse_insurance_benefitBalance": {
+    "TypeName": "eligibilityresponse_insurance_benefitBalance",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "category",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "subCategory",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "excluded",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "name",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "description",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "network",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "unit",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "term",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "financial",
+        "Type": [
+          {
+            "TypeName": "eligibilityresponse_insurance_benefitBalance_financial"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "eligibilityresponse_insurance_benefitBalance_financial": {
+    "TypeName": "eligibilityresponse_insurance_benefitBalance_financial",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "allowed[x]",
+        "Type": [
+          {
+            "TypeName": "Money"
+          },
+          {
+            "TypeName": "string"
+          },
+          {
+            "TypeName": "unsignedInt"
+          }
+        ]
+      },
+      {
+        "ElementName": "used[x]",
+        "Type": [
+          {
+            "TypeName": "Money"
+          },
+          {
+            "TypeName": "unsignedInt"
+          }
+        ]
+      }
+    ]
+  },
+  "eligibilityresponse_error": {
+    "TypeName": "eligibilityresponse_error",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "code",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      }
+    ]
+  }
+}

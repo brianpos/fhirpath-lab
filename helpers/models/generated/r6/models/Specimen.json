@@ -46,6 +46,24 @@
         ]
       },
       {
+        "ElementName": "focus",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/BiologicallyDerivedProduct",
+              "http://hl7.org/fhir/StructureDefinition/Device",
+              "http://hl7.org/fhir/StructureDefinition/Group",
+              "http://hl7.org/fhir/StructureDefinition/Location",
+              "http://hl7.org/fhir/StructureDefinition/NutritionProduct",
+              "http://hl7.org/fhir/StructureDefinition/Patient",
+              "http://hl7.org/fhir/StructureDefinition/RelatedPerson",
+              "http://hl7.org/fhir/StructureDefinition/Substance"
+            ]
+          }
+        ]
+      },
+      {
         "ElementName": "receivedTime",
         "Type": [
           {
@@ -228,19 +246,10 @@
         ]
       },
       {
-        "ElementName": "device[x]",
+        "ElementName": "device",
         "Type": [
           {
-            "TypeName": "CodeableConcept"
-          },
-          {
-            "TypeName": "Reference",
-            "TargetProfile": [
-              "http://hl7.org/fhir/StructureDefinition/Device"
-            ]
-          },
-          {
-            "TypeName": "canonical"
+            "TypeName": "CodeableReference"
           }
         ]
       },
@@ -256,12 +265,13 @@
         ]
       },
       {
-        "ElementName": "bodySite",
+        "ElementName": "bodyStructure",
         "Type": [
           {
             "TypeName": "CodeableReference"
           }
-        ]
+        ],
+        "IsArray": true
       },
       {
         "ElementName": "fastingStatus[x]",
@@ -311,19 +321,10 @@
         ]
       },
       {
-        "ElementName": "device[x]",
+        "ElementName": "device",
         "Type": [
           {
-            "TypeName": "CodeableConcept"
-          },
-          {
-            "TypeName": "Reference",
-            "TargetProfile": [
-              "http://hl7.org/fhir/StructureDefinition/Device"
-            ]
-          },
-          {
-            "TypeName": "canonical"
+            "TypeName": "CodeableReference"
           }
         ]
       },
@@ -331,7 +332,7 @@
         "ElementName": "additive",
         "Type": [
           {
-            "TypeName": "CodeableReference"
+            "TypeName": "specimen_processing_additive"
           }
         ],
         "IsArray": true
@@ -352,24 +353,38 @@
       }
     ]
   },
+  "specimen_processing_additive": {
+    "TypeName": "specimen_processing_additive",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableReference"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "quantity",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
+      }
+    ]
+  },
   "specimen_container": {
     "TypeName": "specimen_container",
     "BaseTypeName": "BackboneElement",
     "Elements": [
       {
-        "ElementName": "device[x]",
+        "ElementName": "device",
         "Type": [
           {
-            "TypeName": "CodeableConcept"
-          },
-          {
-            "TypeName": "Reference",
-            "TargetProfile": [
-              "http://hl7.org/fhir/StructureDefinition/Device"
-            ]
-          },
-          {
-            "TypeName": "canonical"
+            "TypeName": "CodeableReference"
           }
         ],
         "Required": true

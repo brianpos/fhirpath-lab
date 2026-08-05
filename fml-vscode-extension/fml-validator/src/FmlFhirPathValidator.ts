@@ -258,6 +258,7 @@ export class FmlFhirPathValidator {
 
     private toVersionKey(version?: FhirVersion): FhirVersionKey {
         switch (version) {
+            case "STU3": return "stu3";
             case "R4": return "r4";
             case "R5": return "r5";
             case "R6": return "r6";

@@ -5,7 +5,7 @@ import type { ElementModel, ElementTypeModel, TypeModel } from "../../helpers/cu
 import { fhirPrimitiveToSystemTypeName, systemTypesByTypeName, systemTypesByUrl } from "../../helpers/models/generated/system-types";
 import type { SDBundle, SDElement, StructureDefinition } from "./sd-types";
 
-export type FhirVersionKey = "r4" | "r4b" | "r5" | "r6";
+export type FhirVersionKey = "stu3" | "r4" | "r4b" | "r5" | "r6";
 
 /** A TypeModel together with its canonical URL — kept side-by-side rather than on the model itself. */
 export interface TypeModelEntry {
@@ -125,6 +125,20 @@ function resolveTypeCode(t: { code: string; extension?: Array<{ url: string; val
     // No extension — treat as a direct System.* reference.
     const tail = t.code.substring("http://hl7.org/fhirpath/".length);
     return tail; // e.g. "System.String"
+}
+
+function resolveTargetProfiles(
+    targetProfile: string | string[] | undefined,
+    version: FhirVersionKey
+): string[] | undefined {
+    if (!targetProfile || targetProfile.length === 0) return undefined;
+    if (typeof targetProfile === "string") {
+        if (version !== "stu3") {
+            throw new Error(`scalar targetProfile is only supported for STU3: ${targetProfile}`);
+        }
+        return [targetProfile];
+    }
+    return [...targetProfile].sort();
 }
 
 interface SDProcessingContext {
@@ -311,8 +325,9 @@ function processElement(
     const mapped: ElementTypeModel[] = types.map((t) => {
         const code = resolveTypeCode(t);
         const etm: ElementTypeModel = { TypeName: code };
-        if (code === "Reference" && t.targetProfile && t.targetProfile.length > 0) {
-            etm.TargetProfile = [...t.targetProfile].sort();
+        const targetProfiles = resolveTargetProfiles(t.targetProfile, version);
+        if (code === "Reference" && targetProfiles) {
+            etm.TargetProfile = targetProfiles;
         }
         return etm;
     });

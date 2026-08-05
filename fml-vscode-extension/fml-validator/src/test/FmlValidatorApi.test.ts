@@ -316,6 +316,25 @@ group Main(source src : Observation, target tgt : Observation) {
     }));
 });
 
+test("keeps repeated target choice create types independent", async () => {
+    const sourceText = `
+uses 'http://hl7.org/fhir/3.0/StructureDefinition/ClinicalImpression' alias ClinicalImpressionR3 as source
+uses 'http://hl7.org/fhir/4.0/StructureDefinition/ClinicalImpression' alias ClinicalImpression as target
+group Main(source src : ClinicalImpressionR3, target tgt : ClinicalImpression) {
+    src.effective : dateTime as vs -> tgt.effective = create('dateTime') as vt then dateTime(vs, vt);
+    src.effective : Period as vs -> tgt.effective = create('Period') as vt then Period(vs, vt);
+}
+`;
+    const api = new FmlValidatorApi();
+    const result = await api.validate({sourceText});
+    const targets = api.getPropertyUsages({sourceText})
+        .filter(usage => usage.role === "target" && usage.path === "effective");
+
+    assert.equal(result.status, "success", result.diagnostics.map(diagnostic => diagnostic.message).join("; "));
+    assert.deepEqual(targets.map(usage => usage.compatibleTypeNames), [["dateTime"], ["Period"]]);
+    assert.deepEqual(targets.map(usage => usage.elementTypeName), ["dateTime", "Period"]);
+});
+
 test("reports a type filter that is not available on a choice property", async () => {
     const result = await new FmlValidatorApi().validate({sourceText: `
 uses 'http://hl7.org/fhir/5.0/StructureDefinition/Observation' alias Observation as source
@@ -926,6 +945,28 @@ group ConditionAsserter(source src, target tgt) {
         return !diagnostic.message.includes("ConditionRecorder")
             && !diagnostic.message.includes("ConditionAsserter");
     }));
+});
+
+test("resolves STU3 source properties against the STU3 model", async () => {
+    const sourceText = [
+        "uses 'http://hl7.org/fhir/3.0/StructureDefinition/Condition' alias ConditionSTU3 as source",
+        "uses 'http://hl7.org/fhir/4.0/StructureDefinition/Condition' alias ConditionR4 as target",
+        "group Main(source src : ConditionSTU3, target tgt : ConditionR4) {",
+        "    src.assertedDate -> tgt.recordedDate;",
+        "}",
+    ].join("\n");
+    const api = new FmlValidatorApi();
+    const result = await api.validate({sourceText});
+    const usages = api.getPropertyUsages({sourceText}).filter(usage => {
+        return usage.path === "assertedDate" || usage.path === "recordedDate";
+    });
+
+    assert.equal(result.status, "success", result.diagnostics.map(diagnostic => diagnostic.message).join("; "));
+    assert.deepEqual(usages.map(usage => [usage.path, usage.fhirVersion]), [
+        ["assertedDate", "STU3"],
+        ["recordedDate", "R4"],
+    ]);
+    assert.ok(usages.every(usage => !usage.unknownElement));
 });
 
 test("retains narrowed alias types for FHIRPath in dependent groups", async () => {

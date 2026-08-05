@@ -19,12 +19,14 @@
             "TypeName": "Reference",
             "TargetProfile": [
               "http://hl7.org/fhir/StructureDefinition/CarePlan",
-              "http://hl7.org/fhir/StructureDefinition/DocumentReference",
+              "http://hl7.org/fhir/StructureDefinition/CommunicationRequest",
+              "http://hl7.org/fhir/StructureDefinition/DeviceRequest",
               "http://hl7.org/fhir/StructureDefinition/DocumentReference",
               "http://hl7.org/fhir/StructureDefinition/MedicationRequest",
               "http://hl7.org/fhir/StructureDefinition/NutritionOrder",
               "http://hl7.org/fhir/StructureDefinition/RequestOrchestration",
-              "http://hl7.org/fhir/StructureDefinition/ServiceRequest"
+              "http://hl7.org/fhir/StructureDefinition/ServiceRequest",
+              "http://hl7.org/fhir/StructureDefinition/VisionPrescription"
             ]
           }
         ],
@@ -39,6 +41,7 @@
               "http://hl7.org/fhir/StructureDefinition/CarePlan",
               "http://hl7.org/fhir/StructureDefinition/CommunicationRequest",
               "http://hl7.org/fhir/StructureDefinition/DeviceRequest",
+              "http://hl7.org/fhir/StructureDefinition/DocumentReference",
               "http://hl7.org/fhir/StructureDefinition/MedicationRequest",
               "http://hl7.org/fhir/StructureDefinition/NutritionOrder",
               "http://hl7.org/fhir/StructureDefinition/RequestOrchestration",
@@ -303,24 +306,13 @@
         "IsArray": true
       },
       {
-        "ElementName": "specimen",
-        "Type": [
-          {
-            "TypeName": "Reference",
-            "TargetProfile": [
-              "http://hl7.org/fhir/StructureDefinition/Specimen"
-            ]
-          }
-        ],
-        "IsArray": true
-      },
-      {
         "ElementName": "bodyStructure",
         "Type": [
           {
             "TypeName": "CodeableReference"
           }
-        ]
+        ],
+        "IsArray": true
       },
       {
         "ElementName": "note",

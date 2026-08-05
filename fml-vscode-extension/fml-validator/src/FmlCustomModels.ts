@@ -58,6 +58,7 @@ function isLogicalStructureDefinition(value: unknown): value is StructureDefinit
 
 function toVersionKey(version: FhirVersion | undefined): FhirVersionKey {
     switch (version) {
+        case "STU3": return "stu3";
         case "R4": return "r4";
         case "R5": return "r5";
         case "R6": return "r6";

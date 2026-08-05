@@ -498,6 +498,14 @@
         "Required": true
       },
       {
+        "ElementName": "definition",
+        "Type": [
+          {
+            "TypeName": "canonical"
+          }
+        ]
+      },
+      {
         "ElementName": "initiator",
         "Type": [
           {

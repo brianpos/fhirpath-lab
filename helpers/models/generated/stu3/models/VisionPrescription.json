@@ -1,0 +1,216 @@
+{
+  "VisionPrescription": {
+    "TypeName": "VisionPrescription",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "status",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "patient",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Patient"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "encounter",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Encounter"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "dateWritten",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      },
+      {
+        "ElementName": "prescriber",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Practitioner"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "reason[x]",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Condition"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "dispense",
+        "Type": [
+          {
+            "TypeName": "visionprescription_dispense"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "visionprescription_dispense": {
+    "TypeName": "visionprescription_dispense",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "product",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "eye",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "sphere",
+        "Type": [
+          {
+            "TypeName": "decimal"
+          }
+        ]
+      },
+      {
+        "ElementName": "cylinder",
+        "Type": [
+          {
+            "TypeName": "decimal"
+          }
+        ]
+      },
+      {
+        "ElementName": "axis",
+        "Type": [
+          {
+            "TypeName": "integer"
+          }
+        ]
+      },
+      {
+        "ElementName": "prism",
+        "Type": [
+          {
+            "TypeName": "decimal"
+          }
+        ]
+      },
+      {
+        "ElementName": "base",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "add",
+        "Type": [
+          {
+            "TypeName": "decimal"
+          }
+        ]
+      },
+      {
+        "ElementName": "power",
+        "Type": [
+          {
+            "TypeName": "decimal"
+          }
+        ]
+      },
+      {
+        "ElementName": "backCurve",
+        "Type": [
+          {
+            "TypeName": "decimal"
+          }
+        ]
+      },
+      {
+        "ElementName": "diameter",
+        "Type": [
+          {
+            "TypeName": "decimal"
+          }
+        ]
+      },
+      {
+        "ElementName": "duration",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
+      },
+      {
+        "ElementName": "color",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "brand",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "note",
+        "Type": [
+          {
+            "TypeName": "Annotation"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  }
+}

@@ -144,7 +144,6 @@
             "TypeName": "Reference",
             "TargetProfile": [
               "http://hl7.org/fhir/StructureDefinition/Consent",
-              "http://hl7.org/fhir/StructureDefinition/Contract",
               "http://hl7.org/fhir/StructureDefinition/DocumentReference",
               "http://hl7.org/fhir/StructureDefinition/QuestionnaireResponse"
             ]
@@ -383,14 +382,6 @@
           }
         ],
         "IsArray": true
-      },
-      {
-        "ElementName": "expression",
-        "Type": [
-          {
-            "TypeName": "Expression"
-          }
-        ]
       },
       {
         "ElementName": "provision",

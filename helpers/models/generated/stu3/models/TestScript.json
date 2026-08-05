@@ -1,0 +1,1226 @@
+{
+  "TestScript": {
+    "TypeName": "TestScript",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "url",
+        "Type": [
+          {
+            "TypeName": "uri"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ]
+      },
+      {
+        "ElementName": "version",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "name",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "title",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "status",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "experimental",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "date",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      },
+      {
+        "ElementName": "publisher",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "contact",
+        "Type": [
+          {
+            "TypeName": "ContactDetail"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "description",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      },
+      {
+        "ElementName": "useContext",
+        "Type": [
+          {
+            "TypeName": "UsageContext"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "jurisdiction",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "purpose",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      },
+      {
+        "ElementName": "copyright",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      },
+      {
+        "ElementName": "origin",
+        "Type": [
+          {
+            "TypeName": "testscript_origin"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "destination",
+        "Type": [
+          {
+            "TypeName": "testscript_destination"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "metadata",
+        "Type": [
+          {
+            "TypeName": "testscript_metadata"
+          }
+        ]
+      },
+      {
+        "ElementName": "fixture",
+        "Type": [
+          {
+            "TypeName": "testscript_fixture"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "profile",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Resource"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "variable",
+        "Type": [
+          {
+            "TypeName": "testscript_variable"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "rule",
+        "Type": [
+          {
+            "TypeName": "testscript_rule"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "ruleset",
+        "Type": [
+          {
+            "TypeName": "testscript_ruleset"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "setup",
+        "Type": [
+          {
+            "TypeName": "testscript_setup"
+          }
+        ]
+      },
+      {
+        "ElementName": "test",
+        "Type": [
+          {
+            "TypeName": "testscript_test"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "teardown",
+        "Type": [
+          {
+            "TypeName": "testscript_teardown"
+          }
+        ]
+      }
+    ]
+  },
+  "testscript_origin": {
+    "TypeName": "testscript_origin",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "index",
+        "Type": [
+          {
+            "TypeName": "integer"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "profile",
+        "Type": [
+          {
+            "TypeName": "Coding"
+          }
+        ],
+        "Required": true
+      }
+    ]
+  },
+  "testscript_destination": {
+    "TypeName": "testscript_destination",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "index",
+        "Type": [
+          {
+            "TypeName": "integer"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "profile",
+        "Type": [
+          {
+            "TypeName": "Coding"
+          }
+        ],
+        "Required": true
+      }
+    ]
+  },
+  "testscript_metadata": {
+    "TypeName": "testscript_metadata",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "link",
+        "Type": [
+          {
+            "TypeName": "testscript_metadata_link"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "capability",
+        "Type": [
+          {
+            "TypeName": "testscript_metadata_capability"
+          }
+        ],
+        "IsArray": true,
+        "Required": true
+      }
+    ]
+  },
+  "testscript_metadata_link": {
+    "TypeName": "testscript_metadata_link",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "url",
+        "Type": [
+          {
+            "TypeName": "uri"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "description",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      }
+    ]
+  },
+  "testscript_metadata_capability": {
+    "TypeName": "testscript_metadata_capability",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "required",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "validated",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "description",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "origin",
+        "Type": [
+          {
+            "TypeName": "integer"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "destination",
+        "Type": [
+          {
+            "TypeName": "integer"
+          }
+        ]
+      },
+      {
+        "ElementName": "link",
+        "Type": [
+          {
+            "TypeName": "uri"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "capabilities",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/CapabilityStatement"
+            ]
+          }
+        ],
+        "Required": true
+      }
+    ]
+  },
+  "testscript_fixture": {
+    "TypeName": "testscript_fixture",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "autocreate",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "autodelete",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "resource",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Resource"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "testscript_variable": {
+    "TypeName": "testscript_variable",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "name",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "defaultValue",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "description",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "expression",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "headerField",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "hint",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "path",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "sourceId",
+        "Type": [
+          {
+            "TypeName": "id"
+          }
+        ]
+      }
+    ]
+  },
+  "testscript_rule": {
+    "TypeName": "testscript_rule",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "resource",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Resource"
+            ]
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "param",
+        "Type": [
+          {
+            "TypeName": "testscript_rule_param"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "testscript_rule_param": {
+    "TypeName": "testscript_rule_param",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "name",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "value",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      }
+    ]
+  },
+  "testscript_ruleset": {
+    "TypeName": "testscript_ruleset",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "resource",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Resource"
+            ]
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "rule",
+        "Type": [
+          {
+            "TypeName": "testscript_ruleset_rule"
+          }
+        ],
+        "IsArray": true,
+        "Required": true
+      }
+    ]
+  },
+  "testscript_ruleset_rule": {
+    "TypeName": "testscript_ruleset_rule",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "ruleId",
+        "Type": [
+          {
+            "TypeName": "id"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "param",
+        "Type": [
+          {
+            "TypeName": "testscript_ruleset_rule_param"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "testscript_ruleset_rule_param": {
+    "TypeName": "testscript_ruleset_rule_param",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "name",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "value",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      }
+    ]
+  },
+  "testscript_setup": {
+    "TypeName": "testscript_setup",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "action",
+        "Type": [
+          {
+            "TypeName": "testscript_setup_action"
+          }
+        ],
+        "IsArray": true,
+        "Required": true
+      }
+    ]
+  },
+  "testscript_setup_action": {
+    "TypeName": "testscript_setup_action",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "operation",
+        "Type": [
+          {
+            "TypeName": "testscript_setup_action_operation"
+          }
+        ]
+      },
+      {
+        "ElementName": "assert",
+        "Type": [
+          {
+            "TypeName": "testscript_setup_action_assert"
+          }
+        ]
+      }
+    ]
+  },
+  "testscript_setup_action_operation": {
+    "TypeName": "testscript_setup_action_operation",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "Coding"
+          }
+        ]
+      },
+      {
+        "ElementName": "resource",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "label",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "description",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "accept",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "contentType",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "destination",
+        "Type": [
+          {
+            "TypeName": "integer"
+          }
+        ]
+      },
+      {
+        "ElementName": "encodeRequestUrl",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "origin",
+        "Type": [
+          {
+            "TypeName": "integer"
+          }
+        ]
+      },
+      {
+        "ElementName": "params",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "requestHeader",
+        "Type": [
+          {
+            "TypeName": "testscript_setup_action_operation_requestHeader"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "requestId",
+        "Type": [
+          {
+            "TypeName": "id"
+          }
+        ]
+      },
+      {
+        "ElementName": "responseId",
+        "Type": [
+          {
+            "TypeName": "id"
+          }
+        ]
+      },
+      {
+        "ElementName": "sourceId",
+        "Type": [
+          {
+            "TypeName": "id"
+          }
+        ]
+      },
+      {
+        "ElementName": "targetId",
+        "Type": [
+          {
+            "TypeName": "id"
+          }
+        ]
+      },
+      {
+        "ElementName": "url",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      }
+    ]
+  },
+  "testscript_setup_action_operation_requestHeader": {
+    "TypeName": "testscript_setup_action_operation_requestHeader",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "field",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "value",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "Required": true
+      }
+    ]
+  },
+  "testscript_setup_action_assert": {
+    "TypeName": "testscript_setup_action_assert",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "label",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "description",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "direction",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "compareToSourceId",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "compareToSourceExpression",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "compareToSourcePath",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "contentType",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "expression",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "headerField",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "minimumId",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "navigationLinks",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "operator",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "path",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "requestMethod",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "requestURL",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "resource",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "response",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "responseCode",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "rule",
+        "Type": [
+          {
+            "TypeName": "testscript_setup_action_assert_rule"
+          }
+        ]
+      },
+      {
+        "ElementName": "ruleset",
+        "Type": [
+          {
+            "TypeName": "testscript_setup_action_assert_ruleset"
+          }
+        ]
+      },
+      {
+        "ElementName": "sourceId",
+        "Type": [
+          {
+            "TypeName": "id"
+          }
+        ]
+      },
+      {
+        "ElementName": "validateProfileId",
+        "Type": [
+          {
+            "TypeName": "id"
+          }
+        ]
+      },
+      {
+        "ElementName": "value",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "warningOnly",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      }
+    ]
+  },
+  "testscript_setup_action_assert_rule": {
+    "TypeName": "testscript_setup_action_assert_rule",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "ruleId",
+        "Type": [
+          {
+            "TypeName": "id"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "param",
+        "Type": [
+          {
+            "TypeName": "testscript_setup_action_assert_rule_param"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "testscript_setup_action_assert_rule_param": {
+    "TypeName": "testscript_setup_action_assert_rule_param",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "name",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "value",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "Required": true
+      }
+    ]
+  },
+  "testscript_setup_action_assert_ruleset": {
+    "TypeName": "testscript_setup_action_assert_ruleset",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "rulesetId",
+        "Type": [
+          {
+            "TypeName": "id"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "rule",
+        "Type": [
+          {
+            "TypeName": "testscript_setup_action_assert_ruleset_rule"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "testscript_setup_action_assert_ruleset_rule": {
+    "TypeName": "testscript_setup_action_assert_ruleset_rule",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "ruleId",
+        "Type": [
+          {
+            "TypeName": "id"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "param",
+        "Type": [
+          {
+            "TypeName": "testscript_setup_action_assert_ruleset_rule_param"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "testscript_setup_action_assert_ruleset_rule_param": {
+    "TypeName": "testscript_setup_action_assert_ruleset_rule_param",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "name",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "value",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "Required": true
+      }
+    ]
+  },
+  "testscript_test": {
+    "TypeName": "testscript_test",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "name",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "description",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "action",
+        "Type": [
+          {
+            "TypeName": "testscript_test_action"
+          }
+        ],
+        "IsArray": true,
+        "Required": true
+      }
+    ]
+  },
+  "testscript_test_action": {
+    "TypeName": "testscript_test_action",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "operation",
+        "Type": [
+          {
+            "TypeName": "testscript_setup_action_operation"
+          }
+        ]
+      },
+      {
+        "ElementName": "assert",
+        "Type": [
+          {
+            "TypeName": "testscript_setup_action_assert"
+          }
+        ]
+      }
+    ]
+  },
+  "testscript_teardown": {
+    "TypeName": "testscript_teardown",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "action",
+        "Type": [
+          {
+            "TypeName": "testscript_teardown_action"
+          }
+        ],
+        "IsArray": true,
+        "Required": true
+      }
+    ]
+  },
+  "testscript_teardown_action": {
+    "TypeName": "testscript_teardown_action",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "operation",
+        "Type": [
+          {
+            "TypeName": "testscript_setup_action_operation"
+          }
+        ],
+        "Required": true
+      }
+    ]
+  }
+}

@@ -1,0 +1,357 @@
+{
+  "Immunization": {
+    "TypeName": "Immunization",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "status",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "notGiven",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "vaccineCode",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "patient",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Patient"
+            ]
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "encounter",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Encounter"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "date",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      },
+      {
+        "ElementName": "primarySource",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "reportOrigin",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "location",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Location"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "manufacturer",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "lotNumber",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "expirationDate",
+        "Type": [
+          {
+            "TypeName": "date"
+          }
+        ]
+      },
+      {
+        "ElementName": "site",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "route",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "doseQuantity",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
+      },
+      {
+        "ElementName": "practitioner",
+        "Type": [
+          {
+            "TypeName": "immunization_practitioner"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "note",
+        "Type": [
+          {
+            "TypeName": "Annotation"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "explanation",
+        "Type": [
+          {
+            "TypeName": "immunization_explanation"
+          }
+        ]
+      },
+      {
+        "ElementName": "reaction",
+        "Type": [
+          {
+            "TypeName": "immunization_reaction"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "vaccinationProtocol",
+        "Type": [
+          {
+            "TypeName": "immunization_vaccinationProtocol"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "immunization_practitioner": {
+    "TypeName": "immunization_practitioner",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "role",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "actor",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Practitioner"
+            ]
+          }
+        ],
+        "Required": true
+      }
+    ]
+  },
+  "immunization_explanation": {
+    "TypeName": "immunization_explanation",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "reason",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "reasonNotGiven",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "immunization_reaction": {
+    "TypeName": "immunization_reaction",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "date",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      },
+      {
+        "ElementName": "detail",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Observation"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "reported",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      }
+    ]
+  },
+  "immunization_vaccinationProtocol": {
+    "TypeName": "immunization_vaccinationProtocol",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "doseSequence",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ]
+      },
+      {
+        "ElementName": "description",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "authority",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "series",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "seriesDoses",
+        "Type": [
+          {
+            "TypeName": "positiveInt"
+          }
+        ]
+      },
+      {
+        "ElementName": "targetDisease",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true,
+        "Required": true
+      },
+      {
+        "ElementName": "doseStatus",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "doseStatusReason",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      }
+    ]
+  }
+}

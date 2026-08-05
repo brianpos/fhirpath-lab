@@ -1,0 +1,709 @@
+{
+  "PlanDefinition": {
+    "TypeName": "PlanDefinition",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "url",
+        "Type": [
+          {
+            "TypeName": "uri"
+          }
+        ]
+      },
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "version",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "name",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "title",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "status",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "experimental",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "date",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      },
+      {
+        "ElementName": "publisher",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "description",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      },
+      {
+        "ElementName": "purpose",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      },
+      {
+        "ElementName": "usage",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "approvalDate",
+        "Type": [
+          {
+            "TypeName": "date"
+          }
+        ]
+      },
+      {
+        "ElementName": "lastReviewDate",
+        "Type": [
+          {
+            "TypeName": "date"
+          }
+        ]
+      },
+      {
+        "ElementName": "effectivePeriod",
+        "Type": [
+          {
+            "TypeName": "Period"
+          }
+        ]
+      },
+      {
+        "ElementName": "useContext",
+        "Type": [
+          {
+            "TypeName": "UsageContext"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "jurisdiction",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "topic",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "contributor",
+        "Type": [
+          {
+            "TypeName": "Contributor"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "contact",
+        "Type": [
+          {
+            "TypeName": "ContactDetail"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "copyright",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      },
+      {
+        "ElementName": "relatedArtifact",
+        "Type": [
+          {
+            "TypeName": "RelatedArtifact"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "library",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Library"
+            ]
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "goal",
+        "Type": [
+          {
+            "TypeName": "plandefinition_goal"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "action",
+        "Type": [
+          {
+            "TypeName": "plandefinition_action"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "plandefinition_goal": {
+    "TypeName": "plandefinition_goal",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "category",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "description",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "priority",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "start",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "addresses",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "documentation",
+        "Type": [
+          {
+            "TypeName": "RelatedArtifact"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "target",
+        "Type": [
+          {
+            "TypeName": "plandefinition_goal_target"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "plandefinition_goal_target": {
+    "TypeName": "plandefinition_goal_target",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "measure",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "detail[x]",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          },
+          {
+            "TypeName": "Quantity"
+          },
+          {
+            "TypeName": "Range"
+          }
+        ]
+      },
+      {
+        "ElementName": "due",
+        "Type": [
+          {
+            "TypeName": "Duration"
+          }
+        ]
+      }
+    ]
+  },
+  "plandefinition_action": {
+    "TypeName": "plandefinition_action",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "label",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "title",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "description",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "textEquivalent",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "code",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "reason",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "documentation",
+        "Type": [
+          {
+            "TypeName": "RelatedArtifact"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "goalId",
+        "Type": [
+          {
+            "TypeName": "id"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "triggerDefinition",
+        "Type": [
+          {
+            "TypeName": "TriggerDefinition"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "condition",
+        "Type": [
+          {
+            "TypeName": "plandefinition_action_condition"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "input",
+        "Type": [
+          {
+            "TypeName": "DataRequirement"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "output",
+        "Type": [
+          {
+            "TypeName": "DataRequirement"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "relatedAction",
+        "Type": [
+          {
+            "TypeName": "plandefinition_action_relatedAction"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "timing[x]",
+        "Type": [
+          {
+            "TypeName": "Duration"
+          },
+          {
+            "TypeName": "Period"
+          },
+          {
+            "TypeName": "Range"
+          },
+          {
+            "TypeName": "Timing"
+          },
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      },
+      {
+        "ElementName": "participant",
+        "Type": [
+          {
+            "TypeName": "plandefinition_action_participant"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "Coding"
+          }
+        ]
+      },
+      {
+        "ElementName": "groupingBehavior",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "selectionBehavior",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "requiredBehavior",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "precheckBehavior",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "cardinalityBehavior",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "definition",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/ActivityDefinition"
+            ]
+          },
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/PlanDefinition"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "transform",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/StructureMap"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "dynamicValue",
+        "Type": [
+          {
+            "TypeName": "plandefinition_action_dynamicValue"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "action",
+        "Type": [
+          {
+            "TypeName": "plandefinition_action"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "plandefinition_action_condition": {
+    "TypeName": "plandefinition_action_condition",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "kind",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "description",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "language",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "expression",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      }
+    ]
+  },
+  "plandefinition_action_relatedAction": {
+    "TypeName": "plandefinition_action_relatedAction",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "actionId",
+        "Type": [
+          {
+            "TypeName": "id"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "relationship",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "offset[x]",
+        "Type": [
+          {
+            "TypeName": "Duration"
+          },
+          {
+            "TypeName": "Range"
+          }
+        ]
+      }
+    ]
+  },
+  "plandefinition_action_participant": {
+    "TypeName": "plandefinition_action_participant",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "role",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      }
+    ]
+  },
+  "plandefinition_action_dynamicValue": {
+    "TypeName": "plandefinition_action_dynamicValue",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "description",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "path",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "language",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "expression",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      }
+    ]
+  }
+}

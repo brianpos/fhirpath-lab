@@ -65,8 +65,7 @@
               "http://hl7.org/fhir/StructureDefinition/Patient"
             ]
           }
-        ],
-        "Required": true
+        ]
       }
     ]
   },
@@ -136,7 +135,17 @@
           {
             "TypeName": "CodeableConcept"
           }
-        ]
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "origin",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
       }
     ]
   },

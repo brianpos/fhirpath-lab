@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.8.0 (2026-08-06)
+* Add support for STU3
+* Update R6 models from ballot3 to ballot5
+
 ## 0.7.0 (2026-08-05)
 * Support logical model resolution and validation against logical model profiles
 * validate the variable parameter of the `cast` and `translate` transform functions

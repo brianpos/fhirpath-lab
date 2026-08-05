@@ -55,6 +55,14 @@
         "IsArray": true
       },
       {
+        "ElementName": "glycosylationType",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
         "ElementName": "description",
         "Type": [
           {
@@ -173,6 +181,30 @@
             "TypeName": "substancedefinition_sourceMaterial"
           }
         ]
+      },
+      {
+        "ElementName": "nucleicAcid",
+        "Type": [
+          {
+            "TypeName": "substancedefinition_nucleicAcid"
+          }
+        ]
+      },
+      {
+        "ElementName": "polymer",
+        "Type": [
+          {
+            "TypeName": "substancedefinition_polymer"
+          }
+        ]
+      },
+      {
+        "ElementName": "protein",
+        "Type": [
+          {
+            "TypeName": "substancedefinition_protein"
+          }
+        ]
       }
     ]
   },
@@ -194,7 +226,8 @@
           {
             "TypeName": "Identifier"
           }
-        ]
+        ],
+        "IsArray": true
       },
       {
         "ElementName": "name",
@@ -702,7 +735,13 @@
             "TypeName": "Quantity"
           },
           {
+            "TypeName": "Range"
+          },
+          {
             "TypeName": "Ratio"
+          },
+          {
+            "TypeName": "RatioRange"
           },
           {
             "TypeName": "string"
@@ -710,15 +749,39 @@
         ]
       },
       {
-        "ElementName": "ratioHighLimitAmount",
+        "ElementName": "comparator",
         "Type": [
           {
-            "TypeName": "Ratio"
+            "TypeName": "CodeableConcept"
           }
         ]
       },
       {
-        "ElementName": "comparator",
+        "ElementName": "measurementType",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "interaction",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "organism",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "organismType",
         "Type": [
           {
             "TypeName": "CodeableConcept"
@@ -783,6 +846,609 @@
           }
         ],
         "IsArray": true
+      }
+    ]
+  },
+  "substancedefinition_nucleicAcid": {
+    "TypeName": "substancedefinition_nucleicAcid",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "sequenceType",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "numberOfSubunits",
+        "Type": [
+          {
+            "TypeName": "integer"
+          }
+        ]
+      },
+      {
+        "ElementName": "areaOfHybridisation",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "oligoNucleotideType",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "subunit",
+        "Type": [
+          {
+            "TypeName": "substancedefinition_nucleicAcid_subunit"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "gene",
+        "Type": [
+          {
+            "TypeName": "substancedefinition_nucleicAcid_gene"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "geneElement",
+        "Type": [
+          {
+            "TypeName": "substancedefinition_nucleicAcid_geneElement"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "substancedefinition_nucleicAcid_subunit": {
+    "TypeName": "substancedefinition_nucleicAcid_subunit",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "subunit",
+        "Type": [
+          {
+            "TypeName": "integer"
+          }
+        ]
+      },
+      {
+        "ElementName": "sequence",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "length",
+        "Type": [
+          {
+            "TypeName": "integer"
+          }
+        ]
+      },
+      {
+        "ElementName": "sequenceAttachment",
+        "Type": [
+          {
+            "TypeName": "Attachment"
+          }
+        ]
+      },
+      {
+        "ElementName": "fivePrime",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "threePrime",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "linkage",
+        "Type": [
+          {
+            "TypeName": "substancedefinition_nucleicAcid_subunit_linkage"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "sugar",
+        "Type": [
+          {
+            "TypeName": "substancedefinition_nucleicAcid_subunit_sugar"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "substancedefinition_nucleicAcid_subunit_linkage": {
+    "TypeName": "substancedefinition_nucleicAcid_subunit_linkage",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "connectivity",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "substance",
+        "Type": [
+          {
+            "TypeName": "CodeableReference"
+          }
+        ]
+      },
+      {
+        "ElementName": "residueSite",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      }
+    ]
+  },
+  "substancedefinition_nucleicAcid_subunit_sugar": {
+    "TypeName": "substancedefinition_nucleicAcid_subunit_sugar",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "substance",
+        "Type": [
+          {
+            "TypeName": "CodeableReference"
+          }
+        ]
+      },
+      {
+        "ElementName": "residueSite",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      }
+    ]
+  },
+  "substancedefinition_nucleicAcid_gene": {
+    "TypeName": "substancedefinition_nucleicAcid_gene",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "sequenceOrigin",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "gene",
+        "Type": [
+          {
+            "TypeName": "CodeableReference"
+          }
+        ]
+      },
+      {
+        "ElementName": "source",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/DocumentReference"
+            ]
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "substancedefinition_nucleicAcid_geneElement": {
+    "TypeName": "substancedefinition_nucleicAcid_geneElement",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "element",
+        "Type": [
+          {
+            "TypeName": "CodeableReference"
+          }
+        ]
+      },
+      {
+        "ElementName": "source",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/DocumentReference"
+            ]
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "substancedefinition_polymer": {
+    "TypeName": "substancedefinition_polymer",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "class",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "geometry",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "copolymerConnectivity",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "modification",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "monomerSet",
+        "Type": [
+          {
+            "TypeName": "substancedefinition_polymer_monomerSet"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "repeat",
+        "Type": [
+          {
+            "TypeName": "substancedefinition_polymer_repeat"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "substancedefinition_polymer_monomerSet": {
+    "TypeName": "substancedefinition_polymer_monomerSet",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "ratioType",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "startingMaterial",
+        "Type": [
+          {
+            "TypeName": "substancedefinition_polymer_monomerSet_startingMaterial"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "substancedefinition_polymer_monomerSet_startingMaterial": {
+    "TypeName": "substancedefinition_polymer_monomerSet_startingMaterial",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "code",
+        "Type": [
+          {
+            "TypeName": "CodeableReference"
+          }
+        ]
+      },
+      {
+        "ElementName": "category",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "isDefining",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "amount",
+        "Type": [
+          {
+            "TypeName": "Quantity"
+          }
+        ]
+      }
+    ]
+  },
+  "substancedefinition_polymer_repeat": {
+    "TypeName": "substancedefinition_polymer_repeat",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "averageMolecularFormula",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "repeatUnitAmountType",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "repeatUnit",
+        "Type": [
+          {
+            "TypeName": "substancedefinition_polymer_repeat_repeatUnit"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "substancedefinition_polymer_repeat_repeatUnit": {
+    "TypeName": "substancedefinition_polymer_repeat_repeatUnit",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "unit",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "orientation",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "amount",
+        "Type": [
+          {
+            "TypeName": "integer"
+          }
+        ]
+      },
+      {
+        "ElementName": "degreeOfPolymerisation",
+        "Type": [
+          {
+            "TypeName": "substancedefinition_polymer_repeat_repeatUnit_degreeOfPolymerisation"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "structuralRepresentation",
+        "Type": [
+          {
+            "TypeName": "substancedefinition_structure_representation"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "substancedefinition_polymer_repeat_repeatUnit_degreeOfPolymerisation": {
+    "TypeName": "substancedefinition_polymer_repeat_repeatUnit_degreeOfPolymerisation",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "average",
+        "Type": [
+          {
+            "TypeName": "integer"
+          }
+        ]
+      },
+      {
+        "ElementName": "low",
+        "Type": [
+          {
+            "TypeName": "integer"
+          }
+        ]
+      },
+      {
+        "ElementName": "high",
+        "Type": [
+          {
+            "TypeName": "integer"
+          }
+        ]
+      }
+    ]
+  },
+  "substancedefinition_protein": {
+    "TypeName": "substancedefinition_protein",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "sequenceType",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "numberOfSubunits",
+        "Type": [
+          {
+            "TypeName": "integer"
+          }
+        ]
+      },
+      {
+        "ElementName": "disulfideLinkage",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "subunit",
+        "Type": [
+          {
+            "TypeName": "substancedefinition_protein_subunit"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "gene",
+        "Type": [
+          {
+            "TypeName": "substancedefinition_nucleicAcid_gene"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "modificationType",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      }
+    ]
+  },
+  "substancedefinition_protein_subunit": {
+    "TypeName": "substancedefinition_protein_subunit",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "subunit",
+        "Type": [
+          {
+            "TypeName": "integer"
+          }
+        ]
+      },
+      {
+        "ElementName": "sequence",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "length",
+        "Type": [
+          {
+            "TypeName": "integer"
+          }
+        ]
+      },
+      {
+        "ElementName": "sequenceAttachment",
+        "Type": [
+          {
+            "TypeName": "Attachment"
+          }
+        ]
+      },
+      {
+        "ElementName": "nTerminalModification",
+        "Type": [
+          {
+            "TypeName": "CodeableReference"
+          }
+        ]
+      },
+      {
+        "ElementName": "cTerminalModification",
+        "Type": [
+          {
+            "TypeName": "CodeableReference"
+          }
+        ]
       }
     ]
   }

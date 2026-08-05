@@ -59,7 +59,7 @@
         "ElementName": "authorization",
         "Type": [
           {
-            "TypeName": "CodeableReference"
+            "TypeName": "CodeableConcept"
           }
         ],
         "IsArray": true
@@ -197,7 +197,8 @@
               "http://hl7.org/fhir/StructureDefinition/Organization",
               "http://hl7.org/fhir/StructureDefinition/Patient",
               "http://hl7.org/fhir/StructureDefinition/Practitioner",
-              "http://hl7.org/fhir/StructureDefinition/PractitionerRole"
+              "http://hl7.org/fhir/StructureDefinition/PractitionerRole",
+              "http://hl7.org/fhir/StructureDefinition/RelatedPerson"
             ]
           }
         ]

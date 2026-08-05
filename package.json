@@ -8,6 +8,7 @@
     "build": "nuxt build",
     "test": "jest",
     "generate:models": "ts-node --transpile-only scripts/generate-models/index.ts",
+    "generate:fhirpath-r6": "ts-node --transpile-only scripts/generate-fhirpath-r6-model/index.ts",
     "generate:fhirpath-spec": "ts-node --transpile-only scripts/generate-fhirpath-spec/index.ts",
     "start": "nuxt start",
     "generate": "nuxt generate",

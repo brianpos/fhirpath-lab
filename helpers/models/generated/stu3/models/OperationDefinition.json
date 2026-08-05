@@ -1,0 +1,355 @@
+{
+  "OperationDefinition": {
+    "TypeName": "OperationDefinition",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "url",
+        "Type": [
+          {
+            "TypeName": "uri"
+          }
+        ]
+      },
+      {
+        "ElementName": "version",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "name",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "status",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "kind",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "experimental",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "date",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      },
+      {
+        "ElementName": "publisher",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "contact",
+        "Type": [
+          {
+            "TypeName": "ContactDetail"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "description",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      },
+      {
+        "ElementName": "useContext",
+        "Type": [
+          {
+            "TypeName": "UsageContext"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "jurisdiction",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "purpose",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      },
+      {
+        "ElementName": "idempotent",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "code",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "comment",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "base",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/OperationDefinition"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "resource",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "system",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "instance",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "parameter",
+        "Type": [
+          {
+            "TypeName": "operationdefinition_parameter"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "overload",
+        "Type": [
+          {
+            "TypeName": "operationdefinition_overload"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "operationdefinition_parameter": {
+    "TypeName": "operationdefinition_parameter",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "name",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "use",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "min",
+        "Type": [
+          {
+            "TypeName": "integer"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "max",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "documentation",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "searchType",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "profile",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/StructureDefinition"
+            ]
+          }
+        ]
+      },
+      {
+        "ElementName": "binding",
+        "Type": [
+          {
+            "TypeName": "operationdefinition_parameter_binding"
+          }
+        ]
+      },
+      {
+        "ElementName": "part",
+        "Type": [
+          {
+            "TypeName": "operationdefinition_parameter"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "operationdefinition_parameter_binding": {
+    "TypeName": "operationdefinition_parameter_binding",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "strength",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "valueSet[x]",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/ValueSet"
+            ]
+          },
+          {
+            "TypeName": "uri"
+          }
+        ],
+        "Required": true
+      }
+    ]
+  },
+  "operationdefinition_overload": {
+    "TypeName": "operationdefinition_overload",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "parameterName",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "comment",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      }
+    ]
+  }
+}

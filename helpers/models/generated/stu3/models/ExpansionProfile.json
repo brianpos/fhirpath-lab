@@ -1,0 +1,349 @@
+{
+  "ExpansionProfile": {
+    "TypeName": "ExpansionProfile",
+    "BaseTypeName": "DomainResource",
+    "Elements": [
+      {
+        "ElementName": "url",
+        "Type": [
+          {
+            "TypeName": "uri"
+          }
+        ]
+      },
+      {
+        "ElementName": "identifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ]
+      },
+      {
+        "ElementName": "version",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "name",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "status",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "experimental",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "date",
+        "Type": [
+          {
+            "TypeName": "dateTime"
+          }
+        ]
+      },
+      {
+        "ElementName": "publisher",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
+        "ElementName": "contact",
+        "Type": [
+          {
+            "TypeName": "ContactDetail"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "description",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      },
+      {
+        "ElementName": "useContext",
+        "Type": [
+          {
+            "TypeName": "UsageContext"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "jurisdiction",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "fixedVersion",
+        "Type": [
+          {
+            "TypeName": "expansionprofile_fixedVersion"
+          }
+        ],
+        "IsArray": true
+      },
+      {
+        "ElementName": "excludedSystem",
+        "Type": [
+          {
+            "TypeName": "expansionprofile_excludedSystem"
+          }
+        ]
+      },
+      {
+        "ElementName": "includeDesignations",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "designation",
+        "Type": [
+          {
+            "TypeName": "expansionprofile_designation"
+          }
+        ]
+      },
+      {
+        "ElementName": "includeDefinition",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "activeOnly",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "excludeNested",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "excludeNotForUI",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "excludePostCoordinated",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "displayLanguage",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "limitedExpansion",
+        "Type": [
+          {
+            "TypeName": "boolean"
+          }
+        ]
+      }
+    ]
+  },
+  "expansionprofile_fixedVersion": {
+    "TypeName": "expansionprofile_fixedVersion",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "system",
+        "Type": [
+          {
+            "TypeName": "uri"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "version",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "mode",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ],
+        "Required": true
+      }
+    ]
+  },
+  "expansionprofile_excludedSystem": {
+    "TypeName": "expansionprofile_excludedSystem",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "system",
+        "Type": [
+          {
+            "TypeName": "uri"
+          }
+        ],
+        "Required": true
+      },
+      {
+        "ElementName": "version",
+        "Type": [
+          {
+            "TypeName": "string"
+          }
+        ]
+      }
+    ]
+  },
+  "expansionprofile_designation": {
+    "TypeName": "expansionprofile_designation",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "include",
+        "Type": [
+          {
+            "TypeName": "expansionprofile_designation_include"
+          }
+        ]
+      },
+      {
+        "ElementName": "exclude",
+        "Type": [
+          {
+            "TypeName": "expansionprofile_designation_exclude"
+          }
+        ]
+      }
+    ]
+  },
+  "expansionprofile_designation_include": {
+    "TypeName": "expansionprofile_designation_include",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "designation",
+        "Type": [
+          {
+            "TypeName": "expansionprofile_designation_include_designation"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "expansionprofile_designation_include_designation": {
+    "TypeName": "expansionprofile_designation_include_designation",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "language",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "use",
+        "Type": [
+          {
+            "TypeName": "Coding"
+          }
+        ]
+      }
+    ]
+  },
+  "expansionprofile_designation_exclude": {
+    "TypeName": "expansionprofile_designation_exclude",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "designation",
+        "Type": [
+          {
+            "TypeName": "expansionprofile_designation_exclude_designation"
+          }
+        ],
+        "IsArray": true
+      }
+    ]
+  },
+  "expansionprofile_designation_exclude_designation": {
+    "TypeName": "expansionprofile_designation_exclude_designation",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "language",
+        "Type": [
+          {
+            "TypeName": "code"
+          }
+        ]
+      },
+      {
+        "ElementName": "use",
+        "Type": [
+          {
+            "TypeName": "Coding"
+          }
+        ]
+      }
+    ]
+  }
+}

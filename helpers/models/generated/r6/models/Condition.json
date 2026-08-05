@@ -55,24 +55,13 @@
         ]
       },
       {
-        "ElementName": "bodySite",
-        "Type": [
-          {
-            "TypeName": "CodeableConcept"
-          }
-        ],
-        "IsArray": true
-      },
-      {
         "ElementName": "bodyStructure",
         "Type": [
           {
-            "TypeName": "Reference",
-            "TargetProfile": [
-              "http://hl7.org/fhir/StructureDefinition/BodyStructure"
-            ]
+            "TypeName": "CodeableReference"
           }
-        ]
+        ],
+        "IsArray": true
       },
       {
         "ElementName": "subject",

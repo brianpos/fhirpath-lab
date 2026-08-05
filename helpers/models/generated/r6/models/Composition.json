@@ -53,7 +53,6 @@
               "http://hl7.org/fhir/StructureDefinition/CommunicationRequest",
               "http://hl7.org/fhir/StructureDefinition/CoverageEligibilityRequest",
               "http://hl7.org/fhir/StructureDefinition/DeviceRequest",
-              "http://hl7.org/fhir/StructureDefinition/EnrollmentRequest",
               "http://hl7.org/fhir/StructureDefinition/MedicationRequest",
               "http://hl7.org/fhir/StructureDefinition/NutritionOrder",
               "http://hl7.org/fhir/StructureDefinition/RequestOrchestration",
@@ -186,6 +185,15 @@
         "IsArray": true
       },
       {
+        "ElementName": "classification",
+        "Type": [
+          {
+            "TypeName": "composition_classification"
+          }
+        ],
+        "IsArray": true
+      },
+      {
         "ElementName": "attester",
         "Type": [
           {
@@ -273,7 +281,9 @@
           {
             "TypeName": "Reference",
             "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/CareTeam",
               "http://hl7.org/fhir/StructureDefinition/Device",
+              "http://hl7.org/fhir/StructureDefinition/Group",
               "http://hl7.org/fhir/StructureDefinition/Organization",
               "http://hl7.org/fhir/StructureDefinition/Patient",
               "http://hl7.org/fhir/StructureDefinition/Practitioner",
@@ -283,6 +293,29 @@
           }
         ],
         "Required": true
+      }
+    ]
+  },
+  "composition_classification": {
+    "TypeName": "composition_classification",
+    "BaseTypeName": "BackboneElement",
+    "Elements": [
+      {
+        "ElementName": "type",
+        "Type": [
+          {
+            "TypeName": "CodeableConcept"
+          }
+        ]
+      },
+      {
+        "ElementName": "classifier",
+        "Type": [
+          {
+            "TypeName": "CodeableReference"
+          }
+        ],
+        "IsArray": true
       }
     ]
   },

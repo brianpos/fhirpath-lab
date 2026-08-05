@@ -93,14 +93,25 @@
         ]
       },
       {
+        "ElementName": "claimIdentifier",
+        "Type": [
+          {
+            "TypeName": "Identifier"
+          }
+        ],
+        "IsArray": true
+      },
+      {
         "ElementName": "payee",
         "Type": [
           {
             "TypeName": "Reference",
             "TargetProfile": [
               "http://hl7.org/fhir/StructureDefinition/Organization",
+              "http://hl7.org/fhir/StructureDefinition/Patient",
               "http://hl7.org/fhir/StructureDefinition/Practitioner",
-              "http://hl7.org/fhir/StructureDefinition/PractitionerRole"
+              "http://hl7.org/fhir/StructureDefinition/PractitionerRole",
+              "http://hl7.org/fhir/StructureDefinition/RelatedPerson"
             ]
           }
         ]
@@ -111,11 +122,24 @@
           {
             "TypeName": "Reference",
             "TargetProfile": [
-              "http://hl7.org/fhir/StructureDefinition/Organization"
+              "http://hl7.org/fhir/StructureDefinition/Organization",
+              "http://hl7.org/fhir/StructureDefinition/Patient",
+              "http://hl7.org/fhir/StructureDefinition/RelatedPerson"
             ]
           }
         ],
         "Required": true
+      },
+      {
+        "ElementName": "patient",
+        "Type": [
+          {
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Patient"
+            ]
+          }
+        ]
       },
       {
         "ElementName": "amount",

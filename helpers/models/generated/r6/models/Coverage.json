@@ -25,7 +25,7 @@
         "ElementName": "statusReason",
         "Type": [
           {
-            "TypeName": "string"
+            "TypeName": "CodeableConcept"
           }
         ]
       },
@@ -157,7 +157,10 @@
         "ElementName": "network",
         "Type": [
           {
-            "TypeName": "string"
+            "TypeName": "Reference",
+            "TargetProfile": [
+              "http://hl7.org/fhir/StructureDefinition/Organization"
+            ]
           }
         ]
       },
@@ -175,29 +178,6 @@
         "Type": [
           {
             "TypeName": "boolean"
-          }
-        ]
-      },
-      {
-        "ElementName": "contract",
-        "Type": [
-          {
-            "TypeName": "Reference",
-            "TargetProfile": [
-              "http://hl7.org/fhir/StructureDefinition/Contract"
-            ]
-          }
-        ],
-        "IsArray": true
-      },
-      {
-        "ElementName": "insurancePlan",
-        "Type": [
-          {
-            "TypeName": "Reference",
-            "TargetProfile": [
-              "http://hl7.org/fhir/StructureDefinition/InsurancePlan"
-            ]
           }
         ]
       }
@@ -250,8 +230,15 @@
           {
             "TypeName": "Identifier"
           }
-        ],
-        "Required": true
+        ]
+      },
+      {
+        "ElementName": "code",
+        "Type": [
+          {
+            "TypeName": "Coding"
+          }
+        ]
       },
       {
         "ElementName": "name",

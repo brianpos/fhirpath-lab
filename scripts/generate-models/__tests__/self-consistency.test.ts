@@ -280,6 +280,37 @@ describe("buildVersion", () => {
         expect(link.Type[0].TargetProfile).toBeUndefined();
     });
 
+    test("STU3 scalar targetProfile is emitted as a one-item collection", () => {
+        const stu3Account: StructureDefinition = {
+            resourceType: "StructureDefinition",
+            url: "http://hl7.org/fhir/StructureDefinition/Account",
+            name: "Account",
+            type: "Account",
+            kind: "resource",
+            baseDefinition: "http://hl7.org/fhir/StructureDefinition/DomainResource",
+            derivation: "specialization",
+            differential: {
+                element: [
+                    { id: "Account", path: "Account" },
+                    {
+                        id: "Account.subject",
+                        path: "Account.subject",
+                        max: "1",
+                        type: [{
+                            code: "Reference",
+                            targetProfile: "http://hl7.org/fhir/StructureDefinition/Patient",
+                        }],
+                    },
+                ],
+            },
+        };
+        const stu3 = buildVersion("stu3", [TYPES_BUNDLE, mkBundle(stu3Account)]);
+        const account = stu3.entries.find((e) => e.model.TypeName === "Account")!;
+        expect(account.model.Elements[0].Type[0].TargetProfile).toEqual([
+            "http://hl7.org/fhir/StructureDefinition/Patient",
+        ]);
+    });
+
     test("choice elements keep [x] suffix and list every concrete type, sorted", () => {
         const obs = result.entries.find((e) => e.model.TypeName === "Observation")!;
         const valEl = obs.model.Elements.find((e) => e.ElementName === "value[x]")!;

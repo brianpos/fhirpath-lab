@@ -275,6 +275,22 @@
             "TypeName": "url"
           }
         ]
+      },
+      {
+        "ElementName": "fragmentSupport",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
+      },
+      {
+        "ElementName": "supplementSupport",
+        "Type": [
+          {
+            "TypeName": "markdown"
+          }
+        ]
       }
     ]
   },
@@ -300,6 +316,17 @@
         "IsArray": true
       },
       {
+        "ElementName": "versionAlgorithm[x]",
+        "Type": [
+          {
+            "TypeName": "Coding"
+          },
+          {
+            "TypeName": "string"
+          }
+        ]
+      },
+      {
         "ElementName": "version",
         "Type": [
           {
@@ -314,8 +341,7 @@
           {
             "TypeName": "code"
           }
-        ],
-        "Required": true
+        ]
       },
       {
         "ElementName": "subsumption",
@@ -332,7 +358,7 @@
     "BaseTypeName": "BackboneElement",
     "Elements": [
       {
-        "ElementName": "code",
+        "ElementName": "value",
         "Type": [
           {
             "TypeName": "string"
@@ -344,6 +370,14 @@
         "Type": [
           {
             "TypeName": "boolean"
+          }
+        ]
+      },
+      {
+        "ElementName": "content",
+        "Type": [
+          {
+            "TypeName": "code"
           }
         ]
       },

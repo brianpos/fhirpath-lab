@@ -1,5 +1,5 @@
 // THIS FILE IS GENERATED — DO NOT EDIT BY HAND.
-// Run `npm run generate:models -- --version <r4|r4b|r5|r6>` to regenerate.
+// Run `npm run generate:models -- --version <stu3|r4|r4b|r5|r6>` to regenerate.
 // See docs/custom-model-generator-plan.md.
 
 import type { TypeModel } from "../../../custom_model";
@@ -168,7 +168,7 @@ export const uuid: TypeModel = {
 
 export const xhtml: TypeModel = {
     TypeName: "xhtml",
-    BaseTypeName: "Element",
+    BaseTypeName: "PrimitiveType",
     Elements: [
         { ElementName: "value", Type: [{ TypeName: "System.String" }], Required: true },
     ],
