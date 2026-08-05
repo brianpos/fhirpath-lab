@@ -3,6 +3,8 @@ import {
     FmlSource,
     FmlGroupSymbols,
     FmlDocumentSymbols,
+    FmlPropertyUsage,
+    FmlPropertyCompletion,
     FmlValidatorResult,
     LoadedPackage,
     PackageLoadRequest,
@@ -14,12 +16,14 @@ import {
 } from "./contracts";
 import {FmlValidatorEngine} from "./FmlValidatorEngine";
 import {FmlGroupSymbolCollector} from "./FmlGroupSymbolCollector";
+import {FmlPropertyUsageCollector} from "./FmlPropertyUsageCollector";
 import {Stage1FmlValidatorEngine} from "./Stage1FmlValidatorEngine";
 
 export class FmlValidatorApi {
     public constructor(
         private readonly engine: FmlValidatorEngine = new Stage1FmlValidatorEngine(),
         private readonly groupSymbolCollector = new FmlGroupSymbolCollector(),
+        private readonly propertyUsageCollector = new FmlPropertyUsageCollector(),
     ) {
     }
 
@@ -42,6 +46,14 @@ export class FmlValidatorApi {
 
     public getDocumentSymbols(source: FmlSource): FmlDocumentSymbols {
         return this.groupSymbolCollector.collectDocument(source.sourceText);
+    }
+
+    public getPropertyUsages(source: FmlSource): FmlPropertyUsage[] {
+        return this.propertyUsageCollector.collect(source);
+    }
+
+    public getPropertyCompletions(source: FmlSource, cursorOffset: number): FmlPropertyCompletion[] {
+        return this.propertyUsageCollector.getCompletions(source, cursorOffset);
     }
 
     public compile(source: FmlSource): Promise<FmlValidatorResult<CompiledStructureMap>> {

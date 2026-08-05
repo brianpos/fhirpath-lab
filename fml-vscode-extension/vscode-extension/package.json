@@ -3,7 +3,7 @@
   "displayName": "FHIR Mapping Language Tools",
   "description": "Developer tools by Brian Postlethwaite for working with the FHIR Mapping Language (FML), including syntax highlighting, validation, and a trace replay debugger",
   "icon": "ext-images/icon.ico",
-  "version": "0.3.0",
+  "version": "0.5.0",
   "publisher": "fhirpath-lab",
   "readme": "README.md",
   "author": {
@@ -239,17 +239,12 @@
     "@vscode/debugadapter": "^1.68.0",
     "@vscode/debugprotocol": "^1.68.0",
     "antlr4": "^4.13.2",
-    "axios": "^1.18.1",
-    "semver": "^7.8.5",
-    "tar": "^7.5.20",
-    "vscode-languageclient": "^10.1.0",
-    "yaml": "^2.9.0"
+    "vscode-languageclient": "^10.1.0"
   },
   "devDependencies": {
     "@typescript/native": "npm:typescript@^7.0.2",
     "@types/mocha": "^10.0.10",
     "@types/node": "^22.20.1",
-    "@types/semver": "^7.7.1",
     "@types/vscode": "1.91.0",
     "@vscode/test-cli": "^0.0.12",
     "@vscode/test-electron": "^2.5.2",

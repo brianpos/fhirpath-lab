@@ -67,6 +67,9 @@ export interface ValidateOptions {
     contextExpression?: string;
     /** Map of `%var` name -> typed value. */
     environmentVariables?: Record<string, FhirPathValue>;
+    /** FML compatibility: bare root identifiers may resolve to declared
+     *  environment variables, equivalent to `%name`. */
+    allowEnvironmentVariablesAtRoot?: boolean;
     /** Optional override for `%resource` — the input resource type. When
      *  omitted, defaults to `contextType` (per the FHIRPath spec, `%resource`
      *  is the resource the expression is being evaluated against, not the
@@ -90,6 +93,33 @@ export interface ValidationResult {
     outcome?: fhir4b.OperationOutcome;
     /** Annotated AST of the context expression, when one was provided. */
     contextParseDebugTree?: JsonNode;
+}
+
+/** Collect distinct `%variable` names from a visitor AST. */
+export function collectFhirPathVariableReferences(root: JsonNode | undefined): string[] {
+    if (!root) return [];
+    const references: string[] = [];
+    const seen = new Set<string>();
+    const visit = (node: JsonNode): void => {
+        if (node.ExpressionType === "VariableRefExpression" && !seen.has(node.Name)) {
+            seen.add(node.Name);
+            references.push(node.Name);
+        }
+        for (const argument of node.Arguments ?? []) visit(argument);
+    };
+    visit(root);
+    return references;
+}
+
+/** Parse an expression and return the `%variable` names referenced by it. */
+export function getFhirPathVariableReferences(expression: string, rootVariableNames: string[] = []): string[] {
+    const environmentVariables = Object.fromEntries(rootVariableNames.map(name => {
+        return [name, {types: [], isCollection: false} satisfies FhirPathValue];
+    }));
+    return collectFhirPathVariableReferences(validateFhirpathExpression(expression, {
+        environmentVariables,
+        allowEnvironmentVariablesAtRoot: rootVariableNames.length > 0,
+    }).parseDebugTree);
 }
 
 const VALIDATOR_CODE_SYSTEM = "http://fhirpath-lab.com/CodeSystem/validator-codes";
@@ -163,6 +193,7 @@ export function validateFhirpathExpression(
             contextType,
             contextIsCollection: options.contextIsCollection,
             environmentVariables: options.environmentVariables,
+            allowEnvironmentVariablesAtRoot: options.allowEnvironmentVariablesAtRoot,
             resource: options.resource ?? (contextType ? { types: [contextType], isCollection: false } : undefined),
         });
         contextDiagnostics = [...cv.syntaxErrors, ...cv.diagnostics];
@@ -185,6 +216,7 @@ export function validateFhirpathExpression(
         contextIsCollection: options.contextIsCollection,
         contextValue,
         environmentVariables: options.environmentVariables,
+        allowEnvironmentVariablesAtRoot: options.allowEnvironmentVariablesAtRoot,
         // Per the spec's scoped-functions rules, %resource is the input
         // resource the expression is being evaluated against, *not* the
         // current focus. When the user supplied a contextExpression that

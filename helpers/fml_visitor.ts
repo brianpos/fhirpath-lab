@@ -17,7 +17,11 @@ import type {
   RuleSourceContext,
   RuleTargetContext,
   TransformContext,
+  TransformInvocationContext,
+  TransformParamContext,
+  TransformParamValueContext,
   GroupInvocationContext,
+  GroupParamContext,
   DependentExpressionContext,
   QualifiedIdentifierContext,
   IdentifierContext,
@@ -55,6 +59,8 @@ import type { ParserRuleContext } from "antlr4";
  * Builder class to construct StructureMap model from parse tree
  */
 export class FmlModelBuilder {
+  constructor(private readonly sourceText?: string) {}
+
   
   /**
    * Extract source position from ANTLR context
@@ -70,6 +76,13 @@ export class FmlModelBuilder {
       startIndex: ctx.start.start,
       endIndex: ctx.stop.stop + 1
     };
+  }
+
+  private getSourceText(ctx: ParserRuleContext): string {
+    const position = this.getPosition(ctx);
+    return this.sourceText && position
+      ? this.sourceText.slice(position.startIndex, position.endIndex)
+      : ctx.getText();
   }
   
   /**
@@ -326,7 +339,8 @@ export class FmlModelBuilder {
     return {
       position: this.getPosition(ctx),
       name: idNode.getText(),
-      expression: exprNode.getText()
+      expression: this.getSourceText(exprNode),
+      expressionPosition: this.getPosition(exprNode)
     };
   }
   
@@ -533,7 +547,8 @@ export class FmlModelBuilder {
     
     // Get default value if present
     const defaultNode = ctx.sourceDefault();
-    const defaultValue = defaultNode?.fpExpression()?.getText();
+    const defaultExpressionNode = defaultNode?.fpExpression();
+    const defaultValue = defaultExpressionNode ? this.getSourceText(defaultExpressionNode) : undefined;
     
     // Get list mode if present
     const listModeNode = ctx.sourceListMode();
@@ -545,15 +560,18 @@ export class FmlModelBuilder {
     
     // Get where clause if present
     const whereNode = ctx.whereClause();
-    const condition = whereNode?.fpExpression()?.getText();
+    const conditionNode = whereNode?.fpExpression();
+    const condition = conditionNode ? this.getSourceText(conditionNode) : undefined;
     
     // Get check clause if present
     const checkNode = ctx.checkClause();
-    const check = checkNode?.fpExpression()?.getText();
+    const checkExpressionNode = checkNode?.fpExpression();
+    const check = checkExpressionNode ? this.getSourceText(checkExpressionNode) : undefined;
     
     // Get log statement if present
     const logNode = ctx.log();
-    const log = logNode?.fpExpression()?.getText();
+    const logExpressionNode = logNode?.fpExpression();
+    const log = logExpressionNode ? this.getSourceText(logExpressionNode) : undefined;
     
     return {
       position: this.getPosition(ctx),
@@ -563,11 +581,15 @@ export class FmlModelBuilder {
       min,
       max,
       defaultValue,
+      defaultValuePosition: defaultExpressionNode ? this.getPosition(defaultExpressionNode) : undefined,
       listMode,
       variable,
       condition,
+      conditionPosition: conditionNode ? this.getPosition(conditionNode) : undefined,
       check,
-      log
+      checkPosition: checkExpressionNode ? this.getPosition(checkExpressionNode) : undefined,
+      log,
+      logPosition: logExpressionNode ? this.getPosition(logExpressionNode) : undefined,
     };
   }
   
@@ -648,8 +670,9 @@ export class FmlModelBuilder {
         position: this.getPosition(ctx),
         type: 'evaluate',
         parameters: [{
+          position: this.getPosition(fpExprNode),
           type: 'expression',
-          value: fpExprNode.getText()
+          value: this.getSourceText(fpExprNode)
         }]
       };
       return {
@@ -694,7 +717,7 @@ export class FmlModelBuilder {
     }
     
     // Check if it's an invocation (named transform)
-    const invocationNode = ctx.groupInvocation();
+    const invocationNode = ctx.transformInvocation();
     if (invocationNode) {
       return this.visitInvocationAsTransform(invocationNode);
     }
@@ -706,8 +729,9 @@ export class FmlModelBuilder {
         position: this.getPosition(ctx),
         type: 'evaluate',
         parameters: [{
+          position: this.getPosition(fpExprNode),
           type: 'expression',
-          value: fpExprNode.getText()
+          value: this.getSourceText(fpExprNode)
         }]
       };
     }
@@ -718,19 +742,32 @@ export class FmlModelBuilder {
   /**
    * Visit invocation node as transform
    */
-  visitInvocationAsTransform(ctx: GroupInvocationContext): Transform | null {
+  visitInvocationAsTransform(ctx: TransformInvocationContext | GroupInvocationContext): Transform | null {
     const idNode = ctx.identifier();
     if (!idNode) return null;
     
     const type = this.visitIdentifier(idNode);
     const parameters: TransformParameter[] = [];
     
-    const paramListNode = ctx.groupParamList();
+    const paramListNode = 'transformParamList' in ctx
+      ? ctx.transformParamList()
+      : ctx.groupParamList();
     if (paramListNode) {
-      const paramNodes = paramListNode.groupParam_list();
+      const paramNodes = 'transformParam' in paramListNode
+        ? paramListNode.transformParam_list()
+        : paramListNode.groupParam_list();
       for (const paramNode of paramNodes) {
-        const literalNode = paramNode.literal();
-        const idNode = paramNode.ID();
+        const transformParam = paramNode as TransformParamContext;
+        const isTransformParameter = typeof transformParam.transformParamValue === 'function';
+        const valueNode: TransformParamValueContext | GroupParamContext = isTransformParameter
+          ? transformParam.transformParamValue()
+          : paramNode as GroupParamContext;
+        const literalNode = valueNode.literal();
+        const idNode = valueNode.ID();
+        const expressionNode = valueNode.fpExpression?.();
+        const name = isTransformParameter
+          ? transformParam.transformParamName()?.getText()
+          : undefined;
         
         if (literalNode) {
           const text = literalNode.getText();
@@ -742,13 +779,26 @@ export class FmlModelBuilder {
           else if (!isNaN(Number(text))) value = Number(text);
           
           parameters.push({
+            position: this.getPosition(valueNode),
+            name,
             type: 'literal',
+            literalType: this.literalType(text),
             value
           });
         } else if (idNode) {
           parameters.push({
+            position: this.getPosition(valueNode),
+            name,
             type: 'identifier',
             value: idNode.getText()
+          });
+        } else if (expressionNode) {
+          const expression = this.getSourceText(expressionNode);
+          parameters.push({
+            position: this.getPosition(valueNode),
+            name,
+            type: this.isIdentifier(expression) ? 'identifier' : 'expression',
+            value: expression
           });
         }
       }
@@ -757,8 +807,25 @@ export class FmlModelBuilder {
     return { 
       position: this.getPosition(ctx),
       type, 
-      parameters 
+      parameters,
+      isInvocation: true
     };
+  }
+
+  private isIdentifier(value: string): boolean {
+    return /^[A-Za-z_][A-Za-z0-9_]*$/.test(value) || /^`[^`]+`$/.test(value);
+  }
+
+  private literalType(text: string): TransformParameter['literalType'] {
+    if (text === '{}') return 'null';
+    if (text === 'true' || text === 'false') return 'boolean';
+    if (text.startsWith('@T')) return 'time';
+    if (text.startsWith('@') && text.includes('T')) return 'datetime';
+    if (text.startsWith('@')) return 'date';
+    if (/^[0-9]+L$/.test(text) || /^[0-9]+$/.test(text)) return 'integer';
+    if (/^[0-9]*\.[0-9]+$/.test(text)) return 'decimal';
+    if (/^[0-9]+(?:\.[0-9]+)?\s*(?:'[^']+'|[A-Za-z]+)/.test(text)) return 'quantity';
+    return 'string';
   }
   
   /**

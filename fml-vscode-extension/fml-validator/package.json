@@ -4,29 +4,35 @@
   "private": true,
   "description": "TypeScript validation API for FHIR Mapping Language",
   "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "types": "dist/fml-vscode-extension/fml-validator/src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/fml-vscode-extension/fml-validator/src/index.d.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
   "files": [
-    "dist",
-    "grammar"
+    "dist"
   ],
   "engines": {
     "node": ">=20.0.0"
   },
   "packageManager": "npm@10.9.2",
   "scripts": {
-    "clean": "node -e \"const fs=require('node:fs'); for (const path of ['dist','src/generated']) fs.rmSync(path,{recursive:true,force:true})\"",
-    "generate": "antlr-ng -D language=TypeScript -o src/generated --generate-listener true grammar/mapping.g4",
-    "build": "npm run clean && npm run generate && tsc -p tsconfig.json",
-    "check-types": "npm run generate && tsc --noEmit -p tsconfig.json",
-    "test": "npm run build && node --test dist/test/FmlValidatorApi.test.js",
-    "validate-examples": "npm run build && node dist/cli/validate-examples.js"
+    "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
+    "build": "npm run clean && tsc -p tsconfig.json && esbuild src/index.ts --bundle --platform=node --format=cjs --external:antlr4 --outfile=dist/index.js",
+    "check-types": "tsc --noEmit -p tsconfig.json",
+    "test": "npm run build && esbuild src/test/FmlValidatorApi.test.ts --bundle --platform=node --format=cjs --external:antlr4 --outfile=dist/test.js && node --test dist/test.js",
+    "validate-examples": "npm run build && node dist/fml-vscode-extension/fml-validator/src/cli/validate-examples.js"
   },
   "dependencies": {
-    "antlr4ng": "^3.0.16"
+    "@types/fhir": "^0.0.41",
+    "antlr4": "^4.13.2"
   },
   "devDependencies": {
     "@types/node": "^22.20.1",
-    "antlr-ng": "^1.0.10",
+    "esbuild": "^0.25.12",
     "typescript": "^7.0.2"
   }
 }

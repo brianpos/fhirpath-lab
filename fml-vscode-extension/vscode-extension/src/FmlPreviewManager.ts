@@ -254,15 +254,19 @@ function createPreviewHtml(
         :root { color-scheme: light dark; }
         body {
             box-sizing: border-box;
+            height: 100vh;
             margin: 0;
             min-width: 320px;
+            overflow: hidden;
             padding: 24px;
             color: var(--vscode-editor-foreground);
             background: var(--vscode-editor-background);
             font-family: var(--vscode-font-family);
         }
         .preview-shell {
-            min-height: calc(100vh - 48px);
+            box-sizing: border-box;
+            width: 100%;
+            height: calc(100vh - 48px);
             overflow: auto;
         }
         .fml-preview-svg {

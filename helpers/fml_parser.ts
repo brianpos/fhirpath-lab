@@ -1,7 +1,7 @@
 import antlr4, { ErrorListener, RecognitionException, Recognizer, Token } from "antlr4";
 import Lexer from "../fml-parser/FmlMappingLexer";
 import Parser from "../fml-parser/FmlMappingParser";
-import { OperationOutcome } from "fhir/r4b";
+import type { OperationOutcome } from "fhir/r4b";
 import type { FmlStructureMap, ParseError } from "./fml_models";
 import { FmlModelBuilder } from "./fml_visitor";
 
@@ -33,18 +33,28 @@ export function parseFML(fmlText: string): FmlStructureMap | OperationOutcome {
   let tokens = new antlr4.CommonTokenStream(lexer);
   let parser = new Parser(tokens);
 
-  let errListener = new FmlParserErrorListener();
-  parser.addErrorListener(errListener);
+  const lexerErrorListener = new FmlParserErrorListener<number>();
+  const parserErrorListener = new FmlParserErrorListener<Token>();
+  lexer.removeErrorListeners();
+  lexer.addErrorListener(lexerErrorListener);
+  parser.removeErrorListeners();
+  parser.addErrorListener(parserErrorListener);
   let tree = parser.structureMap();
 
-  const errOutcome = errListener.result();
+  const errOutcome: OperationOutcome = {
+    resourceType: "OperationOutcome",
+    issue: [
+      ...lexerErrorListener.result().issue,
+      ...parserErrorListener.result().issue,
+    ],
+  };
   if (errOutcome.issue.length > 0) {
     return errOutcome;
   }
 
   try {
     // Use the model builder to convert parse tree to StructureMap model
-    const builder = new FmlModelBuilder();
+    const builder = new FmlModelBuilder(fmlText);
     const structureMap = builder.buildStructureMap(tree);
     return structureMap;
   } catch (error) {
@@ -62,7 +72,11 @@ export function parseFML(fmlText: string): FmlStructureMap | OperationOutcome {
   }
 }
 
-class FmlParserErrorListener extends ErrorListener<Token> {
+export function isFmlParseError(result: FmlStructureMap | OperationOutcome): result is OperationOutcome {
+  return "resourceType" in result && result.resourceType === "OperationOutcome";
+}
+
+class FmlParserErrorListener<TSymbol> extends ErrorListener<TSymbol> {
   constructor() {
     super();
   }
@@ -82,9 +96,7 @@ class FmlParserErrorListener extends ErrorListener<Token> {
     return this.errors;
   }
 
-  syntaxError = (recognizer: Recognizer<Token>, offendingSymbol: Token, line: number, column: number, msg: string, e: RecognitionException | undefined): void => {
-    console.log("Err: @" + line + ":" + column + " " + msg);
-    
+  syntaxError = (recognizer: Recognizer<TSymbol>, offendingSymbol: TSymbol, line: number, column: number, msg: string, e: RecognitionException | undefined): void => {
     this.outcome.issue.push({
       severity: "error",
       code: "syntax",

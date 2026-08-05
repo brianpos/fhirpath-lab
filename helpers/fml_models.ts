@@ -221,6 +221,9 @@ export interface ConstantDeclaration {
   
   /** FHIRPath expression defining the constant value */
   expression: string;
+
+  /** Source position of the expression, excluding `let name =` and `;`. */
+  expressionPosition?: SourcePosition;
 }
 
 /**
@@ -307,6 +310,7 @@ export interface RuleSource {
   
   /** Default value as FHIRPath expression (optional) */
   defaultValue?: string;
+  defaultValuePosition?: SourcePosition;
   
   /** List option: 'first', 'last', 'not_first', 'not_last', or 'only_one' (optional) */
   listMode?: 'first' | 'last' | 'not_first' | 'not_last' | 'only_one';
@@ -316,12 +320,15 @@ export interface RuleSource {
   
   /** Where clause as FHIRPath expression (optional) */
   condition?: string;
+  conditionPosition?: SourcePosition;
   
   /** Check clause as FHIRPath expression (optional) */
   check?: string;
+  checkPosition?: SourcePosition;
   
   /** Log statement as FHIRPath expression (optional) */
   log?: string;
+  logPosition?: SourcePosition;
 }
 
 /**
@@ -360,6 +367,9 @@ export interface Transform {
   
   /** Parameters for the transform */
   parameters: TransformParameter[];
+
+  /** Whether this transform was written as a named function invocation. */
+  isInvocation?: boolean;
 }
 
 /**
@@ -389,8 +399,17 @@ export type TransformType =
  * Parameter for a transform
  */
 export interface TransformParameter {
+  /** Source position information */
+  position?: SourcePosition;
+
+  /** Optional name used by a named transform parameter */
+  name?: string;
+
   /** Type of parameter */
   type: 'literal' | 'identifier' | 'expression';
+
+  /** More specific literal type retained for static transform validation */
+  literalType?: 'boolean' | 'date' | 'datetime' | 'decimal' | 'integer' | 'null' | 'quantity' | 'string' | 'time';
   
   /** Value of the parameter */
   value: string | number | boolean;

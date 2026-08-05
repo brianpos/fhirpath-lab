@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import {DiagnosticSeverity, InsertTextFormat} from "vscode-languageserver/node";
+import {CompletionItemKind, DiagnosticSeverity, InsertTextFormat} from "vscode-languageserver/node";
 import {toLspCompletion, toLspDiagnostic} from "../lspMapper";
 
 test("maps language diagnostics to LSP diagnostics", () => {
@@ -19,6 +19,20 @@ test("maps language diagnostics to LSP diagnostics", () => {
     assert.deepEqual(diagnostic.range.start, {line: 1, character: 2});
 });
 
+test("maps information diagnostics to LSP information severity", () => {
+    const diagnostic = toLspDiagnostic({
+        range: {
+            start: {line: 0, character: 0},
+            end: {line: 0, character: 3},
+        },
+        severity: "information",
+        message: "Input type unresolved",
+        source: "FHIR Mapping Language Tools",
+    });
+
+    assert.equal(diagnostic.severity, DiagnosticSeverity.Information);
+});
+
 test("maps completion snippets to LSP completion items", () => {
     const completion = toLspCompletion({
         label: "truncate",
@@ -29,4 +43,16 @@ test("maps completion snippets to LSP completion items", () => {
 
     assert.equal(completion.insertTextFormat, InsertTextFormat.Snippet);
     assert.equal(completion.insertText, "truncate(${1})");
+});
+
+test("maps property completions to LSP property items", () => {
+    const completion = toLspCompletion({
+        label: "identifier",
+        detail: "Identifier [0..*] (R5)",
+        insertText: "identifier",
+        snippet: false,
+        kind: "property",
+    });
+
+    assert.equal(completion.kind, CompletionItemKind.Property);
 });

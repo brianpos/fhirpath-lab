@@ -189,8 +189,47 @@ importDeclaration
 transform
   : literal           // trivial constant transform
   | qualifiedIdentifier       // 'copy' transform
-  | groupInvocation        // other named transforms
+  | transformInvocation        // other named transforms
   | '(' fpExpression ')'      // fhirpath based expressions
+  ;
+
+transformInvocation
+  : identifier '(' transformParamList? ')'
+  ;
+
+transformParamList
+  : transformParam (',' transformParam)*
+  ;
+
+transformParam
+  : transformParamName ':' transformParamValue
+  | transformParamValue
+  ;
+
+transformParamName
+  : identifier
+  | 'imports'
+  | 'source'
+  | 'target'
+  | 'group'
+  | 'prefix'
+  | 'map'
+  | 'uses'
+  | 'let'
+  | 'types'
+  | 'extends'
+  | 'where'
+  | 'check'
+  | 'alias'
+  | 'div'
+  | 'first'
+  | 'last'
+  ;
+
+transformParamValue
+  : literal
+  | ID
+  | fpExpression
   ;
 
 groupInvocation
@@ -204,6 +243,7 @@ groupParamList
 groupParam
   : literal
   | ID
+  | fpExpression
   ;
 
 fpExpression

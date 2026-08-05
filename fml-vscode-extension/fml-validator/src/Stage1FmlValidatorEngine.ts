@@ -1,4 +1,5 @@
-import {AntlrFmlParser} from "./AntlrFmlParser";
+import {CoreFmlParser} from "./CoreFmlParser";
+import {fmlToStructureMap} from "../../../helpers/fml_to_structuremap";
 import {
     CompiledStructureMap,
     FmlSource,
@@ -16,18 +17,23 @@ import {
 import {FmlValidatorEngine} from "./FmlValidatorEngine";
 
 export class Stage1FmlValidatorEngine implements FmlValidatorEngine {
-    public constructor(private readonly parser = new AntlrFmlParser()) {
+    public constructor(private readonly parser = new CoreFmlParser()) {
     }
 
     public async parse(source: FmlSource): Promise<FmlValidatorResult<ParsedFml>> {
         return this.parser.parse(source);
     }
 
-    public async compile(_source: FmlSource): Promise<FmlValidatorResult<CompiledStructureMap>> {
-        return this.notImplemented(
-            "compile",
-            "Compiling FML into a FHIR StructureMap is a future validator-engine hook.",
-        );
+    public async compile(source: FmlSource): Promise<FmlValidatorResult<CompiledStructureMap>> {
+        const parsed = this.parser.parse(source);
+        if (parsed.status !== "success") {
+            return parsed;
+        }
+        return {
+            status: "success",
+            value: {resource: fmlToStructureMap(parsed.value.model)},
+            diagnostics: parsed.diagnostics,
+        };
     }
 
     public async validateSemantics(

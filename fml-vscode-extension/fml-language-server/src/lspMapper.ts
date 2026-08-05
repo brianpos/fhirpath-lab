@@ -8,7 +8,9 @@ export function toLspDiagnostic(diagnostic: LanguageDiagnostic): Diagnostic {
         diagnostic.message,
         diagnostic.severity === "warning"
             ? DiagnosticSeverity.Warning
-            : DiagnosticSeverity.Error,
+            : diagnostic.severity === "information"
+                ? DiagnosticSeverity.Information
+                : DiagnosticSeverity.Error,
         undefined,
         diagnostic.source,
     );
@@ -17,7 +19,9 @@ export function toLspDiagnostic(diagnostic: LanguageDiagnostic): Diagnostic {
 export function toLspCompletion(completion: CompletionSuggestion): CompletionItem {
     return {
         label: completion.label,
-        kind: CompletionItemKind.Function,
+        kind: completion.kind === "property"
+            ? CompletionItemKind.Property
+            : CompletionItemKind.Function,
         detail: completion.detail,
         insertText: completion.insertText,
         insertTextFormat: completion.snippet

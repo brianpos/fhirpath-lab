@@ -24,6 +24,7 @@ async function main(): Promise<void> {
     const files = await findFmlFiles(path.resolve(directory));
     let failures = 0;
     let warnings = 0;
+    let informationMessages = 0;
 
     for (const file of files) {
         const result = await validator.validate({
@@ -36,6 +37,9 @@ async function main(): Promise<void> {
             if (diagnostic.severity === "warning") {
                 warnings++;
                 console.warn(message);
+            } else if (diagnostic.severity === "information") {
+                informationMessages++;
+                console.info(message);
             } else {
                 console.error(message);
             }
@@ -47,7 +51,8 @@ async function main(): Promise<void> {
     }
 
     console.log(
-        `${files.length - failures}/${files.length} FML files validated successfully with ${warnings} warning(s).`,
+        `${files.length - failures}/${files.length} FML files validated successfully with `
+        + `${warnings} warning(s) and ${informationMessages} information message(s).`,
     );
     if (failures > 0) {
         process.exitCode = 1;

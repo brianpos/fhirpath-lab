@@ -22,6 +22,7 @@ import {
     ErrorCodes,
     InitializeResult,
     LSPErrorCodes,
+    MarkupKind,
     ProposedFeatures,
     ResponseError,
     TextDocumentSyncKind,
@@ -29,7 +30,7 @@ import {
 } from "vscode-languageserver/node";
 import {TextDocument} from "vscode-languageserver-textdocument";
 import {toLspCompletion, toLspDiagnostic} from "./lspMapper";
-import {findGroupDefinitions, getUnresolvedGroupDiagnostics} from "./groupDefinitionProvider";
+import {findGroupDefinitions, findGroupReferences, getUnresolvedGroupDiagnostics} from "./groupDefinitionProvider";
 import {WorkspaceFmlIndex} from "./WorkspaceFmlIndex";
 import {FmlServerStatusStore} from "./FmlServerStatusStore";
 
@@ -46,9 +47,11 @@ connection.onInitialize((): InitializeResult => ({
     capabilities: {
         textDocumentSync: TextDocumentSyncKind.Incremental,
         completionProvider: {
-            triggerCharacters: ["="],
+            triggerCharacters: ["=", "."],
         },
         definitionProvider: true,
+        hoverProvider: true,
+        referencesProvider: true,
     },
 }));
 
@@ -91,6 +94,31 @@ connection.onDefinition(parameters => {
         workspaceIndex,
         parameters.textDocument.uri,
         parameters.position,
+    );
+});
+
+connection.onHover(parameters => {
+    const document = documents.get(parameters.textDocument.uri);
+    if (!document) {
+        return null;
+    }
+    const hover = languageService.getHover({
+        uri: document.uri,
+        text: document.getText(),
+        position: parameters.position,
+    });
+    return hover ? {
+        contents: {kind: MarkupKind.Markdown, value: hover.markdown},
+        range: hover.range,
+    } : null;
+});
+
+connection.onReferences(parameters => {
+    return findGroupReferences(
+        workspaceIndex,
+        parameters.textDocument.uri,
+        parameters.position,
+        parameters.context.includeDeclaration,
     );
 });
 
@@ -187,6 +215,7 @@ async function validateDocument(document: TextDocument): Promise<DocumentValidat
         diagnostics: [...baseResult.diagnostics, ...unresolvedGroups],
         errorCount: baseResult.errorCount,
         warningCount: baseResult.warningCount + unresolvedGroups.length,
+        informationCount: baseResult.informationCount,
     };
     const currentDocument = documents.get(document.uri);
 

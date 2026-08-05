@@ -4,10 +4,12 @@
     "lib": [
       "ES2022"
     ],
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
+    "esModuleInterop": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
     "outDir": "dist",
-    "rootDir": "src",
+    "rootDir": "../..",
+    "skipLibCheck": true,
     "sourceMap": true,
     "strict": true,
     "target": "ES2022",

@@ -8,6 +8,11 @@
     "moduleResolution": "NodeNext",
     "outDir": "dist",
     "rootDir": "src",
+    "paths": {
+      "@fhirpath-lab/validator": [
+        "../fml-validator/dist/fml-vscode-extension/fml-validator/src/index.d.ts"
+      ]
+    },
     "sourceMap": true,
     "strict": true,
     "target": "ES2022",

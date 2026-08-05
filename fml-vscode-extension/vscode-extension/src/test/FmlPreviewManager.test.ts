@@ -42,6 +42,8 @@ suite("FML Preview Manager", () => {
         renderer.pending[1].resolve("<svg id=\"current\"></svg>");
         await waitFor(() => panel.webview.html.includes("id=\"current\""));
 
+        assert.match(panel.webview.html, /body \{[\s\S]*height: 100vh;[\s\S]*overflow: hidden;/);
+        assert.match(panel.webview.html, /\.preview-shell \{[\s\S]*height: calc\(100vh - 48px\);[\s\S]*overflow: auto;/);
         manager.dispose();
     });
 

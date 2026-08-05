@@ -17,7 +17,7 @@ export interface LanguageRange {
 
 export interface LanguageDiagnostic {
     range: LanguageRange;
-    severity: "error" | "warning";
+    severity: "error" | "warning" | "information";
     message: string;
     source: "FHIR Mapping Language Tools";
     offendingText?: string;
@@ -32,6 +32,7 @@ export interface DocumentValidationResult {
     diagnostics: LanguageDiagnostic[];
     errorCount: number;
     warningCount: number;
+    informationCount: number;
 }
 
 export interface CompletionRequest extends TextDocumentSnapshot {
@@ -43,6 +44,16 @@ export interface CompletionSuggestion {
     detail: string;
     insertText: string;
     snippet: boolean;
+    kind?: "function" | "property";
+}
+
+export interface HoverRequest extends TextDocumentSnapshot {
+    position: LanguagePosition;
+}
+
+export interface HoverInformation {
+    range: LanguageRange;
+    markdown: string;
 }
 
 export interface ValidateDocumentRequest {

@@ -1,3 +1,6 @@
+import type {FmlStructureMap} from "../../../helpers/fml_models";
+import type {StructureMap} from "fhir/r4b";
+
 export type JsonPrimitive = boolean | number | string | null;
 
 export type JsonValue = JsonPrimitive | JsonValue[] | {
@@ -17,7 +20,7 @@ export interface FmlSource {
 }
 
 export interface FmlDiagnostic {
-    severity: "error" | "warning";
+    severity: "error" | "warning" | "information";
     message: string;
     line: number;
     column: number;
@@ -51,6 +54,7 @@ export type FmlValidatorResult<T> =
 export interface ParsedFml {
     sourceName?: string;
     entryRule: "structureMap";
+    model: FmlStructureMap;
 }
 
 export interface FmlSourcePosition {
@@ -84,11 +88,59 @@ export interface FmlDocumentSymbols extends FmlGroupSymbols {
     imports: string[];
 }
 
+export interface FmlPropertyUsage {
+    groupName: string;
+    path: string;
+    role: "source" | "target";
+    rootTypeName: string;
+    rootVariableName: string;
+    variableName?: string;
+    fhirVersion?: import("../../../helpers/fml_models").FhirVersion;
+    span: FmlSourceSpan;
+    isCollection?: boolean;
+    cardinalityMin?: 0 | 1;
+    cardinalityMax?: "1" | "*";
+    targetProfiles?: string[];
+    specificationPath?: string;
+    elementTypeName?: string;
+    possibleTypeNames?: string[];
+    compatibleTypeNames?: string[];
+    excludedTypeNames?: string[];
+    unknownElement?: boolean;
+    validationError?: string;
+    transformName?: string;
+    transformSpan?: FmlSourceSpan;
+    transformResultTypeNames?: string[];
+    transformResultSpan?: FmlSourceSpan;
+    transformResultText?: string;
+}
+
+export interface FmlGroupInputResolution {
+    groupName: string;
+    inputName: string;
+    span: FmlSourceSpan;
+    typeName?: string;
+    fhirVersion?: import("../../../helpers/fml_models").FhirVersion;
+    resolution: "declared" | "context" | "unresolved" | "conflict";
+    conflictingTypeNames?: string[];
+}
+
+export interface FmlPropertyAnalysis {
+    usages: FmlPropertyUsage[];
+    groupInputs: FmlGroupInputResolution[];
+}
+
+export interface FmlPropertyCompletion {
+    name: string;
+    typeNames: string[];
+    cardinalityMin: 0 | 1;
+    cardinalityMax: "1" | "*";
+    targetProfiles?: string[];
+    fhirVersion?: import("../../../helpers/fml_models").FhirVersion;
+}
+
 export interface CompiledStructureMap {
-    resource: {
-        resourceType: "StructureMap";
-        [key: string]: JsonValue;
-    };
+    resource: StructureMap;
 }
 
 export interface SemanticValidationRequest {

@@ -109,9 +109,11 @@ suite("FHIR Mapping Language Tools Extension", () => {
         assert.equal(document.isDirty, true);
 
         const validDiagnostics = await waitForDiagnostics(document.uri, diagnostics => {
-            return diagnostics.length === 0;
+            return diagnostics.every(diagnostic => diagnostic.severity === vscode.DiagnosticSeverity.Information);
         });
-        assert.deepEqual(validDiagnostics, []);
+        assert.ok(validDiagnostics.every(diagnostic => {
+            return diagnostic.severity === vscode.DiagnosticSeverity.Information;
+        }));
     });
 
     test("unknown transforms should appear as warnings", async () => {
@@ -138,6 +140,68 @@ suite("FHIR Mapping Language Tools Extension", () => {
 
         assert.ok(completionList.items.some(item => item.label === "truncate"));
         assert.ok(completionList.items.some(item => item.label === "translate"));
+    });
+
+    test("language server should provide typed FHIR property completions", async () => {
+        const text = [
+            "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias Patient as source",
+            "group example(source src : Patient, target tgt : Patient) {",
+            "    src.na -> tgt.name;",
+            "}",
+        ].join("\n");
+        const document = await openFmlDocument(text);
+        const offset = text.indexOf("src.na") + "src.na".length;
+        const completionList = await vscode.commands.executeCommand<vscode.CompletionList>(
+            "vscode.executeCompletionItemProvider",
+            document.uri,
+            document.positionAt(offset),
+        );
+        const name = completionList.items.find(item => item.label === "name");
+
+        assert.ok(name);
+        assert.equal(completionList.items.filter(item => item.label === "name").length, 1);
+        assert.ok(completionList.items.every(item => !String(item.label).includes("build IG")));
+        assert.equal(name.kind, vscode.CompletionItemKind.Property);
+        assert.match(name.detail ?? "", /HumanName \[0\.\.\*\] \(R5\)/);
+    });
+
+    test("language server should provide FHIR property hovers", async () => {
+        const text = [
+            "uses 'http://hl7.org/fhir/4.3/StructureDefinition/Patient' alias Patient as source",
+            "group example(source src : Patient, target tgt : Patient) {",
+            "    src.name -> tgt.name;",
+            "}",
+        ].join("\n");
+        const document = await openFmlDocument(text);
+        const position = document.positionAt(text.indexOf("src.name") + "src.".length);
+        const hovers = await waitForHovers(document.uri, position);
+        const markdown = hovers.flatMap(hover => hover.contents).map(content => {
+            return typeof content === "string" ? content : content.value;
+        }).join("\n");
+
+        assert.match(markdown, /Patient\.name/);
+        assert.match(markdown, /patient-definitions\.html#Patient\.name/);
+        assert.match(markdown, /\[0\.\.\*\] \(R4B\)/);
+        assert.match(markdown, /Type: `HumanName`/);
+        assert.doesNotMatch(markdown, /repeating/);
+    });
+
+    test("language server should provide transform result hovers", async () => {
+        const text = [
+            "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Observation' alias Observation as target",
+            "group example(source src : Observation, target tgt : Observation) {",
+            "    src -> tgt.identifier = id('system', 'value');",
+            "}",
+        ].join("\n");
+        const document = await openFmlDocument(text);
+        const position = document.positionAt(text.indexOf("id(") + 1);
+        const hovers = await waitForHovers(document.uri, position);
+        const markdown = hovers.flatMap(hover => hover.contents).map(content => {
+            return typeof content === "string" ? content : content.value;
+        }).join("\n");
+
+        assert.match(markdown, /Transform.*`id`/);
+        assert.match(markdown, /Result type: `Identifier`/);
     });
 
     test("manual validation command should request immediate server validation", async () => {
@@ -232,6 +296,14 @@ suite("FHIR Mapping Language Tools Extension", () => {
         });
         assert.ok(location instanceof vscode.Location);
         assert.deepEqual(location.range.start, targetDocument.positionAt(targetText.lastIndexOf("Shared")));
+
+        const declarationPosition = targetDocument.positionAt(targetText.lastIndexOf("Shared") + 1);
+        const references = await waitForReferences(targetDocument.uri, declarationPosition);
+        const invocationReference = references.find(reference => {
+            return reference.uri.toString() === sourceDocument.uri.toString();
+        });
+        assert.ok(invocationReference);
+        assert.deepEqual(invocationReference.range.start, sourceDocument.positionAt(sourceText.indexOf("Shared(")));
     });
 
     test("unresolved imported groups should produce warnings", async () => {
@@ -314,6 +386,46 @@ async function waitForDefinitions(
         await new Promise(resolve => setTimeout(resolve, 50));
     }
     assert.fail("Timed out waiting for FML group definitions.");
+}
+
+async function waitForReferences(
+    uri: vscode.Uri,
+    position: vscode.Position,
+    timeoutMs = 5000,
+): Promise<vscode.Location[]> {
+    const startedAt = Date.now();
+    while (Date.now() - startedAt < timeoutMs) {
+        const references = await vscode.commands.executeCommand<vscode.Location[]>(
+            "vscode.executeReferenceProvider",
+            uri,
+            position,
+        ) ?? [];
+        if (references.length > 0) {
+            return references;
+        }
+        await new Promise(resolve => setTimeout(resolve, 50));
+    }
+    assert.fail("Timed out waiting for FML group references.");
+}
+
+async function waitForHovers(
+    uri: vscode.Uri,
+    position: vscode.Position,
+    timeoutMs = 5000,
+): Promise<vscode.Hover[]> {
+    const startedAt = Date.now();
+    while (Date.now() - startedAt < timeoutMs) {
+        const hovers = await vscode.commands.executeCommand<vscode.Hover[]>(
+            "vscode.executeHoverProvider",
+            uri,
+            position,
+        ) ?? [];
+        if (hovers.length > 0) {
+            return hovers;
+        }
+        await new Promise(resolve => setTimeout(resolve, 50));
+    }
+    assert.fail("Timed out waiting for FML property hovers.");
 }
 
 async function waitForPreviewHtml(

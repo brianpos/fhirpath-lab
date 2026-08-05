@@ -1,105 +1,6 @@
-import {CharStream, CommonTokenStream, ParseTreeWalker, Token} from "antlr4ng";
+import type {GroupDeclaration, Rule, SourcePosition} from "../../../helpers/fml_models";
+import {isFmlParseError, parseFML} from "../../../helpers/fml_parser";
 import {FmlDocumentSymbols, FmlGroupSymbols, FmlSourceSpan} from "./contracts";
-import {mappingLexer} from "./generated/mappingLexer";
-import {mappingListener} from "./generated/mappingListener";
-import {
-    ExtendsContext,
-    ConceptMapDeclarationContext,
-    GroupDeclarationContext,
-    GroupInvocationContext,
-    ImportDeclarationContext,
-    MetadataDeclarationContext,
-    mappingParser,
-} from "./generated/mappingParser";
-
-class GroupSymbolListener extends mappingListener {
-    public readonly symbols: FmlDocumentSymbols = {
-        canonicalUrls: [],
-        definitions: [],
-        imports: [],
-        references: [],
-    };
-
-    public override enterConceptMapDeclaration = (context: ConceptMapDeclarationContext): void => {
-        const canonicalUrl = this.readQuotedValue(context.url()?.getText());
-        if (canonicalUrl) {
-            this.symbols.canonicalUrls.push(canonicalUrl);
-        }
-    };
-
-    public override enterMetadataDeclaration = (context: MetadataDeclarationContext): void => {
-        if (context.qualifiedIdentifier()?.getText() !== "url") {
-            return;
-        }
-        const canonicalUrl = this.readQuotedValue(context.literal()?.getText());
-        if (canonicalUrl) {
-            this.symbols.canonicalUrls.push(canonicalUrl);
-        }
-    };
-
-    public override enterImportDeclaration = (context: ImportDeclarationContext): void => {
-        const importPattern = this.readQuotedValue(context.url()?.getText());
-        if (importPattern) {
-            this.symbols.imports.push(importPattern);
-        }
-    };
-
-    public override enterGroupDeclaration = (context: GroupDeclarationContext): void => {
-        const node = context.ID();
-        if (!node) {
-            return;
-        }
-        this.symbols.definitions.push({
-            name: node.getText(),
-            span: this.toSpan(node.symbol),
-        });
-    };
-
-    public override enterExtends = (context: ExtendsContext): void => {
-        const node = context.ID();
-        if (!node) {
-            return;
-        }
-        this.symbols.references.push({
-            name: node.getText(),
-            kind: "extends",
-            span: this.toSpan(node.symbol),
-        });
-    };
-
-    public override enterGroupInvocation = (context: GroupInvocationContext): void => {
-        const identifier = context.identifier();
-        if (!identifier?.start) {
-            return;
-        }
-        this.symbols.references.push({
-            name: identifier.getText(),
-            kind: "invocation",
-            span: this.toSpan(identifier.start),
-        });
-    };
-
-    private toSpan(token: Token | null): FmlSourceSpan {
-        const line = token?.line ?? 1;
-        const column = token?.column ?? 0;
-        const length = Math.max(token?.text?.length ?? 0, 1);
-        return {
-            start: {line, column},
-            end: {line, column: column + length},
-        };
-    }
-
-    private readQuotedValue(text: string | undefined): string | undefined {
-        if (!text || text.length < 2) {
-            return undefined;
-        }
-        const quote = text[0];
-        if ((quote !== "'" && quote !== "\"") || text[text.length - 1] !== quote) {
-            return undefined;
-        }
-        return text.slice(1, -1).replace(/\\(['"\\])/g, "$1");
-    }
-}
 
 export class FmlGroupSymbolCollector {
     public collect(sourceText: string): FmlGroupSymbols {
@@ -111,17 +12,85 @@ export class FmlGroupSymbolCollector {
     }
 
     public collectDocument(sourceText: string): FmlDocumentSymbols {
-        const lexer = new mappingLexer(CharStream.fromString(sourceText));
-        lexer.removeErrorListeners();
-        const parser = new mappingParser(new CommonTokenStream(lexer));
-        parser.removeErrorListeners();
-        const tree = parser.structureMap();
-        const listener = new GroupSymbolListener();
-        ParseTreeWalker.DEFAULT.walk(listener, tree);
-        return {
-            ...listener.symbols,
-            canonicalUrls: [...new Set(listener.symbols.canonicalUrls)],
-            imports: [...new Set(listener.symbols.imports)],
+        const parsed = parseFML(sourceText);
+        if (isFmlParseError(parsed)) {
+            return {canonicalUrls: [], definitions: [], imports: [], references: []};
+        }
+
+        const symbols: FmlDocumentSymbols = {
+            canonicalUrls: [
+                ...parsed.metadata
+                    .filter(metadata => metadata.path === "url" && metadata.value)
+                    .map(metadata => metadata.value as string),
+                ...parsed.conceptMaps.map(conceptMap => conceptMap.url),
+            ],
+            definitions: [],
+            imports: parsed.imports.map(importDeclaration => importDeclaration.url),
+            references: [],
         };
+
+        for (const group of parsed.groups) {
+            symbols.definitions.push({
+                name: group.name,
+                span: this.nameSpan(group.position, group.name, sourceText),
+            });
+            if (group.extends) {
+                symbols.references.push({
+                    name: group.extends,
+                    kind: "extends",
+                    span: this.extendsSpan(group, sourceText),
+                });
+            }
+            this.collectRuleReferences(group.rules, sourceText, symbols);
+        }
+
+        return {
+            ...symbols,
+            canonicalUrls: [...new Set(symbols.canonicalUrls)],
+            imports: [...new Set(symbols.imports)],
+        };
+    }
+
+    private collectRuleReferences(rules: Rule[], sourceText: string, symbols: FmlDocumentSymbols): void {
+        for (const rule of rules) {
+            for (const invocation of rule.dependent?.invocations ?? []) {
+                symbols.references.push({
+                    name: invocation.name,
+                    kind: "invocation",
+                    span: this.nameSpan(invocation.position, invocation.name, sourceText),
+                });
+            }
+            this.collectRuleReferences(rule.dependent?.rules ?? [], sourceText, symbols);
+        }
+    }
+
+    private extendsSpan(group: GroupDeclaration, sourceText: string): FmlSourceSpan {
+        if (!group.position || !group.extends) return this.defaultSpan();
+        const headerEnd = sourceText.indexOf("{", group.position.startIndex);
+        const header = sourceText.slice(group.position.startIndex, headerEnd);
+        const relativeIndex = header.lastIndexOf(group.extends);
+        const offset = relativeIndex >= 0 ? group.position.startIndex + relativeIndex : group.position.startIndex;
+        return this.spanAt(offset, group.extends, sourceText);
+    }
+
+    private nameSpan(position: SourcePosition | undefined, name: string, sourceText: string): FmlSourceSpan {
+        if (!position) return this.defaultSpan();
+        const relativeIndex = sourceText.slice(position.startIndex, position.endIndex).indexOf(name);
+        const offset = relativeIndex >= 0 ? position.startIndex + relativeIndex : position.startIndex;
+        return this.spanAt(offset, name, sourceText);
+    }
+
+    private spanAt(offset: number, name: string, sourceText: string): FmlSourceSpan {
+        const prefix = sourceText.slice(0, offset);
+        const line = prefix.split(/\r?\n/).length;
+        const column = offset - (prefix.lastIndexOf("\n") + 1);
+        return {
+            start: {line, column},
+            end: {line, column: column + Math.max(name.length, 1)},
+        };
+    }
+
+    private defaultSpan(): FmlSourceSpan {
+        return {start: {line: 1, column: 0}, end: {line: 1, column: 1}};
     }
 }

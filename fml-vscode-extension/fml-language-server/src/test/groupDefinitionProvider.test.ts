@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {DocumentFmlSymbols} from "@fhirpath-lab/language-service";
-import {findGroupDefinitions, getUnresolvedGroupDiagnostics} from "../groupDefinitionProvider";
+import {findGroupDefinitions, findGroupReferences, getUnresolvedGroupDiagnostics} from "../groupDefinitionProvider";
 import {WorkspaceFmlIndex} from "../WorkspaceFmlIndex";
 
 const sourceUri = "file:///source.fml";
@@ -57,6 +57,22 @@ test("does not navigate to groups outside imported canonical URLs", () => {
     unimportedIndex.set(targetUri, target);
 
     assert.equal(findGroupDefinitions(unimportedIndex, sourceUri, {line: 2, character: 24}), null);
+});
+
+test("finds reverse references from a group definition", () => {
+    const locations = findGroupReferences(index, targetUri, {line: 5, character: 8}, false);
+
+    assert.equal(locations?.length, 1);
+    assert.equal(locations?.[0].uri, sourceUri);
+    assert.deepEqual(locations?.[0].range.start, {line: 2, character: 20});
+});
+
+test("finds references from an invocation and optionally includes the declaration", () => {
+    const locations = findGroupReferences(index, sourceUri, {line: 2, character: 24}, true);
+
+    assert.equal(locations?.length, 2);
+    assert.ok(locations?.some(location => location.uri === sourceUri));
+    assert.ok(locations?.some(location => location.uri === targetUri));
 });
 
 test("reports unresolved group references as warnings", () => {

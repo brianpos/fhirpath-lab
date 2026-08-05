@@ -43,6 +43,11 @@ import { LogContext } from "./FmlMappingParser.js";
 import { DependentExpressionContext } from "./FmlMappingParser.js";
 import { ImportDeclarationContext } from "./FmlMappingParser.js";
 import { TransformContext } from "./FmlMappingParser.js";
+import { TransformInvocationContext } from "./FmlMappingParser.js";
+import { TransformParamListContext } from "./FmlMappingParser.js";
+import { TransformParamContext } from "./FmlMappingParser.js";
+import { TransformParamNameContext } from "./FmlMappingParser.js";
+import { TransformParamValueContext } from "./FmlMappingParser.js";
 import { GroupInvocationContext } from "./FmlMappingParser.js";
 import { GroupParamListContext } from "./FmlMappingParser.js";
 import { GroupParamContext } from "./FmlMappingParser.js";
@@ -345,6 +350,36 @@ export default class FmlMappingVisitor<Result> extends ParseTreeVisitor<Result> 
 	 * @return the visitor result
 	 */
 	visitTransform?: (ctx: TransformContext) => Result;
+	/**
+	 * Visit a parse tree produced by `FmlMappingParser.transformInvocation`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitTransformInvocation?: (ctx: TransformInvocationContext) => Result;
+	/**
+	 * Visit a parse tree produced by `FmlMappingParser.transformParamList`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitTransformParamList?: (ctx: TransformParamListContext) => Result;
+	/**
+	 * Visit a parse tree produced by `FmlMappingParser.transformParam`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitTransformParam?: (ctx: TransformParamContext) => Result;
+	/**
+	 * Visit a parse tree produced by `FmlMappingParser.transformParamName`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitTransformParamName?: (ctx: TransformParamNameContext) => Result;
+	/**
+	 * Visit a parse tree produced by `FmlMappingParser.transformParamValue`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitTransformParamValue?: (ctx: TransformParamValueContext) => Result;
 	/**
 	 * Visit a parse tree produced by `FmlMappingParser.groupInvocation`.
 	 * @param ctx the parse tree

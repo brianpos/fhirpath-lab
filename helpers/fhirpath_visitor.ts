@@ -170,6 +170,10 @@ export interface VisitorOptions {
     contextValue?: FhirPathValue;
     /** Additional environment variables (canonical name without leading `%`). */
     environmentVariables?: Record<string, FhirPathValue>;
+    /** FML compatibility: resolve a bare identifier at the root of a path as
+     *  an environment variable when its name is declared. Nested members are
+     *  never rewritten. */
+    allowEnvironmentVariablesAtRoot?: boolean;
     /** Type of the input resource — surfaced as `%resource`. Per the FHIRPath
      *  spec (https://build.fhir.org/ig/HL7/FHIRPath/#scoped-functions),
      *  `%resource` is the resource the expression is being evaluated against,
@@ -701,6 +705,15 @@ class FhirPathExpressionVisitor {
     private visitMember(ctx: MemberInvocationContext, input: FhirPathValue): { node: JsonNode; value: FhirPathValue } {
         const name = ctx.identifier().getText();
         const node: JsonNode = attachPosition({ ExpressionType: "ChildExpression", Name: name, ReturnType: "" }, ctx);
+
+        if (this.options.allowEnvironmentVariablesAtRoot && ctx.parentCtx instanceof InvocationTermContext) {
+            const provided = this.dynamicEnvironmentVariables[name];
+            if (provided) {
+                node.ExpressionType = "VariableRefExpression";
+                node.ReturnType = formatValueType(provided);
+                return {node, value: provided};
+            }
+        }
 
         // Resource-type self-reference: `Patient.name` when the context already
         // is Patient. The leading `Patient` is a no-op and yields the same value.

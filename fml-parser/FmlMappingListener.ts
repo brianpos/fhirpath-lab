@@ -43,6 +43,11 @@ import { LogContext } from "./FmlMappingParser.js";
 import { DependentExpressionContext } from "./FmlMappingParser.js";
 import { ImportDeclarationContext } from "./FmlMappingParser.js";
 import { TransformContext } from "./FmlMappingParser.js";
+import { TransformInvocationContext } from "./FmlMappingParser.js";
+import { TransformParamListContext } from "./FmlMappingParser.js";
+import { TransformParamContext } from "./FmlMappingParser.js";
+import { TransformParamNameContext } from "./FmlMappingParser.js";
+import { TransformParamValueContext } from "./FmlMappingParser.js";
 import { GroupInvocationContext } from "./FmlMappingParser.js";
 import { GroupParamListContext } from "./FmlMappingParser.js";
 import { GroupParamContext } from "./FmlMappingParser.js";
@@ -504,6 +509,56 @@ export default class FmlMappingListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	exitTransform?: (ctx: TransformContext) => void;
+	/**
+	 * Enter a parse tree produced by `FmlMappingParser.transformInvocation`.
+	 * @param ctx the parse tree
+	 */
+	enterTransformInvocation?: (ctx: TransformInvocationContext) => void;
+	/**
+	 * Exit a parse tree produced by `FmlMappingParser.transformInvocation`.
+	 * @param ctx the parse tree
+	 */
+	exitTransformInvocation?: (ctx: TransformInvocationContext) => void;
+	/**
+	 * Enter a parse tree produced by `FmlMappingParser.transformParamList`.
+	 * @param ctx the parse tree
+	 */
+	enterTransformParamList?: (ctx: TransformParamListContext) => void;
+	/**
+	 * Exit a parse tree produced by `FmlMappingParser.transformParamList`.
+	 * @param ctx the parse tree
+	 */
+	exitTransformParamList?: (ctx: TransformParamListContext) => void;
+	/**
+	 * Enter a parse tree produced by `FmlMappingParser.transformParam`.
+	 * @param ctx the parse tree
+	 */
+	enterTransformParam?: (ctx: TransformParamContext) => void;
+	/**
+	 * Exit a parse tree produced by `FmlMappingParser.transformParam`.
+	 * @param ctx the parse tree
+	 */
+	exitTransformParam?: (ctx: TransformParamContext) => void;
+	/**
+	 * Enter a parse tree produced by `FmlMappingParser.transformParamName`.
+	 * @param ctx the parse tree
+	 */
+	enterTransformParamName?: (ctx: TransformParamNameContext) => void;
+	/**
+	 * Exit a parse tree produced by `FmlMappingParser.transformParamName`.
+	 * @param ctx the parse tree
+	 */
+	exitTransformParamName?: (ctx: TransformParamNameContext) => void;
+	/**
+	 * Enter a parse tree produced by `FmlMappingParser.transformParamValue`.
+	 * @param ctx the parse tree
+	 */
+	enterTransformParamValue?: (ctx: TransformParamValueContext) => void;
+	/**
+	 * Exit a parse tree produced by `FmlMappingParser.transformParamValue`.
+	 * @param ctx the parse tree
+	 */
+	exitTransformParamValue?: (ctx: TransformParamValueContext) => void;
 	/**
 	 * Enter a parse tree produced by `FmlMappingParser.groupInvocation`.
 	 * @param ctx the parse tree
