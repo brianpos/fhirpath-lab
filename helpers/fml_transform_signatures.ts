@@ -65,7 +65,7 @@ const definitions: TransformDefinition[] = [
   {name: 'unixToDate', signatures: [signature(parameter('source', 'integer'), parameter('timezone', 'string', {optional: true}))], result: {kind: 'fixed', typeNames: ['date']}},
   {name: 'toTime', signatures: [signature(parameter('source', 'string'), parameter('format', 'string'))], result: {kind: 'fixed', typeNames: ['time']}},
   {name: 'unixToTime', signatures: [signature(parameter('source', 'integer'), parameter('timezone', 'string', {optional: true}))], result: {kind: 'fixed', typeNames: ['time']}},
-  {name: 'uuid', signatures: [signature()], result: {kind: 'fixed', typeNames: ['id']}},
+  {name: 'uuid', signatures: [signature()], result: {kind: 'fixed', typeNames: ['string']}},
   {name: 'pointer', signatures: [signature(parameter('resource', 'any'))], result: {kind: 'fixed', typeNames: ['Reference']}},
   {name: 'evaluate', signatures: [signature(parameter('context', 'any'), parameter('expression', 'expression'))]},
   {name: 'cc', signatures: [

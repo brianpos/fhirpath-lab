@@ -17,6 +17,8 @@ export type FmlValidatorOperation =
 export interface FmlSource {
     sourceText: string;
     sourceName?: string;
+    defaultFhirVersion?: import("../../../helpers/fml_models").FhirVersion;
+    profileBaseTypes?: Record<string, string>;
 }
 
 export interface FmlDiagnostic {

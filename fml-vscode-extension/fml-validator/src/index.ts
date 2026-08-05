@@ -4,5 +4,7 @@ export * from "./FmlValidatorEngine";
 export * from "./FmlGroupSymbolCollector";
 export * from "./FmlPropertyUsageCollector";
 export * from "./FmlFhirPathValidator";
+export * from "./FmlModelConfiguration";
 export * from "./Stage1FmlValidatorEngine";
 export * from "./transformSignatures";
+export * from "./parseFmlModel";

@@ -126,6 +126,10 @@ connection.onRequest(
     INDEX_WORKSPACE_REQUEST,
     async (request: WorkspaceIndexRequest): Promise<WorkspaceIndexResult> => {
         try {
+            languageService.configureModels(
+                request.defaultFhirVersion,
+                request.profileBaseTypes ?? {},
+            );
             return await indexWorkspace(request.uris);
         } catch (error) {
             statusStore.fail(formatError(error));

@@ -3,7 +3,7 @@
   "displayName": "FHIR Mapping Language Tools",
   "description": "Developer tools by Brian Postlethwaite for working with the FHIR Mapping Language (FML), including syntax highlighting, validation, and a trace replay debugger",
   "icon": "ext-images/icon.ico",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "publisher": "fhirpath-lab",
   "readme": "README.md",
   "author": {
@@ -73,6 +73,13 @@
               "model": {
                 "type": "string",
                 "description": "Optional JSON model or bundle file."
+              },
+              "dependencies": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "JSON file glob patterns used to resolve StructureDefinition and ConceptMap dependencies."
               },
               "serverUrl": {
                 "type": "string",
@@ -236,16 +243,19 @@
   "dependencies": {
     "@fhirpath-lab/debug-service": "file:../fml-debug-service",
     "@fhirpath-lab/language-service": "file:../fml-language-service",
+    "@fhirpath-lab/validator": "file:../fml-validator",
     "@vscode/debugadapter": "^1.68.0",
     "@vscode/debugprotocol": "^1.68.0",
     "antlr4": "^4.13.2",
-    "vscode-languageclient": "^10.1.0"
+    "fast-glob": "^3.3.3",
+    "vscode-languageclient": "^10.1.0",
+    "yaml": "^2.9.0"
   },
   "devDependencies": {
-    "@typescript/native": "npm:typescript@^7.0.2",
     "@types/mocha": "^10.0.10",
     "@types/node": "^22.20.1",
     "@types/vscode": "1.91.0",
+    "@typescript/native": "npm:typescript@^7.0.2",
     "@vscode/test-cli": "^0.0.12",
     "@vscode/test-electron": "^2.5.2",
     "@vscode/vsce": "^3.9.2",

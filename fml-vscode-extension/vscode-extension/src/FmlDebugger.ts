@@ -3,6 +3,7 @@ import {existsSync} from "node:fs";
 import path from "node:path";
 import * as vscode from "vscode";
 import {FmlDebugSession} from "./FmlDebugSession";
+import type {SushiWorkspaceConfiguration} from "./SushiConfigWatcher";
 
 export class FmlDebugConfigurationProvider implements vscode.DebugConfigurationProvider {
     public resolveDebugConfiguration(
@@ -73,16 +74,26 @@ export class FmlDebugConfigurationProvider implements vscode.DebugConfigurationP
 }
 
 export class FmlDebugAdapterDescriptorFactory implements vscode.DebugAdapterDescriptorFactory {
+    public constructor(
+        private readonly modelConfigurationProvider: (
+            program: string,
+        ) => SushiWorkspaceConfiguration | undefined = () => undefined,
+    ) {
+    }
+
     public createDebugAdapterDescriptor(
         _session: vscode.DebugSession,
     ): vscode.ProviderResult<vscode.DebugAdapterDescriptor> {
         return new vscode.DebugAdapterInlineImplementation(
-            new FmlDebugSession(),
+            new FmlDebugSession(undefined, this.modelConfigurationProvider),
         );
     }
 }
 
-export function registerFmlDebugger(context: vscode.ExtensionContext): void {
+export function registerFmlDebugger(
+    context: vscode.ExtensionContext,
+    modelConfigurationProvider?: (program: string) => SushiWorkspaceConfiguration | undefined,
+): void {
     context.subscriptions.push(
         vscode.debug.registerDebugConfigurationProvider(
             "fml",
@@ -90,7 +101,7 @@ export function registerFmlDebugger(context: vscode.ExtensionContext): void {
         ),
         vscode.debug.registerDebugAdapterDescriptorFactory(
             "fml",
-            new FmlDebugAdapterDescriptorFactory(),
+            new FmlDebugAdapterDescriptorFactory(modelConfigurationProvider),
         ),
     );
 }

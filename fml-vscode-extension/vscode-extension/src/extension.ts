@@ -16,25 +16,40 @@ import {
     ServerOptions,
     TransportKind,
 } from "vscode-languageclient/node";
-import {FhirDefinition} from "./FhirDefinition";
 import {registerFmlDebugger} from "./FmlDebugger";
-import {FmlCompletionProvider} from "./FmlCompletionProvider";
 import {FmlLanguageServerStatus} from "./FmlLanguageServerStatus";
 import {FmlPreviewManager} from "./FmlPreviewManager";
 import {MapBuilderWatcher} from "./MapBuilderWatcher";
+import {SushiConfigWatcher} from "./SushiConfigWatcher";
 import {UiConstants} from "./constants/UiConstants";
 import {executeWithProgress, logData} from "./utils";
+import {parseFmlModel, resolveFmlStructureType, toFhirVersion} from "@fhirpath-lab/validator";
 
 const FML_MODE = {language: "fml"};
 let languageClient: LanguageClient | undefined;
 
-export async function activate(context: vscode.ExtensionContext): Promise<{
-    completionProviderInstance: FmlCompletionProvider | null;
-}> {
-    const [, completionProviderInstance] = addAutoComplete(UiConstants.principalChannel, context);
-    const previewManager = new FmlPreviewManager();
+export async function activate(context: vscode.ExtensionContext): Promise<void> {
+    const reindexWorkspaceRef: {
+        current?: () => Promise<WorkspaceIndexResult | undefined>;
+    } = {};
+    const sushiConfigWatcher = new SushiConfigWatcher(
+        UiConstants.detailsChannel,
+        undefined,
+        async () => {
+            await reindexWorkspaceRef.current?.();
+        },
+    );
+    context.subscriptions.push(sushiConfigWatcher);
+    await sushiConfigWatcher.initialize();
+    const previewManager = new FmlPreviewManager(
+        undefined,
+        filePath => sushiConfigWatcher.getConfigurationForPath(filePath),
+    );
     context.subscriptions.push(previewManager);
-    registerFmlDebugger(context);
+    registerFmlDebugger(
+        context,
+        program => sushiConfigWatcher.getConfigurationForPath(program),
+    );
 
     addFmlTemplate(context);
     addPreviewCommand(previewManager, context);
@@ -67,6 +82,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<{
             watcher,
             languageClient!,
             UiConstants.detailsChannel,
+            sushiConfigWatcher.getWorkspaceConfiguration(),
         ).finally(() => {
             workspaceIndexInitialized = true;
             logData(
@@ -83,6 +99,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<{
         });
         return indexOperation;
     };
+    reindexWorkspaceRef.current = reindexWorkspace;
     const serverStatus = new FmlLanguageServerStatus(
         languageClient,
         reindexWorkspace,
@@ -100,7 +117,6 @@ export async function activate(context: vscode.ExtensionContext): Promise<{
     void reindexWorkspace().then(() => serverStatus.refresh());
     addValidationCommand(languageClient, context);
 
-    return {completionProviderInstance};
 }
 
 function addPreviewCommand(previewManager: FmlPreviewManager, context: vscode.ExtensionContext): void {
@@ -118,14 +134,18 @@ async function initializeWorkspaceIndex(
     watcher: MapBuilderWatcher,
     client: LanguageClient,
     logger: vscode.OutputChannel,
+    sushiConfiguration: import("./SushiConfigWatcher").SushiWorkspaceConfiguration,
 ): Promise<WorkspaceIndexResult | undefined> {
     try {
         const files = await watcher.scanFmlFiles();
+        await logProfileResolutions(files, sushiConfiguration, logger);
         logData(`Sending ${files.length} FML file(s) to the language-server index.`, logger);
         const result = await client.sendRequest<WorkspaceIndexResult>(
             INDEX_WORKSPACE_REQUEST,
             {
                 uris: files.map(uri => uri.toString()),
+                defaultFhirVersion: toFhirVersion(sushiConfiguration.fhirVersion),
+                profileBaseTypes: sushiConfiguration.profileBaseTypes,
             } satisfies WorkspaceIndexRequest,
         );
         logData(
@@ -139,6 +159,48 @@ async function initializeWorkspaceIndex(
         const message = error instanceof Error ? error.message : String(error);
         logData(`Language-server workspace indexing failed: ${message}`, logger);
         return undefined;
+    }
+}
+
+async function logProfileResolutions(
+    files: vscode.Uri[],
+    configuration: import("./SushiConfigWatcher").SushiWorkspaceConfiguration,
+    logger: vscode.OutputChannel,
+): Promise<void> {
+    const searched = new Set<string>();
+    for (const file of files) {
+        try {
+            const sourceText = new TextDecoder().decode(await vscode.workspace.fs.readFile(file));
+            const model = parseFmlModel(sourceText);
+            if (!model) {
+                logData(`Profile resolution: unable to parse ${file.fsPath}`, logger);
+                continue;
+            }
+            for (const structure of model.structures) {
+                const canonical = (structure.canonical ?? structure.url).split("|")[0];
+                if (searched.has(canonical)) {
+                    continue;
+                }
+                searched.add(canonical);
+                logData(`Profile resolution: searching ${canonical}`, logger);
+                const typeName = resolveFmlStructureType(canonical, configuration.profileBaseTypes);
+                const source = configuration.profileResolutionSources[canonical];
+                if (typeName && source) {
+                    logData(`Profile resolution: found ${typeName} in ${source}`, logger);
+                } else if (typeName) {
+                    logData(
+                        `Profile resolution: found ${typeName} in built-in core model `
+                        + `(${toFhirVersion(configuration.fhirVersion) ?? "FML-declared release"})`,
+                        logger,
+                    );
+                } else {
+                    logData(`Profile resolution: unresolved ${canonical}`, logger);
+                }
+            }
+        } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            logData(`Profile resolution: unable to inspect ${file.fsPath}: ${message}`, logger);
+        }
     }
 }
 
@@ -178,20 +240,6 @@ function createLanguageClient(context: vscode.ExtensionContext): LanguageClient 
         serverOptions,
         clientOptions,
     );
-}
-
-function addAutoComplete(
-    outputChannel: vscode.OutputChannel,
-    context: vscode.ExtensionContext,
-): [FhirDefinition, FmlCompletionProvider] {
-    const fhirDefinitionInstance = new FhirDefinition(outputChannel);
-    const completionProviderInstance = new FmlCompletionProvider(fhirDefinitionInstance, outputChannel);
-
-    context.subscriptions.push(
-        vscode.languages.registerCompletionItemProvider(FML_MODE, completionProviderInstance, "."),
-    );
-
-    return [fhirDefinitionInstance, completionProviderInstance];
 }
 
 function addFmlTemplate(context: vscode.ExtensionContext): void {

@@ -1,6 +1,7 @@
 import {isFmlParseError, parseFML} from "../../../helpers/fml_parser";
 import {validateFmlModel} from "../../../helpers/fml_validation";
 import type {FhirVersion} from "../../../helpers/fml_models";
+import {applyFmlModelConfiguration} from "@fhirpath-lab/validator";
 import {
     generateFmlInstanceDiagramSvg,
     type TypeLookup,
@@ -17,7 +18,11 @@ const lookups: Partial<Record<FhirVersion, TypeLookup>> = {
     R6: lookupByTypeNameR6,
 };
 
-export function renderFmlInstanceDiagram(fmlText: string): string {
+export function renderFmlInstanceDiagram(
+    fmlText: string,
+    defaultFhirVersion?: FhirVersion,
+    profileBaseTypes?: Record<string, string>,
+): string {
     const parsed = parseFML(fmlText);
     if (isFmlParseError(parsed)) {
         const issue = parsed.issue?.[0];
@@ -25,6 +30,12 @@ export function renderFmlInstanceDiagram(fmlText: string): string {
         const location = issue?.location?.[0];
         throw new Error(location ? `${detail} (${location})` : detail);
     }
+
+    applyFmlModelConfiguration(parsed, {
+        sourceText: fmlText,
+        defaultFhirVersion,
+        profileBaseTypes,
+    });
 
     const validationError = validateFmlModel(parsed).find(diagnostic => diagnostic.severity === "error");
     if (validationError) {

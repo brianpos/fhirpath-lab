@@ -65,8 +65,16 @@ test("posts the same FHIR Parameters request shape as the web implementation", a
 
     const result = await service.execute({
         mapText: "group Main(source src, target tgt) {}",
+        maps: [
+            {fileName: "main.fml", text: "group Main(source src, target tgt) {}"},
+            {fileName: "shared.fml", text: "group Shared(source src, target tgt) {}"},
+        ],
         inputText: "{\"resourceType\":\"Patient\",\"id\":\"example\"}",
         modelText: "{\"resourceType\":\"StructureDefinition\"}",
+        modelResources: [{
+            resourceType: "ConceptMap",
+            url: "http://example.org/ConceptMap/example",
+        }],
         serverUrl: "https://example.test/StructureMap/$transform?debug=true",
     });
 
@@ -79,9 +87,17 @@ test("posts the same FHIR Parameters request shape as the web implementation", a
     const requestBody = JSON.parse(String(capturedInit?.body));
     assert.deepEqual(requestBody.parameter.map((parameter: {name: string}) => parameter.name), [
         "map",
+        "map",
         "model",
         "resource",
     ]);
+    assert.deepEqual(requestBody.parameter[0].extension, [{
+        url: "http://hl7.org/fhir/StructureDefinition/operationoutcome-file",
+        valueString: "main.fml",
+    }]);
+    assert.equal(requestBody.parameter[1].valueString, "group Shared(source src, target tgt) {}");
+    assert.equal(requestBody.parameter[3].resource.resourceType, "Bundle");
+    assert.equal(requestBody.parameter[3].resource.entry[0].resource.resourceType, "ConceptMap");
     assert.equal(result.evaluator, ".NET test engine");
     assert.equal(result.trace.length, 2);
     assert.deepEqual(result.trace[0].range, {startOffset: 10, length: 14});

@@ -9,6 +9,7 @@ import type {
 import type { TypeModel, ElementModel } from "./custom_model";
 import { lookupByTypeName as lookupByTypeNameR4B } from "./models/generated/r4b";
 import { getFhirPathVariableReferences } from "./fhirpath_validator";
+import { resolveTransformResultTypes } from "./fml_transform_signatures";
 
 /**
  * Function used to resolve a TypeModel by its TypeName. Pass any per-version
@@ -936,9 +937,13 @@ function scanDependencyRules(
     for (const target of rule.target) {
       if (target.variable) {
         const createdType = getCreatedType(target);
+        const transformResultTypes = (target as any).transformResultTypes as string[] | undefined;
+        const version = firstVersion(variables.get(target.context));
         variables.set(target.variable, createdType
-          ? [{typeName: createdType, fhirVersion: firstVersion(variables.get(target.context))}]
-          : resolveVariableTypes(
+          ? [{typeName: createdType, fhirVersion: version}]
+          : transformResultTypes?.length
+            ? transformResultTypes.map(typeName => ({typeName, fhirVersion: version}))
+            : resolveVariableTypes(
               variables.get(target.context) ?? [], target.element, undefined,
               defaultLookup, lookupForVersion,
             ));
@@ -1156,6 +1161,8 @@ function collectProperties(
           connectionId: computedConnId,
           // Suppress the rule-name divider on these single-row boxes.
           isLeafRule: true,
+          transformName: tgt.transform,
+          transformPosition: (tgt as any).transformPosition,
         };
         const targetPosition = getDiagramPosition(tgt);
         if (targetPosition) computedEntry.fmlPosition = targetPosition;
@@ -1445,10 +1452,12 @@ function getCreatedType(tgt: { transform?: string; parameter?: any[] }): string 
  * the type can't be inferred from the transform alone.
  */
 function getComputedSourceType(tgt: { transform?: string; parameter?: any[] }): string | undefined {
+  const inferred = (tgt as any).transformResultTypes as string[] | undefined;
+  if (inferred?.length) return inferred[0];
   const direct = getCreatedType(tgt);
   if (direct) return direct;
   switch (tgt.transform) {
-    case "uuid": return "id";
+    case "uuid": return "string";
     case "reference": return "Reference";
     case "pointer": return "Reference";
     case "append":
@@ -1488,7 +1497,7 @@ function toFmlDiagramInput(fml: FmlStructureMap): DiagramMapInput {
   for (const structure of fml.structures) {
     const canonical = structure.canonical ?? structure.url;
     const resolved = {
-      typeName: canonical.split("/").pop() || canonical,
+      typeName: structure.resolvedTypeName ?? (canonical.split("/").pop() || canonical),
       version: structure.fhirVersion,
     };
     if (structure.alias) structures.set(structure.alias, resolved);
@@ -1532,6 +1541,7 @@ function toFmlDiagramRule(rule: FmlRule, variableNames: string[]): DiagramRuleIn
       element: target.element,
       variable: target.variable,
       transform: target.transform?.type,
+      transformResultTypes: target.transform ? resolveTransformResultTypes(target.transform) : [],
       transformPosition: target.transform?.position,
       expressionVariables: target.transform?.parameters
         .filter(parameter => parameter.type === "expression")
@@ -1891,17 +1901,6 @@ function typeBoxLabel(type: DiagramType): string {
   return type.typeName ? `${type.typeName} (${type.paramName})` : type.paramName;
 }
 
-function choiceCompatibleTypes(property: PropertyDisplay): string[] {
-  if (property.role === "target") return [];
-  if ((property.possibleTypeNames?.length ?? 0) <= 1) return [];
-  return property.compatibleTypeNames ?? property.possibleTypeNames ?? [];
-}
-
-function choiceTypeLabelLength(property: PropertyDisplay): number {
-  const compatible = choiceCompatibleTypes(property);
-  return compatible.length > 0 ? ` : ${compatible.join(" | ")}`.length : 0;
-}
-
 function propertyTooltip(property: PropertyDisplay): string {
   const cardinality = property.cardinalityMin !== undefined && property.cardinalityMax
     ? ` [${property.cardinalityMin}..${property.cardinalityMax}]`
@@ -1965,9 +1964,7 @@ function calcTypeBoxSize(type: DiagramType): {
     const propertyLabelLen = pd.variableName
       ? pd.displayName.length + collectionSuffixLen + ` (${pd.variableName})`.length
       : pd.displayName.length + collectionSuffixLen;
-    const typeLabelLen = choiceTypeLabelLength(pd);
-    const labelLen = propertyLabelLen + typeLabelLen;
-    const w = pd.depth * PROP_INDENT + labelLen * CHAR_WIDTH + iconExtra;
+    const w = pd.depth * PROP_INDENT + propertyLabelLen * CHAR_WIDTH + iconExtra;
     if (w > maxPropWidth) maxPropWidth = w;
   }
   const propsWidth = maxPropWidth + 2 * TYPE_BOX_PADDING_X;
@@ -2479,12 +2476,8 @@ function renderInstanceDiagramSvg(data: StructureMapDiagram): string {
             );
           }
 
-          const compatibleTypes = choiceCompatibleTypes(pd);
-          const compatibleText = compatibleTypes.length > 0
-            ? `<tspan class="sm-choice-type"> : ${escapeXml(compatibleTypes.join(" | "))}</tspan>`
-            : "";
           svg.push(
-            `<text x="${px}" y="${propY}" class="sm-prop">${escapeXml(propLabel)}${compatibleText}</text>`
+            `<text x="${px}" y="${propY}" class="sm-prop">${escapeXml(propLabel)}</text>`
           );
           // Right-aligned annotation icons; created icon before (left of) filter/fixed/function
           const hasCreated = pd.isCreated;

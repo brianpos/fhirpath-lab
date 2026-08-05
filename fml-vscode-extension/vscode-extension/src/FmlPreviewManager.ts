@@ -20,6 +20,8 @@ import {
     FmlSvgRenderer,
     InstanceDiagramFmlSvgRenderer,
 } from "./FmlPreviewRenderer";
+import {toFhirVersion} from "@fhirpath-lab/validator";
+import type {SushiWorkspaceConfiguration} from "./SushiConfigWatcher";
 
 interface PreviewEntry {
     documentUri: Uri;
@@ -43,6 +45,8 @@ export class FmlPreviewManager implements Disposable {
 
     public constructor(
         private readonly renderer: FmlSvgRenderer = new InstanceDiagramFmlSvgRenderer(),
+        private readonly getModelConfiguration: (filePath: string) => SushiWorkspaceConfiguration | undefined
+            = () => undefined,
     ) {
         this.disposables.push(workspace.onDidChangeTextDocument(event => {
             const preview = this.previews.get(event.document.uri.toString());
@@ -142,11 +146,14 @@ export class FmlPreviewManager implements Disposable {
 
     private async update(entry: PreviewEntry, document: TextDocument): Promise<void> {
         const renderSequence = ++entry.renderSequence;
+        const configuration = this.getModelConfiguration(document.fileName);
         const source: FmlPreviewSource = {
             uri: document.uri,
             fileName: document.isUntitled ? "Untitled FML" : path.basename(document.fileName),
             text: document.getText(),
             version: document.version,
+            defaultFhirVersion: toFhirVersion(configuration?.fhirVersion),
+            profileBaseTypes: configuration?.profileBaseTypes,
         };
 
         try {

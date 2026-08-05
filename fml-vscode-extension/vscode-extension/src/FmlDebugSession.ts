@@ -28,11 +28,15 @@ import {
 import {DebugProtocol} from "@vscode/debugprotocol";
 import {promises as fs} from "node:fs";
 import path from "node:path";
+import {resolveFmlDebugDependencies} from "./FmlDebugDependencies";
+import type {SushiWorkspaceConfiguration} from "./SushiConfigWatcher";
 
 export interface FmlLaunchRequestArguments extends DebugProtocol.LaunchRequestArguments {
     program: string;
     input: string;
     model?: string;
+    dependencies?: string[];
+    fhirVersion?: string;
     serverUrl?: string;
     stopOnEntry?: boolean;
     mapText?: string;
@@ -63,6 +67,9 @@ export class FmlDebugSession extends DebugSession {
 
     public constructor(
         private readonly debugService = new FmlDebugService(),
+        private readonly modelConfigurationProvider: (
+            program: string,
+        ) => SushiWorkspaceConfiguration | undefined = () => undefined,
     ) {
         super();
         this.setDebuggerLinesStartAt1(true);
@@ -99,6 +106,28 @@ export class FmlDebugSession extends DebugSession {
             this.sourceText = args.mapText ?? await fs.readFile(args.program, "utf8");
             const inputText = await fs.readFile(args.input, "utf8");
             const modelText = args.model ? await fs.readFile(args.model, "utf8") : undefined;
+            const modelConfiguration = this.modelConfigurationProvider(args.program);
+            const dependencies = await resolveFmlDebugDependencies(
+                args.program,
+                this.sourceText,
+                args.dependencies ?? [],
+                resource => this.sendEvent(new OutputEvent(
+                    `Required ${resource.resourceType}: ${resource.canonical}\n`,
+                    "console",
+                )),
+                args.fhirVersion ?? modelConfiguration?.fhirVersion,
+                modelConfiguration?.modelResourcePaths,
+                (resource, filePath) => this.sendEvent(new OutputEvent(
+                    `Resolved ${resource.resourceType}: ${resource.canonical} from ${filePath}\n`,
+                    "console",
+                )),
+            );
+            for (const resource of dependencies.unresolvedResources) {
+                this.sendEvent(new OutputEvent(
+                    `Unresolved ${resource.resourceType}: ${resource.canonical}\n`,
+                    "stderr",
+                ));
+            }
 
             this.sendEvent(new OutputEvent(
                 `Starting FML trace using ${args.serverUrl ?? "the configured remote engine"}\n`,
@@ -106,8 +135,10 @@ export class FmlDebugSession extends DebugSession {
             ));
             const trace = await this.debugService.execute({
                 mapText: this.sourceText,
+                maps: dependencies.maps,
                 inputText,
                 modelText,
+                modelResources: dependencies.modelResources,
                 serverUrl: args.serverUrl,
                 signal: this.launchAbortController.signal,
             });

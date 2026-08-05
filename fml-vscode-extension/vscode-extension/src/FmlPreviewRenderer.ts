@@ -1,10 +1,13 @@
 import {Uri} from "vscode";
+import type {FhirVersion} from "@fhirpath-lab/validator";
 
 export interface FmlPreviewSource {
     uri: Uri;
     fileName: string;
     text: string;
     version: number;
+    defaultFhirVersion?: FhirVersion;
+    profileBaseTypes?: Record<string, string>;
 }
 
 /**
@@ -25,7 +28,11 @@ export interface FmlSvgRenderer {
 
 export class InstanceDiagramFmlSvgRenderer implements FmlSvgRenderer {
     public constructor(
-        private renderInstanceDiagram?: (fmlText: string) => string,
+        private renderInstanceDiagram?: (
+            fmlText: string,
+            defaultFhirVersion?: FhirVersion,
+            profileBaseTypes?: Record<string, string>,
+        ) => string,
     ) {}
 
     public async render(source: FmlPreviewSource): Promise<string> {
@@ -33,7 +40,11 @@ export class InstanceDiagramFmlSvgRenderer implements FmlSvgRenderer {
             const diagramModule = await import("@fhirpath-lab/lab-instance-diagram");
             this.renderInstanceDiagram = diagramModule.renderFmlInstanceDiagram;
         }
-        const svg = this.renderInstanceDiagram(source.text);
+        const svg = this.renderInstanceDiagram(
+            source.text,
+            source.defaultFhirVersion,
+            source.profileBaseTypes,
+        );
         const accessibleSvg = svg.replace(
             /^<svg\b/,
             `<svg class="fml-preview-svg" role="img" aria-label="Instance diagram for ${escapeXml(source.fileName)}"`,

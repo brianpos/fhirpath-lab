@@ -18,6 +18,8 @@ import {
 const CURSOR_EXTENSION = "http://fhirpath-lab.com/StructureDefinition/Cursor";
 const VARIABLE_EXTENSION = "http://fhirpath-lab.com/StructureDefinition/Variable";
 const JSON_VALUE_EXTENSION = "http://fhir.forms-lab.com/StructureDefinition/json-value";
+const OPERATION_OUTCOME_FILE_EXTENSION =
+    "http://hl7.org/fhir/StructureDefinition/operationoutcome-file";
 
 interface FhirExtension {
     extension?: FhirExtension[];
@@ -156,11 +158,28 @@ export function parseDebugTrace(
 }
 
 function buildParametersRequest(request: FmlDebugLaunchRequest): FhirParameters {
-    const parameter: FhirParametersPart[] = [
-        {name: "map", valueString: request.mapText},
-    ];
+    const maps = request.maps?.length
+        ? request.maps
+        : [{text: request.mapText}];
+    const parameter: FhirParametersPart[] = maps.map(map => ({
+        name: "map",
+        valueString: map.text,
+        ...(map.fileName
+            ? {extension: [{url: OPERATION_OUTCOME_FILE_EXTENSION, valueString: map.fileName}]}
+            : {}),
+    }));
     if (request.modelText?.trim()) {
         parameter.push({name: "model", valueString: request.modelText});
+    }
+    if (request.modelResources?.length) {
+        parameter.push({
+            name: "model",
+            resource: {
+                resourceType: "Bundle",
+                type: "collection",
+                entry: request.modelResources.map(resource => ({resource})),
+            },
+        });
     }
     parameter.push({name: "resource", valueString: request.inputText});
     return {resourceType: "Parameters", parameter};

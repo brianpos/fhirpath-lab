@@ -4,6 +4,7 @@ import * as http from "node:http";
 import os from "node:os";
 import path from "node:path";
 import * as vscode from "vscode";
+import {resolveFmlDebugDependencies} from "../FmlDebugDependencies";
 import {UiConstants} from "../constants/UiConstants";
 
 interface ProtocolMessage {
@@ -18,29 +19,105 @@ const variableUrl = "http://fhirpath-lab.com/StructureDefinition/Variable";
 const jsonValueUrl = "http://fhir.forms-lab.com/StructureDefinition/json-value";
 
 suite("FML Trace Replay Debugger", () => {
-    test("launches, inspects variables, steps forward, and steps back", async () => {
+    test("resolves models from shared workspace configuration without launch globs", async () => {
+        const tempDirectory = await fs.mkdtemp(path.join(os.tmpdir(), "fml-debug-models-"));
+        const program = path.join(tempDirectory, "debug.fml");
+        const profilePath = path.join(tempDirectory, "StructureDefinition-Profile.json");
+        const canonical = "http://example.org/StructureDefinition/Profile";
+        const mapText = [
+            `uses '${canonical}' alias Profile as source`,
+            "group Main(source src : Profile, target tgt) { src -> tgt; }",
+        ].join("\n");
+        try {
+            await fs.writeFile(program, mapText, "utf8");
+            await fs.writeFile(profilePath, JSON.stringify({
+                fhirVersion: "4.0.1",
+                resourceType: "StructureDefinition",
+                type: "Patient",
+                url: canonical,
+            }), "utf8");
+            const resolved: string[] = [];
+
+            const dependencies = await resolveFmlDebugDependencies(
+                program,
+                mapText,
+                [],
+                () => undefined,
+                "4.0.1",
+                [profilePath],
+                (_resource, filePath) => resolved.push(filePath),
+            );
+
+            assert.equal(dependencies.unresolvedResources.length, 0);
+            assert.equal(dependencies.modelResources.length, 1);
+            assert.deepEqual(resolved, [profilePath]);
+        } finally {
+            await fs.rm(tempDirectory, {recursive: true, force: true});
+        }
+    });
+
+    test("launches, inspects variables, steps forward, and steps back", async function() {
+        this.timeout(10_000);
         const extension = vscode.extensions.getExtension(UiConstants.extensionPublisher);
         assert.ok(extension);
         await extension.activate();
 
         const tempDirectory = await fs.mkdtemp(path.join(os.tmpdir(), "fml-debug-"));
         const program = path.join(tempDirectory, "debug.fml");
+        const importedMap = path.join(tempDirectory, "shared.fml");
         const input = path.join(tempDirectory, "input.json");
         const mapText = [
+            "/// url = 'http://example.org/StructureMap/Main'",
+            "uses 'http://example.org/StructureDefinition/Profile' alias Profile as source",
+            "uses 'http://hl7.org/fhir/StructureDefinition/Practitioner' alias Practitioner as source",
+            "imports 'http://example.org/StructureMap/Shared'",
             "group Main(source src, target tgt) {",
-            "  src.id as id -> tgt.id = id 'copy-id';",
+            "  src.id as id -> tgt.id = id;",
             "}",
         ].join("\n");
         await fs.writeFile(program, mapText, "utf8");
+        await fs.writeFile(importedMap, [
+            "/// url = 'http://example.org/StructureMap/Shared'",
+            "group Shared(source src, target tgt) {",
+            "  src.code -> tgt.code = translate(src.code, 'http://example.org/ConceptMap/example', 'code');",
+            "}",
+        ].join("\n"), "utf8");
         await fs.writeFile(
             input,
             "{\"resourceType\":\"Patient\",\"id\":\"example\",\"name\":[{\"family\":\"Smith\"}]}",
             "utf8",
         );
+        await fs.writeFile(path.join(tempDirectory, "profile.json"), JSON.stringify({
+            fhirVersion: "4.0.1",
+            resourceType: "StructureDefinition",
+            url: "http://example.org/StructureDefinition/Profile",
+        }), "utf8");
+        await fs.writeFile(path.join(tempDirectory, "profile-r5.json"), JSON.stringify({
+            fhirVersion: "5.0.0",
+            resourceType: "StructureDefinition",
+            url: "http://example.org/StructureDefinition/Profile",
+        }), "utf8");
+        await fs.writeFile(path.join(tempDirectory, "conceptmap.json"), JSON.stringify({
+            resourceType: "ConceptMap",
+            url: "http://example.org/ConceptMap/example",
+        }), "utf8");
+        await fs.writeFile(path.join(tempDirectory, "ignored.json"), JSON.stringify({
+            resourceType: "Patient",
+            id: "ignored",
+        }), "utf8");
         const document = await vscode.workspace.openTextDocument(program);
         await vscode.window.showTextDocument(document);
 
-        const receivedRequests: string[] = [];
+        const receivedParameters: Array<{
+            extension?: Array<{url: string; valueString: string}>;
+            name: string;
+            resource?: {entry?: Array<{resource: {
+                fhirVersion?: string;
+                resourceType: string;
+                url?: string;
+            }}>};
+            valueString?: string;
+        }> = [];
         const server = http.createServer((request, response) => {
             let requestBody = "";
             request.setEncoding("utf8");
@@ -48,10 +125,8 @@ suite("FML Trace Replay Debugger", () => {
                 requestBody += chunk;
             });
             request.on("end", () => {
-                const parameters = JSON.parse(requestBody) as {
-                    parameter: Array<{name: string}>;
-                };
-                receivedRequests.push(...parameters.parameter.map(parameter => parameter.name));
+                const parameters = JSON.parse(requestBody) as {parameter: typeof receivedParameters};
+                receivedParameters.push(...parameters.parameter);
                 response.writeHead(200, {"Content-Type": "application/fhir+json"});
                 response.end(JSON.stringify(createDebugResponse(mapText)));
             });
@@ -78,12 +153,40 @@ suite("FML Trace Replay Debugger", () => {
                 name: "FML debugger integration test",
                 program,
                 input,
+                dependencies: [path.join(tempDirectory, "*.json")],
+                fhirVersion: "4.0.1",
                 serverUrl: `http://127.0.0.1:${address.port}/StructureMap/$transform?debug=true`,
                 stopOnEntry: true,
             });
             assert.equal(started, true);
             await waitFor(() => stoppedEvents(protocolMessages).length >= 1);
-            assert.deepEqual(receivedRequests, ["map", "resource"]);
+            assert.deepEqual(receivedParameters.map(parameter => parameter.name), [
+                "map",
+                "map",
+                "model",
+                "resource",
+            ]);
+            assert.deepEqual(
+                receivedParameters.filter(parameter => parameter.name === "map").map(parameter => {
+                    return parameter.extension?.[0].valueString.replaceAll("\\", "/");
+                }),
+                [
+                    "debug.fml",
+                    "shared.fml",
+                ],
+            );
+            const modelEntries = receivedParameters.find(parameter => parameter.name === "model")
+                ?.resource?.entry ?? [];
+            assert.deepEqual(modelEntries.map(entry => entry.resource.resourceType).sort(), [
+                "ConceptMap",
+                "StructureDefinition",
+            ]);
+            assert.equal(modelEntries.find(entry => {
+                return entry.resource.resourceType === "StructureDefinition";
+            })?.resource.fhirVersion, "4.0.1");
+            assert.equal(outputEvents(protocolMessages).some(output => {
+                return output.includes("StructureDefinition/Practitioner");
+            }), false);
 
             const session = vscode.debug.activeDebugSession;
             assert.ok(session);

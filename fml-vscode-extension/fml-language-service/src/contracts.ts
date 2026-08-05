@@ -90,6 +90,8 @@ export interface WorkspaceFileEvent {
 
 export interface WorkspaceIndexRequest {
     uris: string[];
+    defaultFhirVersion?: import("@fhirpath-lab/validator").FhirVersion;
+    profileBaseTypes?: Record<string, string>;
 }
 
 export interface WorkspaceIndexResult {

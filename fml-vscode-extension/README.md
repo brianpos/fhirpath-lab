@@ -6,7 +6,7 @@ For the extension features and current validation scope, see the [extension READ
 
 This project will support the following high level features:
 * Syntax highlighting (via vscode-extension/syntaxes/fml.tmLanguage.json)
-* Text format validation (via antlr4 parser in fml-validator) and some minor semantic validation (via fml-validator)
+* Text format validation via the main lab parser/model and minor semantic validation via `fml-validator`
 * Package loading via sushi-config.yaml
     * detection of FHIR version and implementation guide dependencies
     * resolving profiles from the output directory from the implementation guide build
@@ -22,7 +22,7 @@ This project will support the following high level features:
 
 This repository contains five TypeScript projects:
 
-- `fml-validator` defines the validator API and the ANTLR-based FML parser.
+- `fml-validator` defines the validator API and consumes the canonical parser/model from the main lab project.
 - `fml-language-service` provides editor-independent diagnostics and completion logic.
 - `fml-language-server` exposes the language service through the Language Server Protocol.
 - `fml-debug-service` implements the remote FHIR debug-engine protocol and trace replay model.
@@ -31,6 +31,7 @@ This repository contains five TypeScript projects:
 The language server validates open FML documents as they change, without requiring a save. The filesystem watcher remains separate for future behavior driven by files and package builds.
 
 Workspace FML files are indexed by canonical URL from metadata and concept map declarations. Cross-file group navigation and unresolved-group checks follow each map's wildcard-capable `imports` declarations.
+Standard VS Code **Go to Definition** and **Find All References** commands navigate group declarations, invocations, and `extends` references across imported maps. Property hovers show the FHIR version, cardinality, choice alternatives, versioned target-profile links, specification links, and model-resolution issues using the same internal-model analysis as the SVG diagram. Named transform hovers show their result type when it can be inferred. The language server is the single completion provider: typing after a resolved source, target, or alias variable offers properties from the same internal type model, including nested paths, without requiring an IG build for core FHIR types.
 
 ## Development setup
 
@@ -61,7 +62,7 @@ npm install
 npm test
 ```
 
-The validator parser is generated from `fml-validator/grammar/mapping.g4` during each build.
+The canonical parser is generated from `fml-parser/FmlMapping.g4`; validator builds compile and bundle that parser and the shared intermediate model.
 
 ## Run in an Extension Development Host
 
@@ -143,15 +144,13 @@ code --uninstall-extension fhirpath-lab.fml-tools
 
 ## Validation scope
 
-Stage 1 validates FML text in real time through the language server. It checks that text parses successfully and validates standard transform function parameters. Unknown transforms are warnings, while invalid use of a known transform is an error. FHIRPath expression parameters are only permitted for `evaluate`.
+Stage 1 validates FML text in real time through the language server. It checks that text parses successfully, validates standard transform function parameters, and runs the shared typed FHIRPath validator over constants, source clauses, and `evaluate` expressions using resolved group inputs and aliases. FML aliases may use the standard `%alias` form or the FML-compatible bare form when the alias starts a path (for example, `x.toString()`); nested members are still interpreted normally. Unknown transforms are warnings, while invalid use of a known transform is an error. FHIRPath expression parameters are only permitted for `evaluate`. Validation and SVG diagram extraction operate directly on the canonical position-aware FML model. Expression-populated targets show dotted connectors from referenced source aliases. FHIR `StructureMap` generation is a separate compiler output derived from that model.
 
 The API contracts for the following capabilities are present but return `not-implemented`:
 
 - compiling FML into a FHIR `StructureMap`;
 - semantic validation against FHIR definitions;
 - transforming source data;
-- loading implementation guide packages; and
-- resetting validator state.
 
 ## GitHub workflows
 
@@ -164,19 +163,8 @@ The API contracts for the following capabilities are present but return `not-imp
 This project is licensed under the [MIT License](LICENSE.md).
 
 ## Issues in vscode extension to resolve
-* SVG Preview Diagram Generation issues
+* SVG Preview Instance Diagram Generation issues
     * Long source entries in the diagram should be truncated with ellipsis and the full name should be available on hover.
-    * When a target is populated via a fhirpath expression, any source variable referenced should be included via a dotted line from the source variable to the target variable. (need a fhirpath visitor that tracks property references to use here)
-    * If a node could have multiple types (choice properties), these should all be listed as possible types. When navigating to a child node, then this will impact what types are available above.
-      If a child rule references a property that is only available in a subset of types, then the parent rule should be filtered to only those types that are compatible with the child rule. (but still show that the other types could have been available somehow)
-    * 
-* SVG preview rendering issues
-    * Preview pane scroll bars need to be consistent. horizontal scrollbar is off the screen and need to get to the bottom to be able to see it
-* FML validation issues:
-    * Should use the fml models/parser from the lab main project and not use the antlr-ng project at all.
-        * remove the antlr-ng dependency from the vscode extension and fml-validator projects.
-        * Use the intermediate model from the lab project to validate the fml text and generate the structure map, this gives us a single source of truth for the fml model and parser, and will enable more features
-    * transform functions are validating as group dependencies and thus searching for then incorrectly, and also I'd assume aren't validating the parameter types either.
-    * validator should use the models from the core lab project
-    * validator and diagraming should use the same internal testing/validation rules.
-    * 
+    * Add any extends X groups to the diagram also (recursively) and blend them in too.
+    * tooltip for source rules that have a filter of some kind should have the filter displayed in the tooltip (either a where fhirpath expression filter, or type filter).
+* logical model profile resolution and validation (currently the validator only resolves to the base resource type, but it should be able to resolve to the logical model profile and validate against that - using the classes that are able to convert a StructureDefinition into a FHIRPath model for validation).

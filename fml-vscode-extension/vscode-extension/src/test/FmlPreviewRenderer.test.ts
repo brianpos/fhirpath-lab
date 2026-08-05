@@ -25,4 +25,27 @@ suite("FML Preview Renderer", () => {
         assert.match(svg, /data-fml-length="5"/);
         assert.doesNotMatch(svg, /<preview>/);
     });
+
+    test("instance renderer forwards workspace model configuration", async () => {
+        let receivedVersion: string | undefined;
+        let receivedProfiles: Record<string, string> | undefined;
+        const renderer = new InstanceDiagramFmlSvgRenderer((_text, version, profiles) => {
+            receivedVersion = version;
+            receivedProfiles = profiles;
+            return "<svg></svg>";
+        });
+        const profileBaseTypes = {"http://example.org/Profile": "Practitioner"};
+
+        await renderer.render({
+            uri: vscode.Uri.parse("untitled:Preview"),
+            fileName: "preview.fml",
+            text: "group Example(source src, target tgt) {}",
+            version: 1,
+            defaultFhirVersion: "R4",
+            profileBaseTypes,
+        });
+
+        assert.equal(receivedVersion, "R4");
+        assert.deepEqual(receivedProfiles, profileBaseTypes);
+    });
 });

@@ -12,6 +12,7 @@ import {lookupByTypeName as lookupByTypeNameR4B} from "../../../helpers/models/g
 import {lookupByTypeName as lookupByTypeNameR5} from "../../../helpers/models/generated/r5";
 import {lookupByTypeName as lookupByTypeNameR6} from "../../../helpers/models/generated/r6";
 import {FmlPropertyAnalysis, FmlPropertyCompletion, FmlPropertyUsage, FmlSource, FmlSourceSpan} from "./contracts";
+import {applyFmlModelConfiguration} from "./FmlModelConfiguration";
 
 const lookups: Partial<Record<FhirVersion, TypeLookup>> = {
     R4: lookupByTypeNameR4,
@@ -28,6 +29,7 @@ export class FmlPropertyUsageCollector {
         if (isFmlParseError(parsed)) {
             return [];
         }
+        applyFmlModelConfiguration(parsed, source);
 
         return this.analyzeModel(parsed, source.sourceText).usages;
     }
@@ -45,10 +47,7 @@ export class FmlPropertyUsageCollector {
         const seen = new Set<string>();
         for (const group of diagram.groups) {
             for (const type of [...group.sourceTypes, ...group.targetTypes, ...group.secondaryTargetTypes]) {
-                if (type.isComputed) {
-                    continue;
-                }
-                if (type.fmlPosition && !groupInputs.some(input => {
+                if (!type.isComputed && type.fmlPosition && !groupInputs.some(input => {
                     return input.groupName === group.name && input.inputName === type.paramName;
                 })) {
                     groupInputs.push({
@@ -164,6 +163,7 @@ export class FmlPropertyUsageCollector {
         if (isFmlParseError(parsed)) {
             return [];
         }
+        applyFmlModelConfiguration(parsed, source);
         const analysis = this.analyzeModel(parsed, modifiedText);
         const markerUsage = analysis.usages.find(usage => {
             return usage.path.split(".").at(-1) === FmlPropertyUsageCollector.completionMarker;

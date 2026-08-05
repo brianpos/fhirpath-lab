@@ -177,6 +177,9 @@ export interface StructureDeclaration {
   
   /** Optional alias for the structure */
   alias?: string;
+
+  /** Base FHIR type resolved from a local profile StructureDefinition. */
+  resolvedTypeName?: string;
   
   /** How the structure is used: 'source', 'queried', 'target', or 'produced' */
   mode: 'source' | 'queried' | 'target' | 'produced';

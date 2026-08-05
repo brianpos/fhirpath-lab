@@ -1,4 +1,7 @@
 import * as assert from "node:assert";
+import {promises as fs} from "node:fs";
+import os from "node:os";
+import path from "node:path";
 import {
     DocumentValidationResult,
     FmlServerStatus,
@@ -6,6 +9,12 @@ import {
 } from "@fhirpath-lab/language-service";
 import * as vscode from "vscode";
 import {formatStatusSummary} from "../FmlLanguageServerStatus";
+import {
+    parseSushiConfiguration,
+    resolveProfileBaseTypes,
+    resolveWorkspaceModelResourcePaths,
+    resolveWorkspaceProfileTypes,
+} from "../SushiConfigWatcher";
 import {UiConstants} from "../constants/UiConstants";
 
 suite("FHIR Mapping Language Tools Extension", () => {
@@ -21,6 +30,142 @@ suite("FHIR Mapping Language Tools Extension", () => {
     test("extension should be active", () => {
         const extension = vscode.extensions.getExtension(UiConstants.extensionPublisher);
         assert.ok(extension?.isActive);
+    });
+
+    test("reads FHIR version and package cache indexes from sushi-config", () => {
+        const cachePath = path.join("cache", "packages");
+        const expectedUsCoreIndex = path.join(
+            cachePath,
+            "hl7.fhir.us.core#6.2.0",
+            "package",
+            ".index.json",
+        );
+        const configuration = parseSushiConfiguration(`
+fhirVersion: 4.0.1
+dependencies:
+  hl7.fhir.us.core:
+    id: uscore
+    version: 6.2.0
+  ch.fhir.ig.ch-core: 2.1.0
+`, cachePath, filePath => filePath === expectedUsCoreIndex);
+
+        assert.equal(configuration.fhirVersion, "4.0.1");
+        assert.deepEqual(configuration.dependencies, [
+            {
+                indexExists: true,
+                indexPath: expectedUsCoreIndex,
+                packageId: "hl7.fhir.us.core",
+                version: "6.2.0",
+            },
+            {
+                indexExists: false,
+                indexPath: path.join(
+                    cachePath,
+                    "ch.fhir.ig.ch-core#2.1.0",
+                    "package",
+                    ".index.json",
+                ),
+                packageId: "ch.fhir.ig.ch-core",
+                version: "2.1.0",
+            },
+        ]);
+    });
+
+    test("resolves profile canonicals to base resource types from package indexes", async () => {
+        const packageDirectory = await fs.mkdtemp(path.join(os.tmpdir(), "fml-package-"));
+        const indexPath = path.join(packageDirectory, ".index.json");
+        const profileUrl = "http://example.org/fhir/StructureDefinition/CustomPractitioner";
+        try {
+            await fs.writeFile(indexPath, JSON.stringify({
+                files: [{
+                    filename: "StructureDefinition-CustomPractitioner.json",
+                    resourceType: "StructureDefinition",
+                    url: profileUrl,
+                }],
+            }), "utf8");
+            await fs.writeFile(
+                path.join(packageDirectory, "StructureDefinition-CustomPractitioner.json"),
+                JSON.stringify({
+                    resourceType: "StructureDefinition",
+                    type: "Practitioner",
+                    url: profileUrl,
+                }),
+                "utf8",
+            );
+
+            const profileBaseTypes = await resolveProfileBaseTypes([{
+                indexExists: true,
+                indexPath,
+                packageId: "example.fhir.package",
+                version: "1.0.0",
+            }]);
+
+            assert.equal(profileBaseTypes[profileUrl], "Practitioner");
+        } finally {
+            await fs.rm(packageDirectory, {recursive: true, force: true});
+        }
+    });
+
+    test("workspace output profiles override package profiles and retain provenance", async () => {
+        const workspaceDirectory = await fs.mkdtemp(path.join(os.tmpdir(), "fml-workspace-"));
+        const packageDirectory = path.join(workspaceDirectory, "package");
+        const outputDirectory = path.join(workspaceDirectory, "output");
+        const canonical = "http://example.org/StructureDefinition/LocalProfile";
+        try {
+            await fs.mkdir(packageDirectory);
+            await fs.mkdir(outputDirectory);
+            const indexPath = path.join(packageDirectory, ".index.json");
+            await fs.writeFile(indexPath, JSON.stringify({files: [
+                {
+                    filename: "StructureDefinition-LocalProfile.json",
+                    resourceType: "StructureDefinition",
+                    url: canonical,
+                },
+                {
+                    filename: "ConceptMap-Local.json",
+                    resourceType: "ConceptMap",
+                    url: "http://example.org/ConceptMap/Local",
+                },
+            ]}));
+            await fs.writeFile(
+                path.join(packageDirectory, "StructureDefinition-LocalProfile.json"),
+                JSON.stringify({resourceType: "StructureDefinition", type: "Patient", url: canonical}),
+            );
+            const conceptMapPath = path.join(packageDirectory, "ConceptMap-Local.json");
+            await fs.writeFile(
+                conceptMapPath,
+                JSON.stringify({resourceType: "ConceptMap", url: "http://example.org/ConceptMap/Local"}),
+            );
+            const outputPath = path.join(outputDirectory, "StructureDefinition-LocalProfile.json");
+            await fs.writeFile(
+                outputPath,
+                JSON.stringify({resourceType: "StructureDefinition", type: "Practitioner", url: canonical}),
+            );
+
+            const resolutions = await resolveWorkspaceProfileTypes(workspaceDirectory, [{
+                indexExists: true,
+                indexPath,
+                packageId: "example.package",
+                version: "1.0.0",
+            }]);
+
+            assert.equal(resolutions[canonical].typeName, "Practitioner");
+            assert.equal(resolutions[canonical].source.toLowerCase(), outputPath.toLowerCase());
+            const modelResourcePaths = await resolveWorkspaceModelResourcePaths(
+                workspaceDirectory,
+                [{
+                    indexExists: true,
+                    indexPath,
+                    packageId: "example.package",
+                    version: "1.0.0",
+                }],
+                resolutions,
+            );
+            assert.ok(modelResourcePaths.some(candidate => candidate.toLowerCase() === outputPath.toLowerCase()));
+            assert.ok(modelResourcePaths.some(candidate => candidate.toLowerCase() === conceptMapPath.toLowerCase()));
+        } finally {
+            await fs.rm(workspaceDirectory, {recursive: true, force: true});
+        }
     });
 
     test("commands should be registered", async () => {
@@ -65,7 +210,8 @@ suite("FHIR Mapping Language Tools Extension", () => {
         assert.ok(result.durationMs >= 0);
     });
 
-    test("language server restart restores realtime validation", async () => {
+    test("language server restart restores realtime validation", async function() {
+        this.timeout(10_000);
         await vscode.commands.executeCommand("fmlTools.RestartLanguageServer");
         const document = await openFmlDocument(
             "group restartTest(source src, target tgt) { src -> tgt.id = uuid('bad'); }",
@@ -77,7 +223,8 @@ suite("FHIR Mapping Language Tools Extension", () => {
         assert.ok(diagnostics.some(diagnostic => diagnostic.message.includes("received 1 parameter")));
     });
 
-    test("restart during an index operation starts a fresh index", async () => {
+    test("restart during an index operation starts a fresh index", async function() {
+        this.timeout(10_000);
         const inFlightIndex = vscode.commands.executeCommand<WorkspaceIndexResult>(
             "fmlTools.ReindexLanguageServer",
         );

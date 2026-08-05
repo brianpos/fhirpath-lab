@@ -398,6 +398,33 @@ test("collects position-aware FHIR property usages", () => {
     assert.deepEqual(sourceName.span.end, {line: 3, column: 12});
 });
 
+test("resolves a profile uses canonical to its cached base resource type", async () => {
+    const profileUrl = "http://example.org/fhir/StructureDefinition/CustomPractitioner";
+    const result = await new FmlValidatorApi().validate({
+        sourceText: `
+uses '${profileUrl}' alias CustomPractitioner as source
+group Main(source src : CustomPractitioner, target tgt) {
+    src.name -> tgt.name;
+}
+`,
+        defaultFhirVersion: "R4",
+        profileBaseTypes: {[profileUrl]: "Practitioner"},
+    });
+
+    assert.equal(result.status, "success", result.diagnostics.map(diagnostic => diagnostic.message).join("; "));
+    const usages = new FmlValidatorApi().getPropertyUsages({
+        sourceText: `
+uses '${profileUrl}' alias CustomPractitioner as source
+group Main(source src : CustomPractitioner, target tgt) {
+    src.name -> tgt.name;
+}
+`,
+        defaultFhirVersion: "R4",
+        profileBaseTypes: {[profileUrl]: "Practitioner"},
+    });
+    assert.equal(usages.find(usage => usage.role === "source")?.rootTypeName, "Practitioner");
+});
+
 test("retains every source occurrence when target properties share a diagram row", () => {
     const sourceText = [
         "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Observation' alias Observation as source",
@@ -507,4 +534,22 @@ group Withdrawal(source src, target tgt) {
 
         assert.equal(result.status, "success", result.diagnostics.map(diagnostic => diagnostic.message).join("; "));
         assert.ok(result.diagnostics.every(diagnostic => !diagnostic.message.includes("could not be resolved")));
+});
+
+test("resolves uuid results as string parameters in dependent groups", async () => {
+        const result = await new FmlValidatorApi().validate({sourceText: `
+uses 'http://hl7.org/fhir/StructureDefinition/QuestionnaireResponse' as source
+uses 'http://hl7.org/fhir/StructureDefinition/Bundle' as target
+group Root(source src : QuestionnaireResponse, target tgt : Bundle) {
+    src -> tgt.entry as entry, uuid() as fullUrl then PopulateBundleEntry(src, entry, fullUrl);
+}
+group PopulateBundleEntry(source src : QuestionnaireResponse, target entry, source fullUrl) {
+    fullUrl -> entry.fullUrl = fullUrl;
+}
+`});
+
+        assert.equal(result.status, "success", result.diagnostics.map(diagnostic => diagnostic.message).join("; "));
+        assert.ok(result.diagnostics.every(diagnostic => {
+                return !diagnostic.message.includes("PopulateBundleEntry.fullUrl");
+        }));
 });

@@ -3,6 +3,7 @@ import {validateFmlModel} from "../../../helpers/fml_validation";
 import {FmlDiagnostic, FmlSource, FmlValidatorResult, ParsedFml} from "./contracts";
 import {FmlPropertyUsageCollector} from "./FmlPropertyUsageCollector";
 import {FmlFhirPathValidator} from "./FmlFhirPathValidator";
+import {applyFmlModelConfiguration} from "./FmlModelConfiguration";
 
 export class CoreFmlParser {
     public constructor(
@@ -19,6 +20,7 @@ export class CoreFmlParser {
                 diagnostics: (parsed.issue ?? []).map(issue => this.toDiagnostic(issue, source.sourceName)),
             };
         }
+        applyFmlModelConfiguration(parsed, source);
 
         const diagnostics: FmlDiagnostic[] = validateFmlModel(parsed).map(diagnostic => ({
             ...diagnostic,

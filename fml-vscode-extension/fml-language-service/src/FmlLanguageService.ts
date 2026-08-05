@@ -6,6 +6,7 @@ import {
     TransformParameterDefinition,
     TransformSignature,
     transformDefinitions,
+    FhirVersion,
 } from "@fhirpath-lab/validator";
 import {
     CompletionRequest,
@@ -23,13 +24,26 @@ import {
 const DIAGNOSTIC_SOURCE = "FHIR Mapping Language Tools";
 
 export class FmlLanguageService {
+    private defaultFhirVersion?: FhirVersion;
+    private profileBaseTypes: Record<string, string> = {};
+
     public constructor(private readonly validator = new FmlValidatorApi()) {
+    }
+
+    public configureModels(
+        defaultFhirVersion: FhirVersion | undefined,
+        profileBaseTypes: Record<string, string>,
+    ): void {
+        this.defaultFhirVersion = defaultFhirVersion;
+        this.profileBaseTypes = profileBaseTypes;
     }
 
     public async validateDocument(document: TextDocumentSnapshot): Promise<DocumentValidationResult> {
         const result = await this.validator.validate({
             sourceName: document.uri,
             sourceText: document.text,
+            defaultFhirVersion: this.defaultFhirVersion,
+            profileBaseTypes: this.profileBaseTypes,
         });
         const diagnostics = result.diagnostics.map(diagnostic => {
             return this.toLanguageDiagnostic(diagnostic, document.text);
@@ -51,6 +65,8 @@ export class FmlLanguageService {
         const propertyCompletions = this.validator.getPropertyCompletions({
             sourceName: request.uri,
             sourceText: request.text,
+            defaultFhirVersion: this.defaultFhirVersion,
+            profileBaseTypes: this.profileBaseTypes,
         }, cursorOffset);
         if (propertyCompletions.length > 0) {
             return propertyCompletions.map(completion => ({
@@ -88,6 +104,8 @@ export class FmlLanguageService {
         const usages = this.validator.getPropertyUsages({
             sourceName: request.uri,
             sourceText: request.text,
+            defaultFhirVersion: this.defaultFhirVersion,
+            profileBaseTypes: this.profileBaseTypes,
         });
         const transformMatches = usages.filter(usage => usage.transformName && usage.transformSpan).map(usage => ({
             usage,

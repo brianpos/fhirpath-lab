@@ -151,12 +151,11 @@ describe("choice property type narrowing", () => {
     expect(choice?.unknownElement).not.toBe(true);
   });
 
-  test("SVG lists compatible types only and retains alternatives in the tooltip", () => {
+  test("SVG keeps choice types in the tooltip only", () => {
     const svg = generateFmlInstanceDiagramSvg(fml, lookup);
 
-    expect(svg).toContain('class="sm-choice-type"> : Alpha | Beta</tspan>');
+    expect(svg).not.toContain('class="sm-choice-type"');
     expect(svg).not.toContain("sm-choice-type-excluded");
-    expect(svg).not.toContain('> | Gamma</tspan>');
     expect(svg).toContain("Compatible types: Alpha | Beta");
     expect(svg).toContain("Other possible types: Gamma");
   });
@@ -179,8 +178,7 @@ describe("FML type restrictions and dependent target inference", () => {
     expect(onset?.excludedTypeNames).toEqual(["Period", "Range", "dateTime", "string"]);
 
     const svg = generateFmlInstanceDiagramSvg(fml, lookupR5, true, lookupForVersion);
-    expect(svg).toContain('class="sm-choice-type"> : Age</tspan>');
-    expect(svg).not.toContain('> | Period | Range | dateTime | string</tspan>');
+    expect(svg).not.toContain('class="sm-choice-type"');
     expect(svg).toContain("Source property Condition.onset [0..1] (R5)");
     expect(svg).toContain("Compatible types: Age");
     expect(svg).toContain("Other possible types: Period | Range | dateTime | string");
@@ -203,7 +201,7 @@ describe("FML type restrictions and dependent target inference", () => {
     expect(svg).toContain("https://hl7.org/fhir/R5/patient-definitions.html#Patient.generalPractitioner");
   });
 
-  test("target choice rows omit type suffixes while retaining tooltip types", () => {
+  test("choice rows omit type suffixes while retaining tooltip types", () => {
     const text = [
       "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Condition' alias Condition as target",
       "group Main(source src : Condition, target tgt : Condition) {",
@@ -215,7 +213,7 @@ describe("FML type restrictions and dependent target inference", () => {
 
     expect(svg).toContain('<text x="');
     expect(svg).not.toContain('tgt.onset : Age');
-    expect(svg.match(/class="sm-choice-type"> : Age \| Period \| Range \| dateTime \| string<\/tspan>/g)).toHaveLength(1);
+    expect(svg).not.toContain('class="sm-choice-type"');
     expect(svg).toContain("Target property Condition.onset [0..1] (R5)");
     expect(svg).toContain("Compatible types: Age | Period | Range | dateTime | string");
   });
@@ -320,5 +318,26 @@ describe("fixed-point dependent group type resolution", () => {
 
     expect(group?.sourceTypes[0]).toMatchObject({typeName: "HumanName", fhirVersion: "R5", typeResolution: "context"});
     expect(group?.targetTypes[0]).toMatchObject({typeName: "HumanName", fhirVersion: "R5", typeResolution: "context"});
+  });
+
+  test("propagates uuid string results into dependent group parameters", () => {
+    const text = [
+      "uses 'http://hl7.org/fhir/StructureDefinition/QuestionnaireResponse' as source",
+      "uses 'http://hl7.org/fhir/StructureDefinition/Bundle' as target",
+      "group Root(source src : QuestionnaireResponse, target tgt : Bundle) {",
+      "  src -> tgt.entry as entry, uuid() as fullUrl then PopulateBundleEntry(src, entry, fullUrl);",
+      "}",
+      "group PopulateBundleEntry(source src : QuestionnaireResponse, target entry, source fullUrl) {",
+      "  fullUrl -> entry.fullUrl = fullUrl;",
+      "}",
+    ].join("\n");
+    const fml = parseFML(text) as FmlStructureMap;
+    const diagram = extractFmlStructureMapDiagram(fml, lookupR4B, true, lookupForVersion);
+    const root = diagram.groups.find(group => group.name === "Root");
+    const populate = diagram.groups.find(group => group.name === "PopulateBundleEntry");
+    const fullUrl = populate?.sourceTypes.find(input => input.paramName === "fullUrl");
+
+    expect(root?.sourceTypes.find(input => input.paramName === "fullUrl")?.typeName).toBe("string");
+    expect(fullUrl).toMatchObject({typeName: "string", typeResolution: "context"});
   });
 });

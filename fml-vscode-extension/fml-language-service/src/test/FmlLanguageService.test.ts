@@ -171,6 +171,30 @@ test("provides FHIR property type hover information", () => {
     assert.match(hover.markdown, /\(R4B\)/);
 });
 
+test("uses the configured default FHIR version in profile property hover links", () => {
+    const profileUrl = "http://example.org/fhir/StructureDefinition/CustomPractitioner";
+    const configuredService = new FmlLanguageService();
+    configuredService.configureModels("R4", {[profileUrl]: "Practitioner"});
+    const text = [
+        `uses '${profileUrl}' alias CustomPractitioner as source`,
+        "group example(source src : CustomPractitioner, target tgt) {",
+        "    src.name -> tgt.name;",
+        "}",
+    ].join("\n");
+    const offset = text.indexOf("src.name") + "src.".length;
+
+    const hover = configuredService.getHover({
+        uri: "file:///profile-hover.fml",
+        text,
+        position: positionAt(text, offset),
+    });
+
+    assert.ok(hover);
+    assert.match(hover.markdown, /`Practitioner\.name`/);
+    assert.match(hover.markdown, /\(R4\)/);
+    assert.match(hover.markdown, /https:\/\/hl7\.org\/fhir\/R4\/practitioner-definitions\.html#Practitioner\.name/);
+});
+
 test("property hovers show required singular cardinality", () => {
     const text = [
         "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Observation' alias Observation as target",
@@ -307,6 +331,25 @@ test("transform hovers derive result types from parameters", () => {
     assert.ok(hover);
     assert.match(hover.markdown, /Transform.*`create`/);
     assert.match(hover.markdown, /Result type: `Patient`/);
+});
+
+test("uuid transform hovers report primitive string", () => {
+    const text = [
+        "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Bundle' alias Bundle as target",
+        "group example(source src : Bundle, target tgt : Bundle) {",
+        "    src -> tgt.entry as entry, uuid() as fullUrl;",
+        "}",
+    ].join("\n");
+    const offset = text.indexOf("uuid(") + 1;
+    const hover = service.getHover({
+        uri: "file:///uuid-hover.fml",
+        text,
+        position: positionAt(text, offset),
+    });
+
+    assert.ok(hover);
+    assert.match(hover.markdown, /Transform.*`uuid`/);
+    assert.match(hover.markdown, /Result type: `string`/);
 });
 
 test("every repeated target property occurrence receives a hover", () => {

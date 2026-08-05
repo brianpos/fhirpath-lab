@@ -24,10 +24,17 @@ export interface FmlTypedValue {
 
 export interface FmlDebugLaunchRequest {
     mapText: string;
+    maps?: FmlDebugMapSource[];
     inputText: string;
     modelText?: string;
+    modelResources?: JsonValue[];
     serverUrl?: string;
     signal?: AbortSignal;
+}
+
+export interface FmlDebugMapSource {
+    fileName?: string;
+    text: string;
 }
 
 export interface FmlTraceVariable {
