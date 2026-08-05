@@ -55,6 +55,8 @@ export function getModelProvider(version: FhirVersionKey): ModelProvider {
 export interface ValidateOptions {
     /** FHIR version dictionary to validate against. Defaults to 'r4'. */
     fhirVersion?: FhirVersionKey;
+    /** Optional model provider override. Used to layer runtime logical models over a core FHIR dictionary. */
+    modelProvider?: ModelProvider;
     /** Optional context type name (e.g. "Patient", "Observation.value[x]"). */
     contextType?: string;
     /** True if the expression is rooted at a collection rather than a single value. */
@@ -174,7 +176,7 @@ export function validateFhirpathExpression(
     expression: string,
     options: ValidateOptions = {},
 ): ValidationResult {
-    const provider = getModelProvider(options.fhirVersion ?? "r4");
+    const provider = options.modelProvider ?? getModelProvider(options.fhirVersion ?? "r4");
     const contextType = resolveContextType(provider, options.contextType);
 
     // If a context expression is supplied, evaluate it first to determine the

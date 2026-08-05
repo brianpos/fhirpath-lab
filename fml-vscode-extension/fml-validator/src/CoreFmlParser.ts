@@ -3,12 +3,14 @@ import {validateFmlModel} from "../../../helpers/fml_validation";
 import {FmlDiagnostic, FmlSource, FmlValidatorResult, ParsedFml} from "./contracts";
 import {FmlPropertyUsageCollector} from "./FmlPropertyUsageCollector";
 import {FmlFhirPathValidator} from "./FmlFhirPathValidator";
+import {FmlTransformValidator} from "./FmlTransformValidator";
 import {applyFmlModelConfiguration} from "./FmlModelConfiguration";
 
 export class CoreFmlParser {
     public constructor(
         private readonly propertyUsageCollector = new FmlPropertyUsageCollector(),
         private readonly fhirPathValidator = new FmlFhirPathValidator(),
+        private readonly transformValidator = new FmlTransformValidator(),
     ) {
     }
 
@@ -26,51 +28,37 @@ export class CoreFmlParser {
             ...diagnostic,
             sourceName: source.sourceName,
         }));
-        const propertyAnalysis = this.propertyUsageCollector.analyzeModel(parsed, source.sourceText);
+        const propertyAnalysis = this.propertyUsageCollector.analyzeModel(
+            parsed,
+            source.sourceText,
+            source.customTypeModels,
+        );
         diagnostics.push(...this.fhirPathValidator.validate(
             parsed,
             source.sourceText,
             propertyAnalysis,
             source.sourceName,
+            source.customTypeModels,
+        ));
+        diagnostics.push(...this.transformValidator.validate(
+            parsed,
+            propertyAnalysis,
+            source.sourceName,
+            source.customTypeModels,
         ));
         for (const usage of propertyAnalysis.usages) {
             if (!usage.unknownElement || !usage.rootTypeName) continue;
             diagnostics.push({
                 severity: "warning",
                 message: usage.validationError
-                    ?? `Property '${usage.rootTypeName}.${usage.path}' was not found in the ${usage.fhirVersion ?? "selected"} FHIR model.`,
+                    ?? `Property '${usage.rootTypeName}.${usage.path}' was not found in the `
+                    + (source.customTypeModels?.[usage.rootTypeName]
+                        ? "logical model."
+                        : `${usage.fhirVersion ?? "selected"} FHIR model.`),
                 line: usage.span.start.line,
                 column: usage.span.start.column,
                 sourceName: source.sourceName,
                 offendingText: usage.path,
-            });
-        }
-        for (const usage of propertyAnalysis.usages) {
-            if (usage.role !== "target" || usage.transformName !== "translate") continue;
-            const resultTypes = usage.transformResultTypeNames ?? [];
-            const allowedTypes = usage.compatibleTypeNames?.length
-                ? usage.compatibleTypeNames
-                : usage.possibleTypeNames?.length
-                    ? usage.possibleTypeNames
-                    : usage.elementTypeName
-                        ? [usage.elementTypeName]
-                        : [];
-            if (resultTypes.length === 0 || allowedTypes.length === 0) continue;
-            const compatible = resultTypes.some(resultType => {
-                return allowedTypes.some(allowedType => allowedType.toLowerCase() === resultType.toLowerCase());
-            });
-            if (compatible) continue;
-
-            const diagnosticSpan = usage.transformResultSpan ?? usage.transformSpan ?? usage.span;
-            diagnostics.push({
-                severity: "error",
-                message: `Transform 'translate' output type '${resultTypes.join(" | ")}' is not compatible with `
-                    + `target property '${usage.rootTypeName}.${usage.path}' (allowed: ${allowedTypes.join(" | ")}). `
-                    + "The third parameter must select a compatible output type.",
-                line: diagnosticSpan.start.line,
-                column: diagnosticSpan.start.column,
-                sourceName: source.sourceName,
-                offendingText: usage.transformResultText ?? resultTypes[0],
             });
         }
         for (const input of propertyAnalysis.groupInputs) {

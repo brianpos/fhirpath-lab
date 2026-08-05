@@ -3,6 +3,12 @@ import os from "node:os";
 import path from "node:path";
 import * as vscode from "vscode";
 import YAML from "yaml";
+import {
+    buildLogicalTypeModels,
+    resolveStructureDefinitionTypeName,
+    toFhirVersion,
+    type TypeModel,
+} from "@fhirpath-lab/validator";
 import {logData} from "./utils";
 
 export interface SushiPackageDependency {
@@ -15,6 +21,7 @@ export interface SushiPackageDependency {
 export interface SushiWorkspaceConfiguration {
     dependencies: SushiPackageDependency[];
     fhirVersion?: string;
+    customTypeModels: Record<string, TypeModel>;
     modelResourcePaths: string[];
     profileBaseTypes: Record<string, string>;
     profileResolutionSources: Record<string, string>;
@@ -78,6 +85,10 @@ export class SushiConfigWatcher implements vscode.Disposable {
         return {
             dependencies: configurations.flatMap(configuration => configuration.dependencies),
             fhirVersion: configurations.find(configuration => configuration.fhirVersion)?.fhirVersion,
+            customTypeModels: Object.assign(
+                {},
+                ...configurations.map(configuration => configuration.customTypeModels),
+            ),
             modelResourcePaths: [...new Set(configurations.flatMap(configuration => configuration.modelResourcePaths))],
             profileBaseTypes: Object.assign({}, ...configurations.map(configuration => configuration.profileBaseTypes)),
             profileResolutionSources: Object.assign(
@@ -106,6 +117,10 @@ export class SushiConfigWatcher implements vscode.Disposable {
                 configuration.dependencies,
                 resolutions,
             );
+            configuration.customTypeModels = buildLogicalTypeModels(
+                await readJsonResources(configuration.modelResourcePaths),
+                toFhirVersion(configuration.fhirVersion),
+            );
             this.configurations.set(path.dirname(uri.fsPath), configuration);
             this.configurationUris.set(path.dirname(uri.fsPath), uri);
             logData(`SUSHI configuration: ${uri.fsPath}`, this.logger);
@@ -123,6 +138,10 @@ export class SushiConfigWatcher implements vscode.Disposable {
                     this.logger,
                 );
             }
+            logData(
+                `SUSHI logical model types: ${Object.keys(configuration.customTypeModels).join(", ") || "none"}`,
+                this.logger,
+            );
             await this.onConfigurationChanged();
         } catch (error) {
             const message = error instanceof Error ? error.message : String(error);
@@ -170,6 +189,7 @@ export function parseSushiConfiguration(
     return {
         dependencies,
         fhirVersion,
+        customTypeModels: {},
         modelResourcePaths: [],
         profileBaseTypes: {},
         profileResolutionSources: {},
@@ -186,7 +206,11 @@ interface PackageIndex {
 
 interface ProfileStructureDefinition {
     baseDefinition?: string;
+    differential?: {element?: Array<{path: string}>};
+    kind?: string;
+    name?: string;
     resourceType?: string;
+    snapshot?: {element?: Array<{path: string}>};
     type?: string;
     url?: string;
 }
@@ -201,6 +225,7 @@ export async function resolveProfileBaseTypes(
 }
 
 export interface ProfileTypeResolution {
+    kind?: string;
     resourcePath: string;
     source: string;
     typeName: string;
@@ -289,13 +314,21 @@ async function addProfileResolution(
     indexedCanonical?: string,
 ): Promise<void> {
     const definition = JSON.parse(await fsReadText(resourcePath)) as ProfileStructureDefinition;
-    const baseType = definition.type ?? definition.baseDefinition?.split("|")[0].split("/").at(-1);
+    const baseType = definition.kind === "logical"
+        ? resolveStructureDefinitionTypeName(definition)
+        : definition.type ?? definition.baseDefinition?.split("|")[0].split("/").at(-1);
     if (definition.resourceType !== "StructureDefinition" || !baseType) {
         return;
     }
     for (const canonical of [indexedCanonical, definition.url]) {
         if (canonical) {
-            result[canonical.split("|")[0]] = {resourcePath, source, typeName: baseType};
+            const normalizedCanonical = canonical.split("|")[0];
+            result[normalizedCanonical] = {
+                resourcePath,
+                source,
+                typeName: definition.kind === "logical" ? normalizedCanonical : baseType,
+                ...(definition.kind ? {kind: definition.kind} : {}),
+            };
         }
     }
 }
@@ -307,4 +340,16 @@ async function fsReadText(filePath: string): Promise<string> {
 function isPathInside(filePath: string, directory: string): boolean {
     const relativePath = path.relative(directory, filePath);
     return relativePath === "" || (!relativePath.startsWith("..") && !path.isAbsolute(relativePath));
+}
+
+async function readJsonResources(filePaths: string[]): Promise<unknown[]> {
+    const resources: unknown[] = [];
+    for (const filePath of filePaths) {
+        try {
+            resources.push(JSON.parse(await fsReadText(filePath)) as unknown);
+        } catch {
+            // Ignore stale or malformed model files while retaining other models.
+        }
+    }
+    return resources;
 }

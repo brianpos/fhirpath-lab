@@ -9,6 +9,7 @@ export interface SDBundle {
 export interface StructureDefinition {
     resourceType: "StructureDefinition";
     url: string;
+    version?: string;
     name: string;
     type?: string;
     kind: "primitive-type" | "complex-type" | "resource" | "logical";

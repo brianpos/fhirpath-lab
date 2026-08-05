@@ -1,7 +1,10 @@
 import {isFmlParseError, parseFML} from "../../../helpers/fml_parser";
 import {validateFmlModel} from "../../../helpers/fml_validation";
 import type {FhirVersion} from "../../../helpers/fml_models";
-import {applyFmlModelConfiguration} from "@fhirpath-lab/validator";
+import {
+    applyFmlModelConfiguration,
+    type TypeModel,
+} from "@fhirpath-lab/validator";
 import {
     generateFmlInstanceDiagramSvg,
     type TypeLookup,
@@ -22,6 +25,7 @@ export function renderFmlInstanceDiagram(
     fmlText: string,
     defaultFhirVersion?: FhirVersion,
     profileBaseTypes?: Record<string, string>,
+    customTypeModels: Record<string, TypeModel> = {},
 ): string {
     const parsed = parseFML(fmlText);
     if (isFmlParseError(parsed)) {
@@ -35,7 +39,12 @@ export function renderFmlInstanceDiagram(
         sourceText: fmlText,
         defaultFhirVersion,
         profileBaseTypes,
+        customTypeModels,
     });
+
+    const composeLookup = (fallback: TypeLookup): TypeLookup => {
+        return typeName => customTypeModels[typeName] ?? fallback(typeName);
+    };
 
     const validationError = validateFmlModel(parsed).find(diagnostic => diagnostic.severity === "error");
     if (validationError) {
@@ -44,8 +53,9 @@ export function renderFmlInstanceDiagram(
 
     return generateFmlInstanceDiagramSvg(
         parsed,
-        lookupByTypeNameR4B,
+        composeLookup(lookupByTypeNameR4B),
         true,
-        version => version ? lookups[version] : undefined,
+        version => version && lookups[version] ? composeLookup(lookups[version]!) : undefined,
+        typeName => Object.prototype.hasOwnProperty.call(customTypeModels, typeName),
     );
 }

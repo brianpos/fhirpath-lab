@@ -431,6 +431,34 @@ export class FmlModelBuilder {
       // This is a MapFhirMarkupContext - process the full map transformation rule
       return this.visitMapTransformationRule(mapTransformCtx);
     }
+
+    const identityFieldList = (ctx as any).identityFieldList?.();
+    if (identityFieldList) {
+      const qualIdNodes = (ctx as any).qualifiedIdentifier_list?.() || [];
+      if (qualIdNodes.length < 2) return null;
+      const nameNode = (ctx as any).ruleName?.();
+      const source = this.splitQualifiedIdentifier(qualIdNodes[0]);
+      const target = this.splitQualifiedIdentifier(qualIdNodes[1]);
+      return {
+        position: this.getPosition(ctx),
+        name: nameNode ? this.removeQuotes(nameNode.getText()) : undefined,
+        sources: [{
+          position: this.getPosition(qualIdNodes[0]),
+          context: source.context,
+          element: source.element,
+        }],
+        targets: [{
+          position: this.getPosition(qualIdNodes[1]),
+          context: target.context,
+          element: target.element,
+        }],
+        identityFields: identityFieldList.identifier_list().map((field: IdentifierContext) => ({
+          position: this.getPosition(field),
+          name: this.visitIdentifier(field),
+        })),
+        dependent: undefined,
+      };
+    }
     
     // Check if it's a MapSimpleCopyContext
     const qualIdNodes = (ctx as any).qualifiedIdentifier_list?.();
@@ -475,6 +503,14 @@ export class FmlModelBuilder {
       targets: [],
       dependent: undefined
     };
+  }
+
+  private splitQualifiedIdentifier(ctx: QualifiedIdentifierContext): {context: string; element?: string} {
+    const value = ctx.getText();
+    const dot = value.indexOf('.');
+    return dot > 0
+      ? {context: value.substring(0, dot), element: value.substring(dot + 1)}
+      : {context: value};
   }
   
   /**
@@ -710,6 +746,7 @@ export class FmlModelBuilder {
         position: this.getPosition(ctx),
         type: 'copy',
         parameters: [{
+          position: this.getPosition(qualIdNode),
           type: 'identifier',
           value: this.visitQualifiedIdentifier(qualIdNode)
         }]

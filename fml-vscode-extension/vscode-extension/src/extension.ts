@@ -146,6 +146,7 @@ async function initializeWorkspaceIndex(
                 uris: files.map(uri => uri.toString()),
                 defaultFhirVersion: toFhirVersion(sushiConfiguration.fhirVersion),
                 profileBaseTypes: sushiConfiguration.profileBaseTypes,
+                customTypeModels: sushiConfiguration.customTypeModels,
             } satisfies WorkspaceIndexRequest,
         );
         logData(
@@ -186,7 +187,12 @@ async function logProfileResolutions(
                 const typeName = resolveFmlStructureType(canonical, configuration.profileBaseTypes);
                 const source = configuration.profileResolutionSources[canonical];
                 if (typeName && source) {
-                    logData(`Profile resolution: found ${typeName} in ${source}`, logger);
+                    logData(
+                        `Profile resolution: found ${typeName}`
+                        + `${configuration.customTypeModels[typeName] ? " logical model" : " profile"}`
+                        + ` in ${source}`,
+                        logger,
+                    );
                 } else if (typeName) {
                     logData(
                         `Profile resolution: found ${typeName} in built-in core model `

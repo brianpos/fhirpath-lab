@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import {buildLogicalTypeModels} from "../FmlCustomModels";
 import {FmlValidatorApi} from "../FmlValidatorApi";
 import {FmlValidatorResult, ParsedFml} from "../contracts";
 
@@ -35,6 +36,63 @@ test("accepts syntactically valid FML", async () => {
     assert.deepEqual(result.diagnostics.filter(diagnostic => diagnostic.severity !== "information"), []);
     if (result.status === "success") {
         assert.equal(result.value.model.groups[0].name, "copy");
+    }
+});
+
+test("parses and validates simple batch identity fields", async () => {
+    const result = await new FmlValidatorApi().validate({sourceText: `
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias Patient as source
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias PatientTarget as target
+group Main(source src : Patient, target tgt : PatientTarget) {
+    src -> tgt: id, active, gender;
+    src -> tgt: maritalStatus, birthDate "Others";
+}
+`});
+
+    assert.equal(result.status, "success", result.diagnostics.map(diagnostic => diagnostic.message).join("; "));
+    if (result.status === "success") {
+        assert.deepEqual(
+            result.value.model.groups[0].rules[0].identityFields?.map(field => field.name),
+            ["id", "active", "gender"],
+        );
+        assert.equal(result.value.model.groups[0].rules[1].name, "Others");
+        assert.deepEqual(
+            result.value.model.groups[0].rules[1].identityFields?.map(field => field.name),
+            ["maritalStatus", "birthDate"],
+        );
+    }
+});
+
+test("reports invalid source and target children in simple batch identity rules", async () => {
+    const result = await new FmlValidatorApi().validate({sourceText: `
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias Patient as source
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Observation' alias Observation as target
+group Main(source src : Patient, target tgt : Observation) {
+    src -> tgt: active, status;
+}
+`});
+
+    assert.equal(result.status, "success");
+    const warnings = result.diagnostics.filter(diagnostic => diagnostic.severity === "warning");
+    assert.ok(warnings.some(diagnostic => diagnostic.message.includes("Observation.active")));
+    assert.ok(warnings.some(diagnostic => diagnostic.message.includes("Patient.status")));
+});
+
+test("compiles simple batch identity fields into nested copy rules", async () => {
+    const result = await new FmlValidatorApi().compile({sourceText: `
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias Patient as source
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias PatientTarget as target
+group Main(source src : Patient, target tgt : PatientTarget) {
+    src -> tgt: id, active, gender "Demographics";
+}
+`});
+
+    assert.equal(result.status, "success", result.diagnostics.map(diagnostic => diagnostic.message).join("; "));
+    if (result.status === "success") {
+        const rule = result.value.resource.group?.[0].rule[0];
+        assert.equal(rule?.name, "Demographics");
+        assert.deepEqual(rule?.rule?.map(child => child.source[0].element), ["id", "active", "gender"]);
+        assert.deepEqual(rule?.rule?.map(child => child.target?.[0].element), ["id", "active", "gender"]);
     }
 });
 
@@ -131,14 +189,22 @@ test("rejects FHIRPath expression parameters outside evaluate", async () => {
 });
 
 test("treats underscore-containing aliases as variable references", async () => {
-    const result = await validateTransform("truncate(source_value, 5)");
+    const result = await new FmlValidatorApi().validate({sourceText: `
+group example(source src, target tgt) {
+    src as source_value -> tgt.value = truncate(source_value, 5);
+}
+`});
 
     assert.equal(result.status, "success");
     assert.deepEqual(result.diagnostics.filter(diagnostic => diagnostic.severity !== "information"), []);
 });
 
 test("treats delimited aliases as variable references", async () => {
-    const result = await validateTransform("truncate(`source-value`, 5)");
+    const result = await new FmlValidatorApi().validate({sourceText: `
+group example(source src, target tgt) {
+    src as ` + "`source-value`" + ` -> tgt.value = truncate(` + "`source-value`" + `, 5);
+}
+`});
 
     assert.equal(result.status, "success");
     assert.deepEqual(result.diagnostics.filter(diagnostic => diagnostic.severity !== "information"), []);
@@ -225,6 +291,46 @@ group Main(source src : Condition, target tgt : Condition) {
     assert.match(diagnostic?.message ?? "", /^FHIRPath:/);
 });
 
+test("keeps sibling choice type filters independent", async () => {
+    const result = await new FmlValidatorApi().validate({sourceText: `
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Observation' alias Observation as source
+group Main(source src : Observation, target tgt : Observation) {
+    src.effective : dateTime as dateTimeValue -> tgt.effective = dateTimeValue;
+    src.effective : instant as instantValue -> tgt.effective = cast(instantValue, 'dateTime');
+    src.effective : Period as periodValue then {
+        periodValue.start -> tgt.effective;
+    };
+    src.value : Quantity as quantityValue then {
+        quantityValue.value -> tgt.value;
+    };
+    src.value : CodeableConcept as codedValue then {
+        codedValue.coding -> tgt.value;
+    };
+    src.value : string as stringValue -> tgt.value = stringValue;
+}
+`});
+
+    assert.equal(result.status, "success", result.diagnostics.map(diagnostic => diagnostic.message).join("; "));
+    assert.ok(result.diagnostics.every(diagnostic => {
+        return !diagnostic.message.includes("No choice type supports all referenced child paths");
+    }));
+});
+
+test("reports a type filter that is not available on a choice property", async () => {
+    const result = await new FmlValidatorApi().validate({sourceText: `
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Observation' alias Observation as source
+group Main(source src : Observation, target tgt : Observation) {
+    src.value : Patient as invalid -> tgt.value;
+}
+`});
+
+    assert.equal(result.status, "success");
+    const warning = result.diagnostics.find(diagnostic => diagnostic.message.includes('Type filter "Patient" is not allowed'));
+    assert.equal(warning?.severity, "warning");
+    assert.match(warning?.message ?? "", /CodeableConcept/);
+    assert.match(warning?.message ?? "", /Quantity/);
+});
+
 test("preserves whitespace around FHIRPath word operators in FML clauses", async () => {
     const expression = "coding.exists(code = 'Patient' and system = 'http://hl7.org/fhir/resource-types')";
     const result = await new FmlValidatorApi().validate({sourceText: `
@@ -299,6 +405,124 @@ group Main(source src : Observation, target tgt : Observation) {
     assert.match(compatibilityErrors[0].message, /output type 'Coding'/);
     assert.match(compatibilityErrors[0].message, /allowed: code/);
     assert.match(compatibilityErrors[0].message, /third parameter/);
+});
+
+test("rejects undefined variables in direct assignments", async () => {
+    const result = await new FmlValidatorApi().validate({sourceText: `
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias Patient as source
+group Main(source src : Patient, target tgt : Patient) {
+    src.id as sourceId -> tgt.id = missing;
+}
+`});
+
+    assert.equal(result.status, "failure");
+    const diagnostic = result.diagnostics.find(candidate => candidate.message.includes("Variable 'missing'"));
+    assert.match(diagnostic?.message ?? "", /transform 'copy'/);
+    assert.equal(diagnostic?.line, 4);
+});
+
+test("rejects undefined source variables passed to cast and translate", async () => {
+    const result = await new FmlValidatorApi().validate({sourceText: `
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Observation' alias Observation as source
+group Main(source src : Observation, target tgt : Observation) {
+    src.effective -> tgt.effective = cast(missingCast, 'dateTime');
+    src.status -> tgt.status = translate(missingTranslate, 'http://example.org/ConceptMap/status', 'code');
+}
+`});
+
+    assert.equal(result.status, "failure");
+    assert.ok(result.diagnostics.some(candidate => candidate.message.includes("Variable 'missingCast'")
+        && candidate.message.includes("transform 'cast'")));
+    assert.ok(result.diagnostics.some(candidate => candidate.message.includes("Variable 'missingTranslate'")
+        && candidate.message.includes("transform 'translate'")));
+});
+
+test("warns about incompatible direct variable assignments", async () => {
+    const result = await new FmlValidatorApi().validate({sourceText: `
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias Patient as source
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Observation' alias Observation as target
+group Main(source src : Patient, target tgt : Observation) {
+    src.active as active -> tgt.status = active;
+}
+`});
+
+    assert.equal(result.status, "success");
+    const diagnostic = result.diagnostics.find(candidate => candidate.message.includes("not compatible")
+        && candidate.message.includes("Observation.status"));
+    assert.equal(diagnostic?.severity, "warning");
+    assert.match(diagnostic?.message ?? "", /boolean/);
+    assert.match(diagnostic?.message ?? "", /allowed: code/);
+});
+
+test("uses the local logical model name in assignment diagnostics", async () => {
+    const canonical = "http://hl7.org/fhir/uv/omop/StructureDefinition/ProcedureOccurrence";
+    const customTypeModels = buildLogicalTypeModels([{
+        resourceType: "StructureDefinition",
+        url: canonical,
+        name: "ProcedureOccurrence",
+        type: canonical,
+        kind: "logical",
+        derivation: "specialization",
+        differential: {element: [
+            {id: "ProcedureOccurrence", path: "ProcedureOccurrence"},
+            {id: "ProcedureOccurrence.procedure-date", path: "ProcedureOccurrence.procedure_date", type: [{code: "date"}]},
+        ]},
+    }], "R5");
+    const result = await new FmlValidatorApi().validate({
+        sourceText: `
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias Patient as source
+uses '${canonical}' alias ProcedureTable as target
+group Main(source src : Patient, target tgt : ProcedureTable) {
+    src.active as active -> tgt.procedure_date = active;
+}
+`,
+        defaultFhirVersion: "R5",
+        profileBaseTypes: {[canonical]: canonical},
+        customTypeModels,
+    });
+
+    assert.equal(result.status, "success");
+    const diagnostic = result.diagnostics.find(candidate => candidate.message.includes("not compatible"));
+    assert.equal(diagnostic?.severity, "warning");
+    assert.match(diagnostic?.message ?? "", /ProcedureOccurrence\.procedure_date/);
+    assert.doesNotMatch(diagnostic?.message ?? "", /http:\/\//);
+});
+
+test("uses cast result types when validating target compatibility", async () => {
+    const compatible = await new FmlValidatorApi().validate({sourceText: `
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias Patient as source
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Observation' alias Observation as target
+group Main(source src : Patient, target tgt : Observation) {
+    src.birthDate as birthDate -> tgt.effective = cast(birthDate, 'dateTime');
+}
+`});
+    const incompatible = await new FmlValidatorApi().validate({sourceText: `
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias Patient as source
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Observation' alias Observation as target
+group Main(source src : Patient, target tgt : Observation) {
+    src.birthDate as birthDate -> tgt.effective = cast(birthDate, 'Patient');
+}
+`});
+
+    assert.equal(compatible.status, "success", compatible.diagnostics.map(diagnostic => diagnostic.message).join("; "));
+    assert.equal(incompatible.status, "failure");
+    assert.ok(incompatible.diagnostics.some(candidate => candidate.message.includes("Transform 'cast' result type 'Patient'")
+        && candidate.message.includes("Observation.effective")));
+});
+
+test("accepts compatible direct assignments and inherited aliases in nested rules", async () => {
+    const result = await new FmlValidatorApi().validate({sourceText: `
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias Patient as source
+group Main(source src : Patient, target tgt : Patient) {
+    src.id as sourceId -> tgt then {
+        src -> tgt.id = sourceId;
+    };
+}
+`});
+
+    assert.equal(result.status, "success", result.diagnostics.map(diagnostic => diagnostic.message).join("; "));
+    assert.ok(result.diagnostics.every(candidate => !candidate.message.includes("not defined")));
+    assert.ok(result.diagnostics.every(candidate => !candidate.message.includes("not compatible")));
 });
 
 test("validates named parameters", async () => {
@@ -425,6 +649,196 @@ group Main(source src : CustomPractitioner, target tgt) {
     assert.equal(usages.find(usage => usage.role === "source")?.rootTypeName, "Practitioner");
 });
 
+test("validates and completes properties from a logical model", async () => {
+    const canonical = "http://example.org/StructureDefinition/ClaimRow";
+    const customTypeModels = {
+        ClaimRow: {
+            TypeName: "ClaimRow",
+            Elements: [{
+                ElementName: "claimNumber",
+                Type: [{TypeName: "string"}],
+                Required: true,
+            }],
+        },
+    };
+    const sourceText = [
+        `uses '${canonical}' alias ClaimRow as source`,
+        "group Main(source src : ClaimRow, target tgt) {",
+        "    src.claimNumber -> tgt.id;",
+        "}",
+    ].join("\n");
+    const source = {
+        sourceText,
+        defaultFhirVersion: "R4" as const,
+        profileBaseTypes: {[canonical]: "ClaimRow"},
+        customTypeModels,
+    };
+
+    const result = await new FmlValidatorApi().validate(source);
+    const usages = new FmlValidatorApi().getPropertyUsages(source);
+    const completionOffset = sourceText.indexOf("claimNumber") + 2;
+    const completions = new FmlValidatorApi().getPropertyCompletions({
+        ...source,
+        sourceText: sourceText.replace("claimNumber", "cl"),
+    }, completionOffset);
+
+    assert.equal(result.status, "success", result.diagnostics.map(diagnostic => diagnostic.message).join("; "));
+    assert.equal(usages.find(usage => usage.role === "source")?.rootTypeName, "ClaimRow");
+    assert.ok(completions.some(completion => completion.name === "claimNumber"));
+});
+
+test("converts logical StructureDefinitions and nested elements into TypeModels", () => {
+    const canonical = "http://example.org/StructureDefinition/ClaimRow";
+    const models = buildLogicalTypeModels([{
+        resourceType: "StructureDefinition",
+        url: canonical,
+        name: "ClaimRow",
+        type: "ClaimRow",
+        kind: "logical",
+        derivation: "specialization",
+        differential: {element: [
+            {id: "ClaimRow", path: "ClaimRow"},
+            {id: "ClaimRow.detail", path: "ClaimRow.detail", type: [{code: "Element"}], max: "*"},
+            {id: "ClaimRow.detail.code", path: "ClaimRow.detail.code", type: [{code: "string"}]},
+        ]},
+    }], "R4");
+
+    assert.equal(models[canonical].Elements[0].ElementName, "detail");
+    assert.equal(models[canonical].Elements[0].Type[0].TypeName, "claimrow_detail");
+    assert.equal(models.claimrow_detail.Elements[0].ElementName, "code");
+});
+
+test("validates logical models whose declared type is a canonical URL", async () => {
+    const canonical = "http://hl7.org/fhir/uv/omop/StructureDefinition/ConditionOccurrence";
+    const models = buildLogicalTypeModels([{
+        resourceType: "StructureDefinition",
+        url: canonical,
+        version: "2.0.0-ballot",
+        name: "ConditionOccurrence",
+        type: canonical,
+        kind: "logical",
+        derivation: "specialization",
+        differential: {element: [
+            {id: "ConditionOccurrence", path: "ConditionOccurrence"},
+            {
+                id: "ConditionOccurrence.condition-source-value",
+                path: "ConditionOccurrence.condition_source_value",
+                min: 1,
+                max: "1",
+                type: [{code: "string"}],
+            },
+        ]},
+    }], "R5");
+
+    assert.equal(models.ConditionOccurrence, undefined);
+    assert.equal(models[canonical].Elements[0].ElementName, "condition_source_value");
+    assert.equal(models[canonical].TypeName, "ConditionOccurrence");
+    assert.equal(models[canonical].CanonicalUrl, canonical);
+    assert.equal(models[canonical].Version, "2.0.0-ballot");
+
+    const sourceText = [
+        "uses 'http://hl7.org/fhir/StructureDefinition/Condition' alias Condition as source",
+        `uses '${canonical}' alias ConOccTable as target`,
+        "group Main(source src : Condition, target tgt : ConOccTable) {",
+        "    src.id as id -> tgt.condition_source_value = id;",
+        "}",
+    ].join("\n");
+    const request = {
+        sourceText,
+        defaultFhirVersion: "R5" as const,
+        profileBaseTypes: {[canonical]: canonical},
+        customTypeModels: models,
+    };
+    const result = await new FmlValidatorApi().validate(request);
+    const targetUsage = new FmlValidatorApi().getPropertyUsages(request)
+        .find(usage => usage.role === "target");
+
+    assert.equal(result.status, "success", result.diagnostics.map(diagnostic => diagnostic.message).join("; "));
+    assert.equal(targetUsage?.path, "condition_source_value");
+    assert.equal(targetUsage?.elementTypeName, "string");
+    assert.equal(targetUsage?.unknownElement, undefined);
+});
+
+test("keeps a core source context when a logical model has the same local type name", async () => {
+    const logicalObservationCanonical = "http://example.org/StructureDefinition/Observation";
+    const measurementCanonical = "http://example.org/StructureDefinition/Measurement";
+    const customTypeModels = buildLogicalTypeModels([{
+        resourceType: "StructureDefinition",
+        url: logicalObservationCanonical,
+        version: "1.0.0",
+        name: "Observation",
+        type: logicalObservationCanonical,
+        kind: "logical",
+        derivation: "specialization",
+        differential: {element: [
+            {id: "Observation", path: "Observation"},
+            {id: "Observation.observation-id", path: "Observation.observation_id", type: [{code: "integer"}]},
+        ]},
+    }, {
+        resourceType: "StructureDefinition",
+        url: measurementCanonical,
+        version: "1.0.0",
+        name: "Measurement",
+        type: measurementCanonical,
+        kind: "logical",
+        derivation: "specialization",
+        differential: {element: [
+            {id: "Measurement", path: "Measurement"},
+            {id: "Measurement.source-id", path: "Measurement.source_id", type: [{code: "string"}]},
+        ]},
+    }], "R5");
+    const sourceText = [
+        "uses 'http://hl7.org/fhir/StructureDefinition/Observation' alias Observation as source",
+        `uses '${measurementCanonical}' alias MeasureTable as target`,
+        "group Main(source src : Observation, target tgt : MeasureTable) {",
+        "    src where (category.exists()) then {",
+        "        src.id as id -> tgt.source_id = id;",
+        "    };",
+        "}",
+    ].join("\n");
+    const request = {
+        sourceText,
+        defaultFhirVersion: "R5" as const,
+        profileBaseTypes: {[measurementCanonical]: measurementCanonical},
+        customTypeModels,
+    };
+    const api = new FmlValidatorApi();
+    const result = await api.validate(request);
+    const usages = api.getPropertyUsages(request);
+    const sourceId = usages.find(usage => usage.role === "source" && usage.path === "id");
+    const targetId = usages.find(usage => usage.role === "target" && usage.path === "source_id");
+
+    assert.equal(result.status, "success", result.diagnostics.map(diagnostic => diagnostic.message).join("; "));
+    assert.equal(sourceId?.rootTypeName, "Observation");
+    assert.equal(sourceId?.elementTypeName, "id");
+    assert.equal(sourceId?.unknownElement, undefined);
+    assert.equal(targetId?.elementTypeName, "string");
+    assert.equal(targetId?.unknownElement, undefined);
+});
+
+test("validates FHIRPath expressions against a logical model", async () => {
+    const canonical = "http://example.org/StructureDefinition/ClaimRow";
+    const result = await new FmlValidatorApi().validate({
+        sourceText: [
+            `uses '${canonical}' alias ClaimRow as source`,
+            "group Main(source src : ClaimRow, target tgt) {",
+            "    src as row where (claimNumber.exists()) -> tgt;",
+            "}",
+        ].join("\n"),
+        defaultFhirVersion: "R4",
+        profileBaseTypes: {[canonical]: "ClaimRow"},
+        customTypeModels: {
+            ClaimRow: {
+                TypeName: "ClaimRow",
+                Elements: [{ElementName: "claimNumber", Type: [{TypeName: "string"}]}],
+            },
+        },
+    });
+
+    assert.equal(result.status, "success", result.diagnostics.map(diagnostic => diagnostic.message).join("; "));
+    assert.ok(result.diagnostics.every(diagnostic => !diagnostic.message.includes("claimNumber")));
+});
+
 test("retains every source occurrence when target properties share a diagram row", () => {
     const sourceText = [
         "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Observation' alias Observation as source",
@@ -512,6 +926,29 @@ group ConditionAsserter(source src, target tgt) {
         return !diagnostic.message.includes("ConditionRecorder")
             && !diagnostic.message.includes("ConditionAsserter");
     }));
+});
+
+test("retains narrowed alias types for FHIRPath in dependent groups", async () => {
+    const sourceText = [
+        "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Observation' alias Observation as source",
+        "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Observation' alias ObservationTarget as target",
+        "group Main(source src : Observation, target tgt : ObservationTarget) {",
+        "    src as parent -> tgt then Child(parent, tgt);",
+        "}",
+        "group Child(source src : Observation, target tgt) {",
+        "    src.effective : dateTime as edt -> tgt.effective = (edt.toString().substring(0, 10));",
+        "}",
+    ].join("\n");
+    const api = new FmlValidatorApi();
+    const result = await api.validate({sourceText});
+    const usages = api.getPropertyUsages({sourceText}).filter(usage => {
+        return usage.path === "effective" && usage.variableName === "edt";
+    });
+
+    assert.equal(result.status, "success", result.diagnostics.map(diagnostic => diagnostic.message).join("; "));
+    assert.deepEqual(usages.map(usage => usage.groupName).sort(), ["Child", "Main"]);
+    assert.equal(usages.find(usage => usage.groupName === "Child")?.elementTypeName, "dateTime");
+    assert.ok(result.diagnostics.every(diagnostic => !diagnostic.message.startsWith("FHIRPath:")));
 });
 
 test("resolves multi-level dependent group inputs before validation", async () => {

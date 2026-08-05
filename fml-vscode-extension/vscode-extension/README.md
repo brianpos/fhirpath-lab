@@ -1,19 +1,25 @@
 # FHIR Mapping Language Tools
 
-Developer tools for working with the FHIR Mapping Language (FML) in Visual Studio Code.
+Developer tools by Brian Postlethwaite for working with the FHIR Mapping Language (FML) in Visual Studio Code.
 
 FHIR® is the registered trademark of HL7 and is used with permission. Use of the FHIR trademark does not constitute endorsement of this repository by HL7.
+
+> **NOTE:** This is an early preview release and is known to have issues.
+> Any issues reported in the `problems` panel or debug console may be inaccurate, so manually check that they are right, and report if not.
+> Please report any problems in the [GitHub issues](https://github.com/brianpos/fhirpath-lab/issues) for this repository.
+> The debugger functionality is very early and has many issues
 
 ## Features
 
 - FML syntax highlighting
+- Real-time syntax and transform validation, including type checking against FHIR core and project definitions
+- Go to Definition navigation and find all references for group invocations and `extends` references
+- Live map preview beside the editor
+- Workspace indexing across imported maps
 - FHIR-aware autocompletion
 - FML snippets and templates
-- Real-time syntax and transform validation
-- Go to Definition navigation for group invocations and `extends` references
-- Workspace indexing across imported maps
-- Live map preview beside the editor
 - Trace replay debugging with forward and reverse stepping
+- Cross FHIR Version maps (R4+)
 
 ## Getting started
 

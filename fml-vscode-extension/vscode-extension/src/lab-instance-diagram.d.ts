@@ -3,5 +3,6 @@ declare module "@fhirpath-lab/lab-instance-diagram" {
         fmlText: string,
         defaultFhirVersion?: import("@fhirpath-lab/validator").FhirVersion,
         profileBaseTypes?: Record<string, string>,
+        customTypeModels?: Record<string, import("@fhirpath-lab/validator").TypeModel>,
     ): string;
 }

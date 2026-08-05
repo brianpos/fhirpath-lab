@@ -7,6 +7,7 @@ import {
 } from "../../../helpers/fhirpath_validator";
 import type {FhirPathValue} from "../../../helpers/fhirpath_visitor";
 import type {FmlDiagnostic, FmlPropertyAnalysis, FmlPropertyUsage} from "./contracts";
+import type {ModelProvider} from "../../../helpers/fhirpath_visitor";
 
 interface VariableDescriptor {
     typeNames: string[];
@@ -27,6 +28,7 @@ export class FmlFhirPathValidator {
         sourceText: string,
         propertyAnalysis: FmlPropertyAnalysis,
         sourceName?: string,
+        customTypeModels: Record<string, TypeModel> = {},
     ): FmlDiagnostic[] {
         const diagnostics: FmlDiagnostic[] = [];
         const defaultVersion = model.sourceModelVersion ?? model.targetModelVersion;
@@ -36,7 +38,7 @@ export class FmlFhirPathValidator {
                 text: constant.expression,
                 position: constant.expressionPosition,
                 fhirVersion: defaultVersion,
-            }, new Map(), sourceText, sourceName));
+            }, new Map(), sourceText, sourceName, customTypeModels));
         }
 
         for (const group of model.groups) {
@@ -56,6 +58,7 @@ export class FmlFhirPathValidator {
                 sourceText,
                 sourceName,
                 diagnostics,
+                customTypeModels,
             );
         }
         return diagnostics;
@@ -70,6 +73,7 @@ export class FmlFhirPathValidator {
         sourceText: string,
         sourceName: string | undefined,
         diagnostics: FmlDiagnostic[],
+        customTypeModels: Record<string, TypeModel>,
     ): void {
         for (const rule of rules) {
             const ruleVariables = new Map(variables);
@@ -83,8 +87,10 @@ export class FmlFhirPathValidator {
 
             for (const source of rule.sources) {
                 const usage = this.findSourceUsage(groupName, source.position, propertyAnalysis.usages);
-                const contextType = this.usageTypeNames(usage)[0];
-                const version = usage?.fhirVersion ?? groupVersion;
+                const contextDescriptor = this.descriptorFromUsage(usage)
+                    ?? ruleVariables.get(source.context);
+                const contextType = contextDescriptor?.typeNames[0];
+                const version = usage?.fhirVersion ?? contextDescriptor?.fhirVersion ?? groupVersion;
                 const occurrences: ExpressionOccurrence[] = [
                     {text: source.defaultValue ?? "", position: source.defaultValuePosition, contextType, fhirVersion: version},
                     {text: source.condition ?? "", position: source.conditionPosition, contextType, fhirVersion: version},
@@ -92,7 +98,13 @@ export class FmlFhirPathValidator {
                     {text: source.log ?? "", position: source.logPosition, contextType, fhirVersion: version},
                 ];
                 for (const occurrence of occurrences.filter(candidate => candidate.text)) {
-                    diagnostics.push(...this.validateExpression(occurrence, ruleVariables, sourceText, sourceName));
+                    diagnostics.push(...this.validateExpression(
+                        occurrence,
+                        ruleVariables,
+                        sourceText,
+                        sourceName,
+                        customTypeModels,
+                    ));
                 }
             }
 
@@ -109,7 +121,7 @@ export class FmlFhirPathValidator {
                         position: parameter.position,
                         contextType: contextDescriptor?.typeNames[0],
                         fhirVersion: contextDescriptor?.fhirVersion ?? groupVersion,
-                    }, ruleVariables, sourceText, sourceName));
+                    }, ruleVariables, sourceText, sourceName, customTypeModels));
                 }
             }
 
@@ -129,6 +141,7 @@ export class FmlFhirPathValidator {
                 sourceText,
                 sourceName,
                 diagnostics,
+                customTypeModels,
             );
         }
     }
@@ -138,9 +151,10 @@ export class FmlFhirPathValidator {
         variables: Map<string, VariableDescriptor>,
         sourceText: string,
         sourceName?: string,
+        customTypeModels: Record<string, TypeModel> = {},
     ): FmlDiagnostic[] {
         const version = this.toVersionKey(occurrence.fhirVersion);
-        const provider = getModelProvider(version);
+        const provider = this.composeProvider(getModelProvider(version), customTypeModels);
         const environmentVariables: Record<string, FhirPathValue> = {};
         for (const [name, descriptor] of variables) {
             const types = descriptor.typeNames
@@ -150,6 +164,7 @@ export class FmlFhirPathValidator {
         }
         const result = validateFhirpathExpression(occurrence.text, {
             fhirVersion: version,
+            modelProvider: provider,
             contextType: occurrence.contextType,
             environmentVariables,
             allowEnvironmentVariablesAtRoot: true,
@@ -172,6 +187,16 @@ export class FmlFhirPathValidator {
                 offendingText: diagnostic.expression || occurrence.text,
             };
         });
+    }
+
+    private composeProvider(
+        fallback: ModelProvider,
+        customTypeModels: Record<string, TypeModel>,
+    ): ModelProvider {
+        return {
+            ...fallback,
+            lookupByTypeName: typeName => customTypeModels[typeName] ?? fallback.lookupByTypeName(typeName),
+        };
     }
 
     private createVariables(groupName: string, analysis: FmlPropertyAnalysis): Map<string, VariableDescriptor> {

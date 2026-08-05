@@ -24,9 +24,11 @@ import { MapRulesContext } from "./FmlMappingParser.js";
 import { TypeModeContext } from "./FmlMappingParser.js";
 import { ExtendsContext } from "./FmlMappingParser.js";
 import { TypeIdentifierContext } from "./FmlMappingParser.js";
+import { MapSimpleBatchIdentityContext } from "./FmlMappingParser.js";
 import { MapSimpleCopyContext } from "./FmlMappingParser.js";
 import { MapFhirMarkupContext } from "./FmlMappingParser.js";
 import { MapTransformationRuleContext } from "./FmlMappingParser.js";
+import { IdentityFieldListContext } from "./FmlMappingParser.js";
 import { RuleNameContext } from "./FmlMappingParser.js";
 import { RuleSourcesContext } from "./FmlMappingParser.js";
 import { RuleSourceContext } from "./FmlMappingParser.js";
@@ -235,6 +237,13 @@ export default class FmlMappingVisitor<Result> extends ParseTreeVisitor<Result> 
 	 */
 	visitTypeIdentifier?: (ctx: TypeIdentifierContext) => Result;
 	/**
+	 * Visit a parse tree produced by the `mapSimpleBatchIdentity`
+	 * labeled alternative in `FmlMappingParser.mapRule`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitMapSimpleBatchIdentity?: (ctx: MapSimpleBatchIdentityContext) => Result;
+	/**
 	 * Visit a parse tree produced by the `mapSimpleCopy`
 	 * labeled alternative in `FmlMappingParser.mapRule`.
 	 * @param ctx the parse tree
@@ -254,6 +263,12 @@ export default class FmlMappingVisitor<Result> extends ParseTreeVisitor<Result> 
 	 * @return the visitor result
 	 */
 	visitMapTransformationRule?: (ctx: MapTransformationRuleContext) => Result;
+	/**
+	 * Visit a parse tree produced by `FmlMappingParser.identityFieldList`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitIdentityFieldList?: (ctx: IdentityFieldListContext) => Result;
 	/**
 	 * Visit a parse tree produced by `FmlMappingParser.ruleName`.
 	 * @param ctx the parse tree

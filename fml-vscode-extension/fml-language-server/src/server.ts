@@ -129,6 +129,7 @@ connection.onRequest(
             languageService.configureModels(
                 request.defaultFhirVersion,
                 request.profileBaseTypes ?? {},
+                request.customTypeModels ?? {},
             );
             return await indexWorkspace(request.uris);
         } catch (error) {

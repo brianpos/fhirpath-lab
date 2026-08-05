@@ -13,6 +13,8 @@
         "Zulip"
     ],
     "chat.tools.terminal.autoApprove": {
-        "npx jest": true
+        "npx jest": true,
+        "npm run build": true,
+        "npm run compile": true
     }
 }

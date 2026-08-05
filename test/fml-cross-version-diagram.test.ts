@@ -59,6 +59,84 @@ describe("fmlToStructureMap compilation", () => {
 });
 
 describe("direct FML diagram extraction", () => {
+  test("simple batch identity fields appear on both source and target boxes", () => {
+    const fml = parseFML([
+      "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias Patient as source",
+      "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias PatientTarget as target",
+      "group Main(source src : Patient, target tgt : PatientTarget) {",
+      "  src -> tgt: id, active, gender;",
+      "}",
+    ].join("\n")) as FmlStructureMap;
+    const diagram = extractFmlStructureMapDiagram(fml, lookupR5, true, lookupForVersion);
+    const group = diagram.groups[0];
+
+    expect(group.sourceTypes[0].properties.map(property => property.path)).toEqual(
+      expect.arrayContaining(["id", "active", "gender"]),
+    );
+    expect(group.targetTypes[0].properties.map(property => property.path)).toEqual(
+      expect.arrayContaining(["id", "active", "gender"]),
+    );
+    expect(group.sourceTypes[0].properties.every(property => !property.unknownElement)).toBe(true);
+    expect(group.targetTypes[0].properties.every(property => !property.unknownElement)).toBe(true);
+  });
+
+  test("logical model properties resolve through a custom TypeModel lookup", () => {
+    const fml = parseFML([
+      "uses 'http://example.org/StructureDefinition/ClaimRow' alias ClaimRow as source",
+      "group Main(source src : ClaimRow, target tgt) {",
+      "  src.claimNumber -> tgt.id;",
+      "}",
+    ].join("\n")) as FmlStructureMap;
+    const claimRow: TypeModel = {
+      TypeName: "ClaimRow",
+      CanonicalUrl: "http://example.org/StructureDefinition/ClaimRow",
+      Version: "1.2.3",
+      Elements: [{ElementName: "claimNumber", Type: [{TypeName: "string"}]}],
+    };
+    const customLookup = (typeName: string) => typeName === "ClaimRow"
+      ? claimRow
+      : lookupR4B(typeName);
+
+    const diagram = extractFmlStructureMapDiagram(fml, customLookup, true, () => customLookup);
+    const source = diagram.groups[0].sourceTypes[0];
+    const property = source.properties.find(candidate => candidate.path === "claimNumber");
+
+    expect(source.typeName).toBe("ClaimRow");
+    expect(property?.unknownElement).not.toBe(true);
+    expect(property?.elementTypeName).toBe("string");
+  });
+
+  test("logical model type headers include an icon and tooltip", () => {
+    const fml = parseFML([
+      "uses 'http://example.org/StructureDefinition/ClaimRow' alias ClaimRow as source",
+      "uses 'http://hl7.org/fhir/4.3/StructureDefinition/Patient' alias Patient as target",
+      "group Main(source src : ClaimRow, target tgt : Patient) {",
+      "  src.claimNumber -> tgt.id;",
+      "}",
+    ].join("\n")) as FmlStructureMap;
+    const claimRow: TypeModel = {
+      TypeName: "ClaimRow",
+      CanonicalUrl: "http://example.org/StructureDefinition/ClaimRow",
+      Version: "1.2.3",
+      Elements: [{ElementName: "claimNumber", Type: [{TypeName: "string"}]}],
+    };
+    const customLookup = (typeName: string) => typeName === "ClaimRow"
+      ? claimRow
+      : lookupR4B(typeName);
+    const svg = generateFmlInstanceDiagramSvg(
+      fml,
+      customLookup,
+      true,
+      () => customLookup,
+      typeName => typeName === "ClaimRow",
+    );
+
+    expect(svg.match(/class="sm-logical-model-icon\b/g)).toHaveLength(1);
+    expect(svg).toContain("<title>Logical model type: http://example.org/StructureDefinition/ClaimRow|1.2.3</title>");
+    expect(svg).toContain(">ClaimRow (src)</text>");
+    expect(svg).not.toContain("<title>Logical model type: Patient</title>");
+  });
+
   test("source resolves against R4B and target against R5", () => {
     const fml = parseFML(APPOINTMENT_FML) as FmlStructureMap;
 
@@ -162,6 +240,44 @@ describe("choice property type narrowing", () => {
 });
 
 describe("FML type restrictions and dependent target inference", () => {
+  test("sibling filtered choice bindings retain independent types", () => {
+    const text = [
+      "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Observation' alias Observation as source",
+      "group Main(source src : Observation, target tgt : Observation) {",
+      "  src.value : Quantity as quantity -> tgt then { quantity.value -> tgt.value; };",
+      "  src.value : CodeableConcept as concept -> tgt then { concept.coding -> tgt.value; };",
+      "  src.value : string as text -> tgt.value = text;",
+      "}",
+    ].join("\n");
+    const fml = parseFML(text) as FmlStructureMap;
+    const diagram = extractFmlStructureMapDiagram(fml, lookupR5, true, lookupForVersion);
+    const values = diagram.groups[0].sourceTypes[0].properties
+      .filter(property => property.path === "value" && property.variableName);
+
+    expect(values.map(property => property.compatibleTypeNames)).toEqual([
+      ["Quantity"],
+      ["CodeableConcept"],
+      ["string"],
+    ]);
+    expect(values.every(property => !property.validationError)).toBe(true);
+  });
+
+  test("invalid choice type filters report the allowed types", () => {
+    const text = [
+      "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Observation' alias Observation as source",
+      "group Main(source src : Observation, target tgt : Observation) {",
+      "  src.value : Patient as invalid -> tgt.value;",
+      "}",
+    ].join("\n");
+    const fml = parseFML(text) as FmlStructureMap;
+    const diagram = extractFmlStructureMapDiagram(fml, lookupR5, true, lookupForVersion);
+    const value = diagram.groups[0].sourceTypes[0].properties.find(property => property.variableName === "invalid");
+
+    expect(value?.validationError).toContain('Type filter "Patient" is not allowed');
+    expect(value?.validationError).toContain("CodeableConcept");
+    expect(value?.validationError).toContain("Quantity");
+  });
+
   test("an explicit source type restriction narrows a choice to one type", () => {
     const text = [
       "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Condition' alias Condition as source",
@@ -182,7 +298,7 @@ describe("FML type restrictions and dependent target inference", () => {
     expect(svg).toContain("Source property Condition.onset [0..1] (R5)");
     expect(svg).toContain("Compatible types: Age");
     expect(svg).toContain("Other possible types: Period | Range | dateTime | string");
-    expect(svg).toContain("https://hl7.org/fhir/R5/condition-definitions.html#Condition.onset_x_");
+    expect(svg).not.toContain("condition-definitions.html#Condition.onset_x_");
   });
 
   test("target property SVG tooltips match editor metadata", () => {
@@ -198,7 +314,7 @@ describe("FML type restrictions and dependent target inference", () => {
     expect(svg).toContain("Target property Patient.generalPractitioner [0..*] (R5)");
     expect(svg).toContain("Type: Reference");
     expect(svg).toContain("Practitioner (https://hl7.org/fhir/R5/practitioner.html)");
-    expect(svg).toContain("https://hl7.org/fhir/R5/patient-definitions.html#Patient.generalPractitioner");
+    expect(svg).not.toContain("patient-definitions.html#Patient.generalPractitioner");
   });
 
   test("choice rows omit type suffixes while retaining tooltip types", () => {

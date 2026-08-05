@@ -7,6 +7,7 @@ import {
 } from "../../../helpers/structuremap_diagram_instance";
 import type {ElementModel, TypeModel} from "../../../helpers/custom_model";
 import {resolveTransformResultTypes} from "../../../helpers/fml_transform_signatures";
+import {getFhirPathVariableReferences} from "../../../helpers/fhirpath_validator";
 import {lookupByTypeName as lookupByTypeNameR4} from "../../../helpers/models/generated/r4";
 import {lookupByTypeName as lookupByTypeNameR4B} from "../../../helpers/models/generated/r4b";
 import {lookupByTypeName as lookupByTypeNameR5} from "../../../helpers/models/generated/r5";
@@ -25,22 +26,34 @@ export class FmlPropertyUsageCollector {
     private static readonly completionMarker = "fmlCompletionMarker";
 
     public collect(source: FmlSource): FmlPropertyUsage[] {
+        return this.collectAnalysis(source).usages;
+    }
+
+    public collectAnalysis(source: FmlSource): FmlPropertyAnalysis {
         const parsed = parseFML(source.sourceText);
         if (isFmlParseError(parsed)) {
-            return [];
+            return {usages: [], groupInputs: [], variableReferences: []};
         }
         applyFmlModelConfiguration(parsed, source);
 
-        return this.analyzeModel(parsed, source.sourceText).usages;
+        return this.analyzeModel(parsed, source.sourceText, source.customTypeModels);
     }
 
-    public analyzeModel(parsed: FmlStructureMap, sourceText: string): FmlPropertyAnalysis {
+    public analyzeModel(
+        parsed: FmlStructureMap,
+        sourceText: string,
+        customTypeModels: Record<string, TypeModel> = {},
+    ): FmlPropertyAnalysis {
+
+        const defaultLookup = this.composeLookup(customTypeModels, lookupByTypeNameR4B);
 
         const diagram = extractFmlStructureMapDiagram(
             parsed,
-            lookupByTypeNameR4B,
+            defaultLookup,
             false,
-            version => version ? lookups[version] : undefined,
+            version => version && lookups[version]
+                ? this.composeLookup(customTypeModels, lookups[version]!)
+                : undefined,
         );
         const usages: FmlPropertyUsage[] = [];
         const groupInputs: FmlPropertyAnalysis["groupInputs"] = [];
@@ -77,7 +90,7 @@ export class FmlPropertyUsageCollector {
                             ? transform.parameters.find(parameter => parameter.name === "output") ?? transform.parameters[2]
                             : undefined;
                         const span = this.toPropertySpan(sourceText, position);
-                        const key = `${property.role}:${span.start.line}:${span.start.column}:${property.path}`;
+                        const key = `${group.name}:${property.role}:${span.start.line}:${span.start.column}:${property.path}`;
                         if (seen.has(key)) {
                             continue;
                         }
@@ -96,6 +109,7 @@ export class FmlPropertyUsageCollector {
                             cardinalityMax: property.cardinalityMax,
                             targetProfiles: property.targetProfiles,
                             specificationPath: property.specificationPath,
+                            pathSteps: property.pathSteps,
                             elementTypeName: property.elementTypeName,
                             possibleTypeNames: property.possibleTypeNames,
                             compatibleTypeNames: property.compatibleTypeNames,
@@ -111,12 +125,105 @@ export class FmlPropertyUsageCollector {
                                 ? this.toSpan(sourceText, resultParameter.position)
                                 : undefined,
                             transformResultText: resultParameter ? String(resultParameter.value) : undefined,
+                            variableSpan: property.variableName
+                                ? this.findVariableSpan(sourceText, position, property.variableName)
+                                : undefined,
+                            ruleSpan: property.ruleFmlPosition
+                                ? this.toSpan(sourceText, property.ruleFmlPosition)
+                                : undefined,
+                            transformVariableReferences: transform?.parameters.flatMap(parameter => {
+                                return parameter.type === "identifier" && parameter.position
+                                    ? [{
+                                        name: String(parameter.value).replace(/^%/, "").replace(/^`(.*)`$/, "$1"),
+                                        span: this.toSpan(sourceText, parameter.position),
+                                    }]
+                                    : [];
+                            }),
                         });
                     }
                 }
             }
         }
-        return {usages, groupInputs};
+        return {
+            usages,
+            groupInputs,
+            variableReferences: this.collectVariableReferences(parsed, sourceText),
+        };
+    }
+
+    private collectVariableReferences(parsed: FmlStructureMap, sourceText: string): FmlPropertyAnalysis["variableReferences"] {
+        const references: FmlPropertyAnalysis["variableReferences"] = [];
+        const collect = (groupName: string, rules: FmlStructureMap["groups"][number]["rules"]): void => {
+            for (const rule of rules) {
+                const ruleSpan = rule.position ? this.toSpan(sourceText, rule.position) : undefined;
+                for (const target of rule.targets) {
+                    const contextSpan = target.context && !target.element && target.position
+                        ? this.findLeadingIdentifierSpan(sourceText, target.position)
+                        : undefined;
+                    if (target.context && !target.element && contextSpan) {
+                        references.push({name: target.context, span: contextSpan, groupName, ruleSpan});
+                    }
+                    for (const parameter of target.transform?.parameters ?? []) {
+                        if (!parameter.position) continue;
+                        if (parameter.type === "identifier") {
+                            references.push({
+                                name: String(parameter.value).replace(/^%/, "").replace(/^`(.*)`$/, "$1"),
+                                span: this.toSpan(sourceText, parameter.position),
+                                groupName,
+                                ruleSpan,
+                            });
+                        } else if (parameter.type === "expression") {
+                            const expression = String(parameter.value);
+                            const variableNames = this.collectRuleVariableNames(parsed, groupName);
+                            for (const name of getFhirPathVariableReferences(expression, variableNames)) {
+                                const span = this.findExpressionVariableSpan(sourceText, parameter.position, name);
+                                if (span) references.push({name, span, groupName, ruleSpan});
+                            }
+                        }
+                    }
+                }
+                collect(groupName, rule.dependent?.rules ?? []);
+            }
+        };
+        for (const group of parsed.groups) collect(group.name, group.rules);
+        return references;
+    }
+
+    private collectRuleVariableNames(parsed: FmlStructureMap, groupName: string): string[] {
+        const group = parsed.groups.find(candidate => candidate.name === groupName);
+        if (!group) return [];
+        const names = new Set(group.parameters.map(parameter => parameter.name));
+        const collect = (rules: FmlStructureMap["groups"][number]["rules"]): void => {
+            for (const rule of rules) {
+                for (const source of rule.sources) if (source.variable) names.add(source.variable);
+                for (const target of rule.targets) if (target.variable) names.add(target.variable);
+                collect(rule.dependent?.rules ?? []);
+            }
+        };
+        collect(group.rules);
+        return [...names];
+    }
+
+    private findExpressionVariableSpan(
+        sourceText: string,
+        position: DiagramSourcePosition,
+        variableName: string,
+    ): FmlSourceSpan | undefined {
+        const expression = sourceText.slice(position.startIndex, position.endIndex);
+        const pattern = new RegExp(`(?:%|\\b)${this.escapeRegExp(variableName)}\\b`);
+        const match = pattern.exec(expression);
+        if (!match) return undefined;
+        const prefixLength = match[0].startsWith("%") ? 1 : 0;
+        const startIndex = position.startIndex + match.index + prefixLength;
+        return this.toSpan(sourceText, {
+            ...position,
+            startIndex,
+            endIndex: startIndex + variableName.length,
+        });
+    }
+
+    private escapeRegExp(value: string): string {
+        return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     }
 
     private findModelTransform(
@@ -159,12 +266,30 @@ export class FmlPropertyUsageCollector {
         const modifiedText = source.sourceText.slice(0, partialStart)
             + FmlPropertyUsageCollector.completionMarker
             + source.sourceText.slice(cursorOffset);
-        const parsed = parseFML(modifiedText);
+        let completionText = modifiedText;
+        let parsed = parseFML(completionText);
+        if (isFmlParseError(parsed)) {
+            const statementStart = Math.max(
+                beforeCursor.lastIndexOf(";"),
+                beforeCursor.lastIndexOf("{"),
+                beforeCursor.lastIndexOf("}"),
+            ) + 1;
+            const statementPrefix = beforeCursor.slice(statementStart);
+            const variableName = propertyContext[0].split(".")[0];
+            const ruleTail = statementPrefix.includes("->")
+                ? ";"
+                : ` -> ${variableName};`;
+            completionText = source.sourceText.slice(0, partialStart)
+                + FmlPropertyUsageCollector.completionMarker
+                + ruleTail
+                + source.sourceText.slice(cursorOffset);
+            parsed = parseFML(completionText);
+        }
         if (isFmlParseError(parsed)) {
             return [];
         }
         applyFmlModelConfiguration(parsed, source);
-        const analysis = this.analyzeModel(parsed, modifiedText);
+        const analysis = this.analyzeModel(parsed, completionText, source.customTypeModels);
         const markerUsage = analysis.usages.find(usage => {
             return usage.path.split(".").at(-1) === FmlPropertyUsageCollector.completionMarker;
         });
@@ -172,9 +297,10 @@ export class FmlPropertyUsageCollector {
             return [];
         }
 
-        const lookup = markerUsage.fhirVersion
+        const coreLookup = markerUsage.fhirVersion
             ? lookups[markerUsage.fhirVersion] ?? lookupByTypeNameR4B
             : lookupByTypeNameR4B;
+        const lookup = this.composeLookup(source.customTypeModels ?? {}, coreLookup);
         const parentParts = markerUsage.path.split(".").slice(0, -1);
         let candidateTypes = [markerUsage.rootTypeName];
         for (const part of parentParts) {
@@ -225,6 +351,10 @@ export class FmlPropertyUsageCollector {
         return [...inherited.filter(element => !ownNames.has(element.ElementName)), ...type.Elements];
     }
 
+    private composeLookup(customTypeModels: Record<string, TypeModel>, fallback: TypeLookup): TypeLookup {
+        return typeName => customTypeModels[typeName] ?? fallback(typeName);
+    }
+
     private toPropertySpan(sourceText: string, position: DiagramSourcePosition): FmlSourceSpan {
         const clause = sourceText.slice(position.startIndex, position.endIndex);
         const propertyToken = clause.match(/^(?:`[^`]+`|[A-Za-z_][A-Za-z0-9_]*)(?:\.(?:`[^`]+`|[A-Za-z_][A-Za-z0-9_]*))*/)?.[0] ?? "";
@@ -233,6 +363,44 @@ export class FmlPropertyUsageCollector {
             start,
             end: {line: start.line, column: start.column + Math.max(propertyToken.length, 1)},
         };
+    }
+
+    private findVariableSpan(
+        sourceText: string,
+        position: DiagramSourcePosition,
+        variableName: string,
+    ): FmlSourceSpan | undefined {
+        const clause = sourceText.slice(position.startIndex, position.endIndex);
+        const aliases = clause.matchAll(/\bas\s+(`[^`]+`|[A-Za-z_][A-Za-z0-9_]*)/g);
+        for (const alias of aliases) {
+            const token = alias[1];
+            if (token.replace(/^`(.*)`$/, "$1") !== variableName.replace(/^`(.*)`$/, "$1")) continue;
+            const tokenOffset = position.startIndex + alias.index + alias[0].lastIndexOf(token);
+            return this.toSpan(sourceText, {
+                startIndex: tokenOffset,
+                endIndex: tokenOffset + token.length,
+                startLine: position.startLine,
+                startColumn: position.startColumn,
+                endLine: position.endLine,
+                endColumn: position.endColumn,
+            });
+        }
+        return undefined;
+    }
+
+    private findLeadingIdentifierSpan(
+        sourceText: string,
+        position: DiagramSourcePosition,
+    ): FmlSourceSpan | undefined {
+        const clause = sourceText.slice(position.startIndex, position.endIndex);
+        const token = clause.match(/^\s*(`[^`]+`|[A-Za-z_][A-Za-z0-9_]*)/)?.[1];
+        if (!token) return undefined;
+        const tokenOffset = position.startIndex + clause.indexOf(token);
+        return this.toSpan(sourceText, {
+            ...position,
+            startIndex: tokenOffset,
+            endIndex: tokenOffset + token.length,
+        });
     }
 
     private toSpan(sourceText: string, position: DiagramSourcePosition): FmlSourceSpan {

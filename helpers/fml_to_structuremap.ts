@@ -56,7 +56,22 @@ function convertRules(rules: FmlRule[]): StructureMapGroupRule[] {
       variable: invocation.parameters.map(parameter => String(parameter.value)),
     })) ?? [];
     if (dependencies.length > 0) converted.dependent = dependencies;
-    if (rule.dependent?.rules.length) converted.rule = convertRules(rule.dependent.rules);
+    const batchRules: FmlRule[] = (rule.identityFields ?? []).map(field => ({
+      position: field.position,
+      name: field.name,
+      sources: [{
+        position: field.position,
+        context: rule.sources[0]?.context ?? "",
+        element: field.name,
+      }],
+      targets: [{
+        position: field.position,
+        context: rule.targets[0]?.context,
+        element: field.name,
+      }],
+    }));
+    const nestedRules = [...batchRules, ...(rule.dependent?.rules ?? [])];
+    if (nestedRules.length) converted.rule = convertRules(nestedRules);
     return converted;
   });
 }

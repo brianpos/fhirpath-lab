@@ -29,12 +29,15 @@ suite("FML Preview Renderer", () => {
     test("instance renderer forwards workspace model configuration", async () => {
         let receivedVersion: string | undefined;
         let receivedProfiles: Record<string, string> | undefined;
-        const renderer = new InstanceDiagramFmlSvgRenderer((_text, version, profiles) => {
+        let receivedModels: Record<string, unknown> | undefined;
+        const renderer = new InstanceDiagramFmlSvgRenderer((_text, version, profiles, models) => {
             receivedVersion = version;
             receivedProfiles = profiles;
+            receivedModels = models;
             return "<svg></svg>";
         });
         const profileBaseTypes = {"http://example.org/Profile": "Practitioner"};
+        const customTypeModels = {ClaimRow: {TypeName: "ClaimRow", Elements: []}};
 
         await renderer.render({
             uri: vscode.Uri.parse("untitled:Preview"),
@@ -43,9 +46,11 @@ suite("FML Preview Renderer", () => {
             version: 1,
             defaultFhirVersion: "R4",
             profileBaseTypes,
+            customTypeModels,
         });
 
         assert.equal(receivedVersion, "R4");
         assert.deepEqual(receivedProfiles, profileBaseTypes);
+        assert.deepEqual(receivedModels, customTypeModels);
     });
 });

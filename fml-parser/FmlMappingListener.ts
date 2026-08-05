@@ -24,9 +24,11 @@ import { MapRulesContext } from "./FmlMappingParser.js";
 import { TypeModeContext } from "./FmlMappingParser.js";
 import { ExtendsContext } from "./FmlMappingParser.js";
 import { TypeIdentifierContext } from "./FmlMappingParser.js";
+import { MapSimpleBatchIdentityContext } from "./FmlMappingParser.js";
 import { MapSimpleCopyContext } from "./FmlMappingParser.js";
 import { MapFhirMarkupContext } from "./FmlMappingParser.js";
 import { MapTransformationRuleContext } from "./FmlMappingParser.js";
+import { IdentityFieldListContext } from "./FmlMappingParser.js";
 import { RuleNameContext } from "./FmlMappingParser.js";
 import { RuleSourcesContext } from "./FmlMappingParser.js";
 import { RuleSourceContext } from "./FmlMappingParser.js";
@@ -316,6 +318,18 @@ export default class FmlMappingListener extends ParseTreeListener {
 	 */
 	exitTypeIdentifier?: (ctx: TypeIdentifierContext) => void;
 	/**
+	 * Enter a parse tree produced by the `mapSimpleBatchIdentity`
+	 * labeled alternative in `FmlMappingParser.mapRule`.
+	 * @param ctx the parse tree
+	 */
+	enterMapSimpleBatchIdentity?: (ctx: MapSimpleBatchIdentityContext) => void;
+	/**
+	 * Exit a parse tree produced by the `mapSimpleBatchIdentity`
+	 * labeled alternative in `FmlMappingParser.mapRule`.
+	 * @param ctx the parse tree
+	 */
+	exitMapSimpleBatchIdentity?: (ctx: MapSimpleBatchIdentityContext) => void;
+	/**
 	 * Enter a parse tree produced by the `mapSimpleCopy`
 	 * labeled alternative in `FmlMappingParser.mapRule`.
 	 * @param ctx the parse tree
@@ -349,6 +363,16 @@ export default class FmlMappingListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	exitMapTransformationRule?: (ctx: MapTransformationRuleContext) => void;
+	/**
+	 * Enter a parse tree produced by `FmlMappingParser.identityFieldList`.
+	 * @param ctx the parse tree
+	 */
+	enterIdentityFieldList?: (ctx: IdentityFieldListContext) => void;
+	/**
+	 * Exit a parse tree produced by `FmlMappingParser.identityFieldList`.
+	 * @param ctx the parse tree
+	 */
+	exitIdentityFieldList?: (ctx: IdentityFieldListContext) => void;
 	/**
 	 * Enter a parse tree produced by `FmlMappingParser.ruleName`.
 	 * @param ctx the parse tree

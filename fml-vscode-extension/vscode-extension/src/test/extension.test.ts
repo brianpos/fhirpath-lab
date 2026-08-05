@@ -106,6 +106,43 @@ dependencies:
         }
     });
 
+    test("detects logical models from package StructureDefinition entries", async () => {
+        const packageDirectory = await fs.mkdtemp(path.join(os.tmpdir(), "fml-logical-package-"));
+        const indexPath = path.join(packageDirectory, ".index.json");
+        const canonical = "http://example.org/StructureDefinition/ClaimRow";
+        try {
+            await fs.writeFile(indexPath, JSON.stringify({files: [{
+                filename: "StructureDefinition-ClaimRow.json",
+                resourceType: "StructureDefinition",
+                url: canonical,
+            }]}));
+            await fs.writeFile(path.join(packageDirectory, "StructureDefinition-ClaimRow.json"), JSON.stringify({
+                resourceType: "StructureDefinition",
+                url: canonical,
+                name: "ClaimRow",
+                type: canonical,
+                kind: "logical",
+                derivation: "specialization",
+                differential: {element: [
+                    {id: "ClaimRow", path: "ClaimRow"},
+                    {id: "ClaimRow.claimNumber", path: "ClaimRow.claimNumber", type: [{code: "string"}]},
+                ]},
+            }));
+
+            const resolutions = await resolveWorkspaceProfileTypes(packageDirectory, [{
+                indexExists: true,
+                indexPath,
+                packageId: "example.logical",
+                version: "1.0.0",
+            }]);
+
+            assert.equal(resolutions[canonical].kind, "logical");
+            assert.equal(resolutions[canonical].typeName, canonical);
+        } finally {
+            await fs.rm(packageDirectory, {recursive: true, force: true});
+        }
+    });
+
     test("workspace output profiles override package profiles and retain provenance", async () => {
         const workspaceDirectory = await fs.mkdtemp(path.join(os.tmpdir(), "fml-workspace-"));
         const packageDirectory = path.join(workspaceDirectory, "package");
@@ -312,6 +349,29 @@ dependencies:
         assert.match(name.detail ?? "", /HumanName \[0\.\.\*\] \(R5\)/);
     });
 
+    test("language server should complete children in unfinished source and target rules", async () => {
+        for (const [variable, rule] of [
+            ["src.", "src."],
+            ["tgt.", "src.name -> tgt."],
+        ]) {
+            const text = [
+                "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias Patient as source",
+                "group example(source src : Patient, target tgt : Patient) {",
+                `    ${rule}`,
+                "}",
+            ].join("\n");
+            const document = await openFmlDocument(text);
+            const offset = text.indexOf(variable) + variable.length;
+            const completionList = await vscode.commands.executeCommand<vscode.CompletionList>(
+                "vscode.executeCompletionItemProvider",
+                document.uri,
+                document.positionAt(offset),
+            );
+
+            assert.ok(completionList.items.some(item => item.label === "name"), variable);
+        }
+    });
+
     test("language server should provide FHIR property hovers", async () => {
         const text = [
             "uses 'http://hl7.org/fhir/4.3/StructureDefinition/Patient' alias Patient as source",
@@ -331,6 +391,45 @@ dependencies:
         assert.match(markdown, /\[0\.\.\*\] \(R4B\)/);
         assert.match(markdown, /Type: `HumanName`/);
         assert.doesNotMatch(markdown, /repeating/);
+    });
+
+    test("language server should distinguish context, nested property, and variable hovers", async () => {
+        const text = [
+            "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Observation' alias Observation as source",
+            "group example(source src : Observation, target tgt : Observation) {",
+            "    src.code.coding as coding -> tgt.code = cast(coding, 'CodeableConcept');",
+            "    src.code as sourceCode -> tgt.code as targetCode, targetCode = sourceCode;",
+            "}",
+        ].join("\n");
+        const document = await openFmlDocument(text);
+        const hoverText = async (offset: number): Promise<string> => {
+            const hovers = await waitForHovers(document.uri, document.positionAt(offset));
+            return hovers.flatMap(hover => hover.contents).map(content => {
+                return typeof content === "string" ? content : content.value;
+            }).join("\n");
+        };
+
+        const property = text.indexOf("src.code.coding");
+        const contextMarkdown = await hoverText(property + 1);
+        const codeMarkdown = await hoverText(property + "src.".length + 1);
+        const codingArgument = text.lastIndexOf("coding");
+        const variableMarkdown = await hoverText(codingArgument + 1);
+        const assignment = text.indexOf("targetCode = sourceCode");
+        const targetVariableMarkdown = await hoverText(assignment + 1);
+        const sourceVariableMarkdown = await hoverText(assignment + "targetCode = ".length + 1);
+
+        assert.match(contextMarkdown, /Source context.*`src`/);
+        assert.match(contextMarkdown, /Type: `Observation`/);
+        assert.match(codeMarkdown, /Observation\.code/);
+        assert.match(codeMarkdown, /CodeableConcept/);
+        assert.match(variableMarkdown, /Variable.*`coding`/);
+        assert.match(variableMarkdown, /Type: `Coding`/);
+        assert.match(targetVariableMarkdown, /Variable.*`targetCode`/);
+        assert.match(targetVariableMarkdown, /Target property: `Observation\.code`/);
+        assert.match(targetVariableMarkdown, /Type: `CodeableConcept`/);
+        assert.match(sourceVariableMarkdown, /Variable.*`sourceCode`/);
+        assert.match(sourceVariableMarkdown, /Source property: `Observation\.code`/);
+        assert.match(sourceVariableMarkdown, /Type: `CodeableConcept`/);
     });
 
     test("language server should provide transform result hovers", async () => {

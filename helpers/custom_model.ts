@@ -45,6 +45,10 @@ export interface TypeModel {
     TypeName: string;
     BaseTypeName?: string;
     Elements: ElementModel[];
+    /** Canonical URL for runtime logical models. Core generated models omit this metadata. */
+    CanonicalUrl?: string;
+    /** StructureDefinition.version for runtime logical models. */
+    Version?: string;
     /** True only for system/native primitive types (System.String, System.Boolean, ...). The FHIR primitive
      *  containers (`string`, `boolean`, ...) are complex types and do NOT set this flag. */
     IsPrimitive?: boolean;

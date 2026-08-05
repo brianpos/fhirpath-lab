@@ -1,12 +1,15 @@
 import {
     FmlDiagnostic,
+    FmlPropertyPathStep,
     FmlPropertyUsage,
+    FmlVariableReference,
     FmlSourceSpan,
     FmlValidatorApi,
     TransformParameterDefinition,
     TransformSignature,
     transformDefinitions,
     FhirVersion,
+    TypeModel,
 } from "@fhirpath-lab/validator";
 import {
     CompletionRequest,
@@ -26,6 +29,7 @@ const DIAGNOSTIC_SOURCE = "FHIR Mapping Language Tools";
 export class FmlLanguageService {
     private defaultFhirVersion?: FhirVersion;
     private profileBaseTypes: Record<string, string> = {};
+    private customTypeModels: Record<string, TypeModel> = {};
 
     public constructor(private readonly validator = new FmlValidatorApi()) {
     }
@@ -33,9 +37,11 @@ export class FmlLanguageService {
     public configureModels(
         defaultFhirVersion: FhirVersion | undefined,
         profileBaseTypes: Record<string, string>,
+        customTypeModels: Record<string, TypeModel> = {},
     ): void {
         this.defaultFhirVersion = defaultFhirVersion;
         this.profileBaseTypes = profileBaseTypes;
+        this.customTypeModels = customTypeModels;
     }
 
     public async validateDocument(document: TextDocumentSnapshot): Promise<DocumentValidationResult> {
@@ -44,6 +50,7 @@ export class FmlLanguageService {
             sourceText: document.text,
             defaultFhirVersion: this.defaultFhirVersion,
             profileBaseTypes: this.profileBaseTypes,
+            customTypeModels: this.customTypeModels,
         });
         const diagnostics = result.diagnostics.map(diagnostic => {
             return this.toLanguageDiagnostic(diagnostic, document.text);
@@ -67,6 +74,7 @@ export class FmlLanguageService {
             sourceText: request.text,
             defaultFhirVersion: this.defaultFhirVersion,
             profileBaseTypes: this.profileBaseTypes,
+            customTypeModels: this.customTypeModels,
         }, cursorOffset);
         if (propertyCompletions.length > 0) {
             return propertyCompletions.map(completion => ({
@@ -101,12 +109,17 @@ export class FmlLanguageService {
     }
 
     public getHover(request: HoverRequest): HoverInformation | undefined {
-        const usages = this.validator.getPropertyUsages({
+        const analysis = this.validator.getPropertyAnalysis({
             sourceName: request.uri,
             sourceText: request.text,
             defaultFhirVersion: this.defaultFhirVersion,
             profileBaseTypes: this.profileBaseTypes,
+            customTypeModels: this.customTypeModels,
         });
+        const usages = analysis.usages;
+        const variableMatch = this.getVariableHoverMatch(usages, analysis.variableReferences, request);
+        if (variableMatch) return variableMatch;
+
         const transformMatches = usages.filter(usage => usage.transformName && usage.transformSpan).map(usage => ({
             usage,
             range: this.toSourceRange(usage.transformSpan!, request.text),
@@ -124,26 +137,156 @@ export class FmlLanguageService {
             ];
             return {range: transformMatch.range, markdown: lines.join("\n")};
         }
-        const matches = usages.map(usage => ({
-            usage,
-            range: this.toSourceRange(usage.span, request.text),
-        })).filter(candidate => this.containsPosition(candidate.range, request.position));
-        matches.sort((left, right) => this.rangeSize(left.range) - this.rangeSize(right.range));
-        const match = matches[0];
-        if (!match) {
-            return undefined;
-        }
+        const segmentMatch = this.getPropertySegmentHoverMatch(usages, request);
+        if (segmentMatch) return segmentMatch;
+        return undefined;
+    }
 
-        const usage = match.usage;
-        const cardinality = usage.cardinalityMin !== undefined && usage.cardinalityMax
-            ? ` [${usage.cardinalityMin}..${usage.cardinalityMax}]`
+    private getVariableHoverMatch(
+        usages: FmlPropertyUsage[],
+        references: FmlVariableReference[],
+        request: HoverRequest,
+    ): HoverInformation | undefined {
+        const definitions = usages.filter(usage => usage.variableName && usage.variableSpan);
+        const candidates: Array<{range: LanguageRange; markdown: string}> = [];
+        for (const usage of definitions) {
+            const range = this.toSourceRange(usage.variableSpan!, request.text);
+            if (this.containsPosition(range, request.position)) {
+                candidates.push({range, markdown: this.formatVariableHover(usage.variableName!, usage)});
+            }
+        }
+        for (const reference of references) {
+            const range = this.toSourceRange(reference.span, request.text);
+            if (!this.containsPosition(range, request.position)) continue;
+            const definition = definitions
+                .filter(candidate => candidate.groupName === reference.groupName
+                    && this.normalizeIdentifier(candidate.variableName!) === this.normalizeIdentifier(reference.name)
+                    && !!candidate.ruleSpan
+                    && this.spanContains(candidate.ruleSpan, reference.span)
+                    && this.compareSpans(candidate.variableSpan!, reference.span) <= 0)
+                .sort((left, right) => this.compareSpans(right.variableSpan!, left.variableSpan!))[0];
+            const rootUsage = usages.find(candidate => candidate.groupName === reference.groupName
+                && this.normalizeIdentifier(candidate.rootVariableName) === this.normalizeIdentifier(reference.name));
+            if (definition) {
+                candidates.push({range, markdown: this.formatVariableHover(reference.name, definition)});
+            } else if (rootUsage) {
+                candidates.push({range, markdown: this.formatVariableHover(reference.name, rootUsage, true)});
+            } else {
+                candidates.push({range, markdown: this.formatUndefinedVariableHover(reference.name)});
+            }
+        }
+        candidates.sort((left, right) => this.rangeSize(left.range) - this.rangeSize(right.range));
+        return candidates[0];
+    }
+
+    private getPropertySegmentHoverMatch(usages: FmlPropertyUsage[], request: HoverRequest): HoverInformation | undefined {
+        const candidates: Array<{range: LanguageRange; markdown: string}> = [];
+        for (const usage of usages) {
+            const usageRange = this.toSourceRange(usage.span, request.text);
+            if (!this.containsPosition(usageRange, request.position)) continue;
+            const line = request.text.split(/\r?\n/)[usageRange.start.line] ?? "";
+            const token = line.slice(usageRange.start.character, usageRange.end.character);
+            const parts = [...token.matchAll(/`[^`]+`|[A-Za-z_][A-Za-z0-9_]*/g)];
+            const steps = usage.pathSteps ?? [];
+            if (parts.length === 0) continue;
+            const hasContext = usage.path === "." || parts.length > 1;
+            const propertyCount = hasContext ? parts.length - 1 : parts.length;
+            const stepOffset = Math.max(0, steps.length - propertyCount);
+
+            for (let index = 0; index < parts.length; index++) {
+                const part = parts[index];
+                const range: LanguageRange = {
+                    start: {line: usageRange.start.line, character: usageRange.start.character + part.index!},
+                    end: {line: usageRange.start.line, character: usageRange.start.character + part.index! + part[0].length},
+                };
+                if (!this.containsPosition(range, request.position)) continue;
+                const name = this.normalizeIdentifier(part[0]);
+                if (hasContext && index === 0) {
+                    const isRootContext = this.normalizeIdentifier(usage.rootVariableName) === name;
+                    const step = isRootContext || stepOffset === 0 ? undefined : steps[stepOffset - 1];
+                    candidates.push({
+                        range,
+                        markdown: isRootContext
+                            ? this.formatContextHover(name, usage)
+                            : this.formatVariableHover(name, usage, false, step),
+                    });
+                } else {
+                    const propertyIndex = index - (hasContext ? 1 : 0);
+                    const step = steps[stepOffset + propertyIndex];
+                    candidates.push({range, markdown: this.formatPropertyHover(usage, step)});
+                }
+            }
+        }
+        candidates.sort((left, right) => this.rangeSize(left.range) - this.rangeSize(right.range));
+        return candidates[0];
+    }
+
+    private formatContextHover(name: string, usage: FmlPropertyUsage): string {
+        const typeName = this.customTypeModels[usage.rootTypeName]?.TypeName ?? usage.rootTypeName;
+        return [
+            `**${usage.role === "source" ? "Source" : "Target"} context** \`${name}\``,
+            "",
+            `- Type: \`${typeName}\`${usage.fhirVersion ? ` (${usage.fhirVersion})` : ""}`,
+        ].join("\n");
+    }
+
+    private formatVariableHover(
+        name: string,
+        usage: FmlPropertyUsage,
+        root = false,
+        step?: FmlPropertyPathStep,
+    ): string {
+        const typeNames = root
+            ? [this.customTypeModels[usage.rootTypeName]?.TypeName ?? usage.rootTypeName]
+            : step?.typeNames?.length
+                ? step.typeNames
+                : usage.compatibleTypeNames?.length
+                    ? usage.compatibleTypeNames
+                    : usage.elementTypeName ? usage.elementTypeName.split(" | ") : [];
+        const cardinalityMin = root ? undefined : step?.cardinalityMin ?? usage.cardinalityMin;
+        const cardinalityMax = root ? undefined : step?.cardinalityMax ?? usage.cardinalityMax;
+        const cardinality = cardinalityMin !== undefined && cardinalityMax
+            ? ` [${cardinalityMin}..${cardinalityMax}]`
             : "";
-        const propertyName = `${usage.rootTypeName}.${usage.path}`;
-        const specificationUrl = this.getSpecificationUrl(
-            usage.fhirVersion,
-            usage.rootTypeName,
-            usage.specificationPath,
-        );
+        const lines = [
+            `**Variable** \`${name}\`${cardinality}${usage.fhirVersion ? ` (${usage.fhirVersion})` : ""}`,
+            "",
+        ];
+        if (!root) {
+            const rootTypeName = this.customTypeModels[usage.rootTypeName]?.TypeName ?? usage.rootTypeName;
+            const propertyPath = step?.path ?? usage.path;
+            const propertyCardinality = cardinalityMin !== undefined && cardinalityMax
+                ? ` [${cardinalityMin}..${cardinalityMax}]`
+                : "";
+            lines.push(`- ${usage.role === "source" ? "Source" : "Target"} property: \`${rootTypeName}.${propertyPath}\`${propertyCardinality}${usage.fhirVersion ? ` (${usage.fhirVersion})` : ""}`);
+        }
+        lines.push(typeNames.length > 1
+            ? `- Types: ${typeNames.map(type => `\`${type}\``).join(" | ")}`
+            : `- Type: ${typeNames[0] ? `\`${typeNames[0]}\`` : "unknown"}`);
+        return lines.join("\n");
+    }
+
+    private formatUndefinedVariableHover(name: string): string {
+        return [
+            `**Variable** \`${name}\``,
+            "",
+            "- Issue: not defined in the current rule context",
+        ].join("\n");
+    }
+
+    private formatPropertyHover(usage: FmlPropertyUsage, step?: FmlPropertyPathStep): string {
+        const rootTypeName = this.customTypeModels[usage.rootTypeName]?.TypeName ?? usage.rootTypeName;
+        const path = step?.path ?? usage.path;
+        const cardinalityMin = step?.cardinalityMin ?? usage.cardinalityMin;
+        const cardinalityMax = step?.cardinalityMax ?? usage.cardinalityMax;
+        const cardinality = cardinalityMin !== undefined && cardinalityMax
+            ? ` [${cardinalityMin}..${cardinalityMax}]`
+            : "";
+        const propertyName = `${rootTypeName}.${path}`;
+        const specificationPath = step?.specificationPath ?? usage.specificationPath;
+        const specificationUrl = this.customTypeModels[usage.rootTypeName]
+            ? undefined
+            : this.getSpecificationUrl(usage.fhirVersion, rootTypeName, specificationPath);
         const propertyLabel = specificationUrl
             ? `[\`${propertyName}\`](${specificationUrl})`
             : `\`${propertyName}\``;
@@ -151,28 +294,57 @@ export class FmlLanguageService {
             `**${usage.role === "source" ? "Source" : "Target"} property** ${propertyLabel}${cardinality}${usage.fhirVersion ? ` (${usage.fhirVersion})` : ""}`,
             "",
         ];
-        const possibleTypes = usage.possibleTypeNames ?? [];
-        const compatibleTypes = usage.compatibleTypeNames ?? possibleTypes;
-        const excludedTypes = usage.excludedTypeNames ?? [];
+        const isFinalStep = !step || step.path === usage.path;
+        const possibleTypes = isFinalStep
+            ? usage.possibleTypeNames ?? step?.possibleTypeNames ?? []
+            : step.possibleTypeNames;
+        const compatibleTypes = isFinalStep
+            ? usage.compatibleTypeNames ?? step?.typeNames ?? possibleTypes
+            : step.typeNames;
+        const excludedTypes = isFinalStep ? usage.excludedTypeNames ?? [] : [];
         if (possibleTypes.length > 1) {
             lines.push(`- Compatible types: ${compatibleTypes.map(type => `\`${type}\``).join(" | ") || "none"}`);
             if (excludedTypes.length > 0) {
                 lines.push(`- *Other possible types: ${excludedTypes.map(type => `\`${type}\``).join(" | ")}*`);
             }
-        } else if (usage.elementTypeName) {
-            lines.push(`- Type: \`${usage.elementTypeName}\``);
+        } else if (compatibleTypes.length > 0) {
+            lines.push(`- Type: \`${compatibleTypes.join(" | ")}\``);
         }
-        if (usage.targetProfiles?.length) {
-            lines.push(`- Target profiles: ${usage.targetProfiles.map(profile => {
-                return `[\`${this.formatTargetProfile(profile)}\`](${this.getTargetProfileUrl(profile, usage.fhirVersion)})`;
+        const targetProfiles = step?.targetProfiles ?? usage.targetProfiles;
+        if (targetProfiles?.length) {
+            lines.push(`- Target profiles: ${targetProfiles.map(profile => {
+                const label = `\`${this.formatTargetProfile(profile)}\``;
+                return this.isLogicalCanonical(profile)
+                    ? label
+                    : `[${label}](${this.getTargetProfileUrl(profile, usage.fhirVersion)})`;
             }).join(" | ")}`);
         }
-        if (usage.validationError) {
-            lines.push(`- Issue: ${usage.validationError}`);
-        } else if (usage.unknownElement) {
-            lines.push("- Issue: property not found in the selected FHIR model");
+        if (usage.validationError) lines.push(`- Issue: ${usage.validationError}`);
+        else if (usage.unknownElement) {
+            lines.push(this.customTypeModels[usage.rootTypeName]
+                ? "- Issue: property not found in the logical model"
+                : "- Issue: property not found in the selected FHIR model");
         }
-        return {range: match.range, markdown: lines.join("\n")};
+        return lines.join("\n");
+    }
+
+    private normalizeIdentifier(value: string): string {
+        return value.replace(/^%/, "").replace(/^`(.*)`$/, "$1");
+    }
+
+    private compareSpans(left: FmlSourceSpan, right: FmlSourceSpan): number {
+        return left.start.line - right.start.line || left.start.column - right.start.column;
+    }
+
+    private spanContains(container: FmlSourceSpan, candidate: FmlSourceSpan): boolean {
+        return this.compareSpans(container, candidate) <= 0
+            && (container.end.line > candidate.end.line
+                || (container.end.line === candidate.end.line && container.end.column >= candidate.end.column));
+    }
+
+    private isLogicalCanonical(canonical: string): boolean {
+        const typeName = this.profileBaseTypes[canonical.split("|")[0]];
+        return Boolean(typeName && this.customTypeModels[typeName]);
     }
 
     public getGroupSymbols(document: TextDocumentSnapshot): DocumentGroupSymbols {

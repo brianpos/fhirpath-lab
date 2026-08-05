@@ -16,6 +16,7 @@ import { resolveTransformResultTypes } from "./fml_transform_signatures";
  * dictionary's `lookupByTypeName` function (e.g. from `helpers/models/generated/r4b`).
  */
 export type TypeLookup = (typeName: string) => TypeModel | undefined;
+export type LogicalTypeClassifier = (typeName: string) => boolean;
 
 /**
  * Resolver that returns the {@link TypeLookup} for a given FHIR version. Used
@@ -74,6 +75,14 @@ export interface DiagramGroup {
 export interface DiagramType {
   typeName: string;
   paramName: string;
+  /** True when the resolved type is supplied by a logical StructureDefinition. */
+  isLogicalModel?: boolean;
+  /** Local type name declared inside the logical StructureDefinition. */
+  logicalModelTypeName?: string;
+  /** Canonical URL identifying the logical StructureDefinition. */
+  logicalModelCanonical?: string;
+  /** Business version declared by StructureDefinition.version. */
+  logicalModelVersion?: string;
   /** Property entries — may contain duplicates (e.g. same path with different filters) */
   properties: PropertyEntry[];
   /** Source position in the FML text for click-to-select on the type header */
@@ -98,6 +107,8 @@ export interface DiagramType {
 export interface PropertyEntry {
   /** Dotted property path relative to the type root */
   path: string;
+  /** Internal path retaining alias-binding discriminators for constraint scoping. */
+  constraintPath?: string;
   /** Whether this entry was produced by a source or target context */
   role?: "source" | "target";
   /** Filter/where condition if present (source properties) */
@@ -152,6 +163,8 @@ export interface PropertyEntry {
   targetProfiles?: string[];
   /** Definition anchor path using model element names, including choice `[x]`. */
   specificationPath?: string;
+  /** Resolved metadata for each cumulative path segment. */
+  pathSteps?: PropertyPathStep[];
   /** The element's resolved type name from the type model (used for tooltip) */
   elementTypeName?: string;
   /** Every type permitted by a choice element before child-path constraints. */
@@ -171,6 +184,19 @@ export interface PropertyEntry {
    *  (e.g. `coding as c -> tgt.code = c`) and are rendered as thin lines
    *  rather than sankey bands. */
   isLeafRule?: boolean;
+}
+
+export interface PropertyPathStep {
+  /** Cumulative path from the type root through this segment. */
+  path: string;
+  /** Types compatible with this segment and referenced descendants. */
+  typeNames: string[];
+  /** All types permitted directly by the element declaration. */
+  possibleTypeNames: string[];
+  cardinalityMin: 0 | 1;
+  cardinalityMax: "1" | "*";
+  targetProfiles?: string[];
+  specificationPath?: string;
 }
 
 // ===== Data Extraction =====
@@ -211,16 +237,16 @@ interface VarInfo {
  * renderer can append `[]` for arrays and show the type in a tooltip. If
  * omitted, the bundled R4B dictionary is used as a sensible default.
  */
-export function extractStructureMapDiagram(map: StructureMap, typeLookup?: TypeLookup, showMissingProperties?: boolean, lookupForVersion?: LookupForVersion): StructureMapDiagram {
-  return extractDiagramInput(map as unknown as DiagramMapInput, typeLookup, showMissingProperties, lookupForVersion);
+export function extractStructureMapDiagram(map: StructureMap, typeLookup?: TypeLookup, showMissingProperties?: boolean, lookupForVersion?: LookupForVersion, isLogicalType?: LogicalTypeClassifier): StructureMapDiagram {
+  return extractDiagramInput(map as unknown as DiagramMapInput, typeLookup, showMissingProperties, lookupForVersion, isLogicalType);
 }
 
 /** Extract diagram data directly from the position-aware FML model. */
-export function extractFmlStructureMapDiagram(fml: FmlStructureMap, typeLookup?: TypeLookup, showMissingProperties?: boolean, lookupForVersion?: LookupForVersion): StructureMapDiagram {
-  return extractDiagramInput(toFmlDiagramInput(fml), typeLookup, showMissingProperties, lookupForVersion);
+export function extractFmlStructureMapDiagram(fml: FmlStructureMap, typeLookup?: TypeLookup, showMissingProperties?: boolean, lookupForVersion?: LookupForVersion, isLogicalType?: LogicalTypeClassifier): StructureMapDiagram {
+  return extractDiagramInput(toFmlDiagramInput(fml), typeLookup, showMissingProperties, lookupForVersion, isLogicalType);
 }
 
-function extractDiagramInput(map: DiagramMapInput, typeLookup?: TypeLookup, showMissingProperties?: boolean, lookupForVersion?: LookupForVersion): StructureMapDiagram {
+function extractDiagramInput(map: DiagramMapInput, typeLookup?: TypeLookup, showMissingProperties?: boolean, lookupForVersion?: LookupForVersion, isLogicalType?: LogicalTypeClassifier): StructureMapDiagram {
   const groups: DiagramGroup[] = [];
   nextRuleId = 0;
   nextConnectionId = 0;
@@ -410,9 +436,16 @@ function extractDiagramInput(map: DiagramMapInput, typeLookup?: TypeLookup, show
       // For cross-version maps, resolve this box against the type model for
       // its detected FHIR version; otherwise fall back to the default lookup.
       const boxLookup = (lookupForVersion && lookupForVersion(dt.fhirVersion)) || lookup;
+      const rootModel = dt.typeName ? boxLookup(dt.typeName) : undefined;
+      dt.isLogicalModel = !dt.isComputed && (!!rootModel?.CanonicalUrl || isLogicalType?.(dt.typeName) === true);
+      if (dt.isLogicalModel) {
+        dt.logicalModelTypeName = rootModel?.TypeName ?? dt.typeName;
+        dt.logicalModelCanonical = rootModel?.CanonicalUrl ?? dt.typeName;
+        dt.logicalModelVersion = rootModel?.Version;
+      }
       // Either no declared type, or the declared type isn't in the model:
       // every property on this box is therefore unverifiable — flag them all.
-      const rootKnown = !!dt.typeName && !!boxLookup(dt.typeName);
+      const rootKnown = !!rootModel;
       // Build a map of paths within this box that re-root to a created
       // type — so deeper properties like `entry.resource.status` resolve
       // against the created type (e.g. Observation) rather than the
@@ -426,19 +459,31 @@ function extractDiagramInput(map: DiagramMapInput, typeLookup?: TypeLookup, show
       const resolutions = new Map<PropertyEntry, PathResolution>();
       const entriesByPath = new Map<string, PropertyEntry[]>();
       for (const p of dt.properties) {
-        const cleanPath = stripPathDiscriminators(p.path);
-        const existing = entriesByPath.get(cleanPath) ?? [];
+        const resolutionPath = p.constraintPath ?? p.path;
+        const existing = entriesByPath.get(resolutionPath) ?? [];
         existing.push(p);
-        entriesByPath.set(cleanPath, existing);
+        entriesByPath.set(resolutionPath, existing);
         if (!rootKnown) {
           if (p.path && p.path !== ".") p.unknownElement = true;
           continue;
         }
         // Skip the root-context placeholder ("." path) which has no element.
         if (!p.path || p.path === ".") continue;
-        const resolved = resolvePathInModel(dt.typeName, p.path, boxLookup, createBoundaries);
+        const resolved = resolvePathInModel(dt.typeName, resolutionPath, boxLookup, createBoundaries);
         if (resolved) {
           resolutions.set(p, resolved);
+          p.pathSteps = resolved.steps.map((step, index) => ({
+            path: step.path,
+            typeNames: step.compatibleTypeNames,
+            possibleTypeNames: step.possibleTypeNames,
+            cardinalityMin: step.element?.Required ? 1 : 0,
+            cardinalityMax: step.element?.IsArray ? "*" : "1",
+            targetProfiles: uniqueTypeNames(step.element?.Type.flatMap(type => type.TargetProfile ?? []) ?? []),
+            specificationPath: [dt.typeName, ...resolved.steps.slice(0, index + 1)
+              .map(candidate => candidate.element?.ElementName)
+              .filter((elementName): elementName is string => !!elementName)]
+              .join("."),
+          }));
           if (resolved.isCollection) p.isCollection = true;
           if (resolved.element) {
             p.cardinalityMin = resolved.element.Required ? 1 : 0;
@@ -457,6 +502,11 @@ function extractDiagramInput(map: DiagramMapInput, typeLookup?: TypeLookup, show
               return isTypeAssignableTo(typeName, p.typeFilter!, boxLookup);
             });
             p.compatibleTypeNames = intersectTypeNames(p.compatibleTypeNames, restrictedTypes);
+            if (restrictedTypes.length === 0) {
+              const displayPath = stripPathDiscriminators(p.path);
+              p.unknownElement = true;
+              p.validationError = `Type filter "${p.typeFilter}" is not allowed at ${dt.typeName}.${displayPath} (allowed: ${p.possibleTypeNames.join(" | ")}).`;
+            }
           }
         } else {
           p.unknownElement = true;
@@ -487,7 +537,7 @@ function extractDiagramInput(map: DiagramMapInput, typeLookup?: TypeLookup, show
       // support all children referenced beneath the same bound node.
       for (const resolved of resolutions.values()) {
         for (const step of resolved.steps.slice(0, -1)) {
-          for (const ancestor of entriesByPath.get(step.path) ?? []) {
+          for (const ancestor of entriesByPath.get(step.internalPath) ?? []) {
             ancestor.possibleTypeNames ??= step.possibleTypeNames;
             ancestor.compatibleTypeNames = intersectTypeNames(
               ancestor.compatibleTypeNames ?? ancestor.possibleTypeNames,
@@ -503,7 +553,7 @@ function extractDiagramInput(map: DiagramMapInput, typeLookup?: TypeLookup, show
           p.compatibleTypeNames = compatible;
           p.excludedTypeNames = possible.filter(typeName => !compatible.includes(typeName));
           p.elementTypeName = compatible.join(" | ") || undefined;
-          if (compatible.length === 0) {
+          if (compatible.length === 0 && !p.validationError) {
             p.unknownElement = true;
             p.validationError = `No choice type supports all referenced child paths. Possible types: ${possible.join(" | ")}.`;
           }
@@ -556,6 +606,7 @@ function resolvePathInModel(
   if (!rootTypeName) return undefined;
   if (!path || path === ".") {
     const step: ResolvedPathStep = {
+      internalPath: ".",
       path: ".",
       possibleTypeNames: [rootTypeName],
       compatibleTypeNames: [rootTypeName],
@@ -577,6 +628,8 @@ function resolvePathInModel(
 }
 
 interface ResolvedPathStep {
+  /** Internal path retaining binding discriminators for occurrence-scoped constraints. */
+  internalPath: string;
   path: string;
   possibleTypeNames: string[];
   compatibleTypeNames: string[];
@@ -612,6 +665,7 @@ function resolvePathFromType(
   const possibleTypeNames = createdType ? [createdType] : found.typeNames;
   if (index === parts.length - 1) {
     return {steps: [{
+      internalPath: path,
       path: stripPathDiscriminators(path),
       possibleTypeNames,
       compatibleTypeNames: possibleTypeNames,
@@ -627,6 +681,7 @@ function resolvePathFromType(
   if (childResults.length === 0) return undefined;
 
   const steps: ResolvedPathStep[] = [{
+    internalPath: path,
     path: stripPathDiscriminators(path),
     possibleTypeNames,
     compatibleTypeNames: uniqueTypeNames(childResults.map(result => result.candidate)),
@@ -638,6 +693,7 @@ function resolvePathFromType(
     const childSteps = childResults.map(result => result.child.steps[depth]).filter(Boolean);
     if (childSteps.length === 0) continue;
     steps.push({
+      internalPath: childSteps[0].internalPath,
       path: childSteps[0].path,
       possibleTypeNames: uniqueTypeNames(childSteps.flatMap(step => step.possibleTypeNames)),
       compatibleTypeNames: uniqueTypeNames(childSteps.flatMap(step => step.compatibleTypeNames)),
@@ -1064,8 +1120,13 @@ function collectProperties(
           const fullPath = info.path
             ? `${info.path}.${src.element}`
             : src.element;
+          let constraintPath = fullPath;
+          if (src.variable) {
+            constraintPath = `${constraintPath}#${src.variable}_${connectionId}`;
+          }
           const entry: PropertyEntry = {
-            path: fullPath,
+            path: stripPathDiscriminators(fullPath),
+            ...(constraintPath !== stripPathDiscriminators(fullPath) ? {constraintPath} : {}),
             role: "source",
             ruleId,
             connectionId,
@@ -1082,7 +1143,7 @@ function collectProperties(
           if (src.variable) {
             varMap.set(src.variable, {
               rootInput: info.rootInput,
-              path: fullPath,
+              path: constraintPath,
               rootInputType: info.rootInputType,
               rootInputVersion: info.rootInputVersion,
               createdType: src.type,
@@ -1526,6 +1587,22 @@ function toFmlDiagramInput(fml: FmlStructureMap): DiagramMapInput {
 }
 
 function toFmlDiagramRule(rule: FmlRule, variableNames: string[]): DiagramRuleInput {
+  const batchRules: DiagramRuleInput[] = (rule.identityFields ?? []).map(field => ({
+    name: field.name,
+    source: [{
+      context: rule.sources[0]?.context,
+      element: field.name,
+      fmlPosition: field.position,
+    }],
+    target: [{
+      context: rule.targets[0]?.context,
+      element: field.name,
+      fmlPosition: field.position,
+    }],
+    dependent: [],
+    rule: [],
+    fmlPosition: field.position,
+  }));
   return {
     name: rule.name,
     source: rule.sources.map(source => ({
@@ -1553,7 +1630,10 @@ function toFmlDiagramRule(rule: FmlRule, variableNames: string[]): DiagramRuleIn
       name: invocation.name,
       variable: invocation.parameters.map(parameter => String(parameter.value)),
     })) ?? [],
-    rule: rule.dependent?.rules.map(nestedRule => toFmlDiagramRule(nestedRule, variableNames)) ?? [],
+    rule: [
+      ...batchRules,
+      ...(rule.dependent?.rules.map(nestedRule => toFmlDiagramRule(nestedRule, variableNames)) ?? []),
+    ],
     fmlPosition: rule.position,
   };
 }
@@ -1743,7 +1823,7 @@ function deduplicateProperties(entries: PropertyEntry[]): PropertyEntry[] {
   const seen = new Map<string, PropertyEntry>();
   const result: PropertyEntry[] = [];
   for (const e of entries) {
-    const key = `${e.path}|${e.role || ""}|${e.filter || ""}|${e.typeFilter || ""}|${e.fixedValue || ""}|${e.isCreated ? "c" : ""}|${e.createdType || ""}`;
+    const key = `${e.path}|${e.constraintPath || ""}|${e.role || ""}|${e.filter || ""}|${e.typeFilter || ""}|${e.fixedValue || ""}|${e.isCreated ? "c" : ""}|${e.createdType || ""}`;
     const existing = seen.get(key);
     if (existing) {
       if (e.fmlPosition) {
@@ -1833,7 +1913,7 @@ function buildPropertyDisplay(type: DiagramType): PropertyDisplay[] {
       variableName: entry.variableName,
       isCollection: entry.isCollection,
       elementTypeName: entry.elementTypeName,
-      rootTypeName: type.typeName,
+      rootTypeName: type.logicalModelTypeName ?? type.typeName,
       fhirVersion: type.fhirVersion,
       cardinalityMin: entry.cardinalityMin,
       cardinalityMax: entry.cardinalityMax,
@@ -1895,10 +1975,12 @@ interface PropertyMarker {
 }
 
 const FILTER_ICON_SPACE = 18;
+const LOGICAL_MODEL_ICON_SPACE = 18;
 const RULE_DIVIDER_HEIGHT = 16;
 
 function typeBoxLabel(type: DiagramType): string {
-  return type.typeName ? `${type.typeName} (${type.paramName})` : type.paramName;
+  const displayTypeName = type.logicalModelTypeName ?? type.typeName;
+  return displayTypeName ? `${displayTypeName} (${type.paramName})` : type.paramName;
 }
 
 function propertyTooltip(property: PropertyDisplay): string {
@@ -1923,16 +2005,9 @@ function propertyTooltip(property: PropertyDisplay): string {
       return `${formatTargetProfile(profile)} (${getTargetProfileUrl(profile, property.fhirVersion)})`;
     }).join(" | ")}`);
   }
-  const specificationUrl = getSpecificationUrl(property.fhirVersion, property.rootTypeName, property.specificationPath);
-  if (specificationUrl) lines.push(`Specification: ${specificationUrl}`);
   if (property.validationError) lines.push(`Issue: ${property.validationError}`);
   else if (property.unknownElement) lines.push("Issue: property not found in the selected FHIR model");
   return lines.join("\n");
-}
-
-function getSpecificationUrl(version: FhirVersion | undefined, rootTypeName: string, path?: string): string | undefined {
-  if (!version || !rootTypeName || !path) return undefined;
-  return `https://hl7.org/fhir/${version}/${rootTypeName.toLowerCase()}-definitions.html#${path.replace(/\[x\]/g, "_x_")}`;
 }
 
 function formatTargetProfile(profile: string): string {
@@ -1953,7 +2028,8 @@ function calcTypeBoxSize(type: DiagramType): {
 } {
   const propDisplay = buildPropertyDisplay(type);
   const headerLabel = typeBoxLabel(type);
-  const headerWidth = headerLabel.length * CHAR_WIDTH + 2 * TYPE_BOX_PADDING_X;
+  const headerWidth = headerLabel.length * CHAR_WIDTH + 2 * TYPE_BOX_PADDING_X
+    + (type.isLogicalModel ? LOGICAL_MODEL_ICON_SPACE : 0);
 
   let maxPropWidth = 0;
   const hasAnyIcon = propDisplay.some((pd) => pd.filter || pd.typeFilter || pd.fixedValue || pd.isCreated || pd.transformFunction);
@@ -2053,15 +2129,15 @@ function renderSankeyRibbon(
  * Each group is rendered as a box containing source and target type boxes
  * with the properties read/written listed inside each type box.
  */
-export function generateInstanceDiagramSvg(map: StructureMap, typeLookup?: TypeLookup, showMissingProperties?: boolean, lookupForVersion?: LookupForVersion): string {
-  const data = extractStructureMapDiagram(map, typeLookup, showMissingProperties, lookupForVersion);
+export function generateInstanceDiagramSvg(map: StructureMap, typeLookup?: TypeLookup, showMissingProperties?: boolean, lookupForVersion?: LookupForVersion, isLogicalType?: LogicalTypeClassifier): string {
+  const data = extractStructureMapDiagram(map, typeLookup, showMissingProperties, lookupForVersion, isLogicalType);
 
   return renderInstanceDiagramSvg(data);
 }
 
 /** Generate an SVG directly from the position-aware FML model. */
-export function generateFmlInstanceDiagramSvg(fml: FmlStructureMap, typeLookup?: TypeLookup, showMissingProperties?: boolean, lookupForVersion?: LookupForVersion): string {
-  const data = extractFmlStructureMapDiagram(fml, typeLookup, showMissingProperties, lookupForVersion);
+export function generateFmlInstanceDiagramSvg(fml: FmlStructureMap, typeLookup?: TypeLookup, showMissingProperties?: boolean, lookupForVersion?: LookupForVersion, isLogicalType?: LogicalTypeClassifier): string {
+  const data = extractFmlStructureMapDiagram(fml, typeLookup, showMissingProperties, lookupForVersion, isLogicalType);
   return renderInstanceDiagramSvg(data);
 }
 
@@ -2371,14 +2447,29 @@ function renderInstanceDiagramSvg(data: StructureMapDiagram): string {
       const label = typeBoxLabel(tb.type);
       const typePos = tb.type.fmlPosition;
       const typePosAttrs = typePos ? ` data-pos-start="${typePos.startIndex}" data-pos-end="${typePos.endIndex}"` : "";
+      const logicalIconOffset = tb.type.isLogicalModel ? LOGICAL_MODEL_ICON_SPACE : 0;
+      if (tb.type.isLogicalModel) {
+        svg.push(`<g class="sm-logical-model-header">`);
+        const logicalCanonical = tb.type.logicalModelCanonical ?? tb.type.typeName;
+        const logicalIdentity = tb.type.logicalModelVersion
+          ? `${logicalCanonical}|${tb.type.logicalModelVersion}`
+          : logicalCanonical;
+        svg.push(`<title>Logical model type: ${escapeXml(logicalIdentity)}</title>`);
+        svg.push(
+          `<text x="${tb.x + TYPE_BOX_PADDING_X}" y="${tb.y + TYPE_HEADER_HEIGHT / 2 + 5}" class="sm-logical-model-icon ${titleCls}" aria-hidden="true">&#x25A6;</text>`
+        );
+      }
       svg.push(
-        `<text x="${tb.x + TYPE_BOX_PADDING_X}" y="${tb.y + TYPE_HEADER_HEIGHT / 2 + 5}" class="sm-type-title ${titleCls}">${escapeXml(label)}</text>`
+        `<text x="${tb.x + TYPE_BOX_PADDING_X + logicalIconOffset}" y="${tb.y + TYPE_HEADER_HEIGHT / 2 + 5}" class="sm-type-title ${titleCls}">${escapeXml(label)}</text>`
       );
       // Clickable overlay for type box header
       if (typePos) {
         svg.push(
           `<rect x="${tb.x}" y="${tb.y}" width="${tb.width}" height="${TYPE_HEADER_HEIGHT}" fill="transparent"${typePosAttrs} />`
         );
+      }
+      if (tb.type.isLogicalModel) {
+        svg.push("</g>");
       }
 
       // Properties

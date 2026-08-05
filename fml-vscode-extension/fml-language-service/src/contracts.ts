@@ -92,6 +92,7 @@ export interface WorkspaceIndexRequest {
     uris: string[];
     defaultFhirVersion?: import("@fhirpath-lab/validator").FhirVersion;
     profileBaseTypes?: Record<string, string>;
+    customTypeModels?: Record<string, import("@fhirpath-lab/validator").TypeModel>;
 }
 
 export interface WorkspaceIndexResult {

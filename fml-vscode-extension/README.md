@@ -31,7 +31,7 @@ This repository contains five TypeScript projects:
 The language server validates open FML documents as they change, without requiring a save. The filesystem watcher remains separate for future behavior driven by files and package builds.
 
 Workspace FML files are indexed by canonical URL from metadata and concept map declarations. Cross-file group navigation and unresolved-group checks follow each map's wildcard-capable `imports` declarations.
-Standard VS Code **Go to Definition** and **Find All References** commands navigate group declarations, invocations, and `extends` references across imported maps. Property hovers show the FHIR version, cardinality, choice alternatives, versioned target-profile links, specification links, and model-resolution issues using the same internal-model analysis as the SVG diagram. Named transform hovers show their result type when it can be inferred. The language server is the single completion provider: typing after a resolved source, target, or alias variable offers properties from the same internal type model, including nested paths, without requiring an IG build for core FHIR types.
+Standard VS Code **Go to Definition** and **Find All References** commands navigate group declarations, invocations, and `extends` references across imported maps. Hovers distinguish source/target contexts from each individual property segment, showing the type and cardinality resolved at that exact path. Variable declarations, qualified variable contexts, and transform arguments show the type information inherited from their defining source or target element. Property hovers also show the FHIR version, choice alternatives, versioned target-profile links, specification links, and model-resolution issues using the same internal-model analysis as the SVG diagram. Named transform hovers show their result type when it can be inferred. The language server is the single completion provider: typing after a resolved source, target, or alias variable offers properties from the same internal type model, including nested paths, without requiring an IG build for core FHIR types.
 
 ## Development setup
 
@@ -144,11 +144,10 @@ code --uninstall-extension fhirpath-lab.fml-tools
 
 ## Validation scope
 
-Stage 1 validates FML text in real time through the language server. It checks that text parses successfully, validates standard transform function parameters, and runs the shared typed FHIRPath validator over constants, source clauses, and `evaluate` expressions using resolved group inputs and aliases. FML aliases may use the standard `%alias` form or the FML-compatible bare form when the alias starts a path (for example, `x.toString()`); nested members are still interpreted normally. Unknown transforms are warnings, while invalid use of a known transform is an error. FHIRPath expression parameters are only permitted for `evaluate`. Validation and SVG diagram extraction operate directly on the canonical position-aware FML model. Expression-populated targets show dotted connectors from referenced source aliases. FHIR `StructureMap` generation is a separate compiler output derived from that model.
+Stage 1 validates FML text in real time through the language server. It checks that text parses successfully, validates standard transform function parameters, verifies transform identifier parameters against variables in the current rule scope, and checks known transform result types against target property types. Simple batch identity rules validate every listed field against both source and target models. Incompatible direct variable assignments are warnings because additional mapping type rules may make them valid; incompatible explicit transform results remain errors. FHIR primitive types with the same underlying system value type are treated as compatible. The shared typed FHIRPath validator runs over constants, source clauses, and `evaluate` expressions using resolved group inputs and aliases. FML aliases may use the standard `%alias` form or the FML-compatible bare form when the alias starts a path (for example, `x.toString()`); nested members are still interpreted normally. Unknown transforms are warnings, while invalid use of a known transform is an error. FHIRPath expression parameters are only permitted for `evaluate`. Validation and SVG diagram extraction operate directly on the canonical position-aware FML model. Expression-populated targets show dotted connectors from referenced source aliases. FHIR `StructureMap` generation is a separate compiler output derived from that model.
 
 The API contracts for the following capabilities are present but return `not-implemented`:
 
-- compiling FML into a FHIR `StructureMap`;
 - semantic validation against FHIR definitions;
 - transforming source data;
 
@@ -167,4 +166,7 @@ This project is licensed under the [MIT License](LICENSE.md).
     * Long source entries in the diagram should be truncated with ellipsis and the full name should be available on hover.
     * Add any extends X groups to the diagram also (recursively) and blend them in too.
     * tooltip for source rules that have a filter of some kind should have the filter displayed in the tooltip (either a where fhirpath expression filter, or type filter).
-* logical model profile resolution and validation (currently the validator only resolves to the base resource type, but it should be able to resolve to the logical model profile and validate against that - using the classes that are able to convert a StructureDefinition into a FHIRPath model for validation).
+* autocompletion in the editor is not working at all
+* FML validation
+    * the cast function should validate that the second parameter is a valid FHIR type (for the specific fhir version of the the target element or the default FHIR specification)
+    * `Resource` and `DomainResource` type properties are able to have any derived type assigned to them, but the validator should check that the assigned type is a valid derived type of the target property type.

@@ -1,5 +1,5 @@
 import {Uri} from "vscode";
-import type {FhirVersion} from "@fhirpath-lab/validator";
+import type {FhirVersion, TypeModel} from "@fhirpath-lab/validator";
 
 export interface FmlPreviewSource {
     uri: Uri;
@@ -8,6 +8,7 @@ export interface FmlPreviewSource {
     version: number;
     defaultFhirVersion?: FhirVersion;
     profileBaseTypes?: Record<string, string>;
+    customTypeModels?: Record<string, TypeModel>;
 }
 
 /**
@@ -32,6 +33,7 @@ export class InstanceDiagramFmlSvgRenderer implements FmlSvgRenderer {
             fmlText: string,
             defaultFhirVersion?: FhirVersion,
             profileBaseTypes?: Record<string, string>,
+            customTypeModels?: Record<string, TypeModel>,
         ) => string,
     ) {}
 
@@ -44,6 +46,7 @@ export class InstanceDiagramFmlSvgRenderer implements FmlSvgRenderer {
             source.text,
             source.defaultFhirVersion,
             source.profileBaseTypes,
+            source.customTypeModels,
         );
         const accessibleSvg = svg.replace(
             /^<svg\b/,

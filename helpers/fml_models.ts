@@ -284,9 +284,22 @@ export interface Rule {
   
   /** Target transformations (optional - rules can have no targets) */
   targets: RuleTarget[];
+
+  /** Child names from the simple batch identity shorthand
+   *  (`src -> tgt: id, active`). Each field is copied between the rule's
+   *  source and target root contexts. */
+  identityFields?: BatchIdentityField[];
   
   /** Dependent rules/group invocations */
   dependent?: RuleDependent;
+}
+
+export interface BatchIdentityField {
+  /** Source position of the field name in the batch list. */
+  position?: SourcePosition;
+
+  /** Child element name copied on both source and target sides. */
+  name: string;
 }
 
 /**

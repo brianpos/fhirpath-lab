@@ -108,6 +108,41 @@ test("offers properties on target variables without an IG build", () => {
     assert.ok(completions.every(completion => !completion.label.includes("build IG")));
 });
 
+test("offers custom model children immediately after source and target dots", () => {
+    const canonical = "http://example.org/StructureDefinition/ClaimRow";
+    const configuredService = new FmlLanguageService();
+    configuredService.configureModels("R4", {[canonical]: "ClaimRow"}, {
+        ClaimRow: {
+            TypeName: "ClaimRow",
+            Elements: [
+                {ElementName: "claimNumber", Type: [{TypeName: "string"}]},
+                {ElementName: "status", Type: [{TypeName: "code"}]},
+            ],
+        },
+    });
+    for (const [variable, rule] of [
+        ["src.", "src."],
+        ["tgt.", "src.status -> tgt."],
+    ]) {
+        const text = [
+            `uses '${canonical}' alias ClaimRow as source`,
+            `uses '${canonical}' alias ClaimRow as target`,
+            "group example(source src : ClaimRow, target tgt : ClaimRow) {",
+            `    ${rule}`,
+            "}",
+        ].join("\n");
+        const offset = text.indexOf(variable) + variable.length;
+        const completions = configuredService.getCompletions({
+            uri: "file:///custom-property-completion.fml",
+            text,
+            position: positionAt(text, offset),
+        });
+
+        assert.ok(completions.some(completion => completion.label === "claimNumber"), variable);
+        assert.ok(completions.some(completion => completion.label === "status"), variable);
+    }
+});
+
 test("offers nested properties on typed aliases", () => {
     const text = [
         "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias Patient as source",
@@ -171,6 +206,138 @@ test("provides FHIR property type hover information", () => {
     assert.match(hover.markdown, /\(R4B\)/);
 });
 
+test("distinguishes context and nested property hover segments", () => {
+    const text = [
+        "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Observation' alias Observation as source",
+        "group example(source src : Observation, target tgt : Observation) {",
+        "    src.code.coding -> tgt.code.coding;",
+        "}",
+    ].join("\n");
+    const hoverAt = (token: string, delta = 1) => service.getHover({
+        uri: "file:///segment-hover.fml",
+        text,
+        position: positionAt(text, text.indexOf(token) + delta),
+    });
+
+    const context = hoverAt("src.code.coding");
+    const code = hoverAt("src.code.coding", "src.".length + 1);
+    const coding = hoverAt("src.code.coding", "src.code.".length + 1);
+
+    assert.ok(context);
+    assert.match(context.markdown, /Source context.*`src`/);
+    assert.match(context.markdown, /Type: `Observation`/);
+    assert.ok(code);
+    assert.match(code.markdown, /Source property.*`Observation\.code`/);
+    assert.match(code.markdown, /Type: `CodeableConcept`/);
+    assert.match(code.markdown, /\[1\.\.1\]/);
+    assert.ok(coding);
+    assert.match(coding.markdown, /Source property.*`Observation\.code\.coding`/);
+    assert.match(coding.markdown, /Type: `Coding`/);
+    assert.match(coding.markdown, /\[0\.\.\*\]/);
+});
+
+test("provides variable hovers at declarations, contexts, and transform arguments", () => {
+    const text = [
+        "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias Patient as source",
+        "group example(source src : Patient, target tgt : Patient) {",
+        "    src.birthDate as birthDate -> tgt.deceased = cast(birthDate, 'dateTime');",
+        "    src -> tgt.name as targetName then {",
+        "        src.name -> targetName.text;",
+        "    };",
+        "}",
+    ].join("\n");
+    const hoverAtOccurrence = (value: string, occurrence: number) => {
+        let offset = -1;
+        for (let index = 0; index <= occurrence; index++) offset = text.indexOf(value, offset + 1);
+        return service.getHover({
+            uri: "file:///variable-hover.fml",
+            text,
+            position: positionAt(text, offset + 1),
+        });
+    };
+
+    const sourceDeclaration = hoverAtOccurrence("birthDate", 1);
+    const transformArgument = hoverAtOccurrence("birthDate", 2);
+    const targetDeclaration = hoverAtOccurrence("targetName", 0);
+    const targetContext = hoverAtOccurrence("targetName", 1);
+
+    for (const hover of [sourceDeclaration, transformArgument]) {
+        assert.ok(hover);
+        assert.match(hover.markdown, /Variable.*`birthDate`/);
+        assert.match(hover.markdown, /Type: `date`/);
+        assert.match(hover.markdown, /\[0\.\.1\]/);
+    }
+    for (const hover of [targetDeclaration, targetContext]) {
+        assert.ok(hover);
+        assert.match(hover.markdown, /Variable.*`targetName`/);
+        assert.match(hover.markdown, /Type: `HumanName`/);
+        assert.match(hover.markdown, /\[0\.\.\*\]/);
+    }
+});
+
+test("variable hovers do not leak across sibling rules and show provenance", () => {
+    const text = [
+        "uses 'http://hl7.org/fhir/5.0/StructureDefinition/MedicationStatement' alias MedicationStatement as source",
+        "group example(source src : MedicationStatement, target tgt : MedicationStatement) {",
+        "    src.effective : Period as firstPeriod then {",
+        "        firstPeriod.start as fps -> tgt.effective = fps;",
+        "    };",
+        "    src.effective : Period as secondPeriod then {",
+        "        secondPeriod.end as fpe -> tgt.effective = (fpe.toString()), tgt.effective = cast(fps, 'dateTime');",
+        "    };",
+        "}",
+    ].join("\n");
+    const hoverAt = (needle: string, start = 0) => {
+        const offset = text.indexOf(needle, start);
+        return service.getHover({
+            uri: "file:///variable-scope-hover.fml",
+            text,
+            position: positionAt(text, offset),
+        });
+    };
+    const secondRule = text.indexOf("secondPeriod.end");
+    const fpe = hoverAt("fpe", secondRule);
+    const expressionFpe = hoverAt("fpe", text.indexOf("(fpe.toString())"));
+    const leakedFps = hoverAt("fps", secondRule);
+
+    for (const hover of [fpe, expressionFpe]) {
+        assert.ok(hover);
+        assert.match(hover.markdown, /Variable.*`fpe` \[0\.\.1\] \(R5\)/);
+        assert.match(hover.markdown, /Source property: `MedicationStatement\.effective\.end` \[0\.\.1\] \(R5\)/);
+        assert.match(hover.markdown, /Type: `dateTime`/);
+    }
+    assert.ok(leakedFps);
+    assert.match(leakedFps.markdown, /Variable.*`fps`/);
+    assert.match(leakedFps.markdown, /not defined in the current rule context/);
+    assert.doesNotMatch(leakedFps.markdown, /Type: `dateTime`/);
+});
+
+test("provides hovers for target variable assignments", () => {
+    const text = [
+        "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias Patient as source",
+        "group example(source src : Patient, target tgt : Patient) {",
+        "    src.name as d -> tgt.name as b, b = d;",
+        "}",
+    ].join("\n");
+    const assignment = text.indexOf("b = d");
+    const hoverAt = (offset: number) => service.getHover({
+        uri: "file:///target-variable-hover.fml",
+        text,
+        position: positionAt(text, offset),
+    });
+    const targetVariable = hoverAt(assignment);
+    const sourceVariable = hoverAt(assignment + "b = ".length);
+
+    assert.ok(targetVariable);
+    assert.match(targetVariable.markdown, /Variable.*`b` \[0\.\.\*\] \(R5\)/);
+    assert.match(targetVariable.markdown, /Target property: `Patient\.name` \[0\.\.\*\] \(R5\)/);
+    assert.match(targetVariable.markdown, /Type: `HumanName`/);
+    assert.ok(sourceVariable);
+    assert.match(sourceVariable.markdown, /Variable.*`d` \[0\.\.\*\] \(R5\)/);
+    assert.match(sourceVariable.markdown, /Source property: `Patient\.name` \[0\.\.\*\] \(R5\)/);
+    assert.match(sourceVariable.markdown, /Type: `HumanName`/);
+});
+
 test("uses the configured default FHIR version in profile property hover links", () => {
     const profileUrl = "http://example.org/fhir/StructureDefinition/CustomPractitioner";
     const configuredService = new FmlLanguageService();
@@ -213,6 +380,32 @@ test("property hovers show required singular cardinality", () => {
     assert.match(hover.markdown, /Target property/);
     assert.match(hover.markdown, /\[`Observation\.status`\]\([^)]+\) \[1\.\.1\] \(R5\)/);
     assert.match(hover.markdown, /Type: `code`/);
+});
+
+test("logical model property hovers omit FHIR specification links", () => {
+    const logicalService = new FmlLanguageService();
+    const canonical = "http://example.org/StructureDefinition/ClaimRow";
+    logicalService.configureModels("R4", {[canonical]: "ClaimRow"}, {
+        ClaimRow: {
+            TypeName: "ClaimRow",
+            Elements: [{ElementName: "claimNumber", Type: [{TypeName: "string"}]}],
+        },
+    });
+    const text = [
+        `uses '${canonical}' alias ClaimRow as source`,
+        "group example(source src : ClaimRow, target tgt) {",
+        "    src.claimNumber -> tgt.id;",
+        "}",
+    ].join("\n");
+    const hover = logicalService.getHover({
+        uri: "file:///logical-hover.fml",
+        text,
+        position: positionAt(text, text.indexOf("claimNumber") + 2),
+    });
+
+    assert.ok(hover);
+    assert.match(hover.markdown, /`ClaimRow\.claimNumber`/);
+    assert.doesNotMatch(hover.markdown, /hl7\.org\/fhir/);
 });
 
 test("property hovers show required repeating cardinality", () => {
@@ -273,6 +466,39 @@ test("filtered choice hovers italicize other possible types", () => {
     assert.ok(hover);
     assert.match(hover.markdown, /Compatible types: `Age`/);
     assert.match(hover.markdown, /- \*Other possible types: `Period` \| `Range` \| `dateTime` \| `string`\*/);
+});
+
+test("filtered choice property and variable hovers show different type scopes", () => {
+    const text = [
+        "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Observation' alias Observation as source",
+        "group example(source src : Observation, target tgt : Observation) {",
+        "    src.value : CodeableConcept as s -> tgt then {",
+        "        s.coding -> tgt.value;",
+        "    };",
+        "}",
+    ].join("\n");
+    const propertyOffset = text.indexOf("src.value") + "src.".length + 1;
+    const variableOffset = text.indexOf(" as s ->") + " as ".length;
+    const contextOffset = text.indexOf("s.coding");
+    const hoverAt = (offset: number) => service.getHover({
+        uri: "file:///filtered-variable-hover.fml",
+        text,
+        position: positionAt(text, offset),
+    });
+
+    const property = hoverAt(propertyOffset);
+    const declaration = hoverAt(variableOffset);
+    const context = hoverAt(contextOffset);
+
+    assert.ok(property);
+    assert.match(property.markdown, /Compatible types: `CodeableConcept`/);
+    assert.match(property.markdown, /Other possible types/);
+    for (const [label, hover] of [["declaration", declaration], ["context", context]] as const) {
+        assert.ok(hover, label);
+        assert.match(hover.markdown, /Variable.*`s`/);
+        assert.match(hover.markdown, /Type: `CodeableConcept`/);
+        assert.doesNotMatch(hover.markdown, /Other possible types/);
+    }
 });
 
 test("property hovers list Reference target profiles", () => {

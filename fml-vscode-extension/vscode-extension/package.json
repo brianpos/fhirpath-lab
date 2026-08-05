@@ -1,9 +1,9 @@
 {
   "name": "fml-tools",
   "displayName": "FHIR Mapping Language Tools",
-  "description": "Developer tools by Brian Postlethwaite for working with the FHIR Mapping Language (FML), including syntax highlighting, validation, and a trace replay debugger",
+  "description": "Developer tools for working with the FHIR Mapping Language (FML), including syntax highlighting, validation, and a trace replay debugger",
   "icon": "ext-images/icon.ico",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "publisher": "fhirpath-lab",
   "readme": "README.md",
   "author": {

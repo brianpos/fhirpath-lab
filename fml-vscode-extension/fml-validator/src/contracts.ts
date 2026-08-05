@@ -19,6 +19,7 @@ export interface FmlSource {
     sourceName?: string;
     defaultFhirVersion?: import("../../../helpers/fml_models").FhirVersion;
     profileBaseTypes?: Record<string, string>;
+    customTypeModels?: Record<string, import("../../../helpers/custom_model").TypeModel>;
 }
 
 export interface FmlDiagnostic {
@@ -104,6 +105,7 @@ export interface FmlPropertyUsage {
     cardinalityMax?: "1" | "*";
     targetProfiles?: string[];
     specificationPath?: string;
+    pathSteps?: FmlPropertyPathStep[];
     elementTypeName?: string;
     possibleTypeNames?: string[];
     compatibleTypeNames?: string[];
@@ -115,6 +117,26 @@ export interface FmlPropertyUsage {
     transformResultTypeNames?: string[];
     transformResultSpan?: FmlSourceSpan;
     transformResultText?: string;
+    variableSpan?: FmlSourceSpan;
+    ruleSpan?: FmlSourceSpan;
+    transformVariableReferences?: FmlVariableReference[];
+}
+
+export interface FmlPropertyPathStep {
+    path: string;
+    typeNames: string[];
+    possibleTypeNames: string[];
+    cardinalityMin: 0 | 1;
+    cardinalityMax: "1" | "*";
+    targetProfiles?: string[];
+    specificationPath?: string;
+}
+
+export interface FmlVariableReference {
+    name: string;
+    span: FmlSourceSpan;
+    groupName?: string;
+    ruleSpan?: FmlSourceSpan;
 }
 
 export interface FmlGroupInputResolution {
@@ -130,6 +152,7 @@ export interface FmlGroupInputResolution {
 export interface FmlPropertyAnalysis {
     usages: FmlPropertyUsage[];
     groupInputs: FmlGroupInputResolution[];
+    variableReferences: FmlVariableReference[];
 }
 
 export interface FmlPropertyCompletion {

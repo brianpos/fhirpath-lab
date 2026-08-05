@@ -53,6 +53,21 @@ function lastSegment(url: string | undefined): string | undefined {
     return slash >= 0 ? url.substring(slash + 1) : url;
 }
 
+export function resolveStructureDefinitionTypeName(sd: {
+    url?: string;
+    name?: string;
+    type?: string;
+    differential?: {element?: Array<{path: string}>};
+    snapshot?: {element?: Array<{path: string}>};
+}): string | undefined {
+    if (sd.type && !/^[a-z][a-z0-9+.-]*:/i.test(sd.type)) {
+        return sd.type;
+    }
+    const elements = sd.differential?.element ?? sd.snapshot?.element ?? [];
+    const rootPath = elements[0]?.path?.split(".")[0];
+    return rootPath || sd.name || lastSegment(sd.url);
+}
+
 /** Strip slice-suffix elements (`Foo.bar:slice`) and the slice rows of choice elements
  *  (`Foo.value[x]:valueQuantity`). The base unsliced row is retained. */
 function isSliceElement(el: SDElement): boolean {
@@ -68,9 +83,9 @@ function isRequired(el: SDElement): boolean {
     return typeof el.min === "number" && el.min >= 1;
 }
 
-function elementNameFromId(id: string): string {
-    const dot = id.lastIndexOf(".");
-    return dot >= 0 ? id.substring(dot + 1) : id;
+function elementNameFromPath(path: string): string {
+    const dot = path.lastIndexOf(".");
+    return dot >= 0 ? path.substring(dot + 1) : path;
 }
 
 function parentIdOf(id: string): string | undefined {
@@ -157,7 +172,7 @@ function processStructureDefinition(
 
     // The differential's first element is normally the SD's root row (id === sd.type),
     // but defensively handle both presence and absence.
-    const rootTypeName = sd.type ?? elements[0]?.path;
+    const rootTypeName = resolveStructureDefinitionTypeName(sd);
     if (!rootTypeName) return;
 
     const baseTypeName = lastSegment(sd.baseDefinition);
@@ -219,7 +234,7 @@ function processElement(
         return backboneOrder;
     }
 
-    const elementName = elementNameFromId(id);
+    const elementName = elementNameFromPath(el.path);
 
     // Special handling: FHIR primitive container's `value` element. SDs encode this with
     // a magic type code like "http://hl7.org/fhirpath/System.String"; we override it to

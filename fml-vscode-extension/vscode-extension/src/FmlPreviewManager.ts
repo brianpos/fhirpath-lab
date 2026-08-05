@@ -154,6 +154,7 @@ export class FmlPreviewManager implements Disposable {
             version: document.version,
             defaultFhirVersion: toFhirVersion(configuration?.fhirVersion),
             profileBaseTypes: configuration?.profileBaseTypes,
+            customTypeModels: configuration?.customTypeModels,
         };
 
         try {
