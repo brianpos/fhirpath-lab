@@ -205,9 +205,8 @@ suite("FML Trace Replay Debugger", () => {
                 frameId: stack.stackFrames[0].id,
             }) as {scopes: Array<{name: string; variablesReference: number}>};
             const stateScope = scopes.scopes.find(scope => scope.name.startsWith("State"));
-            assert.ok(stateScope);
-            assert.equal(stateScope.name, "State (FHIR.Patient)");
-            const traceVariablesScope = scopes.scopes.find(scope => scope.name === "Variables");
+            assert.equal(stateScope, undefined);
+            const traceVariablesScope = scopes.scopes.find(scope => scope.name === "FML variables");
             assert.ok(traceVariablesScope);
             const traceVariables = await session.customRequest("variables", {
                 variablesReference: traceVariablesScope.variablesReference,
@@ -224,6 +223,11 @@ suite("FML Trace Replay Debugger", () => {
             assert.equal(sourceVariable.value, "Patient");
             assert.equal(sourceVariable.type, "FHIR.Patient");
             assert.ok(sourceVariable.variablesReference > 0);
+            const profileVariable = traceVariables.variables.find(variable => variable.name === "profile");
+            assert.ok(profileVariable);
+            assert.equal(profileVariable.value, "Meta");
+            assert.equal(profileVariable.type, "Meta");
+            assert.ok(profileVariable.variablesReference > 0);
             const sourceChildren = await session.customRequest("variables", {
                 variablesReference: sourceVariable.variablesReference,
             }) as {variables: Array<{name: string; type?: string; value: string}>};
@@ -232,20 +236,6 @@ suite("FML Trace Replay Debugger", () => {
                     && variable.value === "example"
                     && variable.type === "string";
             }));
-            const variables = await session.customRequest("variables", {
-                variablesReference: stateScope.variablesReference,
-            }) as {variables: Array<{name: string; type?: string; value: string}>};
-            assert.ok(variables.variables.some(variable => {
-                return variable.name === "resourceType"
-                    && variable.value === "Patient"
-                    && variable.type === "string";
-            }));
-            assert.ok(variables.variables.some(variable => {
-                return variable.name === "id"
-                    && variable.value === "example"
-                    && variable.type === "string";
-            }));
-
             const resultScope = scopes.scopes.find(scope => scope.name.startsWith("Final result"));
             assert.ok(resultScope);
             assert.equal(
@@ -260,6 +250,11 @@ suite("FML Trace Replay Debugger", () => {
                     && variable.value === "ABC"
                     && variable.type === "MyCustomCode";
             }));
+            await waitFor(() => vscode.workspace.textDocuments.some(document => {
+                return document.isUntitled
+                    && document.languageId === "json"
+                    && document.getText() === '{\n  "customField": "ABC"\n}';
+            }));
 
             const watch = await session.customRequest("evaluate", {
                 expression: "$state.id",
@@ -268,6 +263,14 @@ suite("FML Trace Replay Debugger", () => {
             }) as {result: string; type?: string};
             assert.equal(watch.result, "example");
             assert.equal(watch.type, "string");
+
+            const variableWatch = await session.customRequest("evaluate", {
+                expression: "src.name[0].family",
+                context: "watch",
+                frameId: stack.stackFrames[0].id,
+            }) as {result: string; type?: string};
+            assert.equal(variableWatch.result, "Smith");
+            assert.equal(variableWatch.type, "string");
 
             const arrayWatch = await session.customRequest("evaluate", {
                 expression: "$state.name[0].family",
@@ -336,6 +339,18 @@ function createDebugResponse(mapText: string): object {
                                 extension: [
                                     {url: "name-INPUT", valueString: "src"},
                                     {url: "path", valueString: "Patient"},
+                                ],
+                            },
+                            {
+                                url: variableUrl,
+                                extension: [
+                                    {url: "name-OUTPUT", valueString: "profile"},
+                                    {url: "path", valueString: "Endpoint.meta"},
+                                    {url: "type", valueString: "Meta"},
+                                    {
+                                        url: "value",
+                                        valueString: "{\"lastUpdated\":\"2020-07-07T13:26:22Z\"}",
+                                    },
                                 ],
                             },
                         ],

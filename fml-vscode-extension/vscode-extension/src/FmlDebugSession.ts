@@ -70,6 +70,7 @@ export class FmlDebugSession extends DebugSession {
         private readonly modelConfigurationProvider: (
             program: string,
         ) => SushiWorkspaceConfiguration | undefined = () => undefined,
+        private readonly presentFinalResult: (result: JsonValue) => void = () => undefined,
     ) {
         super();
         this.setDebuggerLinesStartAt1(true);
@@ -146,6 +147,9 @@ export class FmlDebugSession extends DebugSession {
                 return;
             }
             this.startReplay(trace);
+            if (trace.result !== undefined) {
+                this.presentFinalResult(trace.result.value);
+            }
             this.sendResponse(response);
 
             if (trace.evaluator) {
@@ -249,7 +253,7 @@ export class FmlDebugSession extends DebugSession {
         const frameEvent = this.eventForFrame(args.frameId);
         if (frameEvent) {
             scopes.push(new Scope(
-                "Variables",
+                "FML variables",
                 this.variableHandles.create({kind: "variables", variables: frameEvent.variables}),
                 false,
             ));
@@ -260,20 +264,6 @@ export class FmlDebugSession extends DebugSession {
             ));
         }
         if (this.replay) {
-            scopes.push(new Scope(
-                scopeName(
-                    "State",
-                    frameEvent
-                        ? this.replay.getStateBeforeEvent(frameEvent.index)
-                        : this.replay.currentState,
-                ),
-                this.createTypedHandle(
-                    frameEvent
-                        ? this.replay.getStateBeforeEvent(frameEvent.index)
-                        : this.replay.currentState,
-                ),
-                false,
-            ));
             if (this.replay.trace.result !== undefined) {
                 scopes.push(new Scope(
                     scopeName("Final result", this.replay.trace.result),
@@ -301,13 +291,16 @@ export class FmlDebugSession extends DebugSession {
         response: DebugProtocol.EvaluateResponse,
         args: DebugProtocol.EvaluateArguments,
     ): void {
-        const evaluated = this.evaluateExpression(args.expression);
+        const frameEvent = args.frameId !== undefined
+            ? this.eventForFrame(args.frameId)
+            : this.replay?.currentEvent;
+        const evaluated = this.evaluateExpression(args.expression, frameEvent);
         if (!evaluated) {
             this.sendErrorResponse(response, 2001, `Unable to resolve watch expression '${args.expression}'.`);
             return;
         }
         response.body = {
-            result: displayValue(evaluated.value, evaluated.type),
+            result: displayValue(evaluated.value, evaluated.type, evaluated.typeOverride),
             type: evaluated.typeOverride ?? formatDebugType(evaluated.type),
             variablesReference: isExpandable(evaluated.value) && evaluated.state
                 ? this.variableHandles.create({
@@ -489,7 +482,7 @@ export class FmlDebugSession extends DebugSession {
                 return {
                     name: variable.name,
                     value: typedValue
-                        ? displayValue(typedValue.value, type)
+                        ? displayValue(typedValue.value, type, variable.datatype)
                         : variable.errorMessage
                             ? `<unavailable: ${variable.errorMessage}>`
                             : variable.path,
@@ -517,18 +510,35 @@ export class FmlDebugSession extends DebugSession {
         return variablesForTypedValue(container, this.variableHandles);
     }
 
-    private evaluateExpression(expression: string): EvaluatedValue | undefined {
+    private evaluateExpression(
+        expression: string,
+        event: FmlTraceEvent | undefined,
+    ): EvaluatedValue | undefined {
         const trimmed = expression.trim();
-        const eventVariable = this.replay?.currentEvent?.variables.find(variable => variable.name === trimmed);
+        const eventVariable = event?.variables.find(variable => {
+            return trimmed === variable.name
+                || trimmed.startsWith(`${variable.name}.`)
+                || trimmed.startsWith(`${variable.name}[`);
+        });
         if (eventVariable) {
             if (eventVariable.data) {
+                const parsedPath = parseDebugPath(trimmed.slice(eventVariable.name.length));
+                const resolved = parsedPath
+                    ? resolveTypedPath(eventVariable.data, parsedPath)
+                    : undefined;
+                if (!resolved) {
+                    return undefined;
+                }
                 return {
                     state: eventVariable.data,
-                    value: eventVariable.data.value,
-                    path: "$",
-                    type: eventVariable.data.types["$"],
-                    typeOverride: eventVariable.datatype,
+                    value: resolved.value,
+                    path: resolved.path,
+                    type: eventVariable.data.types[resolved.path],
+                    typeOverride: resolved.path === "$" ? eventVariable.datatype : undefined,
                 };
+            }
+            if (trimmed !== eventVariable.name) {
+                return undefined;
             }
             return {
                 value: eventVariable.path,
@@ -647,14 +657,18 @@ function simpleVariable(name: string, value: string | number): DebugProtocol.Var
     };
 }
 
-function displayValue(value: JsonValue, type?: FmlDebugType): string {
+function displayValue(
+    value: JsonValue,
+    type?: FmlDebugType,
+    typeOverride?: string,
+): string {
     if (typeof value === "string") {
         return value;
     }
     if (value === null || typeof value !== "object") {
         return String(value);
     }
-    const typeName = type?.name ?? "value";
+    const typeName = typeOverride ?? type?.name ?? "value";
     return Array.isArray(value)
         ? `${typeName}[${value.length}]`
         : typeName;

@@ -5,6 +5,7 @@ import {
     FmlDocumentSymbols,
     FmlPropertyUsage,
     FmlPropertyAnalysis,
+    FmlCompletionContext,
     FmlPropertyCompletion,
     FmlValidatorResult,
     LoadedPackage,
@@ -59,6 +60,10 @@ export class FmlValidatorApi {
 
     public getPropertyCompletions(source: FmlSource, cursorOffset: number): FmlPropertyCompletion[] {
         return this.propertyUsageCollector.getCompletions(source, cursorOffset);
+    }
+
+    public getCompletionContext(source: FmlSource, cursorOffset: number): FmlCompletionContext | undefined {
+        return this.propertyUsageCollector.getCompletionContext(source, cursorOffset);
     }
 
     public compile(source: FmlSource): Promise<FmlValidatorResult<CompiledStructureMap>> {

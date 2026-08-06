@@ -5,6 +5,11 @@ import type { OperationOutcome } from "fhir/r4b";
 import type { FmlStructureMap, ParseError } from "./fml_models";
 import { FmlModelBuilder } from "./fml_visitor";
 
+export interface PartialFmlParseResult {
+  model?: FmlStructureMap;
+  outcome: OperationOutcome;
+}
+
 
 /**
  * Parse FML text and build a structured object model with position tracking.
@@ -28,6 +33,18 @@ import { FmlModelBuilder } from "./fml_visitor";
  * }
  */
 export function parseFML(fmlText: string): FmlStructureMap | OperationOutcome {
+  const result = parseFMLPartial(fmlText);
+  return result.outcome.issue.length > 0 || !result.model
+    ? result.outcome
+    : result.model;
+}
+
+/**
+ * Parse FML and retain the model recovered by ANTLR even when syntax errors
+ * are present. Consumers must inspect outcome before treating the model as a
+ * valid document.
+ */
+export function parseFMLPartial(fmlText: string): PartialFmlParseResult {
   let chars = new antlr4.CharStream(fmlText);
   let lexer = new Lexer(chars);
   let tokens = new antlr4.CommonTokenStream(lexer);
@@ -48,27 +65,19 @@ export function parseFML(fmlText: string): FmlStructureMap | OperationOutcome {
       ...parserErrorListener.result().issue,
     ],
   };
-  if (errOutcome.issue.length > 0) {
-    return errOutcome;
-  }
-
   try {
-    // Use the model builder to convert parse tree to StructureMap model
     const builder = new FmlModelBuilder(fmlText);
     const structureMap = builder.buildStructureMap(tree);
-    return structureMap;
+    return {model: structureMap, outcome: errOutcome};
   } catch (error) {
-    // Return errors as OperationOutcome
-    return {
-      resourceType: "OperationOutcome",
-      issue: [{
+    errOutcome.issue.push({
         severity: "error",
         code: "exception",
         details: {
           text: error instanceof Error ? error.message : String(error)
         }
-      }]
-    };
+    });
+    return {outcome: errOutcome};
   }
 }
 

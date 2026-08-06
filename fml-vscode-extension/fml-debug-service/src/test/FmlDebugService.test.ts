@@ -136,6 +136,30 @@ test("parses trace states from JSON-value extensions when provided", () => {
     assert.deepEqual(trace.trace[1].state?.value, {target: {id: "after-step"}});
 });
 
+test("parses variable type and object value extensions", () => {
+    const payload = structuredClone(responseFixture);
+    const traceParameter = payload.parameter.find(parameter => parameter.name === "trace");
+    if (!traceParameter || !("part" in traceParameter) || !traceParameter.part?.[0]) {
+        assert.fail("Trace fixture is missing its first trace event.");
+    }
+    const tracePart = traceParameter.part[0];
+    if (!("extension" in tracePart) || !tracePart.extension?.[1].extension) {
+        assert.fail("Trace fixture event is missing its variable extension.");
+    }
+    tracePart.extension[1].extension.push(
+        {url: "type", valueString: "Meta"},
+        {url: "value", valueString: "{\"lastUpdated\":\"2020-07-07T13:26:22.0314215+00:00\"}"},
+    );
+
+    const trace = parseDebugTrace(payload, {resourceType: "Patient"});
+    const variable = trace.trace[0].variables[0];
+
+    assert.equal(variable.datatype, "Meta");
+    assert.deepEqual(variable.data?.value, {
+        lastUpdated: "2020-07-07T13:26:22.0314215+00:00",
+    });
+});
+
 test("uses engine-supplied type metadata when a typed envelope is returned", () => {
     const payload = structuredClone(responseFixture);
     const resultParameter = payload.parameter.find(parameter => parameter.name === "result");

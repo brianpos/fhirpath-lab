@@ -1,4 +1,4 @@
-import {DEFAULT_FML_DEBUG_SERVER_URL} from "@fhirpath-lab/debug-service";
+import {DEFAULT_FML_DEBUG_SERVER_URL, JsonValue} from "@fhirpath-lab/debug-service";
 import {existsSync} from "node:fs";
 import path from "node:path";
 import * as vscode from "vscode";
@@ -85,9 +85,25 @@ export class FmlDebugAdapterDescriptorFactory implements vscode.DebugAdapterDesc
         _session: vscode.DebugSession,
     ): vscode.ProviderResult<vscode.DebugAdapterDescriptor> {
         return new vscode.DebugAdapterInlineImplementation(
-            new FmlDebugSession(undefined, this.modelConfigurationProvider),
+            new FmlDebugSession(
+                undefined,
+                this.modelConfigurationProvider,
+                result => void openFinalResult(result),
+            ),
         );
     }
+}
+
+async function openFinalResult(result: JsonValue): Promise<void> {
+    const document = await vscode.workspace.openTextDocument({
+        content: JSON.stringify(result, null, 2),
+        language: "json",
+    });
+    await vscode.window.showTextDocument(document, {
+        preview: false,
+        preserveFocus: true,
+        viewColumn: vscode.ViewColumn.Beside,
+    });
 }
 
 export function registerFmlDebugger(

@@ -216,10 +216,12 @@ function parseVariables(extensions: FhirExtension[] | undefined): FmlTraceVariab
         .filter(extension => extension.url === VARIABLE_EXTENSION)
         .map(extension => {
             const nameExtension = extension.extension?.find(child => child.url?.startsWith("name-"));
-            const dataText = findExtensionValue(extension.extension, JSON_VALUE_EXTENSION);
-            const dataValue = dataText ? tryParseJsonValue(dataText) : undefined;
+            const dataText = findExtensionValue(extension.extension, JSON_VALUE_EXTENSION)
+                ?? findExtensionValue(extension.extension, "value");
+            const dataValue = dataText !== undefined ? tryParseJsonValue(dataText) : undefined;
             const data = dataValue !== undefined ? parseFmlTypedValue(dataValue) : undefined;
-            const datatype = findExtensionValue(extension.extension, "datatype");
+            const datatype = findExtensionValue(extension.extension, "datatype")
+                ?? findExtensionValue(extension.extension, "type");
             const errorMessage = findExtensionValue(extension.extension, "error");
             return {
                 name: nameExtension?.valueString ?? "variable",

@@ -1,4 +1,4 @@
-import {isFmlParseError, parseFML} from "../../../helpers/fml_parser";
+import {isFmlParseError, parseFML, parseFMLPartial} from "../../../helpers/fml_parser";
 import type {FhirVersion, FmlStructureMap} from "../../../helpers/fml_models";
 import {
     extractFmlStructureMapDiagram,
@@ -13,7 +13,14 @@ import {lookupByTypeName as lookupByTypeNameR4} from "../../../helpers/models/ge
 import {lookupByTypeName as lookupByTypeNameR4B} from "../../../helpers/models/generated/r4b";
 import {lookupByTypeName as lookupByTypeNameR5} from "../../../helpers/models/generated/r5";
 import {lookupByTypeName as lookupByTypeNameR6} from "../../../helpers/models/generated/r6";
-import {FmlPropertyAnalysis, FmlPropertyCompletion, FmlPropertyUsage, FmlSource, FmlSourceSpan} from "./contracts";
+import {
+    FmlCompletionContext,
+    FmlPropertyAnalysis,
+    FmlPropertyCompletion,
+    FmlPropertyUsage,
+    FmlSource,
+    FmlSourceSpan,
+} from "./contracts";
 import {applyFmlModelConfiguration} from "./FmlModelConfiguration";
 
 const lookups: Partial<Record<FhirVersion, TypeLookup>> = {
@@ -258,46 +265,90 @@ export class FmlPropertyUsageCollector {
     }
 
     public getCompletions(source: FmlSource, cursorOffset: number): FmlPropertyCompletion[] {
+        const context = this.getCompletionContext(source, cursorOffset);
+        return context?.kind === "source-property" || context?.kind === "target-property"
+            ? context.properties
+            : [];
+    }
+
+    public getCompletionContext(source: FmlSource, cursorOffset: number): FmlCompletionContext | undefined {
         const beforeCursor = source.sourceText.slice(0, cursorOffset);
-        const propertyContext = beforeCursor.match(/(?:`[^`]+`|[A-Za-z_][A-Za-z0-9_]*)(?:\.(?:`[^`]+`|[A-Za-z_][A-Za-z0-9_]*))*\.([A-Za-z_][A-Za-z0-9_]*)?$/);
-        if (!propertyContext) {
-            return [];
-        }
-        const partial = propertyContext[1] ?? "";
+        const partial = beforeCursor.match(/[A-Za-z_][A-Za-z0-9_]*$/)?.[0] ?? "";
         const partialStart = cursorOffset - partial.length;
-        const modifiedText = source.sourceText.slice(0, partialStart)
-            + FmlPropertyUsageCollector.completionMarker
-            + source.sourceText.slice(cursorOffset);
-        let completionText = modifiedText;
-        let parsed = parseFML(completionText);
-        if (isFmlParseError(parsed)) {
-            const statementStart = Math.max(
-                beforeCursor.lastIndexOf(";"),
-                beforeCursor.lastIndexOf("{"),
-                beforeCursor.lastIndexOf("}"),
-            ) + 1;
-            const statementPrefix = beforeCursor.slice(statementStart);
-            const variableName = propertyContext[0].split(".")[0];
-            const ruleTail = statementPrefix.includes("->")
-                ? ";"
-                : ` -> ${variableName};`;
-            completionText = source.sourceText.slice(0, partialStart)
-                + FmlPropertyUsageCollector.completionMarker
-                + ruleTail
-                + source.sourceText.slice(cursorOffset);
-            parsed = parseFML(completionText);
+        const prefixModel = parseFMLPartial(beforeCursor).model;
+        if (prefixModel) {
+            applyFmlModelConfiguration(prefixModel, source);
+            const prefixAnalysis = this.analyzeModel(prefixModel, beforeCursor, source.customTypeModels);
+            const positionedUsage = this.getPositionedPropertyUsage(
+                prefixModel,
+                source,
+                prefixAnalysis,
+                cursorOffset,
+                partialStart,
+                partial,
+            );
+            if (positionedUsage) {
+                return this.createPropertyCompletionContext(source, positionedUsage, partial);
+            }
         }
-        if (isFmlParseError(parsed)) {
-            return [];
+
+        const completionText = beforeCursor.slice(0, partialStart)
+            + FmlPropertyUsageCollector.completionMarker;
+        const parsed = parseFMLPartial(completionText).model;
+        if (!parsed) {
+            return undefined;
         }
         applyFmlModelConfiguration(parsed, source);
+
+        const propertyContext = this.getPropertyCompletionContext(
+            source,
+            parsed,
+            completionText,
+            partialStart,
+            partial,
+        );
+        if (propertyContext) {
+            return propertyContext;
+        }
+
+        return this.hasMarkerTransform(parsed.groups.flatMap(group => group.rules))
+            ? {kind: "transform", partial}
+            : undefined;
+    }
+
+    private getPropertyCompletionContext(
+        source: FmlSource,
+        parsed: FmlStructureMap,
+        completionText: string,
+        markerStart: number,
+        partial: string,
+    ): Extract<FmlCompletionContext, {kind: "source-property" | "target-property"}> | undefined {
         const analysis = this.analyzeModel(parsed, completionText, source.customTypeModels);
-        const markerUsage = analysis.usages.find(usage => {
+        const analyzedMarkerUsage = analysis.usages.find(usage => {
             return usage.path.split(".").at(-1) === FmlPropertyUsageCollector.completionMarker;
         });
+        const markerPath = completionText.match(
+            /(?:`[^`]+`|[A-Za-z_][A-Za-z0-9_]*)(?:\.(?:`[^`]+`|[A-Za-z_][A-Za-z0-9_]*))*\.fmlCompletionMarker$/,
+        )?.[0];
+        const markerUsage = analyzedMarkerUsage ?? this.getRecoveredPropertyUsage(
+            parsed,
+            source,
+            analysis,
+            markerStart,
+            markerPath,
+        );
         if (!markerUsage?.rootTypeName) {
-            return [];
+            return undefined;
         }
+
+        return this.createPropertyCompletionContext(source, markerUsage, partial);
+    }
+
+    private createPropertyCompletionContext(
+        source: FmlSource,
+        markerUsage: Pick<FmlPropertyUsage, "path" | "role" | "rootTypeName" | "fhirVersion">,
+        partial: string,
+    ): Extract<FmlCompletionContext, {kind: "source-property" | "target-property"}> | undefined {
 
         const coreLookup = markerUsage.fhirVersion
             ? lookups[markerUsage.fhirVersion] ?? lookupByTypeNameR4B
@@ -315,7 +366,7 @@ export class FmlPropertyUsageCollector {
             }
             candidateTypes = [...new Set(nextTypes)];
             if (candidateTypes.length === 0) {
-                return [];
+                return undefined;
             }
         }
 
@@ -328,14 +379,143 @@ export class FmlPropertyUsageCollector {
                 }
             }
         }
-        return [...elements].map(([name, element]) => ({
-            name,
-            typeNames: element.Type.map(type => type.TypeName),
-            cardinalityMin: element.Required ? 1 as const : 0 as const,
-            cardinalityMax: element.IsArray ? "*" as const : "1" as const,
-            targetProfiles: [...new Set(element.Type.flatMap(type => type.TargetProfile ?? []))],
-            fhirVersion: markerUsage.fhirVersion,
-        })).sort((left, right) => left.name.localeCompare(right.name));
+        return {
+            kind: markerUsage.role === "source" ? "source-property" : "target-property",
+            partial,
+            properties: [...elements].map(([name, element]) => ({
+                name,
+                typeNames: element.Type.map(type => type.TypeName),
+                cardinalityMin: element.Required ? 1 as const : 0 as const,
+                cardinalityMax: element.IsArray ? "*" as const : "1" as const,
+                targetProfiles: [...new Set(element.Type.flatMap(type => type.TargetProfile ?? []))],
+                fhirVersion: markerUsage.fhirVersion,
+            })).sort((left, right) => left.name.localeCompare(right.name)),
+        };
+    }
+
+    private getPositionedPropertyUsage(
+        parsed: FmlStructureMap,
+        source: FmlSource,
+        analysis: FmlPropertyAnalysis,
+        cursorOffset: number,
+        partialStart: number,
+        partial: string,
+    ): Pick<FmlPropertyUsage, "path" | "role" | "rootTypeName" | "fhirVersion"> | undefined {
+        const candidates: Array<{
+            context: string;
+            element?: string;
+            role: "source" | "target";
+            startIndex: number;
+        }> = [];
+        const collect = (rules: FmlStructureMap["groups"][number]["rules"]): void => {
+            for (const rule of rules) {
+                for (const ruleSource of rule.sources) {
+                    if (this.positionTouchesCursor(ruleSource.position, cursorOffset, partialStart)) {
+                        candidates.push({...ruleSource, role: "source", startIndex: ruleSource.position!.startIndex});
+                    }
+                }
+                for (const target of rule.targets) {
+                    if (target.context && this.positionTouchesCursor(target.position, cursorOffset, partialStart)) {
+                        candidates.push({...target, context: target.context, role: "target", startIndex: target.position!.startIndex});
+                    }
+                }
+                collect(rule.dependent?.rules ?? []);
+            }
+        };
+        for (const group of parsed.groups) collect(group.rules);
+        candidates.sort((left, right) => right.startIndex - left.startIndex);
+        const candidate = candidates[0];
+        if (!candidate?.element || !candidate.element.split(".").at(-1)?.startsWith(partial)) {
+            return undefined;
+        }
+
+        const parts = [candidate.context, ...candidate.element.split(".")];
+        parts[parts.length - 1] = FmlPropertyUsageCollector.completionMarker;
+        const recovered = this.getRecoveredPropertyUsage(
+            parsed,
+            source,
+            analysis,
+            partialStart,
+            parts.join("."),
+        );
+        return recovered?.role === candidate.role ? recovered : undefined;
+    }
+
+    private positionTouchesCursor(
+        position: import("../../../helpers/fml_models").SourcePosition | undefined,
+        cursorOffset: number,
+        partialStart: number,
+    ): boolean {
+        return Boolean(position
+            && position.startIndex <= partialStart
+            && position.endIndex >= partialStart
+            && position.endIndex <= cursorOffset);
+    }
+
+    private getRecoveredPropertyUsage(
+        parsed: FmlStructureMap,
+        source: FmlSource,
+        analysis: FmlPropertyAnalysis,
+        markerStart: number,
+        propertyPath: string | undefined,
+    ): Pick<FmlPropertyUsage, "path" | "role" | "rootTypeName" | "fhirVersion"> | undefined {
+        if (!propertyPath) {
+            return undefined;
+        }
+        const groups = parsed.groups.filter(group => {
+            return group.position
+                && group.position.startIndex <= markerStart
+                && markerStart <= group.position.endIndex;
+        }).sort((left, right) => {
+            const leftSize = (left.position?.endIndex ?? 0) - (left.position?.startIndex ?? 0);
+            const rightSize = (right.position?.endIndex ?? 0) - (right.position?.startIndex ?? 0);
+            return leftSize - rightSize;
+        });
+        const parts = propertyPath.split(".");
+        const parameter = groups[0]?.parameters.find(candidate => candidate.name === parts[0]);
+        const aliasUsage = analysis.usages.find(usage => {
+            return usage.groupName === groups[0]?.name && usage.variableName === parts[0];
+        });
+        const rootTypeName = parameter?.type
+            ?? aliasUsage?.elementTypeName
+            ?? aliasUsage?.compatibleTypeNames?.[0]
+            ?? aliasUsage?.possibleTypeNames?.[0];
+        if (!rootTypeName) {
+            return undefined;
+        }
+
+        const structure = parsed.structures.find(candidate => {
+            const sameRole = parameter?.mode === "source"
+                ? candidate.mode === "source" || candidate.mode === "queried"
+                : candidate.mode === "target" || candidate.mode === "produced";
+            return sameRole && (candidate.alias === rootTypeName || candidate.resolvedTypeName === rootTypeName);
+        });
+        const parentParts = parts.slice(1, -1);
+        const role = parameter?.mode ?? aliasUsage?.role;
+        if (!role) {
+            return undefined;
+        }
+        return {
+            path: [...parentParts, FmlPropertyUsageCollector.completionMarker].join("."),
+            role,
+            rootTypeName: structure?.resolvedTypeName ?? rootTypeName,
+            fhirVersion: structure?.fhirVersion
+                ?? aliasUsage?.fhirVersion
+                ?? (role === "source" ? parsed.sourceModelVersion : parsed.targetModelVersion)
+                ?? source.defaultFhirVersion,
+        };
+    }
+
+    private hasMarkerTransform(rules: FmlStructureMap["groups"][number]["rules"]): boolean {
+        return rules.some(rule => {
+            return rule.targets.some(target => {
+                return target.transform?.type === FmlPropertyUsageCollector.completionMarker
+                    || target.transform?.parameters.some(parameter => {
+                        return parameter.value === FmlPropertyUsageCollector.completionMarker;
+                    });
+            })
+                || this.hasMarkerTransform(rule.dependent?.rules ?? []);
+        });
     }
 
     private findElement(type: TypeModel | undefined, name: string, lookup: TypeLookup): ElementModel | undefined {

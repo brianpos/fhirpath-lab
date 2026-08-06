@@ -706,6 +706,28 @@ test("validates and completes properties from a logical model", async () => {
     assert.ok(completions.some(completion => completion.name === "claimNumber"));
 });
 
+test("classifies recovered source, target, and transform completion contexts", () => {
+    const sourceText = [
+        "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias Patient as source",
+        "group Main(source src : Patient, target tgt : Patient) {",
+        "    src.na -> tgt.na;",
+        "}",
+    ].join("\n");
+    const validator = new FmlValidatorApi();
+    const contextAt = (token: string) => validator.getCompletionContext(
+        {sourceText},
+        sourceText.indexOf(token) + token.length,
+    );
+
+    assert.equal(contextAt("src.na")?.kind, "source-property");
+    assert.equal(contextAt("tgt.na")?.kind, "target-property");
+
+    const transformText = "group Main(source src, target tgt) { src -> tgt.id = tr";
+    const transformContext = validator.getCompletionContext({sourceText: transformText}, transformText.length);
+    assert.equal(transformContext?.kind, "transform");
+    assert.equal(transformContext?.partial, "tr");
+});
+
 test("converts logical StructureDefinitions and nested elements into TypeModels", () => {
     const canonical = "http://example.org/StructureDefinition/ClaimRow";
     const models = buildLogicalTypeModels([{

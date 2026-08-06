@@ -65,19 +65,19 @@ export class FmlLanguageService {
     }
 
     public getCompletions(request: CompletionRequest): CompletionSuggestion[] {
-        const lines = request.text.split(/\r?\n/);
-        const line = lines[this.clamp(this.toInteger(request.position.line, 0), 0, lines.length - 1)] ?? "";
-        const character = this.clamp(this.toInteger(request.position.character, 0), 0, line.length);
         const cursorOffset = this.toOffset(request.text, request.position);
-        const propertyCompletions = this.validator.getPropertyCompletions({
+        const context = this.validator.getCompletionContext({
             sourceName: request.uri,
             sourceText: request.text,
             defaultFhirVersion: this.defaultFhirVersion,
             profileBaseTypes: this.profileBaseTypes,
             customTypeModels: this.customTypeModels,
         }, cursorOffset);
-        if (propertyCompletions.length > 0) {
-            return propertyCompletions.map(completion => ({
+        if (!context) {
+            return [];
+        }
+        if (context.kind === "source-property" || context.kind === "target-property") {
+            return context.properties.map(completion => ({
                 label: completion.name,
                 detail: `${completion.typeNames.join(" | ") || "unknown"} `
                     + `[${completion.cardinalityMin}..${completion.cardinalityMax}]`
@@ -87,14 +87,9 @@ export class FmlLanguageService {
                 kind: "property",
             }));
         }
-        const assignment = line.slice(0, character).match(/=\s*([A-Za-z][A-Za-z0-9]*)?$/);
-        if (!assignment) {
-            return [];
-        }
 
-        const prefix = assignment[1] ?? "";
         return [...transformDefinitions.values()]
-            .filter(definition => definition.name.startsWith(prefix))
+            .filter(definition => definition.name.startsWith(context.partial))
             .map(definition => ({
                 label: definition.name,
                 detail: definition.signatures.map(signature => {
@@ -496,11 +491,29 @@ export class FmlLanguageService {
     }
 
     private toOffset(text: string, position: {line: number; character: number}): number {
-        const lines = text.split(/\r?\n/);
+        const targetLine = Math.max(this.toInteger(position.line, 0), 0);
+        const targetCharacter = Math.max(this.toInteger(position.character, 0), 0);
         let offset = 0;
-        for (let line = 0; line < Math.min(position.line, lines.length); line++) {
-            offset += lines[line].length + 1;
+        let line = 0;
+        while (line < targetLine && offset < text.length) {
+            const character = text.charCodeAt(offset++);
+            if (character === 13) {
+                if (text.charCodeAt(offset) === 10) offset++;
+                line++;
+            } else if (character === 10) {
+                line++;
+            }
         }
-        return offset + Math.min(position.character, lines[position.line]?.length ?? 0);
+        if (line < targetLine) {
+            return text.length;
+        }
+
+        let lineEnd = offset;
+        while (lineEnd < text.length) {
+            const character = text.charCodeAt(lineEnd);
+            if (character === 10 || character === 13) break;
+            lineEnd++;
+        }
+        return offset + Math.min(targetCharacter, lineEnd - offset);
     }
 }

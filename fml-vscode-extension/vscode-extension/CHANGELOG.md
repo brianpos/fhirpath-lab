@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.9.0 (2026-08-07)
+* element autocomplete bug fixes
+* Enhance debugger capabilities
+
 ## 0.8.0 (2026-08-06)
 * Add support for STU3
 * Update R6 models from ballot3 to ballot5

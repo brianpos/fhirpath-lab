@@ -164,6 +164,15 @@ export interface FmlPropertyCompletion {
     fhirVersion?: import("../../../helpers/fml_models").FhirVersion;
 }
 
+export type FmlCompletionContext = {
+    kind: "source-property" | "target-property";
+    partial: string;
+    properties: FmlPropertyCompletion[];
+} | {
+    kind: "transform";
+    partial: string;
+};
+
 export interface CompiledStructureMap {
     resource: StructureMap;
 }

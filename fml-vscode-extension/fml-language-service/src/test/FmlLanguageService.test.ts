@@ -30,7 +30,7 @@ test("keeps unknown transforms as successful warning diagnostics", async () => {
 });
 
 test("offers standard transforms in assignment position", () => {
-    const text = "src -> tgt.value = tr";
+    const text = "group example(source src, target tgt) { src -> tgt.value = tr";
     const completions = service.getCompletions({
         uri: "file:///completion.fml",
         text,
@@ -49,6 +49,81 @@ test("does not offer transform completions outside assignments", () => {
         text,
         position: {line: 0, character: text.length},
     }), []);
+});
+
+test("uses semantic source and target contexts for property completions", () => {
+    const text = [
+        "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias Patient as source",
+        "group example(source src : Patient, target tgt : Patient) {",
+        "    src.na -> tgt.na;",
+        "}",
+    ].join("\n");
+
+    for (const token of ["src.na", "tgt.na"]) {
+        const offset = text.indexOf(token) + token.length;
+        const completions = service.getCompletions({
+            uri: "file:///semantic-property-completion.fml",
+            text,
+            position: positionAt(text, offset),
+        });
+        assert.ok(completions.some(completion => completion.label === "name"), token);
+        assert.ok(completions.every(completion => completion.kind === "property"), token);
+    }
+});
+
+test("ignores invalid text after the completion cursor", () => {
+    const text = [
+        "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias Patient as source",
+        "group example(source src : Patient, target tgt : Patient) {",
+        "    src.na this text after the cursor is not FML",
+        "}",
+    ].join("\n");
+    const offset = text.indexOf("src.na") + "src.na".length;
+    const completions = service.getCompletions({
+        uri: "file:///cursor-bounded-completion.fml",
+        text,
+        position: positionAt(text, offset),
+    });
+
+    assert.ok(completions.some(completion => completion.label === "name"));
+});
+
+test("offers a target property consistently for every typed prefix", () => {
+    const property = "managingOrganization";
+    for (let length = 0; length < property.length; length++) {
+        const prefix = property.slice(0, length);
+        const text = [
+            "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias Patient as target",
+            "group example(source src : Patient, target tgt : Patient) {",
+            `    src -> tgt.${prefix} invalid text after cursor`,
+            "}",
+        ].join("\n");
+        const offset = text.indexOf(`tgt.${prefix}`) + `tgt.${prefix}`.length;
+        const completions = service.getCompletions({
+            uri: "file:///stable-prefix-completion.fml",
+            text,
+            position: positionAt(text, offset),
+        });
+
+        assert.ok(completions.some(completion => completion.label === property), prefix);
+    }
+});
+
+test("converts CRLF completion positions without shifting the cursor offset", () => {
+    const text = [
+        "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias Patient as target",
+        "group example(source src : Patient, target tgt : Patient) {",
+        "    src -> tgt.managingOrga",
+        "}",
+    ].join("\r\n");
+    const offset = text.indexOf("tgt.managingOrga") + "tgt.managingOrga".length;
+    const completions = service.getCompletions({
+        uri: "file:///crlf-completion.fml",
+        text,
+        position: positionAt(text, offset),
+    });
+
+    assert.ok(completions.some(completion => completion.label === "managingOrganization"));
 });
 
 test("offers properties available on a typed FML variable", () => {
