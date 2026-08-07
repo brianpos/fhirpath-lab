@@ -44,6 +44,34 @@ suite("FML Preview Manager", () => {
 
         assert.match(panel.webview.html, /body \{[\s\S]*height: 100vh;[\s\S]*overflow: hidden;/);
         assert.match(panel.webview.html, /\.preview-shell \{[\s\S]*height: calc\(100vh - 48px\);[\s\S]*overflow: auto;/);
+        assert.match(panel.webview.html, /message\.type !== "fmlPreview\.update"/);
+        assert.match(panel.webview.html, /const scrollLeft = previewShell\.scrollLeft;/);
+        assert.match(panel.webview.html, /const scrollTop = previewShell\.scrollTop;/);
+        assert.match(panel.webview.html, /previewShell\.scrollLeft = scrollLeft;/);
+        assert.match(panel.webview.html, /previewShell\.scrollTop = scrollTop;/);
+
+        const initialHtml = panel.webview.html;
+        const updateMessages: unknown[] = [];
+        const originalPostMessage = panel.webview.postMessage.bind(panel.webview);
+        panel.webview.postMessage = async message => {
+            updateMessages.push(message);
+            return true;
+        };
+        const nextEdit = new vscode.WorkspaceEdit();
+        nextEdit.insert(document.uri, document.positionAt(document.getText().length), "\ngroup Third");
+        assert.ok(await vscode.workspace.applyEdit(nextEdit));
+        await waitFor(() => renderer.pending.length === 3);
+        renderer.pending[2].resolve("<svg id=\"updated-in-place\"></svg>");
+        await waitFor(() => updateMessages.length === 1);
+
+        assert.equal(panel.webview.html, initialHtml);
+        assert.doesNotMatch(panel.webview.html, /id="updated-in-place"/);
+        assert.deepEqual(updateMessages[0], {
+            type: "fmlPreview.update",
+            svg: "<svg id=\"updated-in-place\"></svg>",
+            version: document.version,
+        });
+        panel.webview.postMessage = originalPostMessage;
         manager.dispose();
     });
 
@@ -61,7 +89,7 @@ suite("FML Preview Manager", () => {
         manager.dispose();
     });
 
-    test("renderer failures are shown as escaped preview errors", async () => {
+    test("an initial renderer failure shows a concise preview error", async () => {
         const renderer = new ControlledRenderer();
         const manager = new FmlPreviewManager(renderer);
         const document = await vscode.workspace.openTextDocument({language: "fml", content: "group Error"});
@@ -69,10 +97,53 @@ suite("FML Preview Manager", () => {
         await waitFor(() => renderer.pending.length === 1);
 
         renderer.pending[0].reject(new Error("<render failed>"));
-        await waitFor(() => panel.webview.html.includes("Unable to render FML preview"));
+        await waitFor(() => panel.webview.html.includes("Preview unavailable"));
 
-        assert.match(panel.webview.html, /&lt;render failed&gt;/);
+        assert.match(panel.webview.html, /Fix the FML errors in the editor/);
+        assert.doesNotMatch(panel.webview.html, /render failed/);
         assert.doesNotMatch(panel.webview.html, /<render failed>/);
+        manager.dispose();
+    });
+
+    test("a renderer failure keeps and dims the last valid diagram", async () => {
+        const renderer = new ControlledRenderer();
+        const manager = new FmlPreviewManager(renderer);
+        const document = await vscode.workspace.openTextDocument({language: "fml", content: "group Valid"});
+        const panel = manager.open(document);
+        await waitFor(() => renderer.pending.length === 1);
+        renderer.pending[0].resolve("<svg id=\"last-valid\"></svg>");
+        await waitFor(() => panel.webview.html.includes("last-valid"));
+
+        const messages: unknown[] = [];
+        panel.webview.postMessage = async message => {
+            messages.push(message);
+            return true;
+        };
+        const edit = new vscode.WorkspaceEdit();
+        edit.insert(document.uri, document.positionAt(document.getText().length), " invalid");
+        assert.ok(await vscode.workspace.applyEdit(edit));
+        await waitFor(() => renderer.pending.length === 2);
+        renderer.pending[1].reject(new Error("parse details that stay in the editor"));
+        await waitFor(() => messages.length === 1);
+
+        assert.match(panel.webview.html, /id="last-valid"/);
+        assert.match(panel.webview.html, /preview-shell\.is-stale/);
+        assert.match(panel.webview.html, /Preview paused/);
+        assert.deepEqual(messages[0], {type: "fmlPreview.invalid"});
+
+        const recoveryEdit = new vscode.WorkspaceEdit();
+        recoveryEdit.insert(document.uri, document.positionAt(document.getText().length), " recovered");
+        assert.ok(await vscode.workspace.applyEdit(recoveryEdit));
+        await waitFor(() => renderer.pending.length === 3);
+        renderer.pending[2].resolve("<svg id=\"recovered\"></svg>");
+        await waitFor(() => messages.length === 2);
+        assert.deepEqual(messages[1], {
+            type: "fmlPreview.update",
+            svg: "<svg id=\"recovered\"></svg>",
+            version: document.version,
+        });
+        assert.match(panel.webview.html, /previewShell\.classList\.remove\("is-stale"\)/);
+        assert.match(panel.webview.html, /previewStatus\.hidden = true/);
         manager.dispose();
     });
 

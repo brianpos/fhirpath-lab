@@ -3,6 +3,7 @@
 ## 0.10.0 (2026-08-08)
 * Fix issue with FML validation of properties with base type definitions like `Resource` to permit `Observation` and `Patientm such as found in Bundle.entry.resource
 * Tooltip enhancements for groups/group invocations
+* FML preview pane enhancements to support more complex FML and better error handling (pausing rendering on errors)
 
 ## 0.9.0 (2026-08-07)
 * element autocomplete bug fixes

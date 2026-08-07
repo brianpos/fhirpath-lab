@@ -480,6 +480,7 @@ dependencies:
         assert.match(previewHtml, /window\.fmlPreview = Object\.freeze/);
         assert.match(previewHtml, /script-src 'nonce-[^']+'/);
         assert.match(previewHtml, /setAttribute\("role", "button"\)/);
+        assert.match(previewHtml, /message\.type !== "fmlPreview\.update"/);
 
         const edit = new vscode.WorkspaceEdit();
         edit.insert(
@@ -490,7 +491,8 @@ dependencies:
         assert.ok(await vscode.workspace.applyEdit(edit));
         assert.equal(document.isDirty, true);
 
-        await waitForPreviewHtml(panel, html => html.includes(">First</text>") && html.includes(">Second</text>"));
+        await new Promise(resolve => setTimeout(resolve, 300));
+        assert.equal(panel.webview.html, previewHtml);
         panel.dispose();
     });
 

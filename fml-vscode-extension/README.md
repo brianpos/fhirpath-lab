@@ -32,6 +32,7 @@ The language server validates open FML documents as they change, without requiri
 
 Workspace FML files are indexed by canonical URL from metadata and concept map declarations. Cross-file group navigation and unresolved-group checks follow each map's wildcard-capable `imports` declarations.
 Standard VS Code **Go to Definition** and **Find All References** commands navigate group declarations, invocations, and `extends` references across imported maps. Hovers distinguish source/target contexts from each individual property segment, showing the type and cardinality resolved at that exact path. Variable declarations, qualified variable contexts, transform arguments, and dependent-group arguments show the type information inherited from their defining source or target element. Group-call hovers list the callee's source and target parameters with their resolved types, while group-definition parameter hovers identify declared, inferred, unresolved, or conflicting types. Property hovers also show the FHIR version, choice alternatives, versioned target-profile links, specification links, and model-resolution issues using the same internal-model analysis as the SVG diagram. Named transform hovers show their result type when it can be inferred. The language server is the single completion provider: typing after a resolved source, target, or alias variable offers properties from the same internal type model, including nested paths, without requiring an IG build for core FHIR types.
+The FML preview updates regenerated SVG diagrams in place, retaining the current webview zoom and diagram scroll position across unsaved edits. If an edit temporarily makes the FML invalid, the preview keeps the last valid diagram dimmed behind a concise status overlay until a valid diagram can be generated again; detailed errors remain in the editor diagnostics.
 
 ## Development setup
 
@@ -195,7 +196,6 @@ group PopulateObservation(source src : QuestionnaireResponse, source complicatio
 ### FML Debugger
 
 ### FML Preview Pane
-* when a map is re-generated, retain the current zoom level and position in the diagram (if possible) instead of resetting to the default zoom and position once it reloads (gives a smoother user experience).
 
 ### FML Autocompletion
 

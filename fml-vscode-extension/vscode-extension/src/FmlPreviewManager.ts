@@ -27,6 +27,7 @@ interface PreviewEntry {
     documentUri: Uri;
     panel: WebviewPanel;
     renderSequence: number;
+    contentInitialized?: boolean;
     sourceViewColumn?: ViewColumn;
     updateTimer?: NodeJS.Timeout;
     webviewMessageDisposable?: Disposable;
@@ -76,6 +77,7 @@ export class FmlPreviewManager implements Disposable {
             {
                 enableScripts: true,
                 localResourceRoots: [],
+                retainContextWhenHidden: true,
             },
         );
         const entry: PreviewEntry = {
@@ -163,18 +165,30 @@ export class FmlPreviewManager implements Disposable {
                 return;
             }
             entry.panel.title = this.getTitle(document);
-            entry.panel.webview.html = createPreviewHtml(
-                entry.panel.webview,
-                svg,
-                source.fileName,
-                source.version,
-            );
-        } catch (error) {
+            if (entry.contentInitialized) {
+                await entry.panel.webview.postMessage({
+                    type: "fmlPreview.update",
+                    svg,
+                    version: source.version,
+                });
+            } else {
+                entry.panel.webview.html = createPreviewHtml(
+                    entry.panel.webview,
+                    svg,
+                    source.fileName,
+                    source.version,
+                );
+                entry.contentInitialized = true;
+            }
+        } catch {
             if (!this.isCurrentRender(entry, renderSequence)) {
                 return;
             }
-            const message = error instanceof Error ? error.message : String(error);
-            entry.panel.webview.html = createErrorHtml(entry.panel.webview, message);
+            if (entry.contentInitialized) {
+                await entry.panel.webview.postMessage({type: "fmlPreview.invalid"});
+            } else {
+                entry.panel.webview.html = createErrorHtml(entry.panel.webview);
+            }
         }
     }
 
@@ -277,6 +291,35 @@ function createPreviewHtml(
             height: calc(100vh - 48px);
             overflow: auto;
         }
+        .preview-diagram {
+            transition: opacity 120ms ease;
+        }
+        .preview-shell.is-stale .preview-diagram {
+            opacity: 0.28;
+            filter: grayscale(0.35);
+            pointer-events: none;
+            user-select: none;
+        }
+        .preview-status {
+            position: fixed;
+            inset: 0;
+            display: grid;
+            place-items: center;
+            padding: 24px;
+            pointer-events: none;
+        }
+        .preview-status[hidden] { display: none; }
+        .preview-status-message {
+            max-width: 360px;
+            padding: 14px 18px;
+            border: 1px solid var(--vscode-inputValidation-warningBorder);
+            border-radius: 6px;
+            color: var(--vscode-editor-foreground);
+            background: var(--vscode-editorWidget-background);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.24);
+            text-align: center;
+        }
+        .preview-status-message strong { display: block; margin-bottom: 4px; }
         .fml-preview-svg {
             display: block;
             width: auto;
@@ -292,10 +335,19 @@ function createPreviewHtml(
     </style>
 </head>
 <body>
-    <main class="preview-shell">${svg}</main>
+    <main class="preview-shell"><div class="preview-diagram">${svg}</div></main>
+    <div class="preview-status" role="status" aria-live="polite" hidden>
+        <div class="preview-status-message">
+            <strong>Preview paused</strong>
+            The FML is not currently valid. The last valid diagram is shown.
+        </div>
+    </div>
     <script nonce="${nonce}">
         const vscode = acquireVsCodeApi();
-        const sourceVersion = ${documentVersion};
+        const previewShell = document.querySelector(".preview-shell");
+        const previewDiagram = document.querySelector(".preview-diagram");
+        const previewStatus = document.querySelector(".preview-status");
+        let sourceVersion = ${documentVersion};
         const navigationSelector = "[data-fml-line][data-fml-column][data-fml-length]";
 
         function navigate(line, column, length) {
@@ -312,17 +364,46 @@ function createPreviewHtml(
             navigate(element.dataset.fmlLine, element.dataset.fmlColumn, element.dataset.fmlLength);
         }
 
-        for (const element of document.querySelectorAll(navigationSelector)) {
-            if (!element.hasAttribute("tabindex")) {
-                element.setAttribute("tabindex", "0");
-            }
-            if (!element.hasAttribute("role")) {
-                element.setAttribute("role", "button");
-            }
-            if (!element.hasAttribute("aria-label")) {
-                element.setAttribute("aria-label", "Go to FML source");
+        function prepareNavigationElements() {
+            for (const element of document.querySelectorAll(navigationSelector)) {
+                if (!element.hasAttribute("tabindex")) {
+                    element.setAttribute("tabindex", "0");
+                }
+                if (!element.hasAttribute("role")) {
+                    element.setAttribute("role", "button");
+                }
+                if (!element.hasAttribute("aria-label")) {
+                    element.setAttribute("aria-label", "Go to FML source");
+                }
             }
         }
+
+        prepareNavigationElements();
+
+        window.addEventListener("message", event => {
+            const message = event.data;
+            if (!previewShell || !previewDiagram || !previewStatus || !message) {
+                return;
+            }
+            if (message.type === "fmlPreview.invalid") {
+                previewShell.classList.add("is-stale");
+                previewStatus.hidden = false;
+                return;
+            }
+            if (message.type !== "fmlPreview.update" || typeof message.svg !== "string"
+                || !Number.isSafeInteger(message.version)) return;
+            const scrollLeft = previewShell.scrollLeft;
+            const scrollTop = previewShell.scrollTop;
+            previewDiagram.innerHTML = message.svg;
+            sourceVersion = message.version;
+            previewShell.classList.remove("is-stale");
+            previewStatus.hidden = true;
+            prepareNavigationElements();
+            requestAnimationFrame(() => {
+                previewShell.scrollLeft = scrollLeft;
+                previewShell.scrollTop = scrollTop;
+            });
+        });
 
         document.addEventListener("click", event => {
             const element = event.target instanceof Element
@@ -352,7 +433,7 @@ function createPreviewHtml(
 </html>`;
 }
 
-function createErrorHtml(webview: Webview, message: string): string {
+function createErrorHtml(webview: Webview): string {
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -365,7 +446,7 @@ function createErrorHtml(webview: Webview, message: string): string {
         .error { padding: 16px; border-left: 4px solid var(--vscode-errorForeground); background: var(--vscode-inputValidation-errorBackground); }
     </style>
 </head>
-<body><div class="error"><strong>Unable to render FML preview</strong><p>${escapeHtml(message)}</p></div></body>
+<body><div class="error"><strong>Preview unavailable</strong><p>Fix the FML errors in the editor to generate the diagram.</p></div></body>
 </html>`;
 }
 
