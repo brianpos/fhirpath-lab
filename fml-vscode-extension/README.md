@@ -162,11 +162,46 @@ The API contracts for the following capabilities are present but return `not-imp
 This project is licensed under the [MIT License](LICENSE.md).
 
 ## Issues in vscode extension to resolve
-* SVG Preview Instance Diagram Generation issues
-    * Long source entries in the diagram should be truncated with ellipsis and the full name should be available on hover.
-    * Add any extends X groups to the diagram also (recursively) and blend them in too.
-    * tooltip for source rules that have a filter of some kind should have the filter displayed in the tooltip (either a where fhirpath expression filter, or type filter).
-* autocompletion in the editor is not working at all
-* FML validation
-    * the cast function should validate that the second parameter is a valid FHIR type (for the specific fhir version of the the target element or the default FHIR specification)
-    * `Resource` and `DomainResource` type properties are able to have any derived type assigned to them, but the validator should check that the assigned type is a valid derived type of the target property type.
+
+### SVG Preview Instance Diagram Generation issues
+* Long source entries in the diagram should be truncated with ellipsis and the full name should be available on hover (specifically for transform sources that are long)
+  e.g. `cc('http://example.org/sdh/demo/CodeSystem/cc-screening-codes', 'sigmoidoscopy-complication')`
+  For cases like this just show `cc(..., 'sigmoidoscopy-complication')` in the diagram (the full name is already in the hover) - specifically for those namespace parameters
+* Add any extends X groups to the diagram also (recursively) and blend them in too.
+* tooltip for source rules that have a filter of some kind should have the filter displayed in the tooltip (either a where fhirpath expression filter, or type filter).
+* fhirpath transforms don't show dotted links to all source variables used in the transform.
+    (check the extract-complex-smap.fml file for an example of this)
+    `tgt.derivedFrom as df, df.reference = ('QuestionnaireResponse/' & src.id)` 
+    doesn't show dotted link from `tgt.derivedFrom` to `src.id` in the diagram.
+* Not all source/target parameters to the group are shown in the diagram (particularly when not used in the mapping rules
+* if a fhirpath transform references a source variable (but not a child property of that variable) then it should be shown as `.` in the diagram (with a dotted link to the source variable) - just as we do with other things. parameter variables don't need to be listed in the rule's sources to be used.
+* (maybe in the preview pane?) tooltip for an source item that includes a filter should display the filter details.
+* (maybe in the preview pane?) tooltip for an target item that includes a fixed value should display the fixed value details.
+``` fml
+group PopulateObservation(source src : QuestionnaireResponse, source complicationItem, target tgt : Observation, source coding : CodeableConcept, source patientFullUrl) {
+  src -> tgt.code = (%coding) "SetObservationCode";
+  src -> tgt.status = 'final' "SetStatus";
+  // src.subject as s -> tgt.subject = s; // not using the the subject, as this is intended to be created from the data instead (as is outgoing referral)
+  src.subject as s -> tgt.subject as p, p.reference = (%patientFullUrl) "SetSubjectRef";
+  src.authored as s -> tgt.issued = s "SetAuthored";
+  src.authored as s -> tgt.effective = s "SetEffective";
+  src.author as s -> tgt.performer = s;
+  src.id -> tgt.derivedFrom as df, df.reference = ('QuestionnaireResponse/' & src.id) "SetDerivedFrom";
+}
+```
+
+### FML Editor
+
+### FML Debugger
+
+### FML Preview Pane
+* when a map is re-generated, retain the current zoom level and position in the diagram (if possible) instead of resetting to the default zoom and position once it reloads (gives a smoother user experience).
+
+### FML Autocompletion
+
+### FML validation
+* simple property transforms should be validated to ensure that the source and target properties are compatible.
+  If they are the same type, then the assignment is valid (this is a direct clone of the source property to the target property - noting that the fhir version also needs to be the same for this to be valid).
+  Otherwise if there is a group (<<types>>) that can convert the source type to the target type, then the assignment is valid.
+  If not, it should be an error.
+  For example, if a source property is of type `string` and the target property is of type `CodeableConcept`, this is only valid if there is a group that permits this transformation. 

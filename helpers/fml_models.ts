@@ -463,6 +463,9 @@ export interface GroupInvocation {
  * Parameter for a group invocation
  */
 export interface InvocationParameter {
+  /** Source position information */
+  position?: SourcePosition;
+
   /** Type of parameter */
   type: 'literal' | 'identifier';
   

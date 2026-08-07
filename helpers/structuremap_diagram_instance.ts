@@ -395,17 +395,7 @@ function extractDiagramInput(map: DiagramMapInput, typeLookup?: TypeLookup, show
       const inferred = refinements?.get(dt.paramName) ?? [];
       const distinct = uniqueRefinements(inferred);
       if (dt.typeResolution === "declared") {
-        const conflicts = distinct.filter(refinement => {
-          return refinement.typeName !== dt.typeName
-            || (refinement.fhirVersion && dt.fhirVersion && refinement.fhirVersion !== dt.fhirVersion);
-        });
-        if (conflicts.length > 0) {
-          dt.typeResolution = "conflict";
-          dt.conflictingTypeNames = [
-            formatRefinement({typeName: dt.typeName, fhirVersion: dt.fhirVersion}),
-            ...conflicts.map(formatRefinement),
-          ];
-        }
+        continue;
       } else if (distinct.length === 1) {
         dt.typeName = distinct[0].typeName;
         dt.fhirVersion = distinct[0].fhirVersion;
@@ -452,8 +442,9 @@ function extractDiagramInput(map: DiagramMapInput, typeLookup?: TypeLookup, show
       // static element type at `entry.resource` (Resource).
       const createBoundaries = new Map<string, string>();
       for (const p of dt.properties) {
-        if (p.createdType && p.path && p.path !== ".") {
-          createBoundaries.set(p.path, p.createdType);
+        const boundaryType = p.createdType ?? p.typeFilter;
+        if (boundaryType && p.path && p.path !== ".") {
+          createBoundaries.set(p.constraintPath ?? p.path, boundaryType);
         }
       }
       const resolutions = new Map<PropertyEntry, PathResolution>();
@@ -471,7 +462,10 @@ function extractDiagramInput(map: DiagramMapInput, typeLookup?: TypeLookup, show
         if (!p.path || p.path === ".") continue;
         const propertyCreateBoundaries = p.createdType
           ? new Map(createBoundaries).set(p.path, p.createdType)
-          : createBoundaries;
+          : p.typeFilter
+            ? new Map(createBoundaries)
+            : createBoundaries;
+        if (p.typeFilter) propertyCreateBoundaries.delete(resolutionPath);
         const resolved = resolvePathInModel(dt.typeName, resolutionPath, boxLookup, propertyCreateBoundaries);
         if (resolved) {
           resolutions.set(p, resolved);
@@ -501,10 +495,16 @@ function extractDiagramInput(map: DiagramMapInput, typeLookup?: TypeLookup, show
           p.possibleTypeNames = resolved.finalStep.possibleTypeNames;
           p.compatibleTypeNames = resolved.finalStep.compatibleTypeNames;
           if (p.typeFilter) {
-            const restrictedTypes = p.possibleTypeNames.filter(typeName => {
-              return isTypeAssignableTo(typeName, p.typeFilter!, boxLookup);
-            });
-            p.compatibleTypeNames = intersectTypeNames(p.compatibleTypeNames, restrictedTypes);
+            const restrictedTypes = narrowTypesByRestriction(
+              p.possibleTypeNames,
+              p.typeFilter,
+              boxLookup,
+            );
+            p.compatibleTypeNames = narrowTypesByRestriction(
+              p.compatibleTypeNames,
+              p.typeFilter,
+              boxLookup,
+            );
             if (restrictedTypes.length === 0) {
               const displayPath = stripPathDiscriminators(p.path);
               p.unknownElement = true;
@@ -725,6 +725,17 @@ function isTypeAssignableTo(typeName: string, restriction: string, lookup: TypeL
     current = lookup(current)?.BaseTypeName;
   }
   return false;
+}
+
+function narrowTypesByRestriction(
+  possibleTypeNames: string[],
+  restriction: string,
+  lookup: TypeLookup,
+): string[] {
+  if (possibleTypeNames.some(typeName => isTypeAssignableTo(restriction, typeName, lookup))) {
+    return [restriction];
+  }
+  return possibleTypeNames.filter(typeName => isTypeAssignableTo(typeName, restriction, lookup));
 }
 
 /**
@@ -1039,7 +1050,7 @@ function resolveVariableTypes(
     const lookup = lookupForVersion?.(context.fhirVersion) ?? defaultLookup;
     const resolved = resolvePathInModel(context.typeName, element, lookup);
     const typeNames = restriction
-      ? (resolved?.finalStep.possibleTypeNames ?? []).filter(typeName => isTypeAssignableTo(typeName, restriction, lookup))
+      ? narrowTypesByRestriction(resolved?.finalStep.possibleTypeNames ?? [], restriction, lookup)
       : resolved?.finalStep.compatibleTypeNames ?? [];
     result.push(...typeNames.map(typeName => ({typeName, fhirVersion: context.fhirVersion})));
   }

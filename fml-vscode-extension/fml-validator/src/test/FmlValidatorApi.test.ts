@@ -350,6 +350,22 @@ group Main(source src : Observation, target tgt : Observation) {
     assert.match(warning?.message ?? "", /Quantity/);
 });
 
+test("accepts derived Resource filters and narrows the rule variable", async () => {
+    const result = await new FmlValidatorApi().validate({sourceText: `
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Bundle' alias Bundle as source
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias Patient as target
+group Main(source src : Bundle, target tgt : Patient) {
+    src.entry.resource : Patient as patient -> tgt.active = (patient.active);
+}
+`});
+
+    assert.equal(result.status, "success", result.diagnostics.map(diagnostic => diagnostic.message).join("; "));
+    assert.ok(result.diagnostics.every(diagnostic => {
+        return !diagnostic.message.includes('Type filter "Patient" is not allowed')
+            && !diagnostic.message.startsWith("FHIRPath:");
+    }));
+});
+
 test("preserves whitespace around FHIRPath word operators in FML clauses", async () => {
     const expression = "coding.exists(code = 'Patient' and system = 'http://hl7.org/fhir/resource-types')";
     const result = await new FmlValidatorApi().validate({sourceText: `
@@ -941,6 +957,29 @@ group Shared(source src, target tgt) {
     assert.equal(conflict?.severity, "error");
     assert.match(conflict?.message ?? "", /Patient \(R4B\)/);
     assert.match(conflict?.message ?? "", /Observation \(R4B\)/);
+});
+
+test("reports declared group parameter mismatches on the call argument", async () => {
+    const sourceText = [
+        "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Observation' alias Observation as source",
+        "group Main(source src : Observation, target tgt : Observation) {",
+        "    src.code as concept -> tgt.code then CopyCoding(concept, tgt.code);",
+        "}",
+        "group CopyCoding(source src : Coding, target tgt : CodeableConcept) {",
+        "}",
+    ].join("\n");
+    const result = await new FmlValidatorApi().validate({sourceText});
+
+    assert.equal(result.status, "failure");
+    const mismatch = result.diagnostics.find(diagnostic => {
+        return diagnostic.message.includes("Group 'CopyCoding' parameter 'src'");
+    });
+    assert.equal(mismatch?.severity, "error");
+    assert.equal(mismatch?.line, 3);
+    assert.equal(mismatch?.offendingText, "concept");
+    assert.ok(result.diagnostics.every(diagnostic => {
+        return !diagnostic.message.includes("Conflicting contextual types for group input 'CopyCoding.src'");
+    }));
 });
 
 test("resolves cross-version dependent source and target inputs from context", async () => {

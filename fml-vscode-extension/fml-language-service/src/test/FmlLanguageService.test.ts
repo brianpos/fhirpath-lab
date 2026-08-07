@@ -237,6 +237,29 @@ test("offers nested properties on typed aliases", () => {
     assert.ok(completions.some(completion => completion.label === "family"));
 });
 
+test("offers derived-type properties on filtered Resource aliases", () => {
+    const text = [
+        "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Bundle' alias Bundle as source",
+        "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias Patient as target",
+        "group example(source src : Bundle, target tgt : Patient) {",
+        "    src.entry.resource : Patient as patient -> tgt then {",
+        "        patient.bi -> tgt.active;",
+        "    };",
+        "}",
+    ].join("\n");
+    const offset = text.indexOf("patient.bi") + "patient.bi".length;
+    const completions = service.getCompletions({
+        uri: "file:///filtered-resource-alias-completion.fml",
+        text,
+        position: positionAt(text, offset),
+    });
+
+    assert.ok(
+        completions.some(completion => completion.label === "birthDate"),
+        completions.map(completion => completion.label).join(", "),
+    );
+});
+
 test("resolves completion context in the active group", () => {
     const text = [
         "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias Patient as source",
@@ -574,6 +597,36 @@ test("filtered choice property and variable hovers show different type scopes", 
         assert.match(hover.markdown, /Type: `CodeableConcept`/);
         assert.doesNotMatch(hover.markdown, /Other possible types/);
     }
+});
+
+test("Resource property hover retains its declared type while its filtered variable is derived", () => {
+    const text = [
+        "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Bundle' alias Bundle as source",
+        "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Condition' alias Condition as target",
+        "group example(source src : Bundle, target tgt : Condition) {",
+        "    src.entry.resource : Condition as condition -> tgt then {",
+        "        condition.code -> tgt.code;",
+        "    };",
+        "}",
+    ].join("\n");
+    const propertyOffset = text.indexOf("entry.resource") + "entry.".length + 1;
+    const variableOffset = text.indexOf(" as condition") + " as ".length + 1;
+    const hoverAt = (offset: number) => service.getHover({
+        uri: "file:///filtered-resource-hover.fml",
+        text,
+        position: positionAt(text, offset),
+    });
+
+    const property = hoverAt(propertyOffset);
+    const variable = hoverAt(variableOffset);
+
+    assert.ok(property);
+    assert.match(property.markdown, /Source property.*`Bundle\.entry\.resource`/);
+    assert.match(property.markdown, /Type: `Resource`/);
+    assert.doesNotMatch(property.markdown, /Type: `Condition`/);
+    assert.ok(variable);
+    assert.match(variable.markdown, /Variable.*`condition`/);
+    assert.match(variable.markdown, /Type: `Condition`/);
 });
 
 test("property hovers list Reference target profiles", () => {

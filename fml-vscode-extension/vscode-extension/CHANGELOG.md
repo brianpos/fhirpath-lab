@@ -1,5 +1,8 @@
 # Change Log
 
+## 0.10.0 (2026-08-08)
+* Fix issue with FML validation of properties with base type definitions like `Resource` to permit `Observation` and `Patientm such as found in Bundle.entry.resource
+
 ## 0.9.0 (2026-08-07)
 * element autocomplete bug fixes
 * Enhance debugger capabilities

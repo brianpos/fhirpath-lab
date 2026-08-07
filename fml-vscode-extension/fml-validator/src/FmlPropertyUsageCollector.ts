@@ -296,7 +296,16 @@ export class FmlPropertyUsageCollector {
             + FmlPropertyUsageCollector.completionMarker;
         const parsed = parseFMLPartial(completionText).model;
         if (!parsed) {
-            return undefined;
+            const fullModel = parseFML(source.sourceText);
+            return isFmlParseError(fullModel)
+                ? undefined
+                : this.getAliasCompletionContext(
+                    source,
+                    fullModel,
+                    beforeCursor,
+                    partialStart,
+                    partial,
+                );
         }
         applyFmlModelConfiguration(parsed, source);
 
@@ -311,9 +320,52 @@ export class FmlPropertyUsageCollector {
             return propertyContext;
         }
 
+        const aliasContext = this.getAliasCompletionContext(
+            source,
+            parsed,
+            beforeCursor,
+            partialStart,
+            partial,
+        );
+        if (aliasContext) {
+            return aliasContext;
+        }
+
         return this.hasMarkerTransform(parsed.groups.flatMap(group => group.rules))
             ? {kind: "transform", partial}
             : undefined;
+    }
+
+    private getAliasCompletionContext(
+        source: FmlSource,
+        parsed: FmlStructureMap,
+        beforeCursor: string,
+        partialStart: number,
+        partial: string,
+    ): Extract<FmlCompletionContext, {kind: "source-property" | "target-property"}> | undefined {
+        const aliasName = beforeCursor.slice(0, partialStart).match(/([A-Za-z_][A-Za-z0-9_]*)\.$/)?.[1];
+        if (!aliasName) return undefined;
+        const activeGroup = parsed.groups.filter(group => {
+            return group.position
+                && group.position.startIndex <= partialStart
+                && partialStart <= group.position.endIndex;
+        }).sort((left, right) => {
+            const leftSize = (left.position?.endIndex ?? 0) - (left.position?.startIndex ?? 0);
+            const rightSize = (right.position?.endIndex ?? 0) - (right.position?.startIndex ?? 0);
+            return leftSize - rightSize;
+        })[0];
+        if (!activeGroup) return undefined;
+        const aliasUsage = this.collectAnalysis(source).usages.find(usage => {
+            return usage.groupName === activeGroup.name && usage.variableName === aliasName;
+        });
+        const rootTypeName = aliasUsage?.compatibleTypeNames?.[0] ?? aliasUsage?.elementTypeName;
+        if (!aliasUsage || !rootTypeName) return undefined;
+        return this.createPropertyCompletionContext(source, {
+            path: FmlPropertyUsageCollector.completionMarker,
+            role: aliasUsage.role,
+            rootTypeName,
+            fhirVersion: aliasUsage.fhirVersion,
+        }, partial);
     }
 
     private getPropertyCompletionContext(
@@ -477,8 +529,8 @@ export class FmlPropertyUsageCollector {
             return usage.groupName === groups[0]?.name && usage.variableName === parts[0];
         });
         const rootTypeName = parameter?.type
-            ?? aliasUsage?.elementTypeName
             ?? aliasUsage?.compatibleTypeNames?.[0]
+            ?? aliasUsage?.elementTypeName
             ?? aliasUsage?.possibleTypeNames?.[0];
         if (!rootTypeName) {
             return undefined;

@@ -3,6 +3,7 @@ import type {
     FhirVersion,
     FmlStructureMap,
     GroupDeclaration,
+    GroupInvocation,
     Rule,
     SourcePosition,
     Transform,
@@ -50,6 +51,7 @@ export class FmlTransformValidator {
                 group.name,
                 variables,
                 propertyAnalysis,
+                model.groups,
                 sourceName,
                 customTypeModels,
                 diagnostics,
@@ -63,6 +65,7 @@ export class FmlTransformValidator {
         groupName: string,
         inheritedVariables: Map<string, VariableDescriptor>,
         propertyAnalysis: FmlPropertyAnalysis,
+        groups: GroupDeclaration[],
         sourceName: string | undefined,
         customTypeModels: Record<string, TypeModel>,
         diagnostics: FmlDiagnostic[],
@@ -107,15 +110,71 @@ export class FmlTransformValidator {
                 }
             }
 
+            for (const invocation of rule.dependent?.invocations ?? []) {
+                this.validateGroupInvocation(
+                    invocation,
+                    variables,
+                    groups,
+                    propertyAnalysis,
+                    sourceName,
+                    customTypeModels,
+                    diagnostics,
+                );
+            }
+
             this.validateRules(
                 rule.dependent?.rules ?? [],
                 groupName,
                 variables,
                 propertyAnalysis,
+                groups,
                 sourceName,
                 customTypeModels,
                 diagnostics,
             );
+        }
+    }
+
+    private validateGroupInvocation(
+        invocation: GroupInvocation,
+        variables: Map<string, VariableDescriptor>,
+        groups: GroupDeclaration[],
+        propertyAnalysis: FmlPropertyAnalysis,
+        sourceName: string | undefined,
+        customTypeModels: Record<string, TypeModel>,
+        diagnostics: FmlDiagnostic[],
+    ): void {
+        const callee = groups.find(group => group.name === invocation.name);
+        if (!callee) return;
+        for (let index = 0; index < callee.parameters.length && index < invocation.parameters.length; index++) {
+            const declaredParameter = callee.parameters[index];
+            if (!declaredParameter.type) continue;
+            const argument = invocation.parameters[index];
+            if (argument.type !== "identifier") continue;
+            const variableName = this.normalizeVariableName(argument.value);
+            const descriptor = variables.get(variableName);
+            if (!descriptor?.typeNames.length) continue;
+            const declaredInput = propertyAnalysis.groupInputs.find(input => {
+                return input.groupName === callee.name && input.inputName === declaredParameter.name;
+            });
+            const declaredType = declaredInput?.typeName ?? declaredParameter.type;
+            const declaredVersion = declaredInput?.fhirVersion;
+            const lookup = this.composeLookup(
+                customTypeModels,
+                lookups[declaredVersion ?? descriptor.fhirVersion ?? "R4B"] ?? lookupByTypeNameR4B,
+            );
+            const versionMismatch = !!declaredVersion && !!descriptor.fhirVersion
+                && declaredVersion !== descriptor.fhirVersion;
+            const incompatibleTypes = descriptor.typeNames.filter(typeName => {
+                return versionMismatch || !this.isAssignableTo(typeName, declaredType, lookup);
+            });
+            if (incompatibleTypes.length === 0) continue;
+            diagnostics.push(this.diagnostic(
+                `Group '${callee.name}' parameter '${declaredParameter.name}' expects '${declaredType}', but argument '${variableName}' has type '${incompatibleTypes.join(" | ")}'.`,
+                argument.position ?? invocation.position,
+                variableName,
+                sourceName,
+            ));
         }
     }
 

@@ -302,8 +302,8 @@ export class FmlLanguageService {
             if (excludedTypes.length > 0) {
                 lines.push(`- *Other possible types: ${excludedTypes.map(type => `\`${type}\``).join(" | ")}*`);
             }
-        } else if (compatibleTypes.length > 0) {
-            lines.push(`- Type: \`${compatibleTypes.join(" | ")}\``);
+        } else if (possibleTypes.length > 0) {
+            lines.push(`- Type: \`${possibleTypes.join(" | ")}\``);
         }
         const targetProfiles = step?.targetProfiles ?? usage.targetProfiles;
         if (targetProfiles?.length) {

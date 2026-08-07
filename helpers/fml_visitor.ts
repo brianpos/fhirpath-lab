@@ -923,11 +923,13 @@ export class FmlModelBuilder {
           else if (!isNaN(Number(text))) value = Number(text);
           
           parameters.push({
+            position: this.getPosition(paramNode),
             type: 'literal',
             value
           });
         } else if (idNode) {
           parameters.push({
+            position: this.getPosition(paramNode),
             type: 'identifier',
             value: idNode.getText()
           });
