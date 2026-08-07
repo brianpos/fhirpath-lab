@@ -41,7 +41,7 @@ export class FmlPropertyUsageCollector {
     public collectAnalysis(source: FmlSource): FmlPropertyAnalysis {
         const parsed = parseFML(source.sourceText);
         if (isFmlParseError(parsed)) {
-            return {usages: [], groupInputs: [], variableReferences: []};
+            return {usages: [], groupInputs: [], groupInvocations: [], variableReferences: []};
         }
         applyFmlModelConfiguration(parsed, source);
 
@@ -72,10 +72,16 @@ export class FmlPropertyUsageCollector {
                 if (!type.isComputed && type.fmlPosition && !groupInputs.some(input => {
                     return input.groupName === group.name && input.inputName === type.paramName;
                 })) {
+                    const parameter = parsed.groups.find(candidate => candidate.name === group.name)
+                        ?.parameters.find(candidate => candidate.name === type.paramName);
                     groupInputs.push({
                         groupName: group.name,
                         inputName: type.paramName,
                         span: this.toSpan(sourceText, type.fmlPosition),
+                        nameSpan: parameter?.position
+                            ? this.findGroupParameterNameSpan(sourceText, parameter.position, parameter.name)
+                            : undefined,
+                        mode: parameter?.mode,
                         typeName: type.typeName || undefined,
                         fhirVersion: type.fhirVersion,
                         resolution: type.typeResolution ?? "unresolved",
@@ -83,7 +89,7 @@ export class FmlPropertyUsageCollector {
                     });
                 }
                 for (const property of type.properties) {
-                    if (!property.role || property.path === ".") {
+                    if (!property.role || (property.path === "." && !property.variableName)) {
                         continue;
                     }
                     for (const position of property.fmlPositions ?? (property.fmlPosition ? [property.fmlPosition] : [])) {
@@ -119,9 +125,9 @@ export class FmlPropertyUsageCollector {
                             targetProfiles: property.targetProfiles,
                             specificationPath: property.specificationPath,
                             pathSteps: property.pathSteps,
-                            elementTypeName: property.elementTypeName,
-                            possibleTypeNames: property.possibleTypeNames,
-                            compatibleTypeNames: property.compatibleTypeNames,
+                            elementTypeName: property.path === "." ? type.typeName : property.elementTypeName,
+                            possibleTypeNames: property.path === "." ? [type.typeName] : property.possibleTypeNames,
+                            compatibleTypeNames: property.path === "." ? [type.typeName] : property.compatibleTypeNames,
                             excludedTypeNames: property.excludedTypeNames,
                             unknownElement: property.unknownElement,
                             validationError: property.validationError,
@@ -156,8 +162,28 @@ export class FmlPropertyUsageCollector {
         return {
             usages,
             groupInputs,
+            groupInvocations: this.collectGroupInvocations(parsed, sourceText),
             variableReferences: this.collectVariableReferences(parsed, sourceText),
         };
+    }
+
+    private collectGroupInvocations(
+        parsed: FmlStructureMap,
+        sourceText: string,
+    ): FmlPropertyAnalysis["groupInvocations"] {
+        const invocations: FmlPropertyAnalysis["groupInvocations"] = [];
+        const collect = (callerGroupName: string, rules: FmlStructureMap["groups"][number]["rules"]): void => {
+            for (const rule of rules) {
+                for (const invocation of rule.dependent?.invocations ?? []) {
+                    if (!invocation.position) continue;
+                    const span = this.findLeadingIdentifierSpan(sourceText, invocation.position);
+                    if (span) invocations.push({groupName: invocation.name, callerGroupName, span});
+                }
+                collect(callerGroupName, rule.dependent?.rules ?? []);
+            }
+        };
+        for (const group of parsed.groups) collect(group.name, group.rules);
+        return invocations;
     }
 
     private collectVariableReferences(parsed: FmlStructureMap, sourceText: string): FmlPropertyAnalysis["variableReferences"] {
@@ -189,6 +215,17 @@ export class FmlPropertyUsageCollector {
                                 if (span) references.push({name, span, groupName, ruleSpan});
                             }
                         }
+                    }
+                }
+                for (const invocation of rule.dependent?.invocations ?? []) {
+                    for (const parameter of invocation.parameters) {
+                        if (parameter.type !== "identifier" || !parameter.position) continue;
+                        references.push({
+                            name: String(parameter.value).replace(/^`(.*)`$/, "$1"),
+                            span: this.toSpan(sourceText, parameter.position),
+                            groupName,
+                            ruleSpan,
+                        });
                     }
                 }
                 collect(groupName, rule.dependent?.rules ?? []);
@@ -635,6 +672,26 @@ export class FmlPropertyUsageCollector {
             startIndex: tokenOffset,
             endIndex: tokenOffset + token.length,
         });
+    }
+
+    private findGroupParameterNameSpan(
+        sourceText: string,
+        position: DiagramSourcePosition,
+        parameterName: string,
+    ): FmlSourceSpan | undefined {
+        const clause = sourceText.slice(position.startIndex, position.endIndex);
+        const match = /^(?:source|target)\s+(`[^`]+`|[A-Za-z_][A-Za-z0-9_]*)/.exec(clause);
+        if (!match || this.normalizeIdentifier(match[1]) !== this.normalizeIdentifier(parameterName)) return undefined;
+        const startIndex = position.startIndex + match[0].lastIndexOf(match[1]);
+        return this.toSpan(sourceText, {
+            ...position,
+            startIndex,
+            endIndex: startIndex + match[1].length,
+        });
+    }
+
+    private normalizeIdentifier(value: string): string {
+        return value.replace(/^`(.*)`$/, "$1");
     }
 
     private toSpan(sourceText: string, position: DiagramSourcePosition): FmlSourceSpan {

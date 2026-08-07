@@ -143,15 +143,24 @@ export interface FmlGroupInputResolution {
     groupName: string;
     inputName: string;
     span: FmlSourceSpan;
+    nameSpan?: FmlSourceSpan;
+    mode?: "source" | "target";
     typeName?: string;
     fhirVersion?: import("../../../helpers/fml_models").FhirVersion;
     resolution: "declared" | "context" | "unresolved" | "conflict";
     conflictingTypeNames?: string[];
 }
 
+export interface FmlGroupInvocationAnalysis {
+    groupName: string;
+    callerGroupName: string;
+    span: FmlSourceSpan;
+}
+
 export interface FmlPropertyAnalysis {
     usages: FmlPropertyUsage[];
     groupInputs: FmlGroupInputResolution[];
+    groupInvocations: FmlGroupInvocationAnalysis[];
     variableReferences: FmlVariableReference[];
 }
 

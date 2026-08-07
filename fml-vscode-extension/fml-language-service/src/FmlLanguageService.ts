@@ -1,5 +1,6 @@
 import {
     FmlDiagnostic,
+    FmlPropertyAnalysis,
     FmlPropertyPathStep,
     FmlPropertyUsage,
     FmlVariableReference,
@@ -115,6 +116,26 @@ export class FmlLanguageService {
         const variableMatch = this.getVariableHoverMatch(usages, analysis.variableReferences, request);
         if (variableMatch) return variableMatch;
 
+        const groupInvocation = analysis.groupInvocations.find(invocation => {
+            return this.containsPosition(this.toSourceRange(invocation.span, request.text), request.position);
+        });
+        if (groupInvocation) {
+            const range = this.toSourceRange(groupInvocation.span, request.text);
+            const inputs = analysis.groupInputs.filter(input => input.groupName === groupInvocation.groupName);
+            return {range, markdown: this.formatGroupInvocationHover(groupInvocation.groupName, inputs)};
+        }
+
+        const groupInput = analysis.groupInputs.find(input => {
+            return !!input.nameSpan
+                && this.containsPosition(this.toSourceRange(input.nameSpan, request.text), request.position);
+        });
+        if (groupInput?.nameSpan) {
+            return {
+                range: this.toSourceRange(groupInput.nameSpan, request.text),
+                markdown: this.formatGroupInputHover(groupInput),
+            };
+        }
+
         const transformMatches = usages.filter(usage => usage.transformName && usage.transformSpan).map(usage => ({
             usage,
             range: this.toSourceRange(usage.transformSpan!, request.text),
@@ -135,6 +156,43 @@ export class FmlLanguageService {
         const segmentMatch = this.getPropertySegmentHoverMatch(usages, request);
         if (segmentMatch) return segmentMatch;
         return undefined;
+    }
+
+    private formatGroupInvocationHover(
+        groupName: string,
+        inputs: FmlPropertyAnalysis["groupInputs"],
+    ): string {
+        const lines = [`**Group call** \`${groupName}\``, ""];
+        if (inputs.length === 0) return [...lines, "- Parameters: unresolved"].join("\n");
+        lines.push("**Parameters**");
+        for (const input of inputs) {
+            lines.push(`- \`${input.mode ?? "input"} ${input.inputName}\`: ${this.formatGroupInputType(input)}`);
+        }
+        return lines.join("\n");
+    }
+
+    private formatGroupInputHover(input: FmlPropertyAnalysis["groupInputs"][number]): string {
+        const heading = input.mode === "source" ? "Source parameter"
+            : input.mode === "target" ? "Target parameter" : "Group parameter";
+        const lines = [
+            `**${heading}** \`${input.inputName}\``,
+            "",
+            `- Type: ${this.formatGroupInputType(input)}`,
+        ];
+        if (input.resolution === "context") lines.push("- Resolution: inferred from calling context");
+        else if (input.resolution === "declared") lines.push("- Resolution: declared");
+        else if (input.resolution === "conflict") lines.push("- Resolution: conflicting calling contexts");
+        else lines.push("- Resolution: unresolved");
+        return lines.join("\n");
+    }
+
+    private formatGroupInputType(input: FmlPropertyAnalysis["groupInputs"][number]): string {
+        if (input.resolution === "conflict" && input.conflictingTypeNames?.length) {
+            return input.conflictingTypeNames.map(type => `\`${type}\``).join(" | ");
+        }
+        return input.typeName
+            ? `\`${input.typeName}\`${input.fhirVersion ? ` (${input.fhirVersion})` : ""}`
+            : "unknown";
     }
 
     private getVariableHoverMatch(
@@ -231,15 +289,16 @@ export class FmlLanguageService {
         root = false,
         step?: FmlPropertyPathStep,
     ): string {
-        const typeNames = root
+        const isRoot = root || usage.path === ".";
+        const typeNames = isRoot
             ? [this.customTypeModels[usage.rootTypeName]?.TypeName ?? usage.rootTypeName]
             : step?.typeNames?.length
                 ? step.typeNames
                 : usage.compatibleTypeNames?.length
                     ? usage.compatibleTypeNames
                     : usage.elementTypeName ? usage.elementTypeName.split(" | ") : [];
-        const cardinalityMin = root ? undefined : step?.cardinalityMin ?? usage.cardinalityMin;
-        const cardinalityMax = root ? undefined : step?.cardinalityMax ?? usage.cardinalityMax;
+        const cardinalityMin = isRoot ? undefined : step?.cardinalityMin ?? usage.cardinalityMin;
+        const cardinalityMax = isRoot ? undefined : step?.cardinalityMax ?? usage.cardinalityMax;
         const cardinality = cardinalityMin !== undefined && cardinalityMax
             ? ` [${cardinalityMin}..${cardinalityMax}]`
             : "";
@@ -247,7 +306,7 @@ export class FmlLanguageService {
             `**Variable** \`${name}\`${cardinality}${usage.fhirVersion ? ` (${usage.fhirVersion})` : ""}`,
             "",
         ];
-        if (!root) {
+        if (!isRoot) {
             const rootTypeName = this.customTypeModels[usage.rootTypeName]?.TypeName ?? usage.rootTypeName;
             const propertyPath = step?.path ?? usage.path;
             const propertyCardinality = cardinalityMin !== undefined && cardinalityMax

@@ -373,6 +373,73 @@ test("provides variable hovers at declarations, contexts, and transform argument
     }
 });
 
+test("provides variable hovers on dependent group call arguments", () => {
+    const text = [
+        "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Observation' alias Observation as source",
+        "group example(source src : Observation, target tgt : Observation) {",
+        "    src as parent -> tgt.component as measurement then parentTable(parent, measurement);",
+        "}",
+        "group parentTable(source parent, target child) {",
+        "}",
+    ].join("\n");
+    const callOffset = text.indexOf("parent, measurement");
+    const parentHover = service.getHover({
+        uri: "file:///dependent-argument-hover.fml",
+        text,
+        position: positionAt(text, callOffset + 1),
+    });
+    const measurementHover = service.getHover({
+        uri: "file:///dependent-argument-hover.fml",
+        text,
+        position: positionAt(text, callOffset + "parent, ".length + 1),
+    });
+
+    assert.ok(parentHover);
+    assert.match(parentHover.markdown, /Variable.*`parent`/);
+    assert.match(parentHover.markdown, /Type: `Observation`/);
+    assert.ok(measurementHover);
+    assert.match(measurementHover.markdown, /Variable.*`measurement`/);
+    assert.match(measurementHover.markdown, /Type: `observation_component`/);
+    assert.match(measurementHover.markdown, /\[0\.\.\*\]/);
+});
+
+test("shows typed signatures on dependent calls and group parameters", () => {
+    const text = [
+        "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Observation' alias Observation as source",
+        "group example(source src : Observation, target tgt : Observation) {",
+        "    src.component as measurement -> tgt then parentTable(measurement, tgt);",
+        "}",
+        "group parentTable(source parent, target child : Observation) {",
+        "}",
+    ].join("\n");
+    const hoverAt = (needle: string, occurrence = 0) => {
+        let offset = -1;
+        for (let index = 0; index <= occurrence; index++) offset = text.indexOf(needle, offset + 1);
+        return service.getHover({
+            uri: "file:///group-signature-hover.fml",
+            text,
+            position: positionAt(text, offset + 1),
+        });
+    };
+
+    const call = hoverAt("parentTable", 0);
+    const inferredParameter = hoverAt("parent", 2);
+    const declaredParameter = hoverAt("child", 0);
+
+    assert.ok(call);
+    assert.match(call.markdown, /Group call.*`parentTable`/);
+    assert.match(call.markdown, /`source parent`: `observation_component` \(R5\)/);
+    assert.match(call.markdown, /`target child`: `Observation` \(R5\)/);
+    assert.ok(inferredParameter);
+    assert.match(inferredParameter.markdown, /Source parameter.*`parent`/);
+    assert.match(inferredParameter.markdown, /Type: `observation_component` \(R5\)/);
+    assert.match(inferredParameter.markdown, /inferred from calling context/);
+    assert.ok(declaredParameter);
+    assert.match(declaredParameter.markdown, /Target parameter.*`child`/);
+    assert.match(declaredParameter.markdown, /Type: `Observation` \(R5\)/);
+    assert.match(declaredParameter.markdown, /Resolution: declared/);
+});
+
 test("variable hovers do not leak across sibling rules and show provenance", () => {
     const text = [
         "uses 'http://hl7.org/fhir/5.0/StructureDefinition/MedicationStatement' alias MedicationStatement as source",
