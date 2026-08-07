@@ -32,7 +32,7 @@ The language server validates open FML documents as they change, without requiri
 
 Workspace FML files are indexed by canonical URL from metadata and concept map declarations. Cross-file group navigation and unresolved-group checks follow each map's wildcard-capable `imports` declarations.
 Standard VS Code **Go to Definition** and **Find All References** commands navigate group declarations, invocations, and `extends` references across imported maps. Hovers distinguish source/target contexts from each individual property segment, showing the type and cardinality resolved at that exact path. Variable declarations, qualified variable contexts, transform arguments, and dependent-group arguments show the type information inherited from their defining source or target element. Group-call hovers list the callee's source and target parameters with their resolved types, while group-definition parameter hovers identify declared, inferred, unresolved, or conflicting types. Property hovers also show the FHIR version, choice alternatives, versioned target-profile links, specification links, and model-resolution issues using the same internal-model analysis as the SVG diagram. Named transform hovers show their result type when it can be inferred. The language server is the single completion provider: typing after a resolved source, target, or alias variable offers properties from the same internal type model, including nested paths, without requiring an IG build for core FHIR types.
-The FML preview updates regenerated SVG diagrams in place, retaining the current webview zoom and diagram scroll position across unsaved edits. If an edit temporarily makes the FML invalid, the preview keeps the last valid diagram dimmed behind a concise status overlay until a valid diagram can be generated again; detailed errors remain in the editor diagnostics.
+The FML preview updates regenerated SVG diagrams in place, retaining the current webview zoom and diagram scroll position across unsaved edits. If an edit temporarily makes the FML invalid, the preview keeps the last valid diagram dimmed behind a concise status overlay until a valid diagram can be generated again; detailed errors remain in the editor diagnostics. Diagrams blend recursively extended groups into derived groups, retain every declared source and target parameter, and draw dotted links from every source variable referenced by a FHIRPath transform. Long computed-source namespace arguments are abbreviated in row labels while remaining complete in hover text. Source filters, type filters, and target fixed values are included in both annotation-icon and full-row tooltips.
 
 ## Development setup
 
@@ -165,31 +165,6 @@ This project is licensed under the [MIT License](LICENSE.md).
 ## Issues in vscode extension to resolve
 
 ### SVG Preview Instance Diagram Generation issues
-* Long source entries in the diagram should be truncated with ellipsis and the full name should be available on hover (specifically for transform sources that are long)
-  e.g. `cc('http://example.org/sdh/demo/CodeSystem/cc-screening-codes', 'sigmoidoscopy-complication')`
-  For cases like this just show `cc(..., 'sigmoidoscopy-complication')` in the diagram (the full name is already in the hover) - specifically for those namespace parameters
-* Add any extends X groups to the diagram also (recursively) and blend them in too.
-* tooltip for source rules that have a filter of some kind should have the filter displayed in the tooltip (either a where fhirpath expression filter, or type filter).
-* fhirpath transforms don't show dotted links to all source variables used in the transform.
-    (check the extract-complex-smap.fml file for an example of this)
-    `tgt.derivedFrom as df, df.reference = ('QuestionnaireResponse/' & src.id)` 
-    doesn't show dotted link from `tgt.derivedFrom` to `src.id` in the diagram.
-* Not all source/target parameters to the group are shown in the diagram (particularly when not used in the mapping rules
-* if a fhirpath transform references a source variable (but not a child property of that variable) then it should be shown as `.` in the diagram (with a dotted link to the source variable) - just as we do with other things. parameter variables don't need to be listed in the rule's sources to be used.
-* (maybe in the preview pane?) tooltip for an source item that includes a filter should display the filter details.
-* (maybe in the preview pane?) tooltip for an target item that includes a fixed value should display the fixed value details.
-``` fml
-group PopulateObservation(source src : QuestionnaireResponse, source complicationItem, target tgt : Observation, source coding : CodeableConcept, source patientFullUrl) {
-  src -> tgt.code = (%coding) "SetObservationCode";
-  src -> tgt.status = 'final' "SetStatus";
-  // src.subject as s -> tgt.subject = s; // not using the the subject, as this is intended to be created from the data instead (as is outgoing referral)
-  src.subject as s -> tgt.subject as p, p.reference = (%patientFullUrl) "SetSubjectRef";
-  src.authored as s -> tgt.issued = s "SetAuthored";
-  src.authored as s -> tgt.effective = s "SetEffective";
-  src.author as s -> tgt.performer = s;
-  src.id -> tgt.derivedFrom as df, df.reference = ('QuestionnaireResponse/' & src.id) "SetDerivedFrom";
-}
-```
 
 ### FML Editor
 

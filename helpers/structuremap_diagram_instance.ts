@@ -35,6 +35,7 @@ interface DiagramMapInput {
 
 interface DiagramGroupInput {
   name: string;
+  extends?: string;
   input: Array<{
     name: string;
     type?: string;
@@ -107,6 +108,8 @@ export interface DiagramType {
 export interface PropertyEntry {
   /** Dotted property path relative to the type root */
   path: string;
+  /** Optional abbreviated label shown in place of path. */
+  displayPath?: string;
   /** Internal path retaining alias-binding discriminators for constraint scoping. */
   constraintPath?: string;
   /** Whether this entry was produced by a source or target context */
@@ -276,6 +279,10 @@ function extractDiagramInput(map: DiagramMapInput, typeLookup?: TypeLookup, show
       propsMap.set(input.name, []);
     }
 
+    collectExtendedGroupProperties(
+      group, varMap, propsMap, computedSources,
+      map.group || [], new Set([group.name]), lookup, lookupForVersion,
+    );
     collectProperties(
       group.rule, varMap, propsMap, computedSources,
       map.group || [], new Set([group.name]),
@@ -1231,6 +1238,7 @@ function collectProperties(
         const computedTypeName = getComputedSourceType(tgt) || "";
         const computedEntry: PropertyEntry = {
           path: ruleText,
+          displayPath: describeComputedSource(tgt, true),
           role: "source",
           ruleId,
           connectionId: computedConnId,
@@ -1311,7 +1319,31 @@ function collectProperties(
             entry.transformPosition = (tgt as any).transformPosition;
           }
           for (const variableName of (tgt as any).expressionVariables ?? []) {
-            const bindingEntry = varMap.get(variableName)?.bindingEntry;
+            const variableInfo = varMap.get(variableName);
+            if (!variableInfo) continue;
+            if (variableInfo.computedSourceConnId !== undefined) {
+              entry.additionalConnectionIds ??= [];
+              entry.expressionConnectionIds ??= [];
+              if (!entry.additionalConnectionIds.includes(variableInfo.computedSourceConnId)) {
+                entry.additionalConnectionIds.push(variableInfo.computedSourceConnId);
+              }
+              if (!entry.expressionConnectionIds.includes(variableInfo.computedSourceConnId)) {
+                entry.expressionConnectionIds.push(variableInfo.computedSourceConnId);
+              }
+              continue;
+            }
+            let bindingEntry = variableInfo.bindingEntry;
+            if (!bindingEntry && variableInfo.path === "") {
+              bindingEntry = {
+                path: ".",
+                role: "source",
+                ruleId,
+                ruleName,
+                isLeafRule,
+              };
+              propsMap.get(variableInfo.rootInput)?.push(bindingEntry);
+              variableInfo.bindingEntry = bindingEntry;
+            }
             if (!bindingEntry) continue;
             const expressionConnectionId = nextConnectionId++;
             bindingEntry.additionalConnectionIds ??= [];
@@ -1440,6 +1472,37 @@ function collectProperties(
   }
 }
 
+function collectExtendedGroupProperties(
+  group: DiagramGroupInput,
+  varMap: Map<string, VarInfo>,
+  propsMap: Map<string, PropertyEntry[]>,
+  computedSources: DiagramType[],
+  allGroups: DiagramGroupInput[],
+  visitedGroups: Set<string>,
+  typeLookup: TypeLookup,
+  lookupForVersion?: LookupForVersion,
+): void {
+  if (!group.extends || visitedGroups.has(group.extends)) return;
+  const baseGroup = allGroups.find(candidate => candidate.name === group.extends);
+  if (!baseGroup) return;
+
+  const baseVarMap = new Map<string, VarInfo>();
+  for (let index = 0; index < baseGroup.input.length && index < group.input.length; index++) {
+    const derivedInfo = varMap.get(group.input[index].name);
+    if (derivedInfo) baseVarMap.set(baseGroup.input[index].name, {...derivedInfo});
+  }
+  const nestedVisited = new Set(visitedGroups);
+  nestedVisited.add(baseGroup.name);
+  collectExtendedGroupProperties(
+    baseGroup, baseVarMap, propsMap, computedSources,
+    allGroups, nestedVisited, typeLookup, lookupForVersion,
+  );
+  collectProperties(
+    baseGroup.rule, baseVarMap, propsMap, computedSources,
+    allGroups, nestedVisited, typeLookup, lookupForVersion,
+  );
+}
+
 /**
  * Determine if a target has a fixed/literal value rather than a mapped value.
  * Returns a description string for the tooltip, or undefined if not fixed.
@@ -1549,9 +1612,11 @@ function getComputedSourceType(tgt: { transform?: string; parameter?: any[] }): 
  * `uuid()`, `create('Quantity')`). Falls back to undefined for plain
  * `as var` aliases that don't have a transform call.
  */
-function describeComputedSource(tgt: { transform?: string; parameter?: any[] }): string | undefined {
+function describeComputedSource(tgt: { transform?: string; parameter?: any[] }, abbreviateNamespace = false): string | undefined {
   if (!tgt.transform) return undefined;
-  const params = (tgt.parameter || []).map((p: any) => {
+  const params = (tgt.parameter || []).map((p: any, index: number) => {
+    if (abbreviateNamespace && index === 0 && typeof p.valueString === "string"
+        && /^https?:\/\//.test(p.valueString) && p.valueString.length > 32) return "...";
     if (p.valueString !== undefined) return `'${p.valueString}'`;
     if (p.valueId !== undefined) return p.valueId;
     if (p.valueBoolean !== undefined) return `${p.valueBoolean}`;
@@ -1582,6 +1647,7 @@ function toFmlDiagramInput(fml: FmlStructureMap): DiagramMapInput {
   return {
     group: fml.groups.map(group => ({
       name: group.name,
+      extends: group.extends,
       input: group.parameters.map(parameter => {
         const structure = parameter.type ? structures.get(parameter.type) : undefined;
         return {
@@ -1903,9 +1969,10 @@ function buildPropertyDisplay(type: DiagramType): PropertyDisplay[] {
         deepestAncestorDepth = i;
       }
     }
+    const displayName = entry.displayPath
+      ?? stripPathDiscriminators(parts.slice(deepestAncestorDepth).join("."));
     // Strip variable-binding discriminators (`#var_id`) from each segment
     // so the user sees the real FHIR path, not internal disambiguators.
-    const displayName = stripPathDiscriminators(parts.slice(deepestAncestorDepth).join("."));
     return {
       displayName,
       depth: deepestAncestorDepth,
@@ -2019,6 +2086,9 @@ function propertyTooltip(property: PropertyDisplay): string {
       return `${formatTargetProfile(profile)} (${getTargetProfileUrl(profile, property.fhirVersion)})`;
     }).join(" | ")}`);
   }
+  if (property.filter) lines.push(`Where: ${property.filter}`);
+  if (property.typeFilter) lines.push(`Type filter: ${property.typeFilter}`);
+  if (property.fixedValue) lines.push(`Fixed value: ${property.fixedValue}`);
   if (property.validationError) lines.push(`Issue: ${property.validationError}`);
   else if (property.unknownElement) lines.push("Issue: property not found in the selected FHIR model");
   return lines.join("\n");

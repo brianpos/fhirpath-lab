@@ -1,0 +1,108 @@
+/// url = "http://hl7.org/fhir/uv/sdc/StructureMap/ExtractComplexSmap"
+/// name = "ExtractComplexSmap"
+/// status = "active"
+/// title = "Complex extraction structure map example"
+/// description = "An example of a StructureMap used to support extraction from a QuestionnaireResponse"
+/// experimental = "true"
+
+map "http://hl7.org/fhir/uv/sdc/StructureMap/ExtractComplexSmap" = "ExtractComplexSmap"
+
+uses "http://hl7.org/fhir/StructureDefinition/QuestionnaireResponse" as source
+uses "http://hl7.org/fhir/StructureDefinition/Bundle" as target
+uses "http://hl7.org/fhir/StructureDefinition/Patient" as target
+uses "http://hl7.org/fhir/StructureDefinition/RelatedPerson" as target
+uses "http://hl7.org/fhir/StructureDefinition/Observation" as target
+uses "http://hl7.org/fhir/StructureDefinition/Coding" as target
+
+group ExtractBundle(source src : QuestionnaireResponse, target tgt : Bundle) {
+
+  // Patient
+    src.item as patientItem where (linkId = 'patient') -> tgt.entry as patientEntry, uuid() as patientFullUrl then {
+      src -> patientEntry.resource = create('Patient') as pat //, pat.id = (%patientFullUrl)
+        then PopulatePatient(src, patientItem, pat), PopulateBundleEntry(src, patientEntry, patientFullUrl) "popPatient";
+  
+  // Related Person(s)
+    src.item as rpItem where (linkId = 'contacts') -> tgt.entry as entry, uuid() as fullUrl then {
+      src -> entry.resource = create('RelatedPerson') as rp //, rp.id = (%fullUrl)
+        then PopulateRelatedPerson(src, rpItem, rp, patientFullUrl), PopulateBundleEntry(src, entry, fullUrl) "popRelatedPerson";
+    } "CreateRelatedPersonEntry";
+  
+  src.item as obsItems where (linkId = 'obs') -> tgt then {
+    // Height Observation
+    obsItems.item as heightItem where (linkId = 'height') -> tgt.entry as entry, uuid() as fullUrl then {
+      src -> entry.resource = create('Observation') as obs,
+        cc('http://loinc.org', '8302-2', 'Body height') as coding,
+        obs.value = create('Quantity') as q, q.value = (%heightItem.answer.value.first()), q.unit = 'm'
+        then PopulateObservation(src, heightItem, obs, coding, patientFullUrl), 
+             PopulateBundleEntry(src, entry, fullUrl) "popObs";
+    } "CreateHeightObsEntry";
+  
+    // Weight Observation
+    obsItems.item as weightItem where (linkId = 'weight') -> tgt.entry as entry, uuid() as fullUrl then {
+      src -> entry.resource = create('Observation') as obs,
+        cc('http://loinc.org', '29463-7', 'Weight') as coding,
+        obs.value = create('Quantity') as q, q.value = (%weightItem.answer.value.first()), q.unit = 'kg'
+        then PopulateObservation(src, weightItem, obs, coding, patientFullUrl), 
+             PopulateBundleEntry(src, entry, fullUrl) "popObs";
+    } "CreateWeightObsEntry";
+
+    // Prepare the bundle entry
+    obsItems.item as complicationItem where (linkId = 'complication') -> tgt.entry as entry, uuid() as fullUrl then {
+      src -> entry.resource = create('Observation') as obs,
+        cc('http://example.org/sdh/demo/CodeSystem/cc-screening-codes', 'sigmoidoscopy-complication') as coding,
+        obs.value = (%complicationItem.answer.value.first())
+        then PopulateObservation(src, complicationItem, obs, coding, patientFullUrl), 
+             PopulateBundleEntry(src, entry, fullUrl) "popObs";
+    } "CreateComplicationObsEntry";
+  };
+    } "CreatePatientEntry";
+}
+
+group PopulateBundleEntry(source src : QuestionnaireResponse, target entry, source fullUrl) {
+    src -> entry.fullUrl = ('urn:uuid:' & %fullUrl) "SetFullUrl";
+    src -> entry.request as req then {
+      src -> req.method = 'POST' "setMethod";
+    } "SetRequest";
+}
+
+group PopulatePatient(source src: QuestionnaireResponse, source patientItem, target pat : Patient) {
+  patientItem.item as gender where (linkId = 'gender') -> pat.gender = (%gender.answer.value.first().code) "SetGender";
+  patientItem.item as dob where (linkId = 'dob') -> pat.birthDate = (%dob.answer.value) "SetBirthDate";
+  
+  // name
+  patientItem.item as name where (linkId = 'name') -> pat.name as tgtName then {
+    name -> tgtName.text = (%name.item.where(linkId='given' or linkId='family').answer.value.join(' ')) "SetNameText";
+    name.item as family where (linkId = 'family') -> tgtName.family = (%family.answer.value) "SetFamily";
+    name.item as given where (linkId = 'given') then { 
+      given.answer as answer -> tgtName.given = (%answer.value) "AnswerValue";
+    }  "SetGiven";
+  } "SetName";
+  
+  // identifier
+  patientItem.item as itemIdentifier where (linkId = 'ihi') -> pat.identifier as tgtIdentifier then {
+    itemIdentifier -> tgtIdentifier.type as t, t.text = 'National Identifier (IHI)' "SetIdentifierType";
+    itemIdentifier -> tgtIdentifier.system = 'http://example.org/nhio' "SetIdentifierSystem";
+    itemIdentifier -> tgtIdentifier.value = (%itemIdentifier.answer.value) "SetIdentifierValue";
+  } "SetIdentifier";
+  
+  // telecom
+  patientItem.item as itemMobile where (linkId = 'mobile-phone') -> pat.telecom as t, t.system='phone', t.value = (%itemMobile.answer.value), t.use = 'mobile' "SetTelecom";
+}
+
+group PopulateRelatedPerson(source src: QuestionnaireResponse, source rpItem, target rp : RelatedPerson, source patientFullUrl) {
+  rpItem -> rp.patient as p, p.reference = (%patientFullUrl) "SetPatientRef";
+  rpItem.item as name where (linkId = 'contact-name') -> rp.name as n, n.text = (%name.answer.value) "SetName";
+  rpItem.item as rel where (linkId = 'relationship') -> rp.relationship as r, r.coding = (%rel.answer.value) "SetRelationship";
+  rpItem.item as phone where (linkId = 'phone') -> rp.telecom as t, t.system = 'phone', t.value = (%phone.answer.value), t.use = 'mobile' "SetPhone";
+}
+
+group PopulateObservation(source src : QuestionnaireResponse, source complicationItem, target tgt : Observation, source coding : CodeableConcept, source patientFullUrl) {
+  src -> tgt.code = (%coding) "SetObservationCode";
+  src -> tgt.status = 'final' "SetStatus";
+  // src.subject as s -> tgt.subject = s; // not using the the subject, as this is intended to be created from the data instead (as is outgoing referral)
+  src.subject as s -> tgt.subject as p, p.reference = (%patientFullUrl) "SetSubjectRef";
+  src.authored as s -> tgt.issued = s "SetAuthored";
+  src.authored as s -> tgt.effective = s "SetEffective";
+  src.author as s -> tgt.performer = s;
+  src.id -> tgt.derivedFrom as df, df.reference = ('QuestionnaireResponse/' & src.id) "SetDerivedFrom";
+}

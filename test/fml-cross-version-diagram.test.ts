@@ -298,6 +298,7 @@ describe("FML type restrictions and dependent target inference", () => {
     expect(svg).toContain("Source property Condition.onset [0..1] (R5)");
     expect(svg).toContain("Compatible types: Age");
     expect(svg).toContain("Other possible types: Period | Range | dateTime | string");
+    expect(svg).toContain("Type filter: Age");
     expect(svg).not.toContain("condition-definitions.html#Condition.onset_x_");
   });
 
@@ -379,6 +380,129 @@ describe("FHIRPath expression connections", () => {
     expect(svg).toContain('class="sm-connector-line sm-expression-connector-line"');
     expect(svg).toContain('stroke-dasharray="2 4"');
     expect(svg).toContain("FHIRPath variable reference");
+  });
+
+  test("draws a dotted connector from a referenced root parameter to the target", () => {
+    const text = [
+      "uses 'http://hl7.org/fhir/5.0/StructureDefinition/QuestionnaireResponse' alias QuestionnaireResponse as source",
+      "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Observation' alias Observation as target",
+      "group Main(source src : QuestionnaireResponse, target tgt : Observation) {",
+      "    src.id -> tgt.derivedFrom as df, df.reference = ('QuestionnaireResponse/' & src.id);",
+      "}",
+    ].join("\n");
+    const fml = parseFML(text) as FmlStructureMap;
+    const diagram = extractFmlStructureMapDiagram(fml, lookupR5, true, lookupForVersion);
+    const rootReference = diagram.groups[0].sourceTypes[0].properties.find(property => property.path === ".");
+    const svg = generateFmlInstanceDiagramSvg(fml, lookupR5, true, lookupForVersion);
+
+    expect(rootReference?.expressionConnectionIds).toHaveLength(1);
+    expect(svg).toContain('class="sm-expression-connector"');
+    expect(svg).toContain("FHIRPath variable reference");
+  });
+
+  test("draws dotted connectors from every root parameter referenced by an expression", () => {
+    const text = [
+      "group Main(source left, source right, target tgt) {",
+      "    left -> tgt.id = (left.id & right.id);",
+      "}",
+    ].join("\n");
+    const fml = parseFML(text) as FmlStructureMap;
+    const diagram = extractFmlStructureMapDiagram(fml, lookupR5, true, lookupForVersion);
+
+    for (const source of diagram.groups[0].sourceTypes) {
+      expect(source.properties.find(property => property.path === ".")?.expressionConnectionIds).toHaveLength(1);
+    }
+  });
+
+  test("connects a computed source consumed through a dependent group expression", () => {
+    const text = [
+      "uses 'http://hl7.org/fhir/5.0/StructureDefinition/QuestionnaireResponse' alias QuestionnaireResponse as source",
+      "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Observation' alias Observation as target",
+      "group Main(source src : QuestionnaireResponse, target tgt : Observation) {",
+      "    src -> cc('http://example.org/sdh/demo/CodeSystem/cc-screening-codes', 'sigmoidoscopy-complication') as coding",
+      "        then PopulateObservation(src, tgt, coding);",
+      "}",
+      "group PopulateObservation(source src : QuestionnaireResponse, target tgt : Observation, source coding : CodeableConcept) {",
+      "    src -> tgt.code = (%coding);",
+      "}",
+    ].join("\n");
+    const fml = parseFML(text) as FmlStructureMap;
+    const diagram = extractFmlStructureMapDiagram(fml, lookupR5, true, lookupForVersion);
+    const main = diagram.groups.find(group => group.name === "Main")!;
+    const computed = main.sourceTypes.find(type => type.paramName === "coding")!;
+    const code = main.targetTypes[0].properties.find(property => property.path === "code")!;
+    const svg = generateFmlInstanceDiagramSvg(fml, lookupR5, true, lookupForVersion);
+
+    expect(code.additionalConnectionIds).toContain(computed.properties[0].connectionId);
+    expect(code.expressionConnectionIds).toContain(computed.properties[0].connectionId);
+    expect(svg).toContain('class="sm-expression-connector"');
+    expect(svg).toContain("FHIRPath variable reference");
+  });
+});
+
+describe("diagram presentation details", () => {
+  test("abbreviates long computed-source namespaces and keeps the full expression in the tooltip", () => {
+    const text = [
+      "uses 'http://hl7.org/fhir/5.0/StructureDefinition/QuestionnaireResponse' alias QuestionnaireResponse as source",
+      "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Observation' alias Observation as target",
+      "group Main(source src : QuestionnaireResponse, target tgt : Observation) {",
+      "    src -> cc('http://example.org/sdh/demo/CodeSystem/cc-screening-codes', 'sigmoidoscopy-complication') as coding, tgt.code = coding;",
+      "}",
+    ].join("\n");
+    const fml = parseFML(text) as FmlStructureMap;
+    const svg = generateFmlInstanceDiagramSvg(fml, lookupR5, true, lookupForVersion);
+
+    expect(svg).toContain("cc(..., &apos;sigmoidoscopy-complication&apos;)");
+    expect(svg).toContain("cc(&apos;http://example.org/sdh/demo/CodeSystem/cc-screening-codes&apos;, &apos;sigmoidoscopy-complication&apos;)");
+  });
+
+  test("shows source filters and target fixed values in full-row tooltips", () => {
+    const text = [
+      "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Observation' alias Observation as source",
+      "group Main(source src : Observation, target tgt : Observation) {",
+      "    src.status as status where (status = 'final') -> tgt.status = 'fixed';",
+      "}",
+    ].join("\n");
+    const fml = parseFML(text) as FmlStructureMap;
+    const svg = generateFmlInstanceDiagramSvg(fml, lookupR5, true, lookupForVersion);
+
+    expect(svg).toContain("Where: status = &apos;final&apos;");
+    expect(svg).toContain("Fixed value: &quot;fixed&quot;");
+  });
+
+  test("keeps unused source and target parameters visible", () => {
+    const text = [
+      "group Main(source src, source unusedSource, target tgt, target unusedTarget) {",
+      "    src -> tgt;",
+      "}",
+    ].join("\n");
+    const fml = parseFML(text) as FmlStructureMap;
+    const diagram = extractFmlStructureMapDiagram(fml, lookupR5, true, lookupForVersion);
+    const svg = generateFmlInstanceDiagramSvg(fml, lookupR5, true, lookupForVersion);
+
+    expect(diagram.groups[0].sourceTypes.map(type => type.paramName)).toEqual(["src", "unusedSource"]);
+    expect(diagram.groups[0].targetTypes.map(type => type.paramName)).toEqual(["tgt", "unusedTarget"]);
+    expect(svg).toContain("unusedSource");
+    expect(svg).toContain("unusedTarget");
+  });
+
+  test("recursively blends extended group rules into the derived group", () => {
+    const text = [
+      "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias Patient as source",
+      "group Base(source baseSrc : Patient, target baseTgt : Patient) { baseSrc.id -> baseTgt.id; }",
+      "group Middle(source middleSrc : Patient, target middleTgt : Patient) extends Base { middleSrc.active -> middleTgt.active; }",
+      "group Derived(source src : Patient, target tgt : Patient) extends Middle { src.gender -> tgt.gender; }",
+    ].join("\n");
+    const fml = parseFML(text) as FmlStructureMap;
+    const diagram = extractFmlStructureMapDiagram(fml, lookupR5, true, lookupForVersion);
+    const derived = diagram.groups.find(group => group.name === "Derived");
+
+    expect(derived?.sourceTypes[0].properties.map(property => property.path)).toEqual(
+      expect.arrayContaining(["id", "active", "gender"]),
+    );
+    expect(derived?.targetTypes[0].properties.map(property => property.path)).toEqual(
+      expect.arrayContaining(["id", "active", "gender"]),
+    );
   });
 });
 
