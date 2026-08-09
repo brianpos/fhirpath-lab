@@ -1,6 +1,7 @@
 import {
     CompiledStructureMap,
     FmlDefaultGroup,
+    FmlDefaultGroupUsage,
     FmlGroupSignature,
     FmlSource,
     FmlGroupSymbols,
@@ -24,13 +25,14 @@ import {FmlGroupSymbolCollector} from "./FmlGroupSymbolCollector";
 import {FmlPropertyUsageCollector} from "./FmlPropertyUsageCollector";
 import {Stage1FmlValidatorEngine} from "./Stage1FmlValidatorEngine";
 import {applyFmlModelConfiguration} from "./FmlModelConfiguration";
-import {resolveDefaultGroups, resolveGroupSignatures} from "./FmlTransformValidator";
+import {FmlTransformValidator, resolveDefaultGroups, resolveGroupSignatures} from "./FmlTransformValidator";
 
 export class FmlValidatorApi {
     public constructor(
         private readonly engine: FmlValidatorEngine = new Stage1FmlValidatorEngine(),
         private readonly groupSymbolCollector = new FmlGroupSymbolCollector(),
         private readonly propertyUsageCollector = new FmlPropertyUsageCollector(),
+        private readonly transformValidator = new FmlTransformValidator(),
     ) {
     }
 
@@ -73,6 +75,24 @@ export class FmlValidatorApi {
             source.customTypeModels,
         );
         return resolveDefaultGroups(parsed.groups, analysis);
+    }
+
+    public getDefaultGroupUsages(source: FmlSource): FmlDefaultGroupUsage[] {
+        const parsed = parseFML(source.sourceText);
+        if (isFmlParseError(parsed)) return [];
+        applyFmlModelConfiguration(parsed, source);
+        const analysis = this.propertyUsageCollector.analyzeModel(
+            parsed,
+            source.sourceText,
+            source.customTypeModels,
+        );
+        return this.transformValidator.getDefaultGroupUsages(
+            parsed,
+            analysis,
+            source.sourceText,
+            source.customTypeModels,
+            source.importedDefaultGroups,
+        );
     }
 
     public getGroupSignatures(source: FmlSource): FmlGroupSignature[] {

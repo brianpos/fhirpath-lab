@@ -1,11 +1,16 @@
-import {OutputChannel, ProgressLocation, window} from 'vscode';
+import {OutputChannel, Progress, ProgressLocation, window} from 'vscode';
+
+export type NotificationProgress = Progress<{message?: string; increment?: number}>;
 
 export function logData(data: string, logger: OutputChannel): void {
   const timestamp = new Date().toLocaleString("fr-FR");
   logger.appendLine(`${timestamp} : ${data}`);
 }
 
-export function executeWithProgress<T>(message: string, task: () => Promise<T>): Promise<T> {
+export function executeWithProgress<T>(
+  message: string,
+  task: (progress: NotificationProgress) => Promise<T>,
+): Promise<T> {
   return Promise.resolve(window.withProgress(
       {
         location: ProgressLocation.Notification,
@@ -13,7 +18,7 @@ export function executeWithProgress<T>(message: string, task: () => Promise<T>):
       },
       (progress) => {
         progress.report({message});
-        return task();
+        return task(progress);
       }
   ));
 }

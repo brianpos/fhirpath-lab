@@ -2063,6 +2063,7 @@ interface PropertyMarker {
 const FILTER_ICON_SPACE = 18;
 const LOGICAL_MODEL_ICON_SPACE = 18;
 const RULE_DIVIDER_HEIGHT = 16;
+const UNNAMED_RULE_DIVIDER_HEIGHT = 1;
 
 function typeBoxLabel(type: DiagramType): string {
   const displayTypeName = type.logicalModelTypeName ?? type.typeName;
@@ -2138,23 +2139,27 @@ function calcTypeBoxSize(type: DiagramType): {
   const propCount = Math.max(propDisplay.length, 1);
   // Computed-source boxes suppress rule dividers in the renderer, so
   // their height calculation must skip them too.
-  const dividerCount = type.isComputed ? 0 : countRuleDividers(propDisplay);
+  const dividerHeight = type.isComputed ? 0 : totalRuleDividerHeight(propDisplay);
   const height =
-    TYPE_HEADER_HEIGHT + propCount * PROP_LINE_HEIGHT + dividerCount * RULE_DIVIDER_HEIGHT + TYPE_BOX_PADDING_Y;
+    TYPE_HEADER_HEIGHT + propCount * PROP_LINE_HEIGHT + dividerHeight + TYPE_BOX_PADDING_Y;
 
   return { width, height, propDisplay };
 }
 
-/** Count the number of rule headers in a property display list (first + transitions) */
-function countRuleDividers(propDisplay: PropertyDisplay[]): number {
+/** Sum named header bars and compact unnamed dividers (first + transitions). */
+function totalRuleDividerHeight(propDisplay: PropertyDisplay[]): number {
   if (propDisplay.length === 0) return 0;
-  let count = 1; // first rule header
+  let height = ruleDividerHeight(propDisplay[0]);
   for (let i = 1; i < propDisplay.length; i++) {
     if (propDisplay[i].ruleId !== propDisplay[i - 1].ruleId) {
-      count++;
+      height += ruleDividerHeight(propDisplay[i]);
     }
   }
-  return count;
+  return height;
+}
+
+function ruleDividerHeight(property: PropertyDisplay): number {
+  return property.ruleName ? RULE_DIVIDER_HEIGHT : UNNAMED_RULE_DIVIDER_HEIGHT;
 }
 
 // ===== Sankey Ribbon Helpers =====
@@ -2576,17 +2581,22 @@ function renderInstanceDiagramSvg(data: StructureMapDiagram): string {
           // already names the variable so the divider would just be noise).
           if (!isComputed && (pi === 0 || pd.ruleId !== tb.propDisplay[pi - 1].ruleId)) {
             const divY = propY - PROP_LINE_HEIGHT + 4;
+            const dividerHeight = ruleDividerHeight(pd);
             const rulePos = pd.ruleFmlPosition;
             const rulePosAttrs = rulePos ? ` data-pos-start="${rulePos.startIndex}" data-pos-end="${rulePos.endIndex}"` : "";
-            svg.push(
-              `<rect x="${tb.x + 1}" y="${divY}" width="${tb.width - 2}" height="${RULE_DIVIDER_HEIGHT}" fill="#e9ecef"${rulePosAttrs} />`
-            );
             if (pd.ruleName) {
               svg.push(
-                `<text x="${tb.x + 6}" y="${divY + RULE_DIVIDER_HEIGHT - 4}" class="sm-rule-header"${rulePosAttrs}>${escapeXml(pd.ruleName)}</text>`
+                `<rect x="${tb.x + 1}" y="${divY}" width="${tb.width - 2}" height="${dividerHeight}" fill="#e9ecef"${rulePosAttrs} />`
+              );
+              svg.push(
+                `<text x="${tb.x + 6}" y="${divY + dividerHeight - 4}" class="sm-rule-header"${rulePosAttrs}>${escapeXml(pd.ruleName)}</text>`
+              );
+            } else {
+              svg.push(
+                `<line x1="${tb.x + 1}" y1="${divY + 0.5}" x2="${tb.x + tb.width - 1}" y2="${divY + 0.5}" class="sm-rule-divider-unnamed" stroke="#ced4da" stroke-width="1"${rulePosAttrs} />`
               );
             }
-            propY += RULE_DIVIDER_HEIGHT;
+            propY += dividerHeight;
           }
 
           const rowConnectionIds = [

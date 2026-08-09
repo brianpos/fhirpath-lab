@@ -18,6 +18,26 @@ test("maps validator errors to bounded editor-neutral diagnostics", async () => 
     assert.ok(result.diagnostics[0].range.end.character <= 72);
 });
 
+test("reports undeclared rule context variables on the context token", async () => {
+    const result = await service.validateDocument({
+        uri: "file:///undefined-context.fml",
+        text: [
+            "uses 'http://hl7.org/fhir/5.0/StructureDefinition/AllergyIntolerance' alias Allergy as source",
+            "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Observation' alias Observation as target",
+            "group AllergyMap(source src : Allergy, target tgt : Observation) {",
+            "    s.id -> tgt.observation_id;",
+            "}",
+        ].join("\n"),
+    });
+
+    assert.equal(result.errorCount, 1);
+    assert.match(result.diagnostics[0].message, /Source context variable 's'.*not defined/);
+    assert.deepEqual(result.diagnostics[0].range, {
+        start: {line: 3, character: 4},
+        end: {line: 3, character: 5},
+    });
+});
+
 test("keeps unknown transforms as successful warning diagnostics", async () => {
     const result = await service.validateDocument({
         uri: "file:///custom.fml",
@@ -980,6 +1000,82 @@ group Main(source src : Patient, target tgt : Observation) {
     assert.match(withoutImport.diagnostics[0].message, /not compatible/);
     assert.equal(withImport.errorCount, 0);
     assert.equal(withImport.warningCount, 0);
+});
+
+test("shows local and imported default groups on simple copy arrows", () => {
+    const mapping = `
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias Patient as source
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Observation' alias Observation as target
+group Main(source src : Patient, target tgt : Observation) {
+    src.active -> tgt.status;
+}
+`;
+    const localText = `${mapping}
+group BooleanToCode(source src : boolean, target tgt : code) <<types>> {
+}
+`;
+    const hoverAtArrow = (text: string, importedDefaultGroups: Parameters<FmlLanguageService["getHover"]>[2] = []) => {
+        const offset = text.indexOf("->") + 1;
+        return service.getHover({
+            uri: "file:///default-group-arrow.fml",
+            text,
+            position: positionAt(text, offset),
+        }, [], importedDefaultGroups);
+    };
+    const importedDefaultGroups = [{
+        groupName: "ImportedBooleanToCode",
+        typeMode: "types" as const,
+        sourceTypeName: "boolean",
+        targetTypeName: "code",
+        sourceFhirVersion: "R5" as const,
+        targetFhirVersion: "R5" as const,
+    }];
+    const localHover = hoverAtArrow(localText);
+    const importedHover = hoverAtArrow(mapping, importedDefaultGroups);
+
+    assert.ok(localHover);
+    assert.match(localHover.markdown, /Default mapping group/);
+    assert.match(localHover.markdown, /`BooleanToCode` \(`types`\): `boolean` -> `code`/);
+    assert.ok(importedHover);
+    assert.match(importedHover.markdown, /`ImportedBooleanToCode` \(`types`\): `boolean` -> `code`/);
+});
+
+test("shows required default groups beneath batch property types", () => {
+    const sourceCanonical = "http://example.org/StructureDefinition/SourceRow";
+    const targetCanonical = "http://example.org/StructureDefinition/TargetRow";
+    const batchService = new FmlLanguageService();
+    batchService.configureModels("R5", {
+        [sourceCanonical]: "SourceRow",
+        [targetCanonical]: "TargetRow",
+    }, {
+        SourceRow: {
+            TypeName: "SourceRow",
+            Elements: [{ElementName: "action", Type: [{TypeName: "string"}]}],
+        },
+        TargetRow: {
+            TypeName: "TargetRow",
+            Elements: [{ElementName: "action", Type: [{TypeName: "CodeableConcept"}]}],
+        },
+    });
+    const text = `
+uses '${sourceCanonical}' alias SourceRow as source
+uses '${targetCanonical}' alias TargetRow as target
+group Main(source src : SourceRow, target tgt : TargetRow) {
+    src -> tgt: action;
+}
+group StringToConcept(source src : string, target tgt : CodeableConcept) <<types>> {
+}
+`;
+    const offset = text.indexOf("action") + 1;
+    const hover = batchService.getHover({
+        uri: "file:///batch-default-group.fml",
+        text,
+        position: positionAt(text, offset),
+    });
+
+    assert.ok(hover);
+    assert.match(hover.markdown, /- Type: `string`/);
+    assert.match(hover.markdown, /Default mapping group: `StringToConcept` \(`types`, `string` -> `CodeableConcept`\)/);
 });
 
 test("does not treat multi-target variable rules as simple identities", async () => {

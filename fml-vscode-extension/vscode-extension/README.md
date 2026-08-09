@@ -34,7 +34,7 @@ Use the Command Palette or editor context menu to access:
 
 ## FML validation
 
-Run **Validate FML** from the command palette or the editor context menu while an FML document is active.
+Run **Validate FML** from the command palette or the editor context menu while an FML document is active. Validation waits for workspace indexing to complete so imported maps and groups are available. From the Explorer context menu, run it on an `.fml` file or folder; folders are scanned recursively, files are loaded without opening editor tabs, their diagnostics remain in the **Problems** panel after documents close, the notification reports that validation is paused while indexing and then shows the current file and `N/total` progress, and validation totals are reported across all discovered FML files.
 
 The extension starts the bundled FML language server and synchronizes open documents incrementally. After a short debounce, the editor-independent language service parses the current text and validates standard transform parameters without requiring the file to be saved.
 

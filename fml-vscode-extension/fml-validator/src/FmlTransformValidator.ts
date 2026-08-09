@@ -18,10 +18,12 @@ import {lookupByTypeName as lookupByTypeNameR5} from "../../../helpers/models/ge
 import {lookupByTypeName as lookupByTypeNameR6} from "../../../helpers/models/generated/r6";
 import type {
     FmlDefaultGroup,
+    FmlDefaultGroupUsage,
     FmlDiagnostic,
     FmlGroupSignature,
     FmlPropertyAnalysis,
     FmlPropertyUsage,
+    FmlSourceSpan,
 } from "./contracts";
 
 interface VariableDescriptor {
@@ -92,6 +94,91 @@ export function resolveGroupSignatures(
 }
 
 export class FmlTransformValidator {
+    public getDefaultGroupUsages(
+        model: FmlStructureMap,
+        propertyAnalysis: FmlPropertyAnalysis,
+        sourceText: string,
+        customTypeModels: Record<string, TypeModel> = {},
+        importedDefaultGroups: FmlDefaultGroup[] = [],
+    ): FmlDefaultGroupUsage[] {
+        const defaultGroups = [
+            ...resolveDefaultGroups(model.groups, propertyAnalysis),
+            ...importedDefaultGroups,
+        ];
+        const usages: FmlDefaultGroupUsage[] = [];
+        const collect = (
+            groupName: string,
+            rules: Rule[],
+            inheritedContextVariables: Set<string>,
+        ): void => {
+            for (const rule of rules) {
+                const contextVariables = new Set(inheritedContextVariables);
+                for (const source of rule.sources) {
+                    if (source.variable) {
+                        contextVariables.add(this.normalizeVariableName(source.variable));
+                    }
+                }
+                if (rule.identityFields?.length) {
+                    for (const field of rule.identityFields) {
+                        const sourceUsage = this.findUsage(groupName, "source", field.position, propertyAnalysis.usages);
+                        const targetUsage = this.findUsage(groupName, "target", field.position, propertyAnalysis.usages);
+                        if (!sourceUsage || !targetUsage) continue;
+                        usages.push(...this.createDefaultGroupUsages(
+                            sourceUsage,
+                            targetUsage,
+                            defaultGroups,
+                            customTypeModels,
+                            "batch",
+                            sourceUsage.span,
+                        ));
+                    }
+                } else if (this.isSimpleIdentityRule(rule, contextVariables)) {
+                    const sourceUsage = this.findUsage(
+                        groupName,
+                        "source",
+                        rule.sources[0].position,
+                        propertyAnalysis.usages,
+                    );
+                    const targetUsage = this.findUsage(
+                        groupName,
+                        "target",
+                        rule.targets[0].position,
+                        propertyAnalysis.usages,
+                    );
+                    const arrowSpan = this.findArrowSpan(
+                        sourceText,
+                        rule.sources[0].position,
+                        rule.targets[0].position,
+                    );
+                    if (sourceUsage && targetUsage && arrowSpan) {
+                        usages.push(...this.createDefaultGroupUsages(
+                            sourceUsage,
+                            targetUsage,
+                            defaultGroups,
+                            customTypeModels,
+                            "simple",
+                            arrowSpan,
+                        ));
+                    }
+                }
+                for (const target of rule.targets) {
+                    if (target.variable) {
+                        contextVariables.add(this.normalizeVariableName(target.variable));
+                    }
+                }
+                collect(groupName, rule.dependent?.rules ?? [], contextVariables);
+            }
+        };
+        for (const group of model.groups) {
+            collect(
+                group.name,
+                group.rules,
+                new Set(group.parameters.map(parameter => this.normalizeVariableName(parameter.name))),
+            );
+        }
+        return usages;
+    }
+
     public validate(
         model: FmlStructureMap,
         propertyAnalysis: FmlPropertyAnalysis,
@@ -111,6 +198,9 @@ export class FmlTransformValidator {
         ];
         for (const group of model.groups) {
             const variables = this.createVariables(group, propertyAnalysis);
+            const contextVariables = new Set(
+                group.parameters.map(parameter => this.normalizeVariableName(parameter.name)),
+            );
             for (const constant of model.constants) {
                 variables.set(this.normalizeVariableName(constant.name), {typeNames: [], isCollection: false});
             }
@@ -118,13 +208,13 @@ export class FmlTransformValidator {
                 group.rules,
                 group.name,
                 variables,
+                contextVariables,
                 propertyAnalysis,
                 groupSignatures,
                 defaultGroups,
                 sourceName,
                 customTypeModels,
                 diagnostics,
-                false,
             );
         }
         return diagnostics;
@@ -134,25 +224,36 @@ export class FmlTransformValidator {
         rules: Rule[],
         groupName: string,
         inheritedVariables: Map<string, VariableDescriptor>,
+        inheritedContextVariables: Set<string>,
         propertyAnalysis: FmlPropertyAnalysis,
         groupSignatures: FmlGroupSignature[],
         defaultGroups: FmlDefaultGroup[],
         sourceName: string | undefined,
         customTypeModels: Record<string, TypeModel>,
         diagnostics: FmlDiagnostic[],
-        insideDependency: boolean,
     ): void {
         for (const rule of rules) {
             const variables = new Map(inheritedVariables);
+            const contextVariables = new Set(inheritedContextVariables);
             for (const source of rule.sources) {
+                this.validateRuleContext(
+                    "Source",
+                    source.context,
+                    source.position,
+                    contextVariables,
+                    sourceName,
+                    diagnostics,
+                );
                 if (!source.variable) continue;
                 const usage = this.findUsage(groupName, "source", source.position, propertyAnalysis.usages);
+                const variableName = this.normalizeVariableName(source.variable);
                 variables.set(
-                    this.normalizeVariableName(source.variable),
+                    variableName,
                     this.descriptorFromUsage(usage)
                         ?? variables.get(this.normalizeVariableName(source.context))
                         ?? {typeNames: [], isCollection: false},
                 );
+                contextVariables.add(variableName);
             }
 
             this.validateIdentityAssignments(
@@ -163,10 +264,20 @@ export class FmlTransformValidator {
                 sourceName,
                 customTypeModels,
                 diagnostics,
-                insideDependency,
+                contextVariables,
             );
 
             for (const target of rule.targets) {
+                if (target.context) {
+                    this.validateRuleContext(
+                        "Target",
+                        target.context,
+                        target.position,
+                        contextVariables,
+                        sourceName,
+                        diagnostics,
+                    );
+                }
                 const usage = this.findUsage(groupName, "target", target.position, propertyAnalysis.usages);
                 const resultTypes = target.transform
                     ? this.validateTransform(
@@ -180,8 +291,9 @@ export class FmlTransformValidator {
                     )
                     : [];
                 if (target.variable) {
+                    const variableName = this.normalizeVariableName(target.variable);
                     variables.set(
-                        this.normalizeVariableName(target.variable),
+                        variableName,
                         resultTypes.length > 0
                             ? {
                                 typeNames: resultTypes,
@@ -191,6 +303,7 @@ export class FmlTransformValidator {
                             : this.descriptorFromUsage(usage)
                                 ?? {typeNames: [], isCollection: false},
                     );
+                    contextVariables.add(variableName);
                 }
             }
 
@@ -209,15 +322,33 @@ export class FmlTransformValidator {
                 rule.dependent?.rules ?? [],
                 groupName,
                 variables,
+                contextVariables,
                 propertyAnalysis,
                 groupSignatures,
                 defaultGroups,
                 sourceName,
                 customTypeModels,
                 diagnostics,
-                true,
             );
         }
+    }
+
+    private validateRuleContext(
+        role: "Source" | "Target",
+        context: string,
+        position: SourcePosition | undefined,
+        contextVariables: Set<string>,
+        sourceName: string | undefined,
+        diagnostics: FmlDiagnostic[],
+    ): void {
+        const contextName = this.normalizeVariableName(context);
+        if (contextVariables.has(contextName)) return;
+        diagnostics.push(this.diagnostic(
+            `${role} context variable '${contextName}' is not defined in the current rule scope.`,
+            position,
+            contextName,
+            sourceName,
+        ));
     }
 
     private validateIdentityAssignments(
@@ -228,7 +359,7 @@ export class FmlTransformValidator {
         sourceName: string | undefined,
         customTypeModels: Record<string, TypeModel>,
         diagnostics: FmlDiagnostic[],
-        insideDependency: boolean,
+        contextVariables: Set<string>,
     ): void {
         if (rule.identityFields?.length) {
             for (const field of rule.identityFields) {
@@ -243,7 +374,7 @@ export class FmlTransformValidator {
             }
             return;
         }
-        if (insideDependency || !this.isSimpleIdentityRule(rule, groupName, propertyAnalysis)) return;
+        if (!this.isSimpleIdentityRule(rule, contextVariables)) return;
         const sourceUsage = this.findUsage(
             groupName,
             "source",
@@ -262,25 +393,16 @@ export class FmlTransformValidator {
 
     private isSimpleIdentityRule(
         rule: Rule,
-        groupName: string,
-        propertyAnalysis: FmlPropertyAnalysis,
+        contextVariables: Set<string>,
     ): boolean {
         if (rule.sources.length !== 1 || rule.targets.length !== 1 || rule.dependent) return false;
         const source = rule.sources[0];
         const target = rule.targets[0];
-        const sourceIsGroupInput = propertyAnalysis.groupInputs.some(input => {
-            return input.groupName === groupName
-                && input.mode === "source"
-                && this.normalizeVariableName(input.inputName) === this.normalizeVariableName(source.context);
-        });
-        const targetIsGroupInput = propertyAnalysis.groupInputs.some(input => {
-            return input.groupName === groupName
-                && input.mode === "target"
-                && !!target.context
-                && this.normalizeVariableName(input.inputName) === this.normalizeVariableName(target.context);
-        });
-        return sourceIsGroupInput
-            && targetIsGroupInput
+        const sourceContextExists = contextVariables.has(this.normalizeVariableName(source.context));
+        const targetContextExists = !!target.context
+            && contextVariables.has(this.normalizeVariableName(target.context));
+        return sourceContextExists
+            && targetContextExists
             && !!source.element
             && source.type === undefined
             && source.min === undefined
@@ -575,13 +697,108 @@ export class FmlTransformValidator {
         targetFhirVersion: FhirVersion | undefined,
         isUnfixedChoice: boolean,
     ): boolean {
-        return groups.some(group => {
+        return !!this.findDefaultGroup(
+            groups,
+            sourceTypeName,
+            targetTypeName,
+            sourceFhirVersion,
+            targetFhirVersion,
+            isUnfixedChoice,
+        );
+    }
+
+    private findDefaultGroup(
+        groups: FmlDefaultGroup[],
+        sourceTypeName: string,
+        targetTypeName: string,
+        sourceFhirVersion: FhirVersion | undefined,
+        targetFhirVersion: FhirVersion | undefined,
+        isUnfixedChoice: boolean,
+    ): FmlDefaultGroup | undefined {
+        return groups.find(group => {
             if (isUnfixedChoice && group.typeMode !== "type+") return false;
             return this.typesMatch(group.sourceTypeName, sourceTypeName)
                 && this.typesMatch(group.targetTypeName, targetTypeName)
                 && this.versionsMatch(group.sourceFhirVersion, sourceFhirVersion)
                 && this.versionsMatch(group.targetFhirVersion, targetFhirVersion);
         });
+    }
+
+    private createDefaultGroupUsages(
+        sourceUsage: FmlPropertyUsage,
+        targetUsage: FmlPropertyUsage,
+        defaultGroups: FmlDefaultGroup[],
+        customTypeModels: Record<string, TypeModel>,
+        kind: FmlDefaultGroupUsage["kind"],
+        span: FmlSourceSpan,
+    ): FmlDefaultGroupUsage[] {
+        if (sourceUsage.unknownElement || targetUsage.unknownElement) return [];
+        const sourceTypes = this.usageTypeNames(sourceUsage);
+        const targetTypes = this.usageTypeNames(targetUsage);
+        if (sourceTypes.length === 0 || targetTypes.length === 0) return [];
+        const lookup = this.composeLookup(
+            customTypeModels,
+            lookups[targetUsage.fhirVersion ?? "R4B"] ?? lookupByTypeNameR4B,
+        );
+        const matches: FmlDefaultGroup[] = [];
+        for (const sourceType of sourceTypes) {
+            let accepted = false;
+            for (const targetType of targetTypes) {
+                const versionMismatch = !!sourceUsage.fhirVersion
+                    && !!targetUsage.fhirVersion
+                    && sourceUsage.fhirVersion !== targetUsage.fhirVersion;
+                const versionIndependent = this.isSystemType(sourceType) && this.isSystemType(targetType);
+                if ((!versionMismatch || versionIndependent)
+                    && this.isAssignableTo(sourceType, targetType, lookup)) {
+                    accepted = true;
+                    break;
+                }
+                const match = this.findDefaultGroup(
+                    defaultGroups,
+                    sourceType,
+                    targetType,
+                    sourceUsage.fhirVersion,
+                    targetUsage.fhirVersion,
+                    this.isUnfixedChoice(targetUsage),
+                );
+                if (match) {
+                    matches.push(match);
+                    accepted = true;
+                    break;
+                }
+            }
+            if (!accepted) return [];
+        }
+        return [...new Map(matches.map(group => [group.groupName, group])).values()].map(group => ({
+            defaultGroupName: group.groupName,
+            typeMode: group.typeMode,
+            kind,
+            sourceTypeName: group.sourceTypeName,
+            targetTypeName: group.targetTypeName,
+            span,
+        }));
+    }
+
+    private findArrowSpan(
+        sourceText: string,
+        sourcePosition: SourcePosition | undefined,
+        targetPosition: SourcePosition | undefined,
+    ): FmlSourceSpan | undefined {
+        if (!sourcePosition || !targetPosition) return undefined;
+        const arrowIndex = sourceText.indexOf("->", sourcePosition.endIndex);
+        if (arrowIndex < 0 || arrowIndex >= targetPosition.startIndex) return undefined;
+        return {
+            start: this.positionAt(sourceText, arrowIndex),
+            end: this.positionAt(sourceText, arrowIndex + 2),
+        };
+    }
+
+    private positionAt(sourceText: string, offset: number): FmlSourceSpan["start"] {
+        const prefix = sourceText.slice(0, offset);
+        return {
+            line: prefix.split(/\r?\n/).length,
+            column: offset - (prefix.lastIndexOf("\n") + 1),
+        };
     }
 
     private typesMatch(left: string, right: string): boolean {

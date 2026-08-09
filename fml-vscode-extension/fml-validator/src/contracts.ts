@@ -33,6 +33,15 @@ export interface FmlDefaultGroup {
     targetFhirVersion?: import("../../../helpers/fml_models").FhirVersion;
 }
 
+export interface FmlDefaultGroupUsage {
+    defaultGroupName: string;
+    typeMode: "types" | "type+";
+    kind: "simple" | "batch";
+    sourceTypeName: string;
+    targetTypeName: string;
+    span: FmlSourceSpan;
+}
+
 export interface FmlGroupSignature {
     groupName: string;
     parameters: FmlGroupParameterSignature[];

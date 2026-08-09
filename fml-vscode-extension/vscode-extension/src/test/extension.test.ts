@@ -16,6 +16,10 @@ import {
     resolveWorkspaceProfileTypes,
 } from "../SushiConfigWatcher";
 import {UiConstants} from "../constants/UiConstants";
+import {
+    waitForWorkspaceIndexBeforeValidation,
+    type FmlValidationBatchResult,
+} from "../extension";
 
 suite("FHIR Mapping Language Tools Extension", () => {
     suiteSetup(async () => {
@@ -461,6 +465,112 @@ dependencies:
         assert.equal(result.warningCount, 0);
     });
 
+    test("Explorer validation should recursively validate FML files and retain Problems after close", async () => {
+        const directory = await fs.mkdtemp(path.join(os.tmpdir(), "fml-validation-"));
+        const nestedDirectory = path.join(directory, "nested");
+        await fs.mkdir(nestedDirectory);
+        await fs.writeFile(
+            path.join(directory, "valid.fml"),
+            "group Valid(source src, target tgt) { src -> tgt.id = uuid(); }",
+            "utf8",
+        );
+        await fs.writeFile(
+            path.join(nestedDirectory, "invalid.fml"),
+            "group Invalid(source src, target tgt) { src -> tgt.id = uuid('bad'); }",
+            "utf8",
+        );
+        await fs.writeFile(path.join(nestedDirectory, "ignored.txt"), "not FML", "utf8");
+        const invalidUri = vscode.Uri.file(path.join(nestedDirectory, "invalid.fml"));
+        try {
+            const result = await vscode.commands.executeCommand<FmlValidationBatchResult>(
+                "fmlTools.Validation",
+                vscode.Uri.file(directory),
+            );
+
+            assert.equal(result.fileCount, 2);
+            assert.equal(result.validatedFileCount, 2);
+            assert.equal(result.failedFileCount, 0);
+            assert.equal(result.errorCount, 1);
+
+            await waitForDiagnostics(invalidUri, diagnostics => {
+                return diagnostics.some(diagnostic => diagnostic.severity === vscode.DiagnosticSeverity.Error);
+            });
+            await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(invalidUri));
+            await vscode.commands.executeCommand("workbench.action.closeActiveEditor");
+            await new Promise(resolve => setTimeout(resolve, 200));
+            assert.ok(vscode.languages.getDiagnostics(invalidUri).some(diagnostic => {
+                return diagnostic.severity === vscode.DiagnosticSeverity.Error;
+            }));
+        } finally {
+            await removeDirectoryWithRetries(directory);
+        }
+    });
+
+    test("retained Problems should survive closing an imported map", async () => {
+        const directory = await fs.mkdtemp(path.join(os.tmpdir(), "fml-retained-import-"));
+        const sharedUri = vscode.Uri.file(path.join(directory, "a-shared.fml"));
+        const consumerUri = vscode.Uri.file(path.join(directory, "b-consumer.fml"));
+        await fs.writeFile(sharedUri.fsPath, [
+            "/// url = 'http://example.org/StructureMap/RetainedShared'",
+            "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Coding' alias Coding as source",
+            "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Observation' alias Observation as target",
+            "group CopyCoding(source src : Coding, target tgt : Observation) {",
+            "}",
+        ].join("\n"), "utf8");
+        await fs.writeFile(consumerUri.fsPath, [
+            "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Observation' alias Observation as source",
+            "imports 'http://example.org/StructureMap/RetainedShared'",
+            "group Main(source src : Observation, target tgt : Observation) {",
+            "    src.code as concept -> tgt then CopyCoding(concept, tgt);",
+            "}",
+        ].join("\n"), "utf8");
+        try {
+            const result = await vscode.commands.executeCommand<FmlValidationBatchResult>(
+                "fmlTools.Validation",
+                vscode.Uri.file(directory),
+            );
+            assert.equal(result.errorCount, 1);
+            await waitForDiagnostics(consumerUri, diagnostics => {
+                return diagnostics.some(diagnostic => diagnostic.message.includes("expects 'Coding'"));
+            });
+
+            await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(sharedUri));
+            await vscode.commands.executeCommand("workbench.action.closeActiveEditor");
+            await new Promise(resolve => setTimeout(resolve, 200));
+
+            assert.ok(vscode.languages.getDiagnostics(consumerUri).some(diagnostic => {
+                return diagnostic.message.includes("expects 'Coding'");
+            }));
+        } finally {
+            await removeDirectoryWithRetries(directory);
+        }
+    });
+
+    test("validation readiness gate should wait for workspace indexing", async () => {
+        let ready = false;
+        let completeIndex!: () => void;
+        const indexOperation = new Promise<void>(resolve => {
+            completeIndex = resolve;
+        });
+        const waitingMessages: string[] = [];
+        let validationStarted = false;
+        const waiting = waitForWorkspaceIndexBeforeValidation(
+            () => ready,
+            () => indexOperation,
+            () => waitingMessages.push("Paused: waiting for FML workspace indexing to complete..."),
+        ).then(() => {
+            validationStarted = true;
+        });
+
+        await new Promise(resolve => setImmediate(resolve));
+        assert.equal(validationStarted, false);
+        assert.deepEqual(waitingMessages, ["Paused: waiting for FML workspace indexing to complete..."]);
+        ready = true;
+        completeIndex();
+        await waiting;
+        assert.equal(validationStarted, true);
+    });
+
     test("preview should open beside the editor and update from unsaved edits", async function() {
         this.timeout(10_000);
         const initialText = "group First(source src, target tgt) {\n}";
@@ -577,6 +687,21 @@ async function openFmlDocument(content: string): Promise<vscode.TextDocument> {
     const document = await vscode.workspace.openTextDocument({language: "fml", content});
     await vscode.window.showTextDocument(document);
     return document;
+}
+
+async function removeDirectoryWithRetries(directory: string): Promise<void> {
+    for (let attempt = 0; attempt < 10; attempt++) {
+        try {
+            await fs.rm(directory, {recursive: true, force: true});
+            return;
+        } catch (error) {
+            const code = (error as NodeJS.ErrnoException).code;
+            if (code !== "EBUSY" || attempt === 9) {
+                throw error;
+            }
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
+    }
 }
 
 function fullDocumentRange(document: vscode.TextDocument): vscode.Range {

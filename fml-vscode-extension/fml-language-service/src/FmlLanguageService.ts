@@ -1,6 +1,7 @@
 import {
     FmlDiagnostic,
     FmlDefaultGroup,
+    FmlDefaultGroupUsage,
     FmlGroupSignature,
     FmlPropertyAnalysis,
     FmlPropertyPathStep,
@@ -120,17 +121,32 @@ export class FmlLanguageService {
     public getHover(
         request: HoverRequest,
         importedGroupSignatures: FmlGroupSignature[] = [],
+        importedDefaultGroups: FmlDefaultGroup[] = [],
     ): HoverInformation | undefined {
-        const analysis = this.validator.getPropertyAnalysis({
+        const source = {
             sourceName: request.uri,
             sourceText: request.text,
             defaultFhirVersion: this.defaultFhirVersion,
             profileBaseTypes: this.profileBaseTypes,
             customTypeModels: this.customTypeModels,
-        });
+            importedDefaultGroups,
+        };
+        const analysis = this.validator.getPropertyAnalysis(source);
+        const defaultGroupUsages = this.validator.getDefaultGroupUsages(source);
         const usages = analysis.usages;
         const variableMatch = this.getVariableHoverMatch(usages, analysis.variableReferences, request);
         if (variableMatch) return variableMatch;
+
+        const arrowUsages = defaultGroupUsages.filter(usage => {
+            return usage.kind === "simple"
+                && this.containsPosition(this.toSourceRange(usage.span, request.text), request.position);
+        });
+        if (arrowUsages.length > 0) {
+            return {
+                range: this.toSourceRange(arrowUsages[0].span, request.text),
+                markdown: this.formatDefaultGroupHover(arrowUsages),
+            };
+        }
 
         const groupInvocation = analysis.groupInvocations.find(invocation => {
             return this.containsPosition(this.toSourceRange(invocation.span, request.text), request.position);
@@ -180,7 +196,7 @@ export class FmlLanguageService {
             ];
             return {range: transformMatch.range, markdown: lines.join("\n")};
         }
-        const segmentMatch = this.getPropertySegmentHoverMatch(usages, request);
+        const segmentMatch = this.getPropertySegmentHoverMatch(usages, request, defaultGroupUsages);
         if (segmentMatch) return segmentMatch;
         return undefined;
     }
@@ -196,6 +212,17 @@ export class FmlLanguageService {
             lines.push(`- \`${input.mode ?? "input"} ${input.inputName}\`: ${this.formatGroupInputType(input)}`);
         }
         return lines.join("\n");
+    }
+
+    private formatDefaultGroupHover(usages: FmlDefaultGroupUsage[]): string {
+        return [
+            "**Default mapping group**",
+            "",
+            ...usages.map(usage => {
+                return `- \`${usage.defaultGroupName}\` (\`${usage.typeMode}\`): `
+                    + `\`${usage.sourceTypeName}\` -> \`${usage.targetTypeName}\``;
+            }),
+        ].join("\n");
     }
 
     private formatGroupInputHover(input: FmlPropertyAnalysis["groupInputs"][number]): string {
@@ -259,7 +286,11 @@ export class FmlLanguageService {
         return candidates[0];
     }
 
-    private getPropertySegmentHoverMatch(usages: FmlPropertyUsage[], request: HoverRequest): HoverInformation | undefined {
+    private getPropertySegmentHoverMatch(
+        usages: FmlPropertyUsage[],
+        request: HoverRequest,
+        defaultGroupUsages: FmlDefaultGroupUsage[] = [],
+    ): HoverInformation | undefined {
         const candidates: Array<{range: LanguageRange; markdown: string}> = [];
         for (const usage of usages) {
             const usageRange = this.toSourceRange(usage.span, request.text);
@@ -293,7 +324,11 @@ export class FmlLanguageService {
                 } else {
                     const propertyIndex = index - (hasContext ? 1 : 0);
                     const step = steps[stepOffset + propertyIndex];
-                    candidates.push({range, markdown: this.formatPropertyHover(usage, step)});
+                    const batchGroups = defaultGroupUsages.filter(defaultGroupUsage => {
+                        return defaultGroupUsage.kind === "batch"
+                            && this.spansEqual(defaultGroupUsage.span, usage.span);
+                    });
+                    candidates.push({range, markdown: this.formatPropertyHover(usage, step, batchGroups)});
                 }
             }
         }
@@ -355,7 +390,11 @@ export class FmlLanguageService {
         ].join("\n");
     }
 
-    private formatPropertyHover(usage: FmlPropertyUsage, step?: FmlPropertyPathStep): string {
+    private formatPropertyHover(
+        usage: FmlPropertyUsage,
+        step?: FmlPropertyPathStep,
+        defaultGroups: FmlDefaultGroupUsage[] = [],
+    ): string {
         const rootTypeName = this.customTypeModels[usage.rootTypeName]?.TypeName ?? usage.rootTypeName;
         const path = step?.path ?? usage.path;
         const cardinalityMin = step?.cardinalityMin ?? usage.cardinalityMin;
@@ -391,6 +430,10 @@ export class FmlLanguageService {
         } else if (possibleTypes.length > 0) {
             lines.push(`- Type: \`${possibleTypes.join(" | ")}\``);
         }
+        for (const defaultGroup of defaultGroups) {
+            lines.push(`- Default mapping group: \`${defaultGroup.defaultGroupName}\` `
+                + `(\`${defaultGroup.typeMode}\`, \`${defaultGroup.sourceTypeName}\` -> \`${defaultGroup.targetTypeName}\`)`);
+        }
         const targetProfiles = this.distinctValues(step?.targetProfiles ?? usage.targetProfiles ?? []);
         if (targetProfiles.length) {
             lines.push(`- Target profiles: ${targetProfiles.map(profile => {
@@ -411,6 +454,13 @@ export class FmlLanguageService {
 
     private distinctValues(values: string[]): string[] {
         return [...new Map(values.map(value => [value.toLowerCase(), value])).values()];
+    }
+
+    private spansEqual(left: FmlSourceSpan, right: FmlSourceSpan): boolean {
+        return left.start.line === right.start.line
+            && left.start.column === right.start.column
+            && left.end.line === right.end.line
+            && left.end.column === right.end.column;
     }
 
     private normalizeIdentifier(value: string): string {

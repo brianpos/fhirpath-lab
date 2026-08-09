@@ -206,6 +206,13 @@
           "group": "navigation@3",
           "when": "editorLangId == fml"
         }
+      ],
+      "explorer/context": [
+        {
+          "command": "fmlTools.Validation",
+          "group": "navigation@1",
+          "when": "resourceExtname == .fml || explorerResourceIsFolder"
+        }
       ]
     }
   },

@@ -59,6 +59,22 @@ describe("fmlToStructureMap compilation", () => {
 });
 
 describe("direct FML diagram extraction", () => {
+  test("unnamed rule headers collapse to divider lines without hiding rule bodies", () => {
+    const fml = parseFML([
+      "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias Patient as source",
+      "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias PatientTarget as target",
+      "group Main(source src : Patient, target tgt : PatientTarget) {",
+      "  src.id -> tgt.id;",
+      "  src.active -> tgt.active;",
+      "}",
+    ].join("\n")) as FmlStructureMap;
+    const svg = generateFmlInstanceDiagramSvg(fml, lookupR5, true, lookupForVersion);
+
+    expect(svg.match(/class="sm-rule-divider-unnamed"/g)).toHaveLength(4);
+    expect(svg.match(/>id<\/text>/g)).toHaveLength(2);
+    expect(svg.match(/>active<\/text>/g)).toHaveLength(2);
+  });
+
   test("simple batch identity fields appear on both source and target boxes", () => {
     const fml = parseFML([
       "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias Patient as source",

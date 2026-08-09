@@ -588,6 +588,10 @@ group Main(source src : Observation, target tgt : Observation) {
     };
     src.value : string as stringValue -> tgt.value = stringValue;
 }
+group DecimalToQuantity(source src : decimal, target tgt : Quantity) <<type+>> {
+}
+group CodingToCodeableConcept(source src : Coding, target tgt : CodeableConcept) <<type+>> {
+}
 `});
 
     assert.equal(result.status, "success", result.diagnostics.map(diagnostic => diagnostic.message).join("; "));
@@ -944,6 +948,86 @@ group Main(source src : Patient, target tgt : Patient) {
     assert.equal(result.status, "success", result.diagnostics.map(diagnostic => diagnostic.message).join("; "));
     assert.ok(result.diagnostics.every(candidate => !candidate.message.includes("not defined")));
     assert.ok(result.diagnostics.every(candidate => !candidate.message.includes("not compatible")));
+});
+
+test("rejects incompatible simple identities inside dependent rules", async () => {
+    const result = await new FmlValidatorApi().validate({sourceText: `
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias Patient as source
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Observation' alias Observation as target
+group Main(source src : Patient, target tgt : Observation) {
+    src as s -> tgt then {
+        s.active -> tgt.status;
+    } "nested";
+}
+`});
+
+    assert.equal(result.status, "failure");
+    const diagnostic = result.diagnostics.find(candidate => {
+        return candidate.message.includes("Identity assignment")
+            && candidate.message.includes("Patient.active")
+            && candidate.message.includes("Observation.status");
+    });
+    assert.equal(diagnostic?.severity, "error");
+    assert.equal(diagnostic?.line, 6);
+    assert.match(diagnostic?.message ?? "", /type 'boolean'/);
+    assert.match(diagnostic?.message ?? "", /allowed: code/);
+});
+
+test("rejects source and target contexts that are not defined in rule scope", async () => {
+    const sourceResult = await new FmlValidatorApi().validate({sourceText: `
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/AllergyIntolerance' alias Allergy as source
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Observation' alias Observation as target
+group AllergyMap(source src : Allergy, target tgt : Observation) {
+    s.id -> tgt.id;
+}
+`});
+    const targetResult = await new FmlValidatorApi().validate({sourceText: `
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/AllergyIntolerance' alias Allergy as source
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Observation' alias Observation as target
+group AllergyMap(source src : Allergy, target tgt : Observation) {
+    src.id -> missing.id;
+}
+`});
+
+    assert.equal(sourceResult.status, "failure");
+    const sourceDiagnostic = sourceResult.diagnostics.find(diagnostic => {
+        return diagnostic.message.includes("Source context variable 's'");
+    });
+    assert.equal(sourceDiagnostic?.line, 5);
+    assert.equal(sourceDiagnostic?.offendingText, "s");
+    assert.match(sourceDiagnostic?.message ?? "", /not defined in the current rule scope/);
+
+    assert.equal(targetResult.status, "failure");
+    const targetDiagnostic = targetResult.diagnostics.find(diagnostic => {
+        return diagnostic.message.includes("Target context variable 'missing'");
+    });
+    assert.equal(targetDiagnostic?.line, 5);
+    assert.equal(targetDiagnostic?.offendingText, "missing");
+});
+
+test("allows parent rule variables in dependent rules and rejects sibling leakage", async () => {
+    const inherited = await new FmlValidatorApi().validate({sourceText: `
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias Patient as source
+group Main(source src : Patient, target tgt : Patient) {
+    src.name as sourceName -> tgt.name as targetName then {
+        sourceName.family -> targetName.family;
+    };
+}
+`});
+    const siblingLeak = await new FmlValidatorApi().validate({sourceText: `
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias Patient as source
+group Main(source src : Patient, target tgt : Patient) {
+    src.name as firstName -> tgt.name;
+    firstName.family -> tgt.name;
+}
+`});
+
+    assert.equal(inherited.status, "success", inherited.diagnostics.map(diagnostic => diagnostic.message).join("; "));
+    assert.equal(siblingLeak.status, "failure");
+    assert.ok(siblingLeak.diagnostics.some(diagnostic => {
+        return diagnostic.message.includes("Source context variable 'firstName'")
+            && diagnostic.offendingText === "firstName";
+    }));
 });
 
 test("validates named parameters", async () => {

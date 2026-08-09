@@ -39,6 +39,7 @@ const connection = createConnection(ProposedFeatures.all);
 const documents = new TextDocuments(TextDocument);
 const languageService = new FmlLanguageService();
 const pendingValidations = new Map<string, NodeJS.Timeout>();
+const retainedDiagnosticUris = new Set<string>();
 const workspaceIndex = new WorkspaceFmlIndex();
 const statusStore = new FmlServerStatusStore();
 let workspaceIndexReady = false;
@@ -68,11 +69,13 @@ documents.onDidChangeContent(event => {
 
 documents.onDidClose(event => {
     cancelPendingValidation(event.document.uri);
-    void restoreWorkspaceFile(event.document.uri);
-    connection.sendDiagnostics({
-        uri: event.document.uri,
-        diagnostics: [],
-    });
+    void restoreWorkspaceFile(event.document.uri, event.document.getText());
+    if (!retainedDiagnosticUris.has(event.document.uri)) {
+        connection.sendDiagnostics({
+            uri: event.document.uri,
+            diagnostics: [],
+        });
+    }
     publishServerStatus();
 });
 
@@ -106,7 +109,7 @@ connection.onHover(parameters => {
         uri: document.uri,
         text: document.getText(),
         position: parameters.position,
-    }, workspaceIndex.getImportedGroupSignatures(document.uri));
+    }, workspaceIndex.getImportedGroupSignatures(document.uri), workspaceIndex.getImportedDefaultGroups(document.uri));
     return hover ? {
         contents: {kind: MarkupKind.Markdown, value: hover.markdown},
         range: hover.range,
@@ -169,6 +172,9 @@ connection.onRequest(
             );
         }
 
+        if (request.retainDiagnostics) {
+            retainedDiagnosticUris.add(document.uri);
+        }
         cancelPendingValidation(document.uri);
         return validateLatestDocument(document.uri);
     },
@@ -238,6 +244,7 @@ async function validateDocument(document: TextDocument): Promise<DocumentValidat
 async function indexWorkspace(uris: string[]): Promise<WorkspaceIndexResult> {
     const startedAt = Date.now();
     workspaceIndexReady = false;
+    clearRetainedDiagnostics(retainedDiagnosticUris);
     workspaceIndex.clear();
     statusStore.clearFailures();
     statusStore.startIndexing();
@@ -281,6 +288,8 @@ async function indexWorkspace(uris: string[]): Promise<WorkspaceIndexResult> {
 }
 
 async function handleWorkspaceFileEvent(event: WorkspaceFileEvent): Promise<void> {
+    const affectedUris = workspaceIndex.getDependentDocumentUris(event.uri);
+    affectedUris.add(event.uri);
     if (event.type === "delete") {
         workspaceIndex.delete(event.uri);
         statusStore.clearFailure(event.uri);
@@ -296,6 +305,10 @@ async function handleWorkspaceFileEvent(event: WorkspaceFileEvent): Promise<void
             );
         }
     }
+    for (const dependentUri of workspaceIndex.getDependentDocumentUris(event.uri)) {
+        affectedUris.add(dependentUri);
+    }
+    clearRetainedDiagnostics(affectedUris, event.type === "delete");
     if (workspaceIndexReady) {
         revalidateOpenDocuments();
     }
@@ -318,15 +331,27 @@ async function indexWorkspaceFile(uri: string): Promise<boolean> {
     }
 }
 
-async function restoreWorkspaceFile(uri: string): Promise<void> {
+async function restoreWorkspaceFile(uri: string, closingText?: string): Promise<void> {
     const dependentUris = workspaceIndex.getDependentDocumentUris(uri);
+    let restoredDifferentContent = false;
     if (!uri.startsWith("file:")) {
         workspaceIndex.delete(uri);
+        restoredDifferentContent = true;
     } else {
+        try {
+            const diskText = await fs.readFile(fileURLToPath(uri), "utf8");
+            restoredDifferentContent = closingText !== undefined && diskText !== closingText;
+        } catch {
+            restoredDifferentContent = true;
+        }
         await indexWorkspaceFile(uri);
     }
     for (const dependentUri of workspaceIndex.getDependentDocumentUris(uri)) {
         dependentUris.add(dependentUri);
+    }
+    if (restoredDifferentContent) {
+        dependentUris.add(uri);
+        clearRetainedDiagnostics(dependentUris);
     }
     if (workspaceIndexReady) {
         revalidateDocuments(dependentUris, 0);
@@ -346,6 +371,15 @@ function revalidateDocuments(uris: Iterable<string>, delay: number): void {
         if (document) {
             scheduleValidation(document, delay);
         }
+    }
+}
+
+function clearRetainedDiagnostics(uris: Iterable<string>, includeOpenDocuments = false): void {
+    for (const uri of uris) {
+        if (!retainedDiagnosticUris.has(uri)
+            || (!includeOpenDocuments && documents.get(uri))) continue;
+        retainedDiagnosticUris.delete(uri);
+        connection.sendDiagnostics({uri, diagnostics: []});
     }
 }
 

@@ -58,6 +58,7 @@ export interface HoverInformation {
 
 export interface ValidateDocumentRequest {
     uri: string;
+    retainDiagnostics?: boolean;
 }
 
 export interface LanguageGroupDefinition {

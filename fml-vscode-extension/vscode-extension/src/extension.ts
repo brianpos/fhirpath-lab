@@ -28,6 +28,26 @@ import {parseFmlModel, resolveFmlStructureType, toFhirVersion} from "@fhirpath-l
 const FML_MODE = {language: "fml"};
 let languageClient: LanguageClient | undefined;
 
+export interface FmlValidationBatchResult {
+    fileCount: number;
+    validatedFileCount: number;
+    failedFileCount: number;
+    errorCount: number;
+    warningCount: number;
+    informationCount: number;
+}
+
+export async function waitForWorkspaceIndexBeforeValidation(
+    isWorkspaceIndexReady: () => boolean,
+    waitForWorkspaceIndex: () => Promise<void>,
+    reportWaiting: () => void,
+): Promise<void> {
+    if (!isWorkspaceIndexReady()) {
+        reportWaiting();
+    }
+    await waitForWorkspaceIndex();
+}
+
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
     const reindexWorkspaceRef: {
         current?: () => Promise<WorkspaceIndexResult | undefined>;
@@ -58,6 +78,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     const queuedWorkspaceEvents: WorkspaceFileEvent[] = [];
     let workspaceIndexInitialized = false;
     let indexOperation: Promise<WorkspaceIndexResult | undefined> | undefined;
+    let workspaceReadyOperation: Promise<unknown> = Promise.resolve();
     const watcher = new MapBuilderWatcher(UiConstants.detailsChannel, {
         onFmlFile: event => {
             const workspaceEvent: WorkspaceFileEvent = {
@@ -97,6 +118,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
             }
             indexOperation = undefined;
         });
+        workspaceReadyOperation = indexOperation;
         return indexOperation;
     };
     reindexWorkspaceRef.current = reindexWorkspace;
@@ -105,17 +127,31 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         reindexWorkspace,
         async () => {
             workspaceIndexInitialized = false;
-            const previousIndexOperation = indexOperation;
-            await languageClient?.restart();
-            if (previousIndexOperation) {
-                await previousIndexOperation;
-            }
-            await reindexWorkspace();
+            const restartOperation = (async () => {
+                const previousIndexOperation = indexOperation;
+                await languageClient?.restart();
+                if (previousIndexOperation) {
+                    await previousIndexOperation;
+                }
+                await reindexWorkspace();
+            })();
+            workspaceReadyOperation = restartOperation;
+            await restartOperation;
         },
     );
     context.subscriptions.push(serverStatus);
     void reindexWorkspace().then(() => serverStatus.refresh());
-    addValidationCommand(languageClient, context);
+    const waitForWorkspaceIndex = async (): Promise<void> => {
+        while (!workspaceIndexInitialized) {
+            await workspaceReadyOperation;
+        }
+    };
+    addValidationCommand(
+        languageClient,
+        context,
+        waitForWorkspaceIndex,
+        () => workspaceIndexInitialized,
+    );
 
 }
 
@@ -260,8 +296,66 @@ function addFmlTemplate(context: vscode.ExtensionContext): void {
     }));
 }
 
-function addValidationCommand(client: LanguageClient, context: vscode.ExtensionContext): void {
-    context.subscriptions.push(vscode.commands.registerCommand("fmlTools.Validation", async () => {
+function addValidationCommand(
+    client: LanguageClient,
+    context: vscode.ExtensionContext,
+    waitForWorkspaceIndex: () => Promise<void>,
+    isWorkspaceIndexReady: () => boolean,
+): void {
+    context.subscriptions.push(vscode.commands.registerCommand("fmlTools.Validation", async (
+        resource?: vscode.Uri,
+        selectedResources?: vscode.Uri[],
+    ) => {
+        const explorerResources = selectedResources?.length
+            ? selectedResources
+            : resource ? [resource] : [];
+        if (explorerResources.length > 0) {
+            try {
+                const files = await collectFmlFiles(explorerResources);
+                if (files.length === 0) {
+                    const emptyResult: FmlValidationBatchResult = {
+                        fileCount: 0,
+                        validatedFileCount: 0,
+                        failedFileCount: 0,
+                        errorCount: 0,
+                        warningCount: 0,
+                        informationCount: 0,
+                    };
+                    void vscode.window.showInformationMessage("No FML files were found.");
+                    return emptyResult;
+                }
+                const result = await executeWithProgress(
+                    isWorkspaceIndexReady()
+                        ? `Validating 0/${files.length} FML file(s)...`
+                        : "Paused: waiting for FML workspace indexing to complete...",
+                    async progress => {
+                        await waitForWorkspaceIndexBeforeValidation(
+                            isWorkspaceIndexReady,
+                            waitForWorkspaceIndex,
+                            () => {
+                            progress.report({
+                                message: "Validation Paused: waiting for FML workspace indexing to complete...",
+                            });
+                            },
+                        );
+                        progress.report({message: `Validating 0/${files.length} FML file(s)...`});
+                        return validateFmlFiles(client, files, (completed, uri) => {
+                        progress.report({
+                            increment: 100 / files.length,
+                            message: `Processed ${completed}/${files.length}: ${path.posix.basename(uri.path)}`,
+                        });
+                        });
+                    },
+                );
+                showBatchValidationSummary(result);
+                return result;
+            } catch (error) {
+                const message = error instanceof Error ? error.message : String(error);
+                void vscode.window.showErrorMessage(`Unable to validate FML files: ${message}`);
+                return undefined;
+            }
+        }
+
         const document = vscode.window.activeTextEditor?.document;
         if (!document || document.languageId !== FML_MODE.language) {
             void vscode.window.showErrorMessage("Open an FML document before running validation.");
@@ -269,12 +363,25 @@ function addValidationCommand(client: LanguageClient, context: vscode.ExtensionC
         }
 
         try {
-            const result = await executeWithProgress("Validating FML...", () => {
-                return client.sendRequest<DocumentValidationResult>(
-                    VALIDATE_DOCUMENT_REQUEST,
-                    {uri: document.uri.toString()} satisfies ValidateDocumentRequest,
-                );
-            });
+            const result = await executeWithProgress(
+                isWorkspaceIndexReady()
+                    ? "Validating FML..."
+                    : "Waiting for FML workspace indexing to complete...",
+                async progress => {
+                    await waitForWorkspaceIndexBeforeValidation(
+                        isWorkspaceIndexReady,
+                        waitForWorkspaceIndex,
+                        () => progress.report({
+                            message: "Waiting for FML workspace indexing to complete...",
+                        }),
+                    );
+                    progress.report({message: "Validating FML..."});
+                    return client.sendRequest<DocumentValidationResult>(
+                        VALIDATE_DOCUMENT_REQUEST,
+                        {uri: document.uri.toString()} satisfies ValidateDocumentRequest,
+                    );
+                },
+            );
             showValidationSummary(result);
             return result;
         } catch (error) {
@@ -283,6 +390,80 @@ function addValidationCommand(client: LanguageClient, context: vscode.ExtensionC
             return undefined;
         }
     }));
+}
+
+async function collectFmlFiles(resources: vscode.Uri[]): Promise<vscode.Uri[]> {
+    const files = new Map<string, vscode.Uri>();
+    const visit = async (resource: vscode.Uri): Promise<void> => {
+        const stat = await vscode.workspace.fs.stat(resource);
+        if ((stat.type & vscode.FileType.Directory) !== 0) {
+            const entries = await vscode.workspace.fs.readDirectory(resource);
+            entries.sort(([left], [right]) => left.localeCompare(right));
+            for (const [name, type] of entries) {
+                if ((type & vscode.FileType.SymbolicLink) !== 0) {
+                    continue;
+                }
+                const child = vscode.Uri.joinPath(resource, name);
+                if ((type & vscode.FileType.Directory) !== 0) {
+                    await visit(child);
+                } else if ((type & vscode.FileType.File) !== 0 && isFmlUri(child)) {
+                    files.set(child.toString(), child);
+                }
+            }
+        } else if ((stat.type & vscode.FileType.File) !== 0 && isFmlUri(resource)) {
+            files.set(resource.toString(), resource);
+        }
+    };
+    for (const resource of resources) {
+        await visit(resource);
+    }
+    return [...files.values()];
+}
+
+function isFmlUri(uri: vscode.Uri): boolean {
+    return path.posix.extname(uri.path).toLowerCase() === ".fml";
+}
+
+async function validateFmlFiles(
+    client: LanguageClient,
+    files: vscode.Uri[],
+    reportProgress?: (completed: number, uri: vscode.Uri) => void,
+): Promise<FmlValidationBatchResult> {
+    const summary: FmlValidationBatchResult = {
+        fileCount: files.length,
+        validatedFileCount: 0,
+        failedFileCount: 0,
+        errorCount: 0,
+        warningCount: 0,
+        informationCount: 0,
+    };
+    for (let index = 0; index < files.length; index++) {
+        const uri = files[index];
+        try {
+            let document = await vscode.workspace.openTextDocument(uri);
+            if (document.languageId !== FML_MODE.language) {
+                document = await vscode.languages.setTextDocumentLanguage(document, FML_MODE.language);
+            }
+            const result = await client.sendRequest<DocumentValidationResult>(
+                VALIDATE_DOCUMENT_REQUEST,
+                {
+                    uri: document.uri.toString(),
+                    retainDiagnostics: true,
+                } satisfies ValidateDocumentRequest,
+            );
+            summary.validatedFileCount++;
+            summary.errorCount += result.errorCount;
+            summary.warningCount += result.warningCount;
+            summary.informationCount += result.informationCount;
+        } catch (error) {
+            summary.failedFileCount++;
+            const message = error instanceof Error ? error.message : String(error);
+            logData(`Unable to validate ${uri.toString()}: ${message}`, UiConstants.detailsChannel);
+        } finally {
+            reportProgress?.(index + 1, uri);
+        }
+    }
+    return summary;
 }
 
 function showValidationSummary(result: DocumentValidationResult): void {
@@ -299,4 +480,30 @@ function showValidationSummary(result: DocumentValidationResult): void {
         return;
     }
     void vscode.window.showInformationMessage("FML is valid.");
+}
+
+function showBatchValidationSummary(result: FmlValidationBatchResult): void {
+    const scope = `${result.validatedFileCount}/${result.fileCount} FML file(s)`;
+    if (result.failedFileCount > 0) {
+        void vscode.window.showErrorMessage(
+            `Validated ${scope}; ${result.failedFileCount} file(s) could not be validated. `
+            + `${result.errorCount} error(s) and ${result.warningCount} warning(s) were reported.`,
+        );
+        return;
+    }
+    if (result.errorCount > 0) {
+        void vscode.window.showErrorMessage(
+            `FML validation found ${result.errorCount} error(s) and ${result.warningCount} warning(s) `
+            + `in ${scope}. See the Problems panel for details.`,
+        );
+        return;
+    }
+    if (result.warningCount > 0) {
+        void vscode.window.showWarningMessage(
+            `FML validation completed with ${result.warningCount} warning(s) in ${scope}. `
+            + "See the Problems panel for details.",
+        );
+        return;
+    }
+    void vscode.window.showInformationMessage(`Validated ${scope}; all files are valid.`);
 }
