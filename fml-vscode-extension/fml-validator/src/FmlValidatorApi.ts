@@ -1,5 +1,7 @@
 import {
     CompiledStructureMap,
+    FmlDefaultGroup,
+    FmlGroupSignature,
     FmlSource,
     FmlGroupSymbols,
     FmlDocumentSymbols,
@@ -16,10 +18,13 @@ import {
     TransformOutput,
     TransformRequest,
 } from "./contracts";
+import {isFmlParseError, parseFML} from "../../../helpers/fml_parser";
 import {FmlValidatorEngine} from "./FmlValidatorEngine";
 import {FmlGroupSymbolCollector} from "./FmlGroupSymbolCollector";
 import {FmlPropertyUsageCollector} from "./FmlPropertyUsageCollector";
 import {Stage1FmlValidatorEngine} from "./Stage1FmlValidatorEngine";
+import {applyFmlModelConfiguration} from "./FmlModelConfiguration";
+import {resolveDefaultGroups, resolveGroupSignatures} from "./FmlTransformValidator";
 
 export class FmlValidatorApi {
     public constructor(
@@ -56,6 +61,30 @@ export class FmlValidatorApi {
 
     public getPropertyAnalysis(source: FmlSource): FmlPropertyAnalysis {
         return this.propertyUsageCollector.collectAnalysis(source);
+    }
+
+    public getDefaultGroups(source: FmlSource): FmlDefaultGroup[] {
+        const parsed = parseFML(source.sourceText);
+        if (isFmlParseError(parsed)) return [];
+        applyFmlModelConfiguration(parsed, source);
+        const analysis = this.propertyUsageCollector.analyzeModel(
+            parsed,
+            source.sourceText,
+            source.customTypeModels,
+        );
+        return resolveDefaultGroups(parsed.groups, analysis);
+    }
+
+    public getGroupSignatures(source: FmlSource): FmlGroupSignature[] {
+        const parsed = parseFML(source.sourceText);
+        if (isFmlParseError(parsed)) return [];
+        applyFmlModelConfiguration(parsed, source);
+        const analysis = this.propertyUsageCollector.analyzeModel(
+            parsed,
+            source.sourceText,
+            source.customTypeModels,
+        );
+        return resolveGroupSignatures(parsed.groups, analysis);
     }
 
     public getPropertyCompletions(source: FmlSource, cursorOffset: number): FmlPropertyCompletion[] {

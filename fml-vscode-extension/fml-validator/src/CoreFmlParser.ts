@@ -45,6 +45,8 @@ export class CoreFmlParser {
             propertyAnalysis,
             source.sourceName,
             source.customTypeModels,
+            source.importedDefaultGroups,
+            source.importedGroupSignatures,
         ));
         for (const usage of propertyAnalysis.usages) {
             if (!usage.unknownElement || !usage.rootTypeName) continue;

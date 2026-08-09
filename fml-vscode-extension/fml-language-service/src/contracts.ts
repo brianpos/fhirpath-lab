@@ -78,6 +78,8 @@ export interface DocumentGroupSymbols {
 
 export interface DocumentFmlSymbols extends DocumentGroupSymbols {
     canonicalUrls: string[];
+    defaultGroups: import("@fhirpath-lab/validator").FmlDefaultGroup[];
+    groupSignatures: import("@fhirpath-lab/validator").FmlGroupSignature[];
     imports: string[];
 }
 

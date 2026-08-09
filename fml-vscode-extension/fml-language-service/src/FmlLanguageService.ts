@@ -1,5 +1,7 @@
 import {
     FmlDiagnostic,
+    FmlDefaultGroup,
+    FmlGroupSignature,
     FmlPropertyAnalysis,
     FmlPropertyPathStep,
     FmlPropertyUsage,
@@ -27,6 +29,11 @@ import {
 
 const DIAGNOSTIC_SOURCE = "FHIR Mapping Language Tools";
 
+type GroupInputHover = Pick<
+    FmlPropertyAnalysis["groupInputs"][number],
+    "inputName" | "mode" | "typeName" | "fhirVersion" | "resolution" | "conflictingTypeNames"
+>;
+
 export class FmlLanguageService {
     private defaultFhirVersion?: FhirVersion;
     private profileBaseTypes: Record<string, string> = {};
@@ -45,13 +52,19 @@ export class FmlLanguageService {
         this.customTypeModels = customTypeModels;
     }
 
-    public async validateDocument(document: TextDocumentSnapshot): Promise<DocumentValidationResult> {
+    public async validateDocument(
+        document: TextDocumentSnapshot,
+        importedDefaultGroups: FmlDefaultGroup[] = [],
+        importedGroupSignatures: FmlGroupSignature[] = [],
+    ): Promise<DocumentValidationResult> {
         const result = await this.validator.validate({
             sourceName: document.uri,
             sourceText: document.text,
             defaultFhirVersion: this.defaultFhirVersion,
             profileBaseTypes: this.profileBaseTypes,
             customTypeModels: this.customTypeModels,
+            importedDefaultGroups,
+            importedGroupSignatures,
         });
         const diagnostics = result.diagnostics.map(diagnostic => {
             return this.toLanguageDiagnostic(diagnostic, document.text);
@@ -104,7 +117,10 @@ export class FmlLanguageService {
             }));
     }
 
-    public getHover(request: HoverRequest): HoverInformation | undefined {
+    public getHover(
+        request: HoverRequest,
+        importedGroupSignatures: FmlGroupSignature[] = [],
+    ): HoverInformation | undefined {
         const analysis = this.validator.getPropertyAnalysis({
             sourceName: request.uri,
             sourceText: request.text,
@@ -121,7 +137,18 @@ export class FmlLanguageService {
         });
         if (groupInvocation) {
             const range = this.toSourceRange(groupInvocation.span, request.text);
-            const inputs = analysis.groupInputs.filter(input => input.groupName === groupInvocation.groupName);
+            const localInputs = analysis.groupInputs.filter(input => input.groupName === groupInvocation.groupName);
+            const importedInputs = importedGroupSignatures.find(signature => {
+                return signature.groupName === groupInvocation.groupName;
+            })?.parameters.map(parameter => ({
+                inputName: parameter.name,
+                mode: parameter.mode,
+                typeName: parameter.typeName,
+                fhirVersion: parameter.fhirVersion,
+                resolution: parameter.resolution,
+                conflictingTypeNames: parameter.conflictingTypeNames,
+            })) ?? [];
+            const inputs = localInputs.length > 0 ? localInputs : importedInputs;
             return {range, markdown: this.formatGroupInvocationHover(groupInvocation.groupName, inputs)};
         }
 
@@ -160,7 +187,7 @@ export class FmlLanguageService {
 
     private formatGroupInvocationHover(
         groupName: string,
-        inputs: FmlPropertyAnalysis["groupInputs"],
+        inputs: GroupInputHover[],
     ): string {
         const lines = [`**Group call** \`${groupName}\``, ""];
         if (inputs.length === 0) return [...lines, "- Parameters: unresolved"].join("\n");
@@ -186,7 +213,7 @@ export class FmlLanguageService {
         return lines.join("\n");
     }
 
-    private formatGroupInputType(input: FmlPropertyAnalysis["groupInputs"][number]): string {
+    private formatGroupInputType(input: GroupInputHover): string {
         if (input.resolution === "conflict" && input.conflictingTypeNames?.length) {
             return input.conflictingTypeNames.map(type => `\`${type}\``).join(" | ");
         }
@@ -349,13 +376,13 @@ export class FmlLanguageService {
             "",
         ];
         const isFinalStep = !step || step.path === usage.path;
-        const possibleTypes = isFinalStep
+        const possibleTypes = this.distinctValues(isFinalStep
             ? usage.possibleTypeNames ?? step?.possibleTypeNames ?? []
-            : step.possibleTypeNames;
-        const compatibleTypes = isFinalStep
+            : step.possibleTypeNames);
+        const compatibleTypes = this.distinctValues(isFinalStep
             ? usage.compatibleTypeNames ?? step?.typeNames ?? possibleTypes
-            : step.typeNames;
-        const excludedTypes = isFinalStep ? usage.excludedTypeNames ?? [] : [];
+            : step.typeNames);
+        const excludedTypes = this.distinctValues(isFinalStep ? usage.excludedTypeNames ?? [] : []);
         if (possibleTypes.length > 1) {
             lines.push(`- Compatible types: ${compatibleTypes.map(type => `\`${type}\``).join(" | ") || "none"}`);
             if (excludedTypes.length > 0) {
@@ -364,8 +391,8 @@ export class FmlLanguageService {
         } else if (possibleTypes.length > 0) {
             lines.push(`- Type: \`${possibleTypes.join(" | ")}\``);
         }
-        const targetProfiles = step?.targetProfiles ?? usage.targetProfiles;
-        if (targetProfiles?.length) {
+        const targetProfiles = this.distinctValues(step?.targetProfiles ?? usage.targetProfiles ?? []);
+        if (targetProfiles.length) {
             lines.push(`- Target profiles: ${targetProfiles.map(profile => {
                 const label = `\`${this.formatTargetProfile(profile)}\``;
                 return this.isLogicalCanonical(profile)
@@ -380,6 +407,10 @@ export class FmlLanguageService {
                 : "- Issue: property not found in the selected FHIR model");
         }
         return lines.join("\n");
+    }
+
+    private distinctValues(values: string[]): string[] {
+        return [...new Map(values.map(value => [value.toLowerCase(), value])).values()];
     }
 
     private normalizeIdentifier(value: string): string {
@@ -410,12 +441,18 @@ export class FmlLanguageService {
     }
 
     public getDocumentSymbols(document: TextDocumentSnapshot): DocumentFmlSymbols {
-        const symbols = this.validator.getDocumentSymbols({
+        const source = {
             sourceName: document.uri,
             sourceText: document.text,
-        });
+            defaultFhirVersion: this.defaultFhirVersion,
+            profileBaseTypes: this.profileBaseTypes,
+            customTypeModels: this.customTypeModels,
+        };
+        const symbols = this.validator.getDocumentSymbols(source);
         return {
             canonicalUrls: symbols.canonicalUrls,
+            defaultGroups: this.validator.getDefaultGroups(source),
+            groupSignatures: this.validator.getGroupSignatures(source),
             definitions: symbols.definitions.map(definition => ({
                 name: definition.name,
                 range: this.toSourceRange(definition.span, document.text),

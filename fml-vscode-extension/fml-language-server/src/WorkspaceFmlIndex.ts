@@ -70,6 +70,22 @@ export class WorkspaceFmlIndex {
         return result;
     }
 
+    public getImportedDefaultGroups(sourceUri: string): NonNullable<DocumentFmlSymbols["defaultGroups"]> {
+        const groups: NonNullable<DocumentFmlSymbols["defaultGroups"]> = [];
+        for (const [uri, symbols] of this.getNavigationDocuments(sourceUri)) {
+            if (uri !== sourceUri) groups.push(...symbols.defaultGroups);
+        }
+        return groups;
+    }
+
+    public getImportedGroupSignatures(sourceUri: string): DocumentFmlSymbols["groupSignatures"] {
+        const signatures: DocumentFmlSymbols["groupSignatures"] = [];
+        for (const [uri, symbols] of this.getNavigationDocuments(sourceUri)) {
+            if (uri !== sourceUri) signatures.push(...symbols.groupSignatures);
+        }
+        return signatures;
+    }
+
     public getDependentDocumentUris(targetUri: string): Set<string> {
         const target = this.documents.get(targetUri);
         const result = new Set<string>();

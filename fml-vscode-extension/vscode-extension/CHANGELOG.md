@@ -1,5 +1,13 @@
 # Change Log
 
+## 0.11.0 (???)
+* Validate exact plain and batch identity mappings against source and target types, FHIR versions, and local or imported `<<types>>`/`<<type+>>` default groups
+* Resolve same-named cross-version default-group inputs by source/target role and permit version-independent `System.*` value copies inside primitive converters
+* Validate `Reference` target-profile compatibility on plain and batch identities and report unsupported source profiles
+* Validate dependent-group arguments against local or imported signatures and show imported parameter types in group-call hovers
+* Shorten core FHIR target profiles in diagnostics and deduplicate compatible property types in hovers
+* Resolve local or imported `<<types>>`/`<<type+>>` defaults for identifier-based copy transforms
+
 ## 0.10.0 (2026-08-08)
 * Fix issue with FML validation of properties with base type definitions like `Resource` to permit `Observation` and `Patientm such as found in Bundle.entry.resource
 * Tooltip enhancements for groups/group invocations

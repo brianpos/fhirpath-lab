@@ -106,7 +106,7 @@ connection.onHover(parameters => {
         uri: document.uri,
         text: document.getText(),
         position: parameters.position,
-    });
+    }, workspaceIndex.getImportedGroupSignatures(document.uri));
     return hover ? {
         contents: {kind: MarkupKind.Markdown, value: hover.markdown},
         range: hover.range,
@@ -212,7 +212,7 @@ async function validateDocument(document: TextDocument): Promise<DocumentValidat
     const baseResult = await languageService.validateDocument({
         uri: document.uri,
         text: document.getText(),
-    });
+    }, workspaceIndex.getImportedDefaultGroups(document.uri), workspaceIndex.getImportedGroupSignatures(document.uri));
     const unresolvedGroups = workspaceIndexReady
         ? getUnresolvedGroupDiagnostics(workspaceIndex, document.uri)
         : [];

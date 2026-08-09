@@ -9,6 +9,8 @@ const targetUri = "file:///target.fml";
 const index = new WorkspaceFmlIndex();
 index.set(sourceUri, {
         canonicalUrls: ["http://example.org/StructureMap/Source"],
+    defaultGroups: [],
+    groupSignatures: [],
         definitions: [],
         imports: ["http://example.org/StructureMap/Target*"],
         references: [{
@@ -22,6 +24,8 @@ index.set(sourceUri, {
     });
 index.set(targetUri, {
         canonicalUrls: ["http://example.org/StructureMap/TargetMap"],
+    defaultGroups: [],
+    groupSignatures: [],
         definitions: [{
             name: "CopyName",
             range: {
@@ -84,6 +88,8 @@ test("reports unresolved group references as warnings", () => {
     assert.match(diagnostics[0].message, /CopyName/);
     index.set(targetUri, {
         canonicalUrls: ["http://example.org/StructureMap/TargetMap"],
+        defaultGroups: [],
+        groupSignatures: [],
         definitions: [{
             name: "CopyName",
             range: {

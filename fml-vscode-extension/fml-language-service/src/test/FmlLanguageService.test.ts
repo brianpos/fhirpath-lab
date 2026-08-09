@@ -440,6 +440,57 @@ test("shows typed signatures on dependent calls and group parameters", () => {
     assert.match(declaredParameter.markdown, /Resolution: declared/);
 });
 
+test("validates and shows resolved parameters for dependent groups from imported maps", async () => {
+    const importedSymbols = service.getDocumentSymbols({
+        uri: "file:///shared.fml",
+        text: [
+            "/// url = 'http://example.org/StructureMap/Shared'",
+            "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Coding' alias Coding as source",
+            "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Observation' alias Observation as target",
+            "group CopyCoding(source src : Coding, target tgt : Observation) {",
+            "}",
+        ].join("\n"),
+    });
+    const text = [
+        "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Observation' alias Observation as source",
+        "imports 'http://example.org/StructureMap/Shared'",
+        "group example(source src : Observation, target tgt : Observation) {",
+        "    src.code as concept -> tgt then CopyCoding(concept, tgt);",
+        "}",
+    ].join("\n");
+    const offset = text.indexOf("CopyCoding");
+    const hover = service.getHover({
+        uri: "file:///imported-group-hover.fml",
+        text,
+        position: positionAt(text, offset + 1),
+    }, importedSymbols.groupSignatures);
+    const validation = await service.validateDocument({
+        uri: "file:///imported-group-hover.fml",
+        text,
+    }, [], importedSymbols.groupSignatures);
+    const compatibleValidation = await service.validateDocument({
+        uri: "file:///compatible-imported-group.fml",
+        text: text.replace(
+            "src.code as concept -> tgt then CopyCoding(concept, tgt)",
+            "src.code.coding as coding -> tgt then CopyCoding(coding, tgt)",
+        ),
+    }, [], importedSymbols.groupSignatures);
+
+    assert.deepEqual(importedSymbols.groupSignatures.map(signature => signature.groupName), ["CopyCoding"]);
+    assert.ok(hover);
+    assert.match(hover.markdown, /Group call.*`CopyCoding`/);
+    assert.match(hover.markdown, /`source src`: `Coding` \(R5\)/);
+    assert.match(hover.markdown, /`target tgt`: `Observation` \(R5\)/);
+    assert.doesNotMatch(hover.markdown, /Parameters: unresolved/);
+    assert.equal(validation.errorCount, 1);
+    assert.match(validation.diagnostics[0].message, /parameter 'src' expects 'Coding'/);
+    assert.equal(
+        compatibleValidation.errorCount,
+        0,
+        compatibleValidation.diagnostics.map(diagnostic => diagnostic.message).join("; "),
+    );
+});
+
 test("variable hovers do not leak across sibling rules and show provenance", () => {
     const text = [
         "uses 'http://hl7.org/fhir/5.0/StructureDefinition/MedicationStatement' alias MedicationStatement as source",
@@ -716,6 +767,29 @@ test("property hovers list Reference target profiles", () => {
     assert.match(hover.markdown, /\[`Organization`\]\(https:\/\/hl7\.org\/fhir\/R5\/organization\.html\)/);
 });
 
+test("property hovers deduplicate Reference types independently of target profiles", () => {
+    const text = [
+        "uses 'http://hl7.org/fhir/3.0/StructureDefinition/AdverseEvent' alias AdverseEvent as source",
+        "group example(source src : AdverseEvent, target tgt : AdverseEvent) {",
+        "    src.subject -> tgt.subject;",
+        "}",
+    ].join("\n");
+    const offset = text.indexOf("src.subject") + "src.".length;
+    const hover = service.getHover({
+        uri: "file:///distinct-reference-hover.fml",
+        text,
+        position: positionAt(text, offset),
+    });
+
+    assert.ok(hover);
+    assert.match(hover.markdown, /- Type: `Reference`/);
+    assert.doesNotMatch(hover.markdown, /Compatible types:/);
+    assert.doesNotMatch(hover.markdown, /`Reference` \| `Reference`/);
+    assert.match(hover.markdown, /Target profiles:/);
+    assert.match(hover.markdown, /\[`Patient`\]/);
+    assert.match(hover.markdown, /\[`ResearchSubject`\]/);
+});
+
 test("transform hovers show fixed result types", () => {
     const text = [
         "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Observation' alias Observation as target",
@@ -830,6 +904,115 @@ group Indexed(source src, target tgt) {
 
     assert.deepEqual(symbols.canonicalUrls, ["http://example.org/StructureMap/Indexed"]);
     assert.deepEqual(symbols.imports, ["http://example.org/StructureMap/Common*"]);
+});
+
+test("extracts resolved default mapping groups for workspace indexing", () => {
+    const symbols = service.getDocumentSymbols({
+        uri: "file:///conversions.fml",
+        text: `
+/// url = 'http://example.org/StructureMap/Conversions'
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias Patient as source
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Observation' alias Observation as target
+group BooleanToCode(source src : boolean, target tgt : code) <<types>> {
+}
+`,
+    });
+
+    assert.deepEqual(symbols.defaultGroups, [{
+        groupName: "BooleanToCode",
+        typeMode: "types",
+        sourceTypeName: "boolean",
+        targetTypeName: "code",
+        sourceFhirVersion: "R5",
+        targetFhirVersion: "R5",
+    }]);
+});
+
+test("uses imported default mapping groups during document validation", async () => {
+    const document = {
+        uri: "file:///consumer.fml",
+        text: `
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias Patient as source
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Observation' alias Observation as target
+group Main(source src : Patient, target tgt : Observation) {
+    src.active -> tgt.status;
+}
+`,
+    };
+    const withoutImport = await service.validateDocument(document);
+    const withImport = await service.validateDocument(document, [{
+        groupName: "BooleanToCode",
+        typeMode: "types",
+        sourceTypeName: "boolean",
+        targetTypeName: "code",
+        sourceFhirVersion: "R5",
+        targetFhirVersion: "R5",
+    }]);
+
+    assert.equal(withoutImport.errorCount, 1);
+    assert.equal(withImport.errorCount, 0);
+});
+
+test("uses imported default mapping groups for copy transforms", async () => {
+    const document = {
+        uri: "file:///copy-consumer.fml",
+        text: `
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias Patient as source
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Observation' alias Observation as target
+group Main(source src : Patient, target tgt : Observation) {
+    src.active as active -> tgt.status = active;
+}
+`,
+    };
+    const importedDefaultGroups = [{
+        groupName: "BooleanToCode",
+        typeMode: "types" as const,
+        sourceTypeName: "boolean",
+        targetTypeName: "code",
+        sourceFhirVersion: "R5" as const,
+        targetFhirVersion: "R5" as const,
+    }];
+    const withoutImport = await service.validateDocument(document);
+    const withImport = await service.validateDocument(document, importedDefaultGroups);
+
+    assert.equal(withoutImport.errorCount, 0);
+    assert.equal(withoutImport.warningCount, 1);
+    assert.match(withoutImport.diagnostics[0].message, /not compatible/);
+    assert.equal(withImport.errorCount, 0);
+    assert.equal(withImport.warningCount, 0);
+});
+
+test("does not treat multi-target variable rules as simple identities", async () => {
+    const result = await service.validateDocument({
+        uri: "file:///set-derived-from.fml",
+        text: `
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/QuestionnaireResponse' alias QuestionnaireResponse as source
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Observation' alias Observation as target
+group Main(source src : QuestionnaireResponse, target tgt : Observation) {
+    src.id -> tgt.derivedFrom as df, df.reference = ('QuestionnaireResponse/' & src.id) "SetDerivedFrom";
+}
+`,
+    });
+
+    assert.equal(result.errorCount, 0, result.diagnostics.map(diagnostic => diagnostic.message).join("; "));
+    assert.ok(result.diagnostics.every(diagnostic => !diagnostic.message.includes("Identity assignment")));
+});
+
+test("reports unsupported source Reference target profiles on identity mappings", async () => {
+    const result = await service.validateDocument({
+        uri: "file:///reference-profiles.fml",
+        text: `
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Appointment' alias Appointment as source
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/AllergyIntolerance' alias AllergyIntolerance as target
+group Main(source src : Appointment, target tgt : AllergyIntolerance) {
+    src.subject -> tgt.patient;
+}
+`,
+    });
+
+    assert.equal(result.errorCount, 1);
+    assert.match(result.diagnostics[0].message, /does not support source Reference target profile\(s\): 'Group'/);
+    assert.deepEqual(result.diagnostics[0].range.start, {line: 4, character: 19});
 });
 
 function positionAt(text: string, offset: number): {line: number; character: number} {

@@ -1633,15 +1633,17 @@ function getDiagramPosition(value: unknown): DiagramSourcePosition | undefined {
 }
 
 function toFmlDiagramInput(fml: FmlStructureMap): DiagramMapInput {
-  const structures = new Map<string, {typeName: string; version?: FhirVersion}>();
+  const structuresByAlias = new Map<string, {typeName: string; version?: FhirVersion}>();
+  const structuresByRoleAndType = new Map<string, {typeName: string; version?: FhirVersion}>();
   for (const structure of fml.structures) {
     const canonical = structure.canonical ?? structure.url;
     const resolved = {
       typeName: structure.resolvedTypeName ?? (canonical.split("/").pop() || canonical),
       version: structure.fhirVersion,
     };
-    if (structure.alias) structures.set(structure.alias, resolved);
-    if (!structures.has(resolved.typeName)) structures.set(resolved.typeName, resolved);
+    if (structure.alias) structuresByAlias.set(structure.alias, resolved);
+    const parameterMode = structure.mode === "source" || structure.mode === "queried" ? "source" : "target";
+    structuresByRoleAndType.set(`${parameterMode}:${resolved.typeName}`, resolved);
   }
 
   return {
@@ -1649,7 +1651,10 @@ function toFmlDiagramInput(fml: FmlStructureMap): DiagramMapInput {
       name: group.name,
       extends: group.extends,
       input: group.parameters.map(parameter => {
-        const structure = parameter.type ? structures.get(parameter.type) : undefined;
+        const structure = parameter.type
+          ? structuresByAlias.get(parameter.type)
+            ?? structuresByRoleAndType.get(`${parameter.mode}:${parameter.type}`)
+          : undefined;
         return {
           name: parameter.name,
           type: structure?.typeName ?? parameter.type,

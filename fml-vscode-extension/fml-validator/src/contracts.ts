@@ -20,6 +20,31 @@ export interface FmlSource {
     defaultFhirVersion?: import("../../../helpers/fml_models").FhirVersion;
     profileBaseTypes?: Record<string, string>;
     customTypeModels?: Record<string, import("../../../helpers/custom_model").TypeModel>;
+    importedDefaultGroups?: FmlDefaultGroup[];
+    importedGroupSignatures?: FmlGroupSignature[];
+}
+
+export interface FmlDefaultGroup {
+    groupName: string;
+    typeMode: "types" | "type+";
+    sourceTypeName: string;
+    targetTypeName: string;
+    sourceFhirVersion?: import("../../../helpers/fml_models").FhirVersion;
+    targetFhirVersion?: import("../../../helpers/fml_models").FhirVersion;
+}
+
+export interface FmlGroupSignature {
+    groupName: string;
+    parameters: FmlGroupParameterSignature[];
+}
+
+export interface FmlGroupParameterSignature {
+    name: string;
+    mode: "source" | "target";
+    typeName?: string;
+    fhirVersion?: import("../../../helpers/fml_models").FhirVersion;
+    resolution: "declared" | "context" | "unresolved" | "conflict";
+    conflictingTypeNames?: string[];
 }
 
 export interface FmlDiagnostic {
