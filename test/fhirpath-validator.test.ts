@@ -65,6 +65,15 @@ describe("FHIRPath validator visitor", () => {
         expect(r.expectedReturnIsCollection).toBe(true);
     });
 
+    it("resolves a backtick-delimited member name", () => {
+        const r = validateFhirpathExpression("Narrative.`div`", {
+            fhirVersion: "r4",
+            contextType: "Narrative",
+        });
+        expect(r.diagnostics).toEqual([]);
+        expect(r.parseDebugTree?.Name).toBe("div");
+    });
+
     it("expands choice types like Patient.deceasedBoolean", () => {
         const r = validateFhirpathExpression("Patient.deceasedBoolean", {
             fhirVersion: "r4",

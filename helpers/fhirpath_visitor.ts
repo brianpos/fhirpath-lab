@@ -204,6 +204,41 @@ export interface VisitorResult {
 
 const EMPTY_VALUE: FhirPathValue = Object.freeze({ types: [], isCollection: false });
 
+function identifierValue(ctx: IdentifierContext): string {
+    const raw = ctx.getText();
+    if (ctx.start.type !== Lexer.DELIMITEDIDENTIFIER) return raw;
+
+    let decoded = "";
+    for (let index = 1; index < raw.length - 1; index++) {
+        const current = raw[index];
+        if (current !== "\\") {
+            decoded += current;
+            continue;
+        }
+
+        const escaped = raw[++index];
+        if (escaped === "u") {
+            decoded += String.fromCharCode(Number.parseInt(raw.slice(index + 1, index + 5), 16));
+            index += 4;
+            continue;
+        }
+
+        const replacements: Record<string, string> = {
+            "`": "`",
+            "\"": "\"",
+            "'": "'",
+            "\\": "\\",
+            "/": "/",
+            f: "\f",
+            n: "\n",
+            r: "\r",
+            t: "\t",
+        };
+        decoded += replacements[escaped] ?? escaped;
+    }
+    return decoded;
+}
+
 /** ANTLR error listener that gathers parser/lexer syntax errors as Diagnostics. */
 class CollectingErrorListener {
     public errors: Diagnostic[] = [];
@@ -703,7 +738,7 @@ class FhirPathExpressionVisitor {
     }
 
     private visitMember(ctx: MemberInvocationContext, input: FhirPathValue): { node: JsonNode; value: FhirPathValue } {
-        const name = ctx.identifier().getText();
+        const name = identifierValue(ctx.identifier());
         const node: JsonNode = attachPosition({ ExpressionType: "ChildExpression", Name: name, ReturnType: "" }, ctx);
 
         if (this.options.allowEnvironmentVariablesAtRoot && ctx.parentCtx instanceof InvocationTermContext) {
@@ -1341,7 +1376,7 @@ class FhirPathExpressionVisitor {
 
         const elementSelectors = ctx.instanceElementSelector_list();
         for (const sel of elementSelectors) {
-            const elementName = sel.identifier().getText();
+            const elementName = identifierValue(sel.identifier());
             const valueCtx = sel.expression();
             const valueResult = this.visitExpression(valueCtx, input);
 
