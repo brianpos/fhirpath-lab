@@ -31,6 +31,8 @@ export interface FmlDefaultGroup {
     targetTypeName: string;
     sourceFhirVersion?: import("../../../helpers/fml_models").FhirVersion;
     targetFhirVersion?: import("../../../helpers/fml_models").FhirVersion;
+    definitionUri?: string;
+    definitionSpan?: FmlSourceSpan;
 }
 
 export interface FmlDefaultGroupUsage {
@@ -45,6 +47,8 @@ export interface FmlDefaultGroupUsage {
 export interface FmlGroupSignature {
     groupName: string;
     parameters: FmlGroupParameterSignature[];
+    definitionUri?: string;
+    definitionSpan?: FmlSourceSpan;
 }
 
 export interface FmlGroupParameterSignature {

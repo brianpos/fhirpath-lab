@@ -2,6 +2,7 @@ import {
     FmlDiagnostic,
     FmlDefaultGroup,
     FmlDefaultGroupUsage,
+    FmlGroupDefinition,
     FmlGroupSignature,
     FmlPropertyAnalysis,
     FmlPropertyPathStep,
@@ -34,6 +35,8 @@ type GroupInputHover = Pick<
     FmlPropertyAnalysis["groupInputs"][number],
     "inputName" | "mode" | "typeName" | "fhirVersion" | "resolution" | "conflictingTypeNames"
 >;
+
+type DefaultGroupLinkResolver = (groupName: string) => string | undefined;
 
 export class FmlLanguageService {
     private defaultFhirVersion?: FhirVersion;
@@ -133,6 +136,7 @@ export class FmlLanguageService {
         };
         const analysis = this.validator.getPropertyAnalysis(source);
         const defaultGroupUsages = this.validator.getDefaultGroupUsages(source);
+        const resolveDefaultGroupLink = this.createDefaultGroupLinkResolver(request, importedDefaultGroups);
         const usages = analysis.usages;
         const variableMatch = this.getVariableHoverMatch(usages, analysis.variableReferences, request);
         if (variableMatch) return variableMatch;
@@ -144,7 +148,7 @@ export class FmlLanguageService {
         if (arrowUsages.length > 0) {
             return {
                 range: this.toSourceRange(arrowUsages[0].span, request.text),
-                markdown: this.formatDefaultGroupHover(arrowUsages),
+                markdown: this.formatDefaultGroupHover(arrowUsages, resolveDefaultGroupLink),
             };
         }
 
@@ -196,7 +200,12 @@ export class FmlLanguageService {
             ];
             return {range: transformMatch.range, markdown: lines.join("\n")};
         }
-        const segmentMatch = this.getPropertySegmentHoverMatch(usages, request, defaultGroupUsages);
+        const segmentMatch = this.getPropertySegmentHoverMatch(
+            usages,
+            request,
+            defaultGroupUsages,
+            resolveDefaultGroupLink,
+        );
         if (segmentMatch) return segmentMatch;
         return undefined;
     }
@@ -214,15 +223,49 @@ export class FmlLanguageService {
         return lines.join("\n");
     }
 
-    private formatDefaultGroupHover(usages: FmlDefaultGroupUsage[]): string {
+    private formatDefaultGroupHover(
+        usages: FmlDefaultGroupUsage[],
+        resolveLink?: DefaultGroupLinkResolver,
+    ): string {
         return [
-            "**Default mapping group**",
+            usages.length > 1 ? "**Default mapping groups**" : "**Default mapping group**",
             "",
             ...usages.map(usage => {
-                return `- \`${usage.defaultGroupName}\` (\`${usage.typeMode}\`): `
+                return `- ${this.formatDefaultGroupName(usage.defaultGroupName, resolveLink)} `
+                    + `(\`${usage.typeMode}\`): `
                     + `\`${usage.sourceTypeName}\` -> \`${usage.targetTypeName}\``;
             }),
         ].join("\n");
+    }
+
+    private createDefaultGroupLinkResolver(
+        request: HoverRequest,
+        importedDefaultGroups: FmlDefaultGroup[],
+    ): DefaultGroupLinkResolver {
+        let localDefinitions: FmlGroupDefinition[] | undefined;
+        return (groupName: string) => {
+            localDefinitions ??= this.validator.getDocumentSymbols({
+                sourceName: request.uri,
+                sourceText: request.text,
+            }).definitions;
+            const local = localDefinitions.find(definition => definition.name === groupName);
+            if (local) return this.formatDefinitionLink(request.uri, local.span);
+            const imported = importedDefaultGroups.find(group => group.groupName === groupName);
+            return imported?.definitionUri && imported.definitionSpan
+                ? this.formatDefinitionLink(imported.definitionUri, imported.definitionSpan)
+                : undefined;
+        };
+    }
+
+    private formatDefinitionLink(uri: string, span: FmlSourceSpan): string {
+        const line = Math.max(this.toInteger(span.start.line, 1), 1);
+        const column = Math.max(this.toInteger(span.start.column, 0), 0) + 1;
+        return `${uri}#L${line},${column}`;
+    }
+
+    private formatDefaultGroupName(groupName: string, resolveLink?: DefaultGroupLinkResolver): string {
+        const link = resolveLink?.(groupName);
+        return link ? `[\`${groupName}\`](<${link}>)` : `\`${groupName}\``;
     }
 
     private formatGroupInputHover(input: FmlPropertyAnalysis["groupInputs"][number]): string {
@@ -290,6 +333,7 @@ export class FmlLanguageService {
         usages: FmlPropertyUsage[],
         request: HoverRequest,
         defaultGroupUsages: FmlDefaultGroupUsage[] = [],
+        resolveDefaultGroupLink?: DefaultGroupLinkResolver,
     ): HoverInformation | undefined {
         const candidates: Array<{range: LanguageRange; markdown: string}> = [];
         for (const usage of usages) {
@@ -328,7 +372,10 @@ export class FmlLanguageService {
                         return defaultGroupUsage.kind === "batch"
                             && this.spansEqual(defaultGroupUsage.span, usage.span);
                     });
-                    candidates.push({range, markdown: this.formatPropertyHover(usage, step, batchGroups)});
+                    candidates.push({
+                        range,
+                        markdown: this.formatPropertyHover(usage, step, batchGroups, resolveDefaultGroupLink),
+                    });
                 }
             }
         }
@@ -394,6 +441,7 @@ export class FmlLanguageService {
         usage: FmlPropertyUsage,
         step?: FmlPropertyPathStep,
         defaultGroups: FmlDefaultGroupUsage[] = [],
+        resolveDefaultGroupLink?: DefaultGroupLinkResolver,
     ): string {
         const rootTypeName = this.customTypeModels[usage.rootTypeName]?.TypeName ?? usage.rootTypeName;
         const path = step?.path ?? usage.path;
@@ -431,7 +479,8 @@ export class FmlLanguageService {
             lines.push(`- Type: \`${possibleTypes.join(" | ")}\``);
         }
         for (const defaultGroup of defaultGroups) {
-            lines.push(`- Default mapping group: \`${defaultGroup.defaultGroupName}\` `
+            lines.push(`- Default mapping group: `
+                + `${this.formatDefaultGroupName(defaultGroup.defaultGroupName, resolveDefaultGroupLink)} `
                 + `(\`${defaultGroup.typeMode}\`, \`${defaultGroup.sourceTypeName}\` -> \`${defaultGroup.targetTypeName}\`)`);
         }
         const targetProfiles = this.distinctValues(step?.targetProfiles ?? usage.targetProfiles ?? []);

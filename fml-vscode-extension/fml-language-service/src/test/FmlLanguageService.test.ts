@@ -945,6 +945,8 @@ group BooleanToCode(source src : boolean, target tgt : code) <<types>> {
         targetTypeName: "code",
         sourceFhirVersion: "R5",
         targetFhirVersion: "R5",
+        definitionUri: "file:///conversions.fml",
+        definitionSpan: {start: {line: 5, column: 6}, end: {line: 5, column: 19}},
     }]);
 });
 
@@ -995,8 +997,8 @@ group Main(source src : Patient, target tgt : Observation) {
     const withoutImport = await service.validateDocument(document);
     const withImport = await service.validateDocument(document, importedDefaultGroups);
 
-    assert.equal(withoutImport.errorCount, 0);
-    assert.equal(withoutImport.warningCount, 1);
+    assert.equal(withoutImport.errorCount, 1);
+    assert.equal(withoutImport.warningCount, 0);
     assert.match(withoutImport.diagnostics[0].message, /not compatible/);
     assert.equal(withImport.errorCount, 0);
     assert.equal(withImport.warningCount, 0);
@@ -1029,15 +1031,60 @@ group BooleanToCode(source src : boolean, target tgt : code) <<types>> {
         targetTypeName: "code",
         sourceFhirVersion: "R5" as const,
         targetFhirVersion: "R5" as const,
+        definitionUri: "file:///imported-defaults.fml",
+        definitionSpan: {start: {line: 12, column: 6}, end: {line: 12, column: 27}},
     }];
     const localHover = hoverAtArrow(localText);
     const importedHover = hoverAtArrow(mapping, importedDefaultGroups);
+    const unlinkedHover = hoverAtArrow(mapping, [{
+        ...importedDefaultGroups[0],
+        definitionUri: undefined,
+        definitionSpan: undefined,
+    }]);
 
     assert.ok(localHover);
     assert.match(localHover.markdown, /Default mapping group/);
-    assert.match(localHover.markdown, /`BooleanToCode` \(`types`\): `boolean` -> `code`/);
+    assert.match(
+        localHover.markdown,
+        /\[`BooleanToCode`\]\(<file:\/\/\/default-group-arrow\.fml#L8,\d+>\) \(`types`\): `boolean` -> `code`/,
+    );
     assert.ok(importedHover);
-    assert.match(importedHover.markdown, /`ImportedBooleanToCode` \(`types`\): `boolean` -> `code`/);
+    assert.match(
+        importedHover.markdown,
+        /\[`ImportedBooleanToCode`\]\(<file:\/\/\/imported-defaults\.fml#L12,7>\) \(`types`\): `boolean` -> `code`/,
+    );
+    assert.ok(unlinkedHover);
+    assert.match(unlinkedHover.markdown, /`ImportedBooleanToCode` \(`types`\): `boolean` -> `code`/);
+});
+
+test("shows default groups that take precedence over a same-type copy", () => {
+    const text = `
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias Patient as source
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias PatientTarget as target
+group Main(source src : Patient, target tgt : PatientTarget) {
+    src.birthDate -> tgt.birthDate;
+}
+group NormaliseDate(source src : date, target tgt : date) <<types>> {
+}
+group AlternateDate(source src : date, target tgt : date) <<types>> {
+}
+`;
+    const hover = service.getHover({
+        uri: "file:///same-type-defaults.fml",
+        text,
+        position: positionAt(text, text.indexOf("->") + 1),
+    });
+
+    assert.ok(hover);
+    assert.match(hover.markdown, /\*\*Default mapping groups\*\*/);
+    assert.match(
+        hover.markdown,
+        /\[`NormaliseDate`\]\(<file:\/\/\/same-type-defaults\.fml#L7,\d+>\) \(`types`\): `date` -> `date`/,
+    );
+    assert.match(
+        hover.markdown,
+        /\[`AlternateDate`\]\(<file:\/\/\/same-type-defaults\.fml#L9,\d+>\) \(`types`\): `date` -> `date`/,
+    );
 });
 
 test("shows required default groups beneath batch property types", () => {
@@ -1075,7 +1122,10 @@ group StringToConcept(source src : string, target tgt : CodeableConcept) <<types
 
     assert.ok(hover);
     assert.match(hover.markdown, /- Type: `string`/);
-    assert.match(hover.markdown, /Default mapping group: `StringToConcept` \(`types`, `string` -> `CodeableConcept`\)/);
+    assert.match(
+        hover.markdown,
+        /Default mapping group: \[`StringToConcept`\]\(<file:\/\/\/batch-default-group\.fml#L7,\d+>\) \(`types`, `string` -> `CodeableConcept`\)/,
+    );
 });
 
 test("does not treat multi-target variable rules as simple identities", async () => {

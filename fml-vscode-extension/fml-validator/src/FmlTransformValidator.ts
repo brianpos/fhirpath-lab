@@ -30,6 +30,25 @@ interface VariableDescriptor {
     typeNames: string[];
     isCollection: boolean;
     fhirVersion?: FhirVersion;
+    /** Property occurrence the value was bound from, when the types came directly from that element. */
+    usage?: FmlPropertyUsage;
+}
+
+interface AssignmentCheck {
+    sourceUsage?: FmlPropertyUsage;
+    sourceTypes: string[];
+    sourceFhirVersion?: FhirVersion;
+    targetUsage: FmlPropertyUsage;
+    /** Set when the value reaches the target through a rule variable instead of a source property. */
+    sourceVariableName?: string;
+    line: number;
+    column: number;
+    offendingText: string;
+}
+
+interface GroupSignatureParameter {
+    mode: "source" | "target";
+    typeName?: string;
 }
 
 type TypeLookup = (typeName: string) => TypeModel | undefined;
@@ -196,6 +215,12 @@ export class FmlTransformValidator {
             ...resolveGroupSignatures(model.groups, propertyAnalysis),
             ...importedGroupSignatures,
         ];
+        this.validateGroupDeclarations(
+            model,
+            importedGroupSignatures,
+            sourceName,
+            diagnostics,
+        );
         for (const group of model.groups) {
             const variables = this.createVariables(group, propertyAnalysis);
             const contextVariables = new Set(
@@ -404,7 +429,6 @@ export class FmlTransformValidator {
         return sourceContextExists
             && targetContextExists
             && !!source.element
-            && source.type === undefined
             && source.min === undefined
             && source.max === undefined
             && source.defaultValue === undefined
@@ -428,51 +452,97 @@ export class FmlTransformValidator {
         customTypeModels: Record<string, TypeModel>,
         diagnostics: FmlDiagnostic[],
     ): void {
-        if (!sourceUsage || !targetUsage || sourceUsage.unknownElement || targetUsage.unknownElement) return;
-        const sourceTypes = this.usageTypeNames(sourceUsage);
+        if (!sourceUsage || !targetUsage) return;
+        this.validateAssignment(
+            {
+                sourceUsage,
+                sourceTypes: this.usageTypeNames(sourceUsage),
+                sourceFhirVersion: sourceUsage.fhirVersion,
+                targetUsage,
+                line: targetUsage.span.start.line,
+                column: targetUsage.span.start.column,
+                offendingText: targetUsage.path,
+            },
+            defaultGroups,
+            sourceName,
+            customTypeModels,
+            diagnostics,
+        );
+    }
+
+    /** Shared compatibility rules for batch, plain, and variable-based property assignments. */
+    private validateAssignment(
+        check: AssignmentCheck,
+        defaultGroups: FmlDefaultGroup[],
+        sourceName: string | undefined,
+        customTypeModels: Record<string, TypeModel>,
+        diagnostics: FmlDiagnostic[],
+    ): void {
+        const {sourceUsage, targetUsage} = check;
+        if (targetUsage.unknownElement || sourceUsage?.unknownElement) return;
         const targetTypes = this.usageTypeNames(targetUsage);
-        if (sourceTypes.length === 0 || targetTypes.length === 0) return;
+        if (check.sourceTypes.length === 0 || targetTypes.length === 0) return;
         const lookup = this.composeLookup(
             customTypeModels,
             lookups[targetUsage.fhirVersion ?? "R4B"] ?? lookupByTypeNameR4B,
         );
-        const incompatible = sourceTypes.filter(sourceType => {
+        const ambiguous: Array<{sourceType: string; targetType: string; groups: FmlDefaultGroup[]}> = [];
+        const incompatible = check.sourceTypes.filter(sourceType => {
             return !targetTypes.some(targetType => {
-                const versionMismatch = !!sourceUsage.fhirVersion
+                const versionMismatch = !!check.sourceFhirVersion
                     && !!targetUsage.fhirVersion
-                    && sourceUsage.fhirVersion !== targetUsage.fhirVersion;
+                    && check.sourceFhirVersion !== targetUsage.fhirVersion;
                 const versionIndependent = this.isSystemType(sourceType) && this.isSystemType(targetType);
-                if ((!versionMismatch || versionIndependent)
-                    && this.isAssignableTo(sourceType, targetType, lookup)) return true;
-                return this.hasDefaultGroup(
+                const assignable = (!versionMismatch || versionIndependent)
+                    && this.isAssignableTo(sourceType, targetType, lookup);
+                const groups = this.findDefaultGroups(
                     defaultGroups,
                     sourceType,
                     targetType,
-                    sourceUsage.fhirVersion,
+                    check.sourceFhirVersion,
                     targetUsage.fhirVersion,
                     this.isUnfixedChoice(targetUsage),
                 );
+                if (groups.length > 1) ambiguous.push({sourceType, targetType, groups});
+                return assignable || groups.length > 0;
             });
         });
-        const sourcePath = `${sourceUsage.rootTypeName}.${sourceUsage.path}`;
-        const targetPath = `${targetUsage.rootTypeName}.${targetUsage.path}`;
-        if (incompatible.length > 0) {
+
+        const prefix = check.sourceVariableName ? "Assignment" : "Identity assignment";
+        const sourceLabel = check.sourceVariableName
+            ? `variable '${check.sourceVariableName}'`
+            : `source property '${this.describeProperty(sourceUsage, lookup)}'`;
+        const targetPath = this.describeProperty(targetUsage, lookup);
+        const report = (message: string): void => {
             diagnostics.push({
                 severity: "error",
-                message: `Identity assignment from source property '${sourcePath}' with type '${incompatible.join(" | ")}' `
-                    + `is not compatible with target property '${targetPath}' (allowed: ${targetTypes.join(" | ")}).`,
-                line: targetUsage.span.start.line,
-                column: targetUsage.span.start.column,
+                message,
+                line: check.line,
+                column: check.column,
                 sourceName,
-                offendingText: targetUsage.path,
+                offendingText: check.offendingText,
             });
+        };
+        if (incompatible.length > 0) {
+            report(`${prefix} from ${sourceLabel} with type '${incompatible.join(" | ")}' `
+                + `is not compatible with target property '${targetPath}' (allowed: ${targetTypes.join(" | ")}).`);
             return;
         }
 
+        if (ambiguous.length > 0) {
+            const {sourceType, targetType, groups} = ambiguous[0];
+            report(`${prefix} from ${sourceLabel} to target property '${targetPath}' matches multiple default `
+                + `mapping groups for '${sourceType}' -> '${targetType}': `
+                + `${groups.map(group => `'${group.groupName}'`).join(", ")}. `
+                + `Only one default group may apply to a type conversion.`);
+            return;
+        }
+
+        if (!sourceUsage) return;
         const profileMismatch = this.referenceProfileMismatch(
             sourceUsage,
             targetUsage,
-            sourceTypes,
+            check.sourceTypes,
             targetTypes,
             lookup,
             customTypeModels,
@@ -484,15 +554,13 @@ export class FmlTransformValidator {
             : `the target does not support source Reference target profile(s): `
                 + `${this.formatTargetProfiles(profileMismatch.missingProfiles)}. `
                 + `Supported target profiles: ${this.formatTargetProfiles(profileMismatch.supportedProfiles)}.`;
-        diagnostics.push({
-            severity: "error",
-            message: `Identity assignment from source property '${sourcePath}' is not compatible with target property `
-                + `'${targetPath}': ${profileIssue}`,
-            line: targetUsage.span.start.line,
-            column: targetUsage.span.start.column,
-            sourceName,
-            offendingText: targetUsage.path,
-        });
+        report(`${prefix} from ${sourceLabel} is not compatible with target property `
+            + `'${targetPath}': ${profileIssue}`);
+    }
+
+    private describeProperty(usage: FmlPropertyUsage | undefined, lookup: TypeLookup): string {
+        if (!usage) return "unknown";
+        return `${lookup(usage.rootTypeName)?.TypeName ?? usage.rootTypeName}.${usage.path}`;
     }
 
     private referenceProfileMismatch(
@@ -646,82 +714,137 @@ export class FmlTransformValidator {
             return resultTypes;
         }
 
-        const isVariableAssignment = transform.type === "copy" && transform.parameters[0]?.type === "identifier";
-        const sourceDescriptor = isVariableAssignment
-            ? variables.get(this.normalizeVariableName(transform.parameters[0].value))
-            : undefined;
+        if (transform.type === "copy" && transform.parameters[0]?.type === "identifier") {
+            const variableName = this.normalizeVariableName(transform.parameters[0].value);
+            if (missingVariables.has(variableName)) return resultTypes;
+            const descriptor = variables.get(variableName);
+            const variablePosition = this.resultPosition(transform) ?? transform.position;
+            this.validateAssignment(
+                {
+                    sourceUsage: descriptor?.usage,
+                    sourceTypes: resultTypes,
+                    sourceFhirVersion: descriptor?.fhirVersion,
+                    targetUsage,
+                    sourceVariableName: variableName,
+                    line: variablePosition?.startLine ?? 1,
+                    column: variablePosition?.startColumn ?? 0,
+                    offendingText: variableName,
+                },
+                defaultGroups,
+                sourceName,
+                customTypeModels,
+                diagnostics,
+            );
+            return resultTypes;
+        }
+
         const lookup = this.composeLookup(customTypeModels, lookups[targetUsage.fhirVersion ?? "R4B"] ?? lookupByTypeNameR4B);
         const incompatible = resultTypes.filter(resultType => {
-            return !allowedTypes.some(allowedType => {
-                const versionMismatch = !!sourceDescriptor?.fhirVersion
-                    && !!targetUsage.fhirVersion
-                    && sourceDescriptor.fhirVersion !== targetUsage.fhirVersion;
-                const versionIndependent = this.isSystemType(resultType) && this.isSystemType(allowedType);
-                if ((!versionMismatch || versionIndependent)
-                    && this.isAssignableTo(resultType, allowedType, lookup)) return true;
-                return isVariableAssignment && this.hasDefaultGroup(
-                    defaultGroups,
-                    resultType,
-                    allowedType,
-                    sourceDescriptor?.fhirVersion,
-                    targetUsage.fhirVersion,
-                    this.isUnfixedChoice(targetUsage),
-                );
-            });
+            return !allowedTypes.some(allowedType => this.isAssignableTo(resultType, allowedType, lookup));
         });
         if (incompatible.length === 0) return resultTypes;
 
         const position = this.resultPosition(transform);
-        const targetTypeName = lookup(targetUsage.rootTypeName)?.TypeName ?? targetUsage.rootTypeName;
-        const targetPath = `${targetTypeName}.${targetUsage.path}`;
+        const targetPath = this.describeProperty(targetUsage, lookup);
         const resultText = incompatible.join(" | ");
-        const message = isVariableAssignment
-            ? `Assignment from variable '${this.normalizeVariableName(transform.parameters[0].value)}' with type '${resultText}' is not compatible with target property '${targetPath}' (allowed: ${allowedTypes.join(" | ")}).`
-            : `Transform '${transform.type}' ${transform.type === "translate" ? "output" : "result"} type '${resultText}' is not compatible with target property '${targetPath}' (allowed: ${allowedTypes.join(" | ")}).`
-                + (transform.type === "translate" ? " The third parameter must select a compatible output type." : "");
         diagnostics.push(this.diagnostic(
-            message,
+            `Transform '${transform.type}' ${transform.type === "translate" ? "output" : "result"} type '${resultText}' is not compatible with target property '${targetPath}' (allowed: ${allowedTypes.join(" | ")}).`
+                + (transform.type === "translate" ? " The third parameter must select a compatible output type." : ""),
             position ?? transform.position,
             resultText,
             sourceName,
-            isVariableAssignment ? "warning" : "error",
+            "error",
         ));
         return resultTypes;
     }
 
-    private hasDefaultGroup(
-        groups: FmlDefaultGroup[],
-        sourceTypeName: string,
-        targetTypeName: string,
-        sourceFhirVersion: FhirVersion | undefined,
-        targetFhirVersion: FhirVersion | undefined,
-        isUnfixedChoice: boolean,
-    ): boolean {
-        return !!this.findDefaultGroup(
-            groups,
-            sourceTypeName,
-            targetTypeName,
-            sourceFhirVersion,
-            targetFhirVersion,
-            isUnfixedChoice,
-        );
+    /** A group name may be overloaded, but not repeated with the same parameter signature. */
+    private validateGroupDeclarations(
+        model: FmlStructureMap,
+        importedGroupSignatures: FmlGroupSignature[],
+        sourceName: string | undefined,
+        diagnostics: FmlDiagnostic[],
+    ): void {
+        const declared = new Map<string, string>();
+        const visit = (
+            groupName: string,
+            parameters: GroupSignatureParameter[],
+            origin: string,
+            position: SourcePosition | undefined,
+            offendingText: string,
+        ): void => {
+            const key = `${groupName}(${parameters.map(parameter => {
+                return `${parameter.mode}:${parameter.typeName ?? ""}`;
+            }).join(",")})`;
+            const existing = declared.get(key);
+            if (existing === undefined) {
+                declared.set(key, origin);
+                return;
+            }
+            const signature = parameters.map(parameter => {
+                return `${parameter.mode} ${parameter.typeName ?? "?"}`;
+            }).join(", ");
+            diagnostics.push(this.diagnostic(
+                `Group '${groupName}(${signature})' is already declared in ${existing}. `
+                + `Group names may only be repeated with a different parameter signature.`,
+                position,
+                offendingText,
+                sourceName,
+            ));
+        };
+        for (const signature of importedGroupSignatures) {
+            visit(
+                signature.groupName,
+                signature.parameters,
+                this.describeGroupOrigin(signature.definitionUri),
+                model.imports[0]?.position,
+                model.imports[0]?.url ?? signature.groupName,
+            );
+        }
+        for (const group of model.groups) {
+            visit(
+                group.name,
+                group.parameters.map(parameter => ({mode: parameter.mode, typeName: parameter.type})),
+                "this map",
+                group.position,
+                group.name,
+            );
+        }
     }
 
-    private findDefaultGroup(
+    private describeGroupOrigin(definitionUri: string | undefined): string {
+        const fileName = definitionUri?.split(/[\\/]/).pop();
+        if (!fileName) return "an imported map";
+        return `'${decodeURIComponent(fileName)}'`;
+    }
+
+    private findDefaultGroups(
         groups: FmlDefaultGroup[],
         sourceTypeName: string,
         targetTypeName: string,
         sourceFhirVersion: FhirVersion | undefined,
         targetFhirVersion: FhirVersion | undefined,
         isUnfixedChoice: boolean,
-    ): FmlDefaultGroup | undefined {
-        return groups.find(group => {
+    ): FmlDefaultGroup[] {
+        const matches = groups.filter(group => {
             if (isUnfixedChoice && group.typeMode !== "type+") return false;
             return this.typesMatch(group.sourceTypeName, sourceTypeName)
                 && this.typesMatch(group.targetTypeName, targetTypeName)
                 && this.versionsMatch(group.sourceFhirVersion, sourceFhirVersion)
                 && this.versionsMatch(group.targetFhirVersion, targetFhirVersion);
         });
+        // Only collapse groups that are indistinguishable; repeated declarations are reported separately.
+        return [...new Map(matches.map(group => [
+            [
+                group.groupName,
+                group.typeMode,
+                group.sourceTypeName,
+                group.targetTypeName,
+                group.sourceFhirVersion ?? "",
+                group.targetFhirVersion ?? "",
+            ].join("|"),
+            group,
+        ])).values()];
     }
 
     private createDefaultGroupUsages(
@@ -748,12 +871,10 @@ export class FmlTransformValidator {
                     && !!targetUsage.fhirVersion
                     && sourceUsage.fhirVersion !== targetUsage.fhirVersion;
                 const versionIndependent = this.isSystemType(sourceType) && this.isSystemType(targetType);
-                if ((!versionMismatch || versionIndependent)
-                    && this.isAssignableTo(sourceType, targetType, lookup)) {
-                    accepted = true;
-                    break;
-                }
-                const match = this.findDefaultGroup(
+                const assignable = (!versionMismatch || versionIndependent)
+                    && this.isAssignableTo(sourceType, targetType, lookup);
+                // Matching groups are listed even when the copy is already valid, because they take precedence.
+                const found = this.findDefaultGroups(
                     defaultGroups,
                     sourceType,
                     targetType,
@@ -761,8 +882,8 @@ export class FmlTransformValidator {
                     targetUsage.fhirVersion,
                     this.isUnfixedChoice(targetUsage),
                 );
-                if (match) {
-                    matches.push(match);
+                matches.push(...found);
+                if (assignable || found.length > 0) {
                     accepted = true;
                     break;
                 }
@@ -892,6 +1013,7 @@ export class FmlTransformValidator {
             typeNames,
             isCollection: !!usage.isCollection,
             fhirVersion: usage.fhirVersion,
+            usage,
         };
     }
 

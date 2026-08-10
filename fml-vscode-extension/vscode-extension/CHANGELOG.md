@@ -1,5 +1,13 @@
 # Change Log
 
+## 0.12.0 (2026-08-10)
+* Fix regression in property copy validation: batch, plain, and variable-based assignments now share the same type, default-group, and `Reference` target-profile rules, and an unsupported variable assignment is an error instead of a warning
+* Validate copies that only narrow the source with a type filter, such as `src.performed : dateTime -> tgt.category`, using the filtered type
+* Link default mapping group names in simple-copy arrow and batch property hovers to their group declaration, including declarations in imported maps
+* List default mapping groups in hovers even when the source and target types already match, because the group takes precedence over the direct copy
+* Report an error when more than one default mapping group matches the same source and target type pair
+* Report an error when a group name is repeated with the same parameter signature in the same map or an imported map, while still allowing overloads with different parameters
+
 ## 0.11.0 (2026-08-09)
 * Validate exact plain and batch identity mappings against source and target types, FHIR versions, and local or imported `<<types>>`/`<<type+>>` default groups
 * Resolve same-named cross-version default-group inputs by source/target role and permit version-independent `System.*` value copies inside primitive converters

@@ -619,6 +619,35 @@ group Main(source src : ClinicalImpressionR3, target tgt : ClinicalImpression) {
     assert.deepEqual(targets.map(usage => usage.elementTypeName), ["dateTime", "Period"]);
 });
 
+test("validates a type filtered copy as a simple identity assignment", async () => {
+    const rule = "src.performed : dateTime -> tgt.category \"performedDateTime\";";
+    const sourceText = (defaultGroup: string) => `
+uses 'http://hl7.org/fhir/4.3/StructureDefinition/Procedure' alias Procedure as source
+uses 'http://hl7.org/fhir/4.3/StructureDefinition/Observation' alias Observation as target
+${defaultGroup}
+group Main(source src : Procedure, target tgt : Observation) {
+    ${rule}
+}
+`;
+    const withoutGroup = await new FmlValidatorApi().validate({sourceText: sourceText("")});
+    const withGroup = await new FmlValidatorApi().validate({
+        sourceText: sourceText(
+            "group DateTimeToConcept(source src : dateTime, target tgt : CodeableConcept) <<types>> {\n"
+            + "    src -> tgt.text;\n}",
+        ),
+    });
+
+    assert.equal(withoutGroup.status, "failure");
+    const error = withoutGroup.diagnostics.find(diagnostic => diagnostic.severity === "error");
+    assert.match(error?.message ?? "", /Identity assignment from source property 'Procedure\.performed'/);
+    assert.match(error?.message ?? "", /dateTime/);
+    assert.match(error?.message ?? "", /CodeableConcept/);
+    assert.ok(
+        withGroup.diagnostics.every(diagnostic => diagnostic.severity !== "error"),
+        withGroup.diagnostics.map(diagnostic => diagnostic.message).join("; "),
+    );
+});
+
 test("reports a type filter that is not available on a choice property", async () => {
     const result = await new FmlValidatorApi().validate({sourceText: `
 uses 'http://hl7.org/fhir/5.0/StructureDefinition/Observation' alias Observation as source
@@ -756,7 +785,7 @@ group Main(source src : Observation, target tgt : Observation) {
         && candidate.message.includes("transform 'translate'")));
 });
 
-test("warns about incompatible direct variable assignments", async () => {
+test("rejects incompatible direct variable assignments", async () => {
     const result = await new FmlValidatorApi().validate({sourceText: `
 uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias Patient as source
 uses 'http://hl7.org/fhir/5.0/StructureDefinition/Observation' alias Observation as target
@@ -765,12 +794,39 @@ group Main(source src : Patient, target tgt : Observation) {
 }
 `});
 
-    assert.equal(result.status, "success");
+    assert.equal(result.status, "failure");
     const diagnostic = result.diagnostics.find(candidate => candidate.message.includes("not compatible")
         && candidate.message.includes("Observation.status"));
-    assert.equal(diagnostic?.severity, "warning");
+    assert.equal(diagnostic?.severity, "error");
+    assert.equal(diagnostic?.offendingText, "active");
     assert.match(diagnostic?.message ?? "", /boolean/);
     assert.match(diagnostic?.message ?? "", /allowed: code/);
+});
+
+test("applies Reference target profile rules to variable assignments", async () => {
+    const widening = await validateReferenceIdentity(
+        ["http://hl7.org/fhir/StructureDefinition/Patient"],
+        [
+            "http://hl7.org/fhir/StructureDefinition/Patient",
+            "http://hl7.org/fhir/StructureDefinition/Group",
+        ],
+        "src.subject as s -> tgt.subject = s;",
+    );
+    const narrowing = await validateReferenceIdentity(
+        [
+            "http://hl7.org/fhir/StructureDefinition/Patient",
+            "http://hl7.org/fhir/StructureDefinition/Group",
+        ],
+        ["http://hl7.org/fhir/StructureDefinition/Patient"],
+        "src.subject as s -> tgt.subject = s;",
+    );
+
+    assert.equal(widening.status, "success", widening.diagnostics.map(diagnostic => diagnostic.message).join("; "));
+    assert.equal(narrowing.status, "failure");
+    const diagnostic = narrowing.diagnostics.find(candidate => candidate.message.includes("target profile"));
+    assert.equal(diagnostic?.severity, "error");
+    assert.match(diagnostic?.message ?? "", /Assignment from variable 's'/);
+    assert.match(diagnostic?.message ?? "", /does not support source Reference target profile\(s\): 'Group'/);
 });
 
 test("accepts incompatible direct variable assignments through a local types group", async () => {
@@ -812,6 +868,124 @@ group Main(source src : Patient, target tgt : Observation) {
     assert.ok(result.diagnostics.every(diagnostic => !diagnostic.message.includes("not compatible")));
 });
 
+test("reports groups repeated with the same parameter signature", async () => {
+    const sourceText = (secondTargetType: string) => `
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias Patient as source
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Observation' alias Observation as target
+group Main(source src : Patient, target tgt : Observation) {
+    src.active -> tgt.status;
+}
+group BooleanToCode(source src : boolean, target tgt : code) <<types>> {
+}
+group BooleanToCode(source src : boolean, target tgt : ${secondTargetType}) <<types>> {
+}
+`;
+    const duplicated = await new FmlValidatorApi().validate({sourceText: sourceText("code")});
+    const overloaded = await new FmlValidatorApi().validate({sourceText: sourceText("string")});
+
+    assert.equal(duplicated.status, "failure");
+    const error = duplicated.diagnostics.find(diagnostic => diagnostic.severity === "error");
+    assert.match(
+        error?.message ?? "",
+        /Group 'BooleanToCode\(source boolean, target code\)' is already declared in this map/,
+    );
+    assert.equal(error?.line, 9);
+    assert.ok(
+        overloaded.diagnostics.every(diagnostic => !diagnostic.message.includes("already declared")),
+        overloaded.diagnostics.map(diagnostic => diagnostic.message).join("; "),
+    );
+});
+
+test("reports a group that repeats an imported signature", async () => {
+    const importedSignature = (targetTypeName: string) => ({
+        groupName: "BooleanToCode",
+        definitionUri: "file:///maps/conversions.fml",
+        parameters: [
+            {name: "src", mode: "source" as const, typeName: "boolean", resolution: "declared" as const},
+            {name: "tgt", mode: "target" as const, typeName: targetTypeName, resolution: "declared" as const},
+        ],
+    });
+    const sourceText = `
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias Patient as source
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Observation' alias Observation as target
+group Main(source src : Patient, target tgt : Observation) {
+    src.active -> tgt.status;
+}
+group BooleanToCode(source src : boolean, target tgt : code) <<types>> {
+}
+`;
+    const duplicated = await new FmlValidatorApi().validate({
+        sourceText,
+        importedGroupSignatures: [importedSignature("code")],
+    });
+    const overloaded = await new FmlValidatorApi().validate({
+        sourceText,
+        importedGroupSignatures: [importedSignature("markdown")],
+    });
+
+    assert.equal(duplicated.status, "failure");
+    assert.ok(duplicated.diagnostics.some(diagnostic => {
+        return diagnostic.severity === "error"
+            && diagnostic.message.includes("is already declared in 'conversions.fml'");
+    }));
+    assert.ok(
+        overloaded.diagnostics.every(diagnostic => !diagnostic.message.includes("already declared")),
+        overloaded.diagnostics.map(diagnostic => diagnostic.message).join("; "),
+    );
+});
+
+test("reports ambiguous default mapping groups for a conversion", async () => {
+    const sourceText = (secondGroup: string) => `
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias Patient as source
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Observation' alias Observation as target
+group Main(source src : Patient, target tgt : Observation) {
+    src.active -> tgt.status;
+}
+group BooleanToCode(source src : boolean, target tgt : code) <<types>> {
+}
+${secondGroup}
+`;
+    const single = await new FmlValidatorApi().validate({sourceText: sourceText("")});
+    const duplicated = await new FmlValidatorApi().validate({
+        sourceText: sourceText("group AlternateBooleanToCode(source src : boolean, target tgt : code) <<types>> {\n}"),
+    });
+
+    assert.equal(single.status, "success", single.diagnostics.map(diagnostic => diagnostic.message).join("; "));
+    assert.equal(duplicated.status, "failure");
+    const error = duplicated.diagnostics.find(diagnostic => diagnostic.severity === "error");
+    assert.match(error?.message ?? "", /matches multiple default mapping groups for 'boolean' -> 'code'/);
+    assert.match(error?.message ?? "", /'BooleanToCode', 'AlternateBooleanToCode'/);
+});
+
+test("reports ambiguous default mapping groups supplied by imported maps", async () => {
+    const importedGroup = {
+        typeMode: "types" as const,
+        sourceTypeName: "boolean",
+        targetTypeName: "code",
+        sourceFhirVersion: "R5" as const,
+        targetFhirVersion: "R5" as const,
+    };
+    const result = await new FmlValidatorApi().validate({
+        sourceText: `
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias Patient as source
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Observation' alias Observation as target
+group Main(source src : Patient, target tgt : Observation) {
+    src.active -> tgt.status;
+}
+`,
+        importedDefaultGroups: [
+            {...importedGroup, groupName: "BooleanToCode"},
+            {...importedGroup, groupName: "OtherBooleanToCode"},
+        ],
+    });
+
+    assert.equal(result.status, "failure");
+    assert.ok(result.diagnostics.some(diagnostic => {
+        return diagnostic.severity === "error"
+            && diagnostic.message.includes("matches multiple default mapping groups");
+    }));
+});
+
 test("requires type+ for a copy transform to select an unfixed choice target type", async () => {
     const sourceText = (mode: "types" | "type+") => `
 uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias Patient as source
@@ -826,7 +1000,7 @@ group NameToString(source src : HumanName, target tgt : string) <<${mode}>> {
     const typePlusResult = await new FmlValidatorApi().validate({sourceText: sourceText("type+")});
 
     assert.ok(typesResult.diagnostics.some(diagnostic => {
-        return diagnostic.severity === "warning" && diagnostic.message.includes("not compatible");
+        return diagnostic.severity === "error" && diagnostic.message.includes("not compatible");
     }));
     assert.equal(typePlusResult.status, "success", typePlusResult.diagnostics.map(diagnostic => diagnostic.message).join("; "));
     assert.ok(typePlusResult.diagnostics.every(diagnostic => !diagnostic.message.includes("not compatible")));
@@ -850,7 +1024,7 @@ group DateTime3To4(source src : dateTimeSTU3, target tgt : dateTime) <<types>> {
 `});
 
     assert.ok(withoutDefaultGroup.diagnostics.some(diagnostic => {
-        return diagnostic.severity === "warning" && diagnostic.message.includes("not compatible");
+        return diagnostic.severity === "error" && diagnostic.message.includes("not compatible");
     }));
     assert.equal(
         withDefaultGroup.status,
@@ -906,9 +1080,9 @@ group Main(source src : Patient, target tgt : ProcedureTable) {
         customTypeModels,
     });
 
-    assert.equal(result.status, "success");
+    assert.equal(result.status, "failure");
     const diagnostic = result.diagnostics.find(candidate => candidate.message.includes("not compatible"));
-    assert.equal(diagnostic?.severity, "warning");
+    assert.equal(diagnostic?.severity, "error");
     assert.match(diagnostic?.message ?? "", /ProcedureOccurrence\.procedure_date/);
     assert.doesNotMatch(diagnostic?.message ?? "", /http:\/\//);
 });

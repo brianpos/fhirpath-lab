@@ -74,7 +74,12 @@ export class FmlValidatorApi {
             source.sourceText,
             source.customTypeModels,
         );
-        return resolveDefaultGroups(parsed.groups, analysis);
+        const definitions = this.groupSymbolCollector.collectDocument(source.sourceText).definitions;
+        return resolveDefaultGroups(parsed.groups, analysis).map(group => {
+            const definition = definitions.find(candidate => candidate.name === group.groupName);
+            if (!definition) return group;
+            return {...group, definitionUri: source.sourceName, definitionSpan: definition.span};
+        });
     }
 
     public getDefaultGroupUsages(source: FmlSource): FmlDefaultGroupUsage[] {
@@ -104,7 +109,12 @@ export class FmlValidatorApi {
             source.sourceText,
             source.customTypeModels,
         );
-        return resolveGroupSignatures(parsed.groups, analysis);
+        const definitions = this.groupSymbolCollector.collectDocument(source.sourceText).definitions;
+        return resolveGroupSignatures(parsed.groups, analysis).map(signature => {
+            const definition = definitions.find(candidate => candidate.name === signature.groupName);
+            if (!definition) return signature;
+            return {...signature, definitionUri: source.sourceName, definitionSpan: definition.span};
+        });
     }
 
     public getPropertyCompletions(source: FmlSource, cursorOffset: number): FmlPropertyCompletion[] {
