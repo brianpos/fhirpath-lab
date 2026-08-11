@@ -1,5 +1,8 @@
 # Change Log
 
+## 0.14.0 (??)
+* Highlight the nearest FML token for located `OperationOutcome` issues, including imported maps, and list all issues in the Debug Console
+
 ## 0.13.0 (2026-08-11)
 * FHIRPath static checking supporting backtick delimited identifiers (found while trying to reference a narrative `div` property - as that's the division function)
 * deduplicate maps correctly which was impacting shared maps when trying to use the replay debugger.

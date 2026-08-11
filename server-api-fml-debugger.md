@@ -350,12 +350,14 @@ For fatal/error issues, clients use `issue.details.text` first and `issue.diagno
 Issues SHOULD:
 
 - identify the map with the same `operationoutcome-file` value supplied in the request;
-- include a source range when available;
+- include 1-based source positions when available using
+  `http://hl7.org/fhir/StructureDefinition/operationoutcome-issue-line` and
+  `http://hl7.org/fhir/StructureDefinition/operationoutcome-issue-col` integer extensions;
 - use normal `issue.expression` for the relevant StructureMap/FHIRPath path;
 - include StructureMap canonical, group, and rule names where available; and
 - distinguish parse, link, model-resolution, and execution errors.
 
-Servers should return all useful issues and must not expose sensitive server paths, credentials, headers, or deployment stack traces.
+Servers should return all useful issues and must not expose sensitive server paths, credentials, headers, or deployment stack traces. The VS Code client lists every issue in the Debug Console and, when no trace is returned, exposes each fatal/error issue as a debugger stop at the nearest FML token.
 
 ## Client implementation notes
 

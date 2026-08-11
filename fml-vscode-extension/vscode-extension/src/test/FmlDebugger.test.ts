@@ -5,6 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import * as vscode from "vscode";
 import {deduplicateFmlFilePaths, resolveFmlDebugDependencies} from "../FmlDebugDependencies";
+import {nearestTokenRange} from "../FmlDebugSession";
 import {UiConstants} from "../constants/UiConstants";
 
 interface ProtocolMessage {
@@ -31,6 +32,21 @@ suite("FML Trace Replay Debugger", () => {
         }
 
         assert.deepEqual(deduplicateFmlFilePaths(paths, program), [sharedMap]);
+    });
+
+    test("selects the nearest FML token from a 1-based issue position", () => {
+        const sourceText = [
+            "/// url = 'http://example.org/StructureMap/Main'",
+            "group Main(source src, target tgt) extends MissingParent {",
+            "}",
+        ].join("\n");
+        const oneBasedLine = 2;
+        const oneBasedColumn = sourceText.split("\n")[1].indexOf("MissingParent") + 2;
+
+        const range = nearestTokenRange(sourceText, oneBasedLine, oneBasedColumn);
+
+        assert.ok(range);
+        assert.equal(sourceText.slice(range.startOffset, range.startOffset + range.length), "MissingParent");
     });
 
     test("resolves models from shared workspace configuration without launch globs", async () => {
@@ -67,6 +83,136 @@ suite("FML Trace Replay Debugger", () => {
             assert.deepEqual(resolved, [profilePath]);
         } finally {
             await fs.rm(tempDirectory, {recursive: true, force: true});
+        }
+    });
+
+    test("stops on each located OperationOutcome error and reports every issue", async function() {
+        this.timeout(10_000);
+        const extension = vscode.extensions.getExtension(UiConstants.extensionPublisher);
+        assert.ok(extension);
+        await extension.activate();
+
+        const tempDirectory = await fs.mkdtemp(path.join(os.tmpdir(), "fml-debug-outcome-"));
+        const program = path.join(tempDirectory, "main.fml");
+        const importedMap = path.join(tempDirectory, "shared.fml");
+        const input = path.join(tempDirectory, "input.json");
+        const primaryToken = "MissingMain";
+        const importedToken = "MissingShared";
+        const mapText = [
+            "/// url = 'http://example.org/StructureMap/Main'",
+            "imports 'http://example.org/StructureMap/Shared'",
+            `group Main(source src, target tgt) extends ${primaryToken} {`,
+            "  src -> tgt;",
+            "}",
+        ].join("\n");
+        const importedText = [
+            "/// url = 'http://example.org/StructureMap/Shared'",
+            `group Shared(source src, target tgt) extends ${importedToken} {`,
+            "  src -> tgt;",
+            "}",
+        ].join("\n");
+        await fs.writeFile(program, mapText, "utf8");
+        await fs.writeFile(importedMap, importedText, "utf8");
+        await fs.writeFile(input, "{\"resourceType\":\"Patient\"}", "utf8");
+
+        const outcome = {
+            resourceType: "OperationOutcome",
+            issue: [
+                outcomeIssue(
+                    "Primary group error",
+                    undefined,
+                    3,
+                    mapText.split("\n")[2].indexOf(primaryToken) + 2,
+                ),
+                outcomeIssue(
+                    "Imported group error",
+                    "shared.fml",
+                    2,
+                    importedText.split("\n")[1].indexOf(importedToken) + 2,
+                ),
+                {
+                    severity: "warning",
+                    code: "processing",
+                    diagnostics: "Additional warning",
+                },
+            ],
+        };
+        const server = http.createServer((_request, response) => {
+            response.writeHead(200, {"Content-Type": "application/fhir+json"});
+            response.end(JSON.stringify({
+                resourceType: "Parameters",
+                parameter: [{name: "outcome", resource: outcome}],
+            }));
+        });
+        await listen(server);
+        const address = server.address();
+        assert.ok(address && typeof address === "object");
+
+        const protocolMessages: ProtocolMessage[] = [];
+        const tracker = vscode.debug.registerDebugAdapterTrackerFactory("fml", {
+            createDebugAdapterTracker: () => ({
+                onDidSendMessage: message => {
+                    if (message && typeof message === "object") {
+                        protocolMessages.push(message as ProtocolMessage);
+                    }
+                },
+            }),
+        });
+
+        try {
+            const started = await vscode.debug.startDebugging(undefined, {
+                type: "fml",
+                request: "launch",
+                name: "FML located outcome test",
+                program,
+                input,
+                serverUrl: `http://127.0.0.1:${address.port}/StructureMap/$transform?debug=true`,
+                stopOnEntry: true,
+            });
+            assert.equal(started, true);
+            await waitFor(() => stoppedEvents(protocolMessages).length >= 1);
+            assert.equal(stoppedEvents(protocolMessages)[0].body?.reason, "exception");
+            await waitFor(() => outputEvents(protocolMessages).some(output => {
+                return output.includes("Additional warning");
+            }));
+
+            const outputs = outputEvents(protocolMessages);
+            assert.ok(outputs.some(output => output.includes("3 OperationOutcome issues")));
+            assert.ok(outputs.some(output => output.includes("[1/3] main.fml:3:")));
+            assert.ok(outputs.some(output => output.includes("Primary group error")));
+            assert.ok(outputs.some(output => output.includes("[2/3] shared.fml:2:")));
+            assert.ok(outputs.some(output => output.includes("Imported group error")));
+            assert.ok(outputs.some(output => output.includes("[3/3] main.fml: warning: Additional warning")));
+
+            const session = vscode.debug.activeDebugSession;
+            assert.ok(session);
+            const primaryStack = await session.customRequest("stackTrace", {threadId: 1}) as {
+                stackFrames: Array<{line: number; column: number; source?: {path?: string}}>;
+            };
+            assert.equal(filePathIdentity(primaryStack.stackFrames[0].source?.path), filePathIdentity(program));
+            assert.equal(primaryStack.stackFrames[0].line, 3);
+            assert.equal(primaryStack.stackFrames[0].column, mapText.split("\n")[2].indexOf(primaryToken) + 1);
+
+            await session.customRequest("stepIn", {threadId: 1});
+            await waitFor(() => stoppedEvents(protocolMessages).length >= 2);
+            const importedStack = await session.customRequest("stackTrace", {threadId: 1}) as {
+                stackFrames: Array<{line: number; column: number; source?: {path?: string}}>;
+            };
+            assert.equal(filePathIdentity(importedStack.stackFrames[0].source?.path), filePathIdentity(importedMap));
+            assert.equal(importedStack.stackFrames[0].line, 2);
+            assert.equal(
+                importedStack.stackFrames[0].column,
+                importedText.split("\n")[1].indexOf(importedToken) + 1,
+            );
+            const exception = await session.customRequest("exceptionInfo", {threadId: 1}) as {
+                description?: string;
+            };
+            assert.equal(exception.description, "Imported group error");
+        } finally {
+            await vscode.debug.stopDebugging();
+            tracker.dispose();
+            await close(server);
+            await fs.rm(tempDirectory, {recursive: true, force: true, maxRetries: 5, retryDelay: 100});
         }
     });
 
@@ -317,6 +463,37 @@ suite("FML Trace Replay Debugger", () => {
         }
     });
 });
+
+function outcomeIssue(
+    message: string,
+    fileName: string | undefined,
+    line: number,
+    column: number,
+): object {
+    return {
+        severity: "error",
+        code: "processing",
+        details: {text: message},
+        extension: [
+            ...(fileName ? [{
+                url: "http://hl7.org/fhir/StructureDefinition/operationoutcome-file",
+                valueString: fileName,
+            }] : []),
+            {
+                url: "http://hl7.org/fhir/StructureDefinition/operationoutcome-issue-line",
+                valueInteger: line,
+            },
+            {
+                url: "http://hl7.org/fhir/StructureDefinition/operationoutcome-issue-col",
+                valueInteger: column,
+            },
+        ],
+    };
+}
+
+function filePathIdentity(filePath: string | undefined): string | undefined {
+    return process.platform === "win32" ? filePath?.toLowerCase() : filePath;
+}
 
 function createDebugResponse(mapText: string): object {
     const ruleOffset = mapText.indexOf("src.id");

@@ -1,5 +1,6 @@
 import {
     DEFAULT_FML_DEBUG_SERVER_URL,
+    FmlDebugIssue,
     FmlDebugLaunchRequest,
     FmlDebugTrace,
     FmlTraceEvent,
@@ -20,10 +21,15 @@ const VARIABLE_EXTENSION = "http://fhirpath-lab.com/StructureDefinition/Variable
 const JSON_VALUE_EXTENSION = "http://fhir.forms-lab.com/StructureDefinition/json-value";
 const OPERATION_OUTCOME_FILE_EXTENSION =
     "http://hl7.org/fhir/StructureDefinition/operationoutcome-file";
+const OPERATION_OUTCOME_LINE_EXTENSION =
+    "http://hl7.org/fhir/StructureDefinition/operationoutcome-issue-line";
+const OPERATION_OUTCOME_COLUMN_EXTENSION =
+    "http://hl7.org/fhir/StructureDefinition/operationoutcome-issue-col";
 
 interface FhirExtension {
     extension?: FhirExtension[];
     url?: string;
+    valueInteger?: number;
     valueString?: string;
 }
 
@@ -128,19 +134,6 @@ export function parseDebugTrace(
                 trace.push(parseTraceEvent(trace.length, parameter.valueString ?? "", part));
             }
         }
-    }
-
-    const errorMessage = readOutcomeError(outcome);
-    if (errorMessage && trace.length === 0) {
-        trace.push({
-            index: 0,
-            name: "exception",
-            category: "exception",
-            message: errorMessage,
-            depth: 0,
-            variables: [],
-            exception: errorMessage,
-        });
     }
 
     for (const event of trace) {
@@ -290,22 +283,52 @@ function inferTraceDepth(message: string, category: string): number {
 }
 
 function readOutcomeError(outcome: JsonValue | undefined): string | undefined {
-    if (!outcome || typeof outcome !== "object" || Array.isArray(outcome)) {
-        return undefined;
+    return parseOperationOutcomeIssues(outcome).find(issue => {
+        return issue.severity === "fatal" || issue.severity === "error";
+    })?.message;
+}
+
+export function parseOperationOutcomeIssues(outcome: JsonValue | undefined): FmlDebugIssue[] {
+    if (!outcome || typeof outcome !== "object" || Array.isArray(outcome) || !Array.isArray(outcome.issue)) {
+        return [];
     }
-    const issues = outcome.issue;
-    if (!Array.isArray(issues)) {
-        return undefined;
-    }
-    for (const issue of issues) {
+    return outcome.issue.flatMap(issue => {
         if (!issue || typeof issue !== "object" || Array.isArray(issue)) {
-            continue;
+            return [];
         }
-        if (issue.severity === "fatal" || issue.severity === "error") {
-            return readIssueMessage(issue);
-        }
-    }
-    return undefined;
+        const extensions = Array.isArray(issue.extension)
+            ? issue.extension.filter(isOutcomeExtension)
+            : [];
+        return [{
+            message: readIssueMessage(issue),
+            ...(typeof issue.severity === "string" ? {severity: issue.severity} : {}),
+            ...readStringExtension(extensions, OPERATION_OUTCOME_FILE_EXTENSION, "fileName"),
+            ...readPositiveIntegerExtension(extensions, OPERATION_OUTCOME_LINE_EXTENSION, "line"),
+            ...readPositiveIntegerExtension(extensions, OPERATION_OUTCOME_COLUMN_EXTENSION, "column"),
+        }];
+    });
+}
+
+function isOutcomeExtension(value: JsonValue): value is {[key: string]: JsonValue} {
+    return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function readStringExtension(
+    extensions: Array<{[key: string]: JsonValue}>,
+    url: string,
+    property: "fileName",
+): Pick<FmlDebugIssue, "fileName"> {
+    const value = extensions.find(extension => extension.url === url)?.valueString;
+    return typeof value === "string" && value.length > 0 ? {[property]: value} : {};
+}
+
+function readPositiveIntegerExtension(
+    extensions: Array<{[key: string]: JsonValue}>,
+    url: string,
+    property: "line" | "column",
+): Pick<FmlDebugIssue, "line" | "column"> {
+    const value = extensions.find(extension => extension.url === url)?.valueInteger;
+    return typeof value === "number" && Number.isInteger(value) && value >= 1 ? {[property]: value} : {};
 }
 
 function readOutcomeMessage(outcome: FhirParameters): string {

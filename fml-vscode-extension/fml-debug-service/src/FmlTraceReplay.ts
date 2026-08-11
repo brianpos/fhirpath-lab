@@ -85,12 +85,12 @@ export class FmlTraceReplay {
 
     public getEventLine(event: FmlTraceEvent): number {
         const offset = Math.max(event.range?.startOffset ?? 0, 0);
-        return this.sourceText.slice(0, offset).split(/\r?\n/).length;
+        return this.sourceTextFor(event).slice(0, offset).split(/\r?\n/).length;
     }
 
     public getEventColumn(event: FmlTraceEvent): number {
         const offset = Math.max(event.range?.startOffset ?? 0, 0);
-        const prefix = this.sourceText.slice(0, offset);
+        const prefix = this.sourceTextFor(event).slice(0, offset);
         const lineStart = Math.max(prefix.lastIndexOf("\n"), prefix.lastIndexOf("\r")) + 1;
         return offset - lineStart + 1;
     }
@@ -111,6 +111,10 @@ export class FmlTraceReplay {
             }
         }
         return this.trace.initialState;
+    }
+
+    private sourceTextFor(event: FmlTraceEvent): string {
+        return event.source?.text ?? this.sourceText;
     }
 
     private moveForward(

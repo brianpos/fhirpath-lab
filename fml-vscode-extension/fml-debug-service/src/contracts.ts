@@ -34,7 +34,16 @@ export interface FmlDebugLaunchRequest {
 
 export interface FmlDebugMapSource {
     fileName?: string;
+    filePath?: string;
     text: string;
+}
+
+export interface FmlDebugIssue {
+    message: string;
+    severity?: string;
+    fileName?: string;
+    line?: number;
+    column?: number;
 }
 
 export interface FmlTraceVariable {
@@ -61,6 +70,7 @@ export interface FmlTraceEvent {
     variables: FmlTraceVariable[];
     state?: FmlTypedValue;
     exception?: string;
+    source?: FmlDebugMapSource;
 }
 
 export interface FmlDebugTrace {

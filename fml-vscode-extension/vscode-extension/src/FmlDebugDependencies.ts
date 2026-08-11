@@ -49,7 +49,7 @@ export async function resolveFmlDebugDependencies(
     const mainMap = parseMap(program, mapText, defaultRelease);
     if (!mainMap) {
         return {
-            maps: [{fileName: displayPath(program), text: mapText}],
+            maps: [{fileName: displayPath(program), filePath: program, text: mapText}],
             modelResources: [],
             unresolvedResources: [],
         };
@@ -87,7 +87,11 @@ export async function resolveFmlDebugDependencies(
     }
 
     return {
-        maps: maps.map(map => ({fileName: displayPath(map.filePath, program), text: map.text})),
+        maps: maps.map(map => ({
+            fileName: displayPath(map.filePath, program),
+            filePath: map.filePath,
+            text: map.text,
+        })),
         modelResources,
         unresolvedResources,
     };

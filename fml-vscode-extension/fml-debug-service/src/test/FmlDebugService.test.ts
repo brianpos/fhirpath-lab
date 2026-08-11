@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import {FmlDebugService, parseDebugTrace} from "../FmlDebugService";
+import {FmlDebugService, parseDebugTrace, parseOperationOutcomeIssues} from "../FmlDebugService";
 import {JsonValue} from "../contracts";
 
 const cursorUrl = "http://fhirpath-lab.com/StructureDefinition/Cursor";
@@ -221,4 +221,45 @@ test("preserves HTTP status when an error response is not JSON", async () => {
         }),
         /HTTP 503 Service Unavailable/,
     );
+});
+
+test("parses all OperationOutcome issue source extensions as 1-based positions", () => {
+    const issues = parseOperationOutcomeIssues({
+        resourceType: "OperationOutcome",
+        issue: [
+            {
+                severity: "error",
+                details: {text: "Unknown parent group"},
+                extension: [
+                    {
+                        url: "http://hl7.org/fhir/StructureDefinition/operationoutcome-file",
+                        valueString: "shared.fml",
+                    },
+                    {
+                        url: "http://hl7.org/fhir/StructureDefinition/operationoutcome-issue-line",
+                        valueInteger: 12,
+                    },
+                    {
+                        url: "http://hl7.org/fhir/StructureDefinition/operationoutcome-issue-col",
+                        valueInteger: 8,
+                    },
+                ],
+            },
+            {
+                severity: "warning",
+                diagnostics: "Secondary issue",
+            },
+        ],
+    });
+
+    assert.deepEqual(issues, [
+        {
+            message: "Unknown parent group",
+            severity: "error",
+            fileName: "shared.fml",
+            line: 12,
+            column: 8,
+        },
+        {message: "Secondary issue", severity: "warning"},
+    ]);
 });

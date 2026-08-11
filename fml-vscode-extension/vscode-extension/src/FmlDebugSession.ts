@@ -1,5 +1,7 @@
 import {
     FmlDebugEngineError,
+    FmlDebugIssue,
+    FmlDebugMapSource,
     FmlDebugService,
     FmlDebugTrace,
     FmlDebugType,
@@ -11,6 +13,7 @@ import {
     childPath,
     createFmlTypedValue,
     formatDebugType,
+    parseOperationOutcomeIssues,
 } from "@fhirpath-lab/debug-service";
 import {
     Breakpoint,
@@ -53,12 +56,18 @@ type VariableContainer =
     | {kind: "trace"; event: FmlTraceEvent}
     | {kind: "variables"; variables: FmlTraceVariable[]};
 
+interface LocatedOutcomeIssue {
+    issue: FmlDebugIssue;
+    event: FmlTraceEvent;
+}
+
 const THREAD_ID = 1;
 
 export class FmlDebugSession extends DebugSession {
     private readonly variableHandles = new Handles<VariableContainer>();
     private readonly pendingBreakpointLines = new Set<number>();
     private replay?: FmlTraceReplay;
+    private mapSources: FmlDebugMapSource[] = [];
     private sourceText = "";
     private sourcePath = "";
     private lastException?: string;
@@ -105,6 +114,11 @@ export class FmlDebugSession extends DebugSession {
             this.launchAbortController = new AbortController();
             this.sourcePath = args.program;
             this.sourceText = args.mapText ?? await fs.readFile(args.program, "utf8");
+            this.mapSources = [{
+                fileName: path.basename(args.program),
+                filePath: args.program,
+                text: this.sourceText,
+            }];
             const inputText = await fs.readFile(args.input, "utf8");
             const modelText = args.model ? await fs.readFile(args.model, "utf8") : undefined;
             const modelConfiguration = this.modelConfigurationProvider(args.program);
@@ -123,6 +137,7 @@ export class FmlDebugSession extends DebugSession {
                     "console",
                 )),
             );
+            this.mapSources = dependencies.maps;
             for (const resource of dependencies.unresolvedResources) {
                 this.sendEvent(new OutputEvent(
                     `Unresolved ${resource.resourceType}: ${resource.canonical}\n`,
@@ -156,7 +171,9 @@ export class FmlDebugSession extends DebugSession {
                 this.sendEvent(new OutputEvent(`Evaluator: ${trace.evaluator}\n`, "console"));
             }
             if (this.replay?.currentEvent) {
-                if (args.stopOnEntry === false) {
+                if (this.replay.currentEvent.exception) {
+                    this.stopAtCurrent("exception");
+                } else if (args.stopOnEntry === false) {
                     this.replay.continue();
                     this.stopOrTerminate("breakpoint");
                 } else {
@@ -223,15 +240,21 @@ export class FmlDebugSession extends DebugSession {
         _args: DebugProtocol.StackTraceArguments,
     ): void {
         const frames = this.getStackEvents().map(event => {
+            const source = event.source ?? this.mapSources[0] ?? {
+                filePath: this.sourcePath,
+                text: this.sourceText,
+            };
+            const sourcePath = source.filePath ?? source.fileName ?? this.sourcePath;
             const frame = new StackFrame(
                 event.index + 1,
                 event.message || event.category,
-                new Source(path.basename(this.sourcePath), this.sourcePath),
+                new Source(path.basename(sourcePath), sourcePath),
                 this.replay?.getEventLine(event) ?? 1,
                 this.replay?.getEventColumn(event) ?? 1,
             );
             const end = this.positionAt(
                 (event.range?.startOffset ?? 0) + Math.max(event.range?.length ?? 1, 1),
+                source.text,
             );
             frame.endLine = end.line;
             frame.endColumn = end.column;
@@ -380,7 +403,7 @@ export class FmlDebugSession extends DebugSession {
     ): void {
         response.body = {
             exceptionId: "FML execution error",
-            description: this.lastException ?? this.replay?.currentEvent?.exception,
+            description: this.replay?.currentEvent?.exception ?? this.lastException,
             breakMode: "always",
         };
         this.sendResponse(response);
@@ -405,9 +428,28 @@ export class FmlDebugSession extends DebugSession {
         this.sendResponse(response);
     }
 
-    private startReplay(trace: FmlDebugTrace): void {
-        this.lastException = trace.trace.find(event => event.exception)?.exception;
-        this.replay = new FmlTraceReplay(trace, this.sourceText);
+    private startReplay(trace: FmlDebugTrace, fallbackException?: string): void {
+        const issues = parseOperationOutcomeIssues(trace.outcome);
+        const locatedIssues: LocatedOutcomeIssue[] = issues.map((issue, index) => ({
+            issue,
+            event: this.createOutcomeIssueEvent(issue, index),
+        }));
+        if (locatedIssues.length > 0) {
+            this.reportOutcomeIssues(locatedIssues);
+        }
+        const errorEvents = locatedIssues
+            .filter(({issue}) => issue.severity === "fatal" || issue.severity === "error")
+            .map(({event}, index) => ({...event, index}));
+        const replayTrace = trace.trace.length > 0
+            ? trace
+            : errorEvents.length > 0
+                ? {...trace, trace: errorEvents}
+                : fallbackException
+                    ? {...trace, trace: [this.createFallbackExceptionEvent(fallbackException)]}
+                    : trace;
+        this.lastException = replayTrace.trace.find(event => event.exception)?.exception
+            ?? fallbackException;
+        this.replay = new FmlTraceReplay(replayTrace, this.sourceText);
         if (this.pendingBreakpointLines.size > 0) {
             this.replay.setBreakpoints([...this.pendingBreakpointLines]);
         }
@@ -415,20 +457,95 @@ export class FmlDebugSession extends DebugSession {
 
     private startExceptionReplay(error: unknown): void {
         const message = error instanceof Error ? error.message : String(error);
-        this.lastException = message;
         const outcome = error instanceof FmlDebugEngineError ? error.outcome : undefined;
         this.startReplay({
             initialState: createFmlTypedValue({}),
             outcome,
-            trace: [{
-                index: 0,
-                name: "exception",
-                category: "exception",
-                message,
-                depth: 0,
-                variables: [],
-                exception: message,
-            }],
+            trace: [],
+        }, message);
+    }
+
+    private createFallbackExceptionEvent(message: string): FmlTraceEvent {
+        return {
+            index: 0,
+            name: "exception",
+            category: "exception",
+            message,
+            depth: 0,
+            variables: [],
+            exception: message,
+        };
+    }
+
+    private createOutcomeIssueEvent(issue: FmlDebugIssue, index: number): FmlTraceEvent {
+        const source = this.resolveIssueSource(issue.fileName);
+        const range = source && issue.line !== undefined && issue.column !== undefined
+            ? nearestTokenRange(source.text, issue.line, issue.column)
+            : undefined;
+        return {
+            index,
+            name: "exception",
+            category: "outcome",
+            message: issue.message,
+            depth: 0,
+            variables: [],
+            exception: issue.message,
+            ...(range ? {range} : {}),
+            ...(source ? {source} : {}),
+        };
+    }
+
+    private resolveIssueSource(fileName: string | undefined): FmlDebugMapSource | undefined {
+        if (!fileName) {
+            return this.mapSources[0];
+        }
+        const identity = diagnosticFileIdentity(fileName);
+        const exact = this.mapSources.find(source => {
+            return source.fileName !== undefined && diagnosticFileIdentity(source.fileName) === identity;
+        });
+        if (exact) {
+            return exact;
+        }
+        const baseName = diagnosticFileBaseName(identity);
+        const matchingBaseNames = this.mapSources.filter(source => {
+            return source.fileName !== undefined
+                && diagnosticFileBaseName(diagnosticFileIdentity(source.fileName)) === baseName;
+        });
+        return matchingBaseNames.length === 1 ? matchingBaseNames[0] : undefined;
+    }
+
+    private reportOutcomeIssues(
+        locatedIssues: LocatedOutcomeIssue[],
+    ): void {
+        this.sendEvent(new OutputEvent(
+            `FML execution returned ${locatedIssues.length} OperationOutcome issue${locatedIssues.length === 1 ? "" : "s"}:\n`,
+            "stderr",
+        ));
+        locatedIssues.forEach(({issue, event}, index) => {
+            const source = event.source;
+            const position = source && event.range
+                ? this.positionAt(event.range.startOffset, source.text)
+                : undefined;
+            const sourceName = source?.fileName ?? issue.fileName;
+            const location = sourceName && position
+                ? `${sourceName}:${position.line}:${position.column}: `
+                : sourceName
+                    ? `${sourceName}: `
+                    : "";
+            const output = new OutputEvent(
+                `[${index + 1}/${locatedIssues.length}] ${location}${issue.severity ?? "issue"}: ${issue.message}\n`,
+                issue.severity === "fatal" || issue.severity === "error" ? "stderr" : "console",
+            );
+            if (source && position) {
+                const sourcePath = source.filePath ?? source.fileName;
+                if (sourcePath) {
+                    const outputBody = output.body as DebugProtocol.OutputEvent["body"];
+                    outputBody.source = new Source(path.basename(sourcePath), sourcePath);
+                    outputBody.line = position.line;
+                    outputBody.column = position.column;
+                }
+            }
+            this.sendEvent(output);
         });
     }
 
@@ -449,7 +566,9 @@ export class FmlDebugSession extends DebugSession {
         }
         this.variableHandles.reset();
         const category = event.exception ? "stderr" : event.category === "debug" ? "console" : "stdout";
-        this.sendEvent(new OutputEvent(`[${event.index}] ${event.message}\n`, category));
+        if (event.category !== "outcome") {
+            this.sendEvent(new OutputEvent(`[${event.index}] ${event.message}\n`, category));
+        }
         this.sendEvent(new StoppedEvent(reason, THREAD_ID, event.exception));
     }
 
@@ -570,9 +689,9 @@ export class FmlDebugSession extends DebugSession {
             : undefined;
     }
 
-    private positionAt(offset: number): {line: number; column: number} {
-        const boundedOffset = Math.min(Math.max(offset, 0), this.sourceText.length);
-        const prefix = this.sourceText.slice(0, boundedOffset);
+    private positionAt(offset: number, sourceText = this.sourceText): {line: number; column: number} {
+        const boundedOffset = Math.min(Math.max(offset, 0), sourceText.length);
+        const prefix = sourceText.slice(0, boundedOffset);
         const lines = prefix.split(/\r?\n/);
         return {
             line: lines.length,
@@ -589,6 +708,58 @@ export class FmlDebugSession extends DebugSession {
             typeOverride,
         });
     }
+}
+
+export function nearestTokenRange(
+    sourceText: string,
+    oneBasedLine: number,
+    oneBasedColumn: number,
+): {startOffset: number; length: number} | undefined {
+    if (!Number.isInteger(oneBasedLine) || !Number.isInteger(oneBasedColumn)
+        || oneBasedLine < 1 || oneBasedColumn < 1) {
+        return undefined;
+    }
+    const lines = [...sourceText.matchAll(/.*(?:\r\n|\r|\n|$)/g)]
+        .filter(match => match[0].length > 0 || match.index === 0);
+    const lineMatch = lines[oneBasedLine - 1];
+    if (!lineMatch || lineMatch.index === undefined) {
+        return undefined;
+    }
+    const lineText = lineMatch[0].replace(/(?:\r\n|\r|\n)$/, "");
+    const requestedColumn = Math.min(oneBasedColumn - 1, lineText.length);
+    const tokens = [...lineText.matchAll(
+        /"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:``|[^`])*`|[A-Za-z_][A-Za-z0-9_-]*|\d+(?:\.\d+)*|->|<<|>>|!=|<=|>=|:=|[^\s]/g,
+    )];
+    if (tokens.length === 0) {
+        return {startOffset: lineMatch.index + requestedColumn, length: 1};
+    }
+    const nearest = tokens.reduce((selected, candidate) => {
+        return tokenDistance(candidate, requestedColumn) < tokenDistance(selected, requestedColumn)
+            ? candidate
+            : selected;
+    });
+    return {
+        startOffset: lineMatch.index + (nearest.index ?? requestedColumn),
+        length: nearest[0].length,
+    };
+}
+
+function tokenDistance(token: RegExpMatchArray, column: number): number {
+    const start = token.index ?? 0;
+    const end = start + token[0].length;
+    if (column >= start && column < end) {
+        return 0;
+    }
+    return Math.min(Math.abs(column - start), Math.abs(column - Math.max(end - 1, start)));
+}
+
+function diagnosticFileIdentity(fileName: string): string {
+    const normalized = fileName.replaceAll("\\", "/");
+    return process.platform === "win32" ? normalized.toLowerCase() : normalized;
+}
+
+function diagnosticFileBaseName(fileName: string): string {
+    return fileName.split("/").at(-1) ?? fileName;
 }
 
 interface EvaluatedValue {
