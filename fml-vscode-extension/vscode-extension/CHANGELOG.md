@@ -1,6 +1,6 @@
 # Change Log
 
-## 0.14.0 (??)
+## 0.14.0 (2026-08-12)
 * Highlight the nearest FML token for located `OperationOutcome` issues, including imported maps, and list all issues in the Debug Console
 
 ## 0.13.0 (2026-08-11)
