@@ -104,13 +104,30 @@ async function loadWorkspaceMaps(
         ignore: ["**/node_modules/**"],
         onlyFiles: true,
     });
-    const files = new Set([
-        ...workspaceUris.map(uri => uri.fsPath),
-        ...nearbyFiles,
-    ].filter(file => path.resolve(file) !== path.resolve(program)));
-    const maps = await Promise.all([...files]
+    const files = deduplicateFmlFilePaths(
+        [...workspaceUris.map(uri => uri.fsPath), ...nearbyFiles],
+        program,
+    );
+    const maps = await Promise.all(files
         .map(async file => parseMap(file, await fs.readFile(file, "utf8"), defaultFhirVersion)));
     return maps.filter((map): map is ParsedMapSource => map !== undefined);
+}
+
+export function deduplicateFmlFilePaths(filePaths: string[], excludedFilePath?: string): string[] {
+    const excludedIdentity = excludedFilePath ? filePathIdentity(excludedFilePath) : undefined;
+    const files = new Map<string, string>();
+    for (const filePath of filePaths) {
+        const identity = filePathIdentity(filePath);
+        if (identity !== excludedIdentity && !files.has(identity)) {
+            files.set(identity, filePath);
+        }
+    }
+    return [...files.values()];
+}
+
+function filePathIdentity(filePath: string): string {
+    const resolvedPath = path.resolve(filePath);
+    return process.platform === "win32" ? resolvedPath.toLowerCase() : resolvedPath;
 }
 
 function parseMap(
@@ -137,10 +154,14 @@ function walkImportedMaps(mainMap: ParsedMapSource, candidates: ParsedMapSource[
     const visited = new Set<string>();
     while (pending.length) {
         const current = pending.shift();
-        if (!current || visited.has(current.filePath)) {
+        if (!current) {
             continue;
         }
-        visited.add(current.filePath);
+        const identity = filePathIdentity(current.filePath);
+        if (visited.has(identity)) {
+            continue;
+        }
+        visited.add(identity);
         result.push(current);
         for (const imported of current.model.imports) {
             for (const candidate of candidates) {

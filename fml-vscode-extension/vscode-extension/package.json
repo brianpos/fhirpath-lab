@@ -3,7 +3,7 @@
   "displayName": "FHIR Mapping Language Tools",
   "description": "Developer tools for working with the FHIR Mapping Language (FML), including syntax highlighting, validation, and a trace replay debugger",
   "icon": "ext-images/icon.ico",
-  "version": "0.12.0",
+  "version": "0.13.0",
   "publisher": "fhirpath-lab",
   "readme": "README.md",
   "author": {

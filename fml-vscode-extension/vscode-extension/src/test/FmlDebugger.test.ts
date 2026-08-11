@@ -4,7 +4,7 @@ import * as http from "node:http";
 import os from "node:os";
 import path from "node:path";
 import * as vscode from "vscode";
-import {resolveFmlDebugDependencies} from "../FmlDebugDependencies";
+import {deduplicateFmlFilePaths, resolveFmlDebugDependencies} from "../FmlDebugDependencies";
 import {UiConstants} from "../constants/UiConstants";
 
 interface ProtocolMessage {
@@ -19,6 +19,20 @@ const variableUrl = "http://fhirpath-lab.com/StructureDefinition/Variable";
 const jsonValueUrl = "http://fhir.forms-lab.com/StructureDefinition/json-value";
 
 suite("FML Trace Replay Debugger", () => {
+    test("deduplicates alternate paths to the same FML file", () => {
+        const directory = path.join(os.tmpdir(), "fml-debug-paths");
+        const program = path.join(directory, "main.fml");
+        const sharedMap = path.join(directory, "shared.fml");
+        const sharedMapWithDotSegments = `${directory}${path.sep}nested${path.sep}..${path.sep}shared.fml`;
+        const sharedMapWithAlternateSeparators = sharedMap.replaceAll("\\", "/");
+        const paths = [program, sharedMap, sharedMapWithDotSegments, sharedMapWithAlternateSeparators];
+        if (process.platform === "win32") {
+            paths.push(sharedMap.toUpperCase());
+        }
+
+        assert.deepEqual(deduplicateFmlFilePaths(paths, program), [sharedMap]);
+    });
+
     test("resolves models from shared workspace configuration without launch globs", async () => {
         const tempDirectory = await fs.mkdtemp(path.join(os.tmpdir(), "fml-debug-models-"));
         const program = path.join(tempDirectory, "debug.fml");

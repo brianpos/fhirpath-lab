@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.13.0 (2026-08-11)
+* FHIRPath static checking supporting backtick delimited identifiers (found while trying to reference a narrative `div` property - as that's the division function)
+* deduplicate maps correctly which was impacting shared maps when trying to use the replay debugger.
+
 ## 0.12.0 (2026-08-10)
 * Fix regression in property copy validation: batch, plain, and variable-based assignments now share the same type, default-group, and `Reference` target-profile rules, and an unsupported variable assignment is an error instead of a warning
 * Validate copies that only narrow the source with a type filter, such as `src.performed : dateTime -> tgt.category`, using the filtered type
