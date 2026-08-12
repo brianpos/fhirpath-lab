@@ -401,7 +401,7 @@ export const registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
 
     "Kotlin FHIRPath R4 (Open Health Stack)": {
       name: "kotlin-fhirpath",
-      legacyName: "kotlin-fhirpath (Open Health Stack)",
+      legacyName: "Kotlin FHIRPath R4 (Open Health Stack)",
       fhirVersion: "R4",
       appInsightsEngineName: "Kotlin",
       publisher: "Open Health Stack Foundation",
@@ -415,7 +415,7 @@ export const registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
 
     "Kotlin FHIRPath R5 (Open Health Stack)": {
       name: "kotlin-fhirpath",
-      legacyName: "kotlin-fhirpath (Open Health Stack)",
+      legacyName: "Kotlin FHIRPath R5 (Open Health Stack)",
       fhirVersion: "R5",
       appInsightsEngineName: "Kotlin",
       publisher: "Open Health Stack",
