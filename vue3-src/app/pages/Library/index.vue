@@ -29,7 +29,7 @@ tr.v-data-table__tr {
           :next="nextPage"
           :last="lastPage"
           :add="addNew"
-          :showAdd="false"
+          :showAdd="canAddLibrary"
         />
       </template>
     </HeaderNavbar>
@@ -43,7 +43,7 @@ tr.v-data-table__tr {
               v-model="searchFor"
               @update:model-value="searchFhirServer"
               hide-details="auto"
-              title="Name or fhirpath function(s)"
+              title="Name or CQL/FHIRPath content"
             />
           </v-col>
           <v-col class="status-col">
@@ -117,6 +117,17 @@ tr.v-data-table__tr {
         <template v-slot:item.favourite="{ item }">
           <FavIcon v-if="item.favourite" />
         </template>
+        <template v-slot:item.testPath="{ item }">
+          <v-btn
+            v-if="item.testPath"
+            size="small"
+            variant="text"
+            :to="item.testPath"
+            @click.stop
+          >
+            Test
+          </v-btn>
+        </template>
         <template v-slot:no-data>
           <div v-if="host.showEmpty && !host.loadingData" class="empty-data">
             (No results)
@@ -129,7 +140,7 @@ tr.v-data-table__tr {
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { computed, ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import type { Library } from 'fhir/r4b'
 import {
@@ -149,8 +160,13 @@ import {
 import type {
   LibraryTableData,
   LibraryTableDefinition,
-} from '@legacy/models/LibraryTableData'
-import type { ConformanceSearchData } from '@legacy/models/ConformanceSearchData'
+} from 'models/LibraryTableData'
+import type { ConformanceSearchData } from 'models/ConformanceSearchData'
+import {
+  decodeLibraryContent,
+  findLogicContent,
+  testerPathForLibrary,
+} from '@legacy/helpers/library_content'
 
 useHead({ title: 'Library' })
 
@@ -172,6 +188,7 @@ const columns = [
   { title: 'Publish Date', key: 'date', align: 'start' as const, sortable: false },
   { title: 'Publisher', key: 'publisher', align: 'start' as const, sortable: false },
   { title: 'ID', key: 'id', align: 'start' as const, sortable: false },
+  { title: '', key: 'testPath', align: 'center' as const, sortable: false, width: '70px' },
   { title: '', key: 'favourite', align: 'center' as const, sortable: false },
 ]
 
@@ -181,6 +198,7 @@ const searchForUseContext = ref<FhirpathLabUseContexts[]>([])
 const searchForPublisher = ref<string | undefined>(undefined)
 const searchUseContexts = ref<FhirpathLabUseContexts[]>([])
 const expanded = ref<string[]>([])
+const canAddLibrary = computed(() => !!settings.getDefaultProviderField())
 
 const host = reactive<Partial<LibraryTableDefinition> & {
   tableData: LibraryTableData[]
@@ -236,15 +254,13 @@ async function searchPage(url: string) {
         searchUseContexts.value = mergeResult.contexts
         updateRequired = true
       }
-      let fhirpathExpression: string | undefined = undefined
-      if (
-        vs.content && vs.content.length > 0 &&
-        vs.content[0].contentType === 'text/fhirpath' && vs.content[0].data
-      ) {
+      let logicText: string | undefined = undefined
+      const logicContent = findLogicContent(vs)
+      if (logicContent?.data) {
         try {
-          fhirpathExpression = atob(vs.content[0].data)
+          logicText = decodeLibraryContent(logicContent.data)
         } catch {
-          console.log("can't parse ", vs.content[0].data)
+          console.log("can't parse ", logicContent.data)
         }
       }
       return {
@@ -258,7 +274,9 @@ async function searchPage(url: string) {
         publisher: vs?.publisher ?? '',
         description: vs?.description,
         favourite: isFavourite(post.resource?.resourceType, post.resource?.id),
-        extendedDescription: fhirpathExpression,
+        extendedDescription: logicText,
+        contentType: logicContent?.contentType,
+        testPath: testerPathForLibrary(vs?.id ?? '', logicContent?.contentType),
       }
     })
     if (updateRequired) saveCustomUseContexts('library', searchUseContexts.value, defaultUseContexts)
@@ -266,7 +284,7 @@ async function searchPage(url: string) {
 }
 
 async function searchFhirServer() {
-  let url = `${settings.getFhirServerUrl()}/Library?_count=${settings.getPageSize()}&_elements=id,name,title,description,url,version,date,status,publisher,useContext,content&content-type=text/fhirpath`
+  let url = `${settings.getFhirServerUrl()}/Library?_count=${settings.getPageSize()}&_elements=id,name,title,description,url,version,date,status,publisher,useContext,content&content-type=text/fhirpath,text/cql`
   if (searchFor.value) url += `&title=${encodeURIComponent(searchFor.value)}`
   if (searchForStatus.value) url += `&status=${encodeURIComponent(searchForStatus.value)}`
   if (searchForPublisher.value) url += `&publisher=${encodeURIComponent(searchForPublisher.value)}`

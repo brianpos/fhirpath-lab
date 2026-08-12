@@ -32,6 +32,44 @@ to test resource data to evaluate with them
 * extracting data from random JSON content!
 * Using an LLM to get assistance with FHIRPath expressions or Questionnaires (BYO LLM)
 
+### CQL Support
+
+The Vue 3 CQL tester accepts either a standalone CQL expression or complete CQL
+library source. The bundled ANTLR CQL parser validates syntax, reports source
+locations, and detects the content form after a short editing debounce:
+
+* Standalone expressions are submitted to the selected engine's system-level
+  `$cql` operation.
+* Library source is wrapped in an inline FHIR `Library` resource and submitted
+  to the type-level `Library/$evaluate` operation.
+  The current CQL IG operation is R4-based; the Library fields used by this
+  request are stable in later FHIR versions, while Endpoint inputs use the
+  selected engine's R4 or R5/R6 wire shape.
+* For libraries, the tester discovers top-level expression declarations and
+  provides an optional multi-select. Leaving it empty evaluates every public
+  expression; named selections can explicitly evaluate public or private
+  declarations, as defined by the
+  [CQL Library Evaluate operation](https://build.fhir.org/ig/HL7/cql-ig/en/OperationDefinition-cql-library-evaluate.html).
+* Top-level CQL parameter declarations are added to the named parameter editor
+  automatically, preserving values and type changes already entered there.
+* Results from both operations are normalized into the result table, with the
+  complete FHIR response available on the Debug tab.
+
+Current limitations:
+
+* Local validation is syntactic only. Translation to ELM, semantic/type
+  validation, terminology resolution, and execution are delegated to the
+  selected remote CQL server.
+* Remote servers must implement the relevant CQL IG operation, accept inline
+  `Library` input for `$evaluate`, and permit browser CORS requests. Support
+  varies between engines and FHIR versions.
+* Included libraries are not uploaded automatically for `$evaluate`; they must
+  be resolvable by the evaluation server or configured content endpoint.
+* The tester does not currently expose the `$evaluate` `includePrivate` switch.
+  Private expressions can still be requested explicitly from the selector.
+* Authentication is not supported, so secured endpoints and real clinical data
+  must not be used with this public test utility.
+
 ### Open AI (BYO)
 What can I do with it:
 * Are there any issues with this expression?
@@ -182,6 +220,23 @@ $ antlr4 -Dlanguage=TypeScript JSON5.g4
 ### `xml-parser`
 ``` bash
 java -cp ../antlr-4.13.2-complete.jar  org.antlr.v4.Tool -Dlanguage=TypeScript XMLParser.g4 XMLLexer.g4 -visitor
+```
+
+### `fhir-liquid-parser`
+The FHIR Liquid grammar imports the shared FHIRPath grammar from `fhirpath-parser`.
+
+``` bash
+java -cp ../antlr-4.13.2-complete.jar org.antlr.v4.Tool -Dlanguage=TypeScript -visitor -lib ../fhirpath-parser fhirliquid.g4
+```
+
+### `cql-parser`
+
+The CQL 2.0 grammar imports the shared FHIRPath grammar. The generated
+TypeScript parser supports CQL syntax validation, content-form detection, and
+top-level expression discovery in the Vue 3 CQL tester.
+
+``` bash
+java -cp ../antlr-4.13.2-complete.jar org.antlr.v4.Tool -Dlanguage=TypeScript -visitor -lib ../fhirpath-parser cql.g4
 ```
 
 ## Fhirpath Lab Special Features/Notes

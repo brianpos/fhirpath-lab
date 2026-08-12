@@ -147,21 +147,24 @@
                   <span>Reset Expression and context</span>
                 </v-tooltip>
               </span>
-              <v-textarea 
-                v-model="fhirpathContextExpression"
-                label="Context Expression (optional)"
-                rows="1"
-                outlined
-                hide-details="auto"
-                persistent-placeholder
+              <ResourceEditor
+                :resource-text="fhirpathContextExpression"
+                text-label="Context Expression (optional)"
+                language="fhirpath"
+                expression-editor
+                :min-lines="1"
+                :max-lines="6"
+                @update:resource-text="fhirpathContextExpression = $event"
               />
-              <v-textarea
+              <ResourceEditor
                 ref="fhirpathExpressionInput"
-                v-model="fhirpathExpression"
-                label="FHIRPath Expression"
-                rows="3"
-                outlined
-                hide-details="auto"
+                :resource-text="fhirpathExpression"
+                text-label="FHIRPath Expression"
+                language="fhirpath"
+                expression-editor
+                :min-lines="3"
+                :max-lines="12"
+                @update:resource-text="fhirpathExpression = $event"
               />
               
               <div class="mt-4">
@@ -183,7 +186,7 @@
                   </template>
                   <template v-else-if="singleEngineResult.results">
                     <template v-for="(resultItem, idx) in singleEngineResult.results" :key="idx">
-                      <table class="v-table v-table--density-default" style="flex-shrink: 1; width: 100%; border: solid thin #eee; border-spacing: 0;">
+                      <table class="v-table v-table--density-default" style="display: table; flex-shrink: 1; width: 100%; border: solid thin #eee; border-spacing: 0;">
                         <tr v-if="resultItem.context">
                           <td class="context" colspan="2">
                             <v-btn v-if="resultItem.position" color="transparent" density="compact" size="small" style="float:right;" icon flat title="Goto context" @click="navigateToResourcePath(resultItem.context)">
@@ -399,15 +402,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, nextTick, onMounted, onBeforeUnmount } from 'vue'
+import axios from 'axios'
 import { useRoute } from 'vue-router'
+import type { Library } from 'fhir/r4b'
 import type { TabData } from '~/components/TwinPaneTab.vue'
 import ResourceEditor from '~/components/ResourceEditor.vue'
 import { type IFhirPathEngineDetails, registeredEngines, applyConfigEngines } from '@legacy/types/fhirpath_test_engine'
 import { evaluateFhirPathExpression, type FhirPathEvaluationOptions, type FhirPathEvaluationResult } from '@legacy/helpers/fhirpath_api_engine'
 import type { VariableData } from 'models/testenginemodel'
-import type { ParseTreeNode } from 'models/FhirpathTesterData'
-import { Model } from "fhirpath";
+import type { JsonNode } from 'models/FhirpathTesterData'
+import type { Model } from "fhirpath";
 import fhirpath_r4_model from 'fhirpath/fhir-context/r4'
 import fhirpath_r5_model from 'fhirpath/fhir-context/r5'
 // Note: R6 is not yet available in fhirpath.js package
@@ -416,6 +421,7 @@ import AbstractSyntaxTreeTab from '~/components/AbstractSyntaxTreeTab.vue'
 import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from 'lz-string'
 import { EncodeTestFhirpathData, DecodeTestFhirpathData, type TestFhirpathData } from 'models/testenginemodel'
 import { settings } from '@legacy/helpers/user_settings'
+import { decodeLibraryContent } from '@legacy/helpers/library_content'
 import type { IApplicationInsights } from '@microsoft/applicationinsights-web'
 
 const { $appInsights } = useNuxtApp() as unknown as { $appInsights?: IApplicationInsights }
@@ -427,13 +433,13 @@ useHead({
 
 // Reactive data
 const fhirpathContextExpression = ref<string>('name')
-const fhirpathExpression = ref<string>('trace(\'trc\').given.join(\' \').combine(family).join(\', \')')
+const fhirpathExpression = ref<string>('trace(\'trc\').given.join(\' \')\n.combine(family).join(\', \')')
 const loading = ref<boolean>(false)
 const loadingAll = ref<boolean>(false)
 const error = ref<string>('')
 const singleEngineResult = ref<FhirPathEvaluationResult | null>(null)
 const allEngineResults = ref<Map<string, FhirPathEvaluationResult>>(new Map())
-const astData = ref<ParseTreeNode | null>(null)
+const astData = ref<JsonNode | null>(null)
 // Tracks which engine in the multi-engine Results tab has been selected for the
 // Expression / AST / DEBUG views. Cleared on every fresh evaluation.
 const selectedEngineName = ref<string | null>(null)
@@ -481,7 +487,7 @@ const dotnetServerDownloader = ref<string>('https://proxy.fhir.forms-lab.com/dow
 
 // Template ref
 const resourceEditor = ref<InstanceType<typeof ResourceEditor>>()
-const fhirpathExpressionInput = ref()
+const fhirpathExpressionInput = ref<InstanceType<typeof ResourceEditor>>()
 
 // Event handlers
 const onResourceUrlUpdate = (newUrl: string) => {
@@ -502,6 +508,7 @@ const shareToolTipMessage = ref<string>('Copy a sharable link to this test expre
 const shareZulipToolTipMessage = ref<string>('Copy a sharable link for Zulip to this test expression')
 const resourceJsonChanged = ref<boolean>(false)
 const showAdvancedSettings = ref<boolean>(settings.showAdvancedSettings())
+const loadedLibraryReference = ref<string>()
 // Local copy of the effective engine registry (baseline + config overrides)
 const effectiveEngines = ref<Record<string, IFhirPathEngineDetails>>({ })
 
@@ -562,10 +569,16 @@ onMounted(async () => {
   } else {
     // Check for query parameters
     const params = readParametersFromQuery()
-    if (params.expression) {
-      await applyParameters(params)
-      // Run evaluation after applying parameters
-      await evaluateExpression()
+    if (params.expression || params.libraryId) {
+      try {
+        await applyParameters(params)
+        // Run evaluation after applying parameters
+        await evaluateExpression()
+      } catch (caught) {
+        error.value = axios.isAxiosError(caught)
+          ? caught.response?.data?.issue?.[0]?.diagnostics || caught.message
+          : caught instanceof Error ? caught.message : 'Unable to load the FHIRPath test.'
+      }
     }
   }
 })
@@ -656,10 +669,17 @@ const resetExpression = () => {
 }
 
 // Navigate to expression node from AST
-const navigateToExpressionNode = (node: ParseTreeNode) => {
-  console.log('Navigate to expression node:', node)
-  // TODO: Highlight the expression text in the editor
-  // This would need the expression editor to support highlighting
+const navigateToExpressionNode = (node: JsonNode) => {
+  twinTabControl.value?.selectTab(0)
+
+  nextTick(() => {
+    fhirpathExpressionInput.value?.navigateToTextRange({
+      position: node.Position,
+      line: node.Line,
+      column: node.Column,
+      length: node.Length ?? node.Name.length,
+    })
+  })
 }
 
 // Navigate to a resource path in the test resource editor
@@ -718,6 +738,9 @@ const handleHashChange = async () => {
       await evaluateExpression()
     } catch (e) {
       console.error('Failed to decode hash parameters:', e)
+      error.value = axios.isAxiosError(e)
+        ? e.response?.data?.issue?.[0]?.diagnostics || e.message
+        : e instanceof Error ? e.message : 'Unable to load the shared FHIRPath test.'
     }
   }
 }
@@ -774,7 +797,10 @@ const readParametersFromQuery = (): TestFhirpathData => {
 
 // Apply parameters from URL
 const applyParameters = async (p: TestFhirpathData) => {
-  if (p.expression) {
+  if (p.libraryId) {
+    await loadFhirPathLibrary(p.libraryId)
+  }
+  if (p.expression !== undefined) {
     fhirpathExpression.value = p.expression
   }
   
@@ -783,6 +809,21 @@ const applyParameters = async (p: TestFhirpathData) => {
   
   if (p.resource) {
     resourceUrl.value = p.resource
+  }
+
+  async function loadFhirPathLibrary(libraryId: string) {
+    const url = libraryId.startsWith('http')
+      ? libraryId
+      : `${settings.getFhirServerUrl()}/Library/${libraryId}`
+    const response = await axios.get<Library>(url, {
+      headers: { Accept: 'application/fhir+json, application/json' },
+    })
+    const content = response.data.content?.find(content =>
+      content.contentType === 'text/fhirpath' && content.data,
+    )
+    if (!content?.data) throw new Error('The selected Library has no FHIRPath source content.')
+    loadedLibraryReference.value = url
+    fhirpathExpression.value = decodeLibraryContent(content.data)
   }
   
   const resourceJson = p.resourceJson
@@ -848,6 +889,7 @@ const prepareSharePackageData = (): TestFhirpathData => {
     context: fhirpathContextExpression.value || undefined,
     resource: resourceUrl.value || undefined,
     engine: selectedEngine.value?.legacyName,
+    libraryId: loadedLibraryReference.value,
   }
   
   if (variables.value.length > 0) {

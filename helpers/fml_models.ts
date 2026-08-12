@@ -28,6 +28,12 @@ export interface SourcePosition {
 }
 
 /**
+ * FHIR release identifier auto-detected from a (cross-)version canonical URL.
+ * See `helpers/fml_cross_version.ts`.
+ */
+export type FhirVersion = 'DSTU2' | 'STU3' | 'R4' | 'R4B' | 'R5' | 'R6';
+
+/**
  * Root structure representing a complete FML StructureMap
  */
 export interface FmlStructureMap {
@@ -54,6 +60,22 @@ export interface FmlStructureMap {
   
   /** Groups containing transformation rules */
   groups: GroupDeclaration[];
+
+  /**
+   * FHIR release auto-detected from the first `uses ... as source` (or
+   * `as queried`) declaration whose canonical URL embeds a FHIR version
+   * segment. `undefined` when none of the source declarations carried a
+   * version segment; callers should fall back to a user override or
+   * global default.
+   */
+  sourceModelVersion?: FhirVersion;
+
+  /**
+   * FHIR release auto-detected from the first `uses ... as target` (or
+   * `as produced`) declaration whose canonical URL embeds a FHIR version
+   * segment.
+   */
+  targetModelVersion?: FhirVersion;
 }
 
 /**
@@ -150,7 +172,7 @@ export interface StructureDeclaration {
   /** Source position information */
   position?: SourcePosition;
   
-  /** URL of the structure definition */
+  /** URL of the structure definition (as written in the FML source) */
   url: string;
   
   /** Optional alias for the structure */
@@ -158,6 +180,22 @@ export interface StructureDeclaration {
   
   /** How the structure is used: 'source', 'queried', 'target', or 'produced' */
   mode: 'source' | 'queried' | 'target' | 'produced';
+
+  /**
+   * Version-neutral canonical URL to use when looking the structure up
+   * in a definition catalogue. For cross-version canonicals the
+   * embedded `<major>.<minor>` segment is removed (e.g.
+   * `http://hl7.org/fhir/4.3/StructureDefinition/Citation` becomes
+   * `http://hl7.org/fhir/StructureDefinition/Citation`). For all other
+   * URLs this is identical to `url`.
+   */
+  canonical?: string;
+
+  /**
+   * FHIR release auto-detected from the URL's `<major>.<minor>` version
+   * segment, or `undefined` when the URL was not version-qualified.
+   */
+  fhirVersion?: FhirVersion;
 }
 
 /**

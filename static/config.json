@@ -3,6 +3,10 @@
 
 	"dotnet_server_downloader": "https://fhirpath-lab-dotnet2.azurewebsites.net/api/downloader",
 	"cql_r4": "https://fhirpath-lab-java2.azurewebsites.net/fhir/$fhirpath-cql",
+	"cql_quality_r4": "https://r4.quality.hl7.org/fhir",
+	"cql_alphora_r4": "https://cloud.alphora.com/sandbox/r4/cds/fhir",
+	"cql_firely_r4": "https://server.fire.ly",
+	"enabledCqlEngines": ["Alphora (R4)", "HL7 Quality (R4)", "Firely Server (R4)"],
 
 	"dotnet_server_r4b": "https://fhirpath-lab-dotnet2.azurewebsites.net/api/$fhirpath",
 	"dotnet_server_r5": "https://fhirpath-lab-dotnet2.azurewebsites.net/api/$fhirpath-r5",

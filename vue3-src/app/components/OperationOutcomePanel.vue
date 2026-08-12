@@ -67,7 +67,7 @@
 }
 
 .issue-item:hover {
-  background-color: rgb(var(--v-theme-surface-variant));
+  background-color: rgb(var(--v-theme-surface-hover));
 }
 
 .issue-item .issue-severity:hover {

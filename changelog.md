@@ -3,6 +3,22 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+# 15 July 2026
+* Update fhirpath.js to 5.0.0
+
+# 14 July 2026 (hackweek only)
+* Add a FHIR Liquid test page
+* Added local CQL syntax validation with navigable source diagnostics
+* Added automatic CQL expression/library detection and operation selection
+* Added inline `Library/$evaluate` support with multi-select expression execution and result display
+* Added automatic named-parameter rows for parameter declarations in CQL library source
+
+# 13 July 2026 (hackweek only - all Vue3 port changes)
+* Added prototype support for a CQL editor
+* Added the syntax highlighting for the Fhirpath Test page
+* Added navigation from the AST to the appropriate part of the expression
+* fixed bug in layout of the fhirpath page results table
+
 # 30 April 2026
 * Modified AppInsights configuration, added to the Vue3 migration, and updated to latest version
 * Added settings configuration support to the Vue3 port

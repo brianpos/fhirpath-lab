@@ -425,11 +425,14 @@ import Chat from "~/components/Chat.vue";
 import ResourceEditor from "~/components/ResourceEditor.vue";
 
 import { parseFML } from "~/helpers/fml_parser";
-import type { FmlStructureMap } from "~/helpers/fml_models";
+import type { FmlStructureMap, FhirVersion } from "~/helpers/fml_models";
 import { generateInstanceDiagramSvg, fmlToStructureMapForDiagram } from "~/helpers/structuremap_diagram_instance";
 import { highlightDiagramConnection, findConnectionIdsForClick } from "~/helpers/diagram_interaction";
 import { generateStructureMapDiagramSvg } from "~/helpers/structuremap_diagram";
 import { lookupByTypeName as lookupByTypeNameR4B } from "~/helpers/models/generated/r4b";
+import { lookupByTypeName as lookupByTypeNameR4 } from "~/helpers/models/generated/r4";
+import { lookupByTypeName as lookupByTypeNameR5 } from "~/helpers/models/generated/r5";
+import { lookupByTypeName as lookupByTypeNameR6 } from "~/helpers/models/generated/r6";
 import { buildUserModelLookup, composeLookups, type TypeLookup, type UserModelLookup } from "~/helpers/user_models";
 import xmlFormat from 'xml-formatter';
 import { createFhirLogicalModel, CreateLogicalModelOptions } from '~/helpers/logical_model_generator';
@@ -780,7 +783,7 @@ export default Vue.extend({
           iconName: "mdi-file-document-outline",
           tabName: "Instance",
           title: "Instance-level view showing source/target objects with mapped and unmapped properties",
-          show: this.showAdvancedSettings,
+          show: true,
           enabled: true,
         },
         {
@@ -830,6 +833,22 @@ export default Vue.extend({
      *  dictionary is never mutated — composition is by function wrapping. */
     composedTypeLookup(): TypeLookup {
       return composeLookups(this.userModelLookup?.lookup, lookupByTypeNameR4B);
+    },
+
+    /** Resolve the type-model lookup for a specific FHIR version, used by the
+     *  diagrams for cross-version maps (e.g. an R4B → R5 transform). The
+     *  per-version dictionary is composed with any user-supplied models so
+     *  user overrides still win. Versions without a bundled dictionary
+     *  (DSTU2/STU3) and the `undefined` case fall back to the default. */
+    lookupForVersion(version?: FhirVersion): TypeLookup | undefined {
+      const base =
+        version === "R4" ? lookupByTypeNameR4
+        : version === "R4B" ? lookupByTypeNameR4B
+        : version === "R5" ? lookupByTypeNameR5
+        : version === "R6" ? lookupByTypeNameR6
+        : undefined;
+      if (!base) return undefined;
+      return composeLookups(this.userModelLookup?.lookup, base);
     },
 
     /** Debounced trigger for instance/structure-map diagram regeneration.
@@ -1615,8 +1634,9 @@ group SetEntryData(source src: Patient, target entry)
       try {
         const fhirMap = fmlToStructureMapForDiagram(fmlMap);
         const lookup = this.composedTypeLookup();
-        this.instanceSvg = generateInstanceDiagramSvg(fhirMap, lookup, true);
-        this.diagramSvg = generateStructureMapDiagramSvg(fhirMap, lookup);
+        const lookupForVersion = (v?: FhirVersion) => this.lookupForVersion(v);
+        this.instanceSvg = generateInstanceDiagramSvg(fhirMap, lookup, true, lookupForVersion);
+        this.diagramSvg = generateStructureMapDiagramSvg(fhirMap, lookup, lookupForVersion);
       } catch (e) {
         console.error('Failed to generate instance diagram:', e);
         this.instanceSvg = undefined;
@@ -1922,8 +1942,9 @@ group SetEntryData(source src: Patient, target entry)
           try {
             const fhirMap = fmlToStructureMapForDiagram(fmlMap);
             const lookup = this.composedTypeLookup();
-            this.instanceSvg = generateInstanceDiagramSvg(fhirMap, lookup, true);
-            this.diagramSvg = generateStructureMapDiagramSvg(fhirMap, lookup);
+            const lookupForVersion = (v?: FhirVersion) => this.lookupForVersion(v);
+            this.instanceSvg = generateInstanceDiagramSvg(fhirMap, lookup, true, lookupForVersion);
+            this.diagramSvg = generateStructureMapDiagramSvg(fhirMap, lookup, lookupForVersion);
           } catch (e) {
             console.error('Failed to generate instance diagram:', e);
             this.instanceSvg = undefined;

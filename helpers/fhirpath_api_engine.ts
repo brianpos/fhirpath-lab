@@ -17,6 +17,7 @@ import fhirpath_r5_model from "fhirpath/fhir-context/r5";
 // Note: R6 is not yet available in fhirpath.js package
 import fhirpath_r6_model from "models/r6";
 import { IFhirPathEngineDetails } from "../types/fhirpath_test_engine";
+import { validateFhirpathExpression, type FhirVersionKey } from "./fhirpath_validator";
 
 
 export interface DebugTraceData {
@@ -347,175 +348,13 @@ export async function executeRestfulEngine(
 }
 
 /**
- * Convert fhirpath.js AST to our JsonNode format
+ * Convert fhirpath.js AST to our JsonNode format.
+ *
+ * Re-exported from `./fhirpath_ast_converter.ts` so the converter is callable
+ * from contexts (e.g. unit tests) that can't load this whole engine module.
  */
-export function convertFhirPathJsToAst(ast: fpjsNode): JsonNode {
-  let result: JsonNode = {
-    ExpressionType: ast.type,
-    Name: ast.terminalNodeText ? ast.terminalNodeText[0] : ast.text ?? "",
-    Arguments: [],
-    ReturnType: "",
-  };
-
-  if (ast.length) {
-    result.Length = ast.length;
-  }
-
-  if (ast.start) {
-    result.Line = ast.start.line;
-    result.Column = ast.start.column;
-  }
-
-  // convert all the child nodes
-  if (ast.children) {
-    ast.children.forEach((element: fpjsNode) => {
-      result.Arguments?.push(convertFhirPathJsToAst(element));
-    });
-  } else {
-    delete result.Arguments;
-  }
-
-  // Populate the Type for known types
-  switch (result.ExpressionType) {
-    case "StringLiteral":
-      result.ReturnType = "string";
-      result.ExpressionType = "ConstantExpression";
-      result.Name = result.Name.substring(1, result.Name.length - 1);
-      break;
-    case "BooleanLiteral":
-      result.ReturnType = "boolean";
-      result.ExpressionType = "ConstantExpression";
-      break;
-    case "QuantityLiteral":
-      result.ReturnType = "Quantity";
-      result.ExpressionType = "ConstantExpression";
-      if (result.Arguments && result.Arguments.length > 0) {
-        result.Name = result.Arguments[0].Name;
-      }
-      delete result.Arguments;
-      return result;
-    case "DateTimeLiteral":
-      result.ReturnType = "dateTime";
-      result.ExpressionType = "ConstantExpression";
-      result.Name = result.Name.substring(1);
-      break;
-    case "TimeLiteral":
-      result.ReturnType = "time";
-      result.ExpressionType = "ConstantExpression";
-      result.Name = result.Name.substring(2);
-      break;
-    case "NumberLiteral":
-      result.ReturnType = "Number (decimal or integer)";
-      result.ExpressionType = "ConstantExpression";
-      break;
-  }
-
-  // Short circuit some of the AST that is not useful to display
-  if (
-    result.Arguments?.length == 1 &&
-    result.ExpressionType == "FunctionInvocation"
-  ) {
-    return result.Arguments[0];
-  }
-  if (result.Arguments?.length == 1 && result.ExpressionType == "Quantity") {
-    result.Name = result.Name + " " + result.Arguments[0].Name;
-    delete result.Arguments;
-    return result;
-  }
-  if (result.Arguments?.length == 1 && result.ExpressionType == "Unit") {
-    return result.Arguments[0];
-  }
-  if (result.Arguments?.length == 1 && result.ExpressionType == "LiteralTerm") {
-    return result.Arguments[0];
-  }
-  if (
-    result.Arguments?.length == 1 &&
-    result.ExpressionType == "TermExpression"
-  ) {
-    return result.Arguments[0];
-  }
-  if (
-    result.Arguments?.length == 1 &&
-    result.ExpressionType == "ExternalConstantTerm"
-  ) {
-    return result.Arguments[0];
-  }
-
-  if (
-    result.ExpressionType == "MemberInvocation" &&
-    result.Arguments &&
-    result.Arguments.length === 1 &&
-    result.Arguments[0].ExpressionType == "Identifier"
-  ) {
-    result.ExpressionType = "ChildExpression";
-    result.Name = result.Arguments[0].Name ?? "";
-    delete result.Arguments;
-  }
-
-  if (
-    result.ExpressionType == "ExternalConstant" &&
-    result.Arguments &&
-    result.Arguments.length === 1 &&
-    result.Arguments[0].ExpressionType == "Identifier"
-  ) {
-    result.ExpressionType = "VariableRefExpression";
-    result.Name = result.Arguments[0].Name ?? "";
-    delete result.Arguments;
-  }
-
-  // restructure the function call part of the tree
-  if (
-    result.ExpressionType == "Functn" &&
-    result.Arguments &&
-    result.Arguments.length === 2 &&
-    result.Arguments[0].ExpressionType == "Identifier" &&
-    result.Arguments[1].ExpressionType == "ParamList"
-  ) {
-    result.ExpressionType = "FunctionCallExpression";
-    result.Name = result.Arguments[0].Name ?? "";
-    result.Arguments = result.Arguments[1].Arguments;
-  }
-  if (
-    result.ExpressionType == "Functn" &&
-    result.Arguments &&
-    result.Arguments.length === 1 &&
-    result.Arguments[0].ExpressionType == "Identifier"
-  ) {
-    result.ExpressionType = "FunctionCallExpression";
-    result.Name = result.Arguments[0].Name ?? "";
-    delete result.Arguments;
-  }
-
-  if (
-    result.Arguments?.length == 1 &&
-    result.ExpressionType == "InvocationTerm" // this is the "scoping node"
-  ) {
-    // inject the scoping node into the tree
-    let scopeNode: JsonNode = {
-      ExpressionType: "AxisExpression",
-      Name: "builtin.that",
-      Arguments: [],
-      ReturnType: "",
-    };
-    if (result.Arguments[0].Arguments)
-      result.Arguments[0].Arguments?.unshift(scopeNode);
-    else result.Arguments[0].Arguments = [scopeNode];
-    return result.Arguments[0];
-  }
-
-  // -----------
-  if (
-    result.ExpressionType == "InvocationExpression" &&
-    result.Arguments &&
-    result.Arguments?.length > 1
-  ) {
-    if (result.Arguments[1].Arguments)
-      result.Arguments[1].Arguments?.unshift(result.Arguments[0]);
-    else result.Arguments[1].Arguments = [result.Arguments[0]];
-    return result.Arguments[1];
-  }
-  return result;
-}
+import { convertFhirPathJsToAst } from "./fhirpath_ast_converter";
+export { convertFhirPathJsToAst };
 
 /**
  * Evaluate FHIRPath expression using fhirpath.js engine (unified for R4 and R5)
@@ -538,8 +377,50 @@ export async function evaluateExpressionUsingFhirpathJs(
     processedByEngine: `fhirpath.js-${fhirpath.version} ${versionLabel}`
   };
 
-  // Parse the FHIRPath expression to generate AST
+  // Run the FHIRPath validator first. It produces a typed AST (matching what
+  // the .NET engine's parseDebugTree looks like) and a FHIR OperationOutcome
+  // with any semantic issues (unknown property, wrong arg type, etc.). The
+  // engine still runs even if issues are found — the resulting outcome is
+  // surfaced via `expressionParseOutcome`, mirroring what the .NET engine
+  // does server-side.
   if (options.expression) {
+    try {
+      const fhirVersionKey: FhirVersionKey =
+        fhirVersion === 'R5' ? 'r5' : fhirVersion === 'R6' ? 'r6' : 'r4';
+      // Determine the starting resource type from the resourceJson if available;
+      // contextExpression refines it further inside the validator.
+      let contextType: string | undefined;
+      if (options.resourceJson) {
+        try {
+          const parsed = JSON.parse(options.resourceJson);
+          if (parsed && typeof parsed.resourceType === 'string') contextType = parsed.resourceType;
+        } catch {/* ignore */}
+      }
+      const validation = validateFhirpathExpression(options.expression, {
+        fhirVersion: fhirVersionKey,
+        contextType,
+        contextExpression: options.contextExpression,
+      });
+      if (validation.parseDebugTree) {
+        result.parseDebugTree = JSON.stringify(validation.parseDebugTree);
+        // Dump the annotated AST to the console to assist with debugging.
+        // Mirrors what the legacy AST conversion logs and makes it easy to
+        // diff the validator's tree against the fhirpath.js-derived tree.
+        console.log('FHIRPath validator AST (annotated):', validation.parseDebugTree);
+      }
+      if (validation.outcome) {
+        result.expressionParseOutcome = validation.outcome;
+      }
+    } catch (err: any) {
+      console.log('FHIRPath validator failed:', err);
+      // Validation is best-effort; never block evaluation if it fails.
+    }
+  }
+
+  // Parse the FHIRPath expression to generate AST (fall back to fhirpath.js if
+  // the validator could not produce one — e.g. the expression has syntax
+  // errors but the engine can still surface a different message).
+  if (options.expression && !result.parseDebugTree) {
     try {
       const parsedAst = fhirpath.parse(options.expression);
       if (parsedAst.children && parsedAst.children.length > 0) {

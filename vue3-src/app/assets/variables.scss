@@ -52,6 +52,16 @@ $tab-color: rgba(0, 0, 0, 0.87);
   margin-bottom: 0;
 }
 
+.v-field:focus-within:not(.v-field--error):not(.v-field--disabled) {
+  .v-field__outline::after {
+    border-color: rgb(var(--v-theme-primary));
+  }
+
+  .v-label.v-field-label {
+    color: rgb(var(--v-theme-primary));
+  }
+}
+
 .v-application--wrap:has(div.retired-page-background) {
   background-color: thistle;
 }
@@ -214,6 +224,19 @@ tr.v-data-table__expanded__content > td {
 /* We don't use the data footer in any of the lab's tables, so hide them (nav panes)*/
 .v-data-footer {
   display: none;
+}
+
+// Hide the cursor and bracket matching when an Ace editor does not have focus.
+.ace_hidden-cursors {
+  opacity: 0;
+}
+
+.ace_editor .ace_bracket {
+  display: none;
+}
+
+.ace_editor:focus-within .ace_bracket {
+  display: block;
 }
 
 // --------------------------------------------------------------------------

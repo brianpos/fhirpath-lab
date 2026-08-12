@@ -1,5 +1,6 @@
 import { StructureMap, StructureMapGroupRule } from "fhir/r4b";
 import type { TypeModel, ElementModel } from "./custom_model";
+import type { FhirVersion } from "./fml_models";
 import { lookupByTypeName as lookupByTypeNameR4B } from "./models/generated/r4b";
 
 /**
@@ -7,6 +8,13 @@ import { lookupByTypeName as lookupByTypeNameR4B } from "./models/generated/r4b"
  * dictionary's `lookupByTypeName` function (e.g. from `helpers/models/generated/r4b`).
  */
 export type TypeLookup = (typeName: string) => TypeModel | undefined;
+
+/**
+ * Resolver that returns the {@link TypeLookup} for a given FHIR version. Used
+ * for cross-version maps where source and target structures belong to
+ * different FHIR releases. Return `undefined` to fall back to the default.
+ */
+export type LookupForVersion = (version: FhirVersion | undefined) => TypeLookup | undefined;
 
 // ===== Exported Data Types =====
 
@@ -29,6 +37,10 @@ export interface DiagramType {
   properties: PropertyEntry[];
   /** Source position in the FML text for click-to-select on the type header */
   fmlPosition?: { startIndex: number; endIndex: number };
+  /** Detected FHIR version of the structure backing this box (cross-version
+   *  maps). When set, the type model is resolved against the matching
+   *  per-version dictionary rather than the default. */
+  fhirVersion?: FhirVersion;
 }
 
 export interface PropertyEntry {
@@ -218,7 +230,7 @@ function inferGroupInputTypes(
  * renderer can append `[]` for arrays and show the type in a tooltip. If
  * omitted, the bundled R4B dictionary is used as a sensible default.
  */
-export function extractStructureMapDiagram(map: StructureMap, typeLookup?: TypeLookup): StructureMapDiagram {
+export function extractStructureMapDiagram(map: StructureMap, typeLookup?: TypeLookup, lookupForVersion?: LookupForVersion): StructureMapDiagram {
   const groups: DiagramGroup[] = [];
   nextRuleId = 0;
   const lookup = typeLookup ?? lookupByTypeNameR4B;
@@ -255,6 +267,7 @@ export function extractStructureMapDiagram(map: StructureMap, typeLookup?: TypeL
         properties: entries,
       };
       if ((input as any)._fmlPosition) dt.fmlPosition = (input as any)._fmlPosition;
+      if ((input as any)._fmlVersion) dt.fhirVersion = (input as any)._fmlVersion;
       if (input.mode === "source") sourceTypes.push(dt);
       else targetTypes.push(dt);
     }
@@ -268,9 +281,12 @@ export function extractStructureMapDiagram(map: StructureMap, typeLookup?: TypeL
   // with isCollection (IsArray) and elementTypeName for tooltip display.
   for (const group of groups) {
     for (const dt of [...group.sourceTypes, ...group.targetTypes]) {
+      // For cross-version maps, resolve this box against the type model for
+      // its detected FHIR version; otherwise fall back to the default lookup.
+      const boxLookup = (lookupForVersion && lookupForVersion(dt.fhirVersion)) || lookup;
       // Either no declared type, or the declared type isn't in the model:
       // every property on this box is therefore unverifiable — flag them all.
-      const rootKnown = !!dt.typeName && !!lookup(dt.typeName);
+      const rootKnown = !!dt.typeName && !!boxLookup(dt.typeName);
       // Build a map of paths within this box that re-root to a created
       // type — so deeper properties like `entry.resource.status` resolve
       // against the created type (e.g. Observation) rather than the
@@ -288,7 +304,7 @@ export function extractStructureMapDiagram(map: StructureMap, typeLookup?: TypeL
           continue;
         }
         if (!p.path || p.path === ".") continue;
-        const resolved = resolvePathInModel(dt.typeName, p.path, lookup, createBoundaries);
+        const resolved = resolvePathInModel(dt.typeName, p.path, boxLookup, createBoundaries);
         if (resolved) {
           if (resolved.isCollection) p.isCollection = true;
           if (resolved.elementTypeName) p.elementTypeName = resolved.elementTypeName;
@@ -302,7 +318,7 @@ export function extractStructureMapDiagram(map: StructureMap, typeLookup?: TypeL
         if (p.createdType) {
           p.elementTypeName = p.createdType;
           if (resolved && resolved.element) {
-            if (!isCreatedTypeAllowed(resolved.element, p.createdType, lookup)) {
+            if (!isCreatedTypeAllowed(resolved.element, p.createdType, boxLookup)) {
               const allowed = describeAllowedTypes(resolved.element);
               const msg = `created type "${p.createdType}" is not allowed at ${dt.typeName}.${p.path} (allowed: ${allowed})`;
               console.warn(`[structuremap_diagram] ${msg}`);
@@ -896,8 +912,8 @@ function countRuleDividers(propDisplay: PropertyDisplay[]): number {
  * Each group is rendered as a box containing source and target type boxes
  * with the properties read/written listed inside each type box.
  */
-export function generateStructureMapDiagramSvg(map: StructureMap, typeLookup?: TypeLookup): string {
-  const data = extractStructureMapDiagram(map, typeLookup);
+export function generateStructureMapDiagramSvg(map: StructureMap, typeLookup?: TypeLookup, lookupForVersion?: LookupForVersion): string {
+  const data = extractStructureMapDiagram(map, typeLookup, lookupForVersion);
 
   if (data.groups.length === 0) {
     return [
