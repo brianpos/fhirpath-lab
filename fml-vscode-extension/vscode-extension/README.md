@@ -65,6 +65,19 @@ The status menu provides:
 **Re-index FML Workspace** and **Restart FML Language Server** are also
 available directly from the command palette.
 
+### FHIR model and dependency resolution
+
+The extension includes core FHIR type models for STU3, R4, R4B, R5, and the bundled R6 ballot release. Versioned core canonicals and source or target versions declared in FML select the corresponding model. Otherwise, the extension uses `fhirVersion` from the project's `sushi-config.yaml` or `sushi-config.yml`; editor type analysis falls back to the bundled R4B model when no release is specified.
+
+The extension discovers model roots from SUSHI configurations and published IG output. For an active map, the nearest enclosing model root supplies its preview and debugger models; resources from all discovered roots are made available to workspace validation and completion. Models are resolved from:
+
+- **Installed package dependencies** — entries under `dependencies` may use either a version value or an object with a `version` property. The extension looks for each package at `~/.fhir/packages/<package-id>#<version>/package/.index.json`. It reads indexed `StructureDefinition` resources, including logical models, and `ConceptMap` resources. Packages must already be installed; the extension does not download them.
+- **IG build output** — a SUSHI configuration causes its adjacent `output/**/*.json` resources to be scanned. When there is no SUSHI configuration, an `output/ImplementationGuide*.json` file identifies the project root and enables the same recursive scan. Creating, changing, or deleting JSON files there refreshes the models and re-indexes the workspace. An output `StructureDefinition` takes precedence over a package definition with the same canonical URL, so the latest local IG build is used. An output-only project has no package dependencies or default FHIR version unless those are declared elsewhere.
+
+Workspace `.fml` files are indexed separately by canonical URL. An FML `imports` declaration, including wildcard imports, resolves matching maps and groups from that index.
+
+For debugging, the extension follows those imported maps and derives required `StructureDefinition` canonicals from `uses` declarations and required `ConceptMap` canonicals from `translate()` calls. It searches the SUSHI package and output resources above, plus any JSON glob patterns supplied by the optional `dependencies` array in the `launch.json` configuration. When several matching resources exist, a resource with the requested FHIR release is preferred.
+
 ## Live map preview
 
 Run **Open FML Preview to the Side** from the editor title, context menu, or command palette. A preview panel opens beside the active FML editor and refreshes from unsaved edits.

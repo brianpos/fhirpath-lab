@@ -32,9 +32,14 @@ interface SushiConfigDocument {
     fhirVersion?: string | string[];
 }
 
+const SUSHI_CONFIG_GLOB = "**/sushi-config.{yaml,yml}";
+const OUTPUT_JSON_GLOB = "**/output/**/*.json";
+const IG_OUTPUT_MARKER_GLOB = "**/output/ImplementationGuide*.json";
+const WORKSPACE_EXCLUDE_GLOB = "**/{.git,node_modules,dist,out,target,.vscode-test}/**";
+
 export class SushiConfigWatcher implements vscode.Disposable {
-    private readonly watcher = vscode.workspace.createFileSystemWatcher("sushi-config.{yaml,yml}");
-    private readonly outputWatcher = vscode.workspace.createFileSystemWatcher("**/output/**/*.json");
+    private readonly watcher = vscode.workspace.createFileSystemWatcher(SUSHI_CONFIG_GLOB);
+    private readonly outputWatcher = vscode.workspace.createFileSystemWatcher(OUTPUT_JSON_GLOB);
     private readonly configurations = new Map<string, SushiWorkspaceConfiguration>();
     private readonly configurationUris = new Map<string, vscode.Uri>();
 
@@ -45,11 +50,7 @@ export class SushiConfigWatcher implements vscode.Disposable {
     ) {
         this.watcher.onDidCreate(uri => void this.readAndReport(uri));
         this.watcher.onDidChange(uri => void this.readAndReport(uri));
-        this.watcher.onDidDelete(uri => {
-            this.configurations.delete(path.dirname(uri.fsPath));
-            this.configurationUris.delete(path.dirname(uri.fsPath));
-            logData(`SUSHI configuration removed: ${uri.fsPath}`, this.logger);
-        });
+        this.watcher.onDidDelete(uri => void this.removeConfiguration(uri));
         this.outputWatcher.onDidCreate(uri => void this.refreshForOutput(uri));
         this.outputWatcher.onDidChange(uri => void this.refreshForOutput(uri));
         this.outputWatcher.onDidDelete(uri => void this.refreshForOutput(uri));
@@ -57,15 +58,26 @@ export class SushiConfigWatcher implements vscode.Disposable {
 
     public async initialize(): Promise<void> {
         const configFiles = await vscode.workspace.findFiles(
-            "sushi-config.{yaml,yml}",
-            "**/{.git,node_modules,dist,out,target,.vscode-test}/**",
+            SUSHI_CONFIG_GLOB,
+            WORKSPACE_EXCLUDE_GLOB,
         );
         if (configFiles.length === 0) {
             logData("No workspace sushi-config.yaml or sushi-config.yml found.", this.logger);
-            return;
         }
         for (const uri of configFiles) {
             await this.readAndReport(uri);
+        }
+        const outputMarkers = await vscode.workspace.findFiles(
+            IG_OUTPUT_MARKER_GLOB,
+            WORKSPACE_EXCLUDE_GLOB,
+        );
+        const outputProjectDirectories = new Set(
+            outputMarkers.flatMap(uri => implementationGuideOutputProjectDirectory(uri.fsPath) ?? []),
+        );
+        for (const directory of outputProjectDirectories) {
+            if (!this.configurationUris.has(directory)) {
+                await this.readOutputAndReport(directory);
+            }
         }
     }
 
@@ -102,27 +114,10 @@ export class SushiConfigWatcher implements vscode.Disposable {
         try {
             const source = new TextDecoder().decode(await vscode.workspace.fs.readFile(uri));
             const configuration = parseSushiConfiguration(source, this.cachePath);
-            const resolutions = await resolveWorkspaceProfileTypes(
-                path.dirname(uri.fsPath),
-                configuration.dependencies,
-            );
-            configuration.profileBaseTypes = Object.fromEntries(
-                Object.entries(resolutions).map(([canonical, resolution]) => [canonical, resolution.typeName]),
-            );
-            configuration.profileResolutionSources = Object.fromEntries(
-                Object.entries(resolutions).map(([canonical, resolution]) => [canonical, resolution.source]),
-            );
-            configuration.modelResourcePaths = await resolveWorkspaceModelResourcePaths(
-                path.dirname(uri.fsPath),
-                configuration.dependencies,
-                resolutions,
-            );
-            configuration.customTypeModels = buildLogicalTypeModels(
-                await readJsonResources(configuration.modelResourcePaths),
-                toFhirVersion(configuration.fhirVersion),
-            );
-            this.configurations.set(path.dirname(uri.fsPath), configuration);
-            this.configurationUris.set(path.dirname(uri.fsPath), uri);
+            const directory = path.dirname(uri.fsPath);
+            await populateWorkspaceModels(directory, configuration);
+            this.configurations.set(directory, configuration);
+            this.configurationUris.set(directory, uri);
             logData(`SUSHI configuration: ${uri.fsPath}`, this.logger);
             logData(
                 `SUSHI default FHIR version: ${configuration.fhirVersion ?? "not specified"}`,
@@ -149,15 +144,119 @@ export class SushiConfigWatcher implements vscode.Disposable {
         }
     }
 
+    private async readOutputAndReport(directory: string): Promise<void> {
+        try {
+            const configuration = await resolveOutputWorkspaceConfiguration(directory);
+            this.configurations.set(directory, configuration);
+            logData(`IG output models: ${path.join(directory, "output")}`, this.logger);
+            logData(
+                `IG output logical model types: ${Object.keys(configuration.customTypeModels).join(", ") || "none"}`,
+                this.logger,
+            );
+            await this.onConfigurationChanged();
+        } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            logData(`Unable to read IG output models from ${directory}: ${message}`, this.logger);
+        }
+    }
+
+    private async removeConfiguration(uri: vscode.Uri): Promise<void> {
+        const directory = path.dirname(uri.fsPath);
+        this.configurations.delete(directory);
+        this.configurationUris.delete(directory);
+        logData(`SUSHI configuration removed: ${uri.fsPath}`, this.logger);
+        if (await hasImplementationGuideOutput(directory)) {
+            await this.readOutputAndReport(directory);
+        } else {
+            await this.onConfigurationChanged();
+        }
+    }
+
     private async refreshForOutput(uri: vscode.Uri): Promise<void> {
-        const configurationUri = [...this.configurationUris.entries()]
-            .filter(([directory]) => isPathInside(uri.fsPath, path.join(directory, "output")))
-            .sort(([left], [right]) => right.length - left.length)[0]?.[1];
+        const directory = outputProjectDirectory(uri.fsPath);
+        if (!directory) {
+            return;
+        }
+        const configurationUri = this.configurationUris.get(directory);
         if (configurationUri) {
             logData(`SUSHI output profile changed: ${uri.fsPath}`, this.logger);
             await this.readAndReport(configurationUri);
+        } else if (await hasImplementationGuideOutput(directory)) {
+            logData(`IG output profile changed: ${uri.fsPath}`, this.logger);
+            await this.readOutputAndReport(directory);
+        } else if (this.configurations.delete(directory)) {
+            logData(`IG output models removed: ${path.join(directory, "output")}`, this.logger);
+            await this.onConfigurationChanged();
         }
     }
+}
+
+async function hasImplementationGuideOutput(directory: string): Promise<boolean> {
+    const markers = await vscode.workspace.findFiles(
+        new vscode.RelativePattern(directory, "output/ImplementationGuide*.json"),
+        WORKSPACE_EXCLUDE_GLOB,
+        1,
+    );
+    return markers.length > 0;
+}
+
+function createEmptyWorkspaceConfiguration(): SushiWorkspaceConfiguration {
+    return {
+        dependencies: [],
+        customTypeModels: {},
+        modelResourcePaths: [],
+        profileBaseTypes: {},
+        profileResolutionSources: {},
+    };
+}
+
+export async function resolveOutputWorkspaceConfiguration(
+    directory: string,
+): Promise<SushiWorkspaceConfiguration> {
+    const configuration = createEmptyWorkspaceConfiguration();
+    await populateWorkspaceModels(directory, configuration);
+    return configuration;
+}
+
+async function populateWorkspaceModels(
+    directory: string,
+    configuration: SushiWorkspaceConfiguration,
+): Promise<void> {
+    const resolutions = await resolveWorkspaceProfileTypes(directory, configuration.dependencies);
+    configuration.profileBaseTypes = Object.fromEntries(
+        Object.entries(resolutions).map(([canonical, resolution]) => [canonical, resolution.typeName]),
+    );
+    configuration.profileResolutionSources = Object.fromEntries(
+        Object.entries(resolutions).map(([canonical, resolution]) => [canonical, resolution.source]),
+    );
+    configuration.modelResourcePaths = await resolveWorkspaceModelResourcePaths(
+        directory,
+        configuration.dependencies,
+        resolutions,
+    );
+    configuration.customTypeModels = buildLogicalTypeModels(
+        await readJsonResources(configuration.modelResourcePaths),
+        toFhirVersion(configuration.fhirVersion),
+    );
+}
+
+export function outputProjectDirectory(filePath: string): string | undefined {
+    let directory = path.dirname(filePath);
+    while (path.dirname(directory) !== directory) {
+        if (path.basename(directory) === "output") {
+            return path.dirname(directory);
+        }
+        directory = path.dirname(directory);
+    }
+    return undefined;
+}
+
+export function implementationGuideOutputProjectDirectory(filePath: string): string | undefined {
+    const outputDirectory = path.dirname(filePath);
+    return path.basename(outputDirectory) === "output"
+        && /^ImplementationGuide.*\.json$/.test(path.basename(filePath))
+        ? path.dirname(outputDirectory)
+        : undefined;
 }
 
 export function parseSushiConfiguration(

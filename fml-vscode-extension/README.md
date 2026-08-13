@@ -9,7 +9,9 @@ This project will support the following high level features:
 * Text format validation via the main lab parser/model and minor semantic validation via `fml-validator`
 * Package loading via sushi-config.yaml
     * detection of FHIR version and implementation guide dependencies
-    * resolving profiles from the output directory from the implementation guide build
+* Resolving profiles and logical models from IG build output
+  * a sibling sushi-config.yaml enables output scanning
+  * without SUSHI, output/ImplementationGuide*.json identifies an IG output directory
 * indexing of maps in the workspace (to be resolvable by FML imports)
 * resolving core resource types from the FHIR specification (to be used for semantic validation)
 * resolving profiles from packages to determine the correct resource structure

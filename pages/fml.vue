@@ -189,13 +189,25 @@
           </template>
 
           <template v-slot:Diagram>
-              <div v-if="diagramSvg" v-html="diagramSvg" style="overflow: auto;" @click="handleDiagramClick"></div>
-              <div v-else style="color: #999; font-style: italic;">No diagram available</div>
+            <div class="diagram-preview" :class="{ 'diagram-preview--stale': diagramIsStale }">
+              <div v-if="diagramIsStale && diagramSvg" class="diagram-preview-status" role="status">
+                <div class="diagram-preview-status-message"><strong>Preview paused</strong> Fix the FML errors to refresh.</div>
+              </div>
+              <div v-if="diagramSvg" ref="diagramPreview" class="diagram-preview-content" v-html="diagramSvg"
+                @click="handleDiagramClick" @keydown="handleDiagramKeydown"></div>
+              <div v-else class="diagram-preview-empty">{{ diagramError ?? 'No diagram available' }}</div>
+            </div>
           </template>
 
           <template v-slot:Instance>
-              <div v-if="instanceSvg" v-html="instanceSvg" style="overflow: auto;" @click="handleDiagramClick"></div>
-              <div v-else style="color: #999; font-style: italic;">No instance diagram available</div>
+            <div class="diagram-preview" :class="{ 'diagram-preview--stale': diagramIsStale }">
+              <div v-if="diagramIsStale && instanceSvg" class="diagram-preview-status" role="status">
+                <div class="diagram-preview-status-message"><strong>Preview paused</strong> Fix the FML errors to refresh.</div>
+              </div>
+              <div v-if="instanceSvg" ref="instancePreview" class="diagram-preview-content" v-html="instanceSvg"
+                @click="handleDiagramClick" @keydown="handleDiagramKeydown"></div>
+              <div v-else class="diagram-preview-empty">{{ diagramError ?? 'No instance diagram available' }}</div>
+            </div>
           </template>
 
           <template v-slot:Debug>
@@ -318,6 +330,48 @@
 .trace_info {
   color: #1976d2;
 }
+
+.diagram-preview {
+  position: relative;
+  overflow: auto;
+}
+
+.diagram-preview--stale .diagram-preview-content {
+  opacity: 0.28;
+  filter: grayscale(0.35);
+  pointer-events: none;
+  user-select: none;
+}
+
+.diagram-preview-status {
+  position: sticky;
+  top: 12px;
+  z-index: 1;
+  display: flex;
+  height: 0;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.diagram-preview-status-message {
+  height: fit-content;
+  padding: 10px 14px;
+  border: 1px solid #edb95e;
+  border-radius: 4px;
+  color: #302b22;
+  background: #fff8e8;
+  box-shadow: 0 3px 12px rgb(0 0 0 / 18%);
+}
+
+.diagram-preview-status-message strong {
+  display: block;
+}
+
+.diagram-preview-empty {
+  padding: 16px;
+  color: #777;
+  font-style: italic;
+}
 </style>
 
 <style lang="scss" scoped>
@@ -424,11 +478,14 @@ import {
 import Chat from "~/components/Chat.vue";
 import ResourceEditor from "~/components/ResourceEditor.vue";
 
-import { parseFML } from "~/helpers/fml_parser";
+import { isFmlParseError, parseFML } from "~/helpers/fml_parser";
 import type { FmlStructureMap, FhirVersion } from "~/helpers/fml_models";
-import { generateInstanceDiagramSvg, fmlToStructureMapForDiagram } from "~/helpers/structuremap_diagram_instance";
+import { fmlToStructureMap } from "~/helpers/fml_to_structuremap";
+import { validateFmlModel } from "~/helpers/fml_validation";
+import { generateFmlInstanceDiagramSvg } from "~/helpers/structuremap_diagram_instance";
 import { highlightDiagramConnection, findConnectionIdsForClick } from "~/helpers/diagram_interaction";
 import { generateStructureMapDiagramSvg } from "~/helpers/structuremap_diagram";
+import { lookupByTypeName as lookupByTypeNameSTU3 } from "~/helpers/models/generated/stu3";
 import { lookupByTypeName as lookupByTypeNameR4B } from "~/helpers/models/generated/r4b";
 import { lookupByTypeName as lookupByTypeNameR4 } from "~/helpers/models/generated/r4";
 import { lookupByTypeName as lookupByTypeNameR5 } from "~/helpers/models/generated/r5";
@@ -565,6 +622,8 @@ interface FhirMapData {
   parsedFmlMap?: FmlStructureMap;
   instanceSvg?: string;
   diagramSvg?: string;
+  diagramIsStale: boolean;
+  diagramError?: string;
   diagramDebounceTimer?: ReturnType<typeof setTimeout>;
   /** Lookup built from the Models tab JSON (Bundle of SDs or a single SD).
    *  Kept separate from the built-in r4b dictionary — composed at call time
@@ -838,11 +897,12 @@ export default Vue.extend({
     /** Resolve the type-model lookup for a specific FHIR version, used by the
      *  diagrams for cross-version maps (e.g. an R4B → R5 transform). The
      *  per-version dictionary is composed with any user-supplied models so
-     *  user overrides still win. Versions without a bundled dictionary
-     *  (DSTU2/STU3) and the `undefined` case fall back to the default. */
+     *  user overrides still win. DSTU2 and the `undefined` case fall back to
+     *  the default. */
     lookupForVersion(version?: FhirVersion): TypeLookup | undefined {
       const base =
-        version === "R4" ? lookupByTypeNameR4
+        version === "STU3" ? lookupByTypeNameSTU3
+        : version === "R4" ? lookupByTypeNameR4
         : version === "R4B" ? lookupByTypeNameR4B
         : version === "R5" ? lookupByTypeNameR5
         : version === "R6" ? lookupByTypeNameR6
@@ -856,7 +916,7 @@ export default Vue.extend({
     scheduleDiagramRegen() {
       if (this.diagramDebounceTimer) clearTimeout(this.diagramDebounceTimer);
       this.diagramDebounceTimer = setTimeout(() => {
-        this.regenerateInstanceDiagram();
+        this.regenerateDiagrams();
       }, 500);
     },
     async twinPaneMounted(): Promise<void> {
@@ -1608,40 +1668,77 @@ group SetEntryData(source src: Patient, target entry)
     },
 
     fhirpathExpressionChangedEvent() {
-      if (this.diagramDebounceTimer) clearTimeout(this.diagramDebounceTimer);
-      this.diagramDebounceTimer = setTimeout(() => {
-        this.regenerateInstanceDiagram();
-      }, 500);
+      this.scheduleDiagramRegen();
     },
 
-    regenerateInstanceDiagram() {
+    regenerateDiagrams() {
       const fmlText = this.getFhirpathExpression();
       if (!fmlText) {
         this.parsedFmlMap = undefined;
         this.instanceSvg = undefined;
         this.diagramSvg = undefined;
+        this.diagramIsStale = false;
+        this.diagramError = undefined;
         return;
       }
       const result = parseFML(fmlText);
-      if ('resourceType' in result && result.resourceType === 'OperationOutcome') {
+      if (isFmlParseError(result)) {
         this.parsedFmlMap = undefined;
-        this.instanceSvg = undefined;
-        this.diagramSvg = undefined;
+        this.pauseDiagramPreview();
         return;
       }
-      const fmlMap = result as FmlStructureMap;
-      this.parsedFmlMap = fmlMap;
+      this.parsedFmlMap = result;
+      if (validateFmlModel(result).some(diagnostic => diagnostic.severity === 'error')) {
+        this.pauseDiagramPreview();
+        return;
+      }
       try {
-        const fhirMap = fmlToStructureMapForDiagram(fmlMap);
+        for (const structure of result.structures) {
+          const canonical = (structure.canonical ?? structure.url).split("|")[0];
+          structure.resolvedTypeName = this.userModelLookup?.resolveCanonical(canonical)
+            ?? this.userModelLookup?.resolveCanonical(structure.url);
+        }
         const lookup = this.composedTypeLookup();
         const lookupForVersion = (v?: FhirVersion) => this.lookupForVersion(v);
-        this.instanceSvg = generateInstanceDiagramSvg(fhirMap, lookup, true, lookupForVersion);
-        this.diagramSvg = generateStructureMapDiagramSvg(fhirMap, lookup, lookupForVersion);
+        const instanceSvg = generateFmlInstanceDiagramSvg(result, lookup, true, lookupForVersion);
+        const diagramSvg = generateStructureMapDiagramSvg(fmlToStructureMap(result), lookup, lookupForVersion);
+        this.instanceSvg = instanceSvg;
+        this.diagramSvg = diagramSvg;
+        this.diagramIsStale = false;
+        this.diagramError = undefined;
+        this.prepareDiagramNavigation();
       } catch (e) {
-        console.error('Failed to generate instance diagram:', e);
-        this.instanceSvg = undefined;
-        this.diagramSvg = undefined;
+        console.error('Failed to generate FML diagrams:', e);
+        this.pauseDiagramPreview();
       }
+    },
+
+    pauseDiagramPreview() {
+      this.diagramError = 'FML is invalid. Fix the errors to render the diagram.';
+      this.diagramIsStale = this.instanceSvg !== undefined || this.diagramSvg !== undefined;
+    },
+
+    prepareDiagramNavigation() {
+      this.$nextTick(() => {
+        const previews = [this.$refs.diagramPreview, this.$refs.instancePreview] as Array<Element | undefined>;
+        for (const preview of previews) {
+          if (!preview) continue;
+          preview.querySelectorAll('[data-pos-start][data-pos-end]').forEach(element => {
+            if (!element.hasAttribute('tabindex')) element.setAttribute('tabindex', '0');
+            if (!element.hasAttribute('role')) element.setAttribute('role', 'button');
+            if (!element.hasAttribute('aria-label')) element.setAttribute('aria-label', 'Go to FML source');
+          });
+        }
+      });
+    },
+
+    handleDiagramKeydown(event: KeyboardEvent) {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      const target = event.target as Element | null;
+      const element = target?.closest('[data-pos-start][data-pos-end]');
+      if (!element) return;
+      event.preventDefault();
+      this.activateDiagramElement(element, event.currentTarget as Element);
     },
 
     handleDiagramClick(event: MouseEvent) {
@@ -1649,13 +1746,16 @@ group SetEntryData(source src: Patient, target entry)
       // on a row/connector flashes its peers (rows + connectors with the
       // same connectionId). Then continue walking for the FML position
       // attribute, which jumps the editor to the corresponding source.
-      const connIds = findConnectionIdsForClick(event.target);
+      this.activateDiagramElement(event.target, event.currentTarget as Element);
+    },
+
+    activateDiagramElement(target: EventTarget | null, container: Element) {
+      const connIds = findConnectionIdsForClick(target);
       if (connIds.length > 0) {
-        const container = event.currentTarget as Element;
         highlightDiagramConnection(container, connIds);
       }
-      let el = event.target as Element | null;
-      while (el) {
+      let el = target as Element | null;
+      while (el && container.contains(el)) {
         const start = el.getAttribute?.('data-pos-start');
         const end = el.getAttribute?.('data-pos-end');
         if (start != null && end != null) {
@@ -1924,34 +2024,7 @@ group SetEntryData(source src: Patient, target entry)
       this.trace = [];
       this.variables = [];
 
-      // Always parse and store the FML map
-      const fmlText = this.getFhirpathExpression();
-      if (fmlText) {
-        const result = parseFML(fmlText);
-        if ('resourceType' in result && result.resourceType === 'OperationOutcome') {
-          // Store the error but continue execution
-          console.log('FML parsing failed:', result);
-          this.parsedFmlMap = undefined;
-          this.instanceSvg = undefined;
-          this.diagramSvg = undefined;
-        } else {
-          // Store the successfully parsed map
-          const fmlMap = result as FmlStructureMap;
-          console.log('FML map parsed successfully:', JSON.parse(JSON.stringify(fmlMap)));
-          this.parsedFmlMap = fmlMap;
-          try {
-            const fhirMap = fmlToStructureMapForDiagram(fmlMap);
-            const lookup = this.composedTypeLookup();
-            const lookupForVersion = (v?: FhirVersion) => this.lookupForVersion(v);
-            this.instanceSvg = generateInstanceDiagramSvg(fhirMap, lookup, true, lookupForVersion);
-            this.diagramSvg = generateStructureMapDiagramSvg(fhirMap, lookup, lookupForVersion);
-          } catch (e) {
-            console.error('Failed to generate instance diagram:', e);
-            this.instanceSvg = undefined;
-            this.diagramSvg = undefined;
-          }
-        }
-      }
+      this.regenerateDiagrams();
 
       let resourceJson = this.getResourceJson();
       let model = this.getModel();
@@ -2065,6 +2138,8 @@ group SetEntryData(source src: Patient, target entry)
       parsedFmlMap: undefined,
       instanceSvg: undefined,
       diagramSvg: undefined,
+      diagramIsStale: false,
+      diagramError: undefined,
       diagramDebounceTimer: undefined,
       userModelLookup: undefined,
 

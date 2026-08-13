@@ -3,7 +3,7 @@
   "displayName": "FHIR Mapping Language Tools",
   "description": "Developer tools for working with the FHIR Mapping Language (FML), including syntax highlighting, validation, and a trace replay debugger",
   "icon": "ext-images/icon.ico",
-  "version": "0.14.0",
+  "version": "0.15.0",
   "publisher": "fhirpath-lab",
   "readme": "README.md",
   "author": {
@@ -80,6 +80,10 @@
                   "type": "string"
                 },
                 "description": "JSON file glob patterns used to resolve StructureDefinition and ConceptMap dependencies."
+              },
+              "fhirVersion": {
+                "type": "string",
+                "description": "Default FHIR version used to resolve map StructureDefinition and ConceptMap dependencies, for example 4.0.1 or 5.0.0."
               },
               "serverUrl": {
                 "type": "string",

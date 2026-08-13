@@ -23,6 +23,8 @@ export interface UserModelLookup {
     /** Lookup function that only sees the user's models — never blends with the
      *  built-in dictionaries. */
     lookup: TypeLookup;
+    /** Resolve a StructureDefinition canonical to its diagram lookup key. */
+    resolveCanonical: (canonical: string) => string | undefined;
     /** TypeNames the user supplied (sorted, deterministic). Useful for debugging
      *  and for surfacing to the UI. */
     typeNames: string[];
@@ -90,19 +92,46 @@ export function buildUserModelLookup(
         return undefined;
     }
 
-    const byTypeName = new Map<string, TypeModel>();
+    const definitionsByUrl = new Map(
+        (bundle.entry ?? [])
+            .map(entry => entry.resource)
+            .filter((resource): resource is StructureDefinition => resource?.resourceType === "StructureDefinition")
+            .map(definition => [definition.url.split("|")[0], definition])
+    );
+    const byLookupKey = new Map<string, TypeModel>();
+    const localTypeNames = new Set<string>();
+    const canonicalKeys = new Set<string>();
     for (const e of result.entries) {
+        const canonical = e.url.split("#")[0].split("|")[0];
+        const definition = definitionsByUrl.get(canonical);
+        const isLogicalModel = definition?.kind === "logical";
+        const model: TypeModel = isLogicalModel
+            ? {
+                ...e.model,
+                CanonicalUrl: e.url,
+                ...(definition?.version ? { Version: definition.version } : {}),
+            }
+            : e.model;
         // First-write-wins, mirroring the static dictionary's collision behaviour.
-        if (!byTypeName.has(e.model.TypeName)) {
-            byTypeName.set(e.model.TypeName, e.model);
+        if (!byLookupKey.has(model.TypeName)) {
+            byLookupKey.set(model.TypeName, model);
+            localTypeNames.add(model.TypeName);
+        }
+        if (isLogicalModel && !e.synthetic && !byLookupKey.has(canonical)) {
+            byLookupKey.set(canonical, model);
+            canonicalKeys.add(canonical);
         }
     }
 
-    if (byTypeName.size === 0) return undefined;
+    if (localTypeNames.size === 0) return undefined;
 
-    const typeNames = Array.from(byTypeName.keys()).sort();
+    const typeNames = Array.from(localTypeNames).sort();
     return {
-        lookup: (typeName: string) => byTypeName.get(typeName),
+        lookup: (typeName: string) => byLookupKey.get(typeName),
+        resolveCanonical: (canonical: string) => {
+            const normalized = canonical.split("|")[0];
+            return canonicalKeys.has(normalized) ? normalized : undefined;
+        },
         typeNames,
     };
 }

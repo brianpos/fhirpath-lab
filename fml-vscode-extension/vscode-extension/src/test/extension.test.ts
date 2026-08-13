@@ -10,8 +10,10 @@ import {
 import * as vscode from "vscode";
 import {formatStatusSummary} from "../FmlLanguageServerStatus";
 import {
+    implementationGuideOutputProjectDirectory,
     parseSushiConfiguration,
     resolveProfileBaseTypes,
+    resolveOutputWorkspaceConfiguration,
     resolveWorkspaceModelResourcePaths,
     resolveWorkspaceProfileTypes,
 } from "../SushiConfigWatcher";
@@ -144,6 +146,45 @@ dependencies:
             assert.equal(resolutions[canonical].typeName, canonical);
         } finally {
             await fs.rm(packageDirectory, {recursive: true, force: true});
+        }
+    });
+
+    test("builds logical models from marked IG output without sushi-config", async () => {
+        const workspaceDirectory = await fs.mkdtemp(path.join(os.tmpdir(), "fml-output-only-"));
+        const outputDirectory = path.join(workspaceDirectory, "output");
+        const markerPath = path.join(outputDirectory, "ImplementationGuide-example.json");
+        const canonical = "http://example.org/StructureDefinition/ClaimRow";
+        try {
+            await fs.mkdir(outputDirectory);
+            await fs.writeFile(markerPath, JSON.stringify({
+                resourceType: "ImplementationGuide",
+                url: "http://example.org/ImplementationGuide/example",
+            }));
+            await fs.writeFile(path.join(outputDirectory, "StructureDefinition-ClaimRow.json"), JSON.stringify({
+                resourceType: "StructureDefinition",
+                url: canonical,
+                name: "ClaimRow",
+                type: canonical,
+                kind: "logical",
+                derivation: "specialization",
+                differential: {element: [
+                    {id: "ClaimRow", path: "ClaimRow"},
+                    {id: "ClaimRow.claimNumber", path: "ClaimRow.claimNumber", type: [{code: "string"}]},
+                ]},
+            }));
+
+            assert.equal(implementationGuideOutputProjectDirectory(markerPath), workspaceDirectory);
+            assert.equal(
+                implementationGuideOutputProjectDirectory(
+                    path.join(outputDirectory, "StructureDefinition-ClaimRow.json"),
+                ),
+                undefined,
+            );
+            const configuration = await resolveOutputWorkspaceConfiguration(workspaceDirectory);
+            assert.equal(configuration.profileBaseTypes[canonical], canonical);
+            assert.ok(configuration.customTypeModels[canonical]);
+        } finally {
+            await fs.rm(workspaceDirectory, {recursive: true, force: true});
         }
     });
 

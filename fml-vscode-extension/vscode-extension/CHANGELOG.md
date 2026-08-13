@@ -1,5 +1,10 @@
 # Change Log
 
+# 0.15.0 (2026-08-13)
+* Add support for resolving profiles and logical models from IG build output, including a sibling sushi-config.yaml or output/ImplementationGuide*.json to identify an IG output directory
+* Update the FML SVG rendering in the fhirpath-lab FML test page (using the same code as the vscode extension)
+* register `fhirVersion` in the launch.json configuration
+
 ## 0.14.0 (2026-08-12)
 * Highlight the nearest FML token for located `OperationOutcome` issues, including imported maps, and list all issues in the Debug Console
 

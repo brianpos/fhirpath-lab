@@ -1,5 +1,8 @@
 // Tests for the runtime user-model lookup helper used by the FML diagram views.
 import { describe, expect, test } from "@jest/globals";
+import { parseFML } from "../helpers/fml_parser";
+import type { FmlStructureMap } from "../helpers/fml_models";
+import { extractFmlStructureMapDiagram } from "../helpers/structuremap_diagram_instance";
 import { buildUserModelLookup, composeLookups } from "../helpers/user_models";
 
 const logicalSd = {
@@ -69,6 +72,52 @@ describe("buildUserModelLookup", () => {
         const synth = r!.lookup("mylogical_section");
         expect(synth).toBeDefined();
         expect(synth!.Elements.map((e) => e.ElementName)).toEqual(["label"]);
+    });
+
+    test("resolves logical models by canonical URL and retains their metadata", () => {
+        const canonical = "http://example.org/StructureDefinition/claim-row-model";
+        const model = {
+            ...logicalSd,
+            url: canonical,
+            version: "2.1.0",
+            name: "ClaimRowModel",
+            type: "ClaimRow",
+            differential: {
+                element: [
+                    { id: "ClaimRow", path: "ClaimRow" },
+                    { id: "ClaimRow.value", path: "ClaimRow.value", min: 0, max: "1", type: [{ code: "string" }] },
+                ],
+            },
+        };
+
+        const result = buildUserModelLookup(JSON.stringify(model));
+        expect(result?.resolveCanonical(`${canonical}|2.1.0`)).toBe(canonical);
+        expect(result?.lookup(canonical)).toBe(result?.lookup("ClaimRow"));
+        expect(result?.lookup(canonical)).toMatchObject({
+            TypeName: "ClaimRow",
+            CanonicalUrl: canonical,
+            Version: "2.1.0",
+        });
+
+        const fml = parseFML([
+            `uses "${canonical}|2.1.0" alias ClaimSource as source`,
+            `uses "${canonical}|2.1.0" alias ClaimTarget as target`,
+            "group Main(source src : ClaimSource, target tgt : ClaimTarget) {",
+            "  src.value -> tgt.value;",
+            "}",
+        ].join("\n")) as FmlStructureMap;
+        for (const structure of fml.structures) {
+            structure.resolvedTypeName = result?.resolveCanonical(structure.canonical ?? structure.url);
+        }
+        const diagram = extractFmlStructureMapDiagram(fml, result?.lookup, true);
+        expect(diagram.groups[0].sourceTypes[0]).toMatchObject({
+            typeName: canonical,
+            logicalModelTypeName: "ClaimRow",
+            logicalModelCanonical: canonical,
+            logicalModelVersion: "2.1.0",
+            isLogicalModel: true,
+        });
+        expect(diagram.groups[0].sourceTypes[0].properties[0].unknownElement).toBeFalsy();
     });
 
     test("processes a Bundle of StructureDefinitions", () => {
