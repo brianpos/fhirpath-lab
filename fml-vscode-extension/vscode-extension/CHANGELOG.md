@@ -1,5 +1,9 @@
 # Change Log
 
+# 0.16.0 (2026-08-18)
+* Fix issue in vscode extension where target variables are not available in dependent rules or following targets in the same rule. These variables are now recognized and passed through as other contexts for fhirpath validation.
+
+
 # 0.15.0 (2026-08-13)
 * Add support for resolving profiles and logical models from IG build output, including a sibling sushi-config.yaml or output/ImplementationGuide*.json to identify an IG output directory
 * Update the FML SVG rendering in the fhirpath-lab FML test page (using the same code as the vscode extension)

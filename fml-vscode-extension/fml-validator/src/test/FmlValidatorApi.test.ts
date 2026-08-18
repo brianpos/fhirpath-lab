@@ -523,6 +523,25 @@ group Main(source src : Patient, target tgt : Patient) {
     assert.ok(result.diagnostics.every(diagnostic => !diagnostic.message.includes("Property 'x'")));
 });
 
+test("passes target aliases to following targets and dependent rule FHIRPath expressions", async () => {
+    const result = await new FmlValidatorApi().validate({sourceText: `
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias Patient as source
+group FhirPathSourceAsVar(source src : Patient, target tgt : Patient) {
+    src -> ('http://example.org/') as extBase, tgt.name as n2, n2.text = (%extBase) then {
+        src.name as sn -> tgt.name as tn, tn.text = (%extBase) then {
+            sn.family as f -> tn.family = f, tn.extension as e, e.url = (%e.url & 'family'), e.value = f "r1";
+            sn.suffix as f -> tn.suffix = f, tn.extension as e, e.url = (extBase & 'suffix'), e.value = f "r1";
+        } "r2";
+    } "r3";
+}
+`});
+
+    assert.ok(
+        result.diagnostics.every(diagnostic => !diagnostic.message.startsWith("FHIRPath:")),
+        result.diagnostics.map(diagnostic => diagnostic.message).join("; "),
+    );
+});
+
 test("scopes reused FML aliases to the rule that declares them", async () => {
     const result = await new FmlValidatorApi().validate({sourceText: `
 uses 'http://hl7.org/fhir/4.3/StructureDefinition/ConceptMap' alias ConceptMap as source
