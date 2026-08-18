@@ -161,7 +161,10 @@ function acceptsParameterCount(signature: TransformSignature, count: number): bo
 
 function isCompatibleType(expected: TransformParameterType, actual: TransformParameter): boolean {
   if (actual.type === 'identifier') return true;
-  if (expected === 'expression') return actual.type === 'expression';
+  if (expected === 'expression') {
+    return actual.type === 'expression'
+      || actual.type === 'literal';
+  }
   if (actual.type === 'expression') return false;
   if (expected === 'any') return true;
   if (expected === 'canonical' || expected === 'string') return actual.literalType === 'string';

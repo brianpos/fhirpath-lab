@@ -137,13 +137,28 @@ export class FmlFhirPathValidator {
                     : undefined;
                 let expressionDescriptor: VariableDescriptor | undefined;
                 if (transform?.type === "evaluate") {
-                    const contextVariable = transform.parameters.find(parameter => parameter.type === "identifier");
+                    const contextParameter = transform.isInvocation
+                        ? transform.parameters.find(parameter => parameter.name === "context")
+                            ?? transform.parameters[0]
+                        : undefined;
+                    const contextVariable = contextParameter?.type === "identifier"
+                        ? contextParameter
+                        : undefined;
                     const contextDescriptor = contextVariable
                         ? ruleVariables.get(String(contextVariable.value).replace(/^%/, ""))
                         : undefined;
-                    for (const parameter of transform.parameters.filter(candidate => candidate.type === "expression")) {
+                    const expressionParameters = transform.isInvocation
+                        ? [transform.parameters.find(parameter => parameter.name === "expression")
+                            ?? transform.parameters[1]].filter(parameter => {
+                                return parameter?.type === "expression"
+                                    || parameter?.type === "literal";
+                            })
+                        : transform.parameters.filter(parameter => parameter.type === "expression");
+                    for (const parameter of expressionParameters) {
                         const validation = this.analyzeExpression({
-                            text: String(parameter.value),
+                            text: parameter.type === "literal" && parameter.position
+                                ? sourceText.slice(parameter.position.startIndex, parameter.position.endIndex)
+                                : String(parameter.value),
                             position: parameter.position,
                             contextType: contextDescriptor?.typeNames[0],
                             fhirVersion: contextDescriptor?.fhirVersion ?? groupVersion,

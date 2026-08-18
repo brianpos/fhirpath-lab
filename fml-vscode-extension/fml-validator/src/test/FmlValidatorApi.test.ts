@@ -490,12 +490,77 @@ group example(source src, target tgt) {
     assert.deepEqual(result.diagnostics.filter(diagnostic => diagnostic.severity !== "information"), []);
 });
 
-test("requires the evaluate expression parameter to be a FHIRPath expression", async () => {
-    const result = await validateTransform("evaluate(src, 'item.count()')");
+test("accepts a FHIRPath string literal as the evaluate expression", async () => {
+    const sourceText = `
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias Patient as source
+group Main(source src : Patient, target tgt : Patient) {
+    src.name as v -> tgt.name as tn then {
+        v -> tn.text = evaluate(v, 'given.join(\\' \\')');
+    };
+}
+`;
+    const api = new FmlValidatorApi();
+    const result = await api.validate({sourceText});
+    const target = result.status === "success"
+        ? result.value.model.groups[0].rules[0].dependent?.rules[0].targets[0]
+        : undefined;
 
-    assert.equal(result.status, "failure");
-    assert.ok(result.diagnostics.some(diagnostic => {
-        return diagnostic.message.includes("parameter 'expression' must be expression");
+    assert.equal(result.status, "success", result.diagnostics.map(diagnostic => diagnostic.message).join("; "));
+    assert.equal(target?.transform?.parameters[1].type, "literal");
+    assert.equal(target?.transform?.parameters[1].value, "given.join(\\' \\')");
+    assert.deepEqual(api.getPropertyUsages({sourceText})
+        .find(usage => usage.transformName === "evaluate")?.transformResultTypeNames, ["string"]);
+});
+
+test("accepts every FHIRPath literal family as an evaluate expression", async () => {
+    const sourceText = `
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias Patient as source
+group Main(source src : Patient, target tgt : Patient) {
+    src -> evaluate(src, {}) as nullValue,
+        evaluate(src, true) as booleanValue,
+        evaluate(src, 12) as integerValue,
+        evaluate(src, 12L) as longValue,
+        evaluate(src, 1.5) as decimalValue,
+        evaluate(src, @2024-12) as dateValue,
+        evaluate(src, @2024-12-01T12:00:00Z) as dateTimeValue,
+        evaluate(src, @T12:00:00) as timeValue,
+        evaluate(src, 5 'mg') as quantityValue,
+        evaluate(src, 'text') as stringValue;
+}
+`;
+    const api = new FmlValidatorApi();
+    const result = await api.validate({sourceText});
+    const usages = api.getPropertyUsages({sourceText});
+    const resultTypes = Object.fromEntries(usages
+        .filter(usage => usage.transformName === "evaluate" && usage.variableName)
+        .map(usage => [usage.variableName!, usage.transformResultTypeNames]));
+
+    assert.equal(result.status, "success", result.diagnostics.map(diagnostic => diagnostic.message).join("; "));
+    assert.deepEqual(resultTypes, {
+        booleanValue: ["boolean"],
+        integerValue: ["integer"],
+        longValue: ["integer"],
+        decimalValue: ["decimal"],
+        dateValue: ["date"],
+        dateTimeValue: ["dateTime"],
+        timeValue: ["time"],
+        quantityValue: ["quantity"],
+        stringValue: ["string"],
+    });
+});
+
+test("accepts an evaluate date literal for a date target", async () => {
+    const result = await new FmlValidatorApi().validate({sourceText: `
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias Patient as source
+group Main(source src : Patient, target tgt : Patient) {
+    src -> tgt.birthDate = evaluate(src, @2024-12);
+}
+`});
+
+    assert.equal(result.status, "success", result.diagnostics.map(diagnostic => diagnostic.message).join("; "));
+    assert.ok(result.diagnostics.every(diagnostic => {
+        return !diagnostic.message.includes("parameter 'expression'")
+            && !diagnostic.message.includes("not compatible");
     }));
 });
 

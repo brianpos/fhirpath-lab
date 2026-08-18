@@ -1,5 +1,8 @@
 # Change Log
 
+# 0.18.0 (2026-08-18)
+* evaluate transform now accepts a FHIRPath-compatible literal as the expression argument, validated exactly as authored without decoding a string literal's contents into an expression.
+
 # 0.17.0 (2026-08-18)
 * Add support for fhirpath expression in FML tooltips
 

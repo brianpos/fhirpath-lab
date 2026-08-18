@@ -40,7 +40,7 @@ The extension starts the bundled FML language server and synchronizes open docum
 
 Errors and warnings appear as editor squiggles and clickable entries in the **Problems** panel.
 
-Unknown transforms produce warnings so custom or newer functions remain usable. Invalid standard transform parameters are errors, and FHIRPath expression parameters are only permitted for `evaluate`.
+Unknown transforms produce warnings so custom or newer functions remain usable. Invalid standard transform parameters are errors, and FHIRPath expression parameters are only permitted for `evaluate`. The `evaluate` expression argument may also be any FHIRPath-compatible literal, validated exactly as authored without decoding a string literal's contents into an expression.
 
 At startup, workspace FML files are indexed by canonical URL. Cross-file group navigation follows each source map's wildcard-capable `imports` declarations. Missing group references are reported as warnings.
 
