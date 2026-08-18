@@ -23,6 +23,7 @@ import {isFmlParseError, parseFML} from "../../../helpers/fml_parser";
 import {FmlValidatorEngine} from "./FmlValidatorEngine";
 import {FmlGroupSymbolCollector} from "./FmlGroupSymbolCollector";
 import {FmlPropertyUsageCollector} from "./FmlPropertyUsageCollector";
+import {FmlFhirPathValidator} from "./FmlFhirPathValidator";
 import {Stage1FmlValidatorEngine} from "./Stage1FmlValidatorEngine";
 import {applyFmlModelConfiguration} from "./FmlModelConfiguration";
 import {FmlTransformValidator, resolveDefaultGroups, resolveGroupSignatures} from "./FmlTransformValidator";
@@ -33,6 +34,7 @@ export class FmlValidatorApi {
         private readonly groupSymbolCollector = new FmlGroupSymbolCollector(),
         private readonly propertyUsageCollector = new FmlPropertyUsageCollector(),
         private readonly transformValidator = new FmlTransformValidator(),
+        private readonly fhirPathValidator = new FmlFhirPathValidator(),
     ) {
     }
 
@@ -58,11 +60,28 @@ export class FmlValidatorApi {
     }
 
     public getPropertyUsages(source: FmlSource): FmlPropertyUsage[] {
-        return this.propertyUsageCollector.collect(source);
+        return this.getPropertyAnalysis(source).usages;
     }
 
     public getPropertyAnalysis(source: FmlSource): FmlPropertyAnalysis {
-        return this.propertyUsageCollector.collectAnalysis(source);
+        const parsed = parseFML(source.sourceText);
+        if (isFmlParseError(parsed)) {
+            return {usages: [], groupInputs: [], groupInvocations: [], variableReferences: []};
+        }
+        applyFmlModelConfiguration(parsed, source);
+        const analysis = this.propertyUsageCollector.analyzeModel(
+            parsed,
+            source.sourceText,
+            source.customTypeModels,
+        );
+        this.fhirPathValidator.analyze(
+            parsed,
+            source.sourceText,
+            analysis,
+            source.sourceName,
+            source.customTypeModels,
+        );
+        return analysis;
     }
 
     public getDefaultGroups(source: FmlSource): FmlDefaultGroup[] {

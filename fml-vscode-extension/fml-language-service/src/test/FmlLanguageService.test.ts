@@ -867,6 +867,53 @@ test("uuid transform hovers report primitive string", () => {
     assert.match(hover.markdown, /Result type: `string`/);
 });
 
+test("FHIRPath transform hovers report inferred result types", () => {
+    const text = [
+        "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias Patient as target",
+        "group example(source src : Patient, target tgt : Patient) {",
+        "    src -> ('http://example.org/') as extBase, tgt.id = (extBase & 'suffix');",
+        "}",
+    ].join("\n");
+    for (const offset of [text.indexOf("http://example.org/"), text.indexOf("&")]) {
+        const hover = service.getHover({
+            uri: "file:///fhirpath-transform-hover.fml",
+            text,
+            position: positionAt(text, offset),
+        });
+
+        assert.ok(hover);
+        assert.match(hover.markdown, /Transform.*`evaluate`/);
+        assert.match(hover.markdown, /Result type: `string`/);
+    }
+});
+
+test("FHIRPath target aliases show typed context, declaration, and reference hovers", () => {
+    const text = [
+        "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias Patient as source",
+        "group example(source src : Patient, target tgt : Patient) {",
+        "    src -> ('http://example.org/') as extBase, tgt.name as n2, n2.text = (%extBase);",
+        "}",
+    ].join("\n");
+    const hoverAt = (offset: number) => service.getHover({
+        uri: "file:///fhirpath-target-alias-hover.fml",
+        text,
+        position: positionAt(text, offset),
+    });
+
+    const sourceContext = hoverAt(text.indexOf("    src ->") + "    ".length + 1);
+    const declaration = hoverAt(text.indexOf("extBase") + 1);
+    const reference = hoverAt(text.indexOf("%extBase") + 2);
+
+    assert.ok(sourceContext);
+    assert.match(sourceContext.markdown, /Source context.*`src`/);
+    assert.match(sourceContext.markdown, /Type: `Patient` \(R5\)/);
+    for (const hover of [declaration, reference]) {
+        assert.ok(hover);
+        assert.match(hover.markdown, /Variable.*`extBase`/);
+        assert.match(hover.markdown, /Type: `string`/);
+    }
+});
+
 test("every repeated target property occurrence receives a hover", () => {
     const text = [
         "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Observation' alias Observation as source",

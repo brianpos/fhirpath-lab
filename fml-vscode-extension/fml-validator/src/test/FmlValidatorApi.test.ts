@@ -536,10 +536,27 @@ group FhirPathSourceAsVar(source src : Patient, target tgt : Patient) {
 }
 `});
 
+    assert.equal(result.status, "success", result.diagnostics.map(diagnostic => diagnostic.message).join("; "));
     assert.ok(
         result.diagnostics.every(diagnostic => !diagnostic.message.startsWith("FHIRPath:")),
         result.diagnostics.map(diagnostic => diagnostic.message).join("; "),
     );
+});
+
+test("rejects FHIRPath expression results incompatible with the target element type", async () => {
+    const result = await new FmlValidatorApi().validate({sourceText: `
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias Patient as source
+group Main(source src : Patient, target tgt : Patient) {
+    src -> ('http://example.org/') as extBase, tgt.active = (extBase & 'suffix');
+}
+`});
+
+    assert.equal(result.status, "failure");
+    const diagnostic = result.diagnostics.find(candidate => {
+        return candidate.message.includes("Transform 'evaluate' result type 'string'");
+    });
+    assert.match(diagnostic?.message ?? "", /Patient\.active/);
+    assert.match(diagnostic?.message ?? "", /allowed: boolean/);
 });
 
 test("scopes reused FML aliases to the rule that declares them", async () => {
@@ -1760,6 +1777,8 @@ test("retains narrowed alias types for FHIRPath in dependent groups", async () =
         "}",
         "group Child(source src : Observation, target tgt) {",
         "    src.effective : dateTime as edt -> tgt.effective = (edt.toString().substring(0, 10));",
+        "}",
+        "group StringToDateTime(source src : string, target tgt : dateTime) <<type+>> {",
         "}",
     ].join("\n");
     const api = new FmlValidatorApi();

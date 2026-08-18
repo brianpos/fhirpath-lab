@@ -33,13 +33,14 @@ export class CoreFmlParser {
             source.sourceText,
             source.customTypeModels,
         );
-        diagnostics.push(...this.fhirPathValidator.validate(
+        const fhirPathAnalysis = this.fhirPathValidator.analyze(
             parsed,
             source.sourceText,
             propertyAnalysis,
             source.sourceName,
             source.customTypeModels,
-        ));
+        );
+        diagnostics.push(...fhirPathAnalysis.diagnostics);
         diagnostics.push(...this.transformValidator.validate(
             parsed,
             propertyAnalysis,
@@ -47,6 +48,7 @@ export class CoreFmlParser {
             source.customTypeModels,
             source.importedDefaultGroups,
             source.importedGroupSignatures,
+            fhirPathAnalysis.transformResultTypes,
         ));
         for (const usage of propertyAnalysis.usages) {
             if (!usage.unknownElement || !usage.rootTypeName) continue;

@@ -25,6 +25,7 @@ import type {
     FmlPropertyUsage,
     FmlSourceSpan,
 } from "./contracts";
+import type {FmlFhirPathResultType} from "./FmlFhirPathValidator";
 
 interface VariableDescriptor {
     typeNames: string[];
@@ -41,6 +42,7 @@ interface AssignmentCheck {
     targetUsage: FmlPropertyUsage;
     /** Set when the value reaches the target through a rule variable instead of a source property. */
     sourceVariableName?: string;
+    sourceTransformName?: string;
     line: number;
     column: number;
     offendingText: string;
@@ -205,6 +207,7 @@ export class FmlTransformValidator {
         customTypeModels: Record<string, TypeModel> = {},
         importedDefaultGroups: FmlDefaultGroup[] = [],
         importedGroupSignatures: FmlGroupSignature[] = [],
+        fhirPathResultTypes: ReadonlyMap<Transform, FmlFhirPathResultType> = new Map(),
     ): FmlDiagnostic[] {
         const diagnostics: FmlDiagnostic[] = [];
         const defaultGroups = [
@@ -240,6 +243,7 @@ export class FmlTransformValidator {
                 sourceName,
                 customTypeModels,
                 diagnostics,
+                fhirPathResultTypes,
             );
         }
         return diagnostics;
@@ -256,6 +260,7 @@ export class FmlTransformValidator {
         sourceName: string | undefined,
         customTypeModels: Record<string, TypeModel>,
         diagnostics: FmlDiagnostic[],
+        fhirPathResultTypes: ReadonlyMap<Transform, FmlFhirPathResultType>,
     ): void {
         for (const rule of rules) {
             const variables = new Map(inheritedVariables);
@@ -313,17 +318,21 @@ export class FmlTransformValidator {
                         sourceName,
                         customTypeModels,
                         diagnostics,
+                        fhirPathResultTypes,
                     )
                     : [];
                 if (target.variable) {
                     const variableName = this.normalizeVariableName(target.variable);
+                    const fhirPathResult = target.transform
+                        ? fhirPathResultTypes.get(target.transform)
+                        : undefined;
                     variables.set(
                         variableName,
                         resultTypes.length > 0
                             ? {
                                 typeNames: resultTypes,
-                                isCollection: false,
-                                fhirVersion: usage?.fhirVersion,
+                                isCollection: fhirPathResult?.isCollection ?? false,
+                                fhirVersion: fhirPathResult?.fhirVersion ?? usage?.fhirVersion,
                             }
                             : this.descriptorFromUsage(usage)
                                 ?? {typeNames: [], isCollection: false},
@@ -354,6 +363,7 @@ export class FmlTransformValidator {
                 sourceName,
                 customTypeModels,
                 diagnostics,
+                fhirPathResultTypes,
             );
         }
     }
@@ -524,6 +534,11 @@ export class FmlTransformValidator {
             });
         };
         if (incompatible.length > 0) {
+            if (check.sourceTransformName) {
+                report(`Transform '${check.sourceTransformName}' result type '${incompatible.join(" | ")}' `
+                    + `is not compatible with target property '${targetPath}' (allowed: ${targetTypes.join(" | ")}).`);
+                return;
+            }
             report(`${prefix} from ${sourceLabel} with type '${incompatible.join(" | ")}' `
                 + `is not compatible with target property '${targetPath}' (allowed: ${targetTypes.join(" | ")}).`);
             return;
@@ -531,6 +546,13 @@ export class FmlTransformValidator {
 
         if (ambiguous.length > 0) {
             const {sourceType, targetType, groups} = ambiguous[0];
+            if (check.sourceTransformName) {
+                report(`Transform '${check.sourceTransformName}' result from '${sourceType}' to target property `
+                    + `'${targetPath}' matches multiple default mapping groups for '${sourceType}' -> '${targetType}': `
+                    + `${groups.map(group => `'${group.groupName}'`).join(", ")}. `
+                    + `Only one default group may apply to a type conversion.`);
+                return;
+            }
             report(`${prefix} from ${sourceLabel} to target property '${targetPath}' matches multiple default `
                 + `mapping groups for '${sourceType}' -> '${targetType}': `
                 + `${groups.map(group => `'${group.groupName}'`).join(", ")}. `
@@ -694,6 +716,7 @@ export class FmlTransformValidator {
         sourceName: string | undefined,
         customTypeModels: Record<string, TypeModel>,
         diagnostics: FmlDiagnostic[],
+        fhirPathResultTypes: ReadonlyMap<Transform, FmlFhirPathResultType>,
     ): string[] {
         const missingVariables = new Set<string>();
         for (const parameter of transform.parameters.filter(candidate => candidate.type === "identifier")) {
@@ -708,7 +731,12 @@ export class FmlTransformValidator {
             ));
         }
 
-        const resultTypes = this.resolveResultTypes(transform, variables, missingVariables);
+        const resultTypes = this.resolveResultTypes(
+            transform,
+            variables,
+            missingVariables,
+            fhirPathResultTypes,
+        );
         const allowedTypes = this.usageTypeNames(targetUsage);
         if (!targetUsage || targetUsage.unknownElement || resultTypes.length === 0 || allowedTypes.length === 0) {
             return resultTypes;
@@ -729,6 +757,27 @@ export class FmlTransformValidator {
                     line: variablePosition?.startLine ?? 1,
                     column: variablePosition?.startColumn ?? 0,
                     offendingText: variableName,
+                },
+                defaultGroups,
+                sourceName,
+                customTypeModels,
+                diagnostics,
+            );
+            return resultTypes;
+        }
+
+        if (transform.type === "evaluate") {
+            const result = fhirPathResultTypes.get(transform);
+            const resultPosition = this.resultPosition(transform) ?? transform.position;
+            this.validateAssignment(
+                {
+                    sourceTypes: resultTypes,
+                    sourceFhirVersion: result?.fhirVersion,
+                    targetUsage,
+                    sourceTransformName: transform.type,
+                    line: resultPosition?.startLine ?? 1,
+                    column: resultPosition?.startColumn ?? 0,
+                    offendingText: String(transform.parameters[0]?.value ?? transform.type),
                 },
                 defaultGroups,
                 sourceName,
@@ -943,7 +992,11 @@ export class FmlTransformValidator {
         transform: Transform,
         variables: Map<string, VariableDescriptor>,
         missingVariables: Set<string>,
+        fhirPathResultTypes: ReadonlyMap<Transform, FmlFhirPathResultType>,
     ): string[] {
+        if (transform.type === "evaluate") {
+            return fhirPathResultTypes.get(transform)?.typeNames ?? [];
+        }
         const sourceParameter = transform.parameters.find(parameter => parameter.name === "source")
             ?? transform.parameters[0];
         if (transform.type === "copy" || (transform.type === "cast" && transform.parameters.length === 1)) {
