@@ -60,16 +60,22 @@ export interface FmlTraceSourceRange {
     length: number;
 }
 
+/** `enter`/`exit` bracket a group or rule frame; `instant` events belong to the enclosing frame. */
+export type FmlTracePhase = "enter" | "exit" | "instant";
+
 export interface FmlTraceEvent {
     index: number;
     name: string;
     category: string;
     message: string;
     depth: number;
+    phase: FmlTracePhase;
     range?: FmlTraceSourceRange;
     variables: FmlTraceVariable[];
     state?: FmlTypedValue;
     exception?: string;
+    /** Diagnostic filename of the map owning `range`; absent means the primary map. */
+    mapFileName?: string;
     source?: FmlDebugMapSource;
 }
 

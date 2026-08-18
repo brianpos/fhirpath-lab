@@ -3,12 +3,14 @@ import {FmlDebugTrace, FmlTraceEvent, FmlTypedValue} from "./contracts";
 export class FmlTraceReplay {
     private cursor = 0;
     private readonly breakpointLines = new Set<number>();
+    private readonly frameStacks: number[][];
 
     public constructor(
         public readonly trace: FmlDebugTrace,
         private readonly sourceText: string,
     ) {
         this.cursor = trace.trace.length > 0 ? 0 : -1;
+        this.frameStacks = buildFrameStacks(trace.trace);
     }
 
     public get currentIndex(): number {
@@ -52,13 +54,29 @@ export class FmlTraceReplay {
     }
 
     public next(): FmlTraceEvent | undefined {
-        const depth = this.currentEvent?.depth ?? 0;
-        return this.moveForward(event => event.depth <= depth, true);
+        const depth = this.stackDepth(this.cursor);
+        return this.moveForward((_event, index) => this.stackDepth(index) <= depth, true);
     }
 
     public stepOut(): FmlTraceEvent | undefined {
-        const depth = this.currentEvent?.depth ?? 0;
-        return this.moveForward(event => event.depth < depth, true);
+        const depth = this.stackDepth(this.cursor);
+        return this.moveForward((_event, index) => this.stackDepth(index) < depth, true);
+    }
+
+    /** Trace indices of the frames enclosing an event, outermost first, with the event itself last. */
+    public getStack(index: number): number[] {
+        return this.frameStacks[index] ?? [];
+    }
+
+    /** Frames for the current event, innermost first, as the debug adapter reports them. */
+    public getStackEvents(): FmlTraceEvent[] {
+        if (!this.currentEvent) {
+            return [];
+        }
+        return this.getStack(this.cursor)
+            .map(index => this.trace.trace[index])
+            .filter((event): event is FmlTraceEvent => event !== undefined)
+            .reverse();
     }
 
     public continue(): FmlTraceEvent | undefined {
@@ -117,13 +135,17 @@ export class FmlTraceReplay {
         return event.source?.text ?? this.sourceText;
     }
 
+    private stackDepth(index: number): number {
+        return this.getStack(index).length;
+    }
+
     private moveForward(
-        predicate: (event: FmlTraceEvent) => boolean,
+        predicate: (event: FmlTraceEvent, index: number) => boolean,
         terminateWhenNotFound = false,
     ): FmlTraceEvent | undefined {
         for (let index = this.cursor + 1; index < this.trace.trace.length; index++) {
             const event = this.trace.trace[index];
-            if (predicate(event)) {
+            if (predicate(event, index)) {
                 return this.moveTo(index);
             }
         }
@@ -136,4 +158,38 @@ export class FmlTraceReplay {
         this.cursor = index;
         return this.currentEvent;
     }
+}
+
+function buildFrameStacks(events: FmlTraceEvent[]): number[][] {
+    const phaseAware = events.some(event => event.phase === "enter" || event.phase === "exit");
+    return phaseAware ? stacksFromPhases(events) : stacksFromDepth(events);
+}
+
+function stacksFromPhases(events: FmlTraceEvent[]): number[][] {
+    const stacks: number[][] = [];
+    const open: number[] = [];
+    events.forEach((event, index) => {
+        if (event.phase === "exit") {
+            open.pop();
+        }
+        stacks[index] = [...open, index];
+        if (event.phase === "enter") {
+            open.push(index);
+        }
+    });
+    return stacks;
+}
+
+/** Fallback for engines that report indentation-derived depth without explicit phases. */
+function stacksFromDepth(events: FmlTraceEvent[]): number[][] {
+    const stacks: number[][] = [];
+    const open: number[] = [];
+    events.forEach((event, index) => {
+        while (open.length > 0 && events[open[open.length - 1]].depth >= event.depth) {
+            open.pop();
+        }
+        stacks[index] = [...open, index];
+        open.push(index);
+    });
+    return stacks;
 }

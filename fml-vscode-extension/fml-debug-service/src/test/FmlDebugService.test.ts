@@ -160,6 +160,59 @@ test("parses variable type and object value extensions", () => {
     });
 });
 
+function traceWithVariableValue(valueExtension: Record<string, unknown>) {
+    return {
+        resourceType: "Parameters",
+        parameter: [{
+            name: "trace",
+            part: [{
+                name: "debug",
+                valueString: "condition",
+                extension: [{
+                    url: variableUrl,
+                    extension: [
+                        {url: "name-INPUT", valueString: "condition"},
+                        {url: "type", valueString: "System.Boolean"},
+                        valueExtension,
+                    ],
+                }],
+            }],
+        }],
+    };
+}
+
+test("reads native FHIR value[x] from variable extensions", () => {
+    const trace = parseDebugTrace(traceWithVariableValue({url: "value", valueBoolean: true}), {});
+    const variable = trace.trace[0].variables[0];
+
+    assert.equal(variable.datatype, "System.Boolean");
+    assert.equal(variable.data?.value, true);
+});
+
+test("keeps primitive display text that is not valid JSON", () => {
+    const trace = parseDebugTrace(traceWithVariableValue({url: "value", valueString: "True"}), {});
+
+    assert.equal(trace.trace[0].variables[0].data?.value, "True");
+});
+
+test("does not coerce primitive text that happens to look like a JSON scalar", () => {
+    const trace = parseDebugTrace(traceWithVariableValue({url: "value", valueString: "123"}), {});
+
+    assert.equal(trace.trace[0].variables[0].data?.value, "123");
+});
+
+test("reads the json-value fallback extension for values without a native FHIR type", () => {
+    const trace = parseDebugTrace(traceWithVariableValue({
+        url: "http://fhir.forms-lab.com/StructureDefinition/json-value",
+        valueString: "{\"resourceType\":\"Patient\",\"id\":\"example\"}",
+    }), {});
+
+    assert.deepEqual(trace.trace[0].variables[0].data?.value, {
+        resourceType: "Patient",
+        id: "example",
+    });
+});
+
 test("uses engine-supplied type metadata when a typed envelope is returned", () => {
     const payload = structuredClone(responseFixture);
     const resultParameter = payload.parameter.find(parameter => parameter.name === "result");

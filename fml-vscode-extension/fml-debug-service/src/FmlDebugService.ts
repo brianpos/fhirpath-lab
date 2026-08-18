@@ -4,6 +4,7 @@ import {
     FmlDebugLaunchRequest,
     FmlDebugTrace,
     FmlTraceEvent,
+    FmlTracePhase,
     FmlTraceSourceRange,
     FmlTraceVariable,
     FmlTypedValue,
@@ -17,8 +18,11 @@ import {
 } from "./FmlVariablePathResolver";
 
 const CURSOR_EXTENSION = "http://fhirpath-lab.com/StructureDefinition/Cursor";
+const TRACE_DEPTH_EXTENSION = "http://fhirpath-lab.com/StructureDefinition/TraceDepth";
+const TRACE_PHASE_EXTENSION = "http://fhirpath-lab.com/StructureDefinition/TracePhase";
 const VARIABLE_EXTENSION = "http://fhirpath-lab.com/StructureDefinition/Variable";
 const JSON_VALUE_EXTENSION = "http://fhir.forms-lab.com/StructureDefinition/json-value";
+const VARIABLE_VALUE_EXTENSION = "value";
 const OPERATION_OUTCOME_FILE_EXTENSION =
     "http://hl7.org/fhir/StructureDefinition/operationoutcome-file";
 const OPERATION_OUTCOME_LINE_EXTENSION =
@@ -29,8 +33,10 @@ const OPERATION_OUTCOME_COLUMN_EXTENSION =
 interface FhirExtension {
     extension?: FhirExtension[];
     url?: string;
+    valueCode?: string;
     valueInteger?: number;
     valueString?: string;
+    [key: string]: unknown;
 }
 
 interface FhirParametersPart {
@@ -190,17 +196,21 @@ function parseTraceEvent(index: number, name: string, part: FhirParametersPart):
     const exception = category === "exception" || category === "error"
         ? message
         : undefined;
+    const mapFileName = findExtensionValue(part.extension, OPERATION_OUTCOME_FILE_EXTENSION);
 
     return {
         index,
         name,
         category,
         message,
-        depth: inferTraceDepth(message, category),
+        depth: findExtensionInteger(part.extension, TRACE_DEPTH_EXTENSION)
+            ?? inferTraceDepth(message, category),
+        phase: parseTracePhase(findExtensionCode(part.extension, TRACE_PHASE_EXTENSION)),
         range: parseCursor(findExtensionValue(part.extension, CURSOR_EXTENSION)),
         variables: parseVariables(part.extension),
         state,
         exception,
+        ...(mapFileName ? {mapFileName} : {}),
     };
 }
 
@@ -209,9 +219,7 @@ function parseVariables(extensions: FhirExtension[] | undefined): FmlTraceVariab
         .filter(extension => extension.url === VARIABLE_EXTENSION)
         .map(extension => {
             const nameExtension = extension.extension?.find(child => child.url?.startsWith("name-"));
-            const dataText = findExtensionValue(extension.extension, JSON_VALUE_EXTENSION)
-                ?? findExtensionValue(extension.extension, "value");
-            const dataValue = dataText !== undefined ? tryParseJsonValue(dataText) : undefined;
+            const dataValue = readVariableValue(extension.extension);
             const data = dataValue !== undefined ? parseFmlTypedValue(dataValue) : undefined;
             const datatype = findExtensionValue(extension.extension, "datatype")
                 ?? findExtensionValue(extension.extension, "type");
@@ -254,6 +262,79 @@ function readParameterValue(part: FhirParametersPart): JsonValue | undefined {
 
 function findExtensionValue(extensions: FhirExtension[] | undefined, url: string): string | undefined {
     return extensions?.find(extension => extension.url === url)?.valueString;
+}
+
+function findExtensionInteger(extensions: FhirExtension[] | undefined, url: string): number | undefined {
+    const value = extensions?.find(extension => extension.url === url)?.valueInteger;
+    return typeof value === "number" && Number.isInteger(value) && value >= 0 ? value : undefined;
+}
+
+function findExtensionCode(extensions: FhirExtension[] | undefined, url: string): string | undefined {
+    const extension = extensions?.find(candidate => candidate.url === url);
+    return extension?.valueCode ?? extension?.valueString;
+}
+
+/** Reads an extension carrying JSON text, keeping the raw text when it does not parse. */
+function findExtensionJson(
+    extensions: FhirExtension[] | undefined,
+    url: string,
+): JsonValue | undefined {
+    const text = findExtensionValue(extensions, url);
+    if (text === undefined) {
+        return undefined;
+    }
+    const parsed = tryParseJsonValue(text);
+    return parsed === undefined ? text : parsed;
+}
+
+/** Engines supply a variable value as JSON text, or as a native value[x] for supported types. */
+function readVariableValue(extensions: FhirExtension[] | undefined): JsonValue | undefined {
+    const parsed = findExtensionJson(extensions, JSON_VALUE_EXTENSION);
+    return parsed !== undefined
+        ? parsed
+        : findExtensionData(extensions, VARIABLE_VALUE_EXTENSION);
+}
+
+/** Reads an extension using its native FHIR value[x], falling back to JSON text in valueString. */
+function findExtensionData(
+    extensions: FhirExtension[] | undefined,
+    url: string,
+): JsonValue | undefined {
+    const extension = extensions?.find(candidate => candidate.url === url);
+    if (!extension) {
+        return undefined;
+    }
+    if (typeof extension.valueString === "string") {
+        return parseStructuredText(extension.valueString);
+    }
+    for (const [key, value] of Object.entries(extension)) {
+        if (key !== "url" && key.startsWith("value") && isJsonValue(value)) {
+            return value;
+        }
+    }
+    return undefined;
+}
+
+/**
+ * Only object and array text is decoded, so that engines serialising primitives as display text
+ * ("True", "123") keep their literal value instead of being coerced or discarded.
+ */
+function parseStructuredText(text: string): JsonValue {
+    const trimmed = text.trim();
+    return trimmed.startsWith("{") || trimmed.startsWith("[")
+        ? tryParseJsonValue(trimmed) ?? text
+        : text;
+}
+
+function parseTracePhase(value: string | undefined): FmlTracePhase {
+    switch (value?.trim().toLowerCase()) {
+        case "enter":
+            return "enter";
+        case "exit":
+            return "exit";
+        default:
+            return "instant";
+    }
 }
 
 function parseCursor(value: string | undefined): FmlTraceSourceRange | undefined {
