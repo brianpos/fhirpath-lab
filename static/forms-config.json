@@ -1,0 +1,16 @@
+{
+  "renderers": [
+    {
+      "tabName": "CSIRO SWM",
+      "title": "CSIRO Smart Forms Renderer",
+      "organization": "CSIRO Australian e-Health Research Centre",
+      "smartWebMessagingUrl": "/swm-csiro-smart-forms"
+    },
+    {
+      "tabName": "LHC-Forms SWM",
+      "title": "NLM LHC-Forms Renderer",
+      "organization": "U.S. National Library of Medicine",
+      "smartWebMessagingUrl": "/swm-lhforms-smart-forms"
+    }
+  ]
+}

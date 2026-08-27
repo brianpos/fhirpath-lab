@@ -1,7 +1,11 @@
 <template>
   <div class="swm-renderer-container">
     <div v-if="questionnaire" class="q-host">
-      <Renderer :questionnaire="questionnaire" :onFocus="onFocusChanged" />
+      <Renderer
+        :questionnaire="questionnaire"
+        :questionnaireResponse="questionnaireResponse || undefined"
+        :onFocus="onFocusChanged"
+      />
     </div>
     <div v-else class="no-questionnaire">
       <p>Waiting for questionnaire...</p>
@@ -373,6 +377,8 @@ export default class SwmCsiroSmartForms extends Vue implements SdcRendererMessag
     }
 
     this.questionnaire = message.payload.questionnaire as Questionnaire;
+    this.questionnaireResponse =
+      message.payload.questionnaireResponse as QuestionnaireResponse | undefined || null;
     
     // Merge context if provided (per protocol: sdc.displayQuestionnaire merges context)
     if (message.payload.context) {
