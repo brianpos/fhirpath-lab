@@ -58,6 +58,9 @@
               <v-btn @click="loadSampleXmlResource" color="primary" class="ml-2">
                 Load Sample Patient (XML)
               </v-btn>
+              <v-btn @click="loadSampleHl7v2Resource" color="primary" class="ml-2">
+                Load Sample HL7 v2
+              </v-btn>
               <v-btn @click="clearResource" color="secondary" class="ml-2">
                 Clear
               </v-btn>
@@ -71,6 +74,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { defaultHl7v2Message } from '@legacy/helpers/hl7v2_parser'
 import HeaderNavbar from '~/components/HeaderNavbar.vue'
 import ResourceEditor from '~/components/ResourceEditor.vue'
 
@@ -126,6 +130,10 @@ const loadSampleXmlResource = () => {
 </Patient>`
   
   resourceText.value = samplePatientXml
+}
+
+const loadSampleHl7v2Resource = () => {
+  resourceText.value = defaultHl7v2Message
 }
 
 const clearResource = () => {

@@ -1103,6 +1103,10 @@ class FhirPathExpressionVisitor {
                 return { ...input };
             case "defineVariable":
                 return { ...input };
+            case "simple": {
+                const t = this.provider.lookupByTypeName("System.String");
+                return { types: t ? [t] : [], isCollection: input.isCollection };
+            }
             case "type": {
                 // Reflection.type — returns SimpleTypeInfo / ClassInfo from the
                 // FHIRPath type-info schema. We don't model that here; emit empty.

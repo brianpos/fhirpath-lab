@@ -26,8 +26,9 @@ import { byTypeName as r4bByTypeName, byUrl as r4bByUrl } from "./models/generat
 import { byTypeName as r5ByTypeName, byUrl as r5ByUrl } from "./models/generated/r5/dictionary";
 import { byTypeName as r6ByTypeName, byUrl as r6ByUrl } from "./models/generated/r6/dictionary";
 import { fhirPrimitiveToSystemTypeName } from "./models/generated/system-types";
+import { hl7v2ByTypeName, hl7v2ByUrl } from "../models/hl7v2";
 
-export type FhirVersionKey = "r4" | "r4b" | "r5" | "r6";
+export type FhirVersionKey = "r4" | "r4b" | "r5" | "r6" | "hl7v2";
 
 interface VersionDicts {
     byTypeName: Record<string, TypeModel>;
@@ -39,6 +40,7 @@ const VERSION_DICTS: Readonly<Record<FhirVersionKey, VersionDicts>> = Object.fre
     r4b: { byTypeName: r4bByTypeName, byUrl: r4bByUrl },
     r5: { byTypeName: r5ByTypeName, byUrl: r5ByUrl },
     r6: { byTypeName: r6ByTypeName, byUrl: r6ByUrl },
+    hl7v2: { byTypeName: hl7v2ByTypeName, byUrl: hl7v2ByUrl },
 });
 
 /** Build a `ModelProvider` over the given FHIR version's generated dictionary. */

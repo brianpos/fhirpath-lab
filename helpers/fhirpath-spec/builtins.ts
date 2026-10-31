@@ -11,6 +11,10 @@ export const IMPLICIT_CONVERSIONS: Readonly<Record<string, ReadonlySet<string>>>
     Long: new Set(["Decimal", "Quantity"]),
     Decimal: new Set(["Quantity"]),
     Date: new Set(["DateTime"]),
+    Cell: new Set(["String"]),
+    Element: new Set(["String"]),
+    Component: new Set(["String"]),
+    SubComponent: new Set(["String"]),
 });
 
 /** True if a value of `from` can be used where `to` is expected (same type or
@@ -73,6 +77,11 @@ export const SAME_TYPE_COLLECTION_FUNCTIONS: ReadonlySet<string> = new Set([
     "sort",
     "repeat",
     "repeatAll",
+    "elements",
+    "components",
+    "subcomponents",
+    "group",
+    "groups",
 ]);
 
 /** Functions whose result is the same as the input type but a single value. */
