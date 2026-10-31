@@ -109,6 +109,75 @@ function loadFunctions(): { all: FunctionDef[]; byName: Record<string, FunctionD
         all.push(extension);
         byName.extension = extension;
     }
+
+    // Add HL7 v2 FHIRPath Appendix functions (https://hl7.org/fhirpath/en/appendices.html)
+    const hl7v2Functions: FunctionDef[] = [
+        {
+            category: "HL7 v2 Navigation",
+            functionName: "elements",
+            description: "Returns all elements (for all fields) or for the nominated 1-based field index on a Segment or Field.",
+            arguments: [{ name: "index", type: "Integer", optional: true }],
+            returnType: "Element",
+            errorOnMultipleInput: false,
+            inputTypes: ["Segment", "Field"],
+            typeMapping: [],
+        },
+        {
+            category: "HL7 v2 Navigation",
+            functionName: "components",
+            description: "Returns all components, or the component at the nominated 1-based index on an Element.",
+            arguments: [{ name: "index", type: "Integer", optional: true }],
+            returnType: "Component",
+            errorOnMultipleInput: false,
+            inputTypes: ["Element", "Cell"],
+            typeMapping: [],
+        },
+        {
+            category: "HL7 v2 Navigation",
+            functionName: "subcomponents",
+            description: "Returns all subcomponents, or the subcomponent at the nominated 1-based index on a Component.",
+            arguments: [{ name: "index", type: "Integer", optional: true }],
+            returnType: "SubComponent",
+            errorOnMultipleInput: false,
+            inputTypes: ["Component", "Cell"],
+            typeMapping: [],
+        },
+        {
+            category: "HL7 v2 Navigation",
+            functionName: "simple",
+            description: "Returns either the text of the cell, if it exists, or the return value of simple() from the first component.",
+            arguments: [],
+            returnType: "String",
+            errorOnMultipleInput: false,
+            inputTypes: ["Cell", "Element", "Component", "SubComponent"],
+            typeMapping: [],
+        },
+        {
+            category: "HL7 v2 Navigation",
+            functionName: "group",
+            description: "Returns direct child groups (or those with the given name) of a Message or Group.",
+            arguments: [{ name: "name", type: "String", optional: true }],
+            returnType: "Group",
+            errorOnMultipleInput: false,
+            inputTypes: ["Message", "Group", "Base"],
+            typeMapping: [],
+        },
+        {
+            category: "HL7 v2 Navigation",
+            functionName: "groups",
+            description: "Returns all descendant groups (or those with the given name) of a Message or Group.",
+            arguments: [{ name: "name", type: "String", optional: true }],
+            returnType: "Group",
+            errorOnMultipleInput: false,
+            inputTypes: ["Message", "Group", "Base"],
+            typeMapping: [],
+        },
+    ];
+    for (const def of hl7v2Functions) {
+        all.push(def);
+        byName[def.functionName] = def;
+    }
+
     return { all: deepFreeze(all), byName: deepFreeze(byName) };
 }
 

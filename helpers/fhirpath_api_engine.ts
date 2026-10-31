@@ -15,7 +15,13 @@ import fhirpath, { AsyncOptions, Model } from "fhirpath";
 import fhirpath_r4_model from "fhirpath/fhir-context/r4";
 import fhirpath_r5_model from "fhirpath/fhir-context/r5";
 // Note: R6 is not yet available in fhirpath.js package
-import fhirpath_r6_model from "models/r6";
+import fhirpath_r6_model from "../models/r6";
+import {
+  fhirpath_hl7v2_model,
+  hl7v2UserInvocationTable,
+  attachHl7v2CellConvertedData,
+} from "../models/hl7v2";
+import { isHl7v2Content, parseHl7v2Message } from "./hl7v2_parser";
 import { IFhirPathEngineDetails } from "../types/fhirpath_test_engine";
 import { validateFhirpathExpression, type FhirVersionKey } from "./fhirpath_validator";
 import { convertParametersToNative } from "./fhir_parameters";
@@ -134,7 +140,8 @@ function fullPropertyName(node: ResourceNode): string | undefined {
 
   let result = node.parentResNode ? fullPropertyName(node.parentResNode) + '.' + propName : node.path ?? undefined;
   if (node.index !== undefined && node.index !== null) {
-    result += '[' + node.index + ']';
+    const displayIdx = (node.model?.version as string) === 'hl7v2' ? node.index + 1 : node.index;
+    result += '[' + displayIdx + ']';
   }
   return result;
 }
@@ -363,12 +370,15 @@ export { convertFhirPathJsToAst };
  */
 export async function evaluateExpressionUsingFhirpathJs(
   options: FhirPathEvaluationOptions,
-  fhirVersion: 'R4' | 'R5' | 'R6' = 'R4'
+  fhirVersion: 'R4' | 'R5' | 'R6' | 'hl7v2' = 'R4'
 ): Promise<FhirPathEvaluationResult> {
-  const model: Model = fhirVersion === 'R5' ? fhirpath_r5_model
+  const isHl7v2 = fhirVersion === 'hl7v2';
+  const model: Model = isHl7v2 ? fhirpath_hl7v2_model
+    : fhirVersion === 'R5' ? fhirpath_r5_model
     : fhirVersion === 'R6' ? fhirpath_r6_model // Use R5 as fallback for R6 until available
     : fhirpath_r4_model;
-  const versionLabel = fhirVersion === 'R5' ? '(r5)'
+  const versionLabel = isHl7v2 ? '(hl7v2)'
+    : fhirVersion === 'R5' ? '(r5)'
     : fhirVersion === 'R6' ? '(r6)'
     : '(r4b)';
   
@@ -388,11 +398,11 @@ export async function evaluateExpressionUsingFhirpathJs(
   if (options.expression) {
     try {
       const fhirVersionKey: FhirVersionKey =
-        fhirVersion === 'R5' ? 'r5' : fhirVersion === 'R6' ? 'r6' : 'r4';
+        isHl7v2 ? 'hl7v2' : fhirVersion === 'R5' ? 'r5' : fhirVersion === 'R6' ? 'r6' : 'r4';
       // Determine the starting resource type from the resourceJson if available;
       // contextExpression refines it further inside the validator.
-      let contextType: string | undefined;
-      if (options.resourceJson) {
+      let contextType: string | undefined = isHl7v2 ? 'Message' : undefined;
+      if (!isHl7v2 && options.resourceJson) {
         try {
           const parsed = JSON.parse(options.resourceJson);
           if (parsed && typeof parsed.resourceType === 'string') contextType = parsed.resourceType;
@@ -438,13 +448,17 @@ export async function evaluateExpressionUsingFhirpathJs(
     }
   }
 
-  // Parse the resource JSON
-  let fhirData = { resourceType: 'Patient' }; // some dummy data
+  // Parse the resource JSON / XML / HL7 v2 message
+  let fhirData: any = isHl7v2 ? { resourceType: 'Message', segment: [] } : { resourceType: 'Patient' }; // some dummy data
   let astJson: IJsonNode | undefined = undefined;
   if (options.resourceJson) {
     try {
-      // if this is XML content, we first need to convert it into json from the XML content
-      if (options.resourceJson.trim().startsWith('<')) {
+      if (isHl7v2 || isHl7v2Content(options.resourceJson)) {
+        const parsedHl7v2 = parseHl7v2Message(options.resourceJson);
+        fhirData = parsedHl7v2.message;
+        astJson = parsedHl7v2.ast;
+      } else if (options.resourceJson.trim().startsWith('<')) {
+        // if this is XML content, we first need to convert it into json from the XML content
         const data = parseXmlAndObject(options.resourceJson, model);
         if (data?.object?.resourceType) {
           fhirData = data.object;
@@ -470,22 +484,24 @@ export async function evaluateExpressionUsingFhirpathJs(
       return result;
     }
   } else {
-    astJson = parseJson(options.resourceJson + '', model);
+    astJson = isHl7v2 ? parseHl7v2Message('').ast : parseJson(options.resourceJson + '', model);
   }
 
   // Setup environment with variables
   var environment: Record<string, any> = { resource: fhirData, rootResource: fhirData };
-  for (let v of options.variables) {
-    let value = v[1].data;
-    if (value && (value.startsWith("[") || value.startsWith("{"))) {
-      // convert to an object
-      try {
-        value = JSON.parse(value);
-      } catch(e) {
-        console.log(e);
+  if (options.variables) {
+    for (let v of options.variables) {
+      let value = v[1].data;
+      if (value && (value.startsWith("[") || value.startsWith("{"))) {
+        // convert to an object
+        try {
+          value = JSON.parse(value);
+        } catch(e) {
+          console.log(e);
+        }
       }
+      environment[v[0]] = value;
     }
-    environment[v[0]] = value;
   }
 
   let contextNodes: ResourceNode[] = [];
@@ -502,13 +518,50 @@ export async function evaluateExpressionUsingFhirpathJs(
     return x;
   };
 
+  // Helper to apply HL7 v2 1-based indexing and Cell string conversion inside fhirpath.js debugger hook
+  const createHl7v2NodeInterceptor = () => {
+    const lastResultByNode = new Map<any, any[]>();
+    return (node: any, expressionResult: any) => {
+      if (!isHl7v2 || !Array.isArray(expressionResult)) return;
+      for (const item of expressionResult) {
+        attachHl7v2CellConvertedData(item);
+      }
+      if (
+        node?.type === 'IndexerExpression' &&
+        Array.isArray(node.children) &&
+        node.children.length >= 2
+      ) {
+        const coll = lastResultByNode.get(node.children[0]);
+        const idxArr = lastResultByNode.get(node.children[1]);
+        if (Array.isArray(coll) && Array.isArray(idxArr) && idxArr.length === 1) {
+          const rawVal = idxArr[0]?.data ?? idxArr[0];
+          const rawIdx = typeof rawVal === 'number' ? rawVal : parseInt(String(rawVal), 10);
+          if (!Number.isNaN(rawIdx)) {
+            expressionResult.length = 0;
+            if (rawIdx >= 1 && rawIdx <= coll.length) {
+              expressionResult.push(attachHl7v2CellConvertedData(coll[rawIdx - 1]));
+            }
+          }
+        }
+      }
+      lastResultByNode.set(node, expressionResult.slice());
+    };
+  };
+
   // Evaluate context expression or use default
   if (options.contextExpression) {
     try {
-      let optionsContext: AsyncOptions = {
+      const interceptContextNode = createHl7v2NodeInterceptor();
+      let optionsContext: any = {
         traceFn: contextTraceOutputFunction,
         async: true,
-        terminologyUrl: options.terminologyServer
+        terminologyUrl: options.terminologyServer,
+        userInvocationTable: isHl7v2 ? hl7v2UserInvocationTable : undefined,
+        debugger: isHl7v2
+          ? (_ctx: any, _focus: any, expressionResult: any, node: any) => {
+              interceptContextNode(node, expressionResult);
+            }
+          : undefined,
       };
       let data = fhirpath.evaluate(fhirData, "select(" + options.contextExpression + ").trace('fhirpath-lab-context')", environment, model, optionsContext);
       if (data instanceof Promise) {
@@ -608,12 +661,14 @@ export async function evaluateExpressionUsingFhirpathJs(
       };
 
       let completedTracing = false;
+      const interceptEvalNode = createHl7v2NodeInterceptor();
       let evaluationOptions: any = {
         traceFn: tracefunction,
         async: true,
         terminologyUrl: options.terminologyServer,
-        userInvocationTable,
+        userInvocationTable: isHl7v2 ? hl7v2UserInvocationTable : userInvocationTable,
         debugger: (ctx: any, focus: any, expressionResult: any, node: any) => {
+          interceptEvalNode(node, expressionResult);
           if (completedTracing) 
             return;
           if (node.type === 'Functn') {
@@ -907,9 +962,12 @@ export async function evaluateFhirPathExpression(
   
   if (engineInfo.isLocal) {
     // Use local fhirpath.js engine
-    const fhirVersion = selectedEngine.fhirVersion.toLowerCase() === 'r5' ? 'R5' : 
-    selectedEngine.fhirVersion.toLowerCase() === 'r6' ? 'R6' : 'R4';
-    return await evaluateExpressionUsingFhirpathJs(options, fhirVersion as 'R4' | 'R5' | 'R6');
+    const rawVer = selectedEngine.fhirVersion.toLowerCase();
+    const fhirVersion: 'R4' | 'R5' | 'R6' | 'hl7v2' =
+      rawVer === 'hl7v2' ? 'hl7v2' :
+      rawVer === 'r5' ? 'R5' :
+      rawVer === 'r6' ? 'R6' : 'R4';
+    return await evaluateExpressionUsingFhirpathJs(options, fhirVersion);
   } else {
     // Use RESTful engine
     if (!engineInfo.url) {
