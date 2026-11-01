@@ -41,6 +41,8 @@
     "vue3-src",
     ".nuxt",
     "dist",
+    "**/dist/**",
+    "**/out/**",
     "test"
   ]
 }

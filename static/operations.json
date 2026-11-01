@@ -1,0 +1,555 @@
+{
+  "categories": [
+    {
+      "name": "Equality",
+      "sectionNumber": "6.1",
+      "operations": [
+        {
+          "operationName": "=",
+          "description": "Returns `true` if the left collection is equal to the right collection. For single items, they must be of the same type (or implicitly convertible). For primitives: String comparison is based on Unicode values, Integer values must be exactly equal, Decimal values must be equal (trailing zeroes ignored), Boolean values must be the same, Date/DateTime/Time must be exactly the same (respecting timezone offset). For Quantity, values are compared after conversion to a common commensurable unit (any commensurable target unit may be chosen); time-valued quantities convert to the least granular unit (without changing code system), and year/month calendar units are not equal to UCUM 'a'/'mo' (result is empty). For complex types, all child properties must be equal recursively. For collections with multiple items, each item must be equal and comparison is order dependent. Returns `false` if collections have different number of items.",
+          "leftArgument": "Any",
+          "rightArgument": "Any",
+          "returnType": "Boolean",
+          "typeMapping": [
+            "String-String",
+            "Integer-Integer",
+            "Decimal-Decimal",
+            "Integer-Decimal",
+            "Decimal-Integer",
+            "Boolean-Boolean",
+            "Date-Date",
+            "DateTime-DateTime",
+            "Time-Time",
+            "Quantity-Quantity",
+            "Complex-Complex"
+          ],
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": false,
+          "sectionNumber": "6.1.1"
+        },
+        {
+          "operationName": "~",
+          "description": "Returns `true` if the collections are equivalent. Similar to equals but with different semantics: String comparison ignores case and locale and normalizes whitespace (without collapsing sequences), Decimal comparison uses precision of least precise operand, Date/DateTime/Time comparison returns `false` (not empty) for different precisions. For Quantity, values are converted to the least granular unit before comparison and rounded to the precision of the least precise operand; calendar units and UCUM definite-duration units are equivalent (year ~ 'a', month ~ 'mo'). For collections with multiple items, comparison is not order dependent.",
+          "leftArgument": "Any",
+          "rightArgument": "Any",
+          "returnType": "Boolean",
+          "typeMapping": [
+            "String-String",
+            "Integer-Integer",
+            "Decimal-Decimal",
+            "Integer-Decimal",
+            "Decimal-Integer",
+            "Boolean-Boolean",
+            "Date-Date",
+            "DateTime-DateTime",
+            "Time-Time",
+            "Quantity-Quantity",
+            "Complex-Complex"
+          ],
+          "emptyInputResult": "true",
+          "errorOnMultipleInput": false,
+          "sectionNumber": "6.1.2"
+        },
+        {
+          "operationName": "!=",
+          "description": "The converse of the equals operator, returning `true` if equal returns `false`; `false` if equal returns `true`; and empty (`{ }`) if equal returns empty. Equivalent to `(A = B).not()`.",
+          "leftArgument": "Any",
+          "rightArgument": "Any",
+          "returnType": "Boolean",
+          "typeMapping": [
+            "String-String",
+            "Integer-Integer",
+            "Decimal-Decimal",
+            "Integer-Decimal",
+            "Decimal-Integer",
+            "Boolean-Boolean",
+            "Date-Date",
+            "DateTime-DateTime",
+            "Time-Time",
+            "Quantity-Quantity",
+            "Complex-Complex"
+          ],
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": false,
+          "sectionNumber": "6.1.3"
+        },
+        {
+          "operationName": "!~",
+          "description": "The converse of the equivalent operator, returning `true` if equivalent returns `false` and `false` if equivalent returns `true`. Equivalent to `(A ~ B).not()`.",
+          "leftArgument": "Any",
+          "rightArgument": "Any",
+          "returnType": "Boolean",
+          "typeMapping": [
+            "String-String",
+            "Integer-Integer",
+            "Decimal-Decimal",
+            "Integer-Decimal",
+            "Decimal-Integer",
+            "Boolean-Boolean",
+            "Date-Date",
+            "DateTime-DateTime",
+            "Time-Time",
+            "Quantity-Quantity",
+            "Complex-Complex"
+          ],
+          "emptyInputResult": "false",
+          "errorOnMultipleInput": false,
+          "sectionNumber": "6.1.4"
+        }
+      ]
+    },
+    {
+      "name": "Comparison",
+      "sectionNumber": "6.2",
+      "operations": [
+        {
+          "operationName": ">",
+          "description": "Returns `true` if the first operand is strictly greater than the second. Defined for strings, integers, longs, decimals, quantities, dates, datetimes and times. The operands must be of the same type, or convertible to the same type using implicit conversion (integer/long values implicitly convert to decimal when compared with decimals; trailing zeroes after the decimal point are ignored). Both arguments must be collections with single values. String ordering is strictly lexical based on Unicode values. For Quantity, units must be commensurable; values are converted to a common unit before comparison; non-commensurable or invalid units (including UCUM 'special' units like Cel/[degF] when an implementation does not handle them) result in empty (`{ }`); year/month calendar and UCUM units are not comparable without explicit conversion via toQuantity().",
+          "leftArgument": "String | Integer | Long | Decimal | Quantity | Date | DateTime | Time",
+          "rightArgument": "String | Integer | Long | Decimal | Quantity | Date | DateTime | Time",
+          "returnType": "Boolean",
+          "typeMapping": [
+            "String-String",
+            "Integer-Integer",
+            "Integer-Long",
+            "Long-Integer",
+            "Long-Long",
+            "Integer-Decimal",
+            "Decimal-Integer",
+            "Long-Decimal",
+            "Decimal-Long",
+            "Decimal-Decimal",
+            "Quantity-Quantity",
+            "Date-Date",
+            "DateTime-DateTime",
+            "Time-Time"
+          ],
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "sectionNumber": "6.2.1"
+        },
+        {
+          "operationName": "<",
+          "description": "Returns `true` if the first operand is strictly less than the second. Defined for strings, integers, longs, decimals, quantities, dates, datetimes and times. The operands must be of the same type, or convertible to the same type using implicit conversion (integer/long values implicitly convert to decimal when compared with decimals; trailing zeroes after the decimal point are ignored). Both arguments must be collections with single values. String ordering is strictly lexical based on Unicode values. For Quantity, units must be commensurable; values are converted to a common unit before comparison; non-commensurable or invalid units result in empty (`{ }`); year/month calendar and UCUM units are not comparable without explicit conversion via toQuantity().",
+          "leftArgument": "String | Integer | Long | Decimal | Quantity | Date | DateTime | Time",
+          "rightArgument": "String | Integer | Long | Decimal | Quantity | Date | DateTime | Time",
+          "returnType": "Boolean",
+          "typeMapping": [
+            "String-String",
+            "Integer-Integer",
+            "Integer-Long",
+            "Long-Integer",
+            "Long-Long",
+            "Integer-Decimal",
+            "Decimal-Integer",
+            "Long-Decimal",
+            "Decimal-Long",
+            "Decimal-Decimal",
+            "Quantity-Quantity",
+            "Date-Date",
+            "DateTime-DateTime",
+            "Time-Time"
+          ],
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "sectionNumber": "6.2.2"
+        },
+        {
+          "operationName": "<=",
+          "description": "Returns `true` if the first operand is less than or equal to the second. Defined for strings, integers, longs, decimals, quantities, dates, datetimes and times. The operands must be of the same type, or convertible to the same type using implicit conversion (integer/long values implicitly convert to decimal when compared with decimals; trailing zeroes after the decimal point are ignored). Both arguments must be collections with single values. String ordering is strictly lexical based on Unicode values. For Quantity, units must be commensurable; values are converted to a common unit before comparison; non-commensurable or invalid units result in empty (`{ }`); year/month calendar and UCUM units are not comparable without explicit conversion via toQuantity().",
+          "leftArgument": "String | Integer | Long | Decimal | Quantity | Date | DateTime | Time",
+          "rightArgument": "String | Integer | Long | Decimal | Quantity | Date | DateTime | Time",
+          "returnType": "Boolean",
+          "typeMapping": [
+            "String-String",
+            "Integer-Integer",
+            "Integer-Long",
+            "Long-Integer",
+            "Long-Long",
+            "Integer-Decimal",
+            "Decimal-Integer",
+            "Long-Decimal",
+            "Decimal-Long",
+            "Decimal-Decimal",
+            "Quantity-Quantity",
+            "Date-Date",
+            "DateTime-DateTime",
+            "Time-Time"
+          ],
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "sectionNumber": "6.2.3"
+        },
+        {
+          "operationName": ">=",
+          "description": "Returns `true` if the first operand is greater than or equal to the second. Defined for strings, integers, longs, decimals, quantities, dates, datetimes and times. The operands must be of the same type, or convertible to the same type using implicit conversion (integer/long values implicitly convert to decimal when compared with decimals; trailing zeroes after the decimal point are ignored). Both arguments must be collections with single values. String ordering is strictly lexical based on Unicode values. For Quantity, units must be commensurable; values are converted to a common unit before comparison; non-commensurable or invalid units result in empty (`{ }`); year/month calendar and UCUM units are not comparable without explicit conversion via toQuantity().",
+          "leftArgument": "String | Integer | Long | Decimal | Quantity | Date | DateTime | Time",
+          "rightArgument": "String | Integer | Long | Decimal | Quantity | Date | DateTime | Time",
+          "returnType": "Boolean",
+          "typeMapping": [
+            "String-String",
+            "Integer-Integer",
+            "Integer-Long",
+            "Long-Integer",
+            "Long-Long",
+            "Integer-Decimal",
+            "Decimal-Integer",
+            "Long-Decimal",
+            "Decimal-Long",
+            "Decimal-Decimal",
+            "Quantity-Quantity",
+            "Date-Date",
+            "DateTime-DateTime",
+            "Time-Time"
+          ],
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "sectionNumber": "6.2.4"
+        }
+      ]
+    },
+    {
+      "name": "Types",
+      "sectionNumber": "6.3",
+      "operations": [
+        {
+          "operationName": "is",
+          "description": "Returns `true` if the type of the left operand is the type specified in the second operand, or a subclass thereof. The left operand must be a collection with a single item and the second operand must be a type identifier. Returns `false` if the input value is not of the specified type.",
+          "leftArgument": "Any",
+          "rightArgument": "type specifier",
+          "returnType": "Boolean",
+          "typeMapping": [
+            "Any-TypeIdentifier"
+          ],
+          "emptyInputResult": "false",
+          "errorOnMultipleInput": true,
+          "sectionNumber": "6.3.1"
+        },
+        {
+          "operationName": "as",
+          "description": "Returns the value of the left operand if it is of the type specified in the second operand, or a subclass thereof. The left operand must be a collection with a single item and the second operand must be a type identifier. Returns empty collection if the value is not of the specified type.",
+          "leftArgument": "Any",
+          "rightArgument": "type specifier",
+          "returnType": "collection",
+          "typeMapping": [
+            "Any-TypeIdentifier"
+          ],
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "sectionNumber": "6.3.3"
+        }
+      ]
+    },
+    {
+      "name": "Collections",
+      "sectionNumber": "6.4",
+      "operations": [
+        {
+          "operationName": "|",
+          "description": "Merge the two collections into a single collection, eliminating any duplicate values (using equals `=` to determine equality). There is no expectation of order in the resulting collection.",
+          "leftArgument": "collection",
+          "rightArgument": "collection",
+          "returnType": "collection",
+          "typeMapping": [
+            "collection-collection"
+          ],
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": false,
+          "sectionNumber": "6.4.1"
+        },
+        {
+          "operationName": "in",
+          "description": "Returns `true` if the item in the left operand (single item collection) is in the right operand using equality semantics. If the left-hand side is empty, the result is empty; if the right-hand side is empty, the result is `false`. Throws an exception if the left operand has multiple items.",
+          "leftArgument": "Any",
+          "rightArgument": "collection",
+          "returnType": "Boolean",
+          "typeMapping": [
+            "Any-collection"
+          ],
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "sectionNumber": "6.4.2"
+        },
+        {
+          "operationName": "contains",
+          "description": "Returns `true` if the item in the right operand (single item collection) is in the left operand using equality semantics. If the right-hand side is empty, the result is empty; if the left-hand side is empty, the result is `false`. This is the converse operation of `in`.",
+          "leftArgument": "collection",
+          "rightArgument": "Any",
+          "returnType": "Boolean",
+          "typeMapping": [
+            "collection-Any"
+          ],
+          "emptyInputResult": "false",
+          "errorOnMultipleInput": false,
+          "sectionNumber": "6.4.3"
+        }
+      ]
+    },
+    {
+      "name": "Boolean Logic",
+      "sectionNumber": "6.5",
+      "operations": [
+        {
+          "operationName": "and",
+          "description": "Returns `true` if both operands evaluate to `true`, `false` if either operand evaluates to `false`, and empty collection otherwise. Uses three-valued logic to propagate empty operands.",
+          "leftArgument": "Boolean",
+          "rightArgument": "Boolean",
+          "returnType": "Boolean",
+          "typeMapping": [
+            "Boolean-Boolean"
+          ],
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": false,
+          "sectionNumber": "6.5.1"
+        },
+        {
+          "operationName": "or",
+          "description": "Returns `false` if both operands evaluate to `false`, `true` if either operand evaluates to `true`, and empty collection otherwise. Uses three-valued logic to propagate empty operands.",
+          "leftArgument": "Boolean",
+          "rightArgument": "Boolean",
+          "returnType": "Boolean",
+          "typeMapping": [
+            "Boolean-Boolean"
+          ],
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": false,
+          "sectionNumber": "6.5.2"
+        },
+        {
+          "operationName": "xor",
+          "description": "Returns `true` if exactly one of the operands evaluates to `true`, `false` if either both operands evaluate to `true` or both operands evaluate to `false`, and empty collection otherwise.",
+          "leftArgument": "Boolean",
+          "rightArgument": "Boolean",
+          "returnType": "Boolean",
+          "typeMapping": [
+            "Boolean-Boolean"
+          ],
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": false,
+          "sectionNumber": "6.5.4"
+        },
+        {
+          "operationName": "implies",
+          "description": "If the left operand evaluates to `true`, returns the boolean evaluation of the right operand. If the left operand evaluates to `false`, returns `true`. Otherwise, returns `true` if the right operand evaluates to `true`, and empty collection otherwise.",
+          "leftArgument": "Boolean",
+          "rightArgument": "Boolean",
+          "returnType": "Boolean",
+          "typeMapping": [
+            "Boolean-Boolean"
+          ],
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": false,
+          "sectionNumber": "6.5.5"
+        }
+      ]
+    },
+    {
+      "name": "Math",
+      "sectionNumber": "6.6",
+      "operations": [
+        {
+          "operationName": "*",
+          "description": "Multiplies both arguments. Each operand must be a single element. Both operands must be of the same type or compatible types (Integer, Long, Decimal, Quantity). For quantities, the resulting quantity will have an appropriate unit as determined by the UCUM specification. Mixing a numeric (Integer/Long/Decimal) with a Quantity is treated as multiplication by the unit '1' (returns a Quantity with the same unit as the Quantity argument). Multiplication involving calendar units (other than UCUM default unit '1') returns empty (`{ }`). Operations on UCUM 'special' units (e.g. Cel, [degF]) on non-ratio scales return empty (`{ }`).",
+          "leftArgument": "Integer | Long | Decimal | Quantity",
+          "rightArgument": "Integer | Long | Decimal | Quantity",
+          "returnType": "Integer | Long | Decimal | Quantity",
+          "typeMapping": [
+            "Integer-Integer",
+            "Long-Long",
+            "Integer-Long",
+            "Long-Integer",
+            "Decimal-Decimal",
+            "Integer-Decimal",
+            "Decimal-Integer",
+            "Long-Decimal",
+            "Decimal-Long",
+            "Quantity-Quantity",
+            "Integer-Quantity",
+            "Quantity-Integer",
+            "Long-Quantity",
+            "Quantity-Long",
+            "Decimal-Quantity",
+            "Quantity-Decimal"
+          ],
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "sectionNumber": "6.6.1"
+        },
+        {
+          "operationName": "/",
+          "description": "Divides the left operand by the right operand. The result is always Decimal (or Quantity for Quantity inputs), even if inputs are Integer/Long. For integer division, use the `div` operator. Each operand must be a single element. Division by zero results in empty collection. For quantities, the resulting quantity will have an appropriate unit as determined by the UCUM specification (e.g. km / h => km/h). Mixing a numeric (Integer/Long/Decimal) with a Quantity is treated as division by/of the unit '1'. Division involving calendar units (other than UCUM default unit '1') returns empty (`{ }`). Operations on UCUM 'special' units on non-ratio scales return empty (`{ }`).",
+          "leftArgument": "Integer | Long | Decimal | Quantity",
+          "rightArgument": "Integer | Long | Decimal | Quantity",
+          "returnType": "Decimal | Quantity",
+          "typeMapping": [
+            "Integer-Integer",
+            "Long-Long",
+            "Integer-Long",
+            "Long-Integer",
+            "Decimal-Decimal",
+            "Integer-Decimal",
+            "Decimal-Integer",
+            "Long-Decimal",
+            "Decimal-Long",
+            "Quantity-Quantity",
+            "Integer-Quantity",
+            "Quantity-Integer",
+            "Long-Quantity",
+            "Quantity-Long",
+            "Decimal-Quantity",
+            "Quantity-Decimal"
+          ],
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "sectionNumber": "6.6.2"
+        },
+        {
+          "operationName": "+",
+          "description": "For Integer, Long, Decimal, and Quantity, adds the operands. For strings, concatenates the right operand to the left operand. For Date/DateTime/Time, adds time-valued quantities respecting calendar semantics (see section 6.7). Each operand must be a single element. When adding quantities, units must be commensurable; values are converted to the most granular unit before addition. Non-commensurable or invalid units result in empty (`{ }`). Quantity addition with month or year calendar units (or UCUM 'mo'/'a') requires explicit conversion via toQuantity(); otherwise the result is empty. Operations on UCUM 'special' units on non-ratio scales return empty (`{ }`). Arithmetic overflow/underflow returns empty (`{ }`).",
+          "leftArgument": "Integer | Long | Decimal | Quantity | String | Date | DateTime | Time",
+          "rightArgument": "Integer | Long | Decimal | Quantity | String",
+          "returnType": "Integer | Long | Decimal | Quantity | String | Date | DateTime | Time",
+          "typeMapping": [
+            "Integer-Integer",
+            "Long-Long",
+            "Integer-Long",
+            "Long-Integer",
+            "Decimal-Decimal",
+            "Integer-Decimal",
+            "Decimal-Integer",
+            "Long-Decimal",
+            "Decimal-Long",
+            "Quantity-Quantity",
+            "String-String",
+            "Date-Quantity",
+            "DateTime-Quantity",
+            "Time-Quantity"
+          ],
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "sectionNumber": "6.6.3"
+        },
+        {
+          "operationName": "-",
+          "description": "Subtracts the right operand from the left operand. Supported for Integer, Long, Decimal, Quantity, and Date/DateTime/Time with time-valued quantities (see section 6.7). Each operand must be a single element. Quantity handling is the same as adding with a negated value (see `+`); units must be commensurable, values are converted to the most granular unit, and non-commensurable units, calendar year/month without explicit conversion, or UCUM 'special' units return empty (`{ }`). Arithmetic overflow/underflow returns empty (`{ }`).",
+          "leftArgument": "Integer | Long | Decimal | Quantity | Date | DateTime | Time",
+          "rightArgument": "Integer | Long | Decimal | Quantity",
+          "returnType": "Integer | Long | Decimal | Quantity | Date | DateTime | Time",
+          "typeMapping": [
+            "Integer-Integer",
+            "Long-Long",
+            "Integer-Long",
+            "Long-Integer",
+            "Decimal-Decimal",
+            "Integer-Decimal",
+            "Decimal-Integer",
+            "Long-Decimal",
+            "Decimal-Long",
+            "Quantity-Quantity",
+            "Date-Quantity",
+            "DateTime-Quantity",
+            "Time-Quantity"
+          ],
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "sectionNumber": "6.6.4"
+        },
+        {
+          "operationName": "div",
+          "description": "Performs truncated division of the left operand by the right operand, ignoring any remainder. Supported for Integer, Long, and Decimal. The resulting datatype is the same as the input datatype after any implicit conversions to make both operands the same type. Each operand must be a single element. Division by zero results in empty collection.",
+          "leftArgument": "Integer | Long | Decimal",
+          "rightArgument": "Integer | Long | Decimal",
+          "returnType": "Integer | Long | Decimal",
+          "typeMapping": [
+            "Integer-Integer",
+            "Long-Long",
+            "Integer-Long",
+            "Long-Integer",
+            "Decimal-Decimal",
+            "Integer-Decimal",
+            "Decimal-Integer",
+            "Long-Decimal",
+            "Decimal-Long"
+          ],
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "sectionNumber": "6.6.5"
+        },
+        {
+          "operationName": "mod",
+          "description": "Computes the remainder of the truncated division of its arguments. Supported for Integer, Long, and Decimal. The resulting datatype is the same as the input datatype after any implicit conversions to make both operands the same type. Each operand must be a single element. Modulo by zero results in empty collection.",
+          "leftArgument": "Integer | Long | Decimal",
+          "rightArgument": "Integer | Long | Decimal",
+          "returnType": "Integer | Long | Decimal",
+          "typeMapping": [
+            "Integer-Integer",
+            "Long-Long",
+            "Integer-Long",
+            "Long-Integer",
+            "Decimal-Decimal",
+            "Integer-Decimal",
+            "Decimal-Integer",
+            "Long-Decimal",
+            "Decimal-Long"
+          ],
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "sectionNumber": "6.6.6"
+        },
+        {
+          "operationName": "&",
+          "description": "String concatenation operator. Concatenates the strings, where an empty operand is taken to be the empty string. This differs from `+` on strings, which results in empty collection when one operand is empty.",
+          "leftArgument": "String",
+          "rightArgument": "String",
+          "returnType": "String",
+          "typeMapping": [
+            "String-String"
+          ],
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "sectionNumber": "6.6.7"
+        }
+      ]
+    },
+    {
+      "name": "Unary Operators",
+      "sectionNumber": "6.8",
+      "operations": [
+        {
+          "operationName": "+",
+          "description": "Unary positive operator. Returns the value of its operand unchanged. Supported for Integer, Long, Decimal, and Quantity. Using with any incompatible type will signal an error.",
+          "leftArgument": null,
+          "rightArgument": "Integer | Long | Decimal | Quantity",
+          "returnType": "Integer | Long | Decimal | Quantity",
+          "typeMapping": [
+            "Integer-Integer",
+            "Long-Long",
+            "Decimal-Decimal",
+            "Quantity-Quantity"
+          ],
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "sectionNumber": "6.8.1",
+          "status": "STU"
+        },
+        {
+          "operationName": "-",
+          "description": "Unary negation operator. Negates the numeric value. If the value is a Quantity, the unit remains unchanged. If the result of negating cannot be represented, the result is empty. Supported for Integer, Long, Decimal, and Quantity. Using with any incompatible type will signal an error.",
+          "leftArgument": null,
+          "rightArgument": "Integer | Long | Decimal | Quantity",
+          "returnType": "Integer | Long | Decimal | Quantity",
+          "typeMapping": [
+            "Integer-Integer",
+            "Long-Long",
+            "Decimal-Decimal",
+            "Quantity-Quantity"
+          ],
+          "emptyInputResult": "empty",
+          "errorOnMultipleInput": true,
+          "sectionNumber": "6.8.2",
+          "status": "STU"
+        }
+      ]
+    }
+  ]
+}

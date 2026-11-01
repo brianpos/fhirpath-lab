@@ -128,6 +128,9 @@ export interface PropertyEntry {
   additionalConnectionIds?: number[];
   /** Connections originating from variables referenced by FHIRPath expressions. */
   expressionConnectionIds?: number[];
+  /** Connections where source presence or filtering triggers target generation
+   *  without supplying the target value. */
+  triggerConnectionIds?: number[];
   /** The name of the top-level rule that produced this entry */
   ruleName?: string;
   /** When true, this target property creates a new node (create/cc/c or variable used as context) */
@@ -319,7 +322,10 @@ function extractDiagramInput(map: DiagramMapInput, typeLookup?: TypeLookup, show
       sourceTypes.push(cs);
     }
 
-    // Prune "no data flow" connections from source→target.
+    // Replace "no data flow" connections from source→target with trigger
+    // connections. A fixed value or self-contained transform does not consume
+    // the source value, but the matched source occurrence still controls
+    // whether target generation fires.
     // When a target has fixedValue or a self-contained transformFunction
     // (no valueId params), no data actually flows from the source — the
     // connector is misleading.  Remove the connectionId from those
@@ -340,12 +346,49 @@ function extractDiagramInput(map: DiagramMapInput, typeLookup?: TypeLookup, show
         for (const addl of p.additionalConnectionIds || []) srcBoxConnIds.add(addl);
       }
     }
-    // Remove connectionId from individual targets that don't consume source data
+    const sourceEntriesByConnectionId = new Map<number, PropertyEntry[]>();
+    for (const dt of sourceTypes) {
+      for (const p of dt.properties) {
+        for (const connectionId of [
+          ...(p.connectionId !== undefined ? [p.connectionId] : []),
+          ...(p.additionalConnectionIds ?? []),
+        ]) {
+          const entries = sourceEntriesByConnectionId.get(connectionId) ?? [];
+          entries.push(p);
+          sourceEntriesByConnectionId.set(connectionId, entries);
+        }
+      }
+    }
+    // Replace each source-rooted no-value target edge with an independently
+    // styled trigger edge. A distinct id preserves normal data-flow edges in
+    // multi-target rules where another target does consume the source value.
     for (const dt of targetTypes) {
       for (const p of dt.properties) {
-        if (p.role === "target" && p.connectionId !== undefined &&
-            srcBoxConnIds.has(p.connectionId) && p.noSourceData) {
-          p.connectionId = undefined;
+        if (p.role === "target" && p.noSourceData) {
+          const sourceConnectionIds = [
+            ...(p.connectionId !== undefined ? [p.connectionId] : []),
+            ...(p.additionalConnectionIds ?? []),
+          ].filter(connectionId => srcBoxConnIds.has(connectionId));
+          for (const sourceConnectionId of sourceConnectionIds) {
+            const triggerConnectionId = nextConnectionId++;
+            p.triggerConnectionIds ??= [];
+            p.triggerConnectionIds.push(triggerConnectionId);
+            for (const sourceEntry of sourceEntriesByConnectionId.get(sourceConnectionId) ?? []) {
+              sourceEntry.triggerConnectionIds ??= [];
+              sourceEntry.triggerConnectionIds.push(triggerConnectionId);
+            }
+          }
+          if (p.connectionId !== undefined && srcBoxConnIds.has(p.connectionId)) {
+            p.connectionId = undefined;
+          }
+          if (p.additionalConnectionIds) {
+            p.additionalConnectionIds = p.additionalConnectionIds.filter(
+              connectionId => !srcBoxConnIds.has(connectionId)
+            );
+            if (p.additionalConnectionIds.length === 0) {
+              p.additionalConnectionIds = undefined;
+            }
+          }
         }
       }
     }
@@ -447,31 +490,31 @@ function extractDiagramInput(map: DiagramMapInput, typeLookup?: TypeLookup, show
       // type — so deeper properties like `entry.resource.status` resolve
       // against the created type (e.g. Observation) rather than the
       // static element type at `entry.resource` (Resource).
-      const createBoundaries = new Map<string, string>();
+      const createBoundariesByRule = new Map<number | undefined, Map<string, string>>();
       for (const p of dt.properties) {
         const boundaryType = p.createdType ?? p.typeFilter;
         if (boundaryType && p.path && p.path !== ".") {
-          createBoundaries.set(p.constraintPath ?? p.path, boundaryType);
+          const boundaries = createBoundariesByRule.get(p.ruleId) ?? new Map<string, string>();
+          boundaries.set(p.constraintPath ?? p.path, boundaryType);
+          createBoundariesByRule.set(p.ruleId, boundaries);
         }
       }
       const resolutions = new Map<PropertyEntry, PathResolution>();
       const entriesByPath = new Map<string, PropertyEntry[]>();
       for (const p of dt.properties) {
         const resolutionPath = p.constraintPath ?? p.path;
-        const existing = entriesByPath.get(resolutionPath) ?? [];
+        const scopedPath = propertyOccurrencePath(p.ruleId, resolutionPath);
+        const existing = entriesByPath.get(scopedPath) ?? [];
         existing.push(p);
-        entriesByPath.set(resolutionPath, existing);
+        entriesByPath.set(scopedPath, existing);
         if (!rootKnown) {
           if (p.path && p.path !== ".") p.unknownElement = true;
           continue;
         }
         // Skip the root-context placeholder ("." path) which has no element.
         if (!p.path || p.path === ".") continue;
-        const propertyCreateBoundaries = p.createdType
-          ? new Map(createBoundaries).set(p.path, p.createdType)
-          : p.typeFilter
-            ? new Map(createBoundaries)
-            : createBoundaries;
+        const propertyCreateBoundaries = new Map(createBoundariesByRule.get(p.ruleId) ?? []);
+        if (p.createdType) propertyCreateBoundaries.set(resolutionPath, p.createdType);
         if (p.typeFilter) propertyCreateBoundaries.delete(resolutionPath);
         const resolved = resolvePathInModel(dt.typeName, resolutionPath, boxLookup, propertyCreateBoundaries);
         if (resolved) {
@@ -545,9 +588,10 @@ function extractDiagramInput(map: DiagramMapInput, typeLookup?: TypeLookup, show
       // A child path constrains every choice-valued ancestor. Intersect
       // constraints from sibling child paths because one runtime type must
       // support all children referenced beneath the same bound node.
-      for (const resolved of resolutions.values()) {
+      for (const [property, resolved] of resolutions) {
         for (const step of resolved.steps.slice(0, -1)) {
-          for (const ancestor of entriesByPath.get(step.internalPath) ?? []) {
+          const scopedPath = propertyOccurrencePath(property.ruleId, step.internalPath);
+          for (const ancestor of entriesByPath.get(scopedPath) ?? []) {
             ancestor.possibleTypeNames ??= step.possibleTypeNames;
             ancestor.compatibleTypeNames = intersectTypeNames(
               ancestor.compatibleTypeNames ?? ancestor.possibleTypeNames,
@@ -573,6 +617,10 @@ function extractDiagramInput(map: DiagramMapInput, typeLookup?: TypeLookup, show
   }
 
   return { groups };
+}
+
+function propertyOccurrencePath(ruleId: number | undefined, path: string): string {
+  return `${ruleId ?? "unscoped"}:${path}`;
 }
 
 /**
@@ -1809,6 +1857,7 @@ interface PropertyDisplay {
   /** Additional connectionIds merged from deduplicated entries */
   additionalConnectionIds?: number[];
   expressionConnectionIds?: number[];
+  triggerConnectionIds?: number[];
   /** The name of the top-level rule */
   ruleName?: string;
   /** When true, this target property creates a new node */
@@ -1857,7 +1906,8 @@ interface PropertyDisplay {
 function treeSortProperties(entries: PropertyEntry[]): PropertyEntry[] {
   if (entries.length <= 1) return entries;
 
-  const pathSet = new Set(entries.map(e => e.path));
+  const treePaths = entries.map(entry => entry.constraintPath ?? entry.path);
+  const pathSet = new Set(treePaths);
 
   function findParent(path: string): string {
     const parts = path.split(".");
@@ -1872,7 +1922,7 @@ function treeSortProperties(entries: PropertyEntry[]): PropertyEntry[] {
   const childrenOf = new Map<string, number[]>();
   childrenOf.set("", []);
   for (let i = 0; i < entries.length; i++) {
-    const parent = findParent(entries[i].path);
+    const parent = findParent(treePaths[i]);
     if (!childrenOf.has(parent)) {
       childrenOf.set(parent, []);
     }
@@ -1887,7 +1937,7 @@ function treeSortProperties(entries: PropertyEntry[]): PropertyEntry[] {
       if (visited.has(idx)) continue;
       visited.add(idx);
       result.push(entries[idx]);
-      walk(entries[idx].path);
+      walk(treePaths[idx]);
     }
   }
   walk("");
@@ -1942,6 +1992,12 @@ function deduplicateProperties(entries: PropertyEntry[]): PropertyEntry[] {
           existing.expressionConnectionIds.push(connectionId);
         }
       }
+      for (const connectionId of e.triggerConnectionIds ?? []) {
+        existing.triggerConnectionIds ??= [];
+        if (!existing.triggerConnectionIds.includes(connectionId)) {
+          existing.triggerConnectionIds.push(connectionId);
+        }
+      }
     } else {
       if (e.fmlPosition) {
         e.fmlPositions = [e.fmlPosition];
@@ -1990,6 +2046,7 @@ function buildPropertyDisplay(type: DiagramType): PropertyDisplay[] {
       connectionId: entry.connectionId,
       additionalConnectionIds: entry.additionalConnectionIds,
       expressionConnectionIds: entry.expressionConnectionIds,
+      triggerConnectionIds: entry.triggerConnectionIds,
       ruleName: entry.ruleName,
       isCreated: entry.isCreated,
       createdType: entry.createdType,
@@ -2408,6 +2465,9 @@ function renderInstanceDiagramSvg(data: StructureMapDiagram): string {
     `.sm-connector-line { stroke: ${COLORS.arrowColor}; stroke-width: 1.35; stroke-linecap: round; opacity: 0.95; }`
   );
   svg.push(
+    `.sm-trigger-connector-line { stroke: #b8bec6; stroke-width: 1.15; opacity: 0.9; }`
+  );
+  svg.push(
     `.sm-connector-port-source { fill: ${COLORS.typeBg}; stroke: ${COLORS.sourceHeaderText}; stroke-width: 1.6; }`
   );
   svg.push(
@@ -2492,6 +2552,7 @@ function renderInstanceDiagramSvg(data: StructureMapDiagram): string {
       ruleId?: number;
     }>();
     const expressionConnectionIds = new Set<number>();
+    const triggerConnectionIds = new Set<number>();
     const propertyMarkers: PropertyMarker[] = [];
     /** Top-level rule ids whose source side uses a property accessor
      *  (e.g. `src.authored as s`). Such rules get per-connectionId thin
@@ -2602,6 +2663,7 @@ function renderInstanceDiagramSvg(data: StructureMapDiagram): string {
           const rowConnectionIds = [
             ...(pd.connectionId !== undefined ? [pd.connectionId] : []),
             ...(pd.additionalConnectionIds ?? []),
+            ...(pd.triggerConnectionIds ?? []),
           ];
           if (rowConnectionIds.length > 0) {
             const centerY = propY - PROP_LINE_HEIGHT / 2 + 4;
@@ -2627,6 +2689,9 @@ function renderInstanceDiagramSvg(data: StructureMapDiagram): string {
             for (const rowConnectionId of rowConnectionIds) {
               if (pd.expressionConnectionIds?.includes(rowConnectionId)) {
                 expressionConnectionIds.add(rowConnectionId);
+              }
+              if (pd.triggerConnectionIds?.includes(rowConnectionId)) {
+                triggerConnectionIds.add(rowConnectionId);
               }
               if (!connectionAnchors.has(rowConnectionId)) {
                 connectionAnchors.set(rowConnectionId, {
@@ -2735,6 +2800,7 @@ function renderInstanceDiagramSvg(data: StructureMapDiagram): string {
             const rowConnIds: number[] = [];
             if (pd.connectionId !== undefined) rowConnIds.push(pd.connectionId);
             for (const addl of pd.additionalConnectionIds || []) rowConnIds.push(addl);
+            for (const trigger of pd.triggerConnectionIds || []) rowConnIds.push(trigger);
             const connAttr = rowConnIds.length > 0
               ? ` data-conn-id-list="${rowConnIds.join(",")}"`
               : "";
@@ -2789,6 +2855,7 @@ function renderInstanceDiagramSvg(data: StructureMapDiagram): string {
     for (const [connId, positions] of connectionAnchors) {
       if (t2tConnIds.has(connId)) continue;
       if (expressionConnectionIds.has(connId)) continue;
+      if (triggerConnectionIds.has(connId)) continue;
       if (positions.ruleId === undefined) {
         untaggedConnIds.push(connId);
         continue;
@@ -2814,6 +2881,24 @@ function renderInstanceDiagramSvg(data: StructureMapDiagram): string {
           svg.push(
             `<g class="sm-expression-connector"><title>FHIRPath variable reference</title>`
             + `<line class="sm-connector-line sm-expression-connector-line" x1="${sourceAnchor.x}" y1="${sourceAnchor.y}" x2="${targetAnchor.x}" y2="${targetAnchor.y}" stroke-dasharray="2 4" data-conn-id-list="${connId}" />`
+            + `</g>`
+          );
+        }
+      }
+    }
+
+    // Trigger relationships show control flow rather than value flow: the
+    // source occurrence (and any filter on it) causes a self-contained target
+    // value to be generated. Keep these visually distinct from dotted
+    // FHIRPath variable references.
+    for (const connId of triggerConnectionIds) {
+      const positions = connectionAnchors.get(connId);
+      if (!positions) continue;
+      for (const sourceAnchor of positions.sourceAnchors) {
+        for (const targetAnchor of positions.targetAnchors) {
+          svg.push(
+            `<g class="sm-trigger-connector"><title>Source presence triggers target generation</title>`
+            + `<line class="sm-connector-line sm-trigger-connector-line" x1="${sourceAnchor.x}" y1="${sourceAnchor.y}" x2="${targetAnchor.x}" y2="${targetAnchor.y}" stroke-dasharray="5 4" data-conn-id-list="${connId}" />`
             + `</g>`
           );
         }

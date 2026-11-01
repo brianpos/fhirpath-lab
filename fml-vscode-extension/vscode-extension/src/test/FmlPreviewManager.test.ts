@@ -3,6 +3,7 @@ import * as vscode from "vscode";
 import {
     FmlPreviewManager,
     parseFmlPreviewNavigationMessage,
+    parseFmlPreviewOptionsMessage,
 } from "../FmlPreviewManager";
 import {FmlPreviewSource, FmlSvgRenderer} from "../FmlPreviewRenderer";
 
@@ -148,17 +149,20 @@ suite("FML Preview Manager", () => {
     });
 
     test("navigation messages require valid bounded coordinate inputs", () => {
+        const externalUri = vscode.Uri.file("C:\\maps\\Element4to5.fml").toString();
         assert.deepEqual(parseFmlPreviewNavigationMessage({
             type: "fmlPreview.navigate",
             line: 2,
             column: 4,
             length: 7,
+            uri: externalUri,
             version: 3,
         }), {
             type: "fmlPreview.navigate",
             line: 2,
             column: 4,
             length: 7,
+            uri: externalUri,
             version: 3,
         });
         assert.equal(parseFmlPreviewNavigationMessage({
@@ -174,6 +178,139 @@ suite("FML Preview Manager", () => {
             column: "4",
             length: 7,
             version: 3,
+        }), undefined);
+        assert.equal(parseFmlPreviewNavigationMessage({
+            type: "fmlPreview.navigate",
+            line: 2,
+            column: 4,
+            length: 7,
+            uri: 42,
+            version: 3,
+        }), undefined);
+    });
+
+    test("navigation messages open the owning external FML document", async () => {
+        const renderer = new ControlledRenderer();
+        const manager = new FmlPreviewManager(renderer);
+        const primary = await vscode.workspace.openTextDocument({
+            language: "fml",
+            content: "group Appointment {}",
+        });
+        const external = await vscode.workspace.openTextDocument({
+            language: "fml",
+            content: "group Element {\n  src.id -> tgt.id;\n}",
+        });
+        manager.open(primary);
+        await waitFor(() => renderer.pending.length === 1);
+
+        const testAccess = manager as unknown as {
+            previews: Map<string, unknown>;
+            handleWebviewMessage(entry: unknown, message: unknown): Promise<void>;
+        };
+        const entry = testAccess.previews.get(primary.uri.toString());
+        assert.ok(entry);
+        await testAccess.handleWebviewMessage(entry, {
+            type: "fmlPreview.navigate",
+            line: 2,
+            column: 6,
+            length: 2,
+            uri: external.uri.toString(),
+            version: external.version,
+        });
+
+        const editor = vscode.window.activeTextEditor;
+        assert.equal(editor?.document.uri.toString(), external.uri.toString());
+        assert.equal(external.getText(editor?.selection), "id");
+        manager.dispose();
+    });
+
+    test("complete previews expose an initially disabled all-properties toggle", async () => {
+        const renderer = new ControlledRenderer();
+        const manager = new FmlPreviewManager(renderer, () => undefined, {
+            viewType: "fmlCompleteMapPreview",
+            titlePrefix: "Complete Preview",
+            showAllPropertiesToggle: true,
+        });
+        const document = await vscode.workspace.openTextDocument({language: "fml", content: "group Complete"});
+        const panel = manager.open(document);
+        await waitFor(() => renderer.pending.length === 1);
+
+        assert.equal(renderer.pending[0].source.showAllProperties, false);
+        renderer.pending[0].resolve("<svg></svg>");
+        await waitFor(() => panel.webview.html.includes("Show all properties"));
+
+        assert.equal(panel.viewType, "fmlCompleteMapPreview");
+        assert.match(panel.title, /^Complete Preview /);
+        assert.match(panel.webview.html, /type="checkbox"/);
+        assert.match(panel.webview.html, /fmlPreview\.setShowAllProperties/);
+        manager.dispose();
+    });
+
+    test("all-properties render activity spans asynchronous preview processing", async () => {
+        const renderer = new ControlledRenderer();
+        const activitySources: FmlPreviewSource[] = [];
+        let activeActivities = 0;
+        let disposedActivities = 0;
+        const manager = new FmlPreviewManager(renderer, () => undefined, {
+            viewType: "fmlCompleteMapPreview",
+            titlePrefix: "Complete Preview",
+            showAllPropertiesToggle: true,
+            beginRenderActivity: source => {
+                if (!source.showAllProperties) {
+                    return undefined;
+                }
+                activitySources.push(source);
+                activeActivities++;
+                return {
+                    dispose: () => {
+                        activeActivities--;
+                        disposedActivities++;
+                    },
+                };
+            },
+        });
+        const document = await vscode.workspace.openTextDocument({language: "fml", content: "group Complete"});
+        const panel = manager.open(document);
+        await waitFor(() => renderer.pending.length === 1);
+        renderer.pending[0].resolve("<svg></svg>");
+        await waitFor(() => panel.webview.html.includes("Show all properties"));
+        assert.equal(activitySources.length, 0);
+        assert.equal(activeActivities, 0);
+
+        const testAccess = manager as unknown as {
+            previews: Map<string, unknown>;
+            handleWebviewMessage(entry: unknown, message: unknown): Promise<void>;
+        };
+        const entry = testAccess.previews.get(document.uri.toString());
+        assert.ok(entry);
+        await testAccess.handleWebviewMessage(entry, {
+            type: "fmlPreview.setShowAllProperties",
+            showAllProperties: true,
+        });
+        await waitFor(() => renderer.pending.length === 2);
+
+        assert.equal(activitySources.length, 1);
+        assert.equal(activitySources[0].fileName, "Untitled FML");
+        assert.equal(activeActivities, 1);
+        assert.equal(disposedActivities, 0);
+
+        renderer.pending[1].resolve("<svg id=\"expanded\"></svg>");
+        await waitFor(() => disposedActivities === 1);
+        assert.equal(activeActivities, 0);
+        manager.dispose();
+    });
+
+    test("all-properties messages require a boolean option", () => {
+        assert.deepEqual(parseFmlPreviewOptionsMessage({
+            type: "fmlPreview.setShowAllProperties",
+            showAllProperties: true,
+        }), {
+            type: "fmlPreview.setShowAllProperties",
+            showAllProperties: true,
+        });
+        assert.equal(parseFmlPreviewOptionsMessage({
+            type: "fmlPreview.setShowAllProperties",
+            showAllProperties: "true",
         }), undefined);
     });
 

@@ -600,6 +600,9 @@ import { validateFhirpathExpression, type FhirVersionKey } from "~/helpers/fhirp
 import { FhirPathTools, createFhirPathEvaluateTools } from "~/helpers/openai_tools";
 import { Console } from "console";
 
+import { convertParametersToNative } from "~/helpers/fhir_parameters";
+export { convertParametersToNative };
+
 const shareTooltipText = 'Copy a sharable link to this test expression';
 const shareZulipTooltipText = 'Copy a sharable link for Zulip to this test expression';
 
@@ -2830,6 +2833,14 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
           }
         }
       }
+
+      // register a custom function "native()" to flatten parameters into a simple structure
+      const userInvocationTable = {
+        native: {
+          fn: (inputs,exp=2)=>inputs.map(i => convertParametersToNative(i)), 
+          arity: {0: [], 1: ["String"]}},
+      };
+
       for (let contextNode of contextNodes) {
         let resData: ResultData;
         const index = contextNodes.indexOf(contextNode);
@@ -2897,6 +2908,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
             traceFn: tracefunction,
             async: true,
             terminologyUrl: this.terminologyServer,
+            userInvocationTable,
             debugger: (ctx: any, focus: any, result: any, node: any) => {
               if (completedTracing) 
                 return;

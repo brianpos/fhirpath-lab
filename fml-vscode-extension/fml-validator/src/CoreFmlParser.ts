@@ -1,10 +1,15 @@
 import {isFmlParseError, parseFML} from "../../../helpers/fml_parser";
 import {validateFmlModel} from "../../../helpers/fml_validation";
-import {FmlDiagnostic, FmlSource, FmlValidatorResult, ParsedFml} from "./contracts";
+import {AnalyzedFml, FmlDiagnostic, FmlSource, FmlValidatorResult, ParsedFml} from "./contracts";
 import {FmlPropertyUsageCollector} from "./FmlPropertyUsageCollector";
 import {FmlFhirPathValidator} from "./FmlFhirPathValidator";
 import {FmlTransformValidator} from "./FmlTransformValidator";
 import {applyFmlModelConfiguration} from "./FmlModelConfiguration";
+import type {FmlStructureMap} from "../../../helpers/fml_models";
+
+export interface CoreFmlAnalysisOptions {
+    semanticErrors?: "error" | "warning";
+}
 
 export class CoreFmlParser {
     public constructor(
@@ -15,7 +20,21 @@ export class CoreFmlParser {
     }
 
     public parse(source: FmlSource): FmlValidatorResult<ParsedFml> {
-        const parsed = parseFML(source.sourceText);
+        const result = this.analyze(source);
+        if (result.status !== "success") return result;
+        return {
+            ...result,
+            value: {
+                sourceName: result.value.sourceName,
+                entryRule: result.value.entryRule,
+                model: result.value.model,
+            },
+        };
+    }
+
+    public analyze(source: FmlSource, parsedModel?: FmlStructureMap,
+        options: CoreFmlAnalysisOptions = {}): FmlValidatorResult<AnalyzedFml> {
+        const parsed = parsedModel ?? parseFML(source.sourceText);
         if (isFmlParseError(parsed)) {
             return {
                 status: "failure",
@@ -49,6 +68,7 @@ export class CoreFmlParser {
             source.importedDefaultGroups,
             source.importedGroupSignatures,
             fhirPathAnalysis.transformResultTypes,
+            source.sourceText,
         ));
         for (const usage of propertyAnalysis.usages) {
             if (!usage.unknownElement || !usage.rootTypeName) continue;
@@ -86,8 +106,11 @@ export class CoreFmlParser {
                 });
             }
         }
-        if (diagnostics.some(diagnostic => diagnostic.severity === "error")) {
-            return {status: "failure", diagnostics};
+        const reportedDiagnostics = options.semanticErrors === "warning"
+            ? diagnostics.map(diagnostic => diagnostic.severity === "error" ? {...diagnostic, severity: "warning" as const} : diagnostic)
+            : diagnostics;
+        if (reportedDiagnostics.some(diagnostic => diagnostic.severity === "error")) {
+            return {status: "failure", diagnostics: reportedDiagnostics};
         }
 
         return {
@@ -96,8 +119,9 @@ export class CoreFmlParser {
                 sourceName: source.sourceName,
                 entryRule: "structureMap",
                 model: parsed,
+                propertyAnalysis,
             },
-            diagnostics,
+            diagnostics: reportedDiagnostics,
         };
     }
 

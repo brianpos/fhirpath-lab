@@ -6,7 +6,7 @@ export function applyFmlModelConfiguration(model: FmlStructureMap, source: FmlSo
     model.targetModelVersion ??= source.defaultFhirVersion;
     for (const structure of model.structures) {
         const canonical = (structure.canonical ?? structure.url).split("|")[0];
-        structure.resolvedTypeName = resolveFmlStructureType(
+        structure.resolvedTypeName = source.customTypeModels?.[canonical] ? canonical : resolveFmlStructureType(
             canonical,
             source.profileBaseTypes,
         ) ?? resolveFmlStructureType(structure.url, source.profileBaseTypes);

@@ -33,7 +33,8 @@ function jsString(s: string): string {
 
 function emitElementType(t: ElementTypeModel): string {
     const parts: string[] = [`TypeName: ${jsString(t.TypeName)}`];
-    if (t.TargetProfile && t.TargetProfile.length > 0) {
+    if (t.TargetProfile && t.TargetProfile.length > 0
+        && !(t.TargetProfile.length == 1 && t.TargetProfile[0] === "http://hl7.org/fhir/StructureDefinition/Resource")) {
         parts.push(`TargetProfile: [${t.TargetProfile.map(jsString).join(", ")}]`);
     }
     return `{ ${parts.join(", ")} }`;

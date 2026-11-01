@@ -29,6 +29,28 @@ function shapeOf(node: JsonNode | undefined): unknown {
 }
 
 describe("FHIRPath validator visitor", () => {
+    it("recognizes extension() and preserves generic Extension-container semantics", () => {
+        const result = validateFhirpathExpression("extension('http://example.org/x').value", {
+            fhirVersion: "r4", contextType: "Patient",
+        });
+        expect(result.diagnostics.filter(diagnostic => diagnostic.severity === "error")).toEqual([]);
+        const containers = validateFhirpathExpression("extension('http://example.org/x')", {
+            fhirVersion: "r4", contextType: "Patient",
+        });
+        expect(containers.expectedReturnType).toBe("Extension");
+        const values = validateFhirpathExpression("extension('http://example.org/x')", {
+            fhirVersion: "r4", contextType: "Patient", fmlExtensionShortcut: true,
+        });
+        expect(values.expectedReturnType).toContain("string");
+        expect(values.expectedReturnIsCollection).toBe(true);
+        expect(values.expectedReturnType).not.toBe("Extension");
+    });
+
+    it.each(["extension()", "extension('a', 'b')", "extension(true)"])("still rejects invalid extension() calls: %s", expression => {
+        const result = validateFhirpathExpression(expression, {fhirVersion: "r4", contextType: "Patient", fmlExtensionShortcut: true});
+        expect(result.diagnostics.some(diagnostic => diagnostic.severity === "error")).toBe(true);
+    });
+
     it("annotates types for (1+1).toString()", () => {
         const r = validateFhirpathExpression("(1+1).toString()", { fhirVersion: "r4" });
         expect(r.diagnostics).toEqual([]);

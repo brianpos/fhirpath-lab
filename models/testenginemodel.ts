@@ -8,6 +8,7 @@ export interface VariableData {
     resourceId?: string;
     datatype?: string;
     errorMessage?: string;
+    retrievalFromInput?: boolean;
 }
 
 

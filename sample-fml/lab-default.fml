@@ -1,0 +1,27 @@
+/// url = 'http://fhirpath-lab.com/StructureMap/intro-patient-map'
+/// name = 'IntroPatientMap'
+/// status = 'draft'
+/// version = '0.1'
+
+uses "http://hl7.org/fhir/StructureDefinition/Patient" as source
+uses "http://hl7.org/fhir/StructureDefinition/Bundle" as target
+
+group patientMap(source src : Patient, target bundle : Bundle) {
+  src -> bundle.id = uuid() "bundle-id";
+  src -> bundle.type = 'transaction' "bundle-type";
+
+  // create a new entry and put the patient resource in it
+  src -> bundle.entry as entry, entry.resource = src then
+    SetEntryData(src, entry) "prep-entry";
+}
+
+group SetEntryData(source src: Patient, target entry)
+{
+  src.id as patientId log('patientId: ' & %src.id) -> entry.fullUrl = append('http://hl7.org/fhir/us/sdoh-clinicalcare/Patient/', patientId);
+  
+  src -> entry.request as request then {
+    src -> request.method = 'POST' "obsn-request-method";
+    src -> request.url = 'Observation' "obsn-request-url";
+  } "obsn-entry-request";
+}
+      

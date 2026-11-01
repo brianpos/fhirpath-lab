@@ -94,6 +94,21 @@ function loadFunctions(): { all: FunctionDef[]; byName: Record<string, FunctionD
             }
         }
     }
+    const extension: FunctionDef = {
+        category: "FHIR",
+        functionName: "extension",
+        arguments: [{name: "url", type: "String"}],
+        returnType: "Extension",
+        emptyInputResult: "empty",
+        errorOnMultipleInput: false,
+        inputTypes: [],
+        typeMapping: [],
+        description: "Select extensions by URL. FML projects the selected extensions' value[x].",
+    };
+    if (!byName.extension) {
+        all.push(extension);
+        byName.extension = extension;
+    }
     return { all: deepFreeze(all), byName: deepFreeze(byName) };
 }
 
@@ -127,7 +142,7 @@ function loadOperations(): { all: OperationDef[]; byName: Record<string, Operati
 const fns = loadFunctions();
 const ops = loadOperations();
 
-/** Every function definition from the spec, in source order. */
+/** Spec definitions in source order, followed by supplemental FHIR functions. */
 export const functions: ReadonlyArray<FunctionDef> = fns.all;
 /** Functions indexed by name (first-wins on duplicates). */
 export const functionsByName: Readonly<Record<string, FunctionDef>> = fns.byName;

@@ -1,4 +1,6 @@
 export * from "./contracts";
+export * from "./CoreFmlParser";
+export {getModelProvider, getModelTypes} from "../../../helpers/fhirpath_validator";
 export * from "./FmlValidatorApi";
 export * from "./FmlValidatorEngine";
 export * from "./FmlGroupSymbolCollector";

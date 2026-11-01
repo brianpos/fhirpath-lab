@@ -3,6 +3,7 @@ import test from "node:test";
 import {FmlDebugTrace, FmlTracePhase} from "../contracts";
 import {FmlTraceReplay} from "../FmlTraceReplay";
 import {createFmlTypedValue} from "../FmlTypedValue";
+import {parseDebugTrace} from "../FmlDebugService";
 
 const sourceText = [
     "group Main(source src, target tgt) {",
@@ -154,4 +155,36 @@ test("steps over an entire group when stopped on its enter event", () => {
 
     assert.equal(replay.currentIndex, 0);
     assert.equal(replay.next()?.index, 6);
+});
+
+test("uses structured event depth for next and stepOut, including the step before a nested scope", () => {
+    const phases = ["enter", "step", "enter", "step", "exit", "step", "exit"];
+    const recording = parseDebugTrace({parameter: phases.map(phase => ({
+        name: "trace", part: [{name: "phase", valueCode: phase}],
+    }))}, {});
+    const replay = new FmlTraceReplay(recording, "");
+    assert.deepEqual(recording.trace.map(event => event.depth), [0, 1, 1, 2, 1, 1, 0]);
+    assert.equal(replay.stepIn()?.index, 1);
+    assert.equal(replay.next()?.index, 2);
+    assert.equal(replay.next()?.index, 4);
+    assert.equal(replay.next()?.index, 5);
+    assert.equal(replay.stepOut()?.index, 6);
+    assert.equal(replay.stepBack()?.index, 5);
+});
+
+test("retains the active stack and variables at the end of a truncated recording", () => {
+    const recording = parseDebugTrace({parameter: [
+        {name: "traceStatus", valueCode: "truncated"},
+        ...["enter", "enter", "step"].map(phase => ({
+            name: "trace", part: [{name: "phase", valueCode: phase}],
+        })),
+    ]}, {});
+    const replay = new FmlTraceReplay(recording, "");
+    replay.stepIn();
+    replay.stepIn();
+    assert.deepEqual(replay.getStackEvents().map(event => event.index), [2, 1, 0]);
+    assert.equal(replay.continue()?.index, 2);
+    assert.equal(replay.stepIn()?.index, 2);
+    assert.deepEqual(replay.getStackEvents().map(event => event.index), [2, 1, 0]);
+    assert.equal(replay.stepBack()?.index, 1);
 });

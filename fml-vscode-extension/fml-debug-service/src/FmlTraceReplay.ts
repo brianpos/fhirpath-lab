@@ -102,11 +102,17 @@ export class FmlTraceReplay {
     }
 
     public getEventLine(event: FmlTraceEvent): number {
+        if (event.textRange) {
+            return event.textRange.startRow + 1;
+        }
         const offset = Math.max(event.range?.startOffset ?? 0, 0);
         return this.sourceTextFor(event).slice(0, offset).split(/\r?\n/).length;
     }
 
     public getEventColumn(event: FmlTraceEvent): number {
+        if (event.textRange) {
+            return event.textRange.startColumn + 1;
+        }
         const offset = Math.max(event.range?.startOffset ?? 0, 0);
         const prefix = this.sourceTextFor(event).slice(0, offset);
         const lineStart = Math.max(prefix.lastIndexOf("\n"), prefix.lastIndexOf("\r")) + 1;
@@ -136,6 +142,10 @@ export class FmlTraceReplay {
     }
 
     private stackDepth(index: number): number {
+        const event = this.trace.trace[index];
+        if (event?.phase === "step" || event?.textRange || event?.messages) {
+            return event.depth;
+        }
         return this.getStack(index).length;
     }
 
@@ -155,7 +165,9 @@ export class FmlTraceReplay {
     }
 
     private moveTo(index: number): FmlTraceEvent | undefined {
-        this.cursor = index;
+        const lastIndex = this.trace.trace.length - 1;
+        const incomplete = this.trace.traceStatus === "truncated" || this.trace.traceStatus === "stopped";
+        this.cursor = incomplete && lastIndex >= 0 && index > lastIndex ? lastIndex : index;
         return this.currentEvent;
     }
 }

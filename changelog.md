@@ -3,6 +3,18 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+# 2 November 2026
+* Major changes to FML support, particularly in the debugging and logical model support
+* Full typescript FML engine (with debugging support)
+* Keep core and logical models with the same name distinct during local FML evaluation, including FHIRPath overlays, nested types, and group arguments. Add blood-pressure/OMOP and timezone-preserving date regressions.
+
+# 1 November 2026
+* Compact empty non-group TypeScript trace scopes to final-state steps, preserving group boundaries and intermediate source filtering/predicate, log and nested-call events. Document the shared policy for other engines.
+* Use the shared FML debug trace model throughout the web test page for local and remote engines, with snapshot variables, reliable source navigation, unified result formatting, and preserved failure traces.
+
+# 29 October 2026
+* Pretty-print local TypeScript engine results on the FML test page using the JSON tab-stop setting, preserving numeric precision.
+
 # 6 August 2026
 * Update the fhirpath.js interim R6 support to ballot5
 

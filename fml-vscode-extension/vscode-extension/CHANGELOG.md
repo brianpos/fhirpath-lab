@@ -1,5 +1,28 @@
 # Change Log
 
+## 0.20.0 (2026-10-28)
+* Resolve local model identities by canonical keys and FHIR release so logical models such as OMOP Observation do not shadow core FHIR Observation or its child types. Preserve the same identities in FHIRPath and group calls.
+* Compact empty non-group local trace scopes into final-state steps, retaining source filtering/predicate steps, target logs/nested calls, group boundaries, and incomplete failure stacks.
+* Discard superseded per-root model refreshes, including loads completing after deletion or disposal. Keep workspace-index failures visible to waiting tools until a successful re-index or restart, without releasing them on stale operation completion.
+* Forward discovered model catalogs and per-project contexts to Copilot evaluation during indexing and after restart, including unsaved known-model overrides for maps using the workspace-wide fallback. Re-index again when model changes arrive during an existing index operation.
+* Preserve newly discovered SUSHI configurations when concurrent output-file discovery finishes later.
+* Restore activation-time registration of the Copilot validation and evaluation tools, sharing the running language client, workspace-index readiness, and model configuration.
+* Add an opt-in `legacyPost` launch flag for remote engines expecting `map.valueString` and `resource.valueString`; keep the current request format as the default and local execution unchanged.
+* Suppress user notifications for unavailable debugger hover expressions while retaining errors for explicit Watch and Debug Console evaluation.
+* Run both Copilot tools in the language server using indexed source snapshots and cached model catalogs; avoid repeatedly opening wildcard imports and reloading model dependencies during evaluation.
+* Reuse existing package/IG-output catalogs and explicit model/dependency files for ConceptMaps (including Bundles and unsaved edits), recognize nested output-package IG markers, and add an optional R4/R5 terminology `$translate` fallback when no local map is available. No extra workspace JSON-content scan is introduced.
+* Make the bundled local TypeScript engine the debugger default. Engine selection uses only `serverUrl`: an explicit launch/settings URL selects a remote engine, with no implicit hosted lab endpoint.
+* Add native Copilot `#validateFml` and local-only `#evaluateFml` tools, using unsaved editor contents and workspace imports/models; requires VS Code 1.95 or later.
+* Add opt-in server traffic logging via the application-level `fmlTools.debug.logServerTraffic` user setting (off by default). When enabled, log full request Parameters, response bodies, HTTP status, and transport failures to the FHIR Mapping Language Tools output channel; payloads are unredacted and may contain sensitive data.
+* Remove the debugger's Trace event scope while retaining the existing input/output context scopes and final result.
+* Pretty-print local FML results in the extension using the JSON output editor's indentation settings, preserving numeric precision and leaving engine output and remote evaluation unchanged.
+* Avoid false duplicate group diagnostics during folder validation when authored and rendered copies share an imported map canonical; consistently resolve the nearest copy for imports and navigation.
+* Reuse the generated result tab across evaluations of the same FML source file and engine, keeping local and distinct remote endpoints separate.
+
+# 0.19.0 (2026-10-27)
+* Add support for local FML execution and debug (using new local typescript engine)
+* FML validation improvements
+
 # 0.18.0 (2026-08-18)
 * evaluate transform now accepts a FHIRPath-compatible literal as the expression argument, validated exactly as authored without decoding a string literal's contents into an expression.
 

@@ -7,7 +7,12 @@ import {
   extractFmlStructureMapDiagram,
   generateFmlInstanceDiagramSvg,
 } from "../helpers/structuremap_diagram_instance";
+import {
+  extractFmlStructureMapDiagram as extractCompleteFmlStructureMapDiagram,
+  generateFmlInstanceDiagramSvg as generateCompleteFmlDiagramSvg,
+} from "../helpers/structuremap_diagram_complete";
 import { fmlToStructureMap } from "../helpers/fml_to_structuremap";
+import { lookupByTypeName as lookupR4 } from "../helpers/models/generated/r4";
 import { lookupByTypeName as lookupR4B } from "../helpers/models/generated/r4b";
 import { lookupByTypeName as lookupR5 } from "../helpers/models/generated/r5";
 import type { FmlStructureMap, FhirVersion } from "../helpers/fml_models";
@@ -59,6 +64,33 @@ describe("fmlToStructureMap compilation", () => {
 });
 
 describe("direct FML diagram extraction", () => {
+  test("keeps nested source descendants under the matching variable binding", () => {
+    const fml = parseFML([
+      "uses 'http://example.org/StructureDefinition/LocationPN' alias LocationPN as source",
+      "uses 'http://example.org/StructureDefinition/LocationNDH' alias LocationNDH as target",
+      "group Main(source src : LocationPN, target tgt : LocationNDH) {",
+      "  src.extension as vNewPatientsSrc -> tgt.extension as vNewPatientsTgt then {",
+      "    vNewPatientsSrc.extension as vFromNetworkSrc -> vNewPatientsTgt.extension = vFromNetworkSrc;",
+      "    vNewPatientsSrc.extension as vAcceptingPatientsSrc -> vNewPatientsTgt.extension as vAcceptingPatientsTgt then {",
+      "      vAcceptingPatientsSrc.value as vAcceptingPatientsValueSrc -> vAcceptingPatientsTgt.value as vAcceptingPatientsValueTgt then {",
+      "        vAcceptingPatientsValueSrc.coding as vAcceptingPatientsCodingSrc -> vAcceptingPatientsValueTgt.coding = vAcceptingPatientsCodingSrc;",
+      "      };",
+      "    };",
+      "  };",
+      "}",
+    ].join("\n")) as FmlStructureMap;
+    const properties = extractFmlStructureMapDiagram(fml).groups[0].sourceTypes[0].properties;
+    const variables = properties.map(property => property.variableName);
+
+    expect(variables).toEqual([
+      "vNewPatientsSrc",
+      "vFromNetworkSrc",
+      "vAcceptingPatientsSrc",
+      "vAcceptingPatientsValueSrc",
+      "vAcceptingPatientsCodingSrc",
+    ]);
+  });
+
   test("unnamed rule headers collapse to divider lines without hiding rule bodies", () => {
     const fml = parseFML([
       "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias Patient as source",
@@ -457,6 +489,368 @@ describe("FHIRPath expression connections", () => {
 });
 
 describe("diagram presentation details", () => {
+  test("draws source-presence triggers differently from FHIRPath references", () => {
+    const fml = parseFML([
+      "uses 'http://hl7.org/fhir/4.0/StructureDefinition/ActivityDefinition' alias ActivityDefinitionR4 as source",
+      "uses 'http://hl7.org/fhir/5.0/StructureDefinition/ActivityDefinition' alias ActivityDefinitionR5 as target",
+      "group Main(source src : ActivityDefinitionR4, target tgt : ActivityDefinitionR5) {",
+      "    src.subject as s where (coding.exists(code = 'Patient')) -> tgt.subject = cc('http://hl7.org/fhir/fhir-types', 'Patient', 'Patient');",
+      "}",
+    ].join("\n")) as FmlStructureMap;
+    const lookupForActivityVersion = (version: FhirVersion | undefined) => {
+      return version === "R5" ? lookupR5 : lookupR4;
+    };
+
+    for (const svg of [
+      generateFmlInstanceDiagramSvg(fml, lookupR4, false, lookupForActivityVersion),
+      generateCompleteFmlDiagramSvg(fml, lookupR4, false, lookupForActivityVersion),
+    ]) {
+      expect(svg).toContain('class="sm-trigger-connector"');
+      expect(svg).toContain('class="sm-connector-line sm-trigger-connector-line"');
+      expect(svg).toContain('stroke-dasharray="5 4"');
+      expect(svg).toContain("Source presence triggers target generation");
+      expect(svg).not.toContain('class="sm-expression-connector"');
+    }
+
+    const mixedFml = parseFML([
+      "uses 'http://hl7.org/fhir/5.0/StructureDefinition/ActivityDefinition' alias ActivityDefinition as source",
+      "group Main(source src : ActivityDefinition, target tgt : ActivityDefinition) {",
+      "    src.title as title -> tgt.subtitle = title, tgt.subject = cc('http://hl7.org/fhir/fhir-types', 'Patient', 'Patient');",
+      "}",
+    ].join("\n")) as FmlStructureMap;
+    for (const svg of [
+      generateFmlInstanceDiagramSvg(mixedFml, lookupR5, false, lookupForVersion),
+      generateCompleteFmlDiagramSvg(mixedFml, lookupR5, false, lookupForVersion),
+    ]) {
+      expect(svg).toContain('class="sm-trigger-connector"');
+      expect(svg).toContain('class="sm-connector"');
+      expect(svg).toMatch(/<line class="sm-connector-line" [^>]+>/);
+    }
+
+    const repeatedFml = parseFML([
+      "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Observation' alias Observation as source",
+      "group Main(source src : Observation, target tgt : Observation) {",
+      "    src.status -> tgt.status = 'final';",
+      "    src.status -> tgt.status = 'final';",
+      "}",
+    ].join("\n")) as FmlStructureMap;
+    for (const svg of [
+      generateFmlInstanceDiagramSvg(repeatedFml, lookupR5, false, lookupForVersion),
+      generateCompleteFmlDiagramSvg(repeatedFml, lookupR5, false, lookupForVersion),
+    ]) {
+      expect(svg.match(/class="sm-trigger-connector"/g)).toHaveLength(2);
+      expect(svg).not.toContain('<g class="sm-connector">');
+    }
+  });
+
+  test("complete diagram keeps repeated target choice constraints rule-scoped", () => {
+    const fml = parseFML([
+      "uses 'http://hl7.org/fhir/4.0/StructureDefinition/ActivityDefinition' alias ActivityDefinitionR4 as source",
+      "uses 'http://hl7.org/fhir/5.0/StructureDefinition/ActivityDefinition' alias ActivityDefinitionR5 as target",
+      "group Main(source src : ActivityDefinitionR4, target tgt : ActivityDefinitionR5) {",
+      "    src.subject as s -> tgt.subject = create('CodeableConcept') as tc, tc.coding as tcc, tcc.system = 'http://example.org/system';",
+      "    src.subject : Reference -> tgt.subject \"subjectReference\";",
+      "}",
+    ].join("\n")) as FmlStructureMap;
+    const lookupForActivityVersion = (version: FhirVersion | undefined) => {
+      return version === "R5" ? lookupR5 : lookupR4;
+    };
+    const diagram = extractCompleteFmlStructureMapDiagram(
+      fml, lookupR4, false, lookupForActivityVersion,
+    );
+    const targetSubjects = diagram.groups[0].targetTypes[0].properties.filter(property => {
+      return property.path === "subject";
+    });
+    const createdSubject = targetSubjects.find(property => property.createdType === "CodeableConcept");
+    const identitySubject = targetSubjects.find(property => !property.createdType);
+
+    expect(createdSubject?.compatibleTypeNames).toEqual(["CodeableConcept"]);
+    expect(identitySubject?.possibleTypeNames).toEqual(["CodeableConcept", "Reference", "canonical"]);
+    expect(identitySubject?.compatibleTypeNames).toEqual(["CodeableConcept", "Reference", "canonical"]);
+  });
+
+  test("complete diagram merges unfiltered source properties without rule or variable labels", () => {
+    const text = [
+      "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Observation' alias Observation as source",
+      "group Main(source src : Observation, target tgt : Observation) {",
+      "    src.status as sourceStatus -> tgt.status = sourceStatus;",
+      "    src.status as sourceStatusAgain -> tgt.id = sourceStatusAgain;",
+      "    src.status as filteredStatus where (filteredStatus = 'final') -> tgt.id = filteredStatus;",
+      "}",
+    ].join("\n");
+    const fml = parseFML(text) as FmlStructureMap;
+    const diagram = extractCompleteFmlStructureMapDiagram(fml, lookupR5, false, lookupForVersion);
+    const svg = generateCompleteFmlDiagramSvg(fml, lookupR5, false, lookupForVersion);
+
+    const statuses = diagram.groups[0].sourceTypes[0].properties.filter(property => property.path === "status");
+    expect(statuses).toHaveLength(2);
+    expect(statuses.filter(property => !property.filter)).toHaveLength(1);
+    expect(svg).not.toContain("sm-rule-header");
+    expect(svg).not.toContain("sm-rule-divider-unnamed");
+    expect(svg).not.toMatch(/>status \((sourceStatus|sourceStatusAgain)\)<\/text>/);
+    expect(svg).not.toContain("Observation (src)");
+    expect(svg).not.toContain("Observation (tgt)");
+  });
+
+  test("complete diagram optionally adds root properties and children only below traversed datatypes", () => {
+    const text = [
+      "uses 'http://example.org/StructureDefinition/ClaimRow' alias ClaimRow as source",
+      "group Main(source src : ClaimRow, target tgt : ClaimRow) {",
+      "    src.detail as sourceDetail -> tgt.detail as targetDetail then { sourceDetail.value -> targetDetail.value; };",
+      "}",
+    ].join("\n");
+    const fml = parseFML(text) as FmlStructureMap;
+    const models: TypeModel[] = [
+      {
+        TypeName: "ClaimRow",
+        Elements: [
+          {ElementName: "claimNumber", Type: [{TypeName: "string"}]},
+          {ElementName: "detail", Type: [{TypeName: "Detail"}]},
+          {ElementName: "untouchedDetail", Type: [{TypeName: "Detail"}]},
+        ],
+      },
+      {
+        TypeName: "Detail",
+        Elements: [
+          {ElementName: "value", Type: [{TypeName: "string"}]},
+          {ElementName: "note", Type: [{TypeName: "string"}]},
+          {ElementName: "deep", Type: [{TypeName: "Deep"}]},
+        ],
+      },
+      {TypeName: "Deep", Elements: [{ElementName: "leaf", Type: [{TypeName: "string"}]}]},
+      {TypeName: "string", Elements: []},
+    ];
+    const lookup = (typeName: string) => models.find(model => model.TypeName === typeName);
+    const compact = extractCompleteFmlStructureMapDiagram(fml, lookup, false, () => lookup);
+    const complete = extractCompleteFmlStructureMapDiagram(fml, lookup, true, () => lookup);
+
+    for (const type of [complete.groups[0].sourceTypes[0], complete.groups[0].targetTypes[0]]) {
+      const paths = type.properties.map(property => property.path);
+      expect(paths).toEqual(expect.arrayContaining([
+        "claimNumber",
+        "detail",
+        "detail.value",
+        "detail.note",
+        "detail.deep",
+        "untouchedDetail",
+      ]));
+      expect(paths).not.toContain("detail.deep.leaf");
+      expect(paths).not.toContain("untouchedDetail.value");
+    }
+    expect(compact.groups[0].sourceTypes[0].properties.map(property => property.path)).not.toContain("claimNumber");
+    expect(compact.groups[0].targetTypes[0].properties.map(property => property.path)).not.toContain("detail.note");
+  });
+
+  test("complete diagram resolves external extends groups only in all-properties mode", () => {
+    const derived = parseFML([
+      "uses 'http://example.org/StructureDefinition/ClaimRow' alias ClaimRow as source",
+      "group Main(source src : ClaimRow, target tgt : ClaimRow) extends CopyBase {",
+      "}",
+    ].join("\n")) as FmlStructureMap;
+    const base = parseFML([
+      "uses 'http://example.org/StructureDefinition/ClaimRow' alias ClaimRow as source",
+      "group CopyBase(source src : ClaimRow, target tgt : ClaimRow) extends RootBase {",
+      "}",
+      "group RootBase(source src : ClaimRow, target tgt : ClaimRow) {",
+      "    src.detail as sourceDetail -> tgt.detail as targetDetail then { sourceDetail.value -> targetDetail.value; };",
+      "}",
+    ].join("\n")) as FmlStructureMap;
+    const models: TypeModel[] = [
+      {TypeName: "ClaimRow", Elements: [{ElementName: "detail", Type: [{TypeName: "Detail"}]}]},
+      {TypeName: "Detail", Elements: [{ElementName: "value", Type: [{TypeName: "string"}]}]},
+      {TypeName: "string", Elements: []},
+    ];
+    const lookup = (typeName: string) => models.find(model => model.TypeName === typeName);
+    const requestedGroups: string[] = [];
+    const resolveExternalGroup = (groupName: string) => {
+      requestedGroups.push(groupName);
+      return base.groups.some(group => group.name === groupName) ? base : undefined;
+    };
+
+    const compact = extractCompleteFmlStructureMapDiagram(
+      derived, lookup, false, () => lookup, undefined, resolveExternalGroup,
+    );
+    expect(requestedGroups).toEqual([]);
+    expect(compact.groups[0].sourceTypes[0].properties).toEqual([]);
+
+    const complete = extractCompleteFmlStructureMapDiagram(
+      derived, lookup, true, () => lookup, undefined, resolveExternalGroup,
+    );
+    const sourceValue = complete.groups[0].sourceTypes[0].properties.find(property => property.path === "detail.value");
+    const targetValue = complete.groups[0].targetTypes[0].properties.find(property => property.path === "detail.value");
+
+    expect(requestedGroups).toEqual(["CopyBase"]);
+    expect(sourceValue?.isUnused).not.toBe(true);
+    expect(targetValue?.isUnused).not.toBe(true);
+  });
+
+  test("complete diagram propagates inherited mappings through a called group", () => {
+    const appointment = parseFML([
+      "uses 'http://example.org/StructureDefinition/Appointment' alias Appointment as source",
+      "group Appointment(source src : Appointment, target tgt : Appointment) {",
+      "    src.participant as sourceParticipant -> tgt.participant as targetParticipant then AppointmentParticipant(sourceParticipant, targetParticipant);",
+      "}",
+      "group AppointmentParticipant(source src, target tgt) extends BackboneElement {",
+      "    src.status -> tgt.status;",
+      "}",
+    ].join("\n")) as FmlStructureMap;
+    const backboneMap = parseFML([
+      "group BackboneElement(source src, target tgt) extends Element {",
+      "    src.modifierExtension -> tgt.modifierExtension;",
+      "}",
+    ].join("\n")) as FmlStructureMap;
+    const elementMap = parseFML([
+      "group Element(source src, target tgt) {",
+      "    src.id -> tgt.id;",
+      "    src.extension -> tgt.extension;",
+      "}",
+    ].join("\n")) as FmlStructureMap;
+    const models: TypeModel[] = [
+      {
+        TypeName: "Appointment",
+        Elements: [{ElementName: "participant", Type: [{TypeName: "AppointmentParticipant"}], IsArray: true}],
+      },
+      {
+        TypeName: "AppointmentParticipant",
+        Elements: [
+          {ElementName: "id", Type: [{TypeName: "string"}]},
+          {ElementName: "extension", Type: [{TypeName: "string"}], IsArray: true},
+          {ElementName: "modifierExtension", Type: [{TypeName: "string"}], IsArray: true},
+          {ElementName: "status", Type: [{TypeName: "string"}]},
+        ],
+      },
+      {TypeName: "string", Elements: []},
+    ];
+    const lookup = (typeName: string) => models.find(model => model.TypeName === typeName);
+    const backboneUri = "file:///maps/BackboneElement4to5.fml";
+    const elementUri = "file:///maps/Element4to5.fml";
+    const resolveExternalGroup = (groupName: string) => {
+      if (groupName === "BackboneElement") {
+        return {map: backboneMap, sourceUri: backboneUri, sourceVersion: 3};
+      }
+      if (groupName === "Element") {
+        return {map: elementMap, sourceUri: elementUri, sourceVersion: 4};
+      }
+      return undefined;
+    };
+    const diagram = extractCompleteFmlStructureMapDiagram(
+      appointment,
+      lookup,
+      true,
+      () => lookup,
+      undefined,
+      resolveExternalGroup,
+    );
+    const parent = diagram.groups.find(group => group.name === "Appointment")!;
+    const participant = diagram.groups.find(group => group.name === "AppointmentParticipant")!;
+
+    for (const propertyName of ["id", "extension", "modifierExtension"]) {
+      const expectedUri = propertyName === "modifierExtension" ? backboneUri : elementUri;
+      for (const type of [parent.sourceTypes[0], parent.targetTypes[0]]) {
+        const property = type.properties.find(candidate => candidate.path.endsWith(`.${propertyName}`));
+        expect(property?.isUnused).not.toBe(true);
+        expect(property?.fmlPosition?.sourceUri).toBe(expectedUri);
+      }
+      for (const type of [participant.sourceTypes[0], participant.targetTypes[0]]) {
+        const property = type.properties.find(candidate => candidate.path === propertyName);
+        expect(property?.isUnused).not.toBe(true);
+        expect(property?.fmlPosition?.sourceUri).toBe(expectedUri);
+      }
+    }
+
+    const svg = generateCompleteFmlDiagramSvg(
+      appointment, lookup, true, () => lookup, undefined, resolveExternalGroup,
+    );
+    expect(svg).toContain(`data-pos-uri="${encodeURIComponent(backboneUri)}" data-pos-version="3"`);
+    expect(svg).toContain(`data-pos-uri="${encodeURIComponent(elementUri)}" data-pos-version="4"`);
+  });
+
+  test("complete diagram greys only properties that do not participate directly or indirectly", () => {
+    const text = [
+      "uses 'http://example.org/StructureDefinition/ClaimRow' alias ClaimRow as source",
+      "group Main(source src : ClaimRow, target tgt : ClaimRow) {",
+      "    src.detail as sourceDetail -> tgt.detail as targetDetail then CopyDetail(sourceDetail, targetDetail);",
+      "    src -> tgt.generated = uuid();",
+      "    src -> tgt.fixed = 'constant';",
+      "}",
+      "group CopyDetail(source src : Detail, target tgt : Detail) {",
+      "    src.value -> tgt.value;",
+      "}",
+    ].join("\n");
+    const fml = parseFML(text) as FmlStructureMap;
+    const models: TypeModel[] = [
+      {
+        TypeName: "ClaimRow",
+        Elements: [
+          {ElementName: "claimNumber", Type: [{TypeName: "string"}]},
+          {ElementName: "detail", Type: [{TypeName: "Detail"}]},
+          {ElementName: "generated", Type: [{TypeName: "string"}]},
+          {ElementName: "fixed", Type: [{TypeName: "string"}]},
+        ],
+      },
+      {
+        TypeName: "Detail",
+        Elements: [
+          {ElementName: "value", Type: [{TypeName: "string"}]},
+          {ElementName: "note", Type: [{TypeName: "string"}]},
+        ],
+      },
+      {TypeName: "string", Elements: []},
+    ];
+    const lookup = (typeName: string) => models.find(model => model.TypeName === typeName);
+    const diagram = extractCompleteFmlStructureMapDiagram(fml, lookup, true, () => lookup);
+    const svg = generateCompleteFmlDiagramSvg(fml, lookup, true, () => lookup);
+    const main = diagram.groups.find(group => group.name === "Main")!;
+    const sourceByPath = new Map(main.sourceTypes[0].properties.map(property => [property.path, property]));
+    const targetByPath = new Map(main.targetTypes[0].properties.map(property => [property.path, property]));
+
+    expect(sourceByPath.get("claimNumber")?.isUnused).toBe(true);
+    expect(sourceByPath.get("detail")?.isUnused).not.toBe(true);
+    expect(sourceByPath.get("detail.value")?.isUnused).not.toBe(true);
+    expect(sourceByPath.get("detail.note")?.isUnused).toBe(true);
+    expect(targetByPath.get("detail.value")?.isUnused).not.toBe(true);
+    expect(targetByPath.get("generated")?.isUnused).not.toBe(true);
+    expect(targetByPath.get("fixed")?.isUnused).not.toBe(true);
+    expect(targetByPath.get("detail.note")?.isUnused).toBe(true);
+    expect(svg).toContain('class="sm-prop-unused"');
+  });
+
+  test("complete diagram retains target collection instances and expands each traversed instance", () => {
+    const text = [
+      "uses 'http://example.org/StructureDefinition/ClaimRow' alias ClaimRow as source",
+      "group Main(source src : ClaimRow, target tgt : ClaimRow) {",
+      "    src.claimNumber as firstValue -> tgt.items as firstItem then { firstValue -> firstItem.value; };",
+      "    src.claimNumber as secondValue -> tgt.items as secondItem then { secondValue -> secondItem.value; };",
+      "}",
+    ].join("\n");
+    const fml = parseFML(text) as FmlStructureMap;
+    const models: TypeModel[] = [
+      {
+        TypeName: "ClaimRow",
+        Elements: [
+          {ElementName: "claimNumber", Type: [{TypeName: "string"}]},
+          {ElementName: "items", Type: [{TypeName: "Item"}], IsArray: true},
+        ],
+      },
+      {
+        TypeName: "Item",
+        Elements: [
+          {ElementName: "value", Type: [{TypeName: "string"}]},
+          {ElementName: "note", Type: [{TypeName: "string"}]},
+        ],
+      },
+      {TypeName: "string", Elements: []},
+    ];
+    const lookup = (typeName: string) => models.find(model => model.TypeName === typeName);
+    const diagram = extractCompleteFmlStructureMapDiagram(fml, lookup, true, () => lookup);
+    const targetPaths = diagram.groups[0].targetTypes[0].properties.map(property => property.path);
+
+    expect(targetPaths.filter(path => /^items#[^.]+$/.test(path))).toHaveLength(2);
+    expect(targetPaths.filter(path => /^items#[^.]+\.value$/.test(path))).toHaveLength(2);
+    expect(targetPaths.filter(path => /^items#[^.]+\.note$/.test(path))).toHaveLength(2);
+    expect(targetPaths).not.toContain("items");
+  });
+
   test("abbreviates long computed-source namespaces and keeps the full expression in the tooltip", () => {
     const text = [
       "uses 'http://hl7.org/fhir/5.0/StructureDefinition/QuestionnaireResponse' alias QuestionnaireResponse as source",

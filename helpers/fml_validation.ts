@@ -48,19 +48,6 @@ function validateRules(rules: Rule[], diagnostics: FmlModelDiagnostic[]): void {
 }
 
 function validateTransform(transform: Transform, diagnostics: FmlModelDiagnostic[]): void {
-  let hasInvalidExpression = false;
-  for (const parameter of transform.parameters) {
-    if (parameter.type === 'expression' && transform.type !== 'evaluate') {
-      hasInvalidExpression = true;
-      diagnostics.push(diagnostic(
-        'error',
-        "FHIRPath expression parameters are only permitted for the 'evaluate' transform.",
-        parameter.position,
-        String(parameter.value),
-      ));
-    }
-  }
-
   const definition = transformDefinitions.get(transform.type);
   if (!definition) {
     diagnostics.push(diagnostic(
@@ -71,7 +58,6 @@ function validateTransform(transform: Transform, diagnostics: FmlModelDiagnostic
     ));
     return;
   }
-  if (hasInvalidExpression) return;
 
   const candidates = definition.signatures.filter(signature => acceptsParameterCount(signature, transform.parameters.length));
   if (candidates.length === 0) {
@@ -143,7 +129,7 @@ function validateSignature(name: string, signature: TransformSignature, actuals:
           message: `Transform '${name}' parameter '${expected.name}' must be ${expected.type}; received ${actualType(actual)}.`,
           parameter: actual,
         });
-      } else if (expected.allowedValues && typeof actual.value === 'string' && !expected.allowedValues.includes(actual.value)) {
+      } else if (expected.allowedValues && actual.type === 'literal' && typeof actual.value === 'string' && !expected.allowedValues.includes(actual.value)) {
         issues.push({
           message: `Transform '${name}' parameter '${expected.name}' must be one of: ${expected.allowedValues.join(', ')}.`,
           parameter: actual,
@@ -165,7 +151,7 @@ function isCompatibleType(expected: TransformParameterType, actual: TransformPar
     return actual.type === 'expression'
       || actual.type === 'literal';
   }
-  if (actual.type === 'expression') return false;
+  if (actual.type === 'expression') return true;
   if (expected === 'any') return true;
   if (expected === 'canonical' || expected === 'string') return actual.literalType === 'string';
   if (expected === 'integer') return actual.literalType === 'integer';

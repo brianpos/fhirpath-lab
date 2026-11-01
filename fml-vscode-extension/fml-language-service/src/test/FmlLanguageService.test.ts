@@ -511,6 +511,30 @@ test("validates and shows resolved parameters for dependent groups from imported
     );
 });
 
+test("reports incompatible imported extends parameters on the base group token", async () => {
+    const symbols = service.getDocumentSymbols({
+        uri: "file:///base.fml",
+        text: `
+uses 'http://hl7.org/fhir/4.0/StructureDefinition/BackboneElement' alias S as source
+uses 'http://hl7.org/fhir/3.0/StructureDefinition/BackboneElement' alias T as target
+group Base(source src : S, target tgt : T) { }
+`,
+    });
+    const text = [
+        "uses 'http://hl7.org/fhir/4.0/StructureDefinition/Dosage' alias S as source",
+        "uses 'http://hl7.org/fhir/3.0/StructureDefinition/Dosage' alias T as target",
+        "imports 'http://example.org/Base'",
+        "group Main(source src : S, target tgt : T)",
+        "  extends Base { }",
+    ].join("\r\n");
+    const result = await service.validateDocument({uri: "file:///dosage.fml", text}, [], symbols.groupSignatures);
+    assert.equal(result.errorCount, 1, JSON.stringify(result.diagnostics));
+    assert.match(result.diagnostics[0].message, /target parameter 'tgt'.*Dosage.*STU3.*BackboneElement/);
+    assert.deepEqual(result.diagnostics[0].range, {
+        start: {line: 4, character: 10}, end: {line: 4, character: 14},
+    });
+});
+
 test("variable hovers do not leak across sibling rules and show provenance", () => {
     const text = [
         "uses 'http://hl7.org/fhir/5.0/StructureDefinition/MedicationStatement' alias MedicationStatement as source",
@@ -1191,7 +1215,7 @@ group Main(source src : QuestionnaireResponse, target tgt : Observation) {
     assert.ok(result.diagnostics.every(diagnostic => !diagnostic.message.includes("Identity assignment")));
 });
 
-test("reports unsupported source Reference target profiles on identity mappings", async () => {
+test("warns about unsupported source Reference target profiles on identity mappings", async () => {
     const result = await service.validateDocument({
         uri: "file:///reference-profiles.fml",
         text: `
@@ -1203,7 +1227,9 @@ group Main(source src : Appointment, target tgt : AllergyIntolerance) {
 `,
     });
 
-    assert.equal(result.errorCount, 1);
+    assert.equal(result.errorCount, 0);
+    assert.equal(result.warningCount, 1);
+    assert.equal(result.diagnostics[0].severity, "warning");
     assert.match(result.diagnostics[0].message, /does not support source Reference target profile\(s\): 'Group'/);
     assert.deepEqual(result.diagnostics[0].range.start, {line: 4, character: 19});
 });

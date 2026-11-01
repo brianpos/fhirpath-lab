@@ -1,0 +1,72 @@
+/// url = 'http://hl7.org/fhir/uv/omop/StructureMap/BloodPressureVitalSignsMap'
+/// name = 'BloodPressureVitalSignsMap'
+/// title = 'Mapping Blood Pressure Vital Signs resource to Measurement OMOP Domain'
+/// status = 'active'
+/// description = "This mapping maps blood pressure FHIR Vital Signs instances that are considered measurements to OMOP Measurement Table objects."
+
+uses "http://hl7.org/fhir/StructureDefinition/Observation" alias BloodPressure as source
+uses "http://hl7.org/fhir/uv/omop/StructureDefinition/RecordSet" alias BPRecord as target
+uses "http://hl7.org/fhir/uv/omop/StructureDefinition/Measurement" alias Measurement as target
+
+//make the bundle
+group BloodPressure(source src : BloodPressure, target recordSet : BPRecord) {
+    src where (src.category.coding.code contains 'vital-signs') then {
+        src where (src.effective.empty().not()) then {
+            src.code as s -> recordSet then {
+                s.coding as sc -> recordSet then {
+                    sc.code as a where (a in ('85354-9' | '8478-0')) -> recordSet then {
+                        src as parent -> recordSet.measurement as measurement then parentTable(parent, measurement) "bpMeasurement";
+                        src.component as comp -> recordSet then {
+                            comp where (comp.code.coding.code = '8480-6') -> recordSet.measurement as measurement then Systolic(src, comp, measurement) "systolicMeasurement";
+                            comp where (comp.code.coding.code = '8462-4') -> recordSet.measurement as measurement then Diastolic(src, comp, measurement) "diastolicMeasurement";
+                        };
+                    };
+                };
+            };
+        } "bpMapping";
+
+    } "bpComponentEntries";
+}
+
+group parentTable(source src: BloodPressure, target tgt: Measurement) {
+    src.id as id -> tgt.measurement_id = cast(id, "code");
+    src.code as s -> tgt then {
+        s.coding as sc -> tgt then {
+            sc.code as a -> tgt.measurement_type_concept_id = translate(a, 'http://hl7.org/fhir/uv/omop/ConceptMap/BloodPressureCodes', 'code');
+            sc.display as display -> tgt.measurement_concept_id = display;
+        };
+    };
+    src.effective : dateTime as edt -> tgt.measurement_datetime = edt, tgt.measurement_date = (edt.toString().substring(0,10).toDate());
+    src.effective : instant as einst -> tgt.measurement_datetime = cast(einst, "dateTime"), tgt.measurement_date = (einst.toString().substring(0,10).toDate());
+    src.effective : Period as s -> tgt then {
+        s.start as eps -> tgt.measurement_datetime = cast(eps, "dateTime"), tgt.measurement_date = (eps.toString().substring(0,10).toDate());
+    } "MeasurementDate";
+}
+
+//make the systolic measurement table
+group Systolic(source parent : BloodPressure, source comp, target tgt : Measurement) {
+    parent.effective : dateTime as edt -> tgt.measurement_datetime = edt, tgt.measurement_date = (edt.toString().substring(0,10).toDate());
+    parent.effective : instant as einst -> tgt.measurement_datetime = cast(einst, "dateTime"), tgt.measurement_date = (einst.toString().substring(0,10).toDate());
+    parent.effective : Period as s -> tgt then {
+        s.start as eps -> tgt.measurement_datetime = cast(eps, "dateTime"), tgt.measurement_date = (eps.toString().substring(0,10).toDate());
+    } "MeasurementDate";
+
+    comp.value : Quantity as s -> tgt then {
+        s.value as a -> tgt.value_as_number = cast(a, "decimal");
+        s.unit as b -> tgt.unit_concept_id = b;
+    };
+}
+
+//make the diastolic measurement table
+group Diastolic(source parent : BloodPressure, source comp, target tgt : Measurement) {
+    parent.effective : dateTime as edt -> tgt.measurement_datetime = edt, tgt.measurement_date = (edt.toString().substring(0,10).toDate());
+    parent.effective : instant as einst -> tgt.measurement_datetime = cast(einst, "dateTime"), tgt.measurement_date = (einst.toString().substring(0,10).toDate());
+    parent.effective : Period as s -> tgt then {
+        s.start as eps -> tgt.measurement_datetime = cast(eps, "dateTime"), tgt.measurement_date = (eps.toString().substring(0,10).toDate());
+    } "MeasurementDate";
+
+    comp.value : Quantity as s -> tgt then {
+        s.value as a -> tgt.value_as_number = a, tgt.value_source_value = (a.toString());
+        s.unit as b -> tgt.unit_concept_id, tgt.unit_source_value = b;
+    };
+}

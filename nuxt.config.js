@@ -77,6 +77,7 @@ export default {
     transpile: [
       // "@fhir-typescript/r4b-core",
       "fhirpath",
+      "lossless-json",
       "ucum-lhc",
       "lforms-loader",
       "openai",

@@ -5,47 +5,25 @@ class StructureMapUtilitiesRender {
 
     constructor() {}
 
-    public static render(map: StructureMap, legacy: boolean = false): string {
+    public static render(map: StructureMap): string {
         let b: string[] = [];
-        if (legacy) {
-            // Legacy format: `map "url" = "name"` header line, no title/status metadata.
-            b.push(`map "${map.url}" = "${this.escapeJson(map.name)}"\n\n`);
-            if (map.description) {
-                this.renderMultilineDoco(b, map.description, 0);
-                b.push("\n");
-            }
-        } else {
-            // New format: `///` prefixed metadata directives for url, name, title, status, version.
-            if (map.url) {
-                b.push(`/// url = '${this.escapeSingleQuote(map.url)}'\n`);
-            }
-            if (map.name) {
-                b.push(`/// name = '${this.escapeSingleQuote(map.name)}'\n`);
-            }
-            if (map.title) {
-                b.push(`/// title = '${this.escapeSingleQuote(map.title)}'\n`);
-            }
-            if (map.status) {
-                b.push(`/// status = '${map.status}'\n`);
-            }
-            if (map.version) {
-                b.push(`/// version = '${this.escapeSingleQuote(map.version)}'\n`);
-            }
+        b.push(`map "${map.url}" = "${this.escapeJson(map.name)}"\n\n`);
+
+        if (map.title) {
+            b.push(`/// title = "${this.escapeJson(map.title)}"\n`);
+        }
+        if (map.status) {
+            b.push(`/// status = "${map.status}"\n`);
+        }
+        if (map.description) {
+            this.renderMultilineDoco(b, map.description, 0);
             b.push("\n");
-            if (map.description) {
-                this.renderMultilineDoco(b, map.description, 0);
-                b.push("\n");
-            }
         }
         this.renderConceptMaps(b, map);
         this.renderUses(b, map);
         this.renderImports(b, map);
         map.group.forEach(g => this.renderGroup(b, g));
         return b.join("");
-    }
-
-    private static escapeSingleQuote(str: string): string {
-        return str.replace(/'/g, "\\'");
     }
 
     private static renderConceptMaps(b: string[], map: StructureMap): void {

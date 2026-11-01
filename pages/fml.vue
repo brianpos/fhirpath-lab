@@ -11,7 +11,7 @@
           </v-icon>
         </v-btn>
         <div v-if="trace.length > 0" style="border-radius: 8px; border: solid 1px white; padding: 4px; margin-left: 6px;">
-          <v-btn v-if="debugTracePosition != undefined" x-small dark icon @click="debugTracePosition = 1; debuggerStepBack()" title="Reset to first trace">
+          <v-btn x-small dark icon @click="selectTrace(0)" title="Reset to first trace">
             <v-icon>
               mdi-bug-play-outline
             </v-icon>
@@ -105,6 +105,7 @@
             <div class="ct-header">
               <v-icon left dark> mdi-format-list-bulleted </v-icon>
               Trace / Debug
+              <span v-if="traceStatus !== 'complete'" class="ml-2">{{ traceStatus }}</span>
             </div>
             <v-simple-table style="flex-shrink:1;" ref="traceTable">
               <template v-for="(v1, index) in trace">
@@ -115,7 +116,13 @@
                         mdi-target
                       </v-icon>
                     </v-btn>
-                    <div :class="traceTypeClass(v1.type)">{{ v1.value }}</div>
+                    <div v-if="v1.phase" class="text-caption">
+                      {{ v1.phase }} / depth {{ v1.depth }}
+                      <span v-if="v1.mapFileName"> / {{ v1.mapFileName }}</span>
+                      <span v-if="v1.traceLocation"> / {{ v1.traceLocation }}</span>
+                    </div>
+                    <div :class="v1.exception ? 'error--text' : traceTypeClass(v1.category)" style="white-space: pre-wrap;">{{ v1.message }}</div>
+                    <div v-if="v1.exception && v1.exception !== v1.message" class="error--text">{{ v1.exception }}</div>
                   </td>
                 </tr>
               </template>
@@ -125,7 +132,7 @@
               Variables
             </div>
             <v-simple-table v-if="variables.length > 0" >
-              <th></th><th>mode</th><th>name</th><th>path</th>
+              <th></th><th>context</th><th>name</th><th>path</th><th>value / error</th>
               <template v-for="(v1, index) in variables">
                 <tr :key="index">
                   <td>
@@ -135,9 +142,10 @@
                       </v-icon>
                     </v-btn>
                   </td>
-                  <td>{{ v1.mode.toLowerCase() }}</td>
+                  <td>{{ v1.mode }}</td>
                   <td>{{ v1.name }}</td>
                   <td width="70%">{{ v1.path }}</td>
+                  <td><small>{{ v1.datatype }}</small><pre>{{ formatTraceVariable(v1) }}</pre></td>
                 </tr>
               </template>
             </v-simple-table>
@@ -149,7 +157,7 @@
               Variables
             </div>
             <v-simple-table >
-              <th></th><th>mode</th><th>name</th><th>path</th>
+              <th></th><th>context</th><th>name</th><th>path</th><th>value / error</th>
               <template v-if="variables.length > 0" v-for="(v1, index) in variables">
                 <tr :key="index">
                   <td>
@@ -159,9 +167,10 @@
                       </v-icon>
                     </v-btn>
                   </td>
-                  <td>{{ v1.mode.toLowerCase() }}</td>
+                  <td>{{ v1.mode }}</td>
                   <td>{{ v1.name }}</td>
                   <td width="70%">{{ v1.path }}</td>
+                  <td><small>{{ v1.datatype }}</small><pre>{{ formatTraceVariable(v1) }}</pre></td>
                 </tr>
               </template>
             </v-simple-table>
@@ -207,6 +216,21 @@
               <div v-if="instanceSvg" ref="instancePreview" class="diagram-preview-content" v-html="instanceSvg"
                 @click="handleDiagramClick" @keydown="handleDiagramKeydown"></div>
               <div v-else class="diagram-preview-empty">{{ diagramError ?? 'No instance diagram available' }}</div>
+            </div>
+          </template>
+
+          <template v-slot:Complete>
+            <div class="diagram-preview" :class="{ 'diagram-preview--stale': diagramIsStale }">
+              <div class="diagram-preview-options">
+                <v-switch v-model="completeShowAllProperties" label="Show all properties" dense hide-details
+                  @change="regenerateDiagrams" />
+              </div>
+              <div v-if="diagramIsStale && completeSvg" class="diagram-preview-status" role="status">
+                <div class="diagram-preview-status-message"><strong>Preview paused</strong> Fix the FML errors to refresh.</div>
+              </div>
+              <div v-if="completeSvg" ref="completePreview" class="diagram-preview-content" v-html="completeSvg"
+                @click="handleDiagramClick" @keydown="handleDiagramKeydown"></div>
+              <div v-else class="diagram-preview-empty">{{ diagramError ?? 'No complete diagram available' }}</div>
             </div>
           </template>
 
@@ -336,6 +360,14 @@
   overflow: auto;
 }
 
+.diagram-preview-options {
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  padding: 4px 12px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
 .diagram-preview--stale .diagram-preview-content {
   opacity: 0.28;
   filter: grayscale(0.35);
@@ -460,10 +492,18 @@ import {
   requestFhirContentTypeHeaders,
   fhirResourceTypes,
 } from "~/helpers/searchFhir";
-import axios, { AxiosRequestHeaders, AxiosResponse } from "axios";
+import axios, { AxiosRequestHeaders } from "axios";
 import { AxiosError } from "axios";
 import { CancelTokenSource } from "axios";
-import { getExtensionStringValue, getExtensions } from "fhir-extension-helpers";
+import {
+  createFmlContent,
+  parseDebugTrace,
+  parseFmlInput,
+} from "../fml-vscode-extension/fml-debug-service/src/FmlDebugService";
+import { FmlTraceLocationIndex } from "../fml-vscode-extension/fml-debug-service/src/FmlTraceLocationIndex";
+import type { FmlDebugTrace, FmlTraceEvent, FmlTraceVariable } from "../fml-vscode-extension/fml-debug-service/src/contracts";
+import { FmlLocalDebugService } from "../fml-vscode-extension/fml-debug-service/src/FmlLocalDebugService";
+import { parseFmlJson, stringifyFmlJson } from "../fml-vscode-extension/fml-executor/src";
 // import { getPreferredTerminologyServerFromSDC } from "fhir-sdc-helpers";
 import fhirpath from "fhirpath";
 import fhirpath_r4_model from "fhirpath/fhir-context/r4";
@@ -483,6 +523,7 @@ import type { FmlStructureMap, FhirVersion } from "~/helpers/fml_models";
 import { fmlToStructureMap } from "~/helpers/fml_to_structuremap";
 import { validateFmlModel } from "~/helpers/fml_validation";
 import { generateFmlInstanceDiagramSvg } from "~/helpers/structuremap_diagram_instance";
+import { generateFmlInstanceDiagramSvg as generateFmlCompleteDiagramSvg } from "~/helpers/structuremap_diagram_complete";
 import { highlightDiagramConnection, findConnectionIdsForClick } from "~/helpers/diagram_interaction";
 import { generateStructureMapDiagramSvg } from "~/helpers/structuremap_diagram";
 import { lookupByTypeName as lookupByTypeNameSTU3 } from "~/helpers/models/generated/stu3";
@@ -501,7 +542,7 @@ import "ace-builds/src-noconflict/mode-json";
 import "ace-builds/src-noconflict/theme-chrome";
 
 import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from "lz-string";
-import { TestFhirMapData, VariableData } from "~/models/testenginemodel";
+import { TestFhirMapData } from "~/models/testenginemodel";
 import { OperationOutcomeIssue } from "fhir/r4b";
 import { ChatCompletionCreateParamsNonStreaming, ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import {
@@ -513,6 +554,7 @@ import { VueComponent } from "vuereact-combined";
 
 const shareTooltipText = 'Copy a sharable link to this test expression';
 const shareZulipTooltipText = 'Copy a sharable link for Zulip to this test expression';
+const debugMapFileName = 'map.fml';
 
 const sampleXmlResource = `{
   "resourceType": "Patient",
@@ -590,7 +632,7 @@ const sampleXmlResource = `{
 
 interface FhirMapData {
   prevFocus?: any;
-  raw?: fhir4b.Parameters;
+  raw?: fhir4b.Parameters | fhir4b.OperationOutcome;
   defaultProviderField?: string;
   structureMapId?: string;
   resourceId?: string;
@@ -608,10 +650,12 @@ interface FhirMapData {
   showResourceSelector?: boolean;
   showAdvancedSettings: boolean;
   cancelSource?: CancelTokenSource;
+  localExecutionAbort?: AbortController;
   tab: any;
   results?: ResultData;
-  trace: TraceData[];
-  variables: VariableData[];
+  trace: FmlTraceEvent[];
+  traceStatus: FmlDebugTrace['traceStatus'];
+  variables: FmlTraceVariable[];
   selectedEngine: string;
   expressionEditor?: ace.Ace.Editor;
   testResourceFormat: string;
@@ -621,6 +665,8 @@ interface FhirMapData {
   openAIexpressionExplanationLoading: boolean;
   parsedFmlMap?: FmlStructureMap;
   instanceSvg?: string;
+  completeSvg?: string;
+  completeShowAllProperties: boolean;
   diagramSvg?: string;
   diagramIsStale: boolean;
   diagramError?: string;
@@ -640,89 +686,9 @@ interface FhirMapData {
 
 interface ResultData {
   type: string;
-  value: any;
-}
-
-interface TraceData {
-  name: string;
-  type?: string;
   value: string;
-  startPosition?: number;
-  length?: number;
-  variables?: VariableData[];
 }
 
-function getValue(entry: fhir4b.ParametersParameter): ResultData | undefined {
-  let myMap = new Map(Object.entries(entry));
-  for (let [k, v] of myMap.entries()) {
-    if (k.startsWith('value'))
-      return { type: k.replace('value', ''), value: v };
-    else if (k == 'resource')
-      return { type: (v as fhir4b.Resource).resourceType, value: v };
-  }
-  const extVal = getExtensionStringValue(entry, "http://fhir.forms-lab.com/StructureDefinition/json-value");
-  if (extVal)
-    return { type: entry.name, value: JSON.parse(extVal) };
-  return undefined;
-}
-function getTraceValue(entry: fhir4b.ParametersParameter): TraceData[] {
-  let result: TraceData[] = [];
-  if (entry.part) {
-    for (let part of entry.part) {
-      const cursorPosition = getExtensionStringValue(part, "http://fhirpath-lab.com/StructureDefinition/Cursor")
-      let startPosition: number|undefined = undefined;
-      let length: number|undefined = undefined;
-      if (cursorPosition) {
-        // extract the formatted position value (start - end)
-        const posParts = cursorPosition?.replace(" ", "").split('-');
-        if (posParts.length == 2) {
-          startPosition = parseInt(posParts[0]);
-          length = parseInt(posParts[1]) - startPosition;
-        }
-      }
-      const val = getValue(part);
-      let traceData: TraceData = {
-        name: entry.valueString ?? '',
-        type: part.name,
-        value: '',
-        startPosition: startPosition,
-        length: length,
-      };
-      if (part.name === "debug") {
-        traceData.value = val?.value;
-      }
-      else {
-        traceData.value = JSON.stringify(val?.value, null, 4);
-      }
-      result.push(traceData);
-
-      // Load in any variables
-      let vars = getExtensions(part, "http://fhirpath-lab.com/StructureDefinition/Variable");
-      if (vars && vars.length > 0) {
-        console.log(vars)
-        for (let v of vars) {
-          if (v.extension) {
-            let varName = v.extension[0].valueString;
-            let varMode = v.extension[0].url;
-            let varValuePath = getExtensionStringValue(v, "path");
-            if (varName && varValuePath) {
-              traceData.variables = traceData.variables ?? [];
-              var varData: VariableData = {
-                name: varName,
-                path: varValuePath,
-                data: varValuePath,
-                mode: varMode.replace("name-", ""),
-              };
-              traceData.variables.push(varData);
-              console.log(varMode, varName, traceData.variables);
-            }
-          }
-        }
-      }
-    }
-  }
-  return result;
-}
 function getPriorityIssue(
   issues: OperationOutcomeIssue[] | undefined
 ): OperationOutcomeIssue | undefined {
@@ -759,6 +725,7 @@ export default Vue.extend({
   },
 
   beforeDestroy() {
+    this.localExecutionAbort?.abort();
     document.removeEventListener('keydown', this.DebugFunctionKeyHandler);
     if (this.diagramDebounceTimer) clearTimeout(this.diagramDebounceTimer);
   },
@@ -767,15 +734,19 @@ export default Vue.extend({
     executionEngines(): string[] { 
       if (this.showAdvancedSettings){
         return [
+          "JavaScript (local)",
           ".NET (brianpos)",
           "java (HAPI)",
+          "java (Validator)",
           "matchbox",
           "Python (MaLaC-HD)"
         ];
       }
       return [
+        "JavaScript (local)",
         ".NET (brianpos)",
         "java (HAPI)",
+        "java (Validator)",
         "matchbox", // matchbox now released! Thanks Oliver
         "Python (MaLaC-HD)"
       ]
@@ -842,6 +813,13 @@ export default Vue.extend({
           iconName: "mdi-file-document-outline",
           tabName: "Instance",
           title: "Instance-level view showing source/target objects with mapped and unmapped properties",
+          show: true,
+          enabled: true,
+        },
+        {
+          iconName: "mdi-table-eye",
+          tabName: "Complete",
+          title: "Property-focused view with optional unmapped properties",
           show: true,
           enabled: true,
         },
@@ -1112,7 +1090,7 @@ group SetEntryData(source src: Patient, target entry)
       let outputPaths: string[] = [];
       for (let n = this.variables.length - 1; n >= 0; n--) {
         const variable = this.variables[n];
-        if (variable.mode === 'INPUT' && variable.path) {
+        if ((variable.retrievalFromInput || variable.mode?.toUpperCase() === 'INPUT') && variable.path) {
           let skip = false;
           for (let p of inputPaths) {
             if (p.length > variable.path.length && p.startsWith(variable.path)) {
@@ -1131,7 +1109,7 @@ group SetEntryData(source src: Patient, target entry)
           if (marker) {
             this.debugInputResourceSelectionMarker?.push(marker);
           }
-        } else if (variable.mode === 'OUTPUT' && variable.path) {
+        } else if (variable.mode?.toUpperCase() === 'OUTPUT' && variable.path) {
           let skip = false;
           for (let p of outputPaths) {
             if (p.length > variable.path.length && p.startsWith(variable.path)) {
@@ -1156,39 +1134,29 @@ group SetEntryData(source src: Patient, target entry)
     },
 
     debuggerStepBack() {
-      this.clearDebuggerSelectionMarkers();
-
-      if (this.debugTracePosition > 0)
-        this.debugTracePosition--;
-      const trace = this.trace[this.debugTracePosition];
-      if (trace.startPosition && trace.length) {
-        this.highlightText(this.expressionEditor, trace.startPosition, trace.length, true);
-      }
-      this.variables = trace.variables ?? [];
-      this.scrollIntoView(this.debugTracePosition);
-
-      // also highlight any variables
-      this.highlightDebuggerVariables();
+      this.selectTrace(Math.max(0, this.debugTracePosition - 1));
     },
 
     debuggerStepForward() {
+      this.selectTrace(Math.min(this.trace.length - 1, this.debugTracePosition + 1));
+    },
+
+    selectTrace(position: number, debugMode = true) {
+      const trace = this.trace[position];
+      if (!trace) return;
       this.clearDebuggerSelectionMarkers();
-
-      if (this.debugTracePosition < this.trace.length-1)
-      {
-        this.debugTracePosition++;
-      }  else {
-        return;
+      this.debugTracePosition = position;
+      this.variables = trace.variables;
+      // Coordinates belong to the submitted map, not to subsequent editor changes.
+      if (trace.source?.text === this.getFhirpathExpression() && trace.range) {
+        this.highlightText(this.expressionEditor, trace.range.startOffset, trace.range.length, debugMode);
       }
-      const trace = this.trace[this.debugTracePosition];
-      if (trace.startPosition && trace.length) {
-        this.highlightText(this.expressionEditor, trace.startPosition, trace.length, true);
-      }
-      this.variables = trace.variables ?? [];
-      this.scrollIntoView(this.debugTracePosition);
-
-      // also highlight any variables
+      this.scrollIntoView(position);
       this.highlightDebuggerVariables();
+    },
+
+    formatTraceVariable(variable: FmlTraceVariable): string | undefined {
+      return variable.errorMessage ?? JSON.stringify(variable.data?.value, null, settings.getTabSpaces());
     },
 
     highlightText(editor?: ace.Ace.Editor, startPosition?: number, length?: number, debugMode?: boolean): void {
@@ -1245,254 +1213,32 @@ group SetEntryData(source src: Patient, target entry)
       }
     },
 
-    findRuleInList(rules: any[], ruleName: string, normalizedSearchName: string): any {
-      // Search through a list of rules, including nested dependent rules
-      const matchesBySourceElement: any[] = [];
-      
-      for (const rule of rules) {
-        // Try exact match first
-        if (rule.name === ruleName) {
-          return rule;
-        }
-        
-        // Try normalized match
-        const normalizeRuleName = (name: string) => name.toLowerCase().replace(/[-_\s]/g, '');
-        if (rule.name && normalizeRuleName(rule.name) === normalizedSearchName) {
-          return rule;
-        }
-        
-        // Recursively search in dependent rules
-        if (rule.dependent && rule.dependent.rules && rule.dependent.rules.length > 0) {
-          const foundInDependent = this.findRuleInList(rule.dependent.rules, ruleName, normalizedSearchName);
-          if (foundInDependent) {
-            return foundInDependent;
-          }
-        }
-        
-        // Fallback: check source.element for unnamed rules
-        // This handles simple copy rules like "src.id -> tgt.id" where the rule has no name
-        if (!rule.name && rule.sources && rule.sources.length > 0) {
-          for (const source of rule.sources) {
-            if (source.element === ruleName || (source.element && normalizeRuleName(source.element) === normalizedSearchName)) {
-              matchesBySourceElement.push(rule);
-              break; // Don't add the same rule multiple times
-            }
-          }
-        }
-      }
-      
-      // If we found matches by source.element, only return if there's exactly one
-      // Multiple matches would be ambiguous, so we do nothing in that case
-      if (matchesBySourceElement.length === 1) {
-        console.log('Found unnamed rule by source.element:', ruleName);
-        return matchesBySourceElement[0];
-      } else if (matchesBySourceElement.length > 1) {
-        console.log(`Found ${matchesBySourceElement.length} unnamed rules with source.element matching "${ruleName}" - too ambiguous, skipping`);
-      }
-      
-      return null;
+    populateTracePositions(mapText: string) {
+      if (!this.trace.some(event => event.source && event.traceLocation && !event.range)) return;
+      const model = parseFML(mapText);
+      if (isFmlParseError(model)) return;
+      const locationIndex = new FmlTraceLocationIndex(model);
+      this.trace = this.trace.map(event => event.source && event.traceLocation && !event.range
+        ? {...event, range: locationIndex.rangeFor(event.traceLocation)}
+        : event);
     },
 
-    populateTracePositions() {
-      // Populate position information for trace entries that don't have it
-      if (!this.parsedFmlMap || !this.trace || this.trace.length === 0) {
-        return;
-      }
-
-      const fmlText = this.getFhirpathExpression();
-      if (!fmlText) return;
-
-      for (let trace of this.trace) {
-        // Skip if position already populated
-        if (trace.startPosition !== undefined && trace.length !== undefined) {
-          continue;
-        }
-
-        if (!trace.value) continue;
-
-        // Parse trace name - format examples:
-        // "Group : patientMap; vars = ..."
-        // "  rule : bundleid; vars = ..."
-        let groupName: string | undefined;
-        let ruleName: string | undefined;
-
-        const traceName = trace.value.trim();
-        
-        // Check if it's a group trace
-        const groupMatch = traceName.match(/^Group\s*:\s*([^;]+)/);
-        if (groupMatch) {
-          groupName = groupMatch[1].trim();
-        } else {
-          // Check if it's a rule trace
-          const ruleMatch = traceName.match(/^rule\s*:\s*([^;]+)/);
-          if (ruleMatch) {
-            ruleName = ruleMatch[1].trim();
-            // For rules, we need to find which group they belong to
-            // We'll search all groups for this rule
-          }
-        }
-
-        if (!groupName && !ruleName) continue;
-
-        let position;
-
-        if (groupName) {
-          // Find the group in the parsed map
-          const group = this.parsedFmlMap.groups.find(g => g.name === groupName);
-          if (group && group.position) {
-            position = group.position;
-          }
-        } else if (ruleName) {
-          // Search for the rule in all groups
-          console.log('Searching for rule:', ruleName);
-          // Normalize rule name for comparison (remove hyphens, underscores, etc.)
-          const normalizeRuleName = (name: string) => name.toLowerCase().replace(/[-_\s]/g, '');
-          const normalizedSearchName = normalizeRuleName(ruleName);
-          
-          for (const group of this.parsedFmlMap.groups) {
-            console.log('Checking group:', group.name, 'rules:', group.rules.map(r => r.name || '(unnamed)'));
-            if (group.rules) {
-              // Use recursive search to find rule in top-level and dependent rules
-              const rule = this.findRuleInList(group.rules, ruleName, normalizedSearchName);
-              
-              if (rule && rule.position) {
-                position = rule.position;
-                console.log('Found rule position:', position);
-                break;
-              }
-            }
-          }
-          if (!position) {
-            console.log('Rule position not found for:', ruleName);
-          }
-        }
-
-        // Populate the trace with position information
-        if (position) {
-          trace.startPosition = position.startIndex;
-          trace.length = position.endIndex - position.startIndex;
-        }
-      }
-
-      console.log('Populated trace positions from FML map');
-    },
-
-    navigateToVariable(variable: VariableData) {
+    navigateToVariable(variable: FmlTraceVariable) {
       console.log('variable:', variable);
       let inputResourceEditor = this.$refs.inputResourceEditor as ResourceEditor;
       let outputResourceEditor = this.$refs.outputResourceEditor as ResourceEditor;
       let tabControl: TwinPaneTab = this.$refs.twinTabControl as TwinPaneTab;
 
-      if (variable.mode === 'INPUT' && variable.path) {
+      if ((variable.retrievalFromInput || variable.mode?.toUpperCase() === 'INPUT') && variable.path) {
         const marker = inputResourceEditor.navigateToContext(fhirpath_r4_model, variable.path);
         tabControl?.selectTab(1);
-      } else if (variable.mode === 'OUTPUT' && variable.path) {
+      } else if (variable.mode?.toUpperCase() === 'OUTPUT' && variable.path) {
         const marker = outputResourceEditor.navigateToContext(fhirpath_r4_model, variable.path);
         tabControl?.selectTab(4);
       }
     },
-    navigateToTrace(trace: TraceData) {
-      console.log('trace:', trace);
-      if (trace.startPosition && trace.length) {
-        this.highlightText(this.expressionEditor, trace.startPosition, trace.length);
-      }
-      
-      // Scan trace information to determine group/rule association
-      if (this.parsedFmlMap && trace.value) {
-        const traceName = trace.value.trim();
-        console.log('Analyzing trace line:', traceName);
-        
-        // Parse trace name - format examples:
-        // "Group : patientMap; vars = ..."
-        // "  rule : bundleid; vars = ..."
-        let groupName: string | undefined;
-        let ruleName: string | undefined;
-        
-        // Check if it's a group trace
-        const groupMatch = traceName.match(/^Group\s*:\s*([^;]+)/);
-        if (groupMatch) {
-          groupName = groupMatch[1].trim();
-        } else {
-          // Check if it's a rule trace
-          const ruleMatch = traceName.match(/^rule\s*:\s*([^;]+)/);
-          if (ruleMatch) {
-            ruleName = ruleMatch[1].trim();
-          }
-        }
-        
-        if (groupName) {
-          // Find the group in the parsed map
-          const group = this.parsedFmlMap.groups.find(g => g.name === groupName);
-          
-          if (group) {
-            console.log('Found group:', {
-              name: group.name,
-              parameters: group.parameters,
-              extends: group.extends,
-              typeMode: group.typeMode,
-              rulesCount: group.rules.length,
-              position: group.position
-            });
-          } else {
-            console.log('Group not found:', groupName);
-            console.log('Available groups:', this.parsedFmlMap.groups.map(g => g.name));
-          }
-        } else if (ruleName) {
-          // Search for the rule in all groups
-          console.log('Searching for rule:', ruleName);
-          // Normalize rule name for comparison (remove hyphens, underscores, etc.)
-          const normalizeRuleName = (name: string) => name.toLowerCase().replace(/[-_\s]/g, '');
-          const normalizedSearchName = normalizeRuleName(ruleName);
-          
-          let foundRule = false;
-          for (const group of this.parsedFmlMap.groups) {
-            console.log('  Checking group:', group.name, '- rules:', group.rules.map(r => r.name || '(unnamed)'));
-            if (group.rules) {
-              // Use recursive search to find rule in top-level and dependent rules
-              const rule = this.findRuleInList(group.rules, ruleName, normalizedSearchName);
-              
-              if (rule) {
-                if (rule.name !== ruleName) {
-                  console.log('Found rule using normalized match (original:', rule.name, ', searched:', ruleName, ')');
-                }
-                console.log('Found rule in group:', group.name);
-                console.log('Rule details:', {
-                  name: rule.name,
-                  sources: rule.sources,
-                  targets: rule.targets,
-                  position: rule.position,
-                  hasDependent: !!rule.dependent
-                });
-                foundRule = true;
-                break;
-              }
-            }
-          }
-          if (!foundRule) {
-            console.log('Rule not found:', ruleName, '(normalized:', normalizedSearchName, ')');
-            console.log('All available rules across groups (including nested):');
-            const collectAllRules = (rules: any[], depth = 0): string[] => {
-              const indent = '  '.repeat(depth);
-              const result: string[] = [];
-              for (const r of rules) {
-                const name = r.name || '(unnamed)';
-                const normalized = name !== '(unnamed)' ? ` (normalized: ${normalizeRuleName(name)})` : '';
-                result.push(`${indent}- ${name}${normalized}`);
-                if (r.dependent && r.dependent.rules) {
-                  result.push(...collectAllRules(r.dependent.rules, depth + 1));
-                }
-              }
-              return result;
-            };
-            this.parsedFmlMap.groups.forEach(g => {
-              console.log(`  Group ${g.name}:`);
-              collectAllRules(g.rules, 1).forEach(line => console.log(line));
-            });
-          }
-        }
-      } else if (!this.parsedFmlMap) {
-        console.log('FML map not yet parsed');
-      }
+    navigateToTrace(trace: FmlTraceEvent) {
+      this.selectTrace(this.trace.indexOf(trace), false);
     },
 
     selectTab(tabIndex: number) {
@@ -1676,6 +1422,7 @@ group SetEntryData(source src: Patient, target entry)
       if (!fmlText) {
         this.parsedFmlMap = undefined;
         this.instanceSvg = undefined;
+        this.completeSvg = undefined;
         this.diagramSvg = undefined;
         this.diagramIsStale = false;
         this.diagramError = undefined;
@@ -1701,8 +1448,12 @@ group SetEntryData(source src: Patient, target entry)
         const lookup = this.composedTypeLookup();
         const lookupForVersion = (v?: FhirVersion) => this.lookupForVersion(v);
         const instanceSvg = generateFmlInstanceDiagramSvg(result, lookup, true, lookupForVersion);
+        const completeSvg = generateFmlCompleteDiagramSvg(
+          result, lookup, this.completeShowAllProperties, lookupForVersion,
+        );
         const diagramSvg = generateStructureMapDiagramSvg(fmlToStructureMap(result), lookup, lookupForVersion);
         this.instanceSvg = instanceSvg;
+        this.completeSvg = completeSvg;
         this.diagramSvg = diagramSvg;
         this.diagramIsStale = false;
         this.diagramError = undefined;
@@ -1715,12 +1466,18 @@ group SetEntryData(source src: Patient, target entry)
 
     pauseDiagramPreview() {
       this.diagramError = 'FML is invalid. Fix the errors to render the diagram.';
-      this.diagramIsStale = this.instanceSvg !== undefined || this.diagramSvg !== undefined;
+      this.diagramIsStale = this.instanceSvg !== undefined
+        || this.completeSvg !== undefined
+        || this.diagramSvg !== undefined;
     },
 
     prepareDiagramNavigation() {
       this.$nextTick(() => {
-        const previews = [this.$refs.diagramPreview, this.$refs.instancePreview] as Array<Element | undefined>;
+        const previews = [
+          this.$refs.diagramPreview,
+          this.$refs.instancePreview,
+          this.$refs.completePreview,
+        ] as Array<Element | undefined>;
         for (const preview of previews) {
           if (!preview) continue;
           preview.querySelectorAll('[data-pos-start][data-pos-end]').forEach(element => {
@@ -1847,80 +1604,90 @@ group SetEntryData(source src: Patient, target entry)
     setResultJson(result: string) {
       this.debugText = result;
     },
-    async executeRequest<T>(url: string, p: fhir4b.Parameters) {
+    async executeRequest(url: string, p: fhir4b.Parameters, inputText: string, mapText: string) {
+      this.cancelSource?.cancel("new map test started");
+      const source = axios.CancelToken.source();
+      this.cancelSource = source;
+      this.loadingData = true;
       try {
-        if (this.cancelSource) this.cancelSource.cancel("new map test started");
-        this.cancelSource = axios.CancelToken.source();
-        this.loadingData = true;
-        let token = this.cancelSource.token;
-        let response: AxiosResponse<fhir4b.Parameters | fhir4b.OperationOutcome, any>;
-        response = await axios.post<fhir4b.Parameters>(url, p,
+        const response = await axios.post<fhir4b.Parameters | fhir4b.OperationOutcome>(url, p,
           {
-            cancelToken: token,
+            cancelToken: source.token,
+            validateStatus: () => true,
             headers: {
               "Accept": requestFhirAcceptHeaders,
               "Content-Type": requestFhirContentTypeHeaders
             }
           });
-        if (token.reason) {
-          console.log(token.reason);
-          return;
-        }
-        this.cancelSource = undefined;
-        this.loadingData = false;
-
-        const results = response.data;
-        console.log("Response: ", results);
-        if (results) {
-          this.setResultJson(JSON.stringify(results, null, 4));
-          if (results.resourceType === 'OperationOutcome') {
-            this.saveOutcome = results;
-            this.showOutcome = true;
-            return;
-          }
-          this.raw = results;
-          this.trace = [];
-
-          if (this.raw.parameter) {
-            for (let entry of this.raw.parameter) {
-              if (entry.name === 'parameters') {
-                // read the processing engine version
-                if (entry.part && entry.part.length > 0 && entry.part[0].name === 'evaluator') {
-                  this.processedByEngine = entry.part[0].valueString;
-                }
-
-                // The map would be in here too (but we can ignore that)
-                continue; // skip over the configuration settings
-              }
-
-              if (entry.name === 'trace') {
-                // Trace data
-                this.trace.push(...getTraceValue(entry));
-                continue;
-              }
-
-              if (entry.name === 'result') {
-                this.results = getValue(entry);
-              }
-            }
-          }
-
-          // Populate trace positions from parsed FML map if available
-          this.populateTracePositions();
-        }
+        if (source.token.reason) return;
+        this.processTransformResponse(response.data, inputText, mapText, response.status);
       } catch (err) {
-        this.loadingData = false;
-        if (axios.isAxiosError(err)) {
-          const serverError = err as AxiosError<fhir4b.OperationOutcome>;
-          if (serverError && serverError.response) {
-            this.setResultJson(JSON.stringify(serverError.response.data, null, 4));
-            this.saveOutcome = serverError.response.data;
-            this.showOutcome = true;
-            return serverError.response.data;
-          }
-        } else {
-          console.log("Client Error:", err);
+        if (source.token.reason || axios.isCancel(err)) return;
+        this.saveOutcome = {
+          resourceType: 'OperationOutcome',
+          issue: [{severity: 'error', code: 'processing', diagnostics: String(err)}],
+        };
+        this.showOutcome = true;
+      } finally {
+        if (this.cancelSource === source) {
+          this.cancelSource = undefined;
+          this.loadingData = false;
         }
+      }
+    },
+
+    processTransformResponse(results: fhir4b.Parameters | fhir4b.OperationOutcome, inputText: string, mapText: string, status = 200) {
+      if (!results || (results.resourceType !== 'Parameters' && results.resourceType !== 'OperationOutcome')) {
+        throw new Error(`Transform engine returned HTTP ${status} without FHIR Parameters or OperationOutcome.`);
+      }
+      this.raw = results;
+      this.setResultJson(JSON.stringify(results, null, settings.getTabSpaces()));
+      this.processedByEngine = undefined;
+      this.traceStatus = 'complete';
+      this.trace = [];
+      this.variables = [];
+      this.results = undefined;
+      this.debugTracePosition = 0;
+      this.saveOutcome = undefined;
+      this.showOutcome = false;
+      if (results.resourceType === 'Parameters') {
+        const debug = parseDebugTrace(results, parseFmlInput(inputText), undefined, [
+          {text: mapText, fileName: debugMapFileName},
+        ]);
+        this.processedByEngine = debug.evaluator;
+        this.traceStatus = debug.traceStatus ?? 'complete';
+        this.trace = debug.trace;
+        this.populateTracePositions(mapText);
+        this.variables = this.trace[0]?.variables ?? [];
+        this.results = debug.result ? {
+          type: debug.result.types['$']?.name ?? 'string',
+          value: debug.rawResult !== undefined
+            ? typeof debug.result.value === 'string'
+              ? debug.rawResult
+              : stringifyFmlJson(parseFmlJson(debug.rawResult), settings.getTabSpaces())
+            : JSON.stringify(debug.result.value, null, settings.getTabSpaces()),
+        } : undefined;
+      }
+      const outcome = results.resourceType === 'OperationOutcome'
+        ? results : results.parameter?.find(parameter => parameter.name === 'outcome')?.resource;
+      if (outcome?.resourceType === 'OperationOutcome') {
+        this.saveOutcome = outcome;
+        this.showOutcome = true;
+      }
+      if (status >= 400) {
+        const message = `Transform engine returned HTTP ${status}.`;
+        if (!this.saveOutcome?.issue.some(issue => issue.severity === 'error' || issue.severity === 'fatal')) {
+          this.saveOutcome = {
+            resourceType: 'OperationOutcome',
+            issue: [
+              ...(this.saveOutcome?.issue ?? []),
+              {severity: 'error', code: 'processing', diagnostics: message},
+            ],
+          };
+          this.showOutcome = true;
+        }
+        const last = this.trace[this.trace.length - 1];
+        if (last && !last.exception) last.exception = message;
       }
     },
 
@@ -2009,7 +1776,15 @@ group SetEntryData(source src: Patient, target entry)
 
       // reset the processing engine
       this.processedByEngine = undefined;
+      this.localExecutionAbort?.abort();
+      this.localExecutionAbort = undefined;
+      this.cancelSource?.cancel("new map test started");
+      this.cancelSource = undefined;
+      this.loadingData = false;
       this.saveOutcome = undefined;
+      this.showOutcome = false;
+      this.raw = undefined;
+      this.debugText = '';
 
       // reset the debugger position info
       let inputResourceEditor = this.$refs.inputResourceEditor as ResourceEditor;
@@ -2022,7 +1797,9 @@ group SetEntryData(source src: Patient, target entry)
       this.debugOutputResourceSelectionMarker = [];
       this.debugTracePosition = 0;
       this.trace = [];
+      this.traceStatus = 'complete';
       this.variables = [];
+      this.results = undefined;
 
       this.regenerateDiagrams();
 
@@ -2032,16 +1809,7 @@ group SetEntryData(source src: Patient, target entry)
       // brianpos hosted service
       // default the firely SDK/brianpos service
       // Source code for this is at https://github.com/brianpos/fhirpath-lab-dotnet
-      let url = (await settings.getServerEngineUrl("mapper_server"));
-
-      let p: fhir4b.Parameters = {
-        resourceType: "Parameters",
-        parameter: [{ name: "map", valueString: this.getFhirpathExpression() ?? 'today()' }]
-      };
-
-      if (model != undefined) {
-        p.parameter?.push({ name: "model", valueString: model });
-      }
+      let url = this.selectedEngine === "JavaScript (local)" ? "" : (await settings.getServerEngineUrl("mapper_server"));
 
       // for initial testing with .net
       if (!this.getResourceJson() && this.resourceId) {
@@ -2053,43 +1821,90 @@ group SetEntryData(source src: Patient, target entry)
         resourceJson = this.getResourceJson();
       }
 
+      const mapText = this.getFhirpathExpression() ?? '';
+      const mapParameter: fhir4b.ParametersParameter = {
+        name: "srcMap",
+        valueString: mapText,
+        extension: [{
+          url: "http://hl7.org/fhir/StructureDefinition/operationoutcome-file",
+          valueString: debugMapFileName,
+        }],
+      };
+      const p: fhir4b.Parameters = {resourceType: "Parameters", parameter: [mapParameter]};
+      if (model !== undefined) p.parameter?.push({name: "model", valueString: model});
+
+      let legacyPost = false;
+
       if (this.selectedEngine == "java (HAPI)") {
         url = (await settings.getServerEngineUrl("mapper_server_java"));
         (this as any).$appInsights?.trackEvent({ name: 'evaluate HAPI (map)' });
       }
+      else if (this.selectedEngine == "java (Validator)") {
+        url = (await settings.getServerEngineUrl("mapper_server_java_validator"));
+        (this as any).$appInsights?.trackEvent({ name: 'evaluate HAPI Validator (map)' });
+      }
       else if (this.selectedEngine == "matchbox") {
         url = (await settings.getServerEngineUrl("mapper_server_matchbox"));
         (this as any).$appInsights?.trackEvent({ name: 'evaluate matchbox (map)' });
+        legacyPost = true;
       }
       else if (this.selectedEngine == "Python (MaLaC-HD)") {
         url = (await settings.getServerEngineUrl("mapper_server_malac_hd"));
         (this as any).$appInsights?.trackEvent({ name: 'evaluate malac-hd (map)' });
+        legacyPost = true;
       }
-      else {
+      else if (this.selectedEngine !== "JavaScript (local)") {
         (this as any).$appInsights?.trackEvent({ name: 'evaluate .NET (map)' });
       }
 
       if (resourceJson) {
-        try {
-          // force the use of the valueString for all
-          // This is so that the parameters object doesn't matter if it is R4 or R5
-          // and we can use the same code for both 
+        if (legacyPost) {
+          mapParameter.name = "map";
           p.parameter?.push({ name: "resource", valueString: resourceJson });
+        } else {
+          p.parameter?.push({ name: "content", resource: createFmlContent(resourceJson) });
         }
-        catch (err) {
-          p.parameter?.push({ name: "resource", valueString: resourceJson });
-        }
+        p.parameter?.push({ name: "debug", valueBoolean: true });
       }
       else {
-        if (!this.resourceId?.startsWith('http')) {
-          p.parameter?.push({ name: "resource", valueString: settings.getFhirServerUrl() + '/' + this.resourceId });
-        }
-        else {
-          p.parameter?.push({ name: "resource", valueString: this.resourceId });
-        }
+        this.saveOutcome = {
+          resourceType: 'OperationOutcome',
+          issue: [{severity: 'error', code: 'required', diagnostics: 'An input JSON or XML resource is required.'}],
+        };
+        this.showOutcome = true;
+        return;
       }
 
-      await this.executeRequest(url, p);
+      if (this.selectedEngine === "JavaScript (local)") {
+        const controller = new AbortController();
+        this.localExecutionAbort = controller;
+        this.loadingData = true;
+        try {
+          const response = await new FmlLocalDebugService().executeParameters({
+            mapText,
+            maps: [{text: mapText, fileName: debugMapFileName}],
+            inputText: resourceJson,
+            modelText: model,
+            signal: controller.signal,
+          });
+          if (controller.signal.aborted) return;
+          this.processTransformResponse(response, resourceJson, mapText);
+        } catch (error) {
+          if (controller.signal.aborted) return;
+          this.saveOutcome = {
+            resourceType: "OperationOutcome",
+            issue: [{severity: "error", code: "processing", diagnostics: String(error)}],
+          };
+          this.showOutcome = true;
+        } finally {
+          if (this.localExecutionAbort === controller) {
+            this.localExecutionAbort = undefined;
+            this.loadingData = false;
+          }
+        }
+      } else {
+        await this.executeRequest(url, p, resourceJson, mapText);
+      }
 
       // Show the output tab if it wasn't already visible
       let tabControl: TwinPaneTab = this.$refs.twinTabControl as TwinPaneTab;
@@ -2130,6 +1945,7 @@ group SetEntryData(source src: Patient, target entry)
       openAILastContext: "",
       openAIexpressionExplanationLoading: false,
       trace: [],
+      traceStatus: 'complete',
       variables: [],
       selectedEngine: ".NET (brianpos)",
       processedByEngine: undefined,
@@ -2137,6 +1953,8 @@ group SetEntryData(source src: Patient, target entry)
       testResourceFormat: "json",
       parsedFmlMap: undefined,
       instanceSvg: undefined,
+      completeSvg: undefined,
+      completeShowAllProperties: false,
       diagramSvg: undefined,
       diagramIsStale: false,
       diagramError: undefined,

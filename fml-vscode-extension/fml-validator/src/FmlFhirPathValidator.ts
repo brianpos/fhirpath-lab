@@ -21,7 +21,7 @@ export interface FmlFhirPathAnalysis {
     transformResultTypes: ReadonlyMap<Transform, FmlFhirPathResultType>;
 }
 
-type VariableDescriptor = FmlFhirPathResultType;
+type VariableDescriptor = FmlFhirPathResultType & {engineVariable?: boolean};
 
 interface ExpressionOccurrence {
     text: string;
@@ -52,16 +52,20 @@ export class FmlFhirPathValidator {
         const transformResultTypes = new Map<Transform, FmlFhirPathResultType>();
         const defaultVersion = model.sourceModelVersion ?? model.targetModelVersion;
 
+        const constants = new Map<string, VariableDescriptor>(model.constants.map(constant =>
+            [constant.name, {typeNames: [], isCollection: false, fhirVersion: defaultVersion}]));
         for (const constant of model.constants) {
             diagnostics.push(...this.validateExpression({
                 text: constant.expression,
                 position: constant.expressionPosition,
                 fhirVersion: defaultVersion,
-            }, new Map(), sourceText, sourceName, customTypeModels));
+            }, constants, sourceText, sourceName, customTypeModels));
         }
 
         for (const group of model.groups) {
-            const variables = this.createVariables(group.name, propertyAnalysis);
+            const variables = new Map([...constants, ...this.createVariables(group.name, propertyAnalysis)]);
+            if (!variables.has("ruleId")) variables.set("ruleId", {typeNames: ["System.String"], isCollection: false, engineVariable: true});
+            if (!variables.has("callingRuleId")) variables.set("callingRuleId", {typeNames: ["System.String"], isCollection: false, engineVariable: true});
             const sourceInput = propertyAnalysis.groupInputs.find(input => {
                 return input.groupName === group.name && group.parameters.some(parameter => {
                     return parameter.mode === "source" && parameter.name === input.inputName;
@@ -136,6 +140,17 @@ export class FmlFhirPathValidator {
                     ? this.findTransformUsage(groupName, transform.position, propertyAnalysis.usages)
                     : undefined;
                 let expressionDescriptor: VariableDescriptor | undefined;
+                if (transform && transform.type !== "evaluate") {
+                    const source = rule.sources.at(-1);
+                    const context = source ? this.descriptorFromUsage(this.findSourceUsage(groupName, source.position, propertyAnalysis.usages))
+                        ?? ruleVariables.get(source.variable ?? source.context) : undefined;
+                    for (const parameter of transform.parameters.filter(parameter => parameter.type === "expression")) {
+                        diagnostics.push(...this.validateExpression({
+                            text: String(parameter.value), position: parameter.position,
+                            contextType: context?.typeNames[0], fhirVersion: context?.fhirVersion ?? groupVersion,
+                        }, ruleVariables, sourceText, sourceName, customTypeModels));
+                    }
+                }
                 if (transform?.type === "evaluate") {
                     const contextParameter = transform.isInvocation
                         ? transform.parameters.find(parameter => parameter.name === "context")
@@ -249,9 +264,10 @@ export class FmlFhirPathValidator {
             contextType: occurrence.contextType,
             environmentVariables,
             allowEnvironmentVariablesAtRoot: true,
+            fmlExtensionShortcut: true,
         });
-        const hasTypedContext = !!occurrence.contextType || Object.values(environmentVariables).some(value => {
-            return value.types.length > 0;
+        const hasTypedContext = !!occurrence.contextType || Object.entries(environmentVariables).some(([name, value]) => {
+            return !variables.get(name)?.engineVariable && value.types.length > 0;
         });
         const expressionDiagnostics = hasTypedContext
             ? result.diagnostics

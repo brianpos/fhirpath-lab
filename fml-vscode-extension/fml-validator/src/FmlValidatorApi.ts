@@ -39,9 +39,8 @@ export class FmlValidatorApi {
     }
 
     /**
-     * Stage-1 validation is intentionally syntax-only. Later stages can compose
-     * compile(), validateSemantics(), and transform() after their engine hooks
-     * are implemented.
+     * Validates syntax, model/FHIRPath usage and available group signatures.
+     * Deeper semantic validation and execution use their separate engine hooks.
      */
     public validate(source: FmlSource): Promise<FmlValidatorResult<ParsedFml>> {
         return this.engine.parse(source);

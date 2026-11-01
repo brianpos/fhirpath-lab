@@ -4,6 +4,21 @@ FHIR Mapping Language Tools is a Visual Studio Code extension for working with F
 
 For the extension features and current validation scope, see the [extension README](vscode-extension/README.md).
 
+FML debugging defaults to the bundled local TypeScript engine without an engine
+setting or executable path. To use a remote engine, provide its HTTP(S) `serverUrl`
+in the launch configuration or `fmlTools.debug.serverUrl` in settings. No lab
+endpoint is selected implicitly. See [engine selection](vscode-extension/README.md#selecting-a-remote-engine)
+for settings and override precedence.
+
+ConceptMaps reuse existing package indexes and IG-output resources for local
+debugger and Copilot evaluations; no extra workspace JSON-content scan is added.
+Explicit model/dependency files and Bundles are supported, including unsaved edits
+to known files. Optional `fmlTools.terminology.serverUrl` and
+`fmlTools.terminology.fhirVersion` settings enable a canonical-based FHIR
+`ConceptMap/$translate` fallback only when no local ConceptMap matches. See
+[terminology configuration](vscode-extension/README.md#terminology-fallback-for-local-evaluation)
+and the [engine host example](fml-executor/README.md#terminology-host-example).
+
 This project will support the following high level features:
 * Syntax highlighting (via vscode-extension/syntaxes/fml.tmLanguage.json)
 * Text format validation via the main lab parser/model and minor semantic validation via `fml-validator`
@@ -11,7 +26,7 @@ This project will support the following high level features:
     * detection of FHIR version and implementation guide dependencies
 * Resolving profiles and logical models from IG build output
   * a sibling sushi-config.yaml enables output scanning
-  * without SUSHI, output/ImplementationGuide*.json identifies an IG output directory
+  * without SUSHI, an ImplementationGuide JSON file below output (including output/package) identifies the IG output directory
 * indexing of maps in the workspace (to be resolvable by FML imports)
 * resolving core resource types from the FHIR specification (to be used for semantic validation)
 * resolving profiles from packages to determine the correct resource structure
@@ -22,19 +37,20 @@ This project will support the following high level features:
 
 ## Project structure
 
-This repository contains five TypeScript projects:
+This repository contains six TypeScript projects:
 
 - `fml-validator` defines the validator API and consumes the canonical parser/model from the main lab project.
 - `fml-language-service` provides editor-independent diagnostics and completion logic.
-- `fml-language-server` exposes the language service through the Language Server Protocol.
-- `fml-debug-service` implements the remote FHIR debug-engine protocol and trace replay model.
+- `fml-language-server` exposes validation and local Copilot evaluation through the Language Server Protocol, sharing indexed FML source snapshots and preprocessed model/catalog caches without reopening imports or reloading models for each test.
+- `fml-debug-service` implements remote/local execution adapters and the shared trace replay model.
+- `fml-executor` implements private browser-safe FML execution, shared analysis and adjudicated external-corpus tests; see its [README](fml-executor/README.md) for supported semantics, explicit exclusions and fixture skips.
 - `vscode-extension` provides syntax highlighting, FHIR-aware completion, templates, filesystem hooks, and the LSP client.
 
 The language server validates open FML documents as they change, without requiring a save. Manual validation waits for workspace indexing to complete so imported maps are available. **Validate FML** is also available from the Explorer context menu for an `.fml` file or folder; folder validation recursively loads and validates every FML file below it without opening editor tabs, retains their diagnostics in the Problems panel after documents close, shows that it is paused while indexing is in progress, updates the notification with a per-file `N/total` counter after indexing, and reports aggregate results. The filesystem watcher remains separate for future behavior driven by files and package builds.
 
 Workspace FML files are indexed by canonical URL from metadata and concept map declarations. Cross-file group navigation and unresolved-group checks follow each map's wildcard-capable `imports` declarations.
 Standard VS Code **Go to Definition** and **Find All References** commands navigate group declarations, invocations, and `extends` references across imported maps. Hovers distinguish source/target contexts from each individual property segment, showing the type and cardinality resolved at that exact path. Variable declarations, qualified variable contexts, transform arguments, and dependent-group arguments show the type information inherited from their defining source or target element. Group-call hovers list the callee's source and target parameters with their resolved types for local and imported groups, while group-definition parameter hovers identify declared, inferred, unresolved, or conflicting types. Simple-copy arrow hovers identify the local or imported default mapping group that authorizes the conversion; batch property hovers show the required group beneath the property type. Groups are also listed when the source and target types already match, because a default group takes precedence over the direct copy. In both cases each group name is a link that navigates to its declaration, including declarations in imported maps. Property hovers deduplicate compatible types independently from their target profiles, and also show the FHIR version, choice alternatives, versioned target-profile links, specification links, and model-resolution issues using the same internal-model analysis as the SVG diagram. Transform hovers show their result type when it can be inferred, including typed FHIRPath expressions. The language server is the single completion provider: typing after a resolved source, target, or alias variable offers properties from the same internal type model, including nested paths, without requiring an IG build for core FHIR types.
-The FML preview updates regenerated SVG diagrams in place, retaining the current webview zoom and diagram scroll position across unsaved edits. If an edit temporarily makes the FML invalid, the preview keeps the last valid diagram dimmed behind a concise status overlay until a valid diagram can be generated again; detailed errors remain in the editor diagnostics. Diagrams blend recursively extended groups into derived groups, retain every declared source and target parameter, collapse unnamed rule headers to compact divider lines without hiding their property rows, and draw dotted links from every source variable referenced by a FHIRPath transform. Long computed-source namespace arguments are abbreviated in row labels while remaining complete in hover text. Source filters, type filters, and target fixed values are included in both annotation-icon and full-row tooltips.
+The FML previews update regenerated SVG diagrams in place, retaining the current webview zoom and diagram scroll position across unsaved edits. If an edit temporarily makes the FML invalid, the preview keeps the last valid diagram dimmed behind a concise status overlay until a valid diagram can be generated again; detailed errors remain in the editor diagnostics. The instance preview retains rule-oriented grouping. The separate complete preview groups rows by property, merges repeated unfiltered source access, retains filtered source rows and target collection instances, and offers a **Show all properties** toggle that adds root properties plus one child level below datatypes traversed by the map. Rows with no direct or indirect participation are shaded light grey; properties used through descendants, called groups, transforms, or fixed values remain unshaded. In all-properties mode, recursively extended groups are blended into derived groups, including base groups from maps selected by the same indexed `imports` graph used for validation. Diagrams retain every declared source and target parameter and draw dotted links from every source variable referenced by a FHIRPath transform. Long computed-source namespace arguments are abbreviated in row labels while remaining complete in hover text. Source filters, type filters, and target fixed values are included in both annotation-icon and full-row tooltips. The browser FML page also provides a **Complete** tab and all-properties switch, using groups declared in the current map.
 
 ## Development setup
 
@@ -52,11 +68,15 @@ cd ../fml-language-service
 npm install
 npm test
 
-cd ../fml-language-server
+cd ../fml-executor
 npm install
 npm test
 
 cd ../fml-debug-service
+npm install
+npm test
+
+cd ../fml-language-server
 npm install
 npm test
 
@@ -86,11 +106,15 @@ cd ../fml-language-service
 npm install
 npm run build
 
-cd ../fml-language-server
+cd ../fml-executor
 npm install
 npm run build
 
 cd ../fml-debug-service
+npm install
+npm run build
+
+cd ../fml-language-server
 npm install
 npm run build
 

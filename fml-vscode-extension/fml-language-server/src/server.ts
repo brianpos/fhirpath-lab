@@ -2,9 +2,14 @@ import {
     DocumentValidationResult,
     FmlLanguageService,
     FmlServerStatus,
+    GET_IMPORT_VISIBLE_DOCUMENTS_REQUEST,
+    EVALUATE_DOCUMENT_REQUEST,
+    EvaluateDocumentRequest,
     GET_INDEX_FAILURES_REQUEST,
     GET_SERVER_STATUS_REQUEST,
     INDEX_WORKSPACE_REQUEST,
+    ImportVisibleDocumentsRequest,
+    ImportVisibleDocumentsResult,
     SERVER_STATUS_CHANGED_NOTIFICATION,
     VALIDATE_DOCUMENT_REQUEST,
     ValidateDocumentRequest,
@@ -32,6 +37,7 @@ import {TextDocument} from "vscode-languageserver-textdocument";
 import {toLspCompletion, toLspDiagnostic} from "./lspMapper";
 import {findGroupDefinitions, findGroupReferences, getUnresolvedGroupDiagnostics} from "./groupDefinitionProvider";
 import {WorkspaceFmlIndex} from "./WorkspaceFmlIndex";
+import {FmlEvaluationService} from "./FmlEvaluationService";
 import {FmlServerStatusStore} from "./FmlServerStatusStore";
 
 const VALIDATION_DELAY_MS = 150;
@@ -41,6 +47,7 @@ const languageService = new FmlLanguageService();
 const pendingValidations = new Map<string, NodeJS.Timeout>();
 const retainedDiagnosticUris = new Set<string>();
 const workspaceIndex = new WorkspaceFmlIndex();
+const evaluationService = new FmlEvaluationService(workspaceIndex);
 const statusStore = new FmlServerStatusStore();
 let workspaceIndexReady = false;
 
@@ -134,6 +141,7 @@ connection.onRequest(
                 request.profileBaseTypes ?? {},
                 request.customTypeModels ?? {},
             );
+            evaluationService.configure(request);
             return await indexWorkspace(request.uris);
         } catch (error) {
             statusStore.fail(formatError(error));
@@ -150,6 +158,27 @@ connection.onRequest(GET_SERVER_STATUS_REQUEST, (): FmlServerStatus => {
 connection.onRequest(GET_INDEX_FAILURES_REQUEST, (): WorkspaceIndexFailure[] => {
     return statusStore.getFailures();
 });
+
+connection.onRequest(
+    GET_IMPORT_VISIBLE_DOCUMENTS_REQUEST,
+    (request: ImportVisibleDocumentsRequest): ImportVisibleDocumentsResult => ({
+        uris: workspaceIndex.getImportedDocumentUris(request.uri),
+    }),
+);
+
+connection.onRequest(
+    EVALUATE_DOCUMENT_REQUEST,
+    async (request: EvaluateDocumentRequest, token) => {
+        const controller = new AbortController();
+        const subscription = token.onCancellationRequested(() => controller.abort(new Error("FML evaluation cancelled.")));
+        try {
+            if (token.isCancellationRequested) controller.abort(new Error("FML evaluation cancelled."));
+            return await evaluationService.evaluate(request, controller.signal);
+        } finally {
+            subscription.dispose();
+        }
+    },
+);
 
 connection.onNotification(WORKSPACE_FILE_EVENT_NOTIFICATION, (event: WorkspaceFileEvent) => {
     void handleWorkspaceFileEvent(event).catch(error => {
@@ -201,10 +230,10 @@ function cancelPendingValidation(uri: string): void {
 
 function updateGroupSymbols(document: TextDocument): void {
     const dependentUris = workspaceIndex.getDependentDocumentUris(document.uri);
+    const text = document.getText();
     workspaceIndex.set(document.uri, languageService.getDocumentSymbols({
-        uri: document.uri,
-        text: document.getText(),
-    }));
+        uri: document.uri, text,
+    }), {text, version: document.version});
     for (const uri of workspaceIndex.getDependentDocumentUris(document.uri)) {
         dependentUris.add(uri);
     }
@@ -264,10 +293,10 @@ async function indexWorkspace(uris: string[]): Promise<WorkspaceIndexResult> {
     }
 
     for (const document of documents.all()) {
+        const text = document.getText();
         workspaceIndex.set(document.uri, languageService.getDocumentSymbols({
-            uri: document.uri,
-            text: document.getText(),
-        }));
+            uri: document.uri, text,
+        }), {text, version: document.version});
     }
     workspaceIndexReady = true;
     revalidateOpenDocuments();
@@ -317,9 +346,10 @@ async function handleWorkspaceFileEvent(event: WorkspaceFileEvent): Promise<void
 
 async function indexWorkspaceFile(uri: string): Promise<boolean> {
     try {
+        const loadedText = documents.get(uri)?.getText() ?? await fs.readFile(fileURLToPath(uri), "utf8");
         const openDocument = documents.get(uri);
-        const text = openDocument?.getText() ?? await fs.readFile(fileURLToPath(uri), "utf8");
-        workspaceIndex.set(uri, languageService.getDocumentSymbols({uri, text}));
+        const text = openDocument?.getText() ?? loadedText;
+        workspaceIndex.set(uri, languageService.getDocumentSymbols({uri, text}), {text, version: openDocument?.version});
         statusStore.clearFailure(uri);
         return true;
     } catch (error) {
