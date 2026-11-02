@@ -3,6 +3,12 @@ export default {
   target: 'static',
   ssr: false,
 
+  generate: {
+    cache: {
+      ignore: ['**/node_modules/**', '**/dist/**', '**/out/**', '**/*.vsix']
+    }
+  },
+
   vue: {
     config: {
       ignoredElements: ['aidbox-form-renderer']
