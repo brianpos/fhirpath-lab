@@ -18,6 +18,8 @@ import fhirpath_r5_model from "fhirpath/fhir-context/r5";
 import fhirpath_r6_model from "models/r6";
 import { IFhirPathEngineDetails } from "../types/fhirpath_test_engine";
 import { validateFhirpathExpression, type FhirVersionKey } from "./fhirpath_validator";
+import { convertParametersToNative } from "./fhir_parameters";
+export { convertParametersToNative };
 
 
 export interface DebugTraceData {
@@ -537,6 +539,13 @@ export async function evaluateExpressionUsingFhirpathJs(
     }
   }
 
+  // register a custom function "native()" to flatten parameters into a simple structure
+  const userInvocationTable = {
+    native: {
+      fn: convertParametersToNative, 
+      arity: {0: [], 1: ["String"]}},
+  };
+
   // Process each context node
   for (let contextNode of contextNodes) {
     let resData: ResultData;
@@ -603,6 +612,7 @@ export async function evaluateExpressionUsingFhirpathJs(
         traceFn: tracefunction,
         async: true,
         terminologyUrl: options.terminologyServer,
+        userInvocationTable,
         debugger: (ctx: any, focus: any, expressionResult: any, node: any) => {
           if (completedTracing) 
             return;
