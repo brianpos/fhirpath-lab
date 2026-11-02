@@ -114,10 +114,10 @@ import {
 } from "~/helpers/favourites";
 import { BaseResource_defaultValues } from "~/models/BaseResourceTableData";
 import StructureMapUtilitiesRender from "~/helpers/structuremap_to_fml";
-import { generateStructureMapDiagramSvg } from "~/helpers/structuremap_diagram";
-import { generateInstanceDiagramSvg, fmlToStructureMapForDiagram } from "~/helpers/structuremap_diagram_instance";
+import { generateStructureMapDiagramSvg, generateFmlStructureMapDiagramSvg } from "~/helpers/structuremap_diagram";
+import { generateInstanceDiagramSvg, generateFmlInstanceDiagramSvg } from "~/helpers/structuremap_diagram_instance";
 import { highlightDiagramConnection, findConnectionIdsForClick } from "~/helpers/diagram_interaction";
-import { parseFML } from "~/helpers/fml_parser";
+import { isFmlParseError, parseFML } from "~/helpers/fml_parser";
 import TwinPaneTab from "~/components/TwinPaneTab.vue";
 import ResourceEditor from "~/components/ResourceEditor.vue";
 import { lookupByTypeName as lookupByTypeNameR4B } from "~/helpers/models/generated/r4b";
@@ -241,24 +241,22 @@ export default Vue.extend({
         document.title = `Structure Map: ${this.raw.title ?? this.raw.name }`;  
 
         this.rawMap = StructureMapUtilitiesRender.render(this.raw);
-        // Re-parse the rendered FML so each diagram element carries
-        // `_fmlPosition` referring to offsets in `rawMap` (the text
-        // shown in the FML editor). This is what makes diagram clicks
-        // able to highlight the matching FML region. Both the base
-        // structure-map diagram and the instance diagram benefit from
-        // these positions. Falls back to the raw FHIR map if parsing
-        // fails — the diagrams still draw, just without text highlight.
-        let diagramInput = this.raw as fhir4b.StructureMap;
+        // Re-parse the editor text to preserve diagram click-to-highlight
+        // positions. Raw-resource rendering remains available if parsing fails.
+        let parsed: ReturnType<typeof parseFML> | undefined;
         try {
-          const parsed = parseFML(this.rawMap);
-          if (parsed && !('resourceType' in parsed && parsed.resourceType === 'OperationOutcome')) {
-            diagramInput = fmlToStructureMapForDiagram(parsed as any) as fhir4b.StructureMap;
-          }
+          parsed = parseFML(this.rawMap);
         } catch (e) {
           console.warn('FML re-parse for diagram positions failed:', e);
         }
-        this.diagramSvg = generateStructureMapDiagramSvg(diagramInput);
-        this.instanceSvg = generateInstanceDiagramSvg(diagramInput, lookupByTypeNameR4B, true);
+        if (parsed && !isFmlParseError(parsed)) {
+          this.diagramSvg = generateFmlStructureMapDiagramSvg(parsed);
+          this.instanceSvg = generateFmlInstanceDiagramSvg(parsed, lookupByTypeNameR4B, true);
+        } else {
+          if (parsed) console.warn('FML re-parse for diagram positions failed:', parsed.issue);
+          this.diagramSvg = generateStructureMapDiagramSvg(this.raw);
+          this.instanceSvg = generateInstanceDiagramSvg(this.raw, lookupByTypeNameR4B, true);
+        }
         // this.rawMap = JSON.stringify(this.raw, null, 2);
       }
     },
