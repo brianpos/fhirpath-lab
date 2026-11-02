@@ -520,12 +520,11 @@ import ResourceEditor from "~/components/ResourceEditor.vue";
 
 import { isFmlParseError, parseFML } from "~/helpers/fml_parser";
 import type { FmlStructureMap, FhirVersion } from "~/helpers/fml_models";
-import { fmlToStructureMap } from "~/helpers/fml_to_structuremap";
 import { validateFmlModel } from "~/helpers/fml_validation";
 import { generateFmlInstanceDiagramSvg } from "~/helpers/structuremap_diagram_instance";
 import { generateFmlInstanceDiagramSvg as generateFmlCompleteDiagramSvg } from "~/helpers/structuremap_diagram_complete";
 import { highlightDiagramConnection, findConnectionIdsForClick } from "~/helpers/diagram_interaction";
-import { generateStructureMapDiagramSvg } from "~/helpers/structuremap_diagram";
+import { generateFmlStructureMapDiagramSvg } from "~/helpers/structuremap_diagram";
 import { lookupByTypeName as lookupByTypeNameSTU3 } from "~/helpers/models/generated/stu3";
 import { lookupByTypeName as lookupByTypeNameR4B } from "~/helpers/models/generated/r4b";
 import { lookupByTypeName as lookupByTypeNameR4 } from "~/helpers/models/generated/r4";
@@ -1451,7 +1450,7 @@ group SetEntryData(source src: Patient, target entry)
         const completeSvg = generateFmlCompleteDiagramSvg(
           result, lookup, this.completeShowAllProperties, lookupForVersion,
         );
-        const diagramSvg = generateStructureMapDiagramSvg(fmlToStructureMap(result), lookup, lookupForVersion);
+        const diagramSvg = generateFmlStructureMapDiagramSvg(result, lookup, lookupForVersion);
         this.instanceSvg = instanceSvg;
         this.completeSvg = completeSvg;
         this.diagramSvg = diagramSvg;

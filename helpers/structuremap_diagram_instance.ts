@@ -2,14 +2,19 @@ import { StructureMap, StructureMapGroupRule } from "fhir/r4b";
 import type {
   FhirVersion,
   FmlStructureMap,
-  Rule as FmlRule,
-  SourcePosition,
-  TransformParameter,
 } from "./fml_models";
 import type { TypeModel, ElementModel } from "./custom_model";
 import { lookupByTypeName as lookupByTypeNameR4B } from "./models/generated/r4b";
-import { getFhirPathVariableReferences } from "./fhirpath_validator";
-import { resolveTransformResultTypes } from "./fml_transform_signatures";
+import {
+  getDiagramPosition,
+  toFmlDiagramInput,
+  toStructureMapDiagramInput,
+  type DiagramMapInput,
+  type DiagramGroupInput,
+  type DiagramRuleInput,
+  type DiagramSourcePosition,
+} from "./fml_diagram_input";
+export type { DiagramSourcePosition } from "./fml_diagram_input";
 
 /**
  * Function used to resolve a TypeModel by its TypeName. Pass any per-version
@@ -25,37 +30,6 @@ export type LogicalTypeClassifier = (typeName: string) => boolean;
  * fall back to the default lookup.
  */
 export type LookupForVersion = (version: FhirVersion | undefined) => TypeLookup | undefined;
-
-export type DiagramSourcePosition = Pick<SourcePosition, "startIndex" | "endIndex">
-  & Partial<Pick<SourcePosition, "startLine" | "startColumn" | "endLine" | "endColumn">>;
-
-interface DiagramMapInput {
-  group: DiagramGroupInput[];
-}
-
-interface DiagramGroupInput {
-  name: string;
-  extends?: string;
-  input: Array<{
-    name: string;
-    type?: string;
-    mode: string;
-    fhirVersion?: FhirVersion;
-    fmlPosition?: DiagramSourcePosition;
-    typeDeclared?: boolean;
-  }>;
-  rule: DiagramRuleInput[];
-  fmlPosition?: DiagramSourcePosition;
-}
-
-interface DiagramRuleInput {
-  name?: string;
-  source: any[];
-  target: any[];
-  dependent: Array<{name: string; variable: string[]}>;
-  rule: DiagramRuleInput[];
-  fmlPosition?: DiagramSourcePosition;
-}
 
 // ===== Exported Data Types =====
 
@@ -244,7 +218,7 @@ interface VarInfo {
  * omitted, the bundled R4B dictionary is used as a sensible default.
  */
 export function extractStructureMapDiagram(map: StructureMap, typeLookup?: TypeLookup, showMissingProperties?: boolean, lookupForVersion?: LookupForVersion, isLogicalType?: LogicalTypeClassifier): StructureMapDiagram {
-  return extractDiagramInput(map as unknown as DiagramMapInput, typeLookup, showMissingProperties, lookupForVersion, isLogicalType);
+  return extractDiagramInput(toStructureMapDiagramInput(map), typeLookup, showMissingProperties, lookupForVersion, isLogicalType);
 }
 
 /** Extract diagram data directly from the position-aware FML model. */
@@ -1054,7 +1028,7 @@ function scanDependencyRules(
     for (const source of rule.source) {
       if (source.variable) {
         variables.set(source.variable, resolveVariableTypes(
-          variables.get(source.context) ?? [], source.element, source.type,
+          (source.context ? variables.get(source.context) : undefined) ?? [], source.element, source.type,
           defaultLookup, lookupForVersion,
         ));
       }
@@ -1063,13 +1037,13 @@ function scanDependencyRules(
       if (target.variable) {
         const createdType = getCreatedType(target);
         const transformResultTypes = (target as any).transformResultTypes as string[] | undefined;
-        const version = firstVersion(variables.get(target.context));
+        const version = firstVersion(target.context ? variables.get(target.context) : undefined);
         variables.set(target.variable, createdType
           ? [{typeName: createdType, fhirVersion: version}]
           : transformResultTypes?.length
             ? transformResultTypes.map(typeName => ({typeName, fhirVersion: version}))
             : resolveVariableTypes(
-              variables.get(target.context) ?? [], target.element, undefined,
+              (target.context ? variables.get(target.context) : undefined) ?? [], target.element, undefined,
               defaultLookup, lookupForVersion,
             ));
       }
@@ -1673,126 +1647,6 @@ function describeComputedSource(tgt: { transform?: string; parameter?: any[] }, 
     return "?";
   });
   return `${tgt.transform}(${params.join(", ")})`;
-}
-
-function getDiagramPosition(value: unknown): DiagramSourcePosition | undefined {
-  const candidate = value as {fmlPosition?: DiagramSourcePosition; _fmlPosition?: DiagramSourcePosition};
-  return candidate.fmlPosition ?? candidate._fmlPosition;
-}
-
-function toFmlDiagramInput(fml: FmlStructureMap): DiagramMapInput {
-  const structuresByAlias = new Map<string, {typeName: string; version?: FhirVersion}>();
-  const structuresByRoleAndType = new Map<string, {typeName: string; version?: FhirVersion}>();
-  for (const structure of fml.structures) {
-    const canonical = structure.canonical ?? structure.url;
-    const resolved = {
-      typeName: structure.resolvedTypeName ?? (canonical.split("/").pop() || canonical),
-      version: structure.fhirVersion,
-    };
-    if (structure.alias) structuresByAlias.set(structure.alias, resolved);
-    const parameterMode = structure.mode === "source" || structure.mode === "queried" ? "source" : "target";
-    structuresByRoleAndType.set(`${parameterMode}:${resolved.typeName}`, resolved);
-  }
-
-  return {
-    group: fml.groups.map(group => ({
-      name: group.name,
-      extends: group.extends,
-      input: group.parameters.map(parameter => {
-        const structure = parameter.type
-          ? structuresByAlias.get(parameter.type)
-            ?? structuresByRoleAndType.get(`${parameter.mode}:${parameter.type}`)
-          : undefined;
-        return {
-          name: parameter.name,
-          type: structure?.typeName ?? parameter.type,
-          mode: parameter.mode,
-          fhirVersion: structure?.version
-            ?? (parameter.mode === "source" ? fml.sourceModelVersion : fml.targetModelVersion),
-          fmlPosition: parameter.position,
-          typeDeclared: !!parameter.type,
-        };
-      }),
-      rule: group.rules.map(rule => toFmlDiagramRule(rule, collectFmlVariableNames(group))),
-      fmlPosition: group.position,
-    })),
-  };
-}
-
-function toFmlDiagramRule(rule: FmlRule, variableNames: string[]): DiagramRuleInput {
-  const batchRules: DiagramRuleInput[] = (rule.identityFields ?? []).map(field => ({
-    name: field.name,
-    source: [{
-      context: rule.sources[0]?.context,
-      element: field.name,
-      fmlPosition: field.position,
-    }],
-    target: [{
-      context: rule.targets[0]?.context,
-      element: field.name,
-      fmlPosition: field.position,
-    }],
-    dependent: [],
-    rule: [],
-    fmlPosition: field.position,
-  }));
-  return {
-    name: rule.name,
-    source: rule.sources.map(source => ({
-      context: source.context,
-      element: source.element,
-      variable: source.variable,
-      condition: source.condition,
-      type: source.type,
-      fmlPosition: source.position,
-    })),
-    target: rule.targets.map(target => ({
-      context: target.context,
-      element: target.element,
-      variable: target.variable,
-      transform: target.transform?.type,
-      transformResultTypes: target.transform ? resolveTransformResultTypes(target.transform) : [],
-      transformPosition: target.transform?.position,
-      expressionVariables: target.transform?.parameters
-        .filter(parameter => parameter.type === "expression")
-        .flatMap(parameter => getFhirPathVariableReferences(String(parameter.value), variableNames)),
-      parameter: target.transform?.parameters.map(toDiagramTransformParameter),
-      fmlPosition: target.position,
-    })),
-    dependent: rule.dependent?.invocations.map(invocation => ({
-      name: invocation.name,
-      variable: invocation.parameters.map(parameter => String(parameter.value)),
-    })) ?? [],
-    rule: [
-      ...batchRules,
-      ...(rule.dependent?.rules.map(nestedRule => toFmlDiagramRule(nestedRule, variableNames)) ?? []),
-    ],
-    fmlPosition: rule.position,
-  };
-}
-
-function collectFmlVariableNames(group: FmlStructureMap["groups"][number]): string[] {
-  const names = new Set(group.parameters.map(parameter => parameter.name));
-  const collect = (rules: FmlRule[]): void => {
-    for (const rule of rules) {
-      for (const source of rule.sources) if (source.variable) names.add(source.variable);
-      for (const target of rule.targets) if (target.variable) names.add(target.variable);
-      collect(rule.dependent?.rules ?? []);
-    }
-  };
-  collect(group.rules);
-  return [...names];
-}
-
-function toDiagramTransformParameter(parameter: TransformParameter): Record<string, string | number | boolean> {
-  if (parameter.type === "identifier") return {valueId: String(parameter.value)};
-  if (typeof parameter.value === "boolean") return {valueBoolean: parameter.value};
-  if (typeof parameter.value === "number") {
-    return parameter.literalType === "decimal"
-      ? {valueDecimal: parameter.value}
-      : {valueInteger: parameter.value};
-  }
-  return {valueString: String(parameter.value)};
 }
 
 // ===== SVG Layout Constants =====
@@ -3015,4 +2869,3 @@ function renderInstanceDiagramSvg(data: StructureMapDiagram): string {
   svg.push("</svg>");
   return svg.join("\n");
 }
-

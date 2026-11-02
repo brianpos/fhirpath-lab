@@ -4,6 +4,7 @@
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
 # 2 November 2026
+* Complete the FML diagram API migration on the StructureMap and FML pages, preserving source highlighting and cross-version metadata without adding diagram fields to FHIR resources.
 * Major changes to FML support, particularly in the debugging and logical model support
 * Full typescript FML engine (with debugging support)
 * Keep core and logical models with the same name distinct during local FML evaluation, including FHIRPath overlays, nested types, and group arguments. Add blood-pressure/OMOP and timezone-preserving date regressions.

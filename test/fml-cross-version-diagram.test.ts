@@ -2,10 +2,16 @@
 // version-qualified `uses` declarations are resolved back to their underlying
 // FHIR type and resolved against the model for the right FHIR release.
 import { describe, expect, test } from "@jest/globals";
-import { parseFML } from "../helpers/fml_parser";
+import { isFmlParseError, parseFML } from "../helpers/fml_parser";
+import {
+  extractFmlStructureMapDiagram as extractBaseFmlDiagram,
+  generateFmlStructureMapDiagramSvg,
+  generateStructureMapDiagramSvg,
+} from "../helpers/structuremap_diagram";
 import {
   extractFmlStructureMapDiagram,
   generateFmlInstanceDiagramSvg,
+  generateInstanceDiagramSvg,
 } from "../helpers/structuremap_diagram_instance";
 import {
   extractFmlStructureMapDiagram as extractCompleteFmlStructureMapDiagram,
@@ -60,6 +66,145 @@ describe("fmlToStructureMap compilation", () => {
     ]);
     expect(JSON.stringify(map)).not.toContain("_fmlPosition");
     expect(JSON.stringify(map)).not.toContain("_fmlVersion");
+  });
+});
+
+describe("base FML diagram migration", () => {
+  function parseMap(text: string): FmlStructureMap {
+    const result = parseFML(text);
+    if (isFmlParseError(result)) throw new Error(JSON.stringify(result.issue));
+    return result;
+  }
+
+  const nestedText = [
+    "uses 'http://hl7.org/fhir/StructureDefinition/Patient' alias Patient as source",
+    "uses 'http://hl7.org/fhir/StructureDefinition/Patient' alias PatientTarget as target",
+    "group Main(source src : Patient, target tgt : PatientTarget) {",
+    "  src.name as sourceName -> tgt.name as targetName then {",
+    "    sourceName.family -> targetName.family;",
+    "  };",
+    "}",
+  ].join("\n");
+
+  test.each([
+    ["base", (fml: FmlStructureMap) => generateFmlStructureMapDiagramSvg(fml)],
+    ["instance", (fml: FmlStructureMap) => generateFmlInstanceDiagramSvg(fml, lookupR4B, true)],
+  ])("%s SVG preserves exact group, input and nested property positions", (_name, render) => {
+    const fml = parseMap(nestedText);
+    const group = fml.groups[0];
+    const rule = group.rules[0];
+    const nested = rule.dependent!.rules[0];
+    const svg = render(fml);
+    for (const element of [
+      group, ...group.parameters,
+      ...rule.sources, ...rule.targets,
+      ...nested.sources, ...nested.targets,
+    ]) {
+      expect(element.position).toBeDefined();
+      const position = element.position!;
+      expect(position.endIndex).toBeGreaterThan(position.startIndex);
+      expect(svg).toContain(`data-pos-start="${position.startIndex}" data-pos-end="${position.endIndex}"`);
+    }
+  });
+
+  test("base extraction retains enclosing and nested rule positions", () => {
+    const fml = parseMap(nestedText);
+    const rule = fml.groups[0].rules[0];
+    const nested = rule.dependent!.rules[0];
+    const group = extractBaseFmlDiagram(fml).groups[0];
+    for (const type of [...group.sourceTypes, ...group.targetTypes]) {
+      expect(type.properties[0].ruleFmlPosition).toEqual(rule.position);
+      expect(type.properties[1].ruleFmlPosition).toEqual(nested.position);
+    }
+  });
+
+  test("base diagram resolves aliases using the correct model for each FHIR release", () => {
+    const fml = parseMap(APPOINTMENT_FML);
+    const group = extractBaseFmlDiagram(fml, lookupR5, lookupForVersion).groups[0];
+    const src = group.sourceTypes[0];
+    const tgt = group.targetTypes[0];
+    expect(src.typeName).toBe("Appointment");
+    expect(src.fhirVersion).toBe("R4B");
+    expect(tgt.typeName).toBe("Appointment");
+    expect(tgt.fhirVersion).toBe("R5");
+    expect(src.properties.find(property => property.path === "reasonCode")?.unknownElement).not.toBe(true);
+    expect(tgt.properties.find(property => property.path === "reason")?.unknownElement).not.toBe(true);
+    expect(generateFmlStructureMapDiagramSvg(fml, lookupR5, lookupForVersion)).not.toContain("Unknown element:");
+  });
+
+  test("base diagram honors resolved logical/profile type names", () => {
+    const fml = parseMap(nestedText);
+    fml.structures[0].resolvedTypeName = "ResolvedPatient";
+    expect(extractBaseFmlDiagram(fml).groups[0].sourceTypes[0].typeName).toBe("ResolvedPatient");
+  });
+
+  test("batch identity fields retain their own SVG positions", () => {
+    const fml = parseMap([
+      "group Main(source src : Patient, target tgt : Patient) {",
+      "  src -> tgt: id, active;",
+      "}",
+    ].join("\n"));
+    const svg = generateFmlStructureMapDiagramSvg(fml);
+    for (const field of fml.groups[0].rules[0].identityFields!) {
+      const position = field.position!;
+      expect(svg).toContain(`data-pos-start="${position.startIndex}" data-pos-end="${position.endIndex}"`);
+    }
+    const group = extractBaseFmlDiagram(fml).groups[0];
+    expect(group.sourceTypes[0].properties.map(property => property.path)).toEqual([".", "id", "active"]);
+    expect(group.targetTypes[0].properties.map(property => property.path)).toEqual(["id", "active"]);
+  });
+
+  test("raw FHIR resources still render without source metadata or mutation", () => {
+    const map = fmlToStructureMap(parseMap(nestedText));
+    const original = JSON.stringify(map);
+    const svg = generateStructureMapDiagramSvg(map);
+    expect(svg).toContain(">Main</text>");
+    expect(svg).toContain("family");
+    expect(svg).not.toContain('data-pos-start="');
+    const instanceSvg = generateInstanceDiagramSvg(map, lookupR4B, true);
+    expect(instanceSvg).toContain("family");
+    expect(instanceSvg).not.toContain('data-pos-start="');
+    expect(JSON.stringify(map)).toBe(original);
+  });
+
+  test("base dependent-call rows highlight their enclosing FML rule", () => {
+    const fml = parseMap([
+      "group Main(source src : Patient, target tgt : Patient) {",
+      "  src.name as sourceName -> tgt.name as targetName then CopyName(sourceName, targetName);",
+      "}",
+      "group CopyName(source src : HumanName, target tgt : HumanName) {",
+      "  src.family -> tgt.family;",
+      "}",
+    ].join("\n"));
+    const dependent = extractBaseFmlDiagram(fml).groups[0].targetTypes[0].properties
+      .find(property => property.dependentCall);
+    expect(dependent?.ruleFmlPosition).toEqual(fml.groups[0].rules[0].position);
+    const position = fml.groups[0].rules[0].position!;
+    expect(generateFmlStructureMapDiagramSvg(fml)).toContain(
+      `data-pos-start="${position.startIndex}" data-pos-end="${position.endIndex}"`,
+    );
+  });
+
+  test("legacy position metadata remains supported on raw FHIR maps", () => {
+    const fml = parseMap(nestedText);
+    const map = fmlToStructureMap(fml);
+    const position = fml.groups[0].position!;
+    Object.assign(map.group[0], { _fmlPosition: position });
+    for (const svg of [
+      generateStructureMapDiagramSvg(map),
+      generateInstanceDiagramSvg(map, lookupR4B, true),
+    ]) {
+      expect(svg).toContain(`data-pos-start="${position.startIndex}" data-pos-end="${position.endIndex}"`);
+    }
+  });
+
+  test("direct FML rendering does not add metadata to the parsed model or compiled resource", () => {
+    const fml = parseMap(nestedText);
+    const original = JSON.stringify(fml);
+    generateFmlStructureMapDiagramSvg(fml);
+    generateFmlInstanceDiagramSvg(fml);
+    expect(JSON.stringify(fml)).toBe(original);
+    expect(JSON.stringify(fmlToStructureMap(fml))).not.toMatch(/_fmlPosition|_fmlVersion|fmlPosition|fhirVersion/);
   });
 });
 
