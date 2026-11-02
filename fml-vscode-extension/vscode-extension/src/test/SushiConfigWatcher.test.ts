@@ -27,7 +27,7 @@ suite("FML catalog refresh ordering", function() {
     setup(async () => {
         const workspace = vscode.workspace.workspaceFolders?.[0];
         assert.ok(workspace);
-        directory = await fs.mkdtemp(path.join(workspace.uri.fsPath, ".fml-refresh-test-"));
+        directory = await fs.mkdtemp(path.join(workspace.uri.fsPath, "fml-refresh-test-"));
     });
 
     teardown(async () => {
