@@ -110,6 +110,7 @@ import { parseXml } from '@legacy/helpers/xml_parser'
 import type { Model } from 'fhirpath'
 import { CqlHighlightRules } from '@legacy/helpers/cql_highlighter'
 import { Rules as FhirPathHighlightRules, setCustomHighlightRules } from '@legacy/helpers/fhirpath_highlighter'
+import { FmlHighlightRules } from '@legacy/helpers/fml_highlighter'
 import { FhirLiquidHighlightRules } from '@legacy/helpers/fhirliquid_highlighter'
 import {
   Hl7v2HighlightRules,
@@ -132,7 +133,7 @@ interface Props {
   tabSpaces?: number
   fhirServerExamplesUrl?: string
   dotnetServerDownloader?: string
-  language?: 'auto' | 'cql' | 'fhir-liquid' | 'fhirpath' | 'hl7v2' | 'json' | 'text' | 'xml'
+  language?: 'auto' | 'cql' | 'fhir-liquid' | 'fhirpath' | 'fml' | 'hl7v2' | 'json' | 'text' | 'xml'
   minLines?: number
   maxLines?: number
   expressionEditor?: boolean
@@ -482,6 +483,8 @@ const detectResourceType = () => {
       setCustomHighlightRules(aceEditor.value, FhirPathHighlightRules)
     } else if (props.language === 'hl7v2' && aceEditor.value) {
       setCustomHighlightRules(aceEditor.value, Hl7v2HighlightRules, true)
+    } else if (props.language === 'fml' && aceEditor.value) {
+      setCustomHighlightRules(aceEditor.value, FmlHighlightRules, true)
     } else {
       aceEditor.value?.getSession().setMode(`ace/mode/${props.language}`)
     }
@@ -497,8 +500,7 @@ const detectResourceType = () => {
   } else if (content.startsWith('///') || content.startsWith('map ')) {
     if (resourceType.value !== 'fml') {
       resourceType.value = 'fml'
-      aceEditor.value?.getSession().setMode('ace/mode/text')
-      // setCustomHighlightRules(aceEditor.value, FhirPathHightlighter_Rules)
+      if (aceEditor.value) setCustomHighlightRules(aceEditor.value, FmlHighlightRules, true)
     }
   } else if (isHl7v2Content(content)) {
     if (resourceType.value !== 'hl7v2') {
@@ -703,6 +705,13 @@ const clearUrl = () => {
 
 const focus = () => aceEditor.value?.focus()
 
+// Replace the gutter annotations (e.g. live validation issues); rows are 1-based
+const setAnnotations = (items: { row: number; column?: number; text: string; type: 'error' | 'warning' | 'info' }[]) => {
+  aceEditor.value?.getSession().setAnnotations(items.map(i => ({ row: Math.max(0, i.row - 1), column: i.column ?? 0, text: i.text, type: i.type })))
+}
+
+const getEditor = () => aceEditor.value
+
 // Expose public methods
 defineExpose({
   DownloadResource,
@@ -712,6 +721,8 @@ defineExpose({
   removeMarker,
   removeMarkers,
   focus,
+  setAnnotations,
+  getEditor,
 })
 
 // Lifecycle

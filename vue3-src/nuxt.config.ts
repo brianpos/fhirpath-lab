@@ -18,6 +18,10 @@ export default defineNuxtConfig({
     '@legacy/helpers': resolve(currentDir, '../helpers'),
     '@legacy/types': resolve(currentDir, '../types'),
     'models': resolve(currentDir, '../models'),
+    // Shared FML runtime consumed from source so no separate build step is required
+    '@fhirpath-lab/validator': resolve(currentDir, '../fml-vscode-extension/fml-validator/src/index.ts'),
+    '@fhirpath-lab/fml-executor': resolve(currentDir, '../fml-vscode-extension/fml-executor/src/index.ts'),
+    '@legacy/fml-debug-service': resolve(currentDir, '../fml-vscode-extension/fml-debug-service/src'),
   },
   
   modules: [
@@ -30,6 +34,10 @@ export default defineNuxtConfig({
     '~/assets/variables.scss'
   ],
   vite: {
+    resolve: {
+      // Shared sources live outside vue3-src; make sure they use this app's copies
+      dedupe: ['fhirpath', 'antlr4', 'lossless-json', 'luxon', 'entities'],
+    },
     optimizeDeps: {
       include: [
         '@vue/devtools-core',
