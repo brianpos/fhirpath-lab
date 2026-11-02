@@ -119,7 +119,7 @@ suite("FML Preview Renderer", () => {
             showAllProperties: true,
         });
 
-        assert.match(svg, /data-fml-uri="file%3A%2F%2F%2Fc%253A%2Fmaps%2FElement4to5\.fml"/i);
+        assert.ok(svg.includes(`data-fml-uri="${encodeURIComponent(externalUri)}"`));
         assert.match(svg, /data-fml-version="7"/);
         assert.match(svg, /data-fml-line="2"/);
         assert.match(svg, /data-fml-column="6"/);
