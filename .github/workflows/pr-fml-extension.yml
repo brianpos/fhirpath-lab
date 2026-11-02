@@ -1,0 +1,109 @@
+name: PR Build - FML VS Code extension
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - develop
+    paths:
+      - 'fml-vscode-extension/**'
+      - 'helpers/**'
+      - 'models/**'
+      - 'types/**'
+      - 'fml-parser/**'
+      - 'fhirpath-parser/**'
+      - 'json-parser/**'
+      - 'xml-parser/**'
+      - 'scripts/generate-models/**'
+      - 'sample-fml/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tsconfig.json'
+      - '.github/workflows/pr-fml-extension.yml'
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - main
+      - master
+      - develop
+    paths:
+      - 'fml-vscode-extension/**'
+      - 'helpers/**'
+      - 'models/**'
+      - 'types/**'
+      - 'fml-parser/**'
+      - 'fhirpath-parser/**'
+      - 'json-parser/**'
+      - 'xml-parser/**'
+      - 'scripts/generate-models/**'
+      - 'sample-fml/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tsconfig.json'
+      - '.github/workflows/pr-fml-extension.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fml-extension-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build_and_test:
+    name: Build, Test & Package FML Extension
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: |
+            package-lock.json
+            fml-vscode-extension/fml-validator/package-lock.json
+            fml-vscode-extension/fml-language-service/package-lock.json
+            fml-vscode-extension/fml-executor/package-lock.json
+            fml-vscode-extension/fml-debug-service/package-lock.json
+            fml-vscode-extension/fml-language-server/package-lock.json
+            fml-vscode-extension/vscode-extension/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm --prefix fml-vscode-extension/fml-validator ci
+          npm --prefix fml-vscode-extension/fml-language-service ci
+          npm --prefix fml-vscode-extension/fml-executor ci
+          npm --prefix fml-vscode-extension/fml-debug-service ci
+          npm --prefix fml-vscode-extension/fml-language-server ci
+          npm --prefix fml-vscode-extension/vscode-extension ci
+
+      - name: Test shared FML packages
+        run: |
+          npm --prefix fml-vscode-extension/fml-validator test
+          npm --prefix fml-vscode-extension/fml-language-service test
+          npm --prefix fml-vscode-extension/fml-executor test
+          npm --prefix fml-vscode-extension/fml-debug-service test
+          npm --prefix fml-vscode-extension/fml-language-server test
+
+      - name: Compile, lint and test the VS Code extension
+        working-directory: fml-vscode-extension/vscode-extension
+        run: xvfb-run --auto-servernum npm test
+
+      - name: Build VSIX
+        working-directory: fml-vscode-extension/vscode-extension
+        run: npm run vsix:build
+
+      - name: Upload VSIX
+        uses: actions/upload-artifact@v4
+        with:
+          name: fml-tools-vsix-${{ github.run_number }}
+          path: fml-vscode-extension/vscode-extension/*.vsix
+          if-no-files-found: error

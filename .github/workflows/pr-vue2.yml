@@ -8,7 +8,9 @@ on:
       - develop
     paths-ignore:
       - 'vue3-src/**'
+      - 'fml-vscode-extension/vscode-extension/**'
       - '.github/workflows/pr-vue3.yml'
+      - '.github/workflows/pr-fml-extension.yml'
   pull_request:
     types: [opened, synchronize, reopened, closed]
     branches:
@@ -17,8 +19,9 @@ on:
       - develop
     paths-ignore:
       - 'vue3-src/**'
-      - 'fml-vscode-extension/**'
+      - 'fml-vscode-extension/vscode-extension/**'
       - '.github/workflows/pr-vue3.yml'
+      - '.github/workflows/pr-fml-extension.yml'
 
 permissions:
   contents: read
@@ -37,12 +40,28 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '22'
           cache: 'npm'
-          cache-dependency-path: package-lock.json
+          cache-dependency-path: |
+            package-lock.json
+            fml-vscode-extension/fml-validator/package-lock.json
+            fml-vscode-extension/fml-executor/package-lock.json
+            fml-vscode-extension/fml-debug-service/package-lock.json
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Install shared FML dependencies
+        run: |
+          npm --prefix fml-vscode-extension/fml-validator ci
+          npm --prefix fml-vscode-extension/fml-executor ci
+          npm --prefix fml-vscode-extension/fml-debug-service ci
+
+      - name: Build shared FML runtime
+        run: |
+          npm --prefix fml-vscode-extension/fml-validator run build
+          npm --prefix fml-vscode-extension/fml-executor run build
+          npm --prefix fml-vscode-extension/fml-debug-service run build
 
       - name: Generate static site
         run: npm run generate
