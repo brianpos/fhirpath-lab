@@ -38,6 +38,7 @@
     "fhirpath-lab": "file:",
     "htmldiff-js": "^1.0.5",
     "lforms-loader": "^3.1.2",
+    "lossless-json": "^4.3.0",
     "luxon": "^3.4.3",
     "lz-string": "^1.4.4",
     "marked": "^4.0.10",

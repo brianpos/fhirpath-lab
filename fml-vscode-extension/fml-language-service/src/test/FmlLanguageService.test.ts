@@ -511,6 +511,30 @@ test("validates and shows resolved parameters for dependent groups from imported
     );
 });
 
+test("reports incompatible imported extends parameters on the base group token", async () => {
+    const symbols = service.getDocumentSymbols({
+        uri: "file:///base.fml",
+        text: `
+uses 'http://hl7.org/fhir/4.0/StructureDefinition/BackboneElement' alias S as source
+uses 'http://hl7.org/fhir/3.0/StructureDefinition/BackboneElement' alias T as target
+group Base(source src : S, target tgt : T) { }
+`,
+    });
+    const text = [
+        "uses 'http://hl7.org/fhir/4.0/StructureDefinition/Dosage' alias S as source",
+        "uses 'http://hl7.org/fhir/3.0/StructureDefinition/Dosage' alias T as target",
+        "imports 'http://example.org/Base'",
+        "group Main(source src : S, target tgt : T)",
+        "  extends Base { }",
+    ].join("\r\n");
+    const result = await service.validateDocument({uri: "file:///dosage.fml", text}, [], symbols.groupSignatures);
+    assert.equal(result.errorCount, 1, JSON.stringify(result.diagnostics));
+    assert.match(result.diagnostics[0].message, /target parameter 'tgt'.*Dosage.*STU3.*BackboneElement/);
+    assert.deepEqual(result.diagnostics[0].range, {
+        start: {line: 4, character: 10}, end: {line: 4, character: 14},
+    });
+});
+
 test("variable hovers do not leak across sibling rules and show provenance", () => {
     const text = [
         "uses 'http://hl7.org/fhir/5.0/StructureDefinition/MedicationStatement' alias MedicationStatement as source",
@@ -867,6 +891,53 @@ test("uuid transform hovers report primitive string", () => {
     assert.match(hover.markdown, /Result type: `string`/);
 });
 
+test("FHIRPath transform hovers report inferred result types", () => {
+    const text = [
+        "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias Patient as target",
+        "group example(source src : Patient, target tgt : Patient) {",
+        "    src -> ('http://example.org/') as extBase, tgt.id = (extBase & 'suffix');",
+        "}",
+    ].join("\n");
+    for (const offset of [text.indexOf("http://example.org/"), text.indexOf("&")]) {
+        const hover = service.getHover({
+            uri: "file:///fhirpath-transform-hover.fml",
+            text,
+            position: positionAt(text, offset),
+        });
+
+        assert.ok(hover);
+        assert.match(hover.markdown, /Transform.*`evaluate`/);
+        assert.match(hover.markdown, /Result type: `string`/);
+    }
+});
+
+test("FHIRPath target aliases show typed context, declaration, and reference hovers", () => {
+    const text = [
+        "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias Patient as source",
+        "group example(source src : Patient, target tgt : Patient) {",
+        "    src -> ('http://example.org/') as extBase, tgt.name as n2, n2.text = (%extBase);",
+        "}",
+    ].join("\n");
+    const hoverAt = (offset: number) => service.getHover({
+        uri: "file:///fhirpath-target-alias-hover.fml",
+        text,
+        position: positionAt(text, offset),
+    });
+
+    const sourceContext = hoverAt(text.indexOf("    src ->") + "    ".length + 1);
+    const declaration = hoverAt(text.indexOf("extBase") + 1);
+    const reference = hoverAt(text.indexOf("%extBase") + 2);
+
+    assert.ok(sourceContext);
+    assert.match(sourceContext.markdown, /Source context.*`src`/);
+    assert.match(sourceContext.markdown, /Type: `Patient` \(R5\)/);
+    for (const hover of [declaration, reference]) {
+        assert.ok(hover);
+        assert.match(hover.markdown, /Variable.*`extBase`/);
+        assert.match(hover.markdown, /Type: `string`/);
+    }
+});
+
 test("every repeated target property occurrence receives a hover", () => {
     const text = [
         "uses 'http://hl7.org/fhir/5.0/StructureDefinition/Observation' alias Observation as source",
@@ -1144,7 +1215,7 @@ group Main(source src : QuestionnaireResponse, target tgt : Observation) {
     assert.ok(result.diagnostics.every(diagnostic => !diagnostic.message.includes("Identity assignment")));
 });
 
-test("reports unsupported source Reference target profiles on identity mappings", async () => {
+test("warns about unsupported source Reference target profiles on identity mappings", async () => {
     const result = await service.validateDocument({
         uri: "file:///reference-profiles.fml",
         text: `
@@ -1156,7 +1227,9 @@ group Main(source src : Appointment, target tgt : AllergyIntolerance) {
 `,
     });
 
-    assert.equal(result.errorCount, 1);
+    assert.equal(result.errorCount, 0);
+    assert.equal(result.warningCount, 1);
+    assert.equal(result.diagnostics[0].severity, "warning");
     assert.match(result.diagnostics[0].message, /does not support source Reference target profile\(s\): 'Group'/);
     assert.deepEqual(result.diagnostics[0].range.start, {line: 4, character: 19});
 });

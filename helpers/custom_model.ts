@@ -9,7 +9,8 @@
 //   represented inline. The synthetic TypeName uses the form `<parentType>_<childPath>` in lower_snake style relative to
 //   its parent, e.g. `questionnaire_item`, `questionnaire_item_enableWhen`, `bundle_entry`. Recursive structures
 //   (e.g. `Questionnaire.item.item`) are expressed by an ElementTypeModel.TypeName referring back to the same synthetic
-//   type, so no explicit contentReference field is required on ElementModel.
+//   type, so no explicit contentReference field is required on ElementModel. Runtime logical models
+//   use canonical keys for these references to avoid collisions with core or other logical backbones.
 //
 // - Choice elements keep the `[x]` suffix in ElementName (e.g. `value[x]`) and list every permitted concrete type in
 //   the Type[] collection. Validators expand `valueQuantity`, `valueString`, etc. by matching the suffix against the
@@ -17,8 +18,9 @@
 //
 // - Models are looked up via an external dictionary keyed by canonical URL (including the FHIR version), since multiple
 //   FHIR versions may be loaded concurrently. TypeName is unique within a single version's dictionary but not across
-//   versions, so the canonical URL is the authoritative identifier. A secondary per-version index by TypeName is fine
-//   for resolving local ElementTypeModel.TypeName references within that same version's dictionary.
+//   versions, so the canonical URL is the authoritative identifier. Runtime logical models can also share a TypeName
+//   with a core or another logical model within one version. A secondary per-version core index by TypeName is fine;
+//   logical models must not implicitly overwrite it using their display TypeName.
 //
 // - Primitive handling uses two layers, mirroring how HL7 itself models primitives:
 //     1. The FHIR primitive datatype (lowercase TypeName: `string`, `boolean`, `dateTime`, ...) is a complex type
@@ -64,8 +66,8 @@ export interface ElementModel {
 }
 
 export interface ElementTypeModel {
-    /** References another TypeModel by its TypeName within the same per-version dictionary. For BackboneElements
-     *  and contentReference targets this is the synthetic `<parenttype>_<childpath>` name. */
+    /** References another TypeModel by its dictionary key: a per-version core TypeName (including synthetic
+     *  `<parenttype>_<childpath>` names), or a canonical key for runtime logical models and their children. */
     TypeName: string;
     /** Only meaningful when TypeName === "Reference"; lists the canonical URLs of allowed target resource types. */
     TargetProfile?: string[];

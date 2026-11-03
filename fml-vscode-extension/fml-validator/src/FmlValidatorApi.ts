@@ -23,6 +23,7 @@ import {isFmlParseError, parseFML} from "../../../helpers/fml_parser";
 import {FmlValidatorEngine} from "./FmlValidatorEngine";
 import {FmlGroupSymbolCollector} from "./FmlGroupSymbolCollector";
 import {FmlPropertyUsageCollector} from "./FmlPropertyUsageCollector";
+import {FmlFhirPathValidator} from "./FmlFhirPathValidator";
 import {Stage1FmlValidatorEngine} from "./Stage1FmlValidatorEngine";
 import {applyFmlModelConfiguration} from "./FmlModelConfiguration";
 import {FmlTransformValidator, resolveDefaultGroups, resolveGroupSignatures} from "./FmlTransformValidator";
@@ -33,13 +34,13 @@ export class FmlValidatorApi {
         private readonly groupSymbolCollector = new FmlGroupSymbolCollector(),
         private readonly propertyUsageCollector = new FmlPropertyUsageCollector(),
         private readonly transformValidator = new FmlTransformValidator(),
+        private readonly fhirPathValidator = new FmlFhirPathValidator(),
     ) {
     }
 
     /**
-     * Stage-1 validation is intentionally syntax-only. Later stages can compose
-     * compile(), validateSemantics(), and transform() after their engine hooks
-     * are implemented.
+     * Validates syntax, model/FHIRPath usage and available group signatures.
+     * Deeper semantic validation and execution use their separate engine hooks.
      */
     public validate(source: FmlSource): Promise<FmlValidatorResult<ParsedFml>> {
         return this.engine.parse(source);
@@ -58,11 +59,28 @@ export class FmlValidatorApi {
     }
 
     public getPropertyUsages(source: FmlSource): FmlPropertyUsage[] {
-        return this.propertyUsageCollector.collect(source);
+        return this.getPropertyAnalysis(source).usages;
     }
 
     public getPropertyAnalysis(source: FmlSource): FmlPropertyAnalysis {
-        return this.propertyUsageCollector.collectAnalysis(source);
+        const parsed = parseFML(source.sourceText);
+        if (isFmlParseError(parsed)) {
+            return {usages: [], groupInputs: [], groupInvocations: [], variableReferences: []};
+        }
+        applyFmlModelConfiguration(parsed, source);
+        const analysis = this.propertyUsageCollector.analyzeModel(
+            parsed,
+            source.sourceText,
+            source.customTypeModels,
+        );
+        this.fhirPathValidator.analyze(
+            parsed,
+            source.sourceText,
+            analysis,
+            source.sourceName,
+            source.customTypeModels,
+        );
+        return analysis;
     }
 
     public getDefaultGroups(source: FmlSource): FmlDefaultGroup[] {

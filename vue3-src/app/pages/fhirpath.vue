@@ -417,6 +417,12 @@ import fhirpath_r4_model from 'fhirpath/fhir-context/r4'
 import fhirpath_r5_model from 'fhirpath/fhir-context/r5'
 // Note: R6 is not yet available in fhirpath.js package
 import fhirpath_r6_model from "models/r6";
+import { fhirpath_hl7v2_model } from "models/hl7v2";
+import {
+  defaultHl7v2Expression,
+  defaultHl7v2Message,
+  isHl7v2Content,
+} from "@legacy/helpers/hl7v2_parser";
 import AbstractSyntaxTreeTab from '~/components/AbstractSyntaxTreeTab.vue'
 import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from 'lz-string'
 import { EncodeTestFhirpathData, DecodeTestFhirpathData, type TestFhirpathData } from 'models/testenginemodel'
@@ -425,6 +431,7 @@ import { decodeLibraryContent } from '@legacy/helpers/library_content'
 import type { IApplicationInsights } from '@microsoft/applicationinsights-web'
 
 const { $appInsights } = useNuxtApp() as unknown as { $appInsights?: IApplicationInsights }
+const route = useRoute()
 
 // Set the page title
 useHead({
@@ -455,7 +462,10 @@ const hasTraceData = computed<boolean>(() => {
 })
 
 // FHIR version and engine selection
-const fhirVersions = ['R4', 'R5', 'R6']
+const showAdvancedSettings = ref<boolean>(settings.showAdvancedSettings())
+const fhirVersions = computed<string[]>(() =>
+  showAdvancedSettings.value ? ['R4', 'R5', 'R6', 'hl7v2'] : ['R4', 'R5', 'R6']
+)
 const selectedFhirVersion = ref<string>('R4')
 const selectedEngine = ref<IFhirPathEngineDetails | undefined>()
 const isFhirVersionMenuOpen = ref<boolean>(false)
@@ -507,7 +517,6 @@ const variables = ref<Array<{name: string, value: string}>>([]) // Start with no
 const shareToolTipMessage = ref<string>('Copy a sharable link to this test expression')
 const shareZulipToolTipMessage = ref<string>('Copy a sharable link for Zulip to this test expression')
 const resourceJsonChanged = ref<boolean>(false)
-const showAdvancedSettings = ref<boolean>(settings.showAdvancedSettings())
 const loadedLibraryReference = ref<string>()
 // Local copy of the effective engine registry (baseline + config overrides)
 const effectiveEngines = ref<Record<string, IFhirPathEngineDetails>>({ })
@@ -528,6 +537,11 @@ const onSettingsClosed = () => {
   if (s.fhirServerExamplesUrl) {
     fhirServerExamplesUrl.value = s.fhirServerExamplesUrl
   }
+  if (!fhirVersions.value.includes(selectedFhirVersion.value)) {
+    selectedFhirVersion.value = fhirVersions.value[0] || 'R4'
+    changeFhirVersion()
+    return
+  }
   // If the currently selected engine is no longer in the visible list
   // (e.g. advanced settings was disabled), fall back to the first available.
   if (selectedEngine.value && !engines.value.includes(selectedEngine.value)) {
@@ -546,7 +560,6 @@ onMounted(async () => {
   window.addEventListener('hashchange', handleHashChange)
 
   // Apply config URL override before any config fetch is triggered
-  const route = useRoute()
   const configParam = route.query.config as string | undefined
   if (configParam) {
     settings.setConfigUrl(configParam)
@@ -691,7 +704,9 @@ const navigateToResourcePath = (elementPath: string) => {
   
   // Get the appropriate FHIR model based on selected version
   let model: Model
-  if (selectedFhirVersion.value === 'R5') {
+  if (selectedFhirVersion.value === 'hl7v2') {
+    model = fhirpath_hl7v2_model
+  } else if (selectedFhirVersion.value === 'R5') {
     model = fhirpath_r5_model
   } else if (selectedFhirVersion.value === 'R6') {
     model = fhirpath_r6_model
@@ -747,7 +762,6 @@ const handleHashChange = async () => {
 
 // Read parameters from URL query
 const readParametersFromQuery = (): TestFhirpathData => {
-  const route = useRoute()
   let data: TestFhirpathData = {
     expression: route.query.expression as string
   }
@@ -970,7 +984,31 @@ const engineTooltip = (engine?: IFhirPathEngineDetails): string => {
 }
 
 // Handle FHIR version change
+const defaultFhirExpression = "trace('trc').given.join(' ')\n.combine(family).join(', ')"
 const changeFhirVersion = async () => {
+  // Swap default sample resource and expression when switching to/from hl7v2
+  if (selectedFhirVersion.value === 'hl7v2') {
+    if (!isHl7v2Content(resourceText.value)) {
+      resourceText.value = defaultHl7v2Message
+      resourceUrl.value = ''
+      resourceJsonChanged.value = true
+    }
+    if (fhirpathExpression.value === defaultFhirExpression) {
+      fhirpathContextExpression.value = ''
+      fhirpathExpression.value = defaultHl7v2Expression
+    }
+  } else {
+    if (resourceText.value === defaultHl7v2Message) {
+      resourceText.value = testResource.value
+      resourceUrl.value = 'Patient/example/_history/3'
+      resourceJsonChanged.value = false
+    }
+    if (fhirpathExpression.value === defaultHl7v2Expression) {
+      fhirpathContextExpression.value = 'name'
+      fhirpathExpression.value = defaultFhirExpression
+    }
+  }
+
   // Update selected engine to match new version if needed
   const lastSelectedEngine = selectedEngine.value
   if (lastSelectedEngine) {

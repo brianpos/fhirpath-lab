@@ -3,6 +3,12 @@ export default {
   target: 'static',
   ssr: false,
 
+  generate: {
+    cache: {
+      ignore: ['**/node_modules/**', '**/dist/**', '**/out/**', '**/*.vsix']
+    }
+  },
+
   vue: {
     config: {
       ignoredElements: ['aidbox-form-renderer']
@@ -77,6 +83,7 @@ export default {
     transpile: [
       // "@fhir-typescript/r4b-core",
       "fhirpath",
+      "lossless-json",
       "ucum-lhc",
       "lforms-loader",
       "openai",

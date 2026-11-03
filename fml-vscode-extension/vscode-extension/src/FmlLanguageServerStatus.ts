@@ -21,10 +21,19 @@ interface StatusQuickPickItem extends vscode.QuickPickItem {
     action?: StatusAction;
 }
 
+export interface FmlStatusActivity {
+    statusText: string;
+    title: string;
+    detail: string;
+}
+
 export class FmlLanguageServerStatus implements vscode.Disposable {
     private readonly statusBarItem: vscode.StatusBarItem;
     private readonly disposables: vscode.Disposable[] = [];
+    private readonly activities = new Map<number, FmlStatusActivity>();
     private currentStatus?: FmlServerStatus;
+    private fallbackState: "starting" | "unavailable" = "starting";
+    private nextActivityId = 0;
 
     public constructor(
         private readonly client: LanguageClient,
@@ -80,8 +89,50 @@ export class FmlLanguageServerStatus implements vscode.Disposable {
         }
     }
 
+    public beginActivity(activity: FmlStatusActivity): vscode.Disposable {
+        const activityId = ++this.nextActivityId;
+        this.activities.set(activityId, activity);
+        this.renderStatusBar();
+        let disposed = false;
+        return {
+            dispose: () => {
+                if (disposed) {
+                    return;
+                }
+                disposed = true;
+                this.activities.delete(activityId);
+                this.renderStatusBar();
+            },
+        };
+    }
+
     private update(status: FmlServerStatus): void {
         this.currentStatus = status;
+        this.fallbackState = "starting";
+        this.renderStatusBar();
+    }
+
+    private renderStatusBar(): void {
+        const activity = Array.from(this.activities.values()).at(-1);
+        if (activity && this.currentStatus?.state !== "error"
+            && this.fallbackState !== "unavailable") {
+            this.statusBarItem.backgroundColor = this.currentStatus?.failedFileCount
+                ? new vscode.ThemeColor("statusBarItem.warningBackground")
+                : undefined;
+            this.statusBarItem.text = statusActivityText(activity);
+            this.statusBarItem.tooltip = statusActivityTooltip(activity, this.currentStatus);
+            return;
+        }
+        if (!this.currentStatus) {
+            if (this.fallbackState === "unavailable") {
+                this.renderUnavailable();
+            } else {
+                this.renderStarting();
+            }
+            return;
+        }
+
+        const status = this.currentStatus;
         this.statusBarItem.backgroundColor = undefined;
         this.statusBarItem.text = statusBarText(status);
         this.statusBarItem.tooltip = statusTooltip(status);
@@ -97,12 +148,24 @@ export class FmlLanguageServerStatus implements vscode.Disposable {
     }
 
     private setStarting(): void {
+        this.currentStatus = undefined;
+        this.fallbackState = "starting";
+        this.renderStatusBar();
+    }
+
+    private renderStarting(): void {
         this.statusBarItem.text = "$(loading~spin) FML: starting";
         this.statusBarItem.tooltip = "FHIR Mapping Language Tools language server is starting.";
         this.statusBarItem.backgroundColor = undefined;
     }
 
     private setUnavailable(): void {
+        this.currentStatus = undefined;
+        this.fallbackState = "unavailable";
+        this.renderStatusBar();
+    }
+
+    private renderUnavailable(): void {
         this.statusBarItem.text = "$(error) FML: unavailable";
         this.statusBarItem.tooltip = "FHIR Mapping Language Tools language server is unavailable.";
         this.statusBarItem.backgroundColor = new vscode.ThemeColor(
@@ -170,9 +233,17 @@ export class FmlLanguageServerStatus implements vscode.Disposable {
                 cancellable: false,
             },
             async () => {
-                const result = await this.reindex();
-                await this.refresh();
-                return result;
+                try {
+                    const result = await this.reindex();
+                    await this.refresh();
+                    return result;
+                } catch (error) {
+                    this.setUnavailable();
+                    void vscode.window.showErrorMessage(
+                        `Unable to re-index the FML workspace: ${error instanceof Error ? error.message : String(error)}`,
+                    );
+                    throw error;
+                }
             },
         );
     }
@@ -186,8 +257,16 @@ export class FmlLanguageServerStatus implements vscode.Disposable {
             },
             async () => {
                 this.setStarting();
-                await this.restart();
-                await this.refresh();
+                try {
+                    await this.restart();
+                    await this.refresh();
+                } catch (error) {
+                    this.setUnavailable();
+                    void vscode.window.showErrorMessage(
+                        `Unable to restart the FML language server: ${error instanceof Error ? error.message : String(error)}`,
+                    );
+                    throw error;
+                }
             },
         );
     }
@@ -331,6 +410,27 @@ function statusTooltip(status: FmlServerStatus): vscode.MarkdownString {
         `${status.openDocumentCount} open documents · ${status.failedFileCount} failures\n\n`,
     );
     tooltip.appendMarkdown("Click for status and recovery actions.");
+    return tooltip;
+}
+
+export function statusActivityText(activity: FmlStatusActivity): string {
+    return `$(loading~spin) FML: ${activity.statusText}`;
+}
+
+export function statusActivityTooltip(
+    activity: FmlStatusActivity,
+    status?: FmlServerStatus,
+): vscode.MarkdownString {
+    const tooltip = new vscode.MarkdownString(undefined, true);
+    tooltip.appendMarkdown(`**${activity.title}**\n\n`);
+    tooltip.appendText(activity.detail);
+    if (status) {
+        tooltip.appendMarkdown("\n\n");
+        tooltip.appendMarkdown(
+            `Language server: ${capitalize(status.state)} · ${status.fileCount} indexed files`,
+        );
+    }
+    tooltip.appendMarkdown("\n\nThe preview will update when processing completes.");
     return tooltip;
 }
 

@@ -174,6 +174,8 @@ export interface VisitorOptions {
      *  an environment variable when its name is declared. Nested members are
      *  never rewritten. */
     allowEnvironmentVariablesAtRoot?: boolean;
+    /** FML extension(url) projects extension.where(url = argument).value. */
+    fmlExtensionShortcut?: boolean;
     /** Type of the input resource — surfaced as `%resource`. Per the FHIRPath
      *  spec (https://build.fhir.org/ig/HL7/FHIRPath/#scoped-functions),
      *  `%resource` is the resource the expression is being evaluated against,
@@ -872,7 +874,10 @@ class FhirPathExpressionVisitor {
         // Look up the spec definition early so per-argument scope decisions
         // (whether to rebind `$this` for a scoped expression argument) can be
         // driven by `argument.type` rather than a hard-coded function list.
-        const def = functionsByName[name];
+        const def: FunctionDef | undefined = functionsByName[name] ?? (name === "resolve" ? {
+            category: "FHIR", functionName: "resolve", arguments: [], returnType: "Resource",
+            inputTypes: ["Reference", "canonical", "uri", "url", "String"], typeMapping: [],
+        } : undefined);
 
         // Visit arguments. For each declared `expression` argument (per the
         // spec's "scoped functions" definition), evaluate with $this rebound
@@ -1123,8 +1128,13 @@ class FhirPathExpressionVisitor {
                 return { types: dedupeTypes(all), isCollection: true };
             }
             case "extension": {
-                // Returns a collection of Extension elements regardless of input.
                 const t = this.provider.lookupByTypeName("Extension");
+                if (t && this.options.fmlExtensionShortcut) {
+                    const element = this.findElement(t, "value")?.element;
+                    const types = element?.Type.map(type => this.provider.lookupByTypeName(type.TypeName))
+                        .filter((type): type is TypeModel => !!type) ?? [];
+                    return {types: dedupeTypes(types), isCollection: true};
+                }
                 return { types: t ? [t] : [], isCollection: true };
             }
             case "resolve": {
@@ -1151,6 +1161,10 @@ class FhirPathExpressionVisitor {
                 return { ...input };
             case "defineVariable":
                 return { ...input };
+            case "simple": {
+                const t = this.provider.lookupByTypeName("System.String");
+                return { types: t ? [t] : [], isCollection: input.isCollection };
+            }
             case "type": {
                 // Reflection.type — returns SimpleTypeInfo / ClassInfo from the
                 // FHIRPath type-info schema. We don't model that here; emit empty.

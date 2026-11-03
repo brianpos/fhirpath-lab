@@ -16,11 +16,14 @@
     "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
     "build": "npm run clean && tsc -p tsconfig.json",
     "check-types": "tsc --noEmit -p tsconfig.json",
-    "test": "npm run build && node --test dist/test/FmlDebugService.test.js dist/test/FmlTraceReplay.test.js dist/test/FmlTypedValue.test.js dist/test/FmlVariablePathResolver.test.js",
+    "test": "npm run build && node --test dist/test/FmlDebugService.test.js dist/test/FmlTraceReplay.test.js dist/test/FmlTypedValue.test.js dist/test/FmlVariablePathResolver.test.js dist/test/FmlLocalDebugService.test.js",
     "watch": "tsc --watch -p tsconfig.json"
   },
   "dependencies": {
-    "fhirpath": "^5.0.0"
+    "@fhirpath-lab/fml-executor": "file:../fml-executor",
+    "@fhirpath-lab/validator": "file:../fml-validator",
+    "fhirpath": "^5.0.0",
+    "fhirpath-lab": "file:../.."
   },
   "devDependencies": {
     "@types/node": "^22.20.1",

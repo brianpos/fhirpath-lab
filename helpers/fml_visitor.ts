@@ -592,7 +592,7 @@ export class FmlModelBuilder {
     
     // Get variable name if present
     const aliasNode = ctx.alias();
-    const variable = aliasNode?.identifier()?.getText();
+    const variable = aliasNode?.identifier() ? this.visitIdentifier(aliasNode.identifier()) : undefined;
     
     // Get where clause if present
     const whereNode = ctx.whereClause();
@@ -657,11 +657,12 @@ export class FmlModelBuilder {
   visitSingleRuleTarget(ctx: any): RuleTarget | null {
     // Get variable name if present (alias is shared across all three forms)
     const aliasNode = ctx.alias();
-    const variable = aliasNode?.identifier()?.getText();
+    const variable = aliasNode?.identifier() ? this.visitIdentifier(aliasNode.identifier()) : undefined;
 
     // Get list mode if present (only forms 1 and 2)
     const listModeNode = ctx.targetListMode?.();
-    const listMode = listModeNode?.getText() as 'first' | 'share' | 'last' | 'single' | undefined;
+    const listMode = listModeNode?.getChild(0)?.getText() as 'first' | 'share' | 'last' | 'single' | undefined;
+    const listRuleId = listModeNode?.ID?.()?.getText();
 
     // Form 1: qualifiedIdentifier ('=' transform)?
     const qualIdNode = ctx.qualifiedIdentifier();
@@ -680,7 +681,8 @@ export class FmlModelBuilder {
         element,
         transform: transform || undefined,
         variable,
-        listMode
+        listMode,
+        listRuleId
       };
     }
 
@@ -695,7 +697,8 @@ export class FmlModelBuilder {
         position: this.getPosition(ctx),
         transform: transform || undefined,
         variable,
-        listMode
+        listMode,
+        listRuleId
       };
     }
 
@@ -715,7 +718,8 @@ export class FmlModelBuilder {
         position: this.getPosition(ctx),
         transform,
         variable,
-        listMode
+        listMode,
+        listRuleId
       };
     }
 
@@ -733,8 +737,10 @@ export class FmlModelBuilder {
         position: this.getPosition(ctx),
         type: 'copy',
         parameters: [{
+          position: this.getPosition(literalNode),
           type: 'literal',
-          value: this.removeQuotes(literalNode.getText())
+          literalType: this.literalType(literalNode.getText()),
+          value: this.literalValue(literalNode.getText())
         }]
       };
     }
@@ -808,12 +814,7 @@ export class FmlModelBuilder {
         
         if (literalNode) {
           const text = literalNode.getText();
-          let value: string | number | boolean = this.removeQuotes(text);
-          
-          // Try to parse as number or boolean
-          if (text === 'true') value = true;
-          else if (text === 'false') value = false;
-          else if (!isNaN(Number(text))) value = Number(text);
+          const value = this.literalValue(text);
           
           parameters.push({
             position: this.getPosition(valueNode),
@@ -841,16 +842,25 @@ export class FmlModelBuilder {
       }
     }
     
-    return { 
-      position: this.getPosition(ctx),
-      type, 
-      parameters,
-      isInvocation: true
-    };
+    if (type === 'evaluate') {
+      parameters.forEach((parameter, index) => {
+        if ((parameter.name === 'expression' || (!parameter.name && index === 1)) && parameter.type === 'identifier') {
+          parameter.type = 'expression';
+        }
+      });
+    }
+    return {position: this.getPosition(ctx), type, parameters, isInvocation: true};
   }
 
   private isIdentifier(value: string): boolean {
     return /^[A-Za-z_][A-Za-z0-9_]*$/.test(value) || /^`[^`]+`$/.test(value);
+  }
+
+  private literalValue(text: string): string | number | boolean {
+    if (text === 'true') return true;
+    if (text === 'false') return false;
+    if (!isNaN(Number(text))) return Number(text);
+    return this.removeQuotes(text);
   }
 
   private literalType(text: string): TransformParameter['literalType'] {
@@ -915,12 +925,7 @@ export class FmlModelBuilder {
         
         if (literalNode) {
           const text = literalNode.getText();
-          let value: string | number | boolean = this.removeQuotes(text);
-          
-          // Try to parse as number or boolean
-          if (text === 'true') value = true;
-          else if (text === 'false') value = false;
-          else if (!isNaN(Number(text))) value = Number(text);
+          const value = this.literalValue(text);
           
           parameters.push({
             position: this.getPosition(paramNode),
@@ -976,7 +981,9 @@ export class FmlModelBuilder {
   private removeQuotes(text: string): string {
     if ((text.startsWith("'") && text.endsWith("'")) ||
         (text.startsWith('"') && text.endsWith('"'))) {
-      return text.substring(1, text.length - 1);
+      const escapes: Record<string, string> = {"'": "'", '"': '"', "\\": "\\", "/": "/", n: "\n", r: "\r", t: "\t", b: "\b", f: "\f"};
+      return text.substring(1, text.length - 1).replace(/\\(u[0-9a-fA-F]{4}|['"\\/nrtbf])/g,
+        (_match, escape: string) => escape.startsWith("u") ? String.fromCharCode(parseInt(escape.slice(1), 16)) : escapes[escape]);
     }
     return text;
   }

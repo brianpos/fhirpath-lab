@@ -1,0 +1,52 @@
+{
+  "name": "@fhirpath-lab/fml-executor",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Internal model-aware FML execution and conformance tests",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./testing": {
+      "types": "./dist/testing/corpus.d.ts",
+      "require": "./dist/testing.js",
+      "default": "./dist/testing.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "packageManager": "npm@10.9.2",
+  "scripts": {
+    "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
+    "build": "npm run clean && tsc -p tsconfig.json && esbuild src/index.ts --bundle --platform=neutral --format=cjs --external:@fhirpath-lab/validator --outfile=dist/index.js && esbuild src/index.ts --bundle --platform=browser --format=esm --external:@fhirpath-lab/validator --outfile=dist/index.mjs && esbuild src/testing/corpus.ts --bundle --platform=node --format=cjs --outfile=dist/testing.js",
+    "check-types": "tsc --noEmit -p tsconfig.json",
+    "test": "npm run build && esbuild src/test/FmlExecutor.test.ts src/test/FmlErrors.test.ts src/test/FmlCoverage.test.ts src/test/FmlTracing.test.ts src/test/FmlPerformance.test.ts src/test/FmlCorpus.test.ts src/test/FmlXverComparison.test.ts src/test/FmlXverWarnings.test.ts src/test/FhirTerminologyService.test.ts src/test/FmlModelIdentity.test.ts --bundle --platform=node --format=cjs --external:@fhirpath-lab/validator --external:esbuild --outdir=dist/test && node --test dist/test/FmlExecutor.test.js dist/test/FmlErrors.test.js dist/test/FmlCoverage.test.js dist/test/FmlTracing.test.js dist/test/FmlPerformance.test.js dist/test/FmlCorpus.test.js dist/test/FmlXverComparison.test.js dist/test/FmlXverWarnings.test.js dist/test/FhirTerminologyService.test.js dist/test/FmlModelIdentity.test.js",
+    "test:corpus": "npm run build && esbuild src/test/ExternalCorpus.test.ts --bundle --platform=node --format=cjs --external:@fhirpath-lab/validator --outfile=dist/test/ExternalCorpus.test.js && node --test dist/test/ExternalCorpus.test.js",
+    "test:xver": "npm run build && esbuild src/test/ExternalXverComparison.test.ts --bundle --platform=node --format=cjs --external:@fhirpath-lab/validator --outfile=dist/test/ExternalXverComparison.test.js && node --test dist/test/ExternalXverComparison.test.js",
+    "benchmark": "npm run build && esbuild src/testing/benchmark.ts --bundle --platform=node --format=cjs --external:@fhirpath-lab/validator --outfile=dist/benchmark.js && node --expose-gc dist/benchmark.js",
+    "benchmark:xver": "npm run build && esbuild src/testing/xver-benchmark.ts --bundle --platform=node --format=cjs --external:@fhirpath-lab/validator --outfile=dist/xver-benchmark.js && node --expose-gc dist/xver-benchmark.js"
+  },
+  "dependencies": {
+    "@fhirpath-lab/validator": "file:../fml-validator",
+    "entities": "^6.0.1",
+    "fhirpath": "^5.0.0",
+    "fhirpath-lab": "file:../..",
+    "lossless-json": "^4.3.0",
+    "luxon": "^3.4.3"
+  },
+  "devDependencies": {
+    "@types/luxon": "^3.4.2",
+    "@types/node": "^22.20.1",
+    "esbuild": "^0.25.12",
+    "typescript": "^7.0.2"
+  }
+}

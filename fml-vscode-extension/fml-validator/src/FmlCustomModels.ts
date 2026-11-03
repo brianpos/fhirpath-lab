@@ -1,5 +1,6 @@
 import type {TypeModel} from "../../../helpers/custom_model";
 import type {FhirVersion} from "../../../helpers/fml_models";
+import {getModelProvider} from "../../../helpers/fhirpath_validator";
 import {
     buildVersion,
     resolveStructureDefinitionTypeName,
@@ -32,15 +33,37 @@ export function buildLogicalTypeModels(
         skipSelfConsistency: true,
     });
     const definitionsByUrl = new Map(definitions.map(definition => [definition.url.split("|")[0], definition]));
+    const cores = (["stu3", "r4", "r4b", "r5", "r6"] as const).map(getModelProvider);
+    const syntheticCounts = new Map<string, number>();
+    const syntheticIdentities = new Map<string, string>();
+    for (const entry of result.entries.filter(entry => entry.synthetic)) {
+        syntheticCounts.set(entry.model.TypeName, (syntheticCounts.get(entry.model.TypeName) ?? 0) + 1);
+        syntheticIdentities.set(`${entry.url.split("#")[0]}|${entry.model.TypeName}`, entry.url);
+    }
     const models: Record<string, TypeModel> = {};
     for (const entry of result.entries) {
-        const definition = definitionsByUrl.get(entry.url.split("#")[0]);
+        const canonical = entry.url.split("#")[0];
+        const definition = definitionsByUrl.get(canonical);
+        const baseCanonical = definition?.baseDefinition?.split("|")[0];
         const model: TypeModel = {
             ...entry.model,
             CanonicalUrl: entry.url,
+            ...(!entry.synthetic && baseCanonical && definitionsByUrl.has(baseCanonical)
+                ? {BaseTypeName: baseCanonical} : {}),
+            Elements: entry.model.Elements.map(element => ({
+                ...element,
+                Type: element.Type.map(type => ({
+                    ...type,
+                    TypeName: syntheticIdentities.get(`${canonical}|${type.TypeName}`) ?? type.TypeName,
+                })),
+            })),
             ...(definition?.version ? {Version: definition.version} : {}),
         };
-        models[entry.synthetic ? model.TypeName : entry.url] = model;
+        models[entry.url] = model;
+        if (entry.synthetic && syntheticCounts.get(model.TypeName) === 1
+            && !cores.some(core => core.lookupByTypeName(model.TypeName))) {
+            models[model.TypeName] = model;
+        }
     }
     return models;
 }
