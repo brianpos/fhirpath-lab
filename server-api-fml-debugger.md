@@ -70,7 +70,7 @@ The body is a FHIR `Parameters` resource.
 | `supportingMap` | `0..*` | `resource` | Supporting StructureMap resources. |
 | `source` | `0..1` | `valueUri` | Canonical URL of a StructureMap already available to the server. |
 | `model` | `0..*` | `valueString` or `resource` | Model resources required to parse or execute the maps. The name is singular even when the value is a Bundle. |
-| `content` | `1..1` | `resource` | Clients send a Binary whose `data` is base64-encoded UTF-8 JSON or XML, with `contentType` of `application/fhir+json` or `application/fhir+xml`. This also supports logical models and cross-version inputs. |
+| `content` | `1..1` | `resource` | Clients send a Binary whose `data` is base64-encoded UTF-8 JSON, XML, or HL7 v2 ER7, with `contentType` of `application/fhir+json`, `application/fhir+xml`, or `x-application/hl7-v2+er7`, respectively. Remote VS Code execution preserves raw v2; the server must support that input format and source model. This also supports logical models and cross-version inputs. |
 | `debug` | `0..1` | `valueBoolean` | Set to `true` to request a trace. May be omitted when `debug=true` is supplied in the URL query instead. |
 
 FHIR permits repeated parameters. A client may therefore send both an explicit `model.valueString` and another `model.resource` containing a collection Bundle.
@@ -80,7 +80,9 @@ FHIR permits repeated parameters. A client may therefore send both an explicit `
 The VS Code extension supports `"legacyPost": true` in a debug launch configuration
 for remote engines that have not migrated to this request format. It replaces
 each `srcMap.valueString` with `map.valueString` and replaces Binary
-`content.resource` with the original JSON or XML text in `resource.valueString`.
+`content.resource` with the original JSON, XML, or v2 text in `resource.valueString`.
+This legacy string parameter cannot carry a Binary content type; the enclosing
+request remains FHIR Parameters JSON in either mode.
 Map filenames, model parameters, and HTTP headers are unchanged. The option
 defaults to `false` and does not affect local execution.
 
@@ -257,7 +259,7 @@ Each repeated `trace` parameter represents one event, in evaluation order:
 - Text coordinates are zero-based UTF-16 positions, with an exclusive end. A missing end selects the start position. `expressionPosition` is also supported for mapping structured locations to FML.
 - Each event contains the complete variable snapshot, not a delta. Repeated names form ordered collections. A variable without a value or retrieval path is an empty collection.
 - Variable items use a `value` part with native `value[x]`, a `resource` part with `resource`, or a `jsonValue.valueString` containing JSON. `dataType` is a display label, not a deserialization instruction.
-- A path-only item is retrieved from the immutable input, regardless of `contextType`. JSON inputs can be resolved locally; XML inputs are sent unchanged and require inline snapshots for local variable inspection.
+- A path-only item is retrieved from the immutable input, regardless of `contextType`. JSON inputs can be resolved locally; XML and raw remote v2 inputs require inline snapshots for local variable inspection.
 - Repeated `message` parts preserve their optional names and all `text` parts.
 - `outcome` issues with severity `error` or `fatal` mark the final recorded event as an exception without unwinding open scopes. Warnings and information do not indicate failure. Parameters failure responses retain their recorded trace, including on non-2xx HTTP responses.
 - Both clients retain `parameters`, `output`, and `trace`. The web page also displays trace completeness and captured variable values; the extension groups variables by engine-provided context and omits the Trace event scope from the Variables view.

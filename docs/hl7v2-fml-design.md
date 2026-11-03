@@ -7,7 +7,7 @@ This mirrors what the FHIRPath page already does for v2.
 ## Scope
 
 * v2 is supported as a **source only**. v2 as a mapping target (serialising to pipe-delimited text) is out of scope.
-* The v2 text is converted to JSON in the browser before it is given to **any** engine
+* On the browser FML page, v2 text is converted to JSON before it is given to **any** engine
   (local JavaScript, .NET, HAPI, matchbox, MaLaC-HD), so all engines see ordinary
   logical-model JSON and need no v2 awareness.
 * Detection is automatic (`isHl7v2Content`): if the Input tab holds v2, it is converted on Run.
@@ -21,6 +21,22 @@ The local JavaScript engine accepts FHIR XML through the same browser-side
 is passed to the TypeScript FML executor, while remote engines continue to receive
 the original XML. XML without a FHIR `resourceType` is rejected; arbitrary XML
 requires a logical-model conversion and remains out of scope.
+
+### VS Code execution
+
+The extension's local debugger and `#evaluateFml` tool reuse the same generic and
+specific model projection. Set `input` in `launch.json` to an `.hl7`, `.v2`, or
+`.er7` file; content detection, not the filename, selects v2 processing.
+The generic models are supplied automatically. Specific models can come from the
+explicit `model` file or resolved workspace model resources.
+
+Unlike the browser, remote extension execution sends the **original v2 text** as
+UTF-8/base64 Binary `content`, with `contentType: "x-application/hl7-v2+er7"`.
+The enclosing HTTP request is still `application/fhir+json` because its body is
+FHIR Parameters. The server must support ER7 input and the map's source model.
+With `legacyPost`, raw v2 is sent as `resource.valueString`; that legacy string
+contract cannot carry a Binary content type. Remote v2 trace replay requires
+inline variable snapshots; path-only variables are explicitly marked unavailable.
 
 ## Two model styles
 

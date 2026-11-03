@@ -50,6 +50,21 @@ function fixture(text = patientMap, name = "main.fml") {
     return {index, request, set, service: new FmlEvaluationService(index)};
 }
 
+test("evaluates HL7 v2 content through the local language tool without a supplied model", async () => {
+    const {service, request} = fixture(`
+uses "http://hl7.org/fhirpath/v2/StructureDefinition/Message" alias V2 as source
+uses "http://hl7.org/fhir/StructureDefinition/Patient" as target
+group Main(source src : V2, target tgt : Patient) {
+  src.segment as pid where (code = 'PID') -> tgt then {
+    pid -> tgt.id = (%pid.field.skip(2).first().element.first().component.first().text) "id";
+  } "pid";
+}`);
+    const result = await service.evaluate({...request,
+        inputText: "MSH|^~\\&|Lab|Hospital|||||ADT^A01|1|P|2.7\rPID|1||12345678^^^MR^MR||Chalmers^Peter\r"});
+    assert.equal(result.status, "success", JSON.stringify(result));
+    assert.deepEqual(JSON.parse(result.resultJson!), {resourceType: "Patient", id: "12345678"});
+});
+
 test("evaluates entirely cached sources at nonexistent paths and observes reindexed unsaved imports", async () => {
     const {service, request, set} = fixture(patientMap
         .replace("group Main", "imports 'http://example.test/Shared'\ngroup Main")

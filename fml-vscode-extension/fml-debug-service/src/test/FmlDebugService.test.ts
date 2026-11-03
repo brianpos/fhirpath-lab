@@ -532,6 +532,23 @@ test("parses all OperationOutcome issue source extensions as 1-based positions",
     ]);
 });
 
+test("sends raw HL7 v2 Binary content with an ER7 MIME type and replays inline snapshots", async () => {
+    const inputText = "MSH|^~\\&|Lab|Hospital|||||ADT^A01|1|P|2.7\rPID|1||12345678||Chalmers^Peter\r";
+    const service = new FmlDebugService(async (_input, init) => {
+        const body = JSON.parse(String(init?.body));
+        const content = body.parameter.find((parameter: {name: string}) => parameter.name === "content").resource;
+        assert.equal(content.contentType, "x-application/hl7-v2+er7");
+        assert.equal(Buffer.from(content.data, "base64").toString("utf8"), inputText);
+        assert.equal(init?.headers && new Headers(init.headers).get("Content-Type"), "application/fhir+json");
+        return new Response(JSON.stringify({resourceType: "Parameters", parameter: []}));
+    });
+    const result = await service.execute({mapText: "group Main {}", inputText});
+    assert.equal(result.initialState.value, inputText);
+    const legacy = buildParametersRequest({mapText: "group Main {}", inputText, legacyPost: true});
+    assert.deepEqual(legacy.parameter?.find(parameter => parameter.name === "resource"),
+        {name: "resource", valueString: inputText});
+});
+
 test("encodes JSON and XML Binary content as UTF-8, including large Unicode inputs", async () => {
     const json = JSON.stringify({resourceType: "Patient", name: [{family: "\u00e9\ud83d\ude00".repeat(10000)}]});
     const xml = '<Patient xmlns="http://hl7.org/fhir"><name><family value="\u00e9"/></name></Patient>';
@@ -706,6 +723,17 @@ test("reports XML path-only variables as unavailable instead of inventing empty 
     ]}]}, '<Patient xmlns="http://hl7.org/fhir"/>');
     assert.equal(trace.trace[0].variables[0].data, undefined);
     assert.match(trace.trace[0].variables[0].errorMessage ?? "", /XML input retrieval paths/);
+});
+
+test("reports raw v2 path-only variables as unavailable while preserving inline values", () => {
+    const trace = parseDebugTrace({parameter: [{name: "trace", part: [
+        {name: "phase", valueCode: "step"},
+        {name: "variable", part: [{name: "name", valueString: "src"}, {name: "path", valueString: "Message"}]},
+        {name: "variable", part: [{name: "name", valueString: "id"}, {name: "path", valueString: "Message.id"},
+            {name: "jsonValue", valueString: '"12345678"'}]},
+    ]}]}, "MSH|^~\\&|Lab|Hospital|||||ADT^A01|1|P|2.7\rPID|1||12345678\r");
+    assert.match(trace.trace[0].variables[0].errorMessage ?? "", /HL7 v2 input retrieval paths/);
+    assert.equal(trace.trace[0].variables[1].data?.value, "12345678");
 });
 
 test("reports HTTP failures even if the Parameters recording omits an error outcome", async () => {

@@ -1,3 +1,4 @@
+import {isHl7v2Content} from "@fhirpath-lab/validator";
 import {
     DEFAULT_FML_DEBUG_SERVER_URL,
     FmlDebugIssue,
@@ -238,7 +239,7 @@ export function parseDebugTrace(
 }
 
 export function parseFmlInput(text: string): JsonValue {
-    return text.trimStart().startsWith("<") ? text : parseJsonValue(text, "input resource");
+    return text.trimStart().startsWith("<") || isHl7v2Content(text) ? text : parseJsonValue(text, "input resource");
 }
 
 export function buildParametersRequest(request: FmlDebugLaunchRequest): FhirParameters {
@@ -284,7 +285,8 @@ export function createFmlContent(inputText: string): {resourceType: "Binary"; co
     }
     return {
         resourceType: "Binary",
-        contentType: inputText.trimStart().startsWith("<")
+        contentType: isHl7v2Content(inputText) ? "x-application/hl7-v2+er7"
+            : inputText.trimStart().startsWith("<")
             ? "application/fhir+xml"
             : "application/fhir+json",
         data: btoa(encoded.join("")),

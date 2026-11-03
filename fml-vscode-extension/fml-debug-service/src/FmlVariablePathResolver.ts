@@ -1,4 +1,5 @@
 import {evaluate} from "fhirpath";
+import {isHl7v2Content} from "@fhirpath-lab/validator";
 import {
     FmlDebugType,
     FmlTraceVariable,
@@ -38,6 +39,10 @@ export function hydratePathOnlyVariables(
         }
         if (typeof input === "string" && input.trimStart().startsWith("<")) {
             variable.errorMessage = "XML input retrieval paths require an inline variable snapshot for local replay.";
+            continue;
+        }
+        if (typeof input === "string" && isHl7v2Content(input)) {
+            variable.errorMessage = "HL7 v2 input retrieval paths require an inline variable snapshot for local replay.";
             continue;
         }
 

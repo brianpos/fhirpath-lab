@@ -12,3 +12,4 @@ export * from "./FmlCustomModels";
 export * from "./Stage1FmlValidatorEngine";
 export * from "./transformSignatures";
 export * from "./parseFmlModel";
+export {isHl7v2Content, prepareHl7v2FmlInput} from "../../../helpers/hl7v2_fml_input";

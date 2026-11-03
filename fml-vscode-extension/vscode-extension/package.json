@@ -73,8 +73,8 @@
         "name": "fml-tools_evaluate",
         "toolReferenceName": "evaluateFml",
         "displayName": "Test FML locally",
-        "userDescription": "Test an FML map against a JSON input file using only the local TypeScript engine.",
-        "modelDescription": "Test a FHIR Mapping Language transformation locally using the bundled TypeScript engine, never a remote mapping server. Uses unsaved editor contents, indexed imported maps and existing package/IG-output models and ConceptMaps. A configured terminology service may receive codes/codings and ConceptMap canonicals when no local ConceptMap matches. Requires an absolute JSON input file path. Omit mapFilePath to use the active file-backed FML document. Optionally select an entry group or supply a model JSON file. Returns status, source/input versions, diagnostics and the lossless resultJson string. No files are edited and no debug trace or input payload is returned. Transformed data may be sensitive and is returned to chat. Unsupported local features report errors, never fall back to remote mapping execution.",
+        "userDescription": "Test an FML map against a JSON or HL7 v2 input file using only the local TypeScript engine.",
+        "modelDescription": "Test a FHIR Mapping Language transformation locally using the bundled TypeScript engine, never a remote mapping server. Uses unsaved editor contents, indexed imported maps and existing package/IG-output models and ConceptMaps. A configured terminology service may receive codes/codings and ConceptMap canonicals when no local ConceptMap matches. Requires an absolute JSON or HL7 v2 ER7 input file path. HL7 v2 uses the generic model automatically or a supplied specific logical model. Omit mapFilePath to use the active file-backed FML document. Optionally select an entry group or supply a model JSON file. Returns status, source/input versions, diagnostics and the lossless resultJson string. No files are edited and no debug trace or input payload is returned. Transformed data may be sensitive and is returned to chat. Unsupported local features report errors, never fall back to remote mapping execution.",
         "canBeReferencedInPrompt": true,
         "tags": [
           "fml",
@@ -92,7 +92,7 @@
             "inputFilePath": {
               "type": "string",
               "minLength": 1,
-              "description": "Absolute path of a JSON input file in the workspace or already open in the editor."
+              "description": "Absolute path of a JSON or HL7 v2 input file in the workspace or already open in the editor."
             },
             "modelFilePath": {
               "type": "string",
@@ -188,7 +188,7 @@
               },
               "input": {
                 "type": "string",
-                "description": "FHIR JSON input resource file. XML input requires a configured remote engine."
+                "description": "JSON or HL7 v2 input resource file. HL7 v2 uses generic or supplied specific models locally; remote engines receive raw v2. XML input requires a configured remote engine."
               },
               "model": {
                 "type": "string",

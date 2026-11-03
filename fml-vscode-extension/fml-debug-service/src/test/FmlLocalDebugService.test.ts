@@ -6,12 +6,75 @@ import path from "node:path";
 import {FmlLocalDebugService} from "../FmlLocalDebugService";
 import {FmlTraceReplay} from "../FmlTraceReplay";
 import {FmlDebugEngineError, parseOperationOutcomeIssues} from "../FmlDebugService";
+import type {JsonValue} from "../contracts";
 
 const mapText = `
 uses 'http://hl7.org/fhir/StructureDefinition/Patient' alias P as source
 uses 'http://hl7.org/fhir/StructureDefinition/Patient' alias T as target
 group Main(source src : P, target tgt : T) { src.id -> tgt.id; }
 `;
+
+test("maps HL7 v2 PID identifier, name and DOB locally with generic models and replay", async () => {
+    const result = await new FmlLocalDebugService().execute({
+        mapText: `
+uses "http://hl7.org/fhirpath/v2/StructureDefinition/Message" alias V2 as source
+uses "http://hl7.org/fhir/StructureDefinition/Patient" as target
+group Main(source src : V2, target tgt : Patient) {
+  src.segment as pid where (code = 'PID') -> tgt then {
+    pid -> tgt.identifier as id then {
+      pid -> id.value = (%pid.field.skip(2).first().element.first().component.first().text) "id";
+    } "identifier";
+    pid -> tgt.name as n then {
+      pid -> n.family = (%pid.field.skip(4).first().element.first().component.first().text) "family";
+      pid -> n.given = (%pid.field.skip(4).first().element.first().component.skip(1).first().text) "given";
+    } "name";
+    pid -> tgt.birthDate = ((%pid.field.skip(6).first().element.first().text.substring(0, 4) + '-' + %pid.field.skip(6).first().element.first().text.substring(4, 2) + '-' + %pid.field.skip(6).first().element.first().text.substring(6, 2)).toDate()) "dob";
+  } "pid";
+}`,
+        inputText: "MSH|^~\\&|Lab|Hospital|||||ADT^A01|1|P|2.7\rPID|1||12345678^^^MR^MR||Chalmers^Peter||19741225|M\r",
+    });
+    assert.deepEqual(result.result?.value, {
+        resourceType: "Patient", identifier: [{value: "12345678"}],
+        name: [{family: "Chalmers", given: ["Peter"]}], birthDate: "1974-12-25",
+    });
+    assert.equal(typeof result.initialState.value, "object");
+    assert.ok(result.trace.length);
+    assert.equal(result.traceStatus, "complete", JSON.stringify(result.outcome));
+});
+
+for (const modelLocation of ["modelText", "modelResources"] as const) {
+    test(`maps HL7 v2 with a user-supplied specific model from ${modelLocation}`, async () => {
+        const url = "http://example.org/StructureDefinition/LocalMessage";
+        const model: JsonValue = {
+            resourceType: "StructureDefinition", url, name: "LocalMessage", type: url,
+            status: "draft", kind: "logical", abstract: false,
+            baseDefinition: "http://hl7.org/fhir/StructureDefinition/Base", derivation: "specialization",
+            differential: {element: [
+                {id: "LocalMessage", path: "LocalMessage"},
+                {id: "LocalMessage.pid", path: "LocalMessage.pid", min: 0, max: "1",
+                    type: [{code: "BackboneElement"}],
+                    extension: [{url: "http://fhirpath-lab.com/StructureDefinition/hl7v2-source", valueString: "PID"}]},
+                {id: "LocalMessage.pid.identifier", path: "LocalMessage.pid.identifier", min: 0, max: "1",
+                    type: [{code: "string"}],
+                    extension: [{url: "http://fhirpath-lab.com/StructureDefinition/hl7v2-source", valueString: "PID-3.1"}]},
+            ]},
+        };
+        const result = await new FmlLocalDebugService().execute({
+            mapText: `
+uses "${url}" alias Local as source
+uses "http://hl7.org/fhir/StructureDefinition/Patient" as target
+group Main(source src : Local, target tgt : Patient) {
+  src.pid as pid -> tgt then {
+    pid.identifier as value -> tgt.identifier as id, id.value = value "identifier";
+  } "pid";
+}`,
+            inputText: "MSH|^~\\&|Lab|Hospital|||||ADT^A01|1|P|2.7\rPID|1||12345678^^^MR^MR||Chalmers^Peter\r",
+            ...(modelLocation === "modelText" ? {modelText: JSON.stringify(model)} : {modelResources: [model]}),
+        });
+        assert.deepEqual(result.result?.value, {resourceType: "Patient", identifier: [{value: "12345678"}]},
+            JSON.stringify(result.outcome));
+    });
+}
 
 for (const effectiveDateTime of ["2026-11-02T00:30:00+11:00", "2026-11-02T23:30:00-11:00"]) {
     test(`evaluates the blood-pressure fixture with both Observation models and preserves the local date for ${effectiveDateTime}`, async () => {

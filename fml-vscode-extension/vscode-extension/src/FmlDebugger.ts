@@ -49,7 +49,7 @@ export class FmlDebugConfigurationProvider implements vscode.DebugConfigurationP
             const selected = await vscode.window.showOpenDialog({
                 canSelectMany: false,
                 openLabel: "Use as FML debug input",
-                filters: {JSON: ["json"]},
+                filters: {"FML input (JSON, XML, HL7 v2)": ["json", "xml", "hl7", "v2", "er7", "txt"]},
                 defaultUri: this.defaultInputUri(configuration.program),
             });
             if (!selected?.[0]) {

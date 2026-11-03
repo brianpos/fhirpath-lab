@@ -1,5 +1,5 @@
 import type {Parameters, ParametersParameter} from "fhir/r4b";
-import {buildLogicalTypeModels} from "@fhirpath-lab/validator";
+import {buildLogicalTypeModels, isHl7v2Content, prepareHl7v2FmlInput} from "@fhirpath-lab/validator";
 import {
     createSingleInputRequest, FmlExecutor, FmlTraceRecorder, parseFmlJson, stringifyFmlJson,
     type FmlExecutorConfiguration, type FmlDiagnostic,
@@ -20,15 +20,28 @@ export class FmlLocalDebugService {
 
     public async execute(request: FmlDebugLaunchRequest): Promise<FmlDebugTrace> {
         const invocation = {...request, maps: request.maps?.map(source => Object.freeze({...source}))};
-        const parameters = await this.executeParameters(invocation);
-        return parseDebugTrace(parameters, JSON.parse(invocation.inputText) as JsonValue, undefined,
+        const {parameters, inputText} = await this.executeInvocation(invocation);
+        return parseDebugTrace(parameters, JSON.parse(inputText) as JsonValue, undefined,
             invocation.maps ?? [Object.freeze({text: invocation.mapText, fileName: "local.fml"})]);
     }
 
     public async executeParameters(request: FmlDebugLaunchRequest): Promise<Parameters> {
+        return (await this.executeInvocation(request)).parameters;
+    }
+
+    private async executeInvocation(request: FmlDebugLaunchRequest): Promise<{parameters: Parameters; inputText: string}> {
         try {
             request.signal?.throwIfAborted();
-            return await this.runParameters(request);
+            const prepared = this.prepareInput(request);
+            const parameters = await this.runParameters(prepared.request);
+            if (prepared.warnings.length) {
+                const warnings = prepared.warnings.map(diagnostics =>
+                    ({severity: "warning" as const, code: "informational" as const, diagnostics}));
+                const outcome = parameters.parameter?.find(parameter => parameter.name === "outcome")?.resource;
+                if (outcome?.resourceType === "OperationOutcome") outcome.issue.push(...warnings);
+                else parameters.parameter?.push({name: "outcome", resource: {resourceType: "OperationOutcome", issue: warnings}});
+            }
+            return {parameters, inputText: prepared.request.inputText};
         } catch (error) {
             if (error instanceof FmlDebugEngineError) throw error;
             if (request.signal?.aborted) throw request.signal.reason;
@@ -40,9 +53,31 @@ export class FmlLocalDebugService {
         }
     }
 
+    private prepareInput(request: FmlDebugLaunchRequest): {request: FmlDebugLaunchRequest; warnings: string[]} {
+        if (!isHl7v2Content(request.inputText)) return {request, warnings: []};
+        const resources: unknown[] = [...request.modelResources ?? []];
+        if (request.modelText?.trim()) resources.push(JSON.parse(request.modelText));
+        const entries: unknown[] = [];
+        const collect = (resource: unknown): void => {
+            if (resource && typeof resource === "object" && "resourceType" in resource
+                && resource.resourceType === "Bundle" && "entry" in resource && Array.isArray(resource.entry)) {
+                for (const entry of resource.entry) collect(entry?.resource);
+            } else {
+                entries.push({resource});
+            }
+        };
+        resources.forEach(collect);
+        const prepared = prepareHl7v2FmlInput(request.inputText, request.mapText,
+            JSON.stringify({resourceType: "Bundle", type: "collection", entry: entries}));
+        return {
+            request: {...request, inputText: prepared.inputText, modelText: prepared.modelText, modelResources: []},
+            warnings: prepared.warnings,
+        };
+    }
+
     private async runParameters(request: FmlDebugLaunchRequest): Promise<Parameters> {
         if (request.inputText.trimStart().startsWith("<")) {
-            throw new Error("The local FML backend currently requires JSON input; select a remote backend for XML.");
+            throw new Error("The local FML backend currently requires JSON or HL7 v2 input; select a remote backend for XML.");
         }
         let input: unknown;
         try {

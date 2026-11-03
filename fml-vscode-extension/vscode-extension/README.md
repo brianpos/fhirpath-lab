@@ -221,7 +221,13 @@ configured remote transform endpoint can be used instead.
 
 No engine setting or executable path is required for local execution. The local engine
 supports the [documented execution features](../fml-executor/README.md),
-one JSON input/target root, optional `entryGroup`, and the same replay controls.
+one input/target root, optional `entryGroup`, and the same replay controls.
+JSON and HL7 v2 ER7 inputs work locally. For v2, the shared Lab parser projects
+the message into the generic FHIRPath-annex logical model automatically, or into
+a supplied specific model using `hl7v2-source` extensions. Specific models may
+come from the explicit `model` file or resolved workspace model resources.
+This also applies to the local `#evaluateFml` tool. See the
+[v2 model design and PID-to-Patient example](../../docs/hl7v2-fml-design.md).
 Unsupported features report diagnostics; they do not fall back to a remote engine.
 Local output documents are pretty-printed for display using the JSON output
 editor's tab-size and spaces/tabs settings. Formatting changes whitespace only,
@@ -252,9 +258,9 @@ an execution error remains visible if it occurs after capture has stopped.
 Snapshot recording can be expensive for large targets; see the
 [recording and benchmark notes](../fml-executor/README.md).
 
-Remote requests use the Mapping Language IG parameters: repeated `srcMap` FML strings, UTF-8/base64 `content` as a Binary (`application/fhir+json` or `application/fhir+xml`), and unchanged `model` parameters. Traces can be requested with `debug=true` in the endpoint URL or a Boolean `debug` body parameter. For modern engine launches, include `debug=true` in `serverUrl`; `legacyPost` sends the body parameter. JSON inputs work locally or remotely; XML requires remote execution. Results use `return`, with legacy `result` still accepted. The adapter retains evaluator metadata, additional `output`, and the raw response.
+Remote requests use the Mapping Language IG parameters: repeated `srcMap` FML strings, UTF-8/base64 `content` as a Binary (`application/fhir+json`, `application/fhir+xml`, or `x-application/hl7-v2+er7`), and unchanged `model` parameters. Remote v2 input is sent unchanged, not projected to JSON; the server must support ER7 input and the source model. The enclosing HTTP content type remains `application/fhir+json` for the Parameters body. Traces can be requested with `debug=true` in the endpoint URL or a Boolean `debug` body parameter. For modern engine launches, include `debug=true` in `serverUrl`; `legacyPost` sends the body parameter. JSON and v2 inputs work locally or remotely; XML requires remote execution. Results use `return`, with legacy `result` still accepted. The adapter retains evaluator metadata, additional `output`, and the raw response.
 
-The structured trace supports `enter`/`step`/`exit`, explicit or derived depth, zero-based UTF-16 source ranges, `expressionPosition`, complete variable snapshots grouped by `contextType`, repeated collection items, and named log messages. Inline values, resources, JSON values, and immutable-input retrieval paths are supported (XML replay requires inline variable values). `traceStatus` reports complete, truncated, or stopped recordings; errors in `outcome` stop replay at the last recorded event without discarding its stack. Legacy extension-based recordings remain supported. See the [debugger API](../../server-api-fml-debugger.md) for the wire format.
+The structured trace supports `enter`/`step`/`exit`, explicit or derived depth, zero-based UTF-16 source ranges, `expressionPosition`, complete variable snapshots grouped by `contextType`, repeated collection items, and named log messages. Inline values, resources, JSON values, and immutable-input retrieval paths are supported (XML and raw remote v2 replay require inline variable values). `traceStatus` reports complete, truncated, or stopped recordings; errors in `outcome` stop replay at the last recorded event without discarding its stack. Legacy extension-based recordings remain supported. See the [debugger API](../../server-api-fml-debugger.md) for the wire format.
 
 Create a `.vscode/launch.json` configuration for the default local engine:
 
@@ -274,7 +280,9 @@ Create a `.vscode/launch.json` configuration for the default local engine:
 }
 ```
 
-Start debugging with `F5`. If `input` is missing, the extension prompts for a JSON file.
+Start debugging with `F5`. If `input` is missing, the extension prompts for a JSON,
+XML, or HL7 v2 file. For example, use `"input": "${workspaceFolder}/input.hl7"`
+with the [PID-to-Patient map](../../docs/hl7v2-fml-design.md#worked-pid-to-patient-example).
 
 Successful evaluations reuse the same editable JSON output tab for the same
 source file and engine across debug sessions. The local engine has its own output;
