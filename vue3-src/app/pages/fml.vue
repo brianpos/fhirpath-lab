@@ -270,6 +270,7 @@ import { lookupByTypeName as lookupByTypeNameR6 } from '@legacy/helpers/models/g
 import { buildUserModelLookup, composeLookups, type TypeLookup, type UserModelLookup } from '@legacy/helpers/user_models'
 import { createFhirLogicalModel, type CreateLogicalModelOptions } from '@legacy/helpers/logical_model_generator'
 import { defaultHl7v2Message } from '@legacy/helpers/hl7v2_parser'
+import { parseXmlAndObject } from '@legacy/helpers/xml_parser'
 import {
   isHl7v2Content,
   mergeHl7v2Models,
@@ -691,6 +692,19 @@ async function evaluateMap() {
   const url = engine.key ? await settings.getServerEngineUrl(engine.key) : ''
 
   if (selectedEngine.value === 'JavaScript (local)') {
+    if (inputText.trimStart().startsWith('<')) {
+      try {
+        const parsed = parseXmlAndObject(inputText)
+        if (!parsed.object?.resourceType) {
+          outcome.value = errorOutcome('invalid', 'The provided XML content does not appear to be a valid FHIR resource (missing resourceType).')
+          return
+        }
+        inputText = stringifyFmlJson(parsed.object, tabSpaces.value)
+      } catch (error) {
+        outcome.value = errorOutcome('invalid', `Unable to parse the FHIR XML input: ${error}`)
+        return
+      }
+    }
     const controller = new AbortController()
     localExecutionAbort = controller
     loadingData.value = true

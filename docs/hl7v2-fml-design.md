@@ -14,6 +14,14 @@ This mirrors what the FHIRPath page already does for v2.
 * The v2 helper buttons (sample message + map, "add generic v2 models") are shown when
   *Advanced settings* are enabled, same as the v2 option on the FHIRPath page.
 
+### FHIR XML input
+
+The local JavaScript engine accepts FHIR XML through the same browser-side
+`parseXmlAndObject` conversion used by the FHIRPath page. The converted FHIR JSON
+is passed to the TypeScript FML executor, while remote engines continue to receive
+the original XML. XML without a FHIR `resourceType` is rejected; arbitrary XML
+requires a logical-model conversion and remains out of scope.
+
 ## Two model styles
 
 | Style | Shape | Where it comes from |
