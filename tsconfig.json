@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "ES2018",
+    "target": "ES2020",
     "module": "commonjs",
     "moduleResolution": "Node",
     "lib": [
@@ -38,9 +38,12 @@
   "exclude": [
     "node_modules",
     "fhirpath-ai",
+    "fml-vscode-extension",
     "vue3-src",
     ".nuxt",
     "dist",
+    "**/dist/**",
+    "**/out/**",
     "test"
   ]
 }

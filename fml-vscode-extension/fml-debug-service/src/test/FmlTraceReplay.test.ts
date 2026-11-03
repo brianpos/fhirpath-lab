@@ -1,8 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import {FmlDebugTrace} from "../contracts";
+import {FmlDebugTrace, FmlTracePhase} from "../contracts";
 import {FmlTraceReplay} from "../FmlTraceReplay";
 import {createFmlTypedValue} from "../FmlTypedValue";
+import {parseDebugTrace} from "../FmlDebugService";
 
 const sourceText = [
     "group Main(source src, target tgt) {",
@@ -30,6 +31,7 @@ const trace: FmlDebugTrace = {
         category: "debug",
         message: `event ${index}`,
         depth: [0, 1, 2, 0, 1][index],
+        phase: "instant" as const,
         range: {startOffset, length: 5},
         variables: [],
         state: index === 1 ? createFmlTypedValue({target: {created: true}}) : undefined,
@@ -82,6 +84,7 @@ test("step over and step out terminate rather than entering deeper events", () =
             category: "debug",
             message: `nested ${index}`,
             depth,
+            phase: "instant" as const,
             range: {startOffset: offsets[index], length: 1},
             variables: [],
         })),
@@ -94,4 +97,94 @@ test("step over and step out terminate rather than entering deeper events", () =
     stepOutReplay.stepIn();
     assert.equal(stepOutReplay.stepOut(), undefined);
     assert.equal(stepOutReplay.currentIndex, nestedTrace.trace.length);
+});
+
+const phases: FmlTracePhase[] = ["enter", "enter", "instant", "exit", "enter", "exit", "exit"];
+
+const phasedTrace: FmlDebugTrace = {
+    initialState: createFmlTypedValue({}),
+    trace: phases.map((phase, index) => ({
+        index,
+        name: `phased-${index}`,
+        category: "debug",
+        message: `${phase} ${index}`,
+        depth: [1, 2, 2, 2, 2, 2, 1][index],
+        phase,
+        range: {startOffset: offsets[index % offsets.length], length: 1},
+        variables: [],
+    })),
+};
+
+test("derives frames from enter and exit phases rather than reported depth", () => {
+    const replay = new FmlTraceReplay(phasedTrace, sourceText);
+
+    assert.deepEqual(replay.getStack(0), [0]);
+    assert.deepEqual(replay.getStack(2), [0, 1, 2]);
+    assert.deepEqual(replay.getStack(3), [0, 3]);
+    assert.deepEqual(replay.getStack(6), [6]);
+});
+
+test("steps over a frame onto its matching exit event", () => {
+    const replay = new FmlTraceReplay(phasedTrace, sourceText);
+
+    assert.equal(replay.stepIn()?.index, 1);
+    assert.equal(replay.next()?.index, 3);
+    assert.equal(replay.next()?.index, 4);
+});
+
+test("steps out of a frame onto the enclosing frame exit", () => {
+    const replay = new FmlTraceReplay(phasedTrace, sourceText);
+
+    replay.stepIn();
+    replay.stepIn();
+    assert.equal(replay.currentIndex, 2);
+    assert.equal(replay.stepOut()?.index, 3);
+    assert.equal(replay.stepOut()?.index, 6);
+});
+
+test("reports the current event first and its enclosing frames after it", () => {
+    const replay = new FmlTraceReplay(phasedTrace, sourceText);
+
+    replay.stepIn();
+    replay.stepIn();
+    assert.deepEqual(replay.getStackEvents().map(event => event.index), [2, 1, 0]);
+});
+
+test("steps over an entire group when stopped on its enter event", () => {
+    const replay = new FmlTraceReplay(phasedTrace, sourceText);
+
+    assert.equal(replay.currentIndex, 0);
+    assert.equal(replay.next()?.index, 6);
+});
+
+test("uses structured event depth for next and stepOut, including the step before a nested scope", () => {
+    const phases = ["enter", "step", "enter", "step", "exit", "step", "exit"];
+    const recording = parseDebugTrace({parameter: phases.map(phase => ({
+        name: "trace", part: [{name: "phase", valueCode: phase}],
+    }))}, {});
+    const replay = new FmlTraceReplay(recording, "");
+    assert.deepEqual(recording.trace.map(event => event.depth), [0, 1, 1, 2, 1, 1, 0]);
+    assert.equal(replay.stepIn()?.index, 1);
+    assert.equal(replay.next()?.index, 2);
+    assert.equal(replay.next()?.index, 4);
+    assert.equal(replay.next()?.index, 5);
+    assert.equal(replay.stepOut()?.index, 6);
+    assert.equal(replay.stepBack()?.index, 5);
+});
+
+test("retains the active stack and variables at the end of a truncated recording", () => {
+    const recording = parseDebugTrace({parameter: [
+        {name: "traceStatus", valueCode: "truncated"},
+        ...["enter", "enter", "step"].map(phase => ({
+            name: "trace", part: [{name: "phase", valueCode: phase}],
+        })),
+    ]}, {});
+    const replay = new FmlTraceReplay(recording, "");
+    replay.stepIn();
+    replay.stepIn();
+    assert.deepEqual(replay.getStackEvents().map(event => event.index), [2, 1, 0]);
+    assert.equal(replay.continue()?.index, 2);
+    assert.equal(replay.stepIn()?.index, 2);
+    assert.deepEqual(replay.getStackEvents().map(event => event.index), [2, 1, 0]);
+    assert.equal(replay.stepBack()?.index, 1);
 });

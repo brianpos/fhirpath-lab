@@ -3,6 +3,7 @@ import {
     FmlDebugIssue,
     FmlDebugMapSource,
     FmlDebugService,
+    FmlLocalDebugService,
     FmlDebugTrace,
     FmlDebugType,
     FmlTraceEvent,
@@ -13,7 +14,9 @@ import {
     childPath,
     createFmlTypedValue,
     formatDebugType,
+    findTraceMapSource,
     parseOperationOutcomeIssues,
+    resolveTraceSourceRange,
 } from "@fhirpath-lab/debug-service";
 import {
     Breakpoint,
@@ -32,7 +35,10 @@ import {DebugProtocol} from "@vscode/debugprotocol";
 import {promises as fs} from "node:fs";
 import path from "node:path";
 import {resolveFmlDebugDependencies} from "./FmlDebugDependencies";
+import {FmlTraceLocationIndex} from "./FmlTraceLocationIndex";
 import type {SushiWorkspaceConfiguration} from "./SushiConfigWatcher";
+import {toFhirVersion} from "@fhirpath-lab/validator";
+import {resolveFmlExecutionEngine} from "./FmlExecutionEngine";
 
 export interface FmlLaunchRequestArguments extends DebugProtocol.LaunchRequestArguments {
     program: string;
@@ -41,8 +47,13 @@ export interface FmlLaunchRequestArguments extends DebugProtocol.LaunchRequestAr
     dependencies?: string[];
     fhirVersion?: string;
     serverUrl?: string;
+    legacyPost?: boolean;
+    terminologyServerUrl?: string;
+    terminologyFhirVersion?: "R4" | "R5";
     stopOnEntry?: boolean;
     mapText?: string;
+    entryGroup?: string;
+    localTrace?: import("@fhirpath-lab/debug-service").FmlDebugLaunchRequest["localTrace"];
 }
 
 type VariableContainer =
@@ -53,7 +64,6 @@ type VariableContainer =
         typeOverride?: string;
         value: JsonValue;
     }
-    | {kind: "trace"; event: FmlTraceEvent}
     | {kind: "variables"; variables: FmlTraceVariable[]};
 
 interface LocatedOutcomeIssue {
@@ -70,6 +80,7 @@ export class FmlDebugSession extends DebugSession {
     private mapSources: FmlDebugMapSource[] = [];
     private sourceText = "";
     private sourcePath = "";
+    private traceLocationIndexes = new Map<FmlDebugMapSource, FmlTraceLocationIndex | undefined>();
     private lastException?: string;
     private launchAbortController?: AbortController;
     private terminated = false;
@@ -79,7 +90,7 @@ export class FmlDebugSession extends DebugSession {
         private readonly modelConfigurationProvider: (
             program: string,
         ) => SushiWorkspaceConfiguration | undefined = () => undefined,
-        private readonly presentFinalResult: (result: JsonValue) => void = () => undefined,
+        private readonly presentFinalResult: (result: JsonValue, rawJson?: string) => void | Promise<void> = () => undefined,
     ) {
         super();
         this.setDebuggerLinesStartAt1(true);
@@ -112,6 +123,7 @@ export class FmlDebugSession extends DebugSession {
         try {
             this.terminated = false;
             this.launchAbortController = new AbortController();
+            const engine = resolveFmlExecutionEngine(args);
             this.sourcePath = args.program;
             this.sourceText = args.mapText ?? await fs.readFile(args.program, "utf8");
             this.mapSources = [{
@@ -136,6 +148,8 @@ export class FmlDebugSession extends DebugSession {
                     `Resolved ${resource.resourceType}: ${resource.canonical} from ${filePath}\n`,
                     "console",
                 )),
+                undefined,
+                modelConfiguration?.modelFileCache,
             );
             this.mapSources = dependencies.maps;
             for (const resource of dependencies.unresolvedResources) {
@@ -146,24 +160,34 @@ export class FmlDebugSession extends DebugSession {
             }
 
             this.sendEvent(new OutputEvent(
-                `Starting FML trace using ${args.serverUrl ?? "the configured remote engine"}\n`,
+                `Starting FML trace using ${engine.kind === "local" ? "the local JavaScript engine" : engine.serverUrl}\n`,
                 "console",
             ));
-            const trace = await this.debugService.execute({
+            const service = engine.kind === "local" ? new FmlLocalDebugService() : this.debugService;
+            const trace = await service.execute({
                 mapText: this.sourceText,
                 maps: dependencies.maps,
                 inputText,
                 modelText,
                 modelResources: dependencies.modelResources,
-                serverUrl: args.serverUrl,
+                serverUrl: engine.serverUrl,
+                legacyPost: args.legacyPost,
+                terminologyServerUrl: args.terminologyServerUrl,
+                terminologyFhirVersion: args.terminologyFhirVersion,
                 signal: this.launchAbortController.signal,
+                defaultFhirVersion: toFhirVersion(args.fhirVersion ?? modelConfiguration?.fhirVersion),
+                entryGroup: args.entryGroup,
+                localTrace: args.localTrace,
             });
             if (this.terminated) {
                 return;
             }
             this.startReplay(trace);
             if (trace.result !== undefined) {
-                this.presentFinalResult(trace.result.value);
+                await this.presentFinalResult(trace.result.value, engine.kind === "local" ? trace.rawResult : undefined);
+                if (this.terminated) {
+                    return;
+                }
             }
             this.sendResponse(response);
 
@@ -240,22 +264,24 @@ export class FmlDebugSession extends DebugSession {
         _args: DebugProtocol.StackTraceArguments,
     ): void {
         const frames = this.getStackEvents().map(event => {
-            const source = event.source ?? this.mapSources[0] ?? {
-                filePath: this.sourcePath,
-                text: this.sourceText,
-            };
-            const sourcePath = source.filePath ?? source.fileName ?? this.sourcePath;
+            const source = event.source ?? (!event.mapFileName ? this.mapSources[0] : undefined);
+            const sourcePath = source?.filePath ?? source?.fileName
+                ?? (!event.mapFileName ? this.sourcePath : undefined);
             const frame = new StackFrame(
                 event.index + 1,
                 event.message || event.category,
-                new Source(path.basename(sourcePath), sourcePath),
+                new Source(sourcePath ? path.basename(sourcePath) : event.mapFileName ?? path.basename(this.sourcePath), sourcePath),
                 this.replay?.getEventLine(event) ?? 1,
                 this.replay?.getEventColumn(event) ?? 1,
             );
-            const end = this.positionAt(
-                (event.range?.startOffset ?? 0) + Math.max(event.range?.length ?? 1, 1),
-                source.text,
-            );
+            const end = event.textRange?.endRow !== undefined && event.textRange.endColumn !== undefined
+                ? {line: event.textRange.endRow + 1, column: event.textRange.endColumn + 1}
+                : event.range
+                    ? this.positionAt(
+                        event.range.startOffset + Math.max(event.range.length, 1),
+                        source?.text ?? this.sourceText,
+                    )
+                    : {line: frame.line, column: frame.column + 1};
             frame.endLine = end.line;
             frame.endColumn = end.column;
             return frame;
@@ -275,16 +301,21 @@ export class FmlDebugSession extends DebugSession {
         const scopes: Scope[] = [];
         const frameEvent = this.eventForFrame(args.frameId);
         if (frameEvent) {
-            scopes.push(new Scope(
-                "FML variables",
-                this.variableHandles.create({kind: "variables", variables: frameEvent.variables}),
-                false,
-            ));
-            scopes.push(new Scope(
-                "Trace event",
-                this.variableHandles.create({kind: "trace", event: frameEvent}),
-                false,
-            ));
+            const contexts = frameEvent.variables.some(variable => variable.retrievalFromInput)
+                ? [...new Set(frameEvent.variables.map(variable => variable.mode))]
+                : [undefined];
+            for (const context of contexts) {
+                scopes.push(new Scope(
+                    context ? `${context} variables` : "FML variables",
+                    this.variableHandles.create({
+                        kind: "variables",
+                        variables: context
+                            ? frameEvent.variables.filter(variable => variable.mode === context)
+                            : frameEvent.variables,
+                    }),
+                    false,
+                ));
+            }
         }
         if (this.replay) {
             if (this.replay.trace.result !== undefined) {
@@ -319,7 +350,11 @@ export class FmlDebugSession extends DebugSession {
             : this.replay?.currentEvent;
         const evaluated = this.evaluateExpression(args.expression, frameEvent);
         if (!evaluated) {
-            this.sendErrorResponse(response, 2001, `Unable to resolve watch expression '${args.expression}'.`);
+            this.sendErrorResponse(response, {
+                id: 2001,
+                format: `Unable to resolve watch expression '${args.expression}'.`,
+                showUser: args.context !== "hover",
+            });
             return;
         }
         response.body = {
@@ -429,6 +464,14 @@ export class FmlDebugSession extends DebugSession {
     }
 
     private startReplay(trace: FmlDebugTrace, fallbackException?: string): void {
+        if (trace.traceStatus === "truncated" || trace.traceStatus === "stopped") {
+            this.sendEvent(new OutputEvent(`FML trace recording is ${trace.traceStatus}.\n`, "stderr"));
+        }
+        this.traceLocationIndexes = new Map(this.mapSources.map(source => [
+            source,
+            FmlTraceLocationIndex.fromSourceText(source.text),
+        ]));
+        const tracedEvents = trace.trace.map(event => this.withResolvedSource(event));
         const issues = parseOperationOutcomeIssues(trace.outcome);
         const locatedIssues: LocatedOutcomeIssue[] = issues.map((issue, index) => ({
             issue,
@@ -440,8 +483,8 @@ export class FmlDebugSession extends DebugSession {
         const errorEvents = locatedIssues
             .filter(({issue}) => issue.severity === "fatal" || issue.severity === "error")
             .map(({event}, index) => ({...event, index}));
-        const replayTrace = trace.trace.length > 0
-            ? trace
+        const replayTrace = tracedEvents.length > 0
+            ? {...trace, trace: tracedEvents}
             : errorEvents.length > 0
                 ? {...trace, trace: errorEvents}
                 : fallbackException
@@ -472,46 +515,54 @@ export class FmlDebugSession extends DebugSession {
             category: "exception",
             message,
             depth: 0,
+            phase: "instant",
             variables: [],
             exception: message,
         };
     }
 
     private createOutcomeIssueEvent(issue: FmlDebugIssue, index: number): FmlTraceEvent {
-        const source = this.resolveIssueSource(issue.fileName);
+        const source = this.resolveMapSource(issue.fileName);
         const range = source && issue.line !== undefined && issue.column !== undefined
             ? nearestTokenRange(source.text, issue.line, issue.column)
-            : undefined;
+            : source && issue.expression
+                ? this.traceLocationIndexes.get(source)?.rangeFor(issue.expression)
+                : undefined;
         return {
             index,
             name: "exception",
             category: "outcome",
             message: issue.message,
             depth: 0,
+            phase: "instant",
             variables: [],
             exception: issue.message,
             ...(range ? {range} : {}),
             ...(source ? {source} : {}),
+            ...(issue.expression ? {traceLocation: issue.expression} : {}),
         };
     }
 
-    private resolveIssueSource(fileName: string | undefined): FmlDebugMapSource | undefined {
-        if (!fileName) {
-            return this.mapSources[0];
+    private withResolvedSource(event: FmlTraceEvent): FmlTraceEvent {
+        const source = event.source ?? this.resolveMapSource(event.mapFileName);
+        if (!source) {
+            return event;
         }
-        const identity = diagnosticFileIdentity(fileName);
-        const exact = this.mapSources.find(source => {
-            return source.fileName !== undefined && diagnosticFileIdentity(source.fileName) === identity;
-        });
-        if (exact) {
-            return exact;
-        }
-        const baseName = diagnosticFileBaseName(identity);
-        const matchingBaseNames = this.mapSources.filter(source => {
-            return source.fileName !== undefined
-                && diagnosticFileBaseName(diagnosticFileIdentity(source.fileName)) === baseName;
-        });
-        return matchingBaseNames.length === 1 ? matchingBaseNames[0] : undefined;
+        const index = this.traceLocationIndexes.get(source);
+        const range = resolveTraceSourceRange(event, source.text)
+            ?? (event.traceLocation ? index?.rangeFor(event.traceLocation) : undefined);
+        const traceLocation = event.traceLocation
+            ?? (event.range ? index?.locationFor(event.range) : undefined);
+        return {
+            ...event,
+            ...(range ? {range} : {}),
+            ...(traceLocation ? {traceLocation} : {}),
+            source,
+        };
+    }
+
+    private resolveMapSource(fileName: string | undefined): FmlDebugMapSource | undefined {
+        return findTraceMapSource(fileName, this.mapSources);
     }
 
     private reportOutcomeIssues(
@@ -573,20 +624,7 @@ export class FmlDebugSession extends DebugSession {
     }
 
     private getStackEvents(): FmlTraceEvent[] {
-        const current = this.replay?.currentEvent;
-        if (!current || !this.replay) {
-            return [];
-        }
-        const frames: FmlTraceEvent[] = [current];
-        let nextDepth = current.depth - 1;
-        for (let index = current.index - 1; index >= 0 && nextDepth >= 0; index--) {
-            const event = this.replay.trace.trace[index];
-            if (event.depth <= nextDepth) {
-                frames.push(event);
-                nextDepth = event.depth - 1;
-            }
-        }
-        return frames;
+        return this.replay?.getStackEvents() ?? [];
     }
 
     private eventForFrame(frameId: number): FmlTraceEvent | undefined {
@@ -617,14 +655,6 @@ export class FmlDebugSession extends DebugSession {
                     evaluateName: variable.name,
                 };
             });
-        }
-        if (container.kind === "trace") {
-            return [
-                simpleVariable("category", container.event.category),
-                simpleVariable("message", container.event.message),
-                simpleVariable("depth", container.event.depth),
-                simpleVariable("traceIndex", container.event.index),
-            ];
         }
         return variablesForTypedValue(container, this.variableHandles);
     }
@@ -753,15 +783,6 @@ function tokenDistance(token: RegExpMatchArray, column: number): number {
     return Math.min(Math.abs(column - start), Math.abs(column - Math.max(end - 1, start)));
 }
 
-function diagnosticFileIdentity(fileName: string): string {
-    const normalized = fileName.replaceAll("\\", "/");
-    return process.platform === "win32" ? normalized.toLowerCase() : normalized;
-}
-
-function diagnosticFileBaseName(fileName: string): string {
-    return fileName.split("/").at(-1) ?? fileName;
-}
-
 interface EvaluatedValue {
     value: JsonValue;
     path: string;
@@ -816,15 +837,6 @@ function typedVariable(
                 path: valuePath,
             })
             : 0,
-    };
-}
-
-function simpleVariable(name: string, value: string | number): DebugProtocol.Variable {
-    return {
-        name,
-        value: String(value),
-        type: typeof value === "number" ? "integer" : "string",
-        variablesReference: 0,
     };
 }
 

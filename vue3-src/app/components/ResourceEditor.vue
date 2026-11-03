@@ -110,7 +110,14 @@ import { parseXml } from '@legacy/helpers/xml_parser'
 import type { Model } from 'fhirpath'
 import { CqlHighlightRules } from '@legacy/helpers/cql_highlighter'
 import { Rules as FhirPathHighlightRules, setCustomHighlightRules } from '@legacy/helpers/fhirpath_highlighter'
+import { FmlHighlightRules } from '@legacy/helpers/fml_highlighter'
 import { FhirLiquidHighlightRules } from '@legacy/helpers/fhirliquid_highlighter'
+import {
+  Hl7v2HighlightRules,
+  formatHl7v2Message,
+  isHl7v2Content,
+  parseHl7v2,
+} from '@legacy/helpers/hl7v2_parser'
 import "ace-builds/src-noconflict/mode-json"
 import "ace-builds/src-noconflict/mode-text"
 import "ace-builds/src-noconflict/mode-xml"
@@ -126,7 +133,7 @@ interface Props {
   tabSpaces?: number
   fhirServerExamplesUrl?: string
   dotnetServerDownloader?: string
-  language?: 'auto' | 'cql' | 'fhir-liquid' | 'fhirpath' | 'json' | 'text' | 'xml'
+  language?: 'auto' | 'cql' | 'fhir-liquid' | 'fhirpath' | 'fml' | 'hl7v2' | 'json' | 'text' | 'xml'
   minLines?: number
   maxLines?: number
   expressionEditor?: boolean
@@ -204,16 +211,24 @@ const navigateToPosition = (position: IJsonNodePosition) => {
   )
 
   if (position.value_stop_pos) {
+    const isHl7v2 = resourceType.value === 'hl7v2'
     let substr = internalResourceText.value.substring(position.prop_start_pos, position.value_stop_pos + 1)
     const lines = substr.split(/\r\n|\r|\n/)
     const endRowOffset = lines.length
     const endRow = position.line + endRowOffset - 1
     const lastLine = lines[endRowOffset - 1]
     const endCollOffset = lastLine ? lastLine.length : 0
-    const endCol = position.column + (endCollOffset > 1 ? endCollOffset + 1 : endCollOffset)
+    const endCol = isHl7v2
+      ? (endRowOffset > 1 ? endCollOffset : position.column + endCollOffset)
+      : position.column + (endCollOffset > 1 ? endCollOffset + 1 : endCollOffset)
     const range = new ace.Range(position.line - 1, position.column, endRow - 1, endCol)
 
-    const selectionMarker = aceEditor.value.session.addMarker(range, "resultSelection", "fullLine", true)
+    const selectionMarker = aceEditor.value.session.addMarker(
+      range,
+      "resultSelection",
+      isHl7v2 ? "text" : "fullLine",
+      !isHl7v2
+    )
     // after 1.5 seconds remove the highlight.
     setTimeout(() => {
       aceEditor.value?.session.removeMarker(selectionMarker)
@@ -289,10 +304,15 @@ const navigateToTextRange = (location: TextRangeLocation): boolean => {
 const navigateToContext = (model: Model, elementPath: string, variableName?: string, debugMode?: boolean): number | void => {
   // Move the cursor in the test resource JSON editor to the element
   if (internalResourceText.value) {
-    // Select the model to use, r5 or r4b
-    // console.log("Using "+modelInfo.version+" model for navigation");
+    // Select the model to use, r5, r4b, or hl7v2
+    const isHl7v2 =
+      resourceType.value === 'hl7v2' ||
+      (model?.version as string) === 'hl7v2' ||
+      isHl7v2Content(internalResourceText.value)
     let ast: IJsonNode | undefined
-    if (internalResourceText.value.startsWith('<')) {
+    if (isHl7v2) {
+      ast = parseHl7v2(internalResourceText.value)
+    } else if (internalResourceText.value.startsWith('<')) {
       ast = parseXml(internalResourceText.value, model)
     } else {
       ast = parseJson(internalResourceText.value, model)
@@ -314,10 +334,13 @@ const navigateToContext = (model: Model, elementPath: string, variableName?: str
 
           if (node.position.value_stop_pos) {
             let substr = internalResourceText.value.substring(node.position.prop_start_pos, node.position.value_stop_pos + 1)
-            const endRowOffset = substr.split(/\r\n|\r|\n/).length
+            const lines = substr.split(/\r\n|\r|\n/)
+            const endRowOffset = lines.length
             const endRow = node.position.line + endRowOffset - 1
-            const endCollOffset = substr.split(/\r\n|\r|\n/)[endRowOffset - 1].length
-            const endCol = node.position.column + (endCollOffset > 1 ? endCollOffset + 1 : endCollOffset)
+            const endCollOffset = lines[endRowOffset - 1]?.length ?? 0
+            const endCol = isHl7v2
+              ? (endRowOffset > 1 ? endCollOffset : node.position.column + endCollOffset)
+              : node.position.column + (endCollOffset > 1 ? endCollOffset + 1 : endCollOffset)
             const range = new ace.Range(node.position.line - 1, node.position.column, endRow - 1, endCol)
             console.log("context", range)
 
@@ -325,7 +348,12 @@ const navigateToContext = (model: Model, elementPath: string, variableName?: str
               const selectionMarker = aceEditor.value.session.addMarker(range, "debugSelection", "text", false)
               return selectionMarker
             } else {
-              const selectionMarker = aceEditor.value.session.addMarker(range, "resultSelection", "fullLine", true)
+              const selectionMarker = aceEditor.value.session.addMarker(
+                range,
+                "resultSelection",
+                isHl7v2 ? "text" : "fullLine",
+                !isHl7v2
+              )
               // after 1.5 seconds remove the highlight.
               setTimeout(() => {
                 aceEditor.value?.session.removeMarker(selectionMarker)
@@ -334,10 +362,13 @@ const navigateToContext = (model: Model, elementPath: string, variableName?: str
           } else if (node.position.prop_stop_pos) {
             // prop based stuff
             let substr = internalResourceText.value.substring(node.position.prop_start_pos, node.position.prop_stop_pos + 1)
-            const endRowOffset = substr.split(/\r\n|\r|\n/).length
+            const lines = substr.split(/\r\n|\r|\n/)
+            const endRowOffset = lines.length
             const endRow = node.position.line + endRowOffset - 1
-            const endCollOffset = substr.split(/\r\n|\r|\n/)[endRowOffset - 1].length
-            const endCol = node.position.column + (endCollOffset > 1 ? endCollOffset + 1 : endCollOffset)
+            const endCollOffset = lines[endRowOffset - 1]?.length ?? 0
+            const endCol = isHl7v2
+              ? (endRowOffset > 1 ? endCollOffset : node.position.column + endCollOffset)
+              : node.position.column + (endCollOffset > 1 ? endCollOffset + 1 : endCollOffset)
             const range = new ace.Range(node.position.line - 1, node.position.column, endRow - 1, endCol)
             console.log("context prop", range)
 
@@ -345,7 +376,12 @@ const navigateToContext = (model: Model, elementPath: string, variableName?: str
               const selectionMarker = aceEditor.value.session.addMarker(range, "debugSelection", "text", false)
               return selectionMarker
             } else {
-              const selectionMarker = aceEditor.value.session.addMarker(range, "resultSelection", "fullLine", true)
+              const selectionMarker = aceEditor.value.session.addMarker(
+                range,
+                "resultSelection",
+                isHl7v2 ? "text" : "fullLine",
+                !isHl7v2
+              )
               // after 1.5 seconds remove the highlight.
               setTimeout(() => {
                 aceEditor.value?.session.removeMarker(selectionMarker)
@@ -414,6 +450,7 @@ const initializeAceEditor = () => {
       // editorOptions.cursorStyle = 'slim'
     }
     aceEditor.value = ace.edit(aceEditorRef.value, editorOptions)
+    aceEditor.value.getSession().setNewLineMode("unix")
     
     aceEditor.value.getSession().setMode(`ace/mode/${resourceType.value}`)
     aceEditor.value.setValue(internalResourceText.value || '', -1)
@@ -438,18 +475,18 @@ const detectResourceType = () => {
   if (props.language !== 'auto') {
     if (resourceType.value === props.language) return
     resourceType.value = props.language
-    const aceMode = props.language === 'cql'
-      || props.language === 'fhir-liquid'
-      || props.language === 'fhirpath'
-      ? 'text'
-      : props.language
-    aceEditor.value?.getSession().setMode(`ace/mode/${aceMode}`)
     if (props.language === 'cql' && aceEditor.value) {
       setCustomHighlightRules(aceEditor.value, CqlHighlightRules, true)
     } else if (props.language === 'fhir-liquid' && aceEditor.value) {
       setCustomHighlightRules(aceEditor.value, FhirLiquidHighlightRules, true)
     } else if (props.language === 'fhirpath' && aceEditor.value) {
       setCustomHighlightRules(aceEditor.value, FhirPathHighlightRules)
+    } else if (props.language === 'hl7v2' && aceEditor.value) {
+      setCustomHighlightRules(aceEditor.value, Hl7v2HighlightRules, true)
+    } else if (props.language === 'fml' && aceEditor.value) {
+      setCustomHighlightRules(aceEditor.value, FmlHighlightRules, true)
+    } else {
+      aceEditor.value?.getSession().setMode(`ace/mode/${props.language}`)
     }
     return
   }
@@ -463,8 +500,14 @@ const detectResourceType = () => {
   } else if (content.startsWith('///') || content.startsWith('map ')) {
     if (resourceType.value !== 'fml') {
       resourceType.value = 'fml'
-      aceEditor.value?.getSession().setMode('ace/mode/text')
-      // setCustomHighlightRules(aceEditor.value, FhirPathHightlighter_Rules)
+      if (aceEditor.value) setCustomHighlightRules(aceEditor.value, FmlHighlightRules, true)
+    }
+  } else if (isHl7v2Content(content)) {
+    if (resourceType.value !== 'hl7v2') {
+      resourceType.value = 'hl7v2'
+      if (aceEditor.value) {
+        setCustomHighlightRules(aceEditor.value, Hl7v2HighlightRules, true)
+      }
     }
   } else {
     if (resourceType.value !== 'json') {
@@ -550,15 +593,20 @@ const downloadResource = async () => {
           resourceType.value = 'xml'
           aceEditor.value.getSession().setMode('ace/mode/xml')
         } else {
-          // Handle JSON response
+          // Handle JSON or HL7 v2 response
           try {
             const parsedJson = typeof results === 'string' ? JSON.parse(results) : results
             formattedContent = JSON.stringify(parsedJson, null, props.tabSpaces)
             resourceType.value = 'json'
             aceEditor.value.getSession().setMode('ace/mode/json')
           } catch (e) {
-            // If JSON parsing fails, treat as plain text
+            // If JSON parsing fails, check if HL7 v2 or treat as plain text
             formattedContent = results as string
+            if (typeof results === 'string' && isHl7v2Content(results)) {
+              formattedContent = formatHl7v2Message(results)
+              resourceType.value = 'hl7v2'
+              setCustomHighlightRules(aceEditor.value, Hl7v2HighlightRules, true)
+            }
           }
         }
         
@@ -636,6 +684,12 @@ const reformatResource = () => {
       alert('Invalid XML')
     }
   }
+  if (resourceType.value === 'hl7v2') {
+    const formattedV2 = formatHl7v2Message(aceEditor.value.getValue())
+    aceEditor.value.setValue(formattedV2, -1)
+    aceEditor.value.clearSelection()
+    aceEditor.value.renderer.updateFull(true)
+  }
   if (!oldResourceTextModified) {
     resourceTextFromFile.value = internalResourceText.value
     resourceTextModified.value = oldResourceTextModified
@@ -651,6 +705,13 @@ const clearUrl = () => {
 
 const focus = () => aceEditor.value?.focus()
 
+// Replace the gutter annotations (e.g. live validation issues); rows are 1-based
+const setAnnotations = (items: { row: number; column?: number; text: string; type: 'error' | 'warning' | 'info' }[]) => {
+  aceEditor.value?.getSession().setAnnotations(items.map(i => ({ row: Math.max(0, i.row - 1), column: i.column ?? 0, text: i.text, type: i.type })))
+}
+
+const getEditor = () => aceEditor.value
+
 // Expose public methods
 defineExpose({
   DownloadResource,
@@ -660,6 +721,8 @@ defineExpose({
   removeMarker,
   removeMarkers,
   focus,
+  setAnnotations,
+  getEditor,
 })
 
 // Lifecycle

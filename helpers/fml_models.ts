@@ -369,6 +369,7 @@ export interface RuleTarget {
   
   /** List mode: 'first', 'share', 'last', or 'single' (optional) */
   listMode?: 'first' | 'share' | 'last' | 'single';
+  listRuleId?: string;
 }
 
 /**

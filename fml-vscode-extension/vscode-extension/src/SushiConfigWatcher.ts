@@ -10,6 +10,8 @@ import {
     type TypeModel,
 } from "@fhirpath-lab/validator";
 import {logData} from "./utils";
+import type {EvaluationModelContext} from "@fhirpath-lab/language-service";
+import {collectFmlModelResources, filePathIdentity, FmlModelFileSnapshot} from "./FmlDebugDependencies";
 
 export interface SushiPackageDependency {
     indexExists: boolean;
@@ -23,6 +25,7 @@ export interface SushiWorkspaceConfiguration {
     fhirVersion?: string;
     customTypeModels: Record<string, TypeModel>;
     modelResourcePaths: string[];
+    modelFileCache?: readonly FmlModelFileSnapshot[];
     profileBaseTypes: Record<string, string>;
     profileResolutionSources: Record<string, string>;
 }
@@ -33,8 +36,8 @@ interface SushiConfigDocument {
 }
 
 const SUSHI_CONFIG_GLOB = "**/sushi-config.{yaml,yml}";
-const OUTPUT_JSON_GLOB = "**/output/**/*.json";
-const IG_OUTPUT_MARKER_GLOB = "**/output/ImplementationGuide*.json";
+const OUTPUT_JSON_GLOB = "**/output/{*.json,**/*.json}";
+const IG_OUTPUT_MARKER_GLOB = "**/output/**/ImplementationGuide*.json";
 const WORKSPACE_EXCLUDE_GLOB = "**/{.git,node_modules,dist,out,target,.vscode-test}/**";
 
 export class SushiConfigWatcher implements vscode.Disposable {
@@ -42,18 +45,30 @@ export class SushiConfigWatcher implements vscode.Disposable {
     private readonly outputWatcher = vscode.workspace.createFileSystemWatcher(OUTPUT_JSON_GLOB);
     private readonly configurations = new Map<string, SushiWorkspaceConfiguration>();
     private readonly configurationUris = new Map<string, vscode.Uri>();
+    private readonly revisions = new Map<string, number>();
+    private disposed = false;
 
     public constructor(
         private readonly logger: vscode.OutputChannel,
         private readonly cachePath = path.join(os.homedir(), ".fhir", "packages"),
         private readonly onConfigurationChanged: () => Promise<void> | void = () => undefined,
+        private readonly loadModels = populateWorkspaceModels,
     ) {
         this.watcher.onDidCreate(uri => void this.readAndReport(uri));
         this.watcher.onDidChange(uri => void this.readAndReport(uri));
-        this.watcher.onDidDelete(uri => void this.removeConfiguration(uri));
-        this.outputWatcher.onDidCreate(uri => void this.refreshForOutput(uri));
-        this.outputWatcher.onDidChange(uri => void this.refreshForOutput(uri));
-        this.outputWatcher.onDidDelete(uri => void this.refreshForOutput(uri));
+        this.watcher.onDidDelete(uri => {
+            void this.removeConfiguration(uri).catch(error => {
+                logData(`Unable to remove SUSHI configuration ${uri.fsPath}: ${String(error)}`, this.logger);
+            });
+        });
+        const refreshOutput = (uri: vscode.Uri): void => {
+            void this.refreshForOutput(uri).catch(error => {
+                logData(`Unable to refresh IG output ${uri.fsPath}: ${String(error)}`, this.logger);
+            });
+        };
+        this.outputWatcher.onDidCreate(refreshOutput);
+        this.outputWatcher.onDidChange(refreshOutput);
+        this.outputWatcher.onDidDelete(refreshOutput);
     }
 
     public async initialize(): Promise<void> {
@@ -82,14 +97,30 @@ export class SushiConfigWatcher implements vscode.Disposable {
     }
 
     public dispose(): void {
+        this.disposed = true;
         this.watcher.dispose();
         this.outputWatcher.dispose();
+        this.revisions.clear();
     }
 
     public getConfigurationForPath(filePath: string): SushiWorkspaceConfiguration | undefined {
         return [...this.configurations.entries()]
             .filter(([directory]) => isPathInside(filePath, directory))
             .sort(([left], [right]) => right.length - left.length)[0]?.[1];
+    }
+
+    public getEvaluationConfigurationForPath(filePath: string): SushiWorkspaceConfiguration {
+        return this.getConfigurationForPath(filePath) ?? this.getWorkspaceConfiguration();
+    }
+
+    public getEvaluationContexts(): EvaluationModelContext[] {
+        return [...this.configurations.entries()].map(([directory, configuration]) => ({
+            rootUri: vscode.Uri.file(directory).toString(),
+            defaultFhirVersion: toFhirVersion(configuration.fhirVersion),
+            profileBaseTypes: configuration.profileBaseTypes,
+            customTypeModels: configuration.customTypeModels,
+            modelResourcePaths: configuration.modelResourcePaths,
+        }));
     }
 
     public getWorkspaceConfiguration(): SushiWorkspaceConfiguration {
@@ -102,6 +133,9 @@ export class SushiConfigWatcher implements vscode.Disposable {
                 ...configurations.map(configuration => configuration.customTypeModels),
             ),
             modelResourcePaths: [...new Set(configurations.flatMap(configuration => configuration.modelResourcePaths))],
+            modelFileCache: configurations.some(configuration => configuration.modelFileCache === undefined)
+                ? undefined : [...new Map(configurations.flatMap(configuration => configuration.modelFileCache ?? [])
+                    .map(file => [filePathIdentity(file.filePath), file])).values()],
             profileBaseTypes: Object.assign({}, ...configurations.map(configuration => configuration.profileBaseTypes)),
             profileResolutionSources: Object.assign(
                 {},
@@ -110,14 +144,35 @@ export class SushiConfigWatcher implements vscode.Disposable {
         };
     }
 
-    private async readAndReport(uri: vscode.Uri): Promise<void> {
+    private beginUpdate(directory: string): number {
+        const key = filePathIdentity(directory);
+        const revision = (this.revisions.get(key) ?? 0) + 1;
+        this.revisions.set(key, revision);
+        return revision;
+    }
+
+    private isCurrentUpdate(directory: string, revision: number): boolean {
+        return !this.disposed && this.revisions.get(filePathIdentity(directory)) === revision;
+    }
+
+    private async readAndReport(
+        uri: vscode.Uri,
+        revision = this.beginUpdate(path.dirname(uri.fsPath)),
+    ): Promise<void> {
+        const directory = path.dirname(uri.fsPath);
+        if (!this.isCurrentUpdate(directory, revision)) {
+            return;
+        }
+        // Output events must see the pending SUSHI owner before its models finish loading.
+        this.configurationUris.set(directory, uri);
         try {
             const source = new TextDecoder().decode(await vscode.workspace.fs.readFile(uri));
             const configuration = parseSushiConfiguration(source, this.cachePath);
-            const directory = path.dirname(uri.fsPath);
-            await populateWorkspaceModels(directory, configuration);
+            await this.loadModels(directory, configuration);
+            if (!this.isCurrentUpdate(directory, revision)) {
+                return;
+            }
             this.configurations.set(directory, configuration);
-            this.configurationUris.set(directory, uri);
             logData(`SUSHI configuration: ${uri.fsPath}`, this.logger);
             logData(
                 `SUSHI default FHIR version: ${configuration.fhirVersion ?? "not specified"}`,
@@ -144,9 +199,16 @@ export class SushiConfigWatcher implements vscode.Disposable {
         }
     }
 
-    private async readOutputAndReport(directory: string): Promise<void> {
+    private async readOutputAndReport(
+        directory: string,
+        revision = this.beginUpdate(directory),
+    ): Promise<void> {
         try {
-            const configuration = await resolveOutputWorkspaceConfiguration(directory);
+            const configuration = createEmptyWorkspaceConfiguration();
+            await this.loadModels(directory, configuration);
+            if (!this.isCurrentUpdate(directory, revision) || this.configurationUris.has(directory)) {
+                return;
+            }
             this.configurations.set(directory, configuration);
             logData(`IG output models: ${path.join(directory, "output")}`, this.logger);
             logData(
@@ -162,11 +224,16 @@ export class SushiConfigWatcher implements vscode.Disposable {
 
     private async removeConfiguration(uri: vscode.Uri): Promise<void> {
         const directory = path.dirname(uri.fsPath);
+        const revision = this.beginUpdate(directory);
         this.configurations.delete(directory);
         this.configurationUris.delete(directory);
         logData(`SUSHI configuration removed: ${uri.fsPath}`, this.logger);
-        if (await hasImplementationGuideOutput(directory)) {
-            await this.readOutputAndReport(directory);
+        const hasOutput = await hasImplementationGuideOutput(directory);
+        if (!this.isCurrentUpdate(directory, revision)) {
+            return;
+        }
+        if (hasOutput) {
+            await this.readOutputAndReport(directory, revision);
         } else {
             await this.onConfigurationChanged();
         }
@@ -177,13 +244,19 @@ export class SushiConfigWatcher implements vscode.Disposable {
         if (!directory) {
             return;
         }
+        const revision = this.beginUpdate(directory);
+        const hasOutput = this.configurationUris.has(directory)
+            ? false : await hasImplementationGuideOutput(directory);
+        if (!this.isCurrentUpdate(directory, revision)) {
+            return;
+        }
         const configurationUri = this.configurationUris.get(directory);
         if (configurationUri) {
             logData(`SUSHI output profile changed: ${uri.fsPath}`, this.logger);
-            await this.readAndReport(configurationUri);
-        } else if (await hasImplementationGuideOutput(directory)) {
+            await this.readAndReport(configurationUri, revision);
+        } else if (hasOutput) {
             logData(`IG output profile changed: ${uri.fsPath}`, this.logger);
-            await this.readOutputAndReport(directory);
+            await this.readOutputAndReport(directory, revision);
         } else if (this.configurations.delete(directory)) {
             logData(`IG output models removed: ${path.join(directory, "output")}`, this.logger);
             await this.onConfigurationChanged();
@@ -193,7 +266,7 @@ export class SushiConfigWatcher implements vscode.Disposable {
 
 async function hasImplementationGuideOutput(directory: string): Promise<boolean> {
     const markers = await vscode.workspace.findFiles(
-        new vscode.RelativePattern(directory, "output/ImplementationGuide*.json"),
+        new vscode.RelativePattern(directory, "output/**/ImplementationGuide*.json"),
         WORKSPACE_EXCLUDE_GLOB,
         1,
     );
@@ -234,8 +307,9 @@ async function populateWorkspaceModels(
         configuration.dependencies,
         resolutions,
     );
+    configuration.modelFileCache = await readModelFiles(configuration.modelResourcePaths);
     configuration.customTypeModels = buildLogicalTypeModels(
-        await readJsonResources(configuration.modelResourcePaths),
+        configuration.modelFileCache.flatMap(file => file.resources),
         toFhirVersion(configuration.fhirVersion),
     );
 }
@@ -252,11 +326,8 @@ export function outputProjectDirectory(filePath: string): string | undefined {
 }
 
 export function implementationGuideOutputProjectDirectory(filePath: string): string | undefined {
-    const outputDirectory = path.dirname(filePath);
-    return path.basename(outputDirectory) === "output"
-        && /^ImplementationGuide.*\.json$/.test(path.basename(filePath))
-        ? path.dirname(outputDirectory)
-        : undefined;
+    return /^ImplementationGuide.*\.json$/.test(path.basename(filePath))
+        ? outputProjectDirectory(filePath) : undefined;
 }
 
 export function parseSushiConfiguration(
@@ -441,14 +512,15 @@ function isPathInside(filePath: string, directory: string): boolean {
     return relativePath === "" || (!relativePath.startsWith("..") && !path.isAbsolute(relativePath));
 }
 
-async function readJsonResources(filePaths: string[]): Promise<unknown[]> {
-    const resources: unknown[] = [];
+async function readModelFiles(filePaths: string[]): Promise<FmlModelFileSnapshot[]> {
+    const files: FmlModelFileSnapshot[] = [];
     for (const filePath of filePaths) {
         try {
-            resources.push(JSON.parse(await fsReadText(filePath)) as unknown);
+            files.push({filePath, resources: collectFmlModelResources(JSON.parse(await fsReadText(filePath)))});
         } catch {
             // Ignore stale or malformed model files while retaining other models.
+            files.push({filePath, resources: []});
         }
     }
-    return resources;
+    return files;
 }

@@ -16,10 +16,12 @@
     "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
     "build": "npm run clean && tsc -p tsconfig.json",
     "check-types": "tsc --noEmit -p tsconfig.json",
-    "test": "npm run build && node --test dist/test/lspMapper.test.js dist/test/groupDefinitionProvider.test.js dist/test/WorkspaceFmlIndex.test.js dist/test/FmlServerStatusStore.test.js",
+    "test": "npm run build && node --test dist/test/lspMapper.test.js dist/test/groupDefinitionProvider.test.js dist/test/WorkspaceFmlIndex.test.js dist/test/FmlServerStatusStore.test.js dist/test/FmlEvaluationService.test.js",
     "watch": "tsc --watch -p tsconfig.json"
   },
   "dependencies": {
+    "@fhirpath-lab/debug-service": "file:../fml-debug-service",
+    "@fhirpath-lab/validator": "file:../fml-validator",
     "@fhirpath-lab/language-service": "file:../fml-language-service",
     "vscode-languageserver": "^10.1.0",
     "vscode-languageserver-textdocument": "^1.0.12"

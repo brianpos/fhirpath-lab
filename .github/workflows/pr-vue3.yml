@@ -18,6 +18,9 @@ on:
       - 'cql-parser/**'
       - 'json-parser/**'
       - 'xml-parser/**'
+      # FML runtime sources consumed via @fhirpath-lab/* and @legacy/fml-debug-service aliases
+      - 'fml-vscode-extension/**'
+      - 'scripts/generate-models/**'
       # Prerendered at build time by vue3-src/server/routes/config.json.get.ts
       - 'static/config.json'
   pull_request:
@@ -38,6 +41,9 @@ on:
       - 'cql-parser/**'
       - 'json-parser/**'
       - 'xml-parser/**'
+      # FML runtime sources consumed via @fhirpath-lab/* and @legacy/fml-debug-service aliases
+      - 'fml-vscode-extension/**'
+      - 'scripts/generate-models/**'
       # Prerendered at build time by vue3-src/server/routes/config.json.get.ts
       - 'static/config.json'
 

@@ -38,7 +38,7 @@ export class FmlGroupSymbolCollector {
                 symbols.references.push({
                     name: group.extends,
                     kind: "extends",
-                    span: this.extendsSpan(group, sourceText),
+                    span: this.getExtendsSpan(group, sourceText),
                 });
             }
             this.collectRuleReferences(group.rules, sourceText, symbols);
@@ -64,7 +64,7 @@ export class FmlGroupSymbolCollector {
         }
     }
 
-    private extendsSpan(group: GroupDeclaration, sourceText: string): FmlSourceSpan {
+    public getExtendsSpan(group: GroupDeclaration, sourceText: string): FmlSourceSpan {
         if (!group.position || !group.extends) return this.defaultSpan();
         const headerEnd = sourceText.indexOf("{", group.position.startIndex);
         const header = sourceText.slice(group.position.startIndex, headerEnd);

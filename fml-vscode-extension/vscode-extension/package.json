@@ -3,7 +3,7 @@
   "displayName": "FHIR Mapping Language Tools",
   "description": "Developer tools for working with the FHIR Mapping Language (FML), including syntax highlighting, validation, and a trace replay debugger",
   "icon": "ext-images/icon.ico",
-  "version": "0.15.0",
+  "version": "0.20.0",
   "publisher": "fhirpath-lab",
   "readme": "README.md",
   "author": {
@@ -14,7 +14,7 @@
     "url": "https://github.com/brianpos/fhirpath-lab.git"
   },
   "engines": {
-    "vscode": "^1.91.0",
+    "vscode": "^1.95.0",
     "node": ">=20.0.0"
   },
   "packageManager": "npm@10.9.2",
@@ -34,17 +34,108 @@
   ],
   "activationEvents": [
     "onLanguage:fml",
-    "onDebug:fml"
+    "onDebug:fml",
+    "onLanguageModelTool:fml-tools_validate",
+    "onLanguageModelTool:fml-tools_evaluate"
   ],
   "main": "./dist/extension.js",
   "contributes": {
+    "languageModelTools": [
+      {
+        "name": "fml-tools_validate",
+        "toolReferenceName": "validateFml",
+        "displayName": "Validate FML",
+        "userDescription": "Validate FML files using current editor contents, workspace imports and models.",
+        "modelDescription": "Validate FHIR Mapping Language (FML) and embedded FHIRPath after editing maps. Uses the same local language server, indexed imports and configured FHIR models as editor validation. Returns diagnostics with zero-based ranges, file URIs, document versions and counts; updates Problems. Omit filePaths to validate the active FML document, including untitled documents. Otherwise supply absolute .fml file paths in the workspace or already open in the editor. Does not edit files, transform resources or contact a mapping server. Use evaluateFml separately to test a transformation.",
+        "canBeReferencedInPrompt": true,
+        "tags": [
+          "fml",
+          "validation",
+          "fhir"
+        ],
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "filePaths": {
+              "type": "array",
+              "minItems": 1,
+              "description": "Absolute FML file paths to validate. Omit to use the active FML document.",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      {
+        "name": "fml-tools_evaluate",
+        "toolReferenceName": "evaluateFml",
+        "displayName": "Test FML locally",
+        "userDescription": "Test an FML map against a JSON or HL7 v2 input file using only the local TypeScript engine.",
+        "modelDescription": "Test a FHIR Mapping Language transformation locally using the bundled TypeScript engine, never a remote mapping server. Uses unsaved editor contents, indexed imported maps and existing package/IG-output models and ConceptMaps. A configured terminology service may receive codes/codings and ConceptMap canonicals when no local ConceptMap matches. Requires an absolute JSON or HL7 v2 ER7 input file path. HL7 v2 uses the generic model automatically or a supplied specific logical model. Omit mapFilePath to use the active file-backed FML document. Optionally select an entry group or supply a model JSON file. Returns status, source/input versions, diagnostics and the lossless resultJson string. No files are edited and no debug trace or input payload is returned. Transformed data may be sensitive and is returned to chat. Unsupported local features report errors, never fall back to remote mapping execution.",
+        "canBeReferencedInPrompt": true,
+        "tags": [
+          "fml",
+          "evaluation",
+          "fhir"
+        ],
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "mapFilePath": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Absolute .fml file path; omit to use the active FML file."
+            },
+            "inputFilePath": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Absolute path of a JSON or HL7 v2 input file in the workspace or already open in the editor."
+            },
+            "modelFilePath": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Optional absolute JSON StructureDefinition, ConceptMap or Bundle file path."
+            },
+            "entryGroup": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Optional explicit entry group name."
+            }
+          },
+          "required": [
+            "inputFilePath"
+          ],
+          "additionalProperties": false
+        }
+      }
+    ],
     "configuration": {
       "title": "FHIR Mapping Language Tools",
       "properties": {
+        "fmlTools.terminology.serverUrl": {
+          "type": "string",
+          "default": "",
+          "description": "Optional FHIR terminology service base URL for local FML translate() when no embedded or supplied ConceptMap matches. Sends codes/codings and the ConceptMap canonical to ConceptMap/$translate. Empty preserves the existing missing-ConceptMap error."
+        },
+        "fmlTools.terminology.fhirVersion": {
+          "type": "string",
+          "enum": ["R4", "R5"],
+          "default": "R4",
+          "description": "FHIR operation version of the terminology service, independent of the map's FHIR version. R4 also covers R4B-compatible services; R5 uses sourceCoding/sourceCodeableConcept inputs."
+        },
         "fmlTools.debug.serverUrl": {
           "type": "string",
-          "default": "https://fhir-mapping-lab2.azurewebsites.net/StructureMap/$transform?debug=true",
-          "description": "Remote FML execution endpoint used by the trace replay debugger."
+          "default": "",
+          "description": "Optional remote FML HTTP(S) execution endpoint. Leave empty to use the bundled local TypeScript engine (the default). A launch serverUrl overrides this setting; an empty launch serverUrl selects local execution."
+        },
+        "fmlTools.debug.logServerTraffic": {
+          "type": "boolean",
+          "default": false,
+          "scope": "application",
+          "description": "Log full server-mode requests, responses, and transport failures to the FHIR Mapping Language Tools output channel. Payloads are unredacted and may contain sensitive clinical data, model dependencies, and trace snapshots. Enable only temporarily for troubleshooting."
         }
       }
     },
@@ -62,13 +153,42 @@
               "input"
             ],
             "properties": {
+              "entryGroup": {
+                "type": "string",
+                "description": "Optional explicit entry group for the local executor."
+              },
+              "localTrace": {
+                "type": "object",
+                "description": "Local recorder budget and capture policy; does not change transformation semantics.",
+                "properties": {
+                  "maxEvents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "default": 10000
+                  },
+                  "maxBytes": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "default": 8388608
+                  },
+                  "detail": {
+                    "type": "string",
+                    "enum": [
+                      "full",
+                      "rules"
+                    ],
+                    "default": "full"
+                  }
+                },
+                "additionalProperties": false
+              },
               "program": {
                 "type": "string",
                 "description": "FML source file to execute."
               },
               "input": {
                 "type": "string",
-                "description": "FHIR JSON input resource file."
+                "description": "JSON or HL7 v2 input resource file. HL7 v2 uses generic or supplied specific models locally; remote engines receive raw v2. XML input requires a configured remote engine."
               },
               "model": {
                 "type": "string",
@@ -87,7 +207,21 @@
               },
               "serverUrl": {
                 "type": "string",
-                "description": "Optional override for the remote debug engine URL."
+                "description": "Optional HTTP(S) transform endpoint; overrides fmlTools.debug.serverUrl. A non-empty URL selects remote execution. Empty selects the bundled local TypeScript engine."
+              },
+              "legacyPost": {
+                "type": "boolean",
+                "default": false,
+                "description": "Use legacy map.valueString and resource.valueString parameters instead of srcMap.valueString and Binary content.resource for remote engines. Does not affect local execution."
+              },
+              "terminologyServerUrl": {
+                "type": "string",
+                "description": "Optional terminology service base URL for local translate() fallback; overrides fmlTools.terminology.serverUrl. Empty disables the fallback."
+              },
+              "terminologyFhirVersion": {
+                "type": "string",
+                "enum": ["R4", "R5"],
+                "description": "Terminology service FHIR operation version; overrides fmlTools.terminology.fhirVersion."
               },
               "stopOnEntry": {
                 "type": "boolean",
@@ -167,9 +301,15 @@
       },
       {
         "command": "fmlTools.OpenPreviewToSide",
-        "title": "Open FML Preview to the Side",
+        "title": "Open FML Instance Preview to the Side",
         "category": "Files",
         "icon": "$(open-preview)"
+      },
+      {
+        "command": "fmlTools.OpenCompletePreviewToSide",
+        "title": "Open FML Complete Preview to the Side",
+        "category": "Files",
+        "icon": "$(list-tree)"
       },
       {
         "command": "fmlTools.ShowLanguageServerStatus",
@@ -193,6 +333,11 @@
           "command": "fmlTools.OpenPreviewToSide",
           "group": "navigation@1",
           "when": "resourceLangId == fml"
+        },
+        {
+          "command": "fmlTools.OpenCompletePreviewToSide",
+          "group": "navigation@2",
+          "when": "resourceLangId == fml"
         }
       ],
       "editor/context": [
@@ -208,6 +353,11 @@
         {
           "command": "fmlTools.OpenPreviewToSide",
           "group": "navigation@3",
+          "when": "editorLangId == fml"
+        },
+        {
+          "command": "fmlTools.OpenCompletePreviewToSide",
+          "group": "navigation@4",
           "when": "editorLangId == fml"
         }
       ],
@@ -226,10 +376,12 @@
     "build:language-service": "npm --prefix ../fml-language-service run build",
     "build:language-server": "npm --prefix ../fml-language-server run build",
     "build:debug-service": "npm --prefix ../fml-debug-service run build",
-    "build:dependencies": "npm run build:validator && npm run build:language-service && npm run build:language-server && npm run build:debug-service",
+    "build:executor": "npm --prefix ../fml-executor run build",
+    "build:dependencies": "npm run build:validator && npm run build:language-service && npm run build:executor && npm run build:debug-service && npm run build:language-server",
     "compile": "npm run build:dependencies && npm run check-types && npm run lint && node esbuild.js",
     "watch": "npm-run-all -p watch:*",
     "watch:esbuild": "node esbuild.js --watch",
+    "watch:debug-service": "npm --prefix ../fml-debug-service run watch",
     "watch:language-service": "npm --prefix ../fml-language-service run watch",
     "watch:language-server": "npm --prefix ../fml-language-server run watch",
     "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
@@ -265,7 +417,7 @@
   "devDependencies": {
     "@types/mocha": "^10.0.10",
     "@types/node": "^22.20.1",
-    "@types/vscode": "1.91.0",
+    "@types/vscode": "1.95.0",
     "@typescript/native": "npm:typescript@^7.0.2",
     "@vscode/test-cli": "^0.0.12",
     "@vscode/test-electron": "^2.5.2",

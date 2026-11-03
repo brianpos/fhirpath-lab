@@ -58,7 +58,7 @@ const definitions: TransformDefinition[] = [
   )], result: {kind: 'parameter', parameterName: 'output', values: {
     code: 'code', system: 'uri', display: 'string', Coding: 'Coding', CodeableConcept: 'CodeableConcept',
   }}},
-  {name: 'reference', signatures: [signature(parameter('source', 'any'))], result: {kind: 'fixed', typeNames: ['Reference']}},
+  {name: 'reference', signatures: [signature(parameter('source', 'any'))], result: {kind: 'fixed', typeNames: ['string']}},
   {name: 'toDateTime', signatures: [signature(parameter('source', 'string'), parameter('format', 'string'))], result: {kind: 'fixed', typeNames: ['dateTime']}},
   {name: 'unixToDateTime', signatures: [signature(parameter('source', 'integer'), parameter('timezone', 'string', {optional: true}))], result: {kind: 'fixed', typeNames: ['dateTime']}},
   {name: 'toDate', signatures: [signature(parameter('source', 'string'), parameter('format', 'string'))], result: {kind: 'fixed', typeNames: ['date']}},
@@ -66,7 +66,7 @@ const definitions: TransformDefinition[] = [
   {name: 'toTime', signatures: [signature(parameter('source', 'string'), parameter('format', 'string'))], result: {kind: 'fixed', typeNames: ['time']}},
   {name: 'unixToTime', signatures: [signature(parameter('source', 'integer'), parameter('timezone', 'string', {optional: true}))], result: {kind: 'fixed', typeNames: ['time']}},
   {name: 'uuid', signatures: [signature()], result: {kind: 'fixed', typeNames: ['string']}},
-  {name: 'pointer', signatures: [signature(parameter('resource', 'any'))], result: {kind: 'fixed', typeNames: ['Reference']}},
+  {name: 'pointer', signatures: [signature(parameter('resource', 'any'))], result: {kind: 'fixed', typeNames: ['string']}},
   {name: 'evaluate', signatures: [signature(parameter('context', 'any'), parameter('expression', 'expression'))]},
   {name: 'cc', signatures: [
     signature(parameter('text', 'string')),
@@ -88,6 +88,28 @@ const definitions: TransformDefinition[] = [
 export const transformDefinitions: ReadonlyMap<string, TransformDefinition> = new Map(
   definitions.map(definition => [definition.name, definition]),
 );
+
+export function orderTransformParameters<T extends {name?: string}>(transform: {
+  type: string; parameters: readonly T[]; isInvocation?: boolean;
+}): readonly T[] {
+  if (!transform.isInvocation || !transform.parameters.some(parameter => parameter.name)) return transform.parameters;
+  const definition = transformDefinitions.get(transform.type);
+  if (!definition) return transform.parameters;
+  const signature = definition.signatures.find(signature =>
+    transform.parameters.every(parameter => !parameter.name || signature.parameters.some(expected => expected.name === parameter.name))
+    && transform.parameters.length >= signature.parameters.filter(parameter => !parameter.optional && !parameter.variadic).length
+    && (signature.parameters.some(parameter => parameter.variadic) || transform.parameters.length <= signature.parameters.length));
+  if (!signature) throw new Error(`No matching signature for named '${transform.type}' arguments.`);
+  const assigned = new Map<number, T[]>();
+  let position = 0;
+  for (const parameter of transform.parameters) {
+    while (assigned.has(position) && !signature.parameters[position]?.variadic) position++;
+    const index = parameter.name ? signature.parameters.findIndex(expected => expected.name === parameter.name)
+      : Math.min(position, signature.parameters.length - 1);
+    assigned.set(index, [...assigned.get(index) ?? [], parameter]);
+  }
+  return signature.parameters.flatMap((_parameter, index) => assigned.get(index) ?? []);
+}
 
 export function resolveTransformResultTypes(transform: TransformInvocationLike): string[] {
   const definition = transformDefinitions.get(transform.type);

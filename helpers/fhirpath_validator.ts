@@ -27,8 +27,9 @@ import { byTypeName as r4bByTypeName, byUrl as r4bByUrl } from "./models/generat
 import { byTypeName as r5ByTypeName, byUrl as r5ByUrl } from "./models/generated/r5/dictionary";
 import { byTypeName as r6ByTypeName, byUrl as r6ByUrl } from "./models/generated/r6/dictionary";
 import { fhirPrimitiveToSystemTypeName } from "./models/generated/system-types";
+import { hl7v2ByTypeName, hl7v2ByUrl } from "../models/hl7v2";
 
-export type FhirVersionKey = "stu3" | "r4" | "r4b" | "r5" | "r6";
+export type FhirVersionKey = "stu3" | "r4" | "r4b" | "r5" | "r6" | "hl7v2";
 
 interface VersionDicts {
     byTypeName: Record<string, TypeModel>;
@@ -41,6 +42,7 @@ const VERSION_DICTS: Readonly<Record<FhirVersionKey, VersionDicts>> = Object.fre
     r4b: { byTypeName: r4bByTypeName, byUrl: r4bByUrl },
     r5: { byTypeName: r5ByTypeName, byUrl: r5ByUrl },
     r6: { byTypeName: r6ByTypeName, byUrl: r6ByUrl },
+    hl7v2: { byTypeName: hl7v2ByTypeName, byUrl: hl7v2ByUrl },
 });
 
 /** Build a `ModelProvider` over the given FHIR version's generated dictionary. */
@@ -51,6 +53,10 @@ export function getModelProvider(version: FhirVersionKey): ModelProvider {
         lookupByUrl: (url: string) => v.byUrl[url],
         fhirPrimitiveToSystemTypeName,
     };
+}
+
+export function getModelTypes(version: FhirVersionKey): readonly TypeModel[] {
+    return Object.values(VERSION_DICTS[version].byTypeName);
 }
 
 /** Inputs for validating an expression. */
@@ -74,6 +80,8 @@ export interface ValidateOptions {
     /** FML compatibility: bare root identifiers may resolve to declared
      *  environment variables, equivalent to `%name`. */
     allowEnvironmentVariablesAtRoot?: boolean;
+    /** Enable the FML value-returning extension(url) shortcut. */
+    fmlExtensionShortcut?: boolean;
     /** Optional override for `%resource` — the input resource type. When
      *  omitted, defaults to `contextType` (per the FHIRPath spec, `%resource`
      *  is the resource the expression is being evaluated against, not the
@@ -198,6 +206,7 @@ export function validateFhirpathExpression(
             contextIsCollection: options.contextIsCollection,
             environmentVariables: options.environmentVariables,
             allowEnvironmentVariablesAtRoot: options.allowEnvironmentVariablesAtRoot,
+            fmlExtensionShortcut: options.fmlExtensionShortcut,
             resource: options.resource ?? (contextType ? { types: [contextType], isCollection: false } : undefined),
         });
         contextDiagnostics = [...cv.syntaxErrors, ...cv.diagnostics];
@@ -221,6 +230,7 @@ export function validateFhirpathExpression(
         contextValue,
         environmentVariables: options.environmentVariables,
         allowEnvironmentVariablesAtRoot: options.allowEnvironmentVariablesAtRoot,
+        fmlExtensionShortcut: options.fmlExtensionShortcut,
         // Per the spec's scoped-functions rules, %resource is the input
         // resource the expression is being evaluated against, *not* the
         // current focus. When the user supplied a contextExpression that

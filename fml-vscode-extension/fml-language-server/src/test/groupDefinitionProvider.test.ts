@@ -100,4 +100,30 @@ test("reports unresolved group references as warnings", () => {
         imports: [],
         references: [],
     });
+
+});
+
+test("navigates and finds references only through the selected copy of an imported canonical", () => {
+    const copies = new WorkspaceFmlIndex();
+    const authoredSourceUri = "file:///workspace/input/source.fml";
+    const renderedSourceUri = "file:///workspace/rendered/source.fml";
+    const authoredTargetUri = "file:///workspace/input/shared.fml";
+    const renderedTargetUri = "file:///workspace/rendered/shared.fml";
+    const source = index.get(sourceUri);
+    const target = index.get(targetUri);
+    assert.ok(source);
+    assert.ok(target);
+    for (const uri of [renderedTargetUri, authoredTargetUri]) {
+        copies.set(uri, target);
+    }
+    copies.set(authoredSourceUri, source);
+    copies.set(renderedSourceUri, source);
+    assert.deepEqual(findGroupDefinitions(copies, authoredSourceUri, {line: 2, character: 24})
+        ?.map(location => location.uri), [authoredTargetUri]);
+    assert.deepEqual(findGroupDefinitions(copies, renderedSourceUri, {line: 2, character: 24})
+        ?.map(location => location.uri), [renderedTargetUri]);
+    assert.deepEqual(findGroupReferences(copies, authoredTargetUri, {line: 5, character: 8}, false)
+        ?.map(location => location.uri), [authoredSourceUri]);
+    assert.deepEqual(findGroupReferences(copies, renderedTargetUri, {line: 5, character: 8}, false)
+        ?.map(location => location.uri), [renderedSourceUri]);
 });

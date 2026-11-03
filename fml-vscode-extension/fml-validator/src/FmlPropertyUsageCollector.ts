@@ -191,6 +191,14 @@ export class FmlPropertyUsageCollector {
         const collect = (groupName: string, rules: FmlStructureMap["groups"][number]["rules"]): void => {
             for (const rule of rules) {
                 const ruleSpan = rule.position ? this.toSpan(sourceText, rule.position) : undefined;
+                for (const source of rule.sources) {
+                    const contextSpan = !source.element && source.position
+                        ? this.findLeadingIdentifierSpan(sourceText, source.position)
+                        : undefined;
+                    if (contextSpan) {
+                        references.push({name: source.context, span: contextSpan, groupName, ruleSpan});
+                    }
+                }
                 for (const target of rule.targets) {
                     const contextSpan = target.context && !target.element && target.position
                         ? this.findLeadingIdentifierSpan(sourceText, target.position)

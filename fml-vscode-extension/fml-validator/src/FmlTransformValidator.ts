@@ -25,6 +25,8 @@ import type {
     FmlPropertyUsage,
     FmlSourceSpan,
 } from "./contracts";
+import type {FmlFhirPathResultType} from "./FmlFhirPathValidator";
+import {FmlGroupSymbolCollector} from "./FmlGroupSymbolCollector";
 
 interface VariableDescriptor {
     typeNames: string[];
@@ -41,6 +43,7 @@ interface AssignmentCheck {
     targetUsage: FmlPropertyUsage;
     /** Set when the value reaches the target through a rule variable instead of a source property. */
     sourceVariableName?: string;
+    sourceTransformName?: string;
     line: number;
     column: number;
     offendingText: string;
@@ -113,6 +116,8 @@ export function resolveGroupSignatures(
 }
 
 export class FmlTransformValidator {
+    private readonly groupSymbolCollector = new FmlGroupSymbolCollector();
+
     public getDefaultGroupUsages(
         model: FmlStructureMap,
         propertyAnalysis: FmlPropertyAnalysis,
@@ -205,14 +210,17 @@ export class FmlTransformValidator {
         customTypeModels: Record<string, TypeModel> = {},
         importedDefaultGroups: FmlDefaultGroup[] = [],
         importedGroupSignatures: FmlGroupSignature[] = [],
+        fhirPathResultTypes: ReadonlyMap<Transform, FmlFhirPathResultType> = new Map(),
+        sourceText?: string,
     ): FmlDiagnostic[] {
         const diagnostics: FmlDiagnostic[] = [];
         const defaultGroups = [
             ...resolveDefaultGroups(model.groups, propertyAnalysis),
             ...importedDefaultGroups,
         ];
+        const localGroupSignatures = resolveGroupSignatures(model.groups, propertyAnalysis);
         const groupSignatures = [
-            ...resolveGroupSignatures(model.groups, propertyAnalysis),
+            ...localGroupSignatures,
             ...importedGroupSignatures,
         ];
         this.validateGroupDeclarations(
@@ -221,7 +229,9 @@ export class FmlTransformValidator {
             sourceName,
             diagnostics,
         );
-        for (const group of model.groups) {
+        for (const [index, group] of model.groups.entries()) {
+            this.validateGroupInheritance(group, localGroupSignatures[index], groupSignatures,
+                sourceName, customTypeModels, diagnostics, sourceText);
             const variables = this.createVariables(group, propertyAnalysis);
             const contextVariables = new Set(
                 group.parameters.map(parameter => this.normalizeVariableName(parameter.name)),
@@ -240,6 +250,7 @@ export class FmlTransformValidator {
                 sourceName,
                 customTypeModels,
                 diagnostics,
+                fhirPathResultTypes,
             );
         }
         return diagnostics;
@@ -256,6 +267,7 @@ export class FmlTransformValidator {
         sourceName: string | undefined,
         customTypeModels: Record<string, TypeModel>,
         diagnostics: FmlDiagnostic[],
+        fhirPathResultTypes: ReadonlyMap<Transform, FmlFhirPathResultType>,
     ): void {
         for (const rule of rules) {
             const variables = new Map(inheritedVariables);
@@ -313,17 +325,21 @@ export class FmlTransformValidator {
                         sourceName,
                         customTypeModels,
                         diagnostics,
+                        fhirPathResultTypes,
                     )
                     : [];
                 if (target.variable) {
                     const variableName = this.normalizeVariableName(target.variable);
+                    const fhirPathResult = target.transform
+                        ? fhirPathResultTypes.get(target.transform)
+                        : undefined;
                     variables.set(
                         variableName,
                         resultTypes.length > 0
                             ? {
                                 typeNames: resultTypes,
-                                isCollection: false,
-                                fhirVersion: usage?.fhirVersion,
+                                isCollection: fhirPathResult?.isCollection ?? false,
+                                fhirVersion: fhirPathResult?.fhirVersion ?? usage?.fhirVersion,
                             }
                             : this.descriptorFromUsage(usage)
                                 ?? {typeNames: [], isCollection: false},
@@ -354,6 +370,7 @@ export class FmlTransformValidator {
                 sourceName,
                 customTypeModels,
                 diagnostics,
+                fhirPathResultTypes,
             );
         }
     }
@@ -513,9 +530,9 @@ export class FmlTransformValidator {
             ? `variable '${check.sourceVariableName}'`
             : `source property '${this.describeProperty(sourceUsage, lookup)}'`;
         const targetPath = this.describeProperty(targetUsage, lookup);
-        const report = (message: string): void => {
+        const report = (message: string, severity: FmlDiagnostic["severity"] = "error"): void => {
             diagnostics.push({
-                severity: "error",
+                severity,
                 message,
                 line: check.line,
                 column: check.column,
@@ -524,6 +541,11 @@ export class FmlTransformValidator {
             });
         };
         if (incompatible.length > 0) {
+            if (check.sourceTransformName) {
+                report(`Transform '${check.sourceTransformName}' result type '${incompatible.join(" | ")}' `
+                    + `is not compatible with target property '${targetPath}' (allowed: ${targetTypes.join(" | ")}).`);
+                return;
+            }
             report(`${prefix} from ${sourceLabel} with type '${incompatible.join(" | ")}' `
                 + `is not compatible with target property '${targetPath}' (allowed: ${targetTypes.join(" | ")}).`);
             return;
@@ -531,6 +553,13 @@ export class FmlTransformValidator {
 
         if (ambiguous.length > 0) {
             const {sourceType, targetType, groups} = ambiguous[0];
+            if (check.sourceTransformName) {
+                report(`Transform '${check.sourceTransformName}' result from '${sourceType}' to target property `
+                    + `'${targetPath}' matches multiple default mapping groups for '${sourceType}' -> '${targetType}': `
+                    + `${groups.map(group => `'${group.groupName}'`).join(", ")}. `
+                    + `Only one default group may apply to a type conversion.`);
+                return;
+            }
             report(`${prefix} from ${sourceLabel} to target property '${targetPath}' matches multiple default `
                 + `mapping groups for '${sourceType}' -> '${targetType}': `
                 + `${groups.map(group => `'${group.groupName}'`).join(", ")}. `
@@ -555,7 +584,7 @@ export class FmlTransformValidator {
                 + `${this.formatTargetProfiles(profileMismatch.missingProfiles)}. `
                 + `Supported target profiles: ${this.formatTargetProfiles(profileMismatch.supportedProfiles)}.`;
         report(`${prefix} from ${sourceLabel} is not compatible with target property `
-            + `'${targetPath}': ${profileIssue}`);
+            + `'${targetPath}': ${profileIssue}`, "warning");
     }
 
     private describeProperty(usage: FmlPropertyUsage | undefined, lookup: TypeLookup): string {
@@ -639,6 +668,63 @@ export class FmlTransformValidator {
         }).join(", ");
     }
 
+    private validateGroupInheritance(
+        group: GroupDeclaration,
+        signature: FmlGroupSignature,
+        groupSignatures: FmlGroupSignature[],
+        sourceName: string | undefined,
+        customTypeModels: Record<string, TypeModel>,
+        diagnostics: FmlDiagnostic[],
+        sourceText?: string,
+    ): void {
+        const baseName = group.extends;
+        if (!baseName) return;
+        const bases = groupSignatures.filter(signature => signature.groupName === baseName);
+        if (bases.length === 0) return;
+        const span = sourceText === undefined ? undefined : this.groupSymbolCollector.getExtendsSpan(group, sourceText);
+        const report = (message: string): void => {
+            const diagnostic = this.diagnostic(
+                `Group '${group.name}' cannot extend '${baseName}': ${message}`,
+                group.position,
+                baseName,
+                sourceName,
+            );
+            if (span) {
+                diagnostic.line = span.start.line;
+                diagnostic.column = span.start.column;
+            }
+            diagnostics.push(diagnostic);
+        };
+        if (bases.length > 1) {
+            report("the base group reference is ambiguous.");
+            return;
+        }
+        const describeType = (typeName: string, version?: FhirVersion): string =>
+            `'${typeName}'${version ? ` (${version})` : ""}`;
+        for (const baseParameter of bases[0].parameters) {
+            const parameter = signature.parameters.find(candidate => candidate.name === baseParameter.name);
+            if (!parameter) {
+                report(`missing inherited ${baseParameter.mode} parameter '${baseParameter.name}'.`);
+                continue;
+            }
+            if (parameter.mode !== baseParameter.mode) {
+                report(`parameter '${parameter.name}' has mode '${parameter.mode}', but the base group requires '${baseParameter.mode}'.`);
+                continue;
+            }
+            if (!parameter.typeName || !baseParameter.typeName
+                || parameter.resolution === "conflict" || baseParameter.resolution === "conflict") continue;
+            const lookup = this.composeLookup(customTypeModels,
+                lookups[baseParameter.fhirVersion ?? parameter.fhirVersion ?? "R4B"] ?? lookupByTypeNameR4B);
+            const versionMismatch = !!parameter.fhirVersion && !!baseParameter.fhirVersion
+                && parameter.fhirVersion !== baseParameter.fhirVersion;
+            if (versionMismatch || !this.isAssignableTo(parameter.typeName, baseParameter.typeName, lookup, false)) {
+                report(`${parameter.mode} parameter '${parameter.name}' has type `
+                    + `${describeType(parameter.typeName, parameter.fhirVersion)}, which is not assignable to `
+                    + `${describeType(baseParameter.typeName, baseParameter.fhirVersion)} required by the base group.`);
+            }
+        }
+    }
+
     private validateGroupInvocation(
         invocation: GroupInvocation,
         variables: Map<string, VariableDescriptor>,
@@ -694,6 +780,7 @@ export class FmlTransformValidator {
         sourceName: string | undefined,
         customTypeModels: Record<string, TypeModel>,
         diagnostics: FmlDiagnostic[],
+        fhirPathResultTypes: ReadonlyMap<Transform, FmlFhirPathResultType>,
     ): string[] {
         const missingVariables = new Set<string>();
         for (const parameter of transform.parameters.filter(candidate => candidate.type === "identifier")) {
@@ -708,7 +795,12 @@ export class FmlTransformValidator {
             ));
         }
 
-        const resultTypes = this.resolveResultTypes(transform, variables, missingVariables);
+        const resultTypes = this.resolveResultTypes(
+            transform,
+            variables,
+            missingVariables,
+            fhirPathResultTypes,
+        );
         const allowedTypes = this.usageTypeNames(targetUsage);
         if (!targetUsage || targetUsage.unknownElement || resultTypes.length === 0 || allowedTypes.length === 0) {
             return resultTypes;
@@ -729,6 +821,27 @@ export class FmlTransformValidator {
                     line: variablePosition?.startLine ?? 1,
                     column: variablePosition?.startColumn ?? 0,
                     offendingText: variableName,
+                },
+                defaultGroups,
+                sourceName,
+                customTypeModels,
+                diagnostics,
+            );
+            return resultTypes;
+        }
+
+        if (transform.type === "evaluate") {
+            const result = fhirPathResultTypes.get(transform);
+            const resultPosition = this.resultPosition(transform) ?? transform.position;
+            this.validateAssignment(
+                {
+                    sourceTypes: resultTypes,
+                    sourceFhirVersion: result?.fhirVersion,
+                    targetUsage,
+                    sourceTransformName: transform.type,
+                    line: resultPosition?.startLine ?? 1,
+                    column: resultPosition?.startColumn ?? 0,
+                    offendingText: String(transform.parameters[0]?.value ?? transform.type),
                 },
                 defaultGroups,
                 sourceName,
@@ -943,7 +1056,11 @@ export class FmlTransformValidator {
         transform: Transform,
         variables: Map<string, VariableDescriptor>,
         missingVariables: Set<string>,
+        fhirPathResultTypes: ReadonlyMap<Transform, FmlFhirPathResultType>,
     ): string[] {
+        if (transform.type === "evaluate") {
+            return fhirPathResultTypes.get(transform)?.typeNames ?? [];
+        }
         const sourceParameter = transform.parameters.find(parameter => parameter.name === "source")
             ?? transform.parameters[0];
         if (transform.type === "copy" || (transform.type === "cast" && transform.parameters.length === 1)) {
@@ -1039,7 +1156,8 @@ export class FmlTransformValidator {
         });
     }
 
-    private isAssignableTo(sourceType: string, targetType: string, lookup: TypeLookup): boolean {
+    private isAssignableTo(sourceType: string, targetType: string, lookup: TypeLookup,
+        allowPrimitiveValue = true): boolean {
         const normalizedTarget = targetType.toLowerCase();
         let current: string | undefined = sourceType;
         const visited = new Set<string>();
@@ -1048,12 +1166,15 @@ export class FmlTransformValidator {
             visited.add(current.toLowerCase());
             current = lookup(current)?.BaseTypeName;
         }
+        if (!allowPrimitiveValue) return false;
         const sourceValueType = this.primitiveValueType(sourceType, lookup);
         return !!sourceValueType && sourceValueType === this.primitiveValueType(targetType, lookup);
     }
 
     private primitiveValueType(typeName: string, lookup: TypeLookup): string | undefined {
-        return lookup(typeName)?.Elements.find(element => element.ElementName === "value")
+        const model = lookup(typeName);
+        if (model?.IsPrimitive) return model.TypeName.toLowerCase();
+        return model?.Elements.find(element => element.ElementName === "value")
             ?.Type[0]?.TypeName.toLowerCase();
     }
 

@@ -1,6 +1,6 @@
 import {isFmlParseError, parseFML} from "../../../helpers/fml_parser";
 import {validateFmlModel} from "../../../helpers/fml_validation";
-import type {FhirVersion} from "../../../helpers/fml_models";
+import type {FhirVersion, FmlStructureMap} from "../../../helpers/fml_models";
 import {
     applyFmlModelConfiguration,
     type TypeModel,
@@ -9,6 +9,10 @@ import {
     generateFmlInstanceDiagramSvg,
     type TypeLookup,
 } from "../../../helpers/structuremap_diagram_instance";
+import {
+    generateFmlInstanceDiagramSvg as generateFmlCompleteDiagramSvg,
+    type FmlGroupResolver,
+} from "../../../helpers/structuremap_diagram_complete";
 import {lookupByTypeName as lookupByTypeNameSTU3} from "../../../helpers/models/generated/stu3";
 import {lookupByTypeName as lookupByTypeNameR4} from "../../../helpers/models/generated/r4";
 import {lookupByTypeName as lookupByTypeNameR4B} from "../../../helpers/models/generated/r4b";
@@ -23,11 +27,64 @@ const lookups: Partial<Record<FhirVersion, TypeLookup>> = {
     R6: lookupByTypeNameR6,
 };
 
+interface FmlExternalGroupSource {
+    uri: string;
+    text: string;
+    version: number;
+}
+
+type DiagramGenerator = (
+    fml: FmlStructureMap,
+    typeLookup?: TypeLookup,
+    showMissingProperties?: boolean,
+    lookupForVersion?: (version: FhirVersion | undefined) => TypeLookup | undefined,
+    isLogicalType?: (typeName: string) => boolean,
+    resolveExternalGroup?: FmlGroupResolver,
+) => string;
+
 export function renderFmlInstanceDiagram(
     fmlText: string,
     defaultFhirVersion?: FhirVersion,
     profileBaseTypes?: Record<string, string>,
     customTypeModels: Record<string, TypeModel> = {},
+): string {
+    return renderFmlDiagram(
+        generateFmlInstanceDiagramSvg,
+        fmlText,
+        defaultFhirVersion,
+        profileBaseTypes,
+        customTypeModels,
+        true,
+    );
+}
+
+export function renderFmlCompleteDiagram(
+    fmlText: string,
+    defaultFhirVersion?: FhirVersion,
+    profileBaseTypes?: Record<string, string>,
+    customTypeModels: Record<string, TypeModel> = {},
+    showAllProperties = false,
+    resolveExternalGroupSource?: (groupName: string) => FmlExternalGroupSource | undefined,
+): string {
+    return renderFmlDiagram(
+        generateFmlCompleteDiagramSvg,
+        fmlText,
+        defaultFhirVersion,
+        profileBaseTypes,
+        customTypeModels,
+        showAllProperties,
+        resolveExternalGroupSource,
+    );
+}
+
+function renderFmlDiagram(
+    generateDiagram: DiagramGenerator,
+    fmlText: string,
+    defaultFhirVersion: FhirVersion | undefined,
+    profileBaseTypes: Record<string, string> | undefined,
+    customTypeModels: Record<string, TypeModel>,
+    showAllProperties: boolean,
+    resolveExternalGroupSource?: (groupName: string) => FmlExternalGroupSource | undefined,
 ): string {
     const parsed = parseFML(fmlText);
     if (isFmlParseError(parsed)) {
@@ -53,11 +110,39 @@ export function renderFmlInstanceDiagram(
         throw new Error(`${validationError.message} (@${validationError.line}:${validationError.column})`);
     }
 
-    return generateFmlInstanceDiagramSvg(
+    const externalMaps = new Map<string, ReturnType<typeof parseFML>>();
+    const resolveExternalGroup: FmlGroupResolver | undefined = resolveExternalGroupSource
+        ? groupName => {
+            const source = resolveExternalGroupSource(groupName);
+            if (!source) return undefined;
+            const cacheKey = `${source.uri}\0${source.version}`;
+            let externalMap = externalMaps.get(cacheKey);
+            if (externalMap === undefined) {
+                externalMap = parseFML(source.text);
+                externalMaps.set(cacheKey, externalMap);
+                if (!isFmlParseError(externalMap)) {
+                    applyFmlModelConfiguration(externalMap, {
+                        sourceText: source.text,
+                        defaultFhirVersion,
+                        profileBaseTypes,
+                        customTypeModels,
+                    });
+                }
+            }
+            return isFmlParseError(externalMap) ? undefined : {
+                map: externalMap,
+                sourceUri: source.uri,
+                sourceVersion: source.version,
+            };
+        }
+        : undefined;
+
+    return generateDiagram(
         parsed,
         composeLookup(lookupByTypeNameR4B),
-        true,
+        showAllProperties,
         version => version && lookups[version] ? composeLookup(lookups[version]!) : undefined,
         typeName => Object.prototype.hasOwnProperty.call(customTypeModels, typeName),
+        resolveExternalGroup,
     );
 }

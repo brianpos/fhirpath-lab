@@ -8,6 +8,7 @@ import {
     WorkspaceIndexResult,
 } from "@fhirpath-lab/language-service";
 import * as vscode from "vscode";
+import type {LanguageClient} from "vscode-languageclient/node";
 import {formatStatusSummary} from "../FmlLanguageServerStatus";
 import {
     implementationGuideOutputProjectDirectory,
@@ -19,6 +20,8 @@ import {
 } from "../SushiConfigWatcher";
 import {UiConstants} from "../constants/UiConstants";
 import {
+    createExternalGroupSourceResolver,
+    initializeWorkspaceIndex,
     waitForWorkspaceIndexBeforeValidation,
     type FmlValidationBatchResult,
 } from "../extension";
@@ -36,6 +39,37 @@ suite("FHIR Mapping Language Tools Extension", () => {
     test("extension should be active", () => {
         const extension = vscode.extensions.getExtension(UiConstants.extensionPublisher);
         assert.ok(extension?.isActive);
+    });
+
+    test("creates an external group resolver from import-visible documents", async () => {
+        const directory = await fs.mkdtemp(path.join(os.tmpdir(), "fml-preview-import-"));
+        const importedPath = path.join(directory, "base.fml");
+        const importedText = [
+            "/// url = 'http://example.org/StructureMap/Base'",
+            "group CopyBase(source src, target tgt) {",
+            "    src -> tgt;",
+            "}",
+        ].join("\n");
+        try {
+            await fs.writeFile(importedPath, importedText, "utf8");
+            const client = {
+                sendRequest: async () => ({uris: [vscode.Uri.file(importedPath).toString()]}),
+            } as unknown as LanguageClient;
+
+            const resolver = await createExternalGroupSourceResolver(
+                client,
+                vscode.Uri.parse("untitled:derived.fml"),
+            );
+
+            assert.deepEqual(resolver?.("CopyBase"), {
+                uri: vscode.Uri.file(importedPath).toString(),
+                text: importedText,
+                version: 1,
+            });
+            assert.equal(resolver?.("Missing"), undefined);
+        } finally {
+            await fs.rm(directory, {recursive: true, force: true});
+        }
     });
 
     test("reads FHIR version and package cache indexes from sushi-config", () => {
@@ -255,6 +289,7 @@ dependencies:
         assert.ok(commands.includes("fmlTools.InsertTemplate"));
         assert.ok(commands.includes("fmlTools.Validation"));
         assert.ok(commands.includes("fmlTools.OpenPreviewToSide"));
+        assert.ok(commands.includes("fmlTools.OpenCompletePreviewToSide"));
         assert.ok(commands.includes("fmlTools.ShowLanguageServerStatus"));
         assert.ok(commands.includes("fmlTools.ReindexLanguageServer"));
         assert.ok(commands.includes("fmlTools.RestartLanguageServer"));
@@ -291,6 +326,22 @@ dependencies:
         assert.ok(result.canonicalUrlCount >= 0);
         assert.ok(result.durationMs >= 0);
     });
+
+    for (const phase of ["scan", "request"]) {
+        test(`workspace indexing preserves ${phase} errors instead of returning an empty success`, async () => {
+            const failure = new Error(`${phase} failed`);
+            await assert.rejects(initializeWorkspaceIndex(
+                {scanFmlFiles: async () => {
+                    if (phase === "scan") {throw failure;}
+                    return [];
+                }},
+                {sendRequest: async () => { throw failure; }},
+                UiConstants.detailsChannel,
+                parseSushiConfiguration("", os.tmpdir()),
+                [],
+            ), error => error === failure);
+        });
+    }
 
     test("language server restart restores realtime validation", async function() {
         this.timeout(10_000);
@@ -547,6 +598,54 @@ dependencies:
         }
     });
 
+    test("Explorer folder validation should not count rendered copies as duplicate imported groups", async () => {
+        const directory = await fs.mkdtemp(path.join(os.tmpdir(), "fml-import-copies-"));
+        const sharedText = [
+            "/// url = 'http://example.org/StructureMap/FolderShared'",
+            "group Copy(source src, target tgt) { src -> tgt.id = uuid(); }",
+        ].join("\n");
+        const callerText = [
+            "/// url = 'http://example.org/StructureMap/FolderConsumer'",
+            "imports 'http://example.org/StructureMap/FolderShared*'",
+            "group Main(source src, target tgt) { src -> tgt then Copy(src, tgt); }",
+        ].join("\n");
+        const callerUris: vscode.Uri[] = [];
+        for (const name of ["input", "rendered"]) {
+            const folder = path.join(directory, name);
+            await fs.mkdir(folder);
+            const sharedUri = vscode.Uri.file(path.join(folder, "a-shared.fml"));
+            const callerUri = vscode.Uri.file(path.join(folder, "b-consumer.fml"));
+            await fs.writeFile(sharedUri.fsPath, sharedText);
+            await fs.writeFile(callerUri.fsPath, callerText);
+            callerUris.push(callerUri);
+        }
+        try {
+            const result = await vscode.commands.executeCommand<FmlValidationBatchResult>(
+                "fmlTools.Validation",
+                vscode.Uri.file(directory),
+            );
+            assert.equal(result.fileCount, 4);
+            assert.equal(result.validatedFileCount, 4);
+            assert.equal(result.failedFileCount, 0);
+            assert.equal(result.errorCount, 0);
+            for (const uri of callerUris) {
+                assert.equal(vscode.languages.getDiagnostics(uri).some(diagnostic =>
+                    diagnostic.message.includes("already declared")), false);
+                const document = await vscode.workspace.openTextDocument(uri);
+                const definitions = await waitForDefinitions(
+                    uri,
+                    document.positionAt(callerText.indexOf("Copy(src") + 1),
+                );
+                assert.equal(definitions.length, 1);
+                const definition = definitions[0];
+                const targetUri = definition instanceof vscode.Location ? definition.uri : definition.targetUri;
+                assert.equal(targetUri.fsPath, path.join(path.dirname(uri.fsPath), "a-shared.fml"));
+            }
+        } finally {
+            await removeDirectoryWithRetries(directory);
+        }
+    });
+
     test("retained Problems should survive closing an imported map", async () => {
         const directory = await fs.mkdtemp(path.join(os.tmpdir(), "fml-retained-import-"));
         const sharedUri = vscode.Uri.file(path.join(directory, "a-shared.fml"));
@@ -644,6 +743,25 @@ dependencies:
 
         await new Promise(resolve => setTimeout(resolve, 300));
         assert.equal(panel.webview.html, previewHtml);
+        panel.dispose();
+    });
+
+    test("complete preview should open separately with an all-properties toggle", async function() {
+        this.timeout(10_000);
+        await openFmlDocument("group Complete(source src, target tgt) {\n}");
+        const panel = await vscode.commands.executeCommand<vscode.WebviewPanel>(
+            "fmlTools.OpenCompletePreviewToSide",
+        );
+
+        assert.ok(panel);
+        assert.equal(panel.viewType, "fmlCompleteMapPreview");
+        assert.match(panel.title, /^Complete Preview /);
+        const previewHtml = await waitForPreviewHtml(
+            panel,
+            html => html.includes("Complete diagram for") && html.includes("Show all properties"),
+        );
+        assert.match(previewHtml, /class="show-all-properties-toggle" type="checkbox"/);
+        assert.match(previewHtml, /fmlPreview\.setShowAllProperties/);
         panel.dispose();
     });
 

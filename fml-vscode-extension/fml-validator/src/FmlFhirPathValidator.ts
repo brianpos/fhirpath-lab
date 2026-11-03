@@ -1,19 +1,27 @@
-import type {FhirVersion, FmlStructureMap, Rule, SourcePosition} from "../../../helpers/fml_models";
+import type {FhirVersion, FmlStructureMap, Rule, SourcePosition, Transform} from "../../../helpers/fml_models";
 import type {TypeModel} from "../../../helpers/custom_model";
 import {
     getModelProvider,
     validateFhirpathExpression,
     type FhirVersionKey,
 } from "../../../helpers/fhirpath_validator";
+import {resolveTransformResultTypes} from "../../../helpers/fml_transform_signatures";
 import type {FhirPathValue} from "../../../helpers/fhirpath_visitor";
 import type {FmlDiagnostic, FmlPropertyAnalysis, FmlPropertyUsage} from "./contracts";
 import type {ModelProvider} from "../../../helpers/fhirpath_visitor";
 
-interface VariableDescriptor {
+export interface FmlFhirPathResultType {
     typeNames: string[];
     isCollection: boolean;
     fhirVersion?: FhirVersion;
 }
+
+export interface FmlFhirPathAnalysis {
+    diagnostics: FmlDiagnostic[];
+    transformResultTypes: ReadonlyMap<Transform, FmlFhirPathResultType>;
+}
+
+type VariableDescriptor = FmlFhirPathResultType & {engineVariable?: boolean};
 
 interface ExpressionOccurrence {
     text: string;
@@ -30,19 +38,34 @@ export class FmlFhirPathValidator {
         sourceName?: string,
         customTypeModels: Record<string, TypeModel> = {},
     ): FmlDiagnostic[] {
+        return this.analyze(model, sourceText, propertyAnalysis, sourceName, customTypeModels).diagnostics;
+    }
+
+    public analyze(
+        model: FmlStructureMap,
+        sourceText: string,
+        propertyAnalysis: FmlPropertyAnalysis,
+        sourceName?: string,
+        customTypeModels: Record<string, TypeModel> = {},
+    ): FmlFhirPathAnalysis {
         const diagnostics: FmlDiagnostic[] = [];
+        const transformResultTypes = new Map<Transform, FmlFhirPathResultType>();
         const defaultVersion = model.sourceModelVersion ?? model.targetModelVersion;
 
+        const constants = new Map<string, VariableDescriptor>(model.constants.map(constant =>
+            [constant.name, {typeNames: [], isCollection: false, fhirVersion: defaultVersion}]));
         for (const constant of model.constants) {
             diagnostics.push(...this.validateExpression({
                 text: constant.expression,
                 position: constant.expressionPosition,
                 fhirVersion: defaultVersion,
-            }, new Map(), sourceText, sourceName, customTypeModels));
+            }, constants, sourceText, sourceName, customTypeModels));
         }
 
         for (const group of model.groups) {
-            const variables = this.createVariables(group.name, propertyAnalysis);
+            const variables = new Map([...constants, ...this.createVariables(group.name, propertyAnalysis)]);
+            if (!variables.has("ruleId")) variables.set("ruleId", {typeNames: ["System.String"], isCollection: false, engineVariable: true});
+            if (!variables.has("callingRuleId")) variables.set("callingRuleId", {typeNames: ["System.String"], isCollection: false, engineVariable: true});
             const sourceInput = propertyAnalysis.groupInputs.find(input => {
                 return input.groupName === group.name && group.parameters.some(parameter => {
                     return parameter.mode === "source" && parameter.name === input.inputName;
@@ -59,9 +82,10 @@ export class FmlFhirPathValidator {
                 sourceName,
                 diagnostics,
                 customTypeModels,
+                transformResultTypes,
             );
         }
-        return diagnostics;
+        return {diagnostics, transformResultTypes};
     }
 
     private validateRules(
@@ -74,6 +98,7 @@ export class FmlFhirPathValidator {
         sourceName: string | undefined,
         diagnostics: FmlDiagnostic[],
         customTypeModels: Record<string, TypeModel>,
+        transformResultTypes: Map<Transform, FmlFhirPathResultType>,
     ): void {
         for (const rule of rules) {
             const ruleVariables = new Map(variables);
@@ -110,26 +135,80 @@ export class FmlFhirPathValidator {
 
             for (const target of rule.targets) {
                 const transform = target.transform;
-                if (!transform || transform.type !== "evaluate") continue;
-                const contextVariable = transform.parameters.find(parameter => parameter.type === "identifier");
-                const contextDescriptor = contextVariable
-                    ? ruleVariables.get(String(contextVariable.value).replace(/^%/, ""))
-                    : undefined;
-                for (const parameter of transform.parameters.filter(candidate => candidate.type === "expression")) {
-                    diagnostics.push(...this.validateExpression({
-                        text: String(parameter.value),
-                        position: parameter.position,
-                        contextType: contextDescriptor?.typeNames[0],
-                        fhirVersion: contextDescriptor?.fhirVersion ?? groupVersion,
-                    }, ruleVariables, sourceText, sourceName, customTypeModels));
-                }
-            }
-
-            for (const target of rule.targets) {
-                if (!target.variable) continue;
                 const usage = this.findTargetUsage(groupName, target.position, propertyAnalysis.usages);
-                const descriptor = this.descriptorFromUsage(usage);
-                if (descriptor) ruleVariables.set(target.variable, descriptor);
+                const transformUsage = transform
+                    ? this.findTransformUsage(groupName, transform.position, propertyAnalysis.usages)
+                    : undefined;
+                let expressionDescriptor: VariableDescriptor | undefined;
+                if (transform && transform.type !== "evaluate") {
+                    const source = rule.sources.at(-1);
+                    const context = source ? this.descriptorFromUsage(this.findSourceUsage(groupName, source.position, propertyAnalysis.usages))
+                        ?? ruleVariables.get(source.variable ?? source.context) : undefined;
+                    for (const parameter of transform.parameters.filter(parameter => parameter.type === "expression")) {
+                        diagnostics.push(...this.validateExpression({
+                            text: String(parameter.value), position: parameter.position,
+                            contextType: context?.typeNames[0], fhirVersion: context?.fhirVersion ?? groupVersion,
+                        }, ruleVariables, sourceText, sourceName, customTypeModels));
+                    }
+                }
+                if (transform?.type === "evaluate") {
+                    const contextParameter = transform.isInvocation
+                        ? transform.parameters.find(parameter => parameter.name === "context")
+                            ?? transform.parameters[0]
+                        : undefined;
+                    const contextVariable = contextParameter?.type === "identifier"
+                        ? contextParameter
+                        : undefined;
+                    const contextDescriptor = contextVariable
+                        ? ruleVariables.get(String(contextVariable.value).replace(/^%/, ""))
+                        : undefined;
+                    const expressionParameters = transform.isInvocation
+                        ? [transform.parameters.find(parameter => parameter.name === "expression")
+                            ?? transform.parameters[1]].filter(parameter => {
+                                return parameter?.type === "expression"
+                                    || parameter?.type === "literal";
+                            })
+                        : transform.parameters.filter(parameter => parameter.type === "expression");
+                    for (const parameter of expressionParameters) {
+                        const validation = this.analyzeExpression({
+                            text: parameter.type === "literal" && parameter.position
+                                ? sourceText.slice(parameter.position.startIndex, parameter.position.endIndex)
+                                : String(parameter.value),
+                            position: parameter.position,
+                            contextType: contextDescriptor?.typeNames[0],
+                            fhirVersion: contextDescriptor?.fhirVersion ?? groupVersion,
+                        }, ruleVariables, sourceText, sourceName, customTypeModels);
+                        diagnostics.push(...validation.diagnostics);
+                        expressionDescriptor ??= validation.descriptor;
+                    }
+                    if (expressionDescriptor) {
+                        transformResultTypes.set(transform, expressionDescriptor);
+                        if (transformUsage) {
+                            transformUsage.transformResultTypeNames = expressionDescriptor.typeNames;
+                            if (target.variable) {
+                                transformUsage.variableName = target.variable;
+                                transformUsage.variableSpan = this.findVariableSpan(
+                                    sourceText,
+                                    target.position,
+                                    target.variable,
+                                );
+                            }
+                        }
+                    }
+                }
+
+                if (!target.variable) continue;
+                const transformTypeNames = transform && transform.type !== "evaluate"
+                    ? resolveTransformResultTypes(transform)
+                    : [];
+                const descriptor = this.descriptorFromUsage(usage)
+                    ?? expressionDescriptor
+                    ?? {
+                        typeNames: transformTypeNames,
+                        isCollection: false,
+                        fhirVersion: groupVersion,
+                    };
+                ruleVariables.set(target.variable, descriptor);
             }
 
             this.validateRules(
@@ -142,6 +221,7 @@ export class FmlFhirPathValidator {
                 sourceName,
                 diagnostics,
                 customTypeModels,
+                transformResultTypes,
             );
         }
     }
@@ -153,6 +233,22 @@ export class FmlFhirPathValidator {
         sourceName?: string,
         customTypeModels: Record<string, TypeModel> = {},
     ): FmlDiagnostic[] {
+        return this.analyzeExpression(
+            occurrence,
+            variables,
+            sourceText,
+            sourceName,
+            customTypeModels,
+        ).diagnostics;
+    }
+
+    private analyzeExpression(
+        occurrence: ExpressionOccurrence,
+        variables: Map<string, VariableDescriptor>,
+        sourceText: string,
+        sourceName?: string,
+        customTypeModels: Record<string, TypeModel> = {},
+    ): {diagnostics: FmlDiagnostic[]; descriptor?: VariableDescriptor} {
         const version = this.toVersionKey(occurrence.fhirVersion);
         const provider = this.composeProvider(getModelProvider(version), customTypeModels);
         const environmentVariables: Record<string, FhirPathValue> = {};
@@ -168,14 +264,15 @@ export class FmlFhirPathValidator {
             contextType: occurrence.contextType,
             environmentVariables,
             allowEnvironmentVariablesAtRoot: true,
+            fmlExtensionShortcut: true,
         });
-        const hasTypedContext = !!occurrence.contextType || Object.values(environmentVariables).some(value => {
-            return value.types.length > 0;
+        const hasTypedContext = !!occurrence.contextType || Object.entries(environmentVariables).some(([name, value]) => {
+            return !variables.get(name)?.engineVariable && value.types.length > 0;
         });
         const expressionDiagnostics = hasTypedContext
             ? result.diagnostics
             : result.diagnostics.filter(diagnostic => diagnostic.code === "syntax");
-        return expressionDiagnostics.map(diagnostic => {
+        const diagnostics = expressionDiagnostics.map(diagnostic => {
             const absoluteOffset = (occurrence.position?.startIndex ?? 0) + diagnostic.position;
             const position = this.positionAt(sourceText, absoluteOffset);
             return {
@@ -187,6 +284,19 @@ export class FmlFhirPathValidator {
                 offendingText: diagnostic.expression || occurrence.text,
             };
         });
+        const typeNames = result.expectedReturnType
+            .replace(/^\((.*)\)$/, "$1")
+            .split("|")
+            .map(typeName => typeName.trim())
+            .filter(Boolean);
+        return {
+            diagnostics,
+            descriptor: typeNames.length > 0 ? {
+                typeNames,
+                isCollection: result.expectedReturnIsCollection,
+                fhirVersion: occurrence.fhirVersion,
+            } : undefined,
+        };
     }
 
     private composeProvider(
@@ -251,9 +361,44 @@ export class FmlFhirPathValidator {
             return usage.groupName === groupName
                 && usage.role === "target"
                 && !!position
-                && usage.span.start.line === position.startLine
-                && usage.span.start.column === position.startColumn;
+                && ((usage.span.start.line === position.startLine
+                    && usage.span.start.column === position.startColumn)
+                    || (usage.transformSpan?.start.line === position.startLine
+                        && usage.transformSpan.start.column === position.startColumn));
         });
+    }
+
+    private findTransformUsage(
+        groupName: string,
+        position: SourcePosition | undefined,
+        usages: FmlPropertyUsage[],
+    ): FmlPropertyUsage | undefined {
+        return usages.find(usage => {
+            return usage.groupName === groupName
+                && !!position
+                && usage.transformSpan?.start.line === position.startLine
+                && usage.transformSpan.start.column === position.startColumn;
+        });
+    }
+
+    private findVariableSpan(
+        sourceText: string,
+        position: SourcePosition | undefined,
+        variableName: string,
+    ): FmlPropertyUsage["variableSpan"] {
+        if (!position) return undefined;
+        const clause = sourceText.slice(position.startIndex, position.endIndex);
+        const aliases = clause.matchAll(/\bas\s+(`[^`]+`|[A-Za-z_][A-Za-z0-9_]*)/g);
+        for (const alias of aliases) {
+            const token = alias[1];
+            if (token.replace(/^`(.*)`$/, "$1") !== variableName.replace(/^`(.*)`$/, "$1")) continue;
+            const startIndex = position.startIndex + alias.index + alias[0].lastIndexOf(token);
+            return {
+                start: this.positionAt(sourceText, startIndex),
+                end: this.positionAt(sourceText, startIndex + token.length),
+            };
+        }
+        return undefined;
     }
 
     private toVersionKey(version?: FhirVersion): FhirVersionKey {
