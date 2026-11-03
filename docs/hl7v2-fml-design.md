@@ -84,6 +84,66 @@ Projection rules (`projectHl7v2ToSpecificModel`):
 2. The page sends the resulting JSON as the `content` (or `resource` for matchbox/MaLaC-HD) and the merged bundle as `model`.
 3. Trace and variables are handled as for any FML run.
 
+## Worked PID-to-Patient example
+
+This example uses the generic model to extract PID-3 (identifier), PID-5
+(patient name), and PID-7 (date of birth).
+
+### Test input
+
+```hl7v2
+MSH|^~\&|SendingApp|SendingFac|ReceivingApp|ReceivingFac|20240115093000||ADT^A01^ADT_A01|MSG00001|P|2.7
+PID|1||12345678^^^MR^MR||Chalmers^Peter^James^^Mr.||19741225|M|||534 Erewhon St^^PleasantVille^Vic^3999
+```
+
+### FML map
+
+```fml
+/// url = 'http://fhirpath-lab.com/StructureMap/hl7v2-pid-to-patient'
+/// name = 'Hl7v2PidToPatient'
+/// status = 'draft'
+
+uses "http://hl7.org/fhirpath/v2/StructureDefinition/Message" alias V2Message as source
+uses "http://hl7.org/fhir/StructureDefinition/Patient" as target
+
+group Hl7v2ToPatient(source src : V2Message, target tgt : Patient) {
+  src.segment as pid where (code = 'PID') -> tgt then PidToPatient(pid, tgt) "pid";
+}
+
+group PidToPatient(source pid, target tgt : Patient) {
+  pid -> tgt.identifier as id then {
+    pid -> id.system = 'http://hospital.example.org/mrn' "identifier-system";
+    pid -> id.value = (%pid.field.skip(2).first().element.first().component.first().text) "identifier-value";
+  } "identifier";
+  pid -> tgt.name as name then {
+    pid -> name.family = (%pid.field.skip(4).first().element.first().component.first().text) "family";
+    pid -> name.given = (%pid.field.skip(4).first().element.first().component.skip(1).first().text) "given";
+  } "name";
+  pid -> tgt.birthDate = ((%pid.field.skip(6).first().element.first().text.substring(0, 4) + '-' + %pid.field.skip(6).first().element.first().text.substring(4, 2) + '-' + %pid.field.skip(6).first().element.first().text.substring(6, 2)).toDate()) "birthDate";
+}
+```
+
+### Expected output
+
+```json
+{
+  "resourceType": "Patient",
+  "identifier": [
+    {
+      "system": "http://hospital.example.org/mrn",
+      "value": "12345678"
+    }
+  ],
+  "name": [
+    {
+      "family": "Chalmers",
+      "given": ["Peter"]
+    }
+  ],
+  "birthDate": "1974-12-25"
+}
+```
+
 ## Debugger highlighting
 
 * Map highlighting is unchanged.
