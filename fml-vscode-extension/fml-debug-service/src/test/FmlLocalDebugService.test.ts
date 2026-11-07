@@ -491,3 +491,45 @@ test("wire empty/ordered collections and primitive companions retain their snaps
     assert.ok(named("empty").every(variable => !variable.part?.some(part => ["jsonValue", "value", "resource", "path"].includes(part.name ?? ""))));
     assert.ok(named("date").some(variable => variable.part?.find(part => part.name === "jsonValue")?.valueString === '{"_value":{"id":"metadata"}}'));
 });
+
+test("resolve() on a logical model Reference calls the host with source origin details", async () => {
+    const models = {resourceType: "Bundle", type: "collection", entry: ["patient", "visit"].map(name => ({resource: {
+        resourceType: "StructureDefinition", url: `http://example.org/sd/${name}`, name, kind: "logical", derivation: "specialization",
+        type: `http://example.org/sd/${name}`, baseDefinition: "http://hl7.org/fhir/StructureDefinition/Base",
+        differential: {element: [
+            {id: name, path: name},
+            ...(name === "patient" ? [{id: "patient.family", path: "patient.family", max: "1", type: [{code: "string"}]}]
+                : [{id: "visit.patient_id", path: "visit.patient_id", max: "1",
+                    type: [{code: "Reference", targetProfile: ["http://example.org/sd/patient"]}]}]),
+        ]},
+    }}))};
+    const calls: {reference: string; mode?: string; variable?: string; rule?: string}[] = [];
+    const result = await new FmlLocalDebugService({}, {
+        resolve: async (reference, _signal, origin) => {
+            calls.push({reference, mode: origin?.mode, variable: origin?.variable, rule: origin?.rule});
+            return {resourceType: "patient", family: "Smith"};
+        },
+    }).executeParameters({
+        mapText: `
+uses 'http://example.org/sd/visit' alias V as source
+uses 'http://hl7.org/fhir/StructureDefinition/Patient' alias T as target
+group Main(source src : V, target tgt : T) {
+  src -> tgt.name as n, n.family = evaluate(src, %src.patient_id.resolve().family) "family";
+}`,
+        inputText: JSON.stringify({patient_id: {reference: "patient/2"}}),
+        modelText: JSON.stringify(models),
+    } as any);
+    const output = result.parameter?.find(p => p.name === "return")?.valueString;
+    assert.ok(output, JSON.stringify(result));
+    assert.deepEqual(JSON.parse(output), {resourceType: "Patient", name: [{family: "Smith"}]});
+    assert.deepEqual(calls, [{reference: "patient/2", mode: "source", variable: "src", rule: "family"}]);
+});
+
+test("executeParametersBatch prepares once and returns a result per input", async () => {
+    const results = await new FmlLocalDebugService().executeParametersBatch(
+        {mapText, inputText: "", localTrace: false} as never,
+        ['{"resourceType":"Patient","id":"a"}', '{"resourceType":"Patient","id":"b"}']);
+    assert.equal(results.length, 2);
+    const ids = results.map(r => JSON.parse(r.parameter?.find(p => p.name === "return")?.valueString ?? "{}").id);
+    assert.deepEqual(ids, ["a", "b"]);
+});

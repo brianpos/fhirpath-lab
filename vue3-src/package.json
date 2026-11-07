@@ -27,6 +27,7 @@
     "lz-string": "^1.5.0",
     "marked": "^18.0.6",
     "nuxt": "^4.4.8",
+    "sql.js": "^1.15.2",
     "vue": "^3.5.39",
     "vue-router": "^5.1.0",
     "vue3-ace-editor": "^2.2.4",
@@ -35,6 +36,7 @@
     "xml-formatter": "^3.7.0"
   },
   "devDependencies": {
+    "@types/sql.js": "^1.4.11",
     "sass": "^1.101.0"
   }
 }

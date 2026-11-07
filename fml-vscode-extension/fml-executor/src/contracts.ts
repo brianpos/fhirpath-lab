@@ -58,7 +58,8 @@ export interface FmlExecutionOptions {
     readonly uuid?: () => string;
     readonly log?: (name: string, values: readonly unknown[]) => void;
     readonly reference?: (resource: FmlBinding) => string;
-    readonly resolve?: (reference: string, signal?: AbortSignal) => Promise<unknown | undefined>;
+    /** `origin` says where in the map the resolve() call was made, and whether it reads source or target data. */
+    readonly resolve?: (reference: string, signal?: AbortSignal, origin?: FmlResolveOrigin) => Promise<unknown | undefined>;
 }
 
 export interface FmlExecutorConfiguration {
@@ -74,6 +75,20 @@ export interface FmlTraceSite {
     readonly kind?: "group" | "rule" | "source" | "target";
     /** Structured source identity, not an event sequence or runtime object ID. */
     readonly expressionPosition?: string;
+}
+
+export interface FmlResolveOrigin {
+    /** "source" when the focus came from a source variable, "target" for a target variable, else "unknown". */
+    readonly mode: "source" | "target" | "unknown";
+    /** The mapping variable holding the focus of the expression, when identifiable. */
+    readonly variable?: string;
+    readonly expression: string;
+    /** Mapping variables referenced by the expression, with whether each is a source or target. */
+    readonly variables: readonly {name: string; mode: "source" | "target"}[];
+    /** Map location (source name and span) of the rule element being executed. */
+    readonly site: FmlTraceSite;
+    /** Name of the rule being executed, if any. */
+    readonly rule?: string;
 }
 
 export interface FmlExecutionFrameView {

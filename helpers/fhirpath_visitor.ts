@@ -789,7 +789,15 @@ class FhirPathExpressionVisitor {
                 if (elt.IsArray) isArray = true;
                 for (const tref of elt.Type) {
                     const target = this.provider.lookupByTypeName(tref.TypeName);
-                    if (target) resolved.push(target);
+                    if (!target) continue;
+                    if (tref.TypeName === "Reference" && tref.TargetProfile?.length) {
+                        // Remember what the reference points at so resolve() can type its result
+                        const withTargets: TypeModel = { ...target };
+                        referenceTargets.set(withTargets, tref.TargetProfile);
+                        resolved.push(withTargets);
+                    } else {
+                        resolved.push(target);
+                    }
                 }
                 if (found.choiceSuffixBase) choiceSuffixBase = found.choiceSuffixBase;
             }
@@ -1146,10 +1154,15 @@ class FhirPathExpressionVisitor {
                         // Walk the original element's TargetProfile via the parent
                         // ElementTypeModel; without it we fall back to Resource.
                         if (refElement) {
-                            // No way to recover targetProfile from t here — caller
-                            // must thread it through. Default to Resource.
-                            const r = this.provider.lookupByTypeName("Resource");
-                            if (r) out.push(r);
+                            const targets = (referenceTargets.get(t) ?? [])
+                                .map((profile) => this.provider.lookupByTypeName(profile))
+                                .filter((target): target is TypeModel => !!target);
+                            if (targets.length > 0) {
+                                out.push(...targets);
+                            } else {
+                                const r = this.provider.lookupByTypeName("Resource");
+                                if (r) out.push(r);
+                            }
                         }
                     } else {
                         out.push(t);
@@ -1572,6 +1585,9 @@ class FhirPathExpressionVisitor {
         return { node, value: EMPTY_VALUE };
     }
 }
+
+/** Target profiles of Reference types reached through an element (see the `resolve` function typing) */
+const referenceTargets = new WeakMap<TypeModel, string[]>();
 
 function dedupeTypes(types: TypeModel[]): TypeModel[] {
     const seen = new Set<string>();

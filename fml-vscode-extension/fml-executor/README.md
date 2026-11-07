@@ -158,6 +158,14 @@ HTTP failures into empty success; contained references and not-found responses
 retain empty-result semantics. Absolute HTTP resolution may perform network I/O;
 relative/canonical resolution requires a host service.
 
+The `resolve` host callback is `(reference, signal, origin)`. `origin`
+(`FmlResolveOrigin`) reports where in the map the call was made: `mode`
+(`"source"` when the focus came from a source variable, `"target"` for a target
+variable, else `"unknown"`), the focus `variable`, the `expression`, the mapping
+`variables` it references (each with its source/target mode), the trace `site`
+(source name and span) and the `rule` name. Hosts can use it to read from a
+source or a target server and to report errors against the map.
+
 ### Terminology host example
 
 The exported, browser-compatible `FhirTerminologyService` is a concrete

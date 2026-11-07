@@ -63,6 +63,7 @@
     "@volar-plugins/vetur": "^2.0.0",
     "@vue/runtime-dom": "^3.2.47",
     "minimist": ">=1.2.6",
+    "sql.js": "^1.15.2",
     "ts-jest": "^29.1.2",
     "ts-node": "^10.9.2",
     "vue-property-decorator": "^9.1.2"
