@@ -1,6 +1,7 @@
 {
   "maps": "maps4-5",
   "reverseMaps": "maps5-4",
+  "conceptMaps": "conceptmaps",
   "inputs": "tests/input",
   "expected": "tests/expected",
   "engine": "local"

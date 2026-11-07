@@ -2,7 +2,7 @@ import * as assert from "node:assert";
 import {promises as fs} from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import {parseFmlTestConfig} from "../FmlTestController";
+import {loadConceptMapResources, parseFmlTestConfig} from "../FmlTestController";
 import {compareJson, discoverTestInputs, globToRegExp} from "../FmlTestSupport";
 
 suite("FML test support", () => {
@@ -36,5 +36,19 @@ suite("FML test support", () => {
         assert.throws(() => parseFmlTestConfig("{}"));
         assert.throws(() => parseFmlTestConfig('{"maps":"m","inputs":"i","engine":"x"}'));
         assert.strictEqual(parseFmlTestConfig('{"maps":"m","inputs":"i"}').maps, "m");
+    });
+
+    test("loads ConceptMaps from files and bundles only", async () => {
+        const dir = await fs.mkdtemp(path.join(os.tmpdir(), "fml-cm-"));
+        try {
+            const cm = {resourceType: "ConceptMap", url: "http://x/cm1"};
+            await fs.writeFile(path.join(dir, "a.json"), JSON.stringify(cm));
+            await fs.writeFile(path.join(dir, "b.json"), JSON.stringify({resourceType: "Bundle", entry: [{resource: {...cm, url: "http://x/cm2"}}, {resource: {resourceType: "Patient"}}]}));
+            await fs.writeFile(path.join(dir, "c.json"), JSON.stringify({resourceType: "Patient"}));
+            const loaded = await loadConceptMapResources(dir);
+            assert.deepStrictEqual(loaded.map(item => (item as {url: string}).url), ["http://x/cm1", "http://x/cm2"]);
+        } finally {
+            await fs.rm(dir, {recursive: true, force: true});
+        }
     });
 });

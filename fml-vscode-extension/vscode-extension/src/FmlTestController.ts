@@ -1,9 +1,9 @@
 import {promises as fs} from "node:fs";
 import path from "node:path";
 import * as vscode from "vscode";
-import {FmlLocalDebugService} from "@fhirpath-lab/debug-service";
+import {FmlLocalDebugService, type JsonValue} from "@fhirpath-lab/debug-service";
 import {parseFmlModel, toFhirVersion} from "@fhirpath-lab/validator";
-import {resolveFmlDebugDependencies} from "./FmlDebugDependencies";
+import {collectFmlModelResources, resolveFmlDebugDependencies} from "./FmlDebugDependencies";
 import type {SushiWorkspaceConfiguration} from "./SushiConfigWatcher";
 import {
     canonicalJson, compareJson, discoverTestInputs, expectedPathFor, type FmlTestCaseFile,
@@ -16,6 +16,8 @@ export interface FmlTestConfig {
     maps: string;
     /** Optional folder with reverse maps, paired to forward maps by swapped source/target types. */
     reverseMaps?: string;
+    /** Optional folder (recursed) of ConceptMap JSON files (or Bundles) used to resolve translate() calls. */
+    conceptMaps?: string;
     /** Folder (recursed) containing JSON input files. */
     inputs: string;
     /** Optional glob filter(s) for input files; default is all .json files. */
@@ -46,6 +48,7 @@ interface ResolvedConfig {
     file: string;
     maps: string;
     reverseMaps?: string;
+    conceptMaps?: string;
     inputs: string;
     include: string[];
     expected?: string;
@@ -90,6 +93,27 @@ async function loadMaps(folder: string): Promise<MapInfo[]> {
         });
     }
     return maps;
+}
+
+type DependencyCache = Map<string, Promise<Awaited<ReturnType<typeof resolveFmlDebugDependencies>>>>;
+
+/** Loads ConceptMap resources (directly or inside Bundles) from every JSON file under the folder. */
+export async function loadConceptMapResources(folder: string): Promise<JsonValue[]> {
+    const resources: JsonValue[] = [];
+    const entries = (await fs.readdir(folder, {recursive: true})).map(String)
+        .filter(name => name.toLowerCase().endsWith(".json")).sort();
+    for (const entry of entries) {
+        const file = path.join(folder, entry);
+        let value: unknown;
+        try {
+            value = JSON.parse(await fs.readFile(file, "utf8"));
+        } catch (error) {
+            throw new Error(`Invalid ConceptMap JSON in ${file}: ${error instanceof Error ? error.message : String(error)}`);
+        }
+        resources.push(...collectFmlModelResources(value).filter(resource =>
+            (resource as {resourceType?: string}).resourceType === "ConceptMap"));
+    }
+    return resources;
 }
 
 export class FmlTestController implements vscode.Disposable {
@@ -139,6 +163,7 @@ export class FmlTestController implements vscode.Disposable {
                     file: file.fsPath,
                     maps: path.resolve(base, raw.maps),
                     reverseMaps: raw.reverseMaps ? path.resolve(base, raw.reverseMaps) : undefined,
+                    conceptMaps: raw.conceptMaps ? path.resolve(base, raw.conceptMaps) : undefined,
                     inputs: path.resolve(base, raw.inputs),
                     include,
                     expected: raw.expected ? path.resolve(base, raw.expected) : undefined,
@@ -198,7 +223,8 @@ export class FmlTestController implements vscode.Disposable {
         const run = this.controller.createTestRun(request);
         const items = this.collect(request);
         items.forEach(item => run.enqueued(item));
-        const forward = new Map<string, Promise<Awaited<ReturnType<typeof resolveFmlDebugDependencies>>>>();
+        const forward: DependencyCache = new Map();
+        const conceptMapCache = new Map<string, Promise<JsonValue[]>>();
         for (const item of items) {
             if (token.isCancellationRequested) {break;}
             const data = this.data.get(item);
@@ -206,7 +232,7 @@ export class FmlTestController implements vscode.Disposable {
             run.started(item);
             const started = Date.now();
             try {
-                const messages = await this.runCase(data.config, data.map, data.input, token, forward);
+                const messages = await this.runCase(data.config, data.map, data.input, token, forward, conceptMapCache);
                 if (messages.length) {
                     messages.forEach(message => {
                         message.location = new vscode.Location(item.uri!, new vscode.Position(0, 0));
@@ -235,7 +261,8 @@ export class FmlTestController implements vscode.Disposable {
         map: MapInfo,
         inputText: string,
         token: vscode.CancellationToken,
-        cache: Map<string, Promise<Awaited<ReturnType<typeof resolveFmlDebugDependencies>>>>,
+        cache: DependencyCache,
+        conceptMaps: JsonValue[],
     ): Promise<unknown> {
         const abort = new AbortController();
         token.onCancellationRequested(() => abort.abort());
@@ -253,7 +280,7 @@ export class FmlTestController implements vscode.Disposable {
             mapText: map.text,
             maps: resolved.maps,
             inputText,
-            modelResources: resolved.modelResources,
+            modelResources: [...resolved.modelResources, ...conceptMaps],
             terminologyServerUrl: settings.get<string>("terminology.serverUrl"),
             terminologyFhirVersion: settings.get<"R4" | "R5">("terminology.fhirVersion"),
             signal: abort.signal,
@@ -275,11 +302,21 @@ export class FmlTestController implements vscode.Disposable {
         map: MapInfo,
         input: FmlTestCaseFile,
         token: vscode.CancellationToken,
-        cache: Map<string, Promise<Awaited<ReturnType<typeof resolveFmlDebugDependencies>>>>,
+        cache: DependencyCache,
+        conceptMapCache: Map<string, Promise<JsonValue[]>>,
     ): Promise<vscode.TestMessage[]> {
         const messages: vscode.TestMessage[] = [];
+        let conceptMaps: JsonValue[] = [];
+        if (config.conceptMaps) {
+            let loading = conceptMapCache.get(config.conceptMaps);
+            if (!loading) {
+                loading = loadConceptMapResources(config.conceptMaps);
+                conceptMapCache.set(config.conceptMaps, loading);
+            }
+            conceptMaps = await loading;
+        }
         const inputText = await fs.readFile(input.filePath, "utf8");
-        const actual = await this.execute(map, inputText, token, cache);
+        const actual = await this.execute(map, inputText, token, cache, conceptMaps);
 
         if (config.expected) {
             const expectedPath = expectedPathFor(config.expected, input.relativePath);
@@ -305,7 +342,7 @@ export class FmlTestController implements vscode.Disposable {
                 candidate.sourceUrl !== undefined && candidate.sourceUrl === map.targetUrl
                 && candidate.targetUrl === map.sourceUrl);
             if (reverse) {
-                const back = await this.execute(reverse, JSON.stringify(actual), token, cache);
+                const back = await this.execute(reverse, JSON.stringify(actual), token, cache, conceptMaps);
                 const original = JSON.parse(inputText) as unknown;
                 const differences = compareJson(original, back, IGNORED_PROPERTIES);
                 if (differences.length) {

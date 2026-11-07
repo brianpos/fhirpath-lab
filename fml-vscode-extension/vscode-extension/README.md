@@ -375,6 +375,7 @@ Add a `.fml-tests.json` file to run a folder of JSON inputs against every map in
 {
   "maps": "maps4-5",
   "reverseMaps": "maps5-4",
+  "conceptMaps": "conceptmaps",
   "inputs": "tests/input",
   "include": "Patient*.json",
   "expected": "tests/expected",
@@ -384,6 +385,7 @@ Add a `.fml-tests.json` file to run a folder of JSON inputs against every map in
 
 - `maps` – folder of maps (recursed); imports are resolved as in the debugger.
 - `reverseMaps` – optional; a reverse map is paired when its source/target structure URLs are swapped, and the forward result is mapped back and compared with the original input.
+- `conceptMaps` – optional folder (recursed) of ConceptMap JSON files (or Bundles) used by `translate()` in the local engine, in addition to ConceptMaps found through the workspace models.
 - `inputs` – folder (recursed) of `.json` files. A map only runs against inputs whose `resourceType` matches its source type, so cross-version layouts can use one sub folder per resource type.
 - `include` – optional glob (or array) filter; default is all `.json` files.
 - `expected` – optional folder mirroring the input paths, compared semantically (key order ignored).
