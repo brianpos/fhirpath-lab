@@ -3,6 +3,11 @@
 
 > **Note:** The dates included here are the dates of the commits that were made to the repository. The actual release dates may be different.
 
+# 7 November 2026
+* Add a SQLite helper (`helpers/db_logical_model_generator.ts`) that reads a database and generates a Bundle of FHIR logical models, one per table, with Reference types for foreign keys and schema comments. See `docs/database-logical-models.md`.
+* FML test page: a database button on the Models tab loads a SQLite file; a new toolbar button runs the map over every row of the map's primary (source) table and outputs a Bundle. `resolve()` on foreign keys reads from the database.
+* FML engine: the `resolve` host callback now receives an origin (source/target variable, expression, rule and map location). FHIRPath typing of `resolve()` now uses a Reference's target profiles.
+
 # 2 November 2026
 * Complete the FML diagram API migration on the StructureMap and FML pages, preserving source highlighting and cross-version metadata without adding diagram fields to FHIR resources.
 * Major changes to FML support, particularly in the debugging and logical model support
