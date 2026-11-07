@@ -8,21 +8,29 @@ interface CliArgs {
     junit?: string;
     report?: string;
     lcov?: string;
+    filter: string[];
+    serverUrl?: string;
 }
 
 function parseArgs(argv: string[]): CliArgs {
-    const args: CliArgs = {config: FML_TEST_CONFIG_FILE};
+    const args: CliArgs = {config: FML_TEST_CONFIG_FILE, filter: []};
     for (let index = 0; index < argv.length; index++) {
         const name = argv[index];
         const value = argv[index + 1];
         if (name === "--help" || name === "-h") {
-            console.log("Usage: fml-test-cli [--config <.fml-tests.json>] [--junit <file>] [--report <file.md>] [--lcov <file>]");
+            console.log("Usage: fml-test-cli [--config <.fml-tests.json>] [--junit <file>] [--report <file.md>] [--lcov <file>]\n  [--filter <pattern>]... map/input path filter (* wildcard, else substring)\n  [--server-url <url>] remote FML engine (overrides config; empty = local)");
             process.exit(0);
         }
-        if (!["--config", "--junit", "--report", "--lcov"].includes(name) || value === undefined) {
+        if (!["--config", "--junit", "--report", "--lcov", "--filter", "--server-url"].includes(name) || value === undefined) {
             throw new Error(`Unknown or incomplete argument '${name}'.`);
         }
-        args[name.slice(2) as keyof CliArgs] = value;
+        if (name === "--filter") {
+            args.filter.push(value);
+        } else if (name === "--server-url") {
+            args.serverUrl = value;
+        } else {
+            (args as unknown as Record<string, string>)[name.slice(2)] = value;
+        }
         index++;
     }
     return args;
@@ -31,9 +39,14 @@ function parseArgs(argv: string[]): CliArgs {
 async function main(): Promise<number> {
     const args = parseArgs(process.argv.slice(2));
     const config = await loadTestConfig(path.resolve(args.config));
+    if (args.serverUrl !== undefined) {
+        config.serverUrl = args.serverUrl;
+        config.forceLocal = false;
+    }
     const runner = new FmlTestRunner(config, {coverage: Boolean(args.report || args.lcov)});
+    console.log(`Engine: ${runner.engine.kind === "local" ? "local" : runner.engine.serverUrl}`);
     const reported: ReportedCase[] = [];
-    for (const set of await discoverTestSets(config)) {
+    for (const set of await discoverTestSets(config, args.filter)) {
         for (const input of set.inputs) {
             const result = await runner.runCase(set.map, input);
             const mapFile = path.relative(config.maps, set.map.filePath);

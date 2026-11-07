@@ -147,6 +147,7 @@ export class FmlTestController implements vscode.Disposable {
                 runner = new FmlTestRunner(data.config, {
                     context: this.contextProvider(), coverage: withCoverage,
                     conceptMapCollector: collectFmlModelResources, signal: abort.signal,
+                    defaultServerUrl: settings.get<string>("debug.serverUrl"),
                     terminology: {
                         serverUrl: settings.get<string>("terminology.serverUrl"),
                         fhirVersion: settings.get<"R4" | "R5">("terminology.fhirVersion"),

@@ -391,13 +391,15 @@ Add a `.fml-tests.json` file to run a folder of JSON inputs against every map in
 - `expected` – optional folder mirroring the input paths, compared semantically (key order ignored).
 - `propertyNotConverted` – optional array of dotted paths (e.g. `"Patient.contact.name"`); differences are ignored when the property (or an ancestor) is missing from the converted output, for expected and round-trip comparisons.
 - `writeOutputFiles` – optional; when `true` (requires `expected`), outputs with no expected file are written there so the first engine's output becomes the baseline for comparing other engines. Existing files are compared; delete one to regenerate it.
-- `engine` – only `"local"` is supported.
+- `serverUrl` / `legacyPost` – optional remote FML engine, exactly as in the debugger launch configuration. With no URL (in the config or the `fmlTools.debug.serverUrl` setting) the bundled local engine is used; `"serverUrl": ""` forces local. `"engine": "local"` also forces the local engine.
 
 Each output (and reverse output) is also checked against the FHIR model for unknown property names, array/single cardinality and missing required elements (bindings are not checked).
 
 **Coverage:** the *Run with Coverage* profile highlights which map rules executed in the editor. The **FML: Show Map Test Coverage Report** command shows a markdown report of rules never executed and model properties never present in inputs or never produced in outputs.
 
-**CI:** `npm run test:maps -- --config .fml-tests.json --junit results.xml --report report.md --lcov lcov.info` (after building) runs the same tests without VS Code and exits non-zero on any failure.
+Rules that were reached but never matched are reported separately from rules that were never reached: the report distinguishes a source `where`/type filter that excluded every value from a source element that was absent in every input.
+
+**CI:** `npm run test:maps -- --config .fml-tests.json --junit results.xml --report report.md --lcov lcov.info [--filter Patient] [--server-url https://...]` (after building; `--filter` is repeatable and matches the map path, input path or `map :: input`, with `*` wildcards or as a substring) runs the same tests without VS Code and exits non-zero on any failure.
 
 Failures show a diff in the Test Explorer; the Debug profile opens a single case in the FML debugger. See `sample-fml/cross-version` for a cross-version R4→R5 example.
 

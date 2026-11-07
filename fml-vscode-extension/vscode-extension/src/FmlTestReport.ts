@@ -25,9 +25,17 @@ export function buildPropertyReport(
         const file = coverage.find(item => item.filePath === map.filePath);
         if (file) {
             const missed = file.sites.filter(site => !file.hits.has(site.location));
+            const filtered = missed.filter(site => file.skips.get(site.location)?.filtered);
+            const noValues = missed.filter(site => !file.skips.get(site.location)?.filtered && file.skips.get(site.location)?.noSourceValues);
+            const unreached = missed.filter(site => !file.skips.has(site.location));
+            const describe = (site: (typeof missed)[number]): string => `line ${site.startLine + 1}: ${site.location}`;
             lines.push(`**Rules executed:** ${file.sites.length - missed.length}/${file.sites.length}`, "",
-                "Rules never executed:",
-                ...list(missed.map(site => `line ${site.startLine + 1}: ${site.location}`)), "");
+                "Rules reached but never matched because a source `where`/type filter excluded every value:",
+                ...list(filtered.map(describe)), "",
+                "Rules reached but never matched because the source element had no values in any input:",
+                ...list(noValues.map(describe)), "",
+                "Rules never reached (parent rule or group never fired):",
+                ...list(unreached.map(describe)), "");
         }
         if (map.sourceType) {
             const missing = modelPropertyPaths(map.sourceType, map.sourceVersion)

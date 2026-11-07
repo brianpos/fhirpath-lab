@@ -734,13 +734,18 @@ export class Invocation {
         if (++this.work > (this.options.limits?.maxWork ?? 1_000_000)) throw new Error("FML work limit exceeded.");
     }
 
+    /** "rules" and "coverage" detail record rule-level events only (no source/target events). */
+    private get leanTrace(): boolean {
+        return this.options.traceDetail === "rules" || this.options.traceDetail === "coverage";
+    }
+
     private emit(phase: "enter" | "step" | "exit", unit: {position?: SourcePosition; name?: string}, frame: Frame,
         messages?: readonly FmlTraceMessage[]): void {
         this.currentSite = this.bound.site(unit);
         this.options.signal?.throwIfAborted();
         const observer = this.options.trace;
         if (!observer?.recording) return;
-        if (this.options.traceDetail === "rules"
+        if (this.leanTrace
             && (this.currentSite.kind === "source" || this.currentSite.kind === "target")) return;
         try {
             observer.onEvent(phase, this.currentSite, this.frameView(frame), messages);
@@ -839,13 +844,14 @@ export class Invocation {
             if (index < rule.sources.length) {
                 const source = rule.sources[index];
                 this.currentSite = this.bound.site(source);
-                const traceSource = this.options.trace?.recording && this.options.traceDetail !== "rules";
+                const traceSource = this.options.trace?.recording && !this.leanTrace;
                 if (traceSource) {
                     this.emit("enter", source, frame);
                     this.traceDepth++;
                 }
                 const sourceContexts = yield* this.context(frame, source.context);
                 let values = sourceContexts.flatMap(node => this.bound.read(node, source.element ?? ""));
+                const readCount = values.length;
                 const sourceType = source.type;
                 if (sourceType) {
                     values = values.filter(node => this.bound.matchesSourceType(node, sourceType));
@@ -907,6 +913,10 @@ export class Invocation {
                     this.emitSourceSelection("step", source, frame, selected.map(candidate => candidate.value),
                         [{name: source.listMode, text: [`${selected.length} selected`]}]);
                 }
+                if (selected.length === 0 && this.options.traceDetail === "coverage") {
+                    this.emit("step", rule, frame, [{name: "coverage",
+                        text: [readCount === 0 ? "no-source-values" : "filtered"]}]);
+                }
                 if (traceSource) {
                     this.traceDepth--;
                     if (this.options.trace?.recording) {
@@ -959,7 +969,7 @@ export class Invocation {
 
     private emitSourceSelection(phase: "step" | "exit", source: RuleSource, frame: Frame, values: Node[],
         messages?: readonly FmlTraceMessage[]): void {
-        if (!this.options.trace?.recording || this.options.traceDetail === "rules") return;
+        if (!this.options.trace?.recording || this.leanTrace) return;
         const snapshot = new Frame(frame);
         if (source.variable) snapshot.local.set(source.variable, values);
         this.emit(phase, source, snapshot, messages);
@@ -1301,7 +1311,7 @@ export class Invocation {
     private *target(target: RuleTarget, frame: Frame, matched: Node[], rule: Rule): Routine {
         this.check();
         this.currentSite = this.bound.site(target);
-        const traceTarget = this.options.trace?.recording && this.options.traceDetail !== "rules";
+        const traceTarget = this.options.trace?.recording && !this.leanTrace;
         if (traceTarget) {
             this.emit("enter", target, frame);
             this.traceDepth++;

@@ -3,9 +3,16 @@ import {promises as fs} from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import {loadConceptMapResources, parseFmlTestConfig} from "../FmlTestController";
-import {compareJson, discoverTestInputs, filterNotConverted, globToRegExp} from "../FmlTestSupport";
+import {compareJson, discoverTestInputs, filterNotConverted, globToRegExp, matchesFilter} from "../FmlTestSupport";
 
 suite("FML test support", () => {
+    test("filter matches map or input paths", () => {
+        assert.ok(matchesFilter([], "A.fml", "x/y.json"));
+        assert.ok(matchesFilter(["org"], "Organization4to5.fml", "Organization/a.json"));
+        assert.ok(matchesFilter(["*/hs-*.json"], "m.fml", "HealthcareService/hs-1.json"));
+        assert.ok(!matchesFilter(["Location"], "Organization4to5.fml", "Organization/a.json"));
+    });
+
     test("propertyNotConverted ignores missing properties only", () => {
         const expected = {resourceType: "Patient", contact: [{name: {text: "x"}, gender: "male"}]};
         const actual = {resourceType: "Patient", contact: [{gender: "female"}]};

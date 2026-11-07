@@ -145,3 +145,17 @@ export function filterNotConverted(
         return true;
     });
 }
+
+/**
+ * Case filter: a pattern matches the map path, the input path or `map :: input`.
+ * `*` matches any characters; patterns without `*` match as a substring. Empty filter matches everything.
+ */
+export function matchesFilter(filter: readonly string[], mapPath: string, inputPath: string): boolean {
+    if (!filter.length) {return true;}
+    const candidates = [mapPath, inputPath, `${mapPath} :: ${inputPath}`].map(item => item.replace(/\\/g, "/"));
+    return filter.some(pattern => {
+        const escaped = pattern.split("*").map(part => part.replace(/[.+?^${}()|[\]\\]/g, "\\$&")).join(".*");
+        const regex = new RegExp(pattern.includes("*") ? `^${escaped}$` : escaped, "i");
+        return candidates.some(candidate => regex.test(candidate));
+    });
+}

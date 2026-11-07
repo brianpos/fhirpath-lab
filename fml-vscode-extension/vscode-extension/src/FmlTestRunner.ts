@@ -1,13 +1,14 @@
 import {promises as fs} from "node:fs";
 import path from "node:path";
 import {
-    FmlDebugEngineError, FmlLocalDebugService, type FmlDebugMapSource, type JsonValue,
+    FmlDebugEngineError, FmlDebugService, FmlLocalDebugService, type FmlDebugMapSource, type JsonValue,
 } from "@fhirpath-lab/debug-service";
+import {resolveFmlExecutionEngine, type FmlExecutionEngine} from "./FmlExecutionEngine";
 import {parseFmlModel, type FhirVersion} from "@fhirpath-lab/validator";
 import {analyzeInstance} from "./FmlStructureCheck";
 import {RuleCoverageCollector} from "./FmlTestCoverage";
 import {
-    canonicalJson, compareJson, discoverTestInputs, expectedPathFor, filterNotConverted, type FmlTestCaseFile,
+    canonicalJson, compareJson, discoverTestInputs, expectedPathFor, filterNotConverted, matchesFilter, type FmlTestCaseFile,
 } from "./FmlTestSupport";
 
 export const FML_TEST_CONFIG_FILE = ".fml-tests.json";
@@ -29,7 +30,11 @@ export interface FmlTestConfig {
     propertyNotConverted?: string[];
     /** When true, outputs with no expected file yet are written to `expected` (existing files are only compared). */
     writeOutputFiles?: boolean;
-    /** Test engine; only "local" is currently supported. */
+    /** Remote FML HTTP(S) endpoint, as in the debugger's `serverUrl`; empty or absent means the local engine. */
+    serverUrl?: string;
+    /** Use the legacy map/resource parameters for remote engines. */
+    legacyPost?: boolean;
+    /** "local" forces the bundled engine even when a serverUrl (or the fmlTools.debug.serverUrl setting) is set. */
     engine?: "local";
 }
 
@@ -43,6 +48,9 @@ export interface ResolvedTestConfig {
     expected?: string;
     propertyNotConverted: string[];
     writeOutputFiles: boolean;
+    serverUrl?: string;
+    legacyPost: boolean;
+    forceLocal: boolean;
 }
 
 export function parseFmlTestConfig(text: string): FmlTestConfig {
@@ -52,6 +60,9 @@ export function parseFmlTestConfig(text: string): FmlTestConfig {
     }
     if (value.engine !== undefined && value.engine !== "local") {
         throw new Error(`Unsupported test engine '${String(value.engine)}'; only "local" is supported.`);
+    }
+    if (value.serverUrl !== undefined && typeof value.serverUrl !== "string") {
+        throw new Error("'serverUrl' must be a string.");
     }
     if (value.propertyNotConverted !== undefined
         && (!Array.isArray(value.propertyNotConverted) || value.propertyNotConverted.some(item => typeof item !== "string"))) {
@@ -76,6 +87,9 @@ export function resolveTestConfig(file: string, raw: FmlTestConfig): ResolvedTes
         expected: resolve(raw.expected),
         propertyNotConverted: raw.propertyNotConverted ?? [],
         writeOutputFiles: raw.writeOutputFiles === true,
+        serverUrl: raw.serverUrl,
+        legacyPost: raw.legacyPost === true,
+        forceLocal: raw.engine === "local",
     };
 }
 
@@ -194,7 +208,7 @@ export interface MapTestSet {
 }
 
 /** Pairs each map with the inputs whose resourceType matches the map's source type. */
-export async function discoverTestSets(config: ResolvedTestConfig): Promise<MapTestSet[]> {
+export async function discoverTestSets(config: ResolvedTestConfig, filter: readonly string[] = []): Promise<MapTestSet[]> {
     const maps = await loadMaps(config.maps);
     const inputs = await discoverTestInputs(config.inputs, config.include);
     const resourceTypes = new Map<string, string | undefined>();
@@ -210,7 +224,8 @@ export async function discoverTestSets(config: ResolvedTestConfig): Promise<MapT
         map,
         inputs: inputs.filter(input => {
             const resourceType = resourceTypes.get(input.filePath);
-            return !map.sourceType || !resourceType || map.sourceType === resourceType;
+            return (!map.sourceType || !resourceType || map.sourceType === resourceType)
+                && matchesFilter(filter, path.relative(config.maps, map.filePath), input.relativePath);
         }),
     })).filter(set => set.inputs.length > 0);
 }
@@ -258,6 +273,8 @@ export interface RunnerOptions {
     coverage?: boolean;
     conceptMapCollector?: (value: unknown) => JsonValue[];
     terminology?: {serverUrl?: string; fhirVersion?: "R4" | "R5"};
+    /** Server URL used when the config does not set one (e.g. the fmlTools.debug.serverUrl setting). */
+    defaultServerUrl?: string;
     signal?: AbortSignal;
 }
 
@@ -277,8 +294,14 @@ export class FmlTestRunner {
     private forwardMaps?: Promise<MapInfo[]>;
     private reverseMaps?: Promise<MapInfo[]>;
     private conceptMaps?: Promise<JsonValue[]>;
+    private readonly localService = new FmlLocalDebugService({}, {}, {cachePrepared: true});
+    private readonly remoteService = new FmlDebugService();
+    public readonly engine: FmlExecutionEngine;
 
-    public constructor(public readonly config: ResolvedTestConfig, private readonly options: RunnerOptions = {}) {}
+    public constructor(public readonly config: ResolvedTestConfig, private readonly options: RunnerOptions = {}) {
+        this.engine = config.forceLocal ? {kind: "local"}
+            : resolveFmlExecutionEngine({serverUrl: config.serverUrl}, options.defaultServerUrl);
+    }
 
     private folderMaps(reverse: boolean): Promise<MapInfo[]> {
         if (reverse) {
@@ -299,20 +322,22 @@ export class FmlTestRunner {
         for (const source of context.maps) {
             this.coverage.registerFile(source.fileName ?? path.basename(source.filePath ?? ""), source.filePath, source.text);
         }
+        const remote = this.engine.kind === "remote";
         const request = {
             mapText: map.text,
             maps: context.maps,
             inputText,
             modelResources: [...context.modelResources, ...await this.loadConceptMaps()],
+            serverUrl: this.engine.serverUrl,
+            legacyPost: this.config.legacyPost,
             terminologyServerUrl: this.options.terminology?.serverUrl,
             terminologyFhirVersion: this.options.terminology?.fhirVersion,
             signal: this.options.signal,
             defaultFhirVersion: context.defaultFhirVersion,
-            localTrace: this.options.coverage ? {detail: "rules" as const} : false as const,
+            localTrace: this.options.coverage ? {detail: "coverage" as const, maxEvents: 200_000} : false as const,
         };
-        const service = new FmlLocalDebugService();
-        if (this.options.coverage) {
-            const trace = await service.execute(request);
+        if (remote || this.options.coverage) {
+            const trace = await (remote ? this.remoteService : this.localService).execute(request);
             const primary = context.maps[0]?.fileName ?? path.basename(map.filePath);
             this.coverage.record(trace.trace, primary);
             const raw = trace.rawResult ?? (trace.result ? JSON.stringify(trace.result.value) : undefined);
@@ -320,11 +345,12 @@ export class FmlTestRunner {
                 const issues = (trace.outcome as {issue?: {severity?: string; diagnostics?: string}[]} | undefined)?.issue
                     ?.filter(issue => issue.severity === "error" || issue.severity === "fatal")
                     .map(issue => issue.diagnostics).filter(Boolean).join("; ");
-                throw new Error(issues || "The map produced no result.");
+                const exception = trace.trace.find(event => event.exception)?.exception;
+                throw new Error(issues || exception || "The map produced no result.");
             }
             return JSON.parse(raw);
         }
-        const parameters = await service.executeParameters(request);
+        const parameters = await this.localService.executeParameters(request);
         const returned = parameters.parameter?.find(parameter => parameter.name === "return")?.valueString;
         if (returned === undefined) {
             const outcome = parameters.parameter?.find(parameter => parameter.name === "outcome")?.resource;

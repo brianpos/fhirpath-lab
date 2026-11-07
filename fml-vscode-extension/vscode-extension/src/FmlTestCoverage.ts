@@ -54,7 +54,10 @@ export interface FileRuleCoverage {
     fileName: string;
     filePath?: string;
     sites: RuleSite[];
+    /** Times each rule fired (its sources matched). */
     hits: Map<string, number>;
+    /** Times each rule was reached but produced no match, by reason. */
+    skips: Map<string, {noSourceValues: number; filtered: number}>;
 }
 
 /** Accumulates rule hits across runs; files are keyed by their diagnostic file name. */
@@ -63,22 +66,41 @@ export class RuleCoverageCollector {
 
     public registerFile(fileName: string, filePath: string | undefined, text: string): void {
         if (!this.files.has(fileName)) {
-            this.files.set(fileName, {fileName, filePath, sites: enumerateRules(text), hits: new Map()});
+            this.files.set(fileName, {fileName, filePath, sites: enumerateRules(text), hits: new Map(), skips: new Map()});
         }
     }
 
-    public record(events: readonly {phase: string; traceLocation?: string; mapFileName?: string}[], primaryFile: string): void {
+    public record(
+        events: readonly {phase: string; traceLocation?: string; mapFileName?: string; messages?: {name?: string; text: string[]}[]}[],
+        primaryFile: string,
+    ): void {
         for (const event of events) {
-            if (event.phase === "exit" || !event.traceLocation || !RULE_LOCATION.test(event.traceLocation)) {
+            if (!event.traceLocation || !RULE_LOCATION.test(event.traceLocation)) {
                 continue;
             }
             const file = this.files.get(event.mapFileName ?? primaryFile);
-            file?.hits.set(event.traceLocation, (file.hits.get(event.traceLocation) ?? 0) + 1);
+            if (!file) {
+                continue;
+            }
+            if (event.phase === "enter") {
+                file.hits.set(event.traceLocation, (file.hits.get(event.traceLocation) ?? 0) + 1);
+            } else if (event.phase === "step") {
+                const reason = event.messages?.find(message => message.name === "coverage")?.text[0];
+                if (reason) {
+                    const skip = file.skips.get(event.traceLocation) ?? {noSourceValues: 0, filtered: 0};
+                    if (reason === "filtered") {
+                        skip.filtered++;
+                    } else {
+                        skip.noSourceValues++;
+                    }
+                    file.skips.set(event.traceLocation, skip);
+                }
+            }
         }
     }
 
     /** Files with at least one executed rule, or listed in `always`. */
     public results(always: ReadonlySet<string> = new Set()): FileRuleCoverage[] {
-        return [...this.files.values()].filter(file => file.hits.size > 0 || always.has(file.fileName));
+        return [...this.files.values()].filter(file => file.hits.size > 0 || file.skips.size > 0 || always.has(file.fileName));
     }
 }

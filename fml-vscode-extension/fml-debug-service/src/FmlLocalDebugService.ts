@@ -15,8 +15,13 @@ export interface FmlLocalExecutionServices extends Pick<FmlExecutionOptions,
 }
 
 export class FmlLocalDebugService {
+    private readonly preparedCache?: Map<string, Promise<{executor: FmlExecutor; prepared: Awaited<ReturnType<FmlExecutor["prepare"]>>}>>;
+
+    /** With `cachePrepared`, identical map/model inputs are prepared once per service instance (bulk runs). */
     public constructor(private readonly configuration: FmlExecutorConfiguration = {},
-        private readonly services: FmlLocalExecutionServices = {}) {}
+        private readonly services: FmlLocalExecutionServices = {}, options: {cachePrepared?: boolean} = {}) {
+        if (options.cachePrepared) this.preparedCache = new Map();
+    }
 
     public async execute(request: FmlDebugLaunchRequest): Promise<FmlDebugTrace> {
         const invocation = {...request, maps: request.maps?.map(source => Object.freeze({...source}))};
@@ -126,20 +131,39 @@ export class FmlLocalDebugService {
         };
         resources.forEach(collect);
         const sourceName = request.maps?.[0]?.fileName ?? request.maps?.[0]?.filePath ?? "local.fml";
-        const models = request.customTypeModels && !explicitModelDefinitions
-            ? request.customTypeModels : buildLogicalTypeModels(resources, request.defaultFhirVersion ?? "R4");
-        const executor = new FmlExecutor({...this.configuration, maps: [
-            ...this.configuration.maps ?? [],
-            ...(request.maps ?? []).map(map => ({
-                sourceText: map.text, sourceName: map.fileName ?? map.filePath,
-                defaultFhirVersion: request.defaultFhirVersion, profileBaseTypes, customTypeModels: models,
-            })),
-        ]});
-        const prepared = await executor.prepare({
-            sourceText: request.mapText, sourceName, defaultFhirVersion: request.defaultFhirVersion,
-            profileBaseTypes,
-            customTypeModels: models,
-        }, {signal: request.signal});
+        const prepare = async (): Promise<{executor: FmlExecutor; prepared: Awaited<ReturnType<FmlExecutor["prepare"]>>}> => {
+            const models = request.customTypeModels && !explicitModelDefinitions
+                ? request.customTypeModels : buildLogicalTypeModels(resources, request.defaultFhirVersion ?? "R4");
+            const executor = new FmlExecutor({...this.configuration, maps: [
+                ...this.configuration.maps ?? [],
+                ...(request.maps ?? []).map(map => ({
+                    sourceText: map.text, sourceName: map.fileName ?? map.filePath,
+                    defaultFhirVersion: request.defaultFhirVersion, profileBaseTypes, customTypeModels: models,
+                })),
+            ]});
+            const prepared = await executor.prepare({
+                sourceText: request.mapText, sourceName, defaultFhirVersion: request.defaultFhirVersion,
+                profileBaseTypes,
+                customTypeModels: models,
+            }, {signal: request.signal});
+            return {executor, prepared};
+        };
+        let entry: {executor: FmlExecutor; prepared: Awaited<ReturnType<FmlExecutor["prepare"]>>};
+        if (this.preparedCache) {
+            const key = JSON.stringify([request.mapText, request.maps, request.defaultFhirVersion, profileBaseTypes,
+                request.customTypeModels && !explicitModelDefinitions ? request.customTypeModels : undefined,
+                resources.filter(resource => (resource as {resourceType?: string}).resourceType !== "ConceptMap")]);
+            let cached = this.preparedCache.get(key);
+            if (!cached) {
+                cached = prepare();
+                this.preparedCache.set(key, cached);
+                cached.catch(() => this.preparedCache?.delete(key));
+            }
+            entry = await cached;
+        } else {
+            entry = await prepare();
+        }
+        const {executor, prepared} = entry;
         request.signal?.throwIfAborted();
         const recorder = request.localTrace === false ? undefined
             : new FmlTraceRecorder(request.localTrace?.maxEvents, request.localTrace?.maxBytes);
