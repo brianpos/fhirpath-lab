@@ -1,0 +1,32 @@
+/// url = "http://hl7.org/fhir/uv/xver/StructureMap/Practitioner5to4"
+/// name = "Practitioner5to4"
+/// title = "Practitioner Transforms: R5 to R4"
+/// status = "active"
+
+uses "http://hl7.org/fhir/5.0/StructureDefinition/Practitioner" alias PractitionerR5 as source
+uses "http://hl7.org/fhir/4.0/StructureDefinition/Practitioner" alias PractitionerR4 as target
+
+imports "http://hl7.org/fhir/uv/xver/StructureMap/*5to4"
+
+group Practitioner(source src : PractitionerR5, target tgt : PractitionerR4) extends DomainResource <<type+>> {
+  src.identifier -> tgt.identifier;
+  src.active -> tgt.active;
+  src.name -> tgt.name;
+  src.telecom -> tgt.telecom;
+  src.gender as v -> tgt.gender = translate(v, 'http://hl7.org/fhir/uv/xver/ConceptMap/prc.gender-5to4', 'code');
+  src.birthDate -> tgt.birthDate;
+  src.address -> tgt.address;
+  src.photo -> tgt.photo;
+  src.qualification as s -> tgt.qualification as t then PractitionerQualification(s, t);
+  src.communication as s -> tgt then {
+    s.language -> tgt.communication;
+  };
+}
+
+group PractitionerQualification(source src, target tgt) extends BackboneElement {
+  src.identifier -> tgt.identifier;
+  src.code -> tgt.code;
+  src.period -> tgt.period;
+  src.issuer -> tgt.issuer;
+}
+

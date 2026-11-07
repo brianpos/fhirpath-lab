@@ -35,6 +35,7 @@
   "activationEvents": [
     "onLanguage:fml",
     "onDebug:fml",
+    "workspaceContains:**/.fml-tests.json",
     "onLanguageModelTool:fml-tools_validate",
     "onLanguageModelTool:fml-tools_evaluate"
   ],
@@ -290,6 +291,11 @@
     ],
     "commands": [
       {
+        "command": "fmlTools.showTestReport",
+        "title": "Show Map Test Coverage Report",
+        "category": "FML"
+      },
+      {
         "command": "fmlTools.Validation",
         "title": "Validate FML",
         "category": "Files"
@@ -379,6 +385,7 @@
     "build:executor": "npm --prefix ../fml-executor run build",
     "build:dependencies": "npm run build:validator && npm run build:language-service && npm run build:executor && npm run build:debug-service && npm run build:language-server",
     "compile": "npm run build:dependencies && npm run check-types && npm run lint && node esbuild.js",
+    "test:maps": "node dist/fml-test-cli.js",
     "watch": "npm-run-all -p watch:*",
     "watch:esbuild": "node esbuild.js --watch",
     "watch:debug-service": "npm --prefix ../fml-debug-service run watch",

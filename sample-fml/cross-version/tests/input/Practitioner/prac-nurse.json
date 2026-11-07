@@ -1,0 +1,8 @@
+{
+  "resourceType": "Practitioner",
+  "id": "prac-nurse",
+  "active": true,
+  "name": [{"family": "Helpful", "given": ["Jo"]}],
+  "gender": "female",
+  "birthDate": "1988-03-02"
+}

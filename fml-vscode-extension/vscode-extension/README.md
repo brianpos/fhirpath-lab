@@ -367,6 +367,42 @@ Turn the setting off after troubleshooting. Disabling it stops new HTTP log
 entries, including responses from evaluations already running, but does not erase
 previously logged content; clear the output channel separately.
 
+## Bulk map tests
+
+Add a `.fml-tests.json` file to run a folder of JSON inputs against every map in a folder from the Test Explorer (paths are relative to the config file):
+
+```json
+{
+  "maps": "maps4-5",
+  "reverseMaps": "maps5-4",
+  "conceptMaps": "conceptmaps",
+  "inputs": "tests/input",
+  "include": "Patient*.json",
+  "expected": "tests/expected",
+  "engine": "local"
+}
+```
+
+- `maps` – folder of maps (recursed); imports are resolved as in the debugger.
+- `reverseMaps` – optional; a reverse map is paired when its source/target structure URLs are swapped, and the forward result is mapped back and compared with the original input.
+- `conceptMaps` – optional folder (recursed) of ConceptMap JSON files (or Bundles) used by `translate()` in the local engine, in addition to ConceptMaps found through the workspace models.
+- `inputs` – folder (recursed) of `.json` files. A map only runs against inputs whose `resourceType` matches its source type, so cross-version layouts can use one sub folder per resource type.
+- `include` – optional glob (or array) filter; default is all `.json` files.
+- `expected` – optional folder mirroring the input paths, compared semantically (key order ignored).
+- `propertyNotConverted` – optional array of dotted paths (e.g. `"Patient.contact.name"`); differences are ignored when the property (or an ancestor) is missing from the converted output, for expected and round-trip comparisons.
+- `writeOutputFiles` – optional; when `true` (requires `expected`), outputs with no expected file are written there so the first engine's output becomes the baseline for comparing other engines. Existing files are compared; delete one to regenerate it.
+- `serverUrl` / `legacyPost` – optional remote FML engine, exactly as in the debugger launch configuration. With no URL (in the config or the `fmlTools.debug.serverUrl` setting) the bundled local engine is used; `"serverUrl": ""` forces local. `"engine": "local"` also forces the local engine.
+
+Each output (and reverse output) is also checked against the FHIR model for unknown property names, array/single cardinality and missing required elements (bindings are not checked).
+
+**Coverage:** the *Run with Coverage* profile highlights which map rules executed in the editor. The **FML: Show Map Test Coverage Report** command shows a markdown report of rules never executed and model properties never present in inputs or never produced in outputs.
+
+Rules that were reached but never matched are reported separately from rules that were never reached: the report distinguishes a source `where`/type filter that excluded every value from a source element that was absent in every input.
+
+**CI:** `npm run test:maps -- --config .fml-tests.json --junit results.xml --report report.md --lcov lcov.info [--filter Patient] [--server-url https://...]` (after building; `--filter` is repeatable and matches the map path, input path or `map :: input`, with `*` wildcards or as a substring) runs the same tests without VS Code and exits non-zero on any failure.
+
+Failures show a diff in the Test Explorer; the Debug profile opens a single case in the FML debugger. See `sample-fml/cross-version` for a cross-version R4→R5 example.
+
 ## Templates
 
 Use **Insert template FML** from the editor context menu, or choose the FML snippet from Visual Studio Code's snippet picker.

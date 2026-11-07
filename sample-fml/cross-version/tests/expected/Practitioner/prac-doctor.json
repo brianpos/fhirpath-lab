@@ -1,0 +1,17 @@
+{
+  "resourceType": "Practitioner",
+  "id": "prac-doctor",
+  "identifier": [{"system": "http://example.org/npi", "value": "1234567890"}],
+  "active": true,
+  "name": [{"family": "Careful", "given": ["Adam"], "prefix": ["Dr"]}],
+  "telecom": [{"system": "phone", "value": "555-0111", "use": "work"}],
+  "gender": "male",
+  "birthDate": "1974-12-25",
+  "address": [{"line": ["534 Erewhon St"], "city": "PleasantVille", "state": "Vic", "postalCode": "3999"}],
+  "qualification": [{
+    "identifier": [{"system": "http://example.org/qual", "value": "12345"}],
+    "code": {"coding": [{"system": "http://terminology.hl7.org/CodeSystem/v2-0360", "code": "MD"}]},
+    "period": {"start": "1995-01-01"}
+  }],
+  "communication": [{"language": {"coding": [{"system": "urn:ietf:bcp:47", "code": "en"}]}}]
+}

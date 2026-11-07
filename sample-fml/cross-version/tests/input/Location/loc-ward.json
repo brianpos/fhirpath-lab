@@ -1,0 +1,16 @@
+{
+  "resourceType": "Location",
+  "id": "loc-ward",
+  "identifier": [{"system": "http://example.org/locations", "value": "W-3"}],
+  "status": "active",
+  "name": "South Wing, second floor",
+  "alias": ["Ward 3"],
+  "description": "Second floor of the south wing",
+  "mode": "instance",
+  "telecom": [{"system": "phone", "value": "555-0122"}],
+  "address": {"line": ["100 Hospital Way"], "city": "Ann Arbor", "state": "MI"},
+  "physicalType": {"coding": [{"system": "http://terminology.hl7.org/CodeSystem/location-physical-type", "code": "wa"}]},
+  "position": {"longitude": -83.6945691, "latitude": 42.25475478, "altitude": 0},
+  "managingOrganization": {"reference": "Organization/org-hospital"},
+  "hoursOfOperation": [{"daysOfWeek": ["mon", "tue"], "allDay": false, "openingTime": "08:00:00", "closingTime": "17:00:00"}]
+}
