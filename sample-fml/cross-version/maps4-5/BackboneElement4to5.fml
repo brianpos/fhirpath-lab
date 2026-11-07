@@ -1,0 +1,14 @@
+/// url = "http://hl7.org/fhir/uv/xver/StructureMap/BackboneElement4to5"
+/// name = "BackboneElement4to5"
+/// title = "BackboneElement Transforms: R4 to R5"
+/// status = "draft"
+
+uses "http://hl7.org/fhir/4.0/StructureDefinition/BackboneElement" alias BackboneElementR4 as source
+uses "http://hl7.org/fhir/5.0/StructureDefinition/BackboneElement" alias BackboneElementR5 as target
+
+imports "http://hl7.org/fhir/uv/xver/StructureMap/*4to5"
+
+group BackboneElement(source src : BackboneElementR4, target tgt : BackboneElementR5) extends Element <<type+>> {
+  src.modifierExtension -> tgt.modifierExtension;
+}
+

@@ -367,6 +367,30 @@ Turn the setting off after troubleshooting. Disabling it stops new HTTP log
 entries, including responses from evaluations already running, but does not erase
 previously logged content; clear the output channel separately.
 
+## Bulk map tests
+
+Add a `.fml-tests.json` file to run a folder of JSON inputs against every map in a folder from the Test Explorer (paths are relative to the config file):
+
+```json
+{
+  "maps": "maps4-5",
+  "reverseMaps": "maps5-4",
+  "inputs": "tests/input",
+  "include": "Patient*.json",
+  "expected": "tests/expected",
+  "engine": "local"
+}
+```
+
+- `maps` – folder of maps (recursed); imports are resolved as in the debugger.
+- `reverseMaps` – optional; a reverse map is paired when its source/target structure URLs are swapped, and the forward result is mapped back and compared with the original input.
+- `inputs` – folder (recursed) of `.json` files. A map only runs against inputs whose `resourceType` matches its source type, so cross-version layouts can use one sub folder per resource type.
+- `include` – optional glob (or array) filter; default is all `.json` files.
+- `expected` – optional folder mirroring the input paths, compared semantically (key order ignored).
+- `engine` – only `"local"` is supported.
+
+Failures show a diff in the Test Explorer; the Debug profile opens a single case in the FML debugger. See `sample-fml/cross-version` for a cross-version R4→R5 example.
+
 ## Templates
 
 Use **Insert template FML** from the editor context menu, or choose the FML snippet from Visual Studio Code's snippet picker.

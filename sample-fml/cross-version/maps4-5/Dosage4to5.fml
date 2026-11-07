@@ -1,0 +1,37 @@
+/// url = "http://hl7.org/fhir/uv/xver/StructureMap/Dosage4to5"
+/// name = "Dosage4to5"
+/// title = "Dosage Transforms: R4 to R5"
+/// status = "active"
+
+uses "http://hl7.org/fhir/4.0/StructureDefinition/Dosage" alias DosageR4 as source
+uses "http://hl7.org/fhir/5.0/StructureDefinition/Dosage" alias DosageR5 as target
+
+imports "http://hl7.org/fhir/uv/xver/StructureMap/*4to5"
+
+group Dosage(source src : DosageR4, target tgt : DosageR5) extends Element <<type+>> {
+  src.modifierExtension -> tgt.modifierExtension;
+  src.sequence -> tgt.sequence;
+  src.text -> tgt.text;
+  src.additionalInstruction -> tgt.additionalInstruction;
+  src.patientInstruction -> tgt.patientInstruction;
+  src.timing -> tgt.timing;
+  src.asNeeded : boolean -> tgt.asNeeded "asNeededBoolean";
+  src.asNeeded : CodeableConcept -> tgt.asNeededFor "asNeededCodeableConcept";
+  src.site -> tgt.site;
+  src.route -> tgt.route;
+  src.method -> tgt.method;
+  src.doseAndRate as s -> tgt.doseAndRate as t then DosageDoseAndRate(s, t);
+  src.maxDosePerPeriod -> tgt.maxDosePerPeriod;
+  src.maxDosePerAdministration -> tgt.maxDosePerAdministration;
+  src.maxDosePerLifetime -> tgt.maxDosePerLifetime;
+}
+
+group DosageDoseAndRate(source src, target tgt) extends Element {
+  src.type -> tgt.type;
+  src.dose : Range -> tgt.dose "doseRange";
+  src.dose : Quantity -> tgt.dose "doseQuantity";
+  src.rate : Ratio -> tgt.rate "rateRatio";
+  src.rate : Range -> tgt.rate "rateRange";
+  src.rate : Quantity -> tgt.rate "rateQuantity";
+}
+
