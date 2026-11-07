@@ -3,9 +3,17 @@ import {promises as fs} from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import {loadConceptMapResources, parseFmlTestConfig} from "../FmlTestController";
-import {compareJson, discoverTestInputs, globToRegExp} from "../FmlTestSupport";
+import {compareJson, discoverTestInputs, filterNotConverted, globToRegExp} from "../FmlTestSupport";
 
 suite("FML test support", () => {
+    test("propertyNotConverted ignores missing properties only", () => {
+        const expected = {resourceType: "Patient", contact: [{name: {text: "x"}, gender: "male"}]};
+        const actual = {resourceType: "Patient", contact: [{gender: "female"}]};
+        const filtered = filterNotConverted(compareJson(expected, actual), expected, ["Patient.contact.name"]);
+        assert.strictEqual(filtered.length, 1);
+        assert.ok(filtered[0].path.includes("gender"));
+    });
+
     test("globs match file names", () => {
         assert.ok(globToRegExp("Patient*.json").test("Patient-1.json"));
         assert.ok(!globToRegExp("Patient*.json").test("Observation-1.json"));

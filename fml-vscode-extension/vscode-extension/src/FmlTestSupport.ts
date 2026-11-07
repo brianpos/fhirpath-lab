@@ -111,3 +111,37 @@ export function canonicalJson(value: unknown, ignoredProperties: ReadonlySet<str
     };
     return JSON.stringify(normalize(value), undefined, 2);
 }
+
+/** `$.contact[0].name` -> `Patient.contact.name` using the root resource's type. */
+export function normalizeDifferencePath(root: unknown, differencePath: string): string {
+    const type = isObject(root) && typeof root.resourceType === "string" ? root.resourceType : "";
+    const trimmed = differencePath.replace(/^\$/, "").replace(/\[\d+\]/g, "");
+    return `${type}${trimmed}`;
+}
+
+/**
+ * Drops differences where the property (or one of its ancestors) is listed in
+ * `propertyNotConverted` and is missing from the actual (converted) value.
+ */
+export function filterNotConverted(
+    differences: JsonDifference[],
+    root: unknown,
+    propertyNotConverted: readonly string[] | undefined,
+): JsonDifference[] {
+    if (!propertyNotConverted?.length) {
+        return differences;
+    }
+    const ignored = new Set(propertyNotConverted);
+    return differences.filter(difference => {
+        if (difference.actual !== undefined) {
+            return true;
+        }
+        const segments = normalizeDifferencePath(root, difference.path).split(".");
+        for (let length = segments.length; length > 0; length--) {
+            if (ignored.has(segments.slice(0, length).join("."))) {
+                return false;
+            }
+        }
+        return true;
+    });
+}
