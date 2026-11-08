@@ -1,0 +1,42 @@
+/// url = "http://hl7.org/fhir/uv/xver/StructureMap/Location4to5"
+/// name = "Location4to5"
+/// title = "Location Transforms: R4 to R5"
+/// status = "active"
+
+uses "http://hl7.org/fhir/4.0/StructureDefinition/Location" alias LocationR4 as source
+uses "http://hl7.org/fhir/5.0/StructureDefinition/Location" alias LocationR5 as target
+
+imports "http://hl7.org/fhir/uv/xver/StructureMap/*4to5"
+
+group Location(source src : LocationR4, target tgt : LocationR5) extends DomainResource <<type+>> {
+  src.identifier -> tgt.identifier;
+  src.status as v -> tgt.status = translate(v, 'http://hl7.org/fhir/uv/xver/ConceptMap/loc.status-4to5', 'code');
+  src.operationalStatus -> tgt.operationalStatus;
+  src.name -> tgt.name;
+  src.alias -> tgt.alias;
+  src.description -> tgt.description;
+  src.mode as v -> tgt.mode = translate(v, 'http://hl7.org/fhir/uv/xver/ConceptMap/loc.mode-4to5', 'code');
+  src.type -> tgt.type;
+  src.telecom : ContactPoint as s ->  tgt.contact = create('ExtendedContactDetail') as t,  t.telecom = s "telecomContactPoint";
+  src.address -> tgt.address;
+  src.physicalType -> tgt.form;
+  src.position as s -> tgt.position as t then LocationPosition(s, t);
+  src.managingOrganization -> tgt.managingOrganization;
+  src.partOf -> tgt.partOf;
+  src.hoursOfOperation as s -> tgt.hoursOfOperation as t then LocationAvailabilityAvailableTime(s, t) "availableTime";
+  src.endpoint -> tgt.endpoint;
+}
+
+group LocationPosition(source src, target tgt) extends BackboneElement {
+  src.longitude -> tgt.longitude;
+  src.latitude -> tgt.latitude;
+  src.altitude -> tgt.altitude;
+}
+
+group LocationAvailabilityAvailableTime(source src, target tgt) extends BackboneElement {
+  src.daysOfWeek as s ->  tgt.availableTime as t,  t.daysOfWeek = s;
+  src.allDay as s ->  tgt.availableTime as t,  t.allDay = s;
+  src.openingTime : time as s ->  tgt.availableTime as t,  t.availableStartTime = s "openingTimeTime";
+  src.closingTime : time as s ->  tgt.availableTime as t,  t.availableEndTime = s "closingTimeTime";
+}
+

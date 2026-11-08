@@ -1,0 +1,6 @@
+{
+  "resourceType": "HealthcareService",
+  "id": "hs-minimal",
+  "active": false,
+  "name": "Walk-in clinic"
+}

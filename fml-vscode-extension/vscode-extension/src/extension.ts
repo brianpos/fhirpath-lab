@@ -21,6 +21,7 @@ import {
     TransportKind,
 } from "vscode-languageclient/node";
 import {registerFmlDebugger} from "./FmlDebugger";
+import {FmlTestController} from "./FmlTestController";
 import {FmlLanguageServerStatus} from "./FmlLanguageServerStatus";
 import {FmlWorkspaceIndexController} from "./FmlWorkspaceIndexController";
 import {
@@ -107,6 +108,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         context,
         program => sushiConfigWatcher.getConfigurationForPath(program),
     );
+
+    const testController = new FmlTestController(program => sushiConfigWatcher.getConfigurationForPath(program));
+    context.subscriptions.push(testController);
+    void testController.refresh();
 
     addFmlTemplate(context);
     addPreviewCommand("fmlTools.OpenPreviewToSide", previewManager, context);

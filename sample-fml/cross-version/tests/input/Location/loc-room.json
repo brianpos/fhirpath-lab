@@ -1,0 +1,8 @@
+{
+  "resourceType": "Location",
+  "id": "loc-room",
+  "status": "inactive",
+  "name": "Room 12",
+  "mode": "kind",
+  "partOf": {"reference": "Location/loc-ward"}
+}

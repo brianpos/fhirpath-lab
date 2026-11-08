@@ -1,0 +1,50 @@
+{
+  "resourceType": "ConceptMap",
+  "id": "prc.gender-5to4",
+  "url": "http://hl7.org/fhir/uv/xver/ConceptMap/prc.gender-5to4",
+  "status": "draft",
+  "group": [
+    {
+      "source": "http://hl7.org/fhir/administrative-gender",
+      "target": "http://hl7.org/fhir/administrative-gender",
+      "element": [
+        {
+          "code": "male",
+          "target": [
+            {
+              "code": "male",
+              "relationship": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "female",
+          "target": [
+            {
+              "code": "female",
+              "relationship": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "other",
+          "target": [
+            {
+              "code": "other",
+              "relationship": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "unknown",
+          "target": [
+            {
+              "code": "unknown",
+              "relationship": "equivalent"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

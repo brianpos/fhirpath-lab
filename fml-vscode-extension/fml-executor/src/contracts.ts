@@ -46,7 +46,7 @@ export interface FmlExecutionOptions {
     readonly limits?: FmlExecutionLimits;
     readonly trace?: FmlExecutionTraceObserver;
     /** Rules capture retains group/rule events and messages, omitting source/target instrumentation. */
-    readonly traceDetail?: "full" | "rules";
+    readonly traceDetail?: "full" | "rules" | "coverage";
     readonly fhirPath?: Pick<Options, "terminologyUrl" | "httpHeaders">;
     readonly translate?: (
         /** Detached from input/target graphs; host mutation cannot modify the invocation's input. */

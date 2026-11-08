@@ -40,7 +40,7 @@ export interface FmlDebugLaunchRequest {
     localTrace?: false | {
         maxEvents?: number;
         maxBytes?: number;
-        detail?: "full" | "rules";
+        detail?: "full" | "rules" | "coverage";
     };
 }
 

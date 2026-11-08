@@ -1,0 +1,14 @@
+{
+  "resourceType": "Organization",
+  "id": "org-hospital",
+  "identifier": [{"system": "http://example.org/orgs", "value": "H-100"}],
+  "active": true,
+  "type": [{"coding": [{"system": "http://terminology.hl7.org/CodeSystem/organization-type", "code": "prov"}]}],
+  "name": "General Hospital",
+  "alias": ["GH", "City General"],
+  "contact": [{
+    "purpose": {"coding": [{"system": "http://terminology.hl7.org/CodeSystem/contactentity-type", "code": "ADMIN"}]},
+    "name": {"family": "Smith", "given": ["Alex"]},
+    "telecom": [{"system": "email", "value": "admin@example.org"}]
+  }]
+}

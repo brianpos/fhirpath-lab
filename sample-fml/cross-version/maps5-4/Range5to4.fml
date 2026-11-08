@@ -1,0 +1,15 @@
+/// url = "http://hl7.org/fhir/uv/xver/StructureMap/Range5to4"
+/// name = "Range5to4"
+/// title = "Range Transforms: R5 to R4"
+/// status = "active"
+
+uses "http://hl7.org/fhir/5.0/StructureDefinition/Range" alias RangeR5 as source
+uses "http://hl7.org/fhir/4.0/StructureDefinition/Range" alias RangeR4 as target
+
+imports "http://hl7.org/fhir/uv/xver/StructureMap/*5to4"
+
+group Range(source src : RangeR5, target tgt : RangeR4) extends Element <<type+>> {
+  src.low -> tgt.low;
+  src.high -> tgt.high;
+}
+

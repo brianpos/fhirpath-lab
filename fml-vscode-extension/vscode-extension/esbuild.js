@@ -51,6 +51,7 @@ async function main() {
 		entryPoints: {
 			extension: 'src/extension.ts',
 			'language-server': '../fml-language-server/src/server.ts',
+			'fml-test-cli': 'src/FmlTestCli.ts',
 		},
 		bundle: true,
 		format: 'cjs',
