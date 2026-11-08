@@ -403,6 +403,8 @@ Rules that were reached but never matched are reported separately from rules tha
 
 Failures show a diff in the Test Explorer; the Debug profile opens a single case in the FML debugger. See `sample-fml/cross-version` for a cross-version R4→R5 example.
 
+Saving changes to maps or JSON test files refreshes test discovery. Rerun the tests after saving to evaluate the updated maps; execution caches are scoped to each run.
+
 ## Templates
 
 Use **Insert template FML** from the editor context menu, or choose the FML snippet from Visual Studio Code's snippet picker.

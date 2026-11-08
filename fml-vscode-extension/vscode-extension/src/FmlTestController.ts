@@ -37,6 +37,7 @@ export class FmlTestController implements vscode.Disposable {
     private readonly details = new WeakMap<vscode.FileCoverage, vscode.FileCoverageDetail[]>();
     private reportDocument?: vscode.TextDocument;
     private lastReport = "";
+    private refreshGeneration = 0;
 
     public constructor(
         private readonly modelConfigurationProvider: (program: string) => SushiWorkspaceConfiguration | undefined,
@@ -59,9 +60,7 @@ export class FmlTestController implements vscode.Disposable {
         };
         this.disposables.push(this.controller, watcher,
             watcher.onDidCreate(onChange), watcher.onDidDelete(onChange),
-            watcher.onDidChange(uri => {
-                if (path.basename(uri.fsPath) === FML_TEST_CONFIG_FILE) {void this.refresh();}
-            }),
+            watcher.onDidChange(onChange),
             vscode.commands.registerCommand("fmlTools.showTestReport", () => this.showReport()));
     }
 
@@ -70,6 +69,7 @@ export class FmlTestController implements vscode.Disposable {
     }
 
     public async refresh(): Promise<void> {
+        const generation = ++this.refreshGeneration;
         const files = await vscode.workspace.findFiles(`**/${FML_TEST_CONFIG_FILE}`, "**/node_modules/**");
         const roots: vscode.TestItem[] = [];
         for (const file of files) {
@@ -95,7 +95,9 @@ export class FmlTestController implements vscode.Disposable {
             }
             roots.push(root);
         }
-        this.controller.items.replace(roots);
+        if (generation === this.refreshGeneration) {
+            this.controller.items.replace(roots);
+        }
     }
 
     private collect(request: vscode.TestRunRequest): vscode.TestItem[] {
