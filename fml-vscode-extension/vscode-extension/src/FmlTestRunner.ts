@@ -258,6 +258,8 @@ export interface CaseResult {
     durationMs: number;
     messages: CaseMessage[];
     error?: string;
+    /** Time spent resolving maps/models (index, imports) vs. preparing and running the engine. */
+    timing?: {contextMs: number; engineMs: number};
 }
 
 export interface PropertyUsage {
@@ -294,6 +296,7 @@ export class FmlTestRunner {
     private forwardMaps?: Promise<MapInfo[]>;
     private reverseMaps?: Promise<MapInfo[]>;
     private conceptMaps?: Promise<JsonValue[]>;
+    private contextMs = 0;
     private readonly localService = new FmlLocalDebugService({}, {}, {cachePrepared: true});
     private readonly remoteService = new FmlDebugService();
     public readonly engine: FmlExecutionEngine;
@@ -318,7 +321,9 @@ export class FmlTestRunner {
 
     private async execute(map: MapInfo, reverse: boolean, inputText: string): Promise<unknown> {
         const folderMaps = await this.folderMaps(reverse);
+        const contextStarted = Date.now();
         const context = await (this.options.context ?? defaultContextProvider)(map, folderMaps);
+        this.contextMs += Date.now() - contextStarted;
         for (const source of context.maps) {
             this.coverage.registerFile(source.fileName ?? path.basename(source.filePath ?? ""), source.filePath, source.text);
         }
@@ -375,7 +380,12 @@ export class FmlTestRunner {
 
     public async runCase(map: MapInfo, input: FmlTestCaseFile): Promise<CaseResult> {
         const started = Date.now();
+        this.contextMs = 0;
         const messages: CaseMessage[] = [];
+        const timing = (): CaseResult["timing"] => {
+            const total = Date.now() - started;
+            return {contextMs: this.contextMs, engineMs: total - this.contextMs};
+        };
         try {
             const inputText = await fs.readFile(input.filePath, "utf8");
             const original = JSON.parse(inputText) as unknown;
@@ -412,10 +422,10 @@ export class FmlTestRunner {
                 }
             }
         } catch (error) {
-            return {status: "errored", durationMs: Date.now() - started, messages, error: describeError(error)};
+            return {status: "errored", durationMs: Date.now() - started, messages, error: describeError(error), timing: timing()};
         }
         const failed = messages.some(message => message.kind !== "info");
-        return {status: failed ? "failed" : "passed", durationMs: Date.now() - started, messages};
+        return {status: failed ? "failed" : "passed", durationMs: Date.now() - started, messages, timing: timing()};
     }
 
     private async compareExpected(input: FmlTestCaseFile, actual: unknown, messages: CaseMessage[]): Promise<void> {

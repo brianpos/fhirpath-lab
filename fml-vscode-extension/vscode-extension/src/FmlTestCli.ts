@@ -52,7 +52,7 @@ async function main(): Promise<number> {
             const mapFile = path.relative(config.maps, set.map.filePath);
             reported.push({mapFile, inputFile: input.relativePath, result});
             const label = result.status === "passed" ? "PASS" : result.status === "failed" ? "FAIL" : "ERROR";
-            console.log(`${label} ${mapFile} :: ${input.relativePath}`);
+            console.log(`${label} ${mapFile} :: ${input.relativePath} (${result.durationMs}ms)`);
             for (const message of result.messages) {
                 console.log(`    ${message.text}`);
             }
