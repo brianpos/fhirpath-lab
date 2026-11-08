@@ -14,6 +14,14 @@ export interface FmlLocalExecutionServices extends Pick<FmlExecutionOptions,
     loadConceptMap?: (canonical: string, signal?: AbortSignal) => Promise<unknown | undefined>;
 }
 
+const resourceIdentities = new WeakMap<object, number>();
+let nextResourceIdentity = 1;
+function identityOf(value: object): number {
+    let id = resourceIdentities.get(value);
+    if (!id) { id = nextResourceIdentity++; resourceIdentities.set(value, id); }
+    return id;
+}
+
 export class FmlLocalDebugService {
     private readonly preparedCache?: Map<string, Promise<{executor: FmlExecutor; prepared: Awaited<ReturnType<FmlExecutor["prepare"]>>}>>;
 
@@ -152,7 +160,9 @@ export class FmlLocalDebugService {
         if (this.preparedCache) {
             const key = JSON.stringify([request.mapText, request.maps, request.defaultFhirVersion, profileBaseTypes,
                 request.customTypeModels && !explicitModelDefinitions ? request.customTypeModels : undefined,
-                resources.filter(resource => (resource as {resourceType?: string}).resourceType !== "ConceptMap")]);
+                // Identity, not content: serializing a large IG's resources for every case would dominate bulk runs.
+                resources.filter(resource => (resource as {resourceType?: string}).resourceType !== "ConceptMap")
+                    .map(resource => identityOf(resource as object))]);
             let cached = this.preparedCache.get(key);
             if (!cached) {
                 cached = prepare();

@@ -157,6 +157,9 @@ export class FmlTestController implements vscode.Disposable {
             }
             run.started(item);
             const result = await runner.runCase(data.map, data.input);
+            if (result.timing) {
+                run.appendOutput(`${item.label}: ${result.timing.contextMs}ms resolving maps/models, ${result.timing.engineMs}ms prepare+execute\r\n`);
+            }
             result.messages.filter(message => message.kind === "info").forEach(message => run.appendOutput(`${message.text}\r\n`));
             if (result.status === "errored") {
                 run.errored(item, new vscode.TestMessage(result.error ?? "error"), result.durationMs);
