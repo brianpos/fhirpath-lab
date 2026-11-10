@@ -56,7 +56,7 @@ export async function discoverTestInputs(
         }
     };
     await walk(inputFolder);
-    return results.sort((a, b) => a.relativePath.localeCompare(b.relativePath));
+    return results.sort((a, b) => a.relativePath < b.relativePath ? -1 : a.relativePath > b.relativePath ? 1 : 0);
 }
 
 /** Resolves the expected-output file for an input, mirroring its relative path. */

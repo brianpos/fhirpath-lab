@@ -43,6 +43,7 @@ export class FmlTestController implements vscode.Disposable {
         private readonly modelConfigurationProvider: (program: string) => SushiWorkspaceConfiguration | undefined,
         controller = vscode.tests.createTestController("fmlTools.tests", "FML Map Tests"),
         watcher = vscode.workspace.createFileSystemWatcher("**/*"),
+        registerReportCommand = true,
     ) {
         this.controller = controller;
         this.controller.refreshHandler = () => this.refresh();
@@ -61,8 +62,11 @@ export class FmlTestController implements vscode.Disposable {
         };
         this.disposables.push(this.controller, watcher,
             watcher.onDidCreate(onChange), watcher.onDidDelete(onChange),
-            watcher.onDidChange(onChange),
-            vscode.commands.registerCommand("fmlTools.showTestReport", () => this.showReport()));
+            watcher.onDidChange(onChange));
+        if (registerReportCommand) {
+            this.disposables.push(vscode.commands.registerCommand(
+                "fmlTools.showTestReport", () => this.showReport()));
+        }
     }
 
     public dispose(): void {

@@ -21,7 +21,7 @@ export {
 } from "./FmlWorkspaceModels";
 
 const SUSHI_CONFIG_GLOB = "**/sushi-config.{yaml,yml}";
-const OUTPUT_JSON_GLOB = "**/output/{*.json,**/*.json}";
+const OUTPUT_JSON_GLOB = "**/output/**/*.json";
 const IG_OUTPUT_MARKER_GLOB = "**/output/**/ImplementationGuide*.json";
 const WORKSPACE_EXCLUDE_GLOB = "**/{.git,node_modules,dist,out,target,.vscode-test}/**";
 

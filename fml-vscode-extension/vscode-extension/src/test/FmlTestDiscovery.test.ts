@@ -229,7 +229,7 @@ suite("FML profile test discovery", function() {
         const watcher = vscode.workspace.createFileSystemWatcher(
             new vscode.RelativePattern(directory, "**/*"), true, true, true);
         const controller = new FmlTestController(program =>
-            program.startsWith(directory) ? configuration : undefined, testController, watcher);
+            program.startsWith(directory) ? configuration : undefined, testController, watcher, false);
         controllers.push(controller);
         const configurations = await vscode.workspace.findFiles("**/.fml-tests.json", "**/node_modules/**");
         assert.ok(configurations.some(uri => uri.fsPath.toLowerCase() === config.file.toLowerCase()),
