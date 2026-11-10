@@ -20,6 +20,11 @@
           <v-btn icon dark accesskey="g" title="Run map (alt+g)" @click="evaluateMap">
             <v-icon>mdi-play</v-icon>
           </v-btn>
+          <v-btn v-if="sqliteSession" icon dark :disabled="loadingData"
+            :title="`Run the map for every row of the primary table in ${sqliteSession.fileName} and output a Bundle`"
+            @click="runMapOverSqlite">
+            <v-icon>mdi-database-arrow-right</v-icon>
+          </v-btn>
           <div v-if="trace.length > 0" class="debug-controls">
             <v-btn size="x-small" variant="text" icon title="Reset to first trace" @click="selectTrace(0)">
               <v-icon>mdi-bug-play-outline</v-icon>
@@ -52,7 +57,7 @@
               @update:resourceText="onMapTextUpdate"
             >
               <template v-slot:append>
-                <v-btn icon size="small" variant="text" title="Validate FML" @click="validateMap">
+                <v-btn icon size="small" variant="text" density="comfortable" rounded="0" title="Validate FML" @click="validateMap">
                   <v-icon>mdi-note-check-outline</v-icon>
                 </v-btn>
               </template>
@@ -73,11 +78,11 @@
               @update:resourceText="inputResourceText = $event"
             >
               <template v-slot:append>
-                <v-btn icon size="small" variant="text" title="Generate a logical model from this input resource"
+                <v-btn icon size="small" variant="text" density="comfortable" rounded="0" title="Generate a logical model from this input resource"
                   @click="generateLogicalModelFromInput">
                   <v-icon>mdi-tree-outline</v-icon>
                 </v-btn>
-                <v-btn v-if="showAdvancedSettings" icon size="small" variant="text"
+                <v-btn v-if="showAdvancedSettings" icon size="small" variant="text" density="comfortable" rounded="0"
                   title="Load a sample HL7 v2 message and map" @click="loadHl7v2Sample">
                   <v-icon>mdi-message-text-outline</v-icon>
                 </v-btn>
@@ -100,11 +105,18 @@
               @update:resourceText="modelsText = $event"
             >
               <template v-slot:append>
-                <v-btn icon size="small" variant="text" title="Generate a logical model from the input resource"
+                <v-btn icon size="small" variant="text" density="comfortable" rounded="0" title="Generate a logical model from the input resource"
                   @click="generateLogicalModelFromInput">
                   <v-icon>mdi-tree-outline</v-icon>
                 </v-btn>
-                <v-btn v-if="showAdvancedSettings" icon size="small" variant="text"
+                <v-btn icon size="small" variant="text" density="comfortable" rounded="0"
+                  title="Generate logical models (one per table) from a SQLite database file"
+                  @click="sqliteFileInput?.click()">
+                  <v-icon>mdi-database</v-icon>
+                </v-btn>
+                <input ref="sqliteFileInput" type="file" class="d-none" accept=".sqlite,.sqlite3,.db,.db3,.s3db"
+                  @change="onSqliteFileSelected">
+                <v-btn v-if="showAdvancedSettings" icon size="small" variant="text" density="comfortable" rounded="0"
                   title="Add the generic HL7 v2 logical models (always applied when the input is HL7 v2)"
                   @click="addGenericHl7v2Models">
                   <v-icon>mdi-message-text-outline</v-icon>
@@ -239,7 +251,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import axios, { type CancelTokenSource } from 'axios'
 import ace from 'ace-builds'
@@ -269,6 +281,17 @@ import { lookupByTypeName as lookupByTypeNameR5 } from '@legacy/helpers/models/g
 import { lookupByTypeName as lookupByTypeNameR6 } from '@legacy/helpers/models/generated/r6'
 import { buildUserModelLookup, composeLookups, type TypeLookup, type UserModelLookup } from '@legacy/helpers/user_models'
 import { createFhirLogicalModel, type CreateLogicalModelOptions } from '@legacy/helpers/logical_model_generator'
+import {
+  SqliteSchemaReader,
+  createLogicalModelsFromSchema,
+  findTableForType,
+  readSqliteRows,
+  resolveSqliteReference,
+  type DbSchema,
+  type DbTable,
+  type SqliteQueryRunner,
+} from '@legacy/helpers/db_logical_model_generator'
+import type { FmlExecutionOptions } from '@fhirpath-lab/fml-executor'
 import { defaultHl7v2Message } from '@legacy/helpers/hl7v2_parser'
 import { parseXmlAndObject } from '@legacy/helpers/xml_parser'
 import {
@@ -709,7 +732,7 @@ async function evaluateMap() {
     localExecutionAbort = controller
     loadingData.value = true
     try {
-      const response = await new FmlLocalDebugService().executeParameters({
+      const response = await new FmlLocalDebugService({}, localResolveServices()).executeParameters({
         mapText: map,
         maps: [{ text: map, fileName: debugMapFileName }],
         inputText,
@@ -895,6 +918,156 @@ const generateLogicalModelFromInput = () => {
   }
 }
 
+// ---------------------------------------------------------------------------
+// SQLite database support
+// ---------------------------------------------------------------------------
+interface SqliteSession {
+  fileName: string
+  schema: DbSchema
+  runner: SqliteQueryRunner
+  close: () => void
+}
+
+const maxSqliteRows = 10000
+const sqliteFileInput = ref<HTMLInputElement | null>(null)
+const sqliteSession = shallowRef<SqliteSession | undefined>()
+
+const closeSqliteSession = () => {
+  sqliteSession.value?.close()
+  sqliteSession.value = undefined
+}
+
+const onSqliteFileSelected = async (event: Event) => {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = ''
+  if (!file) return
+  loadingData.value = true
+  try {
+    const [{ default: initSqlJs }, wasm] = await Promise.all([
+      import('sql.js'),
+      import('sql.js/dist/sql-wasm.wasm?url'),
+    ])
+    const SQL = await initSqlJs({ locateFile: () => wasm.default })
+    const db = new SQL.Database(new Uint8Array(await file.arrayBuffer()))
+    const runner: SqliteQueryRunner = {
+      all(sql) {
+        const statement = db.prepare(sql)
+        try {
+          const rows: Record<string, unknown>[] = []
+          while (statement.step()) rows.push(statement.getAsObject())
+          return rows
+        } finally {
+          statement.free()
+        }
+      },
+    }
+    const schema = new SqliteSchemaReader(runner, file.name.replace(/\.[^.]*$/, '')).readSchema()
+    const bundle = createLogicalModelsFromSchema(schema, { publisher: settings.getDefaultProviderField() })
+    closeSqliteSession()
+    sqliteSession.value = { fileName: file.name, schema, runner, close: () => db.close() }
+    modelsText.value = JSON.stringify(bundle, null, 4)
+    outcome.value = undefined
+    selectTabByName('Models')
+  } catch (e) {
+    outcome.value = errorOutcome('invalid', `Unable to read the SQLite database: ${e}`)
+  } finally {
+    loadingData.value = false
+  }
+}
+
+/** FHIRPath resolve() host: source references are looked up in the loaded database, absolute urls are fetched */
+const localResolveServices = (): Pick<FmlExecutionOptions, 'resolve'> => {
+  const session = sqliteSession.value
+  if (!session) return {}
+  return {
+    resolve: async (reference, signal, origin) => {
+      if (origin?.mode !== 'target') {
+        const row = resolveSqliteReference(session.runner, session.schema, reference)
+        if (row) return row
+      }
+      if (!/^https?:\/\//.test(reference)) return undefined
+      const response = await fetch(reference, { headers: { Accept: 'application/fhir+json' }, signal })
+      if (response.status === 404 || response.status === 410) return undefined
+      if (!response.ok) throw new Error(`resolve of ${reference} returned HTTP ${response.status}`)
+      return await response.json()
+    },
+  }
+}
+
+/** The table of the SQLite database that the map declares as its source */
+const findPrimaryTable = (session: SqliteSession, map: string): DbTable | undefined => {
+  const model = parseFML(map)
+  if (isFmlParseError(model)) throw new Error('The map must be valid FML before it can be run against a database.')
+  for (const structure of model.structures.filter(s => s.mode === 'source')) {
+    const table = findTableForType(session.schema, structure.url)
+    if (table) return table
+  }
+  return undefined
+}
+
+async function runMapOverSqlite() {
+  const session = sqliteSession.value
+  if (!session) return
+  resetRun()
+  const map = mapText.value
+  const issues: OperationOutcomeIssue[] = []
+  let table: DbTable | undefined
+  try {
+    table = findPrimaryTable(session, map)
+  } catch (e) {
+    outcome.value = errorOutcome('invalid', String(e))
+    return
+  }
+  if (!table) {
+    outcome.value = errorOutcome('not-found', `None of the map's source structures match a table in ${session.fileName} (${session.schema.tables.map(t => t.name).join(', ')}).`)
+    return
+  }
+  const controller = new AbortController()
+  localExecutionAbort = controller
+  loadingData.value = true
+  try {
+    const rows = readSqliteRows(session.runner, session.schema, table, maxSqliteRows + 1)
+    if (rows.length > maxSqliteRows) {
+      rows.length = maxSqliteRows
+      issues.push({ severity: 'warning', code: 'too-costly', diagnostics: `Only the first ${maxSqliteRows} rows of ${table.name} were processed.` })
+    }
+    const service = new FmlLocalDebugService({}, localResolveServices())
+    const entries: { fullUrl?: string; resource: unknown }[] = []
+    // The map is prepared once; a single response means preparation failed and applies to every row
+    const responses = await service.executeParametersBatch({
+      mapText: map,
+      maps: [{ text: map, fileName: debugMapFileName }],
+      inputText: '',
+      modelText: modelsText.value,
+      localTrace: false,
+      signal: controller.signal,
+    } as any, rows.map(row => JSON.stringify(row)))
+    const perRow = responses.length === rows.length
+    for (const [index, response] of responses.entries()) {
+      const prefix = perRow ? `${table.name} row ${index + 1}: ` : `${table.name}: `
+      const rowIssues = (response.parameter?.find(p => p.name === 'outcome')?.resource as OperationOutcome | undefined)?.issue ?? []
+      for (const issue of rowIssues) issues.push({ ...issue, diagnostics: `${prefix}${issue.diagnostics}` })
+      const text = response.parameter?.find(p => p.name === 'return')?.valueString
+      if (!text) continue
+      const result = parseFmlJson(text) as any
+      if (result?.resourceType === 'Bundle') entries.push(...(result.entry ?? []))
+      else entries.push({ resource: result })
+    }
+    outputText.value = stringifyFmlJson({ resourceType: 'Bundle', type: 'collection', entry: entries }, tabSpaces.value)
+    processedByEngine.value = `FHIRPath Lab JavaScript (local), ${rows.length} row(s) of ${table.name}`
+    if (issues.length) outcome.value = { resourceType: 'OperationOutcome', issue: issues }
+    selectTabByName('Output')
+  } catch (e) {
+    if (!controller.signal.aborted) outcome.value = errorOutcome('processing', String(e))
+  } finally {
+    if (localExecutionAbort === controller) {
+      localExecutionAbort = undefined
+      loadingData.value = false
+    }
+  }
+}
+
 /** Puts the generic HL7 v2 models (merged with any user models already present) in the Models tab */
 const addGenericHl7v2Models = () => {
   try {
@@ -975,6 +1148,7 @@ onBeforeUnmount(() => {
   if (diagramDebounceTimer) clearTimeout(diagramDebounceTimer)
   localExecutionAbort?.abort()
   cancelSource?.cancel('page closed')
+  closeSqliteSession()
 })
 </script>
 

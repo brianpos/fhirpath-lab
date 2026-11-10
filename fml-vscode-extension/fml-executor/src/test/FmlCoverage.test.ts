@@ -896,3 +896,25 @@ group Main(source src : P, target tgt : T) { src -> ${invocation} as bad; }`});
         assert.ok(result.diagnostics.some(diagnostic => diagnostic.severity === "error"));
     });
 }
+
+test("resolve host callback receives the origin: source vs target variable and rule site", async () => {
+    const calls: {reference: string; origin: any}[] = [];
+    const resolve: FmlExecutionOptions["resolve"] = async (reference, _signal, origin) => {
+        calls.push({reference, origin});
+        return {resourceType: "Practitioner", id: reference.split("/").pop()};
+    };
+    const {target} = await execute(`${declarations}
+group Main(source src : P, target tgt : T) {
+  src -> tgt.id = evaluate(src, generalPractitioner.reference.resolve().id) "fromSource";
+  src -> tgt.name as n then {
+    src -> n.family = evaluate(tgt, %tgt.generalPractitioner.reference.resolve().id) "fromTarget";
+  } "named";
+}`, {resourceType: "Patient", generalPractitioner: [{reference: "Practitioner/a"}]}, {resolve});
+    assert.equal((target as any).id, "a");
+    const source = calls.find(call => call.origin.expression.startsWith("generalPractitioner"));
+    assert.ok(source);
+    assert.equal(source.origin.mode, "source");
+    assert.equal(source.origin.variable, "src");
+    assert.equal(source.origin.rule, "fromSource");
+    assert.ok(source.origin.site);
+});

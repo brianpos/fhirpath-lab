@@ -8,7 +8,7 @@ import {
     transformDefinitions,
 } from "@fhirpath-lab/validator";
 import type {
-    FmlBinding, FmlExecutionFrameView, FmlExecutionOptions, FmlExecutionRequest,
+    FmlBinding, FmlExecutionFrameView, FmlExecutionOptions, FmlExecutionRequest, FmlResolveOrigin,
     FmlExecutorConfiguration, FmlTraceMessage, FmlTraceSite, PreparedFmlProgram,
 } from "./contracts";
 import {createTypeLookup} from "./LabRuntimeModels";
@@ -50,6 +50,8 @@ const discardTrace = (): void => {};
 
 export class Frame {
     public readonly local = new Map<string, Node[]>();
+    /** Whether each local variable was bound by a source or a target (used to attribute resolve() calls). */
+    public readonly modes = new Map<string, "source" | "target">();
     public readonly shared: SharedScope;
     public constructor(public readonly parent?: Frame, shared?: SharedScope) {
         this.shared = shared ?? parent?.shared ?? new SharedScope();
@@ -64,6 +66,13 @@ export class Frame {
         const result = this.parent?.visible() ?? new Map<string, Node[]>();
         for (const [name, nodes] of this.local) result.set(name, nodes);
         return result;
+    }
+    public mode(name: string): "source" | "target" | undefined {
+        return this.modes.get(name) ?? (this.local.has(name) ? undefined : this.parent?.mode(name));
+    }
+    public bind(name: string, nodes: Node[], mode?: "source" | "target"): void {
+        this.local.set(name, nodes);
+        if (mode) this.modes.set(name, mode); else this.modes.delete(name);
     }
     public has(name: string): boolean { return this.local.has(name) || !!this.parent?.has(name); }
 }
@@ -712,7 +721,7 @@ export class Invocation {
             }
             if (resolved.typeName) this.bound.validateValue(binding.value, resolved.typeName, resolved.version);
             if (isObject(binding.value) && typeof binding.value.resourceType === "string") resolved.typeName = binding.value.resourceType;
-            frame.local.set(parameter.name, [resolved]);
+            frame.bind(parameter.name, [resolved], parameter.mode);
         }
         yield* this.group(group, frame);
         for (const [array, {object, name}] of this.writtenArrays) {
@@ -806,7 +815,7 @@ export class Invocation {
                 }
                 return node;
             });
-            frame.local.set(parameter.name, nodes);
+            frame.bind(parameter.name, nodes, parameter.mode);
             for (const node of nodes) {
                 if (descriptor.typeName && node.typeName && (!this.bound.matchesType(node, descriptor.typeName) || node.version !== descriptor.version)) {
                     throw new Error(`Group '${group.name}' received an incompatible '${parameter.name}' type/model binding.`);
@@ -819,7 +828,7 @@ export class Invocation {
         const base = this.bound.bases.get(group);
         if (base) {
             const inherited = new Frame();
-            for (const parameter of base.parameters) inherited.local.set(parameter.name, frame.get(parameter.name));
+            for (const parameter of base.parameters) inherited.bind(parameter.name, frame.get(parameter.name), parameter.mode);
             yield* this.group(base, inherited);
         }
         for (const rule of group.rules) yield* this.rule(rule, frame);
@@ -883,7 +892,7 @@ export class Invocation {
                 for (const value of values) {
                     this.check();
                     const child = new Frame(frame);
-                    if (source.variable) child.local.set(source.variable, [value]);
+                    if (source.variable) child.bind(source.variable, [value], "source");
                     if (source.condition) {
                         const matches = this.boolean(yield* this.evaluate(source.condition, value, child));
                         if (traceSource && this.options.trace?.recording) {
@@ -947,8 +956,8 @@ export class Invocation {
                     if (parameter.mode === "target" && (nodes.length !== 1 || nodes.some(node => !node.writable))) {
                         throw new Error(`Group target '${parameter.name}' requires a writable target argument.`);
                     }
-                    argumentsFrame.local.set(parameter.name, nodes.map(node =>
-                        parameter.mode === "source" ? {...node, writable: false} : node));
+                    argumentsFrame.bind(parameter.name, nodes.map(node =>
+                        parameter.mode === "source" ? {...node, writable: false} : node), parameter.mode);
                 }
                 yield* this.group(callee, argumentsFrame);
             }
@@ -971,7 +980,7 @@ export class Invocation {
         messages?: readonly FmlTraceMessage[]): void {
         if (!this.options.trace?.recording || this.leanTrace) return;
         const snapshot = new Frame(frame);
-        if (source.variable) snapshot.local.set(source.variable, values);
+        if (source.variable) snapshot.bind(source.variable, values, "source");
         this.emit(phase, source, snapshot, messages);
     }
 
@@ -1003,8 +1012,10 @@ export class Invocation {
         const result = this.bound.expression(text, context, names)(
             this.bound.evaluationValue(context), environment,
             {...this.options.fhirPath, signal: this.options.signal,
-                userInvocationTable: {extension: this.bound.extensionFunction(context), resolve: {arity: {0: []}, fn: (values: unknown[]) =>
-                    Promise.all(values.map(value => this.resolve(value))).then(values => values.filter(value => value !== undefined))}},
+                userInvocationTable: {extension: this.bound.extensionFunction(context), resolve: {arity: {0: []}, fn: (values: unknown[]) => {
+                    const origin = this.resolveOrigin(text, context, frame, references);
+                    return Promise.all(values.map(value => this.resolve(value, origin))).then(values => values.filter(value => value !== undefined));
+                }}},
                 traceFn},
         );
         const convert = (values: unknown[]): Node[] => values.map(value => {
@@ -1029,12 +1040,34 @@ export class Invocation {
         return result instanceof Promise ? yield result.then(convert) : convert(result);
     }
 
-    private async resolve(value: unknown): Promise<unknown | undefined> {
+    /** Describes where a resolve() call came from so the host can pick the source or target server. */
+    private resolveOrigin(expression: string, context: Node, frame: Frame, references: readonly string[]): FmlResolveOrigin {
+        const variables = [...new Set(references)].filter(name => frame.has(name))
+            .map(name => ({name, mode: frame.mode(name)}))
+            .filter((entry): entry is {name: string; mode: "source" | "target"} => entry.mode !== undefined);
+        let mode: "source" | "target" | undefined;
+        let variable: string | undefined;
+        if (isObject(context.value)) {
+            for (const [name, nodes] of frame.visible()) {
+                if (nodes.some(node => node.value === context.value) && frame.mode(name)) {
+                    variable = name;
+                    mode = frame.mode(name);
+                }
+            }
+        }
+        mode ??= context.root !== undefined && this.sourceRoots.some(root => root.value === context.root) ? "source"
+            : context.root !== undefined && this.request.targets.some(binding => binding.value === context.root) ? "target"
+            : variables[0]?.mode;
+        return {mode: mode ?? "unknown", variable, expression, variables, site: this.currentSite,
+            rule: this.ruleStack.at(-1)?.name};
+    }
+
+    private async resolve(value: unknown, origin: FmlResolveOrigin): Promise<unknown | undefined> {
         if (isObject(value) && "data" in value && typeof value.getTypeInfo === "function") value = value.data;
         const reference = typeof value === "string" ? value : isObject(value) && typeof value.reference === "string" ? value.reference : undefined;
         if (!reference) throw new Error("resolve requires a reference string.");
         if (this.options.resolve) {
-            const resource = await this.options.resolve(reference, this.options.signal);
+            const resource = await this.options.resolve(reference, this.options.signal, origin);
             if (resource === undefined) return undefined;
             if (!isObject(resource) || typeof resource.resourceType !== "string") throw new Error("The resolve host service did not return a resource.");
             return toEvaluationValue(resource);
@@ -1413,7 +1446,7 @@ export class Invocation {
             ...context, typeName: undefined,
             version: this.bound.program.analysis.model.targetModelVersion ?? context.version,
         });
-        if (target.variable) frame.local.set(target.variable, values);
+        if (target.variable) frame.bind(target.variable, values, "target");
         if (traceTarget) {
             this.traceDepth--;
             this.emit("exit", target, frame);

@@ -42,11 +42,30 @@ export class FmlLocalDebugService {
         return (await this.executeInvocation(request)).parameters;
     }
 
+    /**
+     * Prepares the map once and executes it for each JSON input text. When preparation fails a single
+     * Parameters (carrying the diagnostics) is returned instead of one per input.
+     */
+    public async executeParametersBatch(request: FmlDebugLaunchRequest, inputTexts: readonly string[]): Promise<Parameters[]> {
+        try {
+            request.signal?.throwIfAborted();
+            return await this.runParameters(request, inputTexts);
+        } catch (error) {
+            if (error instanceof FmlDebugEngineError) throw error;
+            if (request.signal?.aborted) throw request.signal.reason;
+            const message = error instanceof Error ? error.message : String(error);
+            throw new FmlDebugEngineError(message, {
+                resourceType: "OperationOutcome",
+                issue: [{severity: "error", code: "processing", diagnostics: message}],
+            });
+        }
+    }
+
     private async executeInvocation(request: FmlDebugLaunchRequest): Promise<{parameters: Parameters; inputText: string}> {
         try {
             request.signal?.throwIfAborted();
             const prepared = this.prepareInput(request);
-            const parameters = await this.runParameters(prepared.request);
+            const [parameters] = await this.runParameters(prepared.request, [prepared.request.inputText]);
             if (prepared.warnings.length) {
                 const warnings = prepared.warnings.map(diagnostics =>
                     ({severity: "warning" as const, code: "informational" as const, diagnostics}));
@@ -88,16 +107,17 @@ export class FmlLocalDebugService {
         };
     }
 
-    private async runParameters(request: FmlDebugLaunchRequest): Promise<Parameters> {
-        if (request.inputText.trimStart().startsWith("<")) {
-            throw new Error("The local FML backend currently requires JSON or HL7 v2 input; select a remote backend for XML.");
-        }
-        let input: unknown;
-        try {
-            input = parseFmlJson(request.inputText);
-        } catch (error) {
-            throw new Error(`Invalid local FML input JSON: ${error instanceof Error ? error.message : String(error)}`, {cause: error});
-        }
+    private async runParameters(request: FmlDebugLaunchRequest, inputTexts: readonly string[]): Promise<Parameters[]> {
+        const inputs = inputTexts.map(inputText => {
+            if (inputText.trimStart().startsWith("<")) {
+                throw new Error("The local FML backend currently requires JSON or HL7 v2 input; select a remote backend for XML.");
+            }
+            try {
+                return parseFmlJson(inputText);
+            } catch (error) {
+                throw new Error(`Invalid local FML input JSON: ${error instanceof Error ? error.message : String(error)}`, {cause: error});
+            }
+        });
         const resources: unknown[] = [...request.modelResources ?? []];
         let explicitModelDefinitions = false;
         if (request.modelText?.trim()) {
@@ -175,6 +195,9 @@ export class FmlLocalDebugService {
         }
         const {executor, prepared} = entry;
         request.signal?.throwIfAborted();
+        const compiled = new Map<unknown, ReturnType<typeof compileConceptMap>>();
+        let terminology: FhirTerminologyService | undefined;
+        const runOne = async (input: unknown): Promise<Parameters> => {
         const recorder = request.localTrace === false ? undefined
             : new FmlTraceRecorder(request.localTrace?.maxEvents, request.localTrace?.maxBytes);
         const parameters: Parameters = {resourceType: "Parameters", parameter: [{
@@ -183,8 +206,6 @@ export class FmlLocalDebugService {
         let diagnostics: FmlDiagnostic[] = prepared.diagnostics;
         if (prepared.status === "success") {
             const invocation = createSingleInputRequest(prepared.value, input, request.entryGroup);
-            const compiled = new Map<unknown, ReturnType<typeof compileConceptMap>>();
-            let terminology: FhirTerminologyService | undefined;
             const translate: NonNullable<FmlExecutionOptions["translate"]> = async (source, canonical, output, signal) => {
                 const [url, version] = canonical.split("|");
                 const matches = conceptMaps.filter(map => map.url === url && (!version || map.version === version));
@@ -274,6 +295,14 @@ export class FmlLocalDebugService {
             },
         });
         return parameters;
+        };
+        if (prepared.status !== "success") return [await runOne(inputs[0])];
+        const results: Parameters[] = [];
+        for (const input of inputs) {
+            request.signal?.throwIfAborted();
+            results.push(await runOne(input));
+        }
+        return results;
     }
 }
 
