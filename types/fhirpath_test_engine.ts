@@ -82,6 +82,18 @@ export const registeredEngines: { [key: string]: IFhirPathEngineDetails } = {
         supportsAST: true,
         supportsXML: true
     },
+    "fhirpath.js (hl7v2)": {
+        name: "fhirpath.js",
+        legacyName: "fhirpath.js (hl7v2)",
+        fhirVersion: "hl7v2",
+        appInsightsEngineName: "fhirpath.js",
+        publisher: "Brian Postlethwaite",
+        githubRepo: "https://github.com/HL7/fhirpath.js",
+        description: "A JavaScript FHIRPath engine for HL7 v2 messages.",
+        external: false,
+        supportsAST: true,
+        supportsXML: false
+    },
     ".NET SDK": {
         name: ".NET SDK",
         legacyName: ".NET (firely)",

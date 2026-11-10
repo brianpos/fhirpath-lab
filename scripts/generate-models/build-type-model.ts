@@ -327,7 +327,9 @@ function processElement(
         const etm: ElementTypeModel = { TypeName: code };
         const targetProfiles = resolveTargetProfiles(t.targetProfile, version);
         if (code === "Reference" && targetProfiles) {
-            etm.TargetProfile = targetProfiles;
+            if (!(targetProfiles.length == 1 && targetProfiles[0] === "http://hl7.org/fhir/StructureDefinition/Resource")) {
+                etm.TargetProfile = targetProfiles;
+            }
         }
         return etm;
     });

@@ -1,0 +1,18 @@
+/// url = "http://hl7.org/fhir/uv/xver/StructureMap/ContactPoint4to5"
+/// name = "ContactPoint4to5"
+/// title = "ContactPoint Transforms: R4 to R5"
+/// status = "active"
+
+uses "http://hl7.org/fhir/4.0/StructureDefinition/ContactPoint" alias ContactPointR4 as source
+uses "http://hl7.org/fhir/5.0/StructureDefinition/ContactPoint" alias ContactPointR5 as target
+
+imports "http://hl7.org/fhir/uv/xver/StructureMap/*4to5"
+
+group ContactPoint(source src : ContactPointR4, target tgt : ContactPointR5) extends Element <<type+>> {
+  src.system as v -> tgt.system = translate(v, 'http://hl7.org/fhir/uv/xver/ConceptMap/cpt.system-4to5', 'code');
+  src.value -> tgt.value;
+  src.use as v -> tgt.use = translate(v, 'http://hl7.org/fhir/uv/xver/ConceptMap/cpt.use-4to5', 'code');
+  src.rank -> tgt.rank;
+  src.period -> tgt.period;
+}
+

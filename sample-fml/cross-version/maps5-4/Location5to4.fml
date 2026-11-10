@@ -1,0 +1,45 @@
+/// url = "http://hl7.org/fhir/uv/xver/StructureMap/Location5to4"
+/// name = "Location5to4"
+/// title = "Location Transforms: R5 to R4"
+/// status = "active"
+
+uses "http://hl7.org/fhir/5.0/StructureDefinition/Location" alias LocationR5 as source
+uses "http://hl7.org/fhir/4.0/StructureDefinition/Location" alias LocationR4 as target
+
+imports "http://hl7.org/fhir/uv/xver/StructureMap/*5to4"
+
+group Location(source src : LocationR5, target tgt : LocationR4) extends DomainResource <<type+>> {
+  src.identifier -> tgt.identifier;
+  src.status as v -> tgt.status = translate(v, 'http://hl7.org/fhir/uv/xver/ConceptMap/loc.status-5to4', 'code');
+  src.operationalStatus -> tgt.operationalStatus;
+  src.name -> tgt.name;
+  src.alias -> tgt.alias;
+  src.description -> tgt.description;
+  src.mode as v -> tgt.mode = translate(v, 'http://hl7.org/fhir/uv/xver/ConceptMap/loc.mode-5to4', 'code');
+  src.type -> tgt.type;
+  src.contact as s then {
+    s.telecom -> tgt.telecom;
+  } "copyContactToTelecom";
+  src.address -> tgt.address;
+  src.form -> tgt.physicalType;
+  src.position as s -> tgt.position as t then LocationPosition(s, t);
+  src.managingOrganization -> tgt.managingOrganization;
+  src.partOf -> tgt.partOf;
+  src.hoursOfOperation as hoo then { 
+    hoo.availableTime as s -> tgt.hoursOfOperation as te then {
+      s.daysOfWeek -> te.daysOfWeek;
+      s.allDay -> te.allDay;
+      s.availableStartTime -> te.openingTime;
+      s.availableEndTime -> te.closingTime;
+    } "availableTime";
+  } "hoursOfOperation";
+  src -> tgt.availabilityExceptions = (src.hoursOfOperation.notAvailableTime.description.join('\n')) "availabilityExceptions";
+  src.endpoint -> tgt.endpoint;
+}
+
+group LocationPosition(source src, target tgt) extends BackboneElement {
+  src.longitude -> tgt.longitude;
+  src.latitude -> tgt.latitude;
+  src.altitude -> tgt.altitude;
+}
+

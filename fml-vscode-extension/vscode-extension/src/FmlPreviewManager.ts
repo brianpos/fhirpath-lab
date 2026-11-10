@@ -31,11 +31,25 @@ interface PreviewEntry {
     sourceViewColumn?: ViewColumn;
     updateTimer?: NodeJS.Timeout;
     webviewMessageDisposable?: Disposable;
+    showAllProperties: boolean;
 }
 
 interface FmlPreviewNavigationMessage extends FmlPreviewNavigationTarget {
     type: "fmlPreview.navigate";
+    uri?: string;
     version: number;
+}
+
+interface FmlPreviewOptionsMessage {
+    type: "fmlPreview.setShowAllProperties";
+    showAllProperties: boolean;
+}
+
+export interface FmlPreviewManagerOptions {
+    viewType?: string;
+    titlePrefix?: string;
+    showAllPropertiesToggle?: boolean;
+    beginRenderActivity?: (source: FmlPreviewSource) => Disposable | undefined;
 }
 
 const PREVIEW_UPDATE_DELAY_MS = 120;
@@ -43,12 +57,20 @@ const PREVIEW_UPDATE_DELAY_MS = 120;
 export class FmlPreviewManager implements Disposable {
     private readonly previews = new Map<string, PreviewEntry>();
     private readonly disposables: Disposable[] = [];
+    private readonly options: Required<FmlPreviewManagerOptions>;
 
     public constructor(
         private readonly renderer: FmlSvgRenderer = new InstanceDiagramFmlSvgRenderer(),
         private readonly getModelConfiguration: (filePath: string) => SushiWorkspaceConfiguration | undefined
             = () => undefined,
+        options: FmlPreviewManagerOptions = {},
     ) {
+        this.options = {
+            viewType: options.viewType ?? "fmlMapPreview",
+            titlePrefix: options.titlePrefix ?? "Preview",
+            showAllPropertiesToggle: options.showAllPropertiesToggle ?? false,
+            beginRenderActivity: options.beginRenderActivity ?? (() => undefined),
+        };
         this.disposables.push(workspace.onDidChangeTextDocument(event => {
             const preview = this.previews.get(event.document.uri.toString());
             if (preview) {
@@ -68,7 +90,7 @@ export class FmlPreviewManager implements Disposable {
         }
 
         const panel = window.createWebviewPanel(
-            "fmlMapPreview",
+            this.options.viewType,
             this.getTitle(document),
             {
                 viewColumn: ViewColumn.Beside,
@@ -85,6 +107,7 @@ export class FmlPreviewManager implements Disposable {
             panel,
             renderSequence: 0,
             sourceViewColumn: this.getSourceViewColumn(document),
+            showAllProperties: false,
         };
         this.previews.set(key, entry);
         entry.webviewMessageDisposable = panel.webview.onDidReceiveMessage(message => {
@@ -157,7 +180,9 @@ export class FmlPreviewManager implements Disposable {
             defaultFhirVersion: toFhirVersion(configuration?.fhirVersion),
             profileBaseTypes: configuration?.profileBaseTypes,
             customTypeModels: configuration?.customTypeModels,
+            showAllProperties: entry.showAllProperties,
         };
+        const renderActivity = this.options.beginRenderActivity(source);
 
         try {
             const svg = await this.renderer.render(source);
@@ -177,6 +202,8 @@ export class FmlPreviewManager implements Disposable {
                     svg,
                     source.fileName,
                     source.version,
+                    this.options.showAllPropertiesToggle,
+                    entry.showAllProperties,
                 );
                 entry.contentInitialized = true;
             }
@@ -189,12 +216,14 @@ export class FmlPreviewManager implements Disposable {
             } else {
                 entry.panel.webview.html = createErrorHtml(entry.panel.webview);
             }
+        } finally {
+            renderActivity?.dispose();
         }
     }
 
     private getTitle(document: TextDocument): string {
         const fileName = document.isUntitled ? "Untitled FML" : path.basename(document.fileName);
-        return `Preview ${fileName}`;
+        return `${this.options.titlePrefix} ${fileName}`;
     }
 
     private getSourceViewColumn(document: TextDocument): ViewColumn | undefined {
@@ -205,20 +234,43 @@ export class FmlPreviewManager implements Disposable {
     }
 
     private async handleWebviewMessage(entry: PreviewEntry, message: unknown): Promise<void> {
+        if (this.previews.get(entry.documentUri.toString()) !== entry) {
+            return;
+        }
+        const optionsMessage = parseFmlPreviewOptionsMessage(message);
+        if (optionsMessage) {
+            if (!this.options.showAllPropertiesToggle
+                || entry.showAllProperties === optionsMessage.showAllProperties) {
+                return;
+            }
+            entry.showAllProperties = optionsMessage.showAllProperties;
+            try {
+                const document = await workspace.openTextDocument(entry.documentUri);
+                this.scheduleUpdate(entry, document, 0);
+            } catch (error) {
+                const messageText = error instanceof Error ? error.message : String(error);
+                void window.showErrorMessage(`Unable to update the FML preview: ${messageText}`);
+            }
+            return;
+        }
         const navigation = parseFmlPreviewNavigationMessage(message);
-        if (!navigation || this.previews.get(entry.documentUri.toString()) !== entry) {
+        if (!navigation) {
             return;
         }
 
         try {
-            const document = await workspace.openTextDocument(entry.documentUri);
+            const navigationUri = navigation.uri
+                ? Uri.parse(navigation.uri, true)
+                : entry.documentUri;
+            const document = await workspace.openTextDocument(navigationUri);
             if (document.version !== navigation.version) {
-                this.scheduleUpdate(entry, document, 0);
+                const sourceDocument = await workspace.openTextDocument(entry.documentUri);
+                this.scheduleUpdate(entry, sourceDocument, 0);
                 void window.showInformationMessage("The FML preview is updating. Select the diagram item again.");
                 return;
             }
             await this.navigateToSource(
-                entry.documentUri,
+                navigationUri,
                 navigation,
                 entry.sourceViewColumn ?? ViewColumn.One,
             );
@@ -245,6 +297,7 @@ export function parseFmlPreviewNavigationMessage(message: unknown): FmlPreviewNa
         || !isNavigationInteger(candidate.column, 0)
         || !isNavigationInteger(candidate.length, 0)
         || !isNavigationInteger(candidate.version, 0)
+        || (candidate.uri !== undefined && (typeof candidate.uri !== "string" || candidate.uri.length === 0))
     ) {
         return undefined;
     }
@@ -253,7 +306,23 @@ export function parseFmlPreviewNavigationMessage(message: unknown): FmlPreviewNa
         line: candidate.line,
         column: candidate.column,
         length: candidate.length,
+        ...(candidate.uri === undefined ? {} : {uri: candidate.uri}),
         version: candidate.version,
+    };
+}
+
+export function parseFmlPreviewOptionsMessage(message: unknown): FmlPreviewOptionsMessage | undefined {
+    if (!message || typeof message !== "object" || Array.isArray(message)) {
+        return undefined;
+    }
+    const candidate = message as Record<string, unknown>;
+    if (candidate.type !== "fmlPreview.setShowAllProperties"
+        || typeof candidate.showAllProperties !== "boolean") {
+        return undefined;
+    }
+    return {
+        type: "fmlPreview.setShowAllProperties",
+        showAllProperties: candidate.showAllProperties,
     };
 }
 
@@ -262,9 +331,19 @@ function createPreviewHtml(
     svg: string,
     fileName: string,
     documentVersion: number,
+    showAllPropertiesToggle: boolean,
+    showAllProperties: boolean,
 ): string {
     const cspSource = webview.cspSource;
     const nonce = randomBytes(18).toString("base64");
+    const toolbar = showAllPropertiesToggle
+        ? `<header class="preview-toolbar">
+        <label class="preview-toggle">
+            <input class="show-all-properties-toggle" type="checkbox"${showAllProperties ? " checked" : ""}>
+            <span>Show all properties</span>
+        </label>
+    </header>`
+        : "";
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -290,6 +369,30 @@ function createPreviewHtml(
             width: 100%;
             height: calc(100vh - 48px);
             overflow: auto;
+        }
+        body.has-preview-toolbar .preview-shell {
+            height: calc(100vh - 88px);
+        }
+        .preview-toolbar {
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            height: 32px;
+            margin-bottom: 8px;
+            border-bottom: 1px solid var(--vscode-panel-border);
+        }
+        .preview-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            min-height: 24px;
+            user-select: none;
+        }
+        .show-all-properties-toggle {
+            width: 16px;
+            height: 16px;
+            margin: 0;
+            accent-color: var(--vscode-focusBorder);
         }
         .preview-diagram {
             transition: opacity 120ms ease;
@@ -334,7 +437,8 @@ function createPreviewHtml(
         }
     </style>
 </head>
-<body>
+<body${showAllPropertiesToggle ? ' class="has-preview-toolbar"' : ""}>
+    ${toolbar}
     <main class="preview-shell"><div class="preview-diagram">${svg}</div></main>
     <div class="preview-status" role="status" aria-live="polite" hidden>
         <div class="preview-status-message">
@@ -347,21 +451,36 @@ function createPreviewHtml(
         const previewShell = document.querySelector(".preview-shell");
         const previewDiagram = document.querySelector(".preview-diagram");
         const previewStatus = document.querySelector(".preview-status");
+        const showAllPropertiesToggle = document.querySelector(".show-all-properties-toggle");
         let sourceVersion = ${documentVersion};
         const navigationSelector = "[data-fml-line][data-fml-column][data-fml-length]";
 
-        function navigate(line, column, length) {
-            vscode.postMessage({
+        function navigate(line, column, length, uri, version) {
+            const message = {
                 type: "fmlPreview.navigate",
                 line: Number(line),
                 column: Number(column),
                 length: Number(length),
-                version: sourceVersion
-            });
+                version: version === undefined ? sourceVersion : Number(version)
+            };
+            if (uri !== undefined) {
+                try {
+                    message.uri = decodeURIComponent(uri);
+                } catch {
+                    return;
+                }
+            }
+            vscode.postMessage(message);
         }
 
         function navigateFromElement(element) {
-            navigate(element.dataset.fmlLine, element.dataset.fmlColumn, element.dataset.fmlLength);
+            navigate(
+                element.dataset.fmlLine,
+                element.dataset.fmlColumn,
+                element.dataset.fmlLength,
+                element.dataset.fmlUri,
+                element.dataset.fmlVersion
+            );
         }
 
         function prepareNavigationElements() {
@@ -379,6 +498,13 @@ function createPreviewHtml(
         }
 
         prepareNavigationElements();
+
+        showAllPropertiesToggle?.addEventListener("change", () => {
+            vscode.postMessage({
+                type: "fmlPreview.setShowAllProperties",
+                showAllProperties: showAllPropertiesToggle.checked
+            });
+        });
 
         window.addEventListener("message", event => {
             const message = event.data;

@@ -1,6 +1,10 @@
 import {
     DocumentValidationResult,
+    EvaluationModelContext,
+    GET_IMPORT_VISIBLE_DOCUMENTS_REQUEST,
     INDEX_WORKSPACE_REQUEST,
+    ImportVisibleDocumentsRequest,
+    ImportVisibleDocumentsResult,
     VALIDATE_DOCUMENT_REQUEST,
     ValidateDocumentRequest,
     WORKSPACE_FILE_EVENT_NOTIFICATION,
@@ -17,8 +21,21 @@ import {
     TransportKind,
 } from "vscode-languageclient/node";
 import {registerFmlDebugger} from "./FmlDebugger";
+import {FmlTestController} from "./FmlTestController";
 import {FmlLanguageServerStatus} from "./FmlLanguageServerStatus";
+import {FmlWorkspaceIndexController} from "./FmlWorkspaceIndexController";
+import {
+    EVALUATE_FML_TOOL,
+    FmlEvaluationTool,
+    FmlValidationTool,
+    VALIDATE_FML_TOOL,
+} from "./FmlLanguageTools";
 import {FmlPreviewManager} from "./FmlPreviewManager";
+import {
+    CompleteDiagramFmlSvgRenderer,
+    FmlExternalGroupSource,
+    FmlExternalGroupSourceResolver,
+} from "./FmlPreviewRenderer";
 import {MapBuilderWatcher} from "./MapBuilderWatcher";
 import {SushiConfigWatcher} from "./SushiConfigWatcher";
 import {UiConstants} from "./constants/UiConstants";
@@ -52,11 +69,15 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     const reindexWorkspaceRef: {
         current?: () => Promise<WorkspaceIndexResult | undefined>;
     } = {};
+    const serverStatusRef: {current?: FmlLanguageServerStatus} = {};
+    let waitForWorkspaceIndexForPreview = async (): Promise<void> => undefined;
+    const testControllerRef: {current?: FmlTestController} = {};
     const sushiConfigWatcher = new SushiConfigWatcher(
         UiConstants.detailsChannel,
         undefined,
         async () => {
             await reindexWorkspaceRef.current?.();
+            await testControllerRef.current?.refresh();
         },
     );
     context.subscriptions.push(sushiConfigWatcher);
@@ -65,27 +86,49 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         undefined,
         filePath => sushiConfigWatcher.getConfigurationForPath(filePath),
     );
-    context.subscriptions.push(previewManager);
+    const completePreviewManager = new FmlPreviewManager(
+        new CompleteDiagramFmlSvgRenderer(undefined, async source => {
+            await waitForWorkspaceIndexForPreview();
+            return createExternalGroupSourceResolver(languageClient, source.uri);
+        }),
+        filePath => sushiConfigWatcher.getConfigurationForPath(filePath),
+        {
+            viewType: "fmlCompleteMapPreview",
+            titlePrefix: "Complete Preview",
+            showAllPropertiesToggle: true,
+            beginRenderActivity: source => source.showAllProperties
+                ? serverStatusRef.current?.beginActivity({
+                    statusText: "expanding preview",
+                    title: "Building Complete FML preview",
+                    detail: `Resolving imported FML maps and expanding all properties for ${source.fileName}.`,
+                })
+                : undefined,
+        },
+    );
+    context.subscriptions.push(previewManager, completePreviewManager);
     registerFmlDebugger(
         context,
         program => sushiConfigWatcher.getConfigurationForPath(program),
     );
 
+    const testController = new FmlTestController(program => sushiConfigWatcher.getConfigurationForPath(program));
+    testControllerRef.current = testController;
+    context.subscriptions.push(testController);
+    void testController.refresh();
+
     addFmlTemplate(context);
-    addPreviewCommand(previewManager, context);
+    addPreviewCommand("fmlTools.OpenPreviewToSide", previewManager, context);
+    addPreviewCommand("fmlTools.OpenCompletePreviewToSide", completePreviewManager, context);
     languageClient = createLanguageClient(context);
     await languageClient.start();
     const queuedWorkspaceEvents: WorkspaceFileEvent[] = [];
-    let workspaceIndexInitialized = false;
-    let indexOperation: Promise<WorkspaceIndexResult | undefined> | undefined;
-    let workspaceReadyOperation: Promise<unknown> = Promise.resolve();
     const watcher = new MapBuilderWatcher(UiConstants.detailsChannel, {
         onFmlFile: event => {
             const workspaceEvent: WorkspaceFileEvent = {
                 type: event.type,
                 uri: event.uri.toString(),
             };
-            if (!workspaceIndexInitialized) {
+            if (!indexController.isReady) {
                 queuedWorkspaceEvents.push(workspaceEvent);
                 return;
             }
@@ -94,69 +137,117 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         },
     });
     context.subscriptions.push(watcher);
-    const reindexWorkspace = (): Promise<WorkspaceIndexResult | undefined> => {
-        if (indexOperation) {
-            return indexOperation;
-        }
-        workspaceIndexInitialized = false;
-        indexOperation = initializeWorkspaceIndex(
-            watcher,
-            languageClient!,
-            UiConstants.detailsChannel,
-            sushiConfigWatcher.getWorkspaceConfiguration(),
-        ).finally(() => {
-            workspaceIndexInitialized = true;
+    const indexController = new FmlWorkspaceIndexController(
+        async () => {
+            const result = await initializeWorkspaceIndex(
+                watcher,
+                languageClient!,
+                UiConstants.detailsChannel,
+                sushiConfigWatcher.getWorkspaceConfiguration(),
+                sushiConfigWatcher.getEvaluationContexts(),
+            );
             logData(
                 `Replaying ${queuedWorkspaceEvents.length} filesystem event(s) after indexing.`,
                 UiConstants.detailsChannel,
             );
-            for (const event of queuedWorkspaceEvents.splice(0)) {
-                void languageClient?.sendNotification(
+            while (queuedWorkspaceEvents.length > 0) {
+                await languageClient!.sendNotification(
                     WORKSPACE_FILE_EVENT_NOTIFICATION,
-                    event,
+                    queuedWorkspaceEvents[0],
                 );
+                queuedWorkspaceEvents.shift();
             }
-            indexOperation = undefined;
-        });
-        workspaceReadyOperation = indexOperation;
-        return indexOperation;
-    };
-    reindexWorkspaceRef.current = reindexWorkspace;
-    const serverStatus = new FmlLanguageServerStatus(
+            return result;
+        },
+        async () => { await languageClient!.restart(); },
+    );
+    reindexWorkspaceRef.current = () => indexController.reindex(true);
+    const activeServerStatus = new FmlLanguageServerStatus(
         languageClient,
-        reindexWorkspace,
-        async () => {
-            workspaceIndexInitialized = false;
-            const restartOperation = (async () => {
-                const previousIndexOperation = indexOperation;
-                await languageClient?.restart();
-                if (previousIndexOperation) {
-                    await previousIndexOperation;
-                }
-                await reindexWorkspace();
-            })();
-            workspaceReadyOperation = restartOperation;
-            await restartOperation;
+        () => indexController.reindex(),
+        async () => { await indexController.restart(); },
+    );
+    serverStatusRef.current = activeServerStatus;
+    context.subscriptions.push(activeServerStatus);
+    void indexController.reindex().then(
+        () => activeServerStatus.refresh(),
+        error => {
+            const message = error instanceof Error ? error.message : String(error);
+            void vscode.window.showErrorMessage(`FML workspace indexing failed: ${message}`);
+            return activeServerStatus.refresh();
         },
     );
-    context.subscriptions.push(serverStatus);
-    void reindexWorkspace().then(() => serverStatus.refresh());
-    const waitForWorkspaceIndex = async (): Promise<void> => {
-        while (!workspaceIndexInitialized) {
-            await workspaceReadyOperation;
-        }
-    };
+    const waitForWorkspaceIndex = () => indexController.waitUntilReady();
+    waitForWorkspaceIndexForPreview = waitForWorkspaceIndex;
     addValidationCommand(
         languageClient,
         context,
         waitForWorkspaceIndex,
-        () => workspaceIndexInitialized,
+        () => indexController.isReady,
     );
-
+    context.subscriptions.push(
+        vscode.lm.registerTool(
+            VALIDATE_FML_TOOL,
+            new FmlValidationTool(languageClient, waitForWorkspaceIndex),
+        ),
+        vscode.lm.registerTool(
+            EVALUATE_FML_TOOL,
+            new FmlEvaluationTool(
+                languageClient,
+                waitForWorkspaceIndex,
+                program => sushiConfigWatcher.getEvaluationConfigurationForPath(program),
+            ),
+        ),
+    );
 }
 
-function addPreviewCommand(previewManager: FmlPreviewManager, context: vscode.ExtensionContext): void {
-    context.subscriptions.push(vscode.commands.registerCommand("fmlTools.OpenPreviewToSide", () => {
+export async function createExternalGroupSourceResolver(
+    client: LanguageClient | undefined,
+    sourceUri: vscode.Uri,
+): Promise<FmlExternalGroupSourceResolver | undefined> {
+    if (!client) {
+        return undefined;
+    }
+    try {
+        const result = await client.sendRequest<ImportVisibleDocumentsResult>(
+            GET_IMPORT_VISIBLE_DOCUMENTS_REQUEST,
+            {uri: sourceUri.toString()} satisfies ImportVisibleDocumentsRequest,
+        );
+        const sourcesByGroupName = new Map<string, FmlExternalGroupSource>();
+        for (const uriText of result.uris) {
+            const document = await vscode.workspace.openTextDocument(vscode.Uri.parse(uriText));
+            const text = document.getText();
+            const map = parseFmlModel(text);
+            if (!map) {
+                continue;
+            }
+            const source: FmlExternalGroupSource = {
+                uri: document.uri.toString(),
+                text,
+                version: document.version,
+            };
+            for (const group of map.groups) {
+                if (!sourcesByGroupName.has(group.name)) {
+                    sourcesByGroupName.set(group.name, source);
+                }
+            }
+        }
+        return sourcesByGroupName.size > 0
+            ? groupName => sourcesByGroupName.get(groupName)
+            : undefined;
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        logData(`Unable to resolve imported FML groups for preview: ${message}`, UiConstants.detailsChannel);
+        return undefined;
+    }
+}
+
+function addPreviewCommand(
+    command: string,
+    previewManager: FmlPreviewManager,
+    context: vscode.ExtensionContext,
+): void {
+    context.subscriptions.push(vscode.commands.registerCommand(command, () => {
         const document = vscode.window.activeTextEditor?.document;
         if (!document || document.languageId !== FML_MODE.language) {
             void vscode.window.showErrorMessage("Open an FML document before opening the preview.");
@@ -166,12 +257,13 @@ function addPreviewCommand(previewManager: FmlPreviewManager, context: vscode.Ex
     }));
 }
 
-async function initializeWorkspaceIndex(
-    watcher: MapBuilderWatcher,
-    client: LanguageClient,
+export async function initializeWorkspaceIndex(
+    watcher: Pick<MapBuilderWatcher, "scanFmlFiles">,
+    client: Pick<LanguageClient, "sendRequest">,
     logger: vscode.OutputChannel,
     sushiConfiguration: import("./SushiConfigWatcher").SushiWorkspaceConfiguration,
-): Promise<WorkspaceIndexResult | undefined> {
+    evaluationContexts: readonly EvaluationModelContext[],
+): Promise<WorkspaceIndexResult> {
     try {
         const files = await watcher.scanFmlFiles();
         await logProfileResolutions(files, sushiConfiguration, logger);
@@ -183,6 +275,8 @@ async function initializeWorkspaceIndex(
                 defaultFhirVersion: toFhirVersion(sushiConfiguration.fhirVersion),
                 profileBaseTypes: sushiConfiguration.profileBaseTypes,
                 customTypeModels: sushiConfiguration.customTypeModels,
+                modelFiles: sushiConfiguration.modelFileCache,
+                evaluationContexts,
             } satisfies WorkspaceIndexRequest,
         );
         logData(
@@ -195,7 +289,7 @@ async function initializeWorkspaceIndex(
     } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         logData(`Language-server workspace indexing failed: ${message}`, logger);
-        return undefined;
+        throw error;
     }
 }
 

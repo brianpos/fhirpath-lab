@@ -2,14 +2,19 @@ import { StructureMap, StructureMapGroupRule } from "fhir/r4b";
 import type {
   FhirVersion,
   FmlStructureMap,
-  Rule as FmlRule,
-  SourcePosition,
-  TransformParameter,
 } from "./fml_models";
 import type { TypeModel, ElementModel } from "./custom_model";
 import { lookupByTypeName as lookupByTypeNameR4B } from "./models/generated/r4b";
-import { getFhirPathVariableReferences } from "./fhirpath_validator";
-import { resolveTransformResultTypes } from "./fml_transform_signatures";
+import {
+  getDiagramPosition,
+  toFmlDiagramInput,
+  toStructureMapDiagramInput,
+  type DiagramMapInput,
+  type DiagramGroupInput,
+  type DiagramRuleInput,
+  type DiagramSourcePosition,
+} from "./fml_diagram_input";
+export type { DiagramSourcePosition } from "./fml_diagram_input";
 
 /**
  * Function used to resolve a TypeModel by its TypeName. Pass any per-version
@@ -25,37 +30,6 @@ export type LogicalTypeClassifier = (typeName: string) => boolean;
  * fall back to the default lookup.
  */
 export type LookupForVersion = (version: FhirVersion | undefined) => TypeLookup | undefined;
-
-export type DiagramSourcePosition = Pick<SourcePosition, "startIndex" | "endIndex">
-  & Partial<Pick<SourcePosition, "startLine" | "startColumn" | "endLine" | "endColumn">>;
-
-interface DiagramMapInput {
-  group: DiagramGroupInput[];
-}
-
-interface DiagramGroupInput {
-  name: string;
-  extends?: string;
-  input: Array<{
-    name: string;
-    type?: string;
-    mode: string;
-    fhirVersion?: FhirVersion;
-    fmlPosition?: DiagramSourcePosition;
-    typeDeclared?: boolean;
-  }>;
-  rule: DiagramRuleInput[];
-  fmlPosition?: DiagramSourcePosition;
-}
-
-interface DiagramRuleInput {
-  name?: string;
-  source: any[];
-  target: any[];
-  dependent: Array<{name: string; variable: string[]}>;
-  rule: DiagramRuleInput[];
-  fmlPosition?: DiagramSourcePosition;
-}
 
 // ===== Exported Data Types =====
 
@@ -128,6 +102,9 @@ export interface PropertyEntry {
   additionalConnectionIds?: number[];
   /** Connections originating from variables referenced by FHIRPath expressions. */
   expressionConnectionIds?: number[];
+  /** Connections where source presence or filtering triggers target generation
+   *  without supplying the target value. */
+  triggerConnectionIds?: number[];
   /** The name of the top-level rule that produced this entry */
   ruleName?: string;
   /** When true, this target property creates a new node (create/cc/c or variable used as context) */
@@ -241,7 +218,7 @@ interface VarInfo {
  * omitted, the bundled R4B dictionary is used as a sensible default.
  */
 export function extractStructureMapDiagram(map: StructureMap, typeLookup?: TypeLookup, showMissingProperties?: boolean, lookupForVersion?: LookupForVersion, isLogicalType?: LogicalTypeClassifier): StructureMapDiagram {
-  return extractDiagramInput(map as unknown as DiagramMapInput, typeLookup, showMissingProperties, lookupForVersion, isLogicalType);
+  return extractDiagramInput(toStructureMapDiagramInput(map), typeLookup, showMissingProperties, lookupForVersion, isLogicalType);
 }
 
 /** Extract diagram data directly from the position-aware FML model. */
@@ -319,7 +296,10 @@ function extractDiagramInput(map: DiagramMapInput, typeLookup?: TypeLookup, show
       sourceTypes.push(cs);
     }
 
-    // Prune "no data flow" connections from source→target.
+    // Replace "no data flow" connections from source→target with trigger
+    // connections. A fixed value or self-contained transform does not consume
+    // the source value, but the matched source occurrence still controls
+    // whether target generation fires.
     // When a target has fixedValue or a self-contained transformFunction
     // (no valueId params), no data actually flows from the source — the
     // connector is misleading.  Remove the connectionId from those
@@ -340,12 +320,49 @@ function extractDiagramInput(map: DiagramMapInput, typeLookup?: TypeLookup, show
         for (const addl of p.additionalConnectionIds || []) srcBoxConnIds.add(addl);
       }
     }
-    // Remove connectionId from individual targets that don't consume source data
+    const sourceEntriesByConnectionId = new Map<number, PropertyEntry[]>();
+    for (const dt of sourceTypes) {
+      for (const p of dt.properties) {
+        for (const connectionId of [
+          ...(p.connectionId !== undefined ? [p.connectionId] : []),
+          ...(p.additionalConnectionIds ?? []),
+        ]) {
+          const entries = sourceEntriesByConnectionId.get(connectionId) ?? [];
+          entries.push(p);
+          sourceEntriesByConnectionId.set(connectionId, entries);
+        }
+      }
+    }
+    // Replace each source-rooted no-value target edge with an independently
+    // styled trigger edge. A distinct id preserves normal data-flow edges in
+    // multi-target rules where another target does consume the source value.
     for (const dt of targetTypes) {
       for (const p of dt.properties) {
-        if (p.role === "target" && p.connectionId !== undefined &&
-            srcBoxConnIds.has(p.connectionId) && p.noSourceData) {
-          p.connectionId = undefined;
+        if (p.role === "target" && p.noSourceData) {
+          const sourceConnectionIds = [
+            ...(p.connectionId !== undefined ? [p.connectionId] : []),
+            ...(p.additionalConnectionIds ?? []),
+          ].filter(connectionId => srcBoxConnIds.has(connectionId));
+          for (const sourceConnectionId of sourceConnectionIds) {
+            const triggerConnectionId = nextConnectionId++;
+            p.triggerConnectionIds ??= [];
+            p.triggerConnectionIds.push(triggerConnectionId);
+            for (const sourceEntry of sourceEntriesByConnectionId.get(sourceConnectionId) ?? []) {
+              sourceEntry.triggerConnectionIds ??= [];
+              sourceEntry.triggerConnectionIds.push(triggerConnectionId);
+            }
+          }
+          if (p.connectionId !== undefined && srcBoxConnIds.has(p.connectionId)) {
+            p.connectionId = undefined;
+          }
+          if (p.additionalConnectionIds) {
+            p.additionalConnectionIds = p.additionalConnectionIds.filter(
+              connectionId => !srcBoxConnIds.has(connectionId)
+            );
+            if (p.additionalConnectionIds.length === 0) {
+              p.additionalConnectionIds = undefined;
+            }
+          }
         }
       }
     }
@@ -447,31 +464,31 @@ function extractDiagramInput(map: DiagramMapInput, typeLookup?: TypeLookup, show
       // type — so deeper properties like `entry.resource.status` resolve
       // against the created type (e.g. Observation) rather than the
       // static element type at `entry.resource` (Resource).
-      const createBoundaries = new Map<string, string>();
+      const createBoundariesByRule = new Map<number | undefined, Map<string, string>>();
       for (const p of dt.properties) {
         const boundaryType = p.createdType ?? p.typeFilter;
         if (boundaryType && p.path && p.path !== ".") {
-          createBoundaries.set(p.constraintPath ?? p.path, boundaryType);
+          const boundaries = createBoundariesByRule.get(p.ruleId) ?? new Map<string, string>();
+          boundaries.set(p.constraintPath ?? p.path, boundaryType);
+          createBoundariesByRule.set(p.ruleId, boundaries);
         }
       }
       const resolutions = new Map<PropertyEntry, PathResolution>();
       const entriesByPath = new Map<string, PropertyEntry[]>();
       for (const p of dt.properties) {
         const resolutionPath = p.constraintPath ?? p.path;
-        const existing = entriesByPath.get(resolutionPath) ?? [];
+        const scopedPath = propertyOccurrencePath(p.ruleId, resolutionPath);
+        const existing = entriesByPath.get(scopedPath) ?? [];
         existing.push(p);
-        entriesByPath.set(resolutionPath, existing);
+        entriesByPath.set(scopedPath, existing);
         if (!rootKnown) {
           if (p.path && p.path !== ".") p.unknownElement = true;
           continue;
         }
         // Skip the root-context placeholder ("." path) which has no element.
         if (!p.path || p.path === ".") continue;
-        const propertyCreateBoundaries = p.createdType
-          ? new Map(createBoundaries).set(p.path, p.createdType)
-          : p.typeFilter
-            ? new Map(createBoundaries)
-            : createBoundaries;
+        const propertyCreateBoundaries = new Map(createBoundariesByRule.get(p.ruleId) ?? []);
+        if (p.createdType) propertyCreateBoundaries.set(resolutionPath, p.createdType);
         if (p.typeFilter) propertyCreateBoundaries.delete(resolutionPath);
         const resolved = resolvePathInModel(dt.typeName, resolutionPath, boxLookup, propertyCreateBoundaries);
         if (resolved) {
@@ -545,9 +562,10 @@ function extractDiagramInput(map: DiagramMapInput, typeLookup?: TypeLookup, show
       // A child path constrains every choice-valued ancestor. Intersect
       // constraints from sibling child paths because one runtime type must
       // support all children referenced beneath the same bound node.
-      for (const resolved of resolutions.values()) {
+      for (const [property, resolved] of resolutions) {
         for (const step of resolved.steps.slice(0, -1)) {
-          for (const ancestor of entriesByPath.get(step.internalPath) ?? []) {
+          const scopedPath = propertyOccurrencePath(property.ruleId, step.internalPath);
+          for (const ancestor of entriesByPath.get(scopedPath) ?? []) {
             ancestor.possibleTypeNames ??= step.possibleTypeNames;
             ancestor.compatibleTypeNames = intersectTypeNames(
               ancestor.compatibleTypeNames ?? ancestor.possibleTypeNames,
@@ -573,6 +591,10 @@ function extractDiagramInput(map: DiagramMapInput, typeLookup?: TypeLookup, show
   }
 
   return { groups };
+}
+
+function propertyOccurrencePath(ruleId: number | undefined, path: string): string {
+  return `${ruleId ?? "unscoped"}:${path}`;
 }
 
 /**
@@ -1006,7 +1028,7 @@ function scanDependencyRules(
     for (const source of rule.source) {
       if (source.variable) {
         variables.set(source.variable, resolveVariableTypes(
-          variables.get(source.context) ?? [], source.element, source.type,
+          (source.context ? variables.get(source.context) : undefined) ?? [], source.element, source.type,
           defaultLookup, lookupForVersion,
         ));
       }
@@ -1015,13 +1037,13 @@ function scanDependencyRules(
       if (target.variable) {
         const createdType = getCreatedType(target);
         const transformResultTypes = (target as any).transformResultTypes as string[] | undefined;
-        const version = firstVersion(variables.get(target.context));
+        const version = firstVersion(target.context ? variables.get(target.context) : undefined);
         variables.set(target.variable, createdType
           ? [{typeName: createdType, fhirVersion: version}]
           : transformResultTypes?.length
             ? transformResultTypes.map(typeName => ({typeName, fhirVersion: version}))
             : resolveVariableTypes(
-              variables.get(target.context) ?? [], target.element, undefined,
+              (target.context ? variables.get(target.context) : undefined) ?? [], target.element, undefined,
               defaultLookup, lookupForVersion,
             ));
       }
@@ -1627,126 +1649,6 @@ function describeComputedSource(tgt: { transform?: string; parameter?: any[] }, 
   return `${tgt.transform}(${params.join(", ")})`;
 }
 
-function getDiagramPosition(value: unknown): DiagramSourcePosition | undefined {
-  const candidate = value as {fmlPosition?: DiagramSourcePosition; _fmlPosition?: DiagramSourcePosition};
-  return candidate.fmlPosition ?? candidate._fmlPosition;
-}
-
-function toFmlDiagramInput(fml: FmlStructureMap): DiagramMapInput {
-  const structuresByAlias = new Map<string, {typeName: string; version?: FhirVersion}>();
-  const structuresByRoleAndType = new Map<string, {typeName: string; version?: FhirVersion}>();
-  for (const structure of fml.structures) {
-    const canonical = structure.canonical ?? structure.url;
-    const resolved = {
-      typeName: structure.resolvedTypeName ?? (canonical.split("/").pop() || canonical),
-      version: structure.fhirVersion,
-    };
-    if (structure.alias) structuresByAlias.set(structure.alias, resolved);
-    const parameterMode = structure.mode === "source" || structure.mode === "queried" ? "source" : "target";
-    structuresByRoleAndType.set(`${parameterMode}:${resolved.typeName}`, resolved);
-  }
-
-  return {
-    group: fml.groups.map(group => ({
-      name: group.name,
-      extends: group.extends,
-      input: group.parameters.map(parameter => {
-        const structure = parameter.type
-          ? structuresByAlias.get(parameter.type)
-            ?? structuresByRoleAndType.get(`${parameter.mode}:${parameter.type}`)
-          : undefined;
-        return {
-          name: parameter.name,
-          type: structure?.typeName ?? parameter.type,
-          mode: parameter.mode,
-          fhirVersion: structure?.version
-            ?? (parameter.mode === "source" ? fml.sourceModelVersion : fml.targetModelVersion),
-          fmlPosition: parameter.position,
-          typeDeclared: !!parameter.type,
-        };
-      }),
-      rule: group.rules.map(rule => toFmlDiagramRule(rule, collectFmlVariableNames(group))),
-      fmlPosition: group.position,
-    })),
-  };
-}
-
-function toFmlDiagramRule(rule: FmlRule, variableNames: string[]): DiagramRuleInput {
-  const batchRules: DiagramRuleInput[] = (rule.identityFields ?? []).map(field => ({
-    name: field.name,
-    source: [{
-      context: rule.sources[0]?.context,
-      element: field.name,
-      fmlPosition: field.position,
-    }],
-    target: [{
-      context: rule.targets[0]?.context,
-      element: field.name,
-      fmlPosition: field.position,
-    }],
-    dependent: [],
-    rule: [],
-    fmlPosition: field.position,
-  }));
-  return {
-    name: rule.name,
-    source: rule.sources.map(source => ({
-      context: source.context,
-      element: source.element,
-      variable: source.variable,
-      condition: source.condition,
-      type: source.type,
-      fmlPosition: source.position,
-    })),
-    target: rule.targets.map(target => ({
-      context: target.context,
-      element: target.element,
-      variable: target.variable,
-      transform: target.transform?.type,
-      transformResultTypes: target.transform ? resolveTransformResultTypes(target.transform) : [],
-      transformPosition: target.transform?.position,
-      expressionVariables: target.transform?.parameters
-        .filter(parameter => parameter.type === "expression")
-        .flatMap(parameter => getFhirPathVariableReferences(String(parameter.value), variableNames)),
-      parameter: target.transform?.parameters.map(toDiagramTransformParameter),
-      fmlPosition: target.position,
-    })),
-    dependent: rule.dependent?.invocations.map(invocation => ({
-      name: invocation.name,
-      variable: invocation.parameters.map(parameter => String(parameter.value)),
-    })) ?? [],
-    rule: [
-      ...batchRules,
-      ...(rule.dependent?.rules.map(nestedRule => toFmlDiagramRule(nestedRule, variableNames)) ?? []),
-    ],
-    fmlPosition: rule.position,
-  };
-}
-
-function collectFmlVariableNames(group: FmlStructureMap["groups"][number]): string[] {
-  const names = new Set(group.parameters.map(parameter => parameter.name));
-  const collect = (rules: FmlRule[]): void => {
-    for (const rule of rules) {
-      for (const source of rule.sources) if (source.variable) names.add(source.variable);
-      for (const target of rule.targets) if (target.variable) names.add(target.variable);
-      collect(rule.dependent?.rules ?? []);
-    }
-  };
-  collect(group.rules);
-  return [...names];
-}
-
-function toDiagramTransformParameter(parameter: TransformParameter): Record<string, string | number | boolean> {
-  if (parameter.type === "identifier") return {valueId: String(parameter.value)};
-  if (typeof parameter.value === "boolean") return {valueBoolean: parameter.value};
-  if (typeof parameter.value === "number") {
-    return parameter.literalType === "decimal"
-      ? {valueDecimal: parameter.value}
-      : {valueInteger: parameter.value};
-  }
-  return {valueString: String(parameter.value)};
-}
-
 // ===== SVG Layout Constants =====
 
 const PADDING = 20;
@@ -1809,6 +1711,7 @@ interface PropertyDisplay {
   /** Additional connectionIds merged from deduplicated entries */
   additionalConnectionIds?: number[];
   expressionConnectionIds?: number[];
+  triggerConnectionIds?: number[];
   /** The name of the top-level rule */
   ruleName?: string;
   /** When true, this target property creates a new node */
@@ -1857,7 +1760,8 @@ interface PropertyDisplay {
 function treeSortProperties(entries: PropertyEntry[]): PropertyEntry[] {
   if (entries.length <= 1) return entries;
 
-  const pathSet = new Set(entries.map(e => e.path));
+  const treePaths = entries.map(entry => entry.constraintPath ?? entry.path);
+  const pathSet = new Set(treePaths);
 
   function findParent(path: string): string {
     const parts = path.split(".");
@@ -1872,7 +1776,7 @@ function treeSortProperties(entries: PropertyEntry[]): PropertyEntry[] {
   const childrenOf = new Map<string, number[]>();
   childrenOf.set("", []);
   for (let i = 0; i < entries.length; i++) {
-    const parent = findParent(entries[i].path);
+    const parent = findParent(treePaths[i]);
     if (!childrenOf.has(parent)) {
       childrenOf.set(parent, []);
     }
@@ -1887,7 +1791,7 @@ function treeSortProperties(entries: PropertyEntry[]): PropertyEntry[] {
       if (visited.has(idx)) continue;
       visited.add(idx);
       result.push(entries[idx]);
-      walk(entries[idx].path);
+      walk(treePaths[idx]);
     }
   }
   walk("");
@@ -1942,6 +1846,12 @@ function deduplicateProperties(entries: PropertyEntry[]): PropertyEntry[] {
           existing.expressionConnectionIds.push(connectionId);
         }
       }
+      for (const connectionId of e.triggerConnectionIds ?? []) {
+        existing.triggerConnectionIds ??= [];
+        if (!existing.triggerConnectionIds.includes(connectionId)) {
+          existing.triggerConnectionIds.push(connectionId);
+        }
+      }
     } else {
       if (e.fmlPosition) {
         e.fmlPositions = [e.fmlPosition];
@@ -1990,6 +1900,7 @@ function buildPropertyDisplay(type: DiagramType): PropertyDisplay[] {
       connectionId: entry.connectionId,
       additionalConnectionIds: entry.additionalConnectionIds,
       expressionConnectionIds: entry.expressionConnectionIds,
+      triggerConnectionIds: entry.triggerConnectionIds,
       ruleName: entry.ruleName,
       isCreated: entry.isCreated,
       createdType: entry.createdType,
@@ -2408,6 +2319,9 @@ function renderInstanceDiagramSvg(data: StructureMapDiagram): string {
     `.sm-connector-line { stroke: ${COLORS.arrowColor}; stroke-width: 1.35; stroke-linecap: round; opacity: 0.95; }`
   );
   svg.push(
+    `.sm-trigger-connector-line { stroke: #b8bec6; stroke-width: 1.15; opacity: 0.9; }`
+  );
+  svg.push(
     `.sm-connector-port-source { fill: ${COLORS.typeBg}; stroke: ${COLORS.sourceHeaderText}; stroke-width: 1.6; }`
   );
   svg.push(
@@ -2492,6 +2406,7 @@ function renderInstanceDiagramSvg(data: StructureMapDiagram): string {
       ruleId?: number;
     }>();
     const expressionConnectionIds = new Set<number>();
+    const triggerConnectionIds = new Set<number>();
     const propertyMarkers: PropertyMarker[] = [];
     /** Top-level rule ids whose source side uses a property accessor
      *  (e.g. `src.authored as s`). Such rules get per-connectionId thin
@@ -2602,6 +2517,7 @@ function renderInstanceDiagramSvg(data: StructureMapDiagram): string {
           const rowConnectionIds = [
             ...(pd.connectionId !== undefined ? [pd.connectionId] : []),
             ...(pd.additionalConnectionIds ?? []),
+            ...(pd.triggerConnectionIds ?? []),
           ];
           if (rowConnectionIds.length > 0) {
             const centerY = propY - PROP_LINE_HEIGHT / 2 + 4;
@@ -2627,6 +2543,9 @@ function renderInstanceDiagramSvg(data: StructureMapDiagram): string {
             for (const rowConnectionId of rowConnectionIds) {
               if (pd.expressionConnectionIds?.includes(rowConnectionId)) {
                 expressionConnectionIds.add(rowConnectionId);
+              }
+              if (pd.triggerConnectionIds?.includes(rowConnectionId)) {
+                triggerConnectionIds.add(rowConnectionId);
               }
               if (!connectionAnchors.has(rowConnectionId)) {
                 connectionAnchors.set(rowConnectionId, {
@@ -2735,6 +2654,7 @@ function renderInstanceDiagramSvg(data: StructureMapDiagram): string {
             const rowConnIds: number[] = [];
             if (pd.connectionId !== undefined) rowConnIds.push(pd.connectionId);
             for (const addl of pd.additionalConnectionIds || []) rowConnIds.push(addl);
+            for (const trigger of pd.triggerConnectionIds || []) rowConnIds.push(trigger);
             const connAttr = rowConnIds.length > 0
               ? ` data-conn-id-list="${rowConnIds.join(",")}"`
               : "";
@@ -2789,6 +2709,7 @@ function renderInstanceDiagramSvg(data: StructureMapDiagram): string {
     for (const [connId, positions] of connectionAnchors) {
       if (t2tConnIds.has(connId)) continue;
       if (expressionConnectionIds.has(connId)) continue;
+      if (triggerConnectionIds.has(connId)) continue;
       if (positions.ruleId === undefined) {
         untaggedConnIds.push(connId);
         continue;
@@ -2814,6 +2735,24 @@ function renderInstanceDiagramSvg(data: StructureMapDiagram): string {
           svg.push(
             `<g class="sm-expression-connector"><title>FHIRPath variable reference</title>`
             + `<line class="sm-connector-line sm-expression-connector-line" x1="${sourceAnchor.x}" y1="${sourceAnchor.y}" x2="${targetAnchor.x}" y2="${targetAnchor.y}" stroke-dasharray="2 4" data-conn-id-list="${connId}" />`
+            + `</g>`
+          );
+        }
+      }
+    }
+
+    // Trigger relationships show control flow rather than value flow: the
+    // source occurrence (and any filter on it) causes a self-contained target
+    // value to be generated. Keep these visually distinct from dotted
+    // FHIRPath variable references.
+    for (const connId of triggerConnectionIds) {
+      const positions = connectionAnchors.get(connId);
+      if (!positions) continue;
+      for (const sourceAnchor of positions.sourceAnchors) {
+        for (const targetAnchor of positions.targetAnchors) {
+          svg.push(
+            `<g class="sm-trigger-connector"><title>Source presence triggers target generation</title>`
+            + `<line class="sm-connector-line sm-trigger-connector-line" x1="${sourceAnchor.x}" y1="${sourceAnchor.y}" x2="${targetAnchor.x}" y2="${targetAnchor.y}" stroke-dasharray="5 4" data-conn-id-list="${connId}" />`
             + `</g>`
           );
         }
@@ -2930,4 +2869,3 @@ function renderInstanceDiagramSvg(data: StructureMapDiagram): string {
   svg.push("</svg>");
   return svg.join("\n");
 }
-

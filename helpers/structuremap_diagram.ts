@@ -1,7 +1,8 @@
-import { StructureMap, StructureMapGroupRule } from "fhir/r4b";
+import { StructureMap } from "fhir/r4b";
 import type { TypeModel, ElementModel } from "./custom_model";
-import type { FhirVersion } from "./fml_models";
+import type { FhirVersion, FmlStructureMap } from "./fml_models";
 import { lookupByTypeName as lookupByTypeNameR4B } from "./models/generated/r4b";
+import { getDiagramPosition, toFmlDiagramInput, toStructureMapDiagramInput, type DiagramMapInput, type DiagramRuleInput } from "./fml_diagram_input";
 
 /**
  * Function used to resolve a TypeModel by its TypeName. Pass any per-version
@@ -109,7 +110,7 @@ interface InferVarInfo {
  * Returns a map of `groupName → inputName → inferredTypeName`.
  */
 function inferGroupInputTypes(
-  map: StructureMap,
+  map: DiagramMapInput,
   lookup: TypeLookup
 ): Map<string, Map<string, string>> {
   const inferred = new Map<string, Map<string, string>>();
@@ -231,6 +232,15 @@ function inferGroupInputTypes(
  * omitted, the bundled R4B dictionary is used as a sensible default.
  */
 export function extractStructureMapDiagram(map: StructureMap, typeLookup?: TypeLookup, lookupForVersion?: LookupForVersion): StructureMapDiagram {
+  return extractDiagramInput(toStructureMapDiagramInput(map), typeLookup, lookupForVersion);
+}
+
+/** Extract diagram data directly from the position-aware FML model. */
+export function extractFmlStructureMapDiagram(fml: FmlStructureMap, typeLookup?: TypeLookup, lookupForVersion?: LookupForVersion): StructureMapDiagram {
+  return extractDiagramInput(toFmlDiagramInput(fml), typeLookup, lookupForVersion);
+}
+
+function extractDiagramInput(map: DiagramMapInput, typeLookup?: TypeLookup, lookupForVersion?: LookupForVersion): StructureMapDiagram {
   const groups: DiagramGroup[] = [];
   nextRuleId = 0;
   const lookup = typeLookup ?? lookupByTypeNameR4B;
@@ -266,14 +276,14 @@ export function extractStructureMapDiagram(map: StructureMap, typeLookup?: TypeL
         paramName: input.name,
         properties: entries,
       };
-      if ((input as any)._fmlPosition) dt.fmlPosition = (input as any)._fmlPosition;
-      if ((input as any)._fmlVersion) dt.fhirVersion = (input as any)._fmlVersion;
+      dt.fmlPosition = getDiagramPosition(input);
+      dt.fhirVersion = input.fhirVersion;
       if (input.mode === "source") sourceTypes.push(dt);
       else targetTypes.push(dt);
     }
 
     const dg: DiagramGroup = { name: group.name, sourceTypes, targetTypes };
-    if ((group as any)._fmlPosition) dg.fmlPosition = (group as any)._fmlPosition;
+    dg.fmlPosition = getDiagramPosition(group);
     groups.push(dg);
   }
 
@@ -493,7 +503,7 @@ function deduplicateSourceProperties(entries: PropertyEntry[]): PropertyEntry[] 
 let nextRuleId = 0;
 
 function collectProperties(
-  rules: StructureMapGroupRule[] | undefined,
+  rules: DiagramRuleInput[] | undefined,
   varMap: Map<string, VarInfo>,
   propsMap: Map<string, PropertyEntry[]>,
   parentRuleId?: number
@@ -503,7 +513,7 @@ function collectProperties(
   for (const rule of rules) {
     const ruleId = parentRuleId ?? nextRuleId++;
     const ruleName = parentRuleId !== undefined ? undefined : rule.name;
-    const rulePos = (rule as any)._fmlPosition as { startIndex: number; endIndex: number } | undefined;
+    const rulePos = getDiagramPosition(rule);
 
     // Determine dependent group descriptions for this rule (name + params)
     const dependentDescs = (rule.dependent || [])
@@ -526,7 +536,7 @@ function collectProperties(
           const entry: PropertyEntry = { path: fullPath, ruleId, ruleName };
           if (src.condition) entry.filter = src.condition;
           if (src.type) entry.typeFilter = src.type;
-          if ((src as any)._fmlPosition) entry.fmlPosition = (src as any)._fmlPosition;
+          entry.fmlPosition = getDiagramPosition(src);
           if (rulePos) entry.ruleFmlPosition = rulePos;
           propsMap.get(info.rootInput)?.push(entry);
           if (src.variable) {
@@ -538,7 +548,7 @@ function collectProperties(
         } else if (info && !src.element) {
           // Source references the type directly — show as $this
           const dotEntry: PropertyEntry = { path: ".", ruleId, ruleName };
-          if ((src as any)._fmlPosition) dotEntry.fmlPosition = (src as any)._fmlPosition;
+          dotEntry.fmlPosition = getDiagramPosition(src);
           if (rulePos) dotEntry.ruleFmlPosition = rulePos;
           propsMap.get(info.rootInput)?.push(dotEntry);
           if (src.variable) {
@@ -580,7 +590,7 @@ function collectProperties(
           if (tgt.variable && !entry.isCreated && !hasVariableRef) {
             entry.isCreated = true;
           }
-          if ((tgt as any)._fmlPosition) entry.fmlPosition = (tgt as any)._fmlPosition;
+          entry.fmlPosition = getDiagramPosition(tgt);
           if (rulePos) entry.ruleFmlPosition = rulePos;
           propsMap.get(info.rootInput)?.push(entry);
           lastTargetRootInput = info.rootInput;
@@ -606,6 +616,7 @@ function collectProperties(
           dependentCall: desc,
           ruleId,
           ruleName,
+          ruleFmlPosition: rulePos,
         });
       }
     }
@@ -786,6 +797,8 @@ function buildPropertyDisplay(properties: PropertyEntry[]): PropertyDisplay[] {
         dependentCall: entry.dependentCall,
         ruleId: entry.ruleId,
         ruleName: entry.ruleName,
+        fmlPosition: entry.fmlPosition,
+        ruleFmlPosition: entry.ruleFmlPosition,
       };
     }
     const parts = entry.path.split(".");
@@ -914,6 +927,16 @@ function countRuleDividers(propDisplay: PropertyDisplay[]): number {
  */
 export function generateStructureMapDiagramSvg(map: StructureMap, typeLookup?: TypeLookup, lookupForVersion?: LookupForVersion): string {
   const data = extractStructureMapDiagram(map, typeLookup, lookupForVersion);
+  return renderStructureMapDiagramSvg(data);
+}
+
+/** Generate an SVG directly from the position-aware FML model. */
+export function generateFmlStructureMapDiagramSvg(fml: FmlStructureMap, typeLookup?: TypeLookup, lookupForVersion?: LookupForVersion): string {
+  const data = extractFmlStructureMapDiagram(fml, typeLookup, lookupForVersion);
+  return renderStructureMapDiagramSvg(data);
+}
+
+function renderStructureMapDiagramSvg(data: StructureMapDiagram): string {
 
   if (data.groups.length === 0) {
     return [
@@ -1205,7 +1228,7 @@ export function generateStructureMapDiagramSvg(map: StructureMap, typeLookup?: T
             const iconX = px;
             const iconY = propY - 10;
             svg.push(
-              `<g class="sm-dependent-call" transform="translate(${iconX}, ${iconY})">` +
+              `<g class="sm-dependent-call" transform="translate(${iconX}, ${iconY})"${propPosAttrs}>` +
               `<path d="M2 3h6l3 3-3 3H2l3-3-3-3z" fill="none" stroke="${COLORS.arrowColor}" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round" />` +
               `</g>`
             );

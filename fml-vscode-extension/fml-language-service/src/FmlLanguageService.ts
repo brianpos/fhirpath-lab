@@ -138,7 +138,12 @@ export class FmlLanguageService {
         const defaultGroupUsages = this.validator.getDefaultGroupUsages(source);
         const resolveDefaultGroupLink = this.createDefaultGroupLinkResolver(request, importedDefaultGroups);
         const usages = analysis.usages;
-        const variableMatch = this.getVariableHoverMatch(usages, analysis.variableReferences, request);
+        const variableMatch = this.getVariableHoverMatch(
+            usages,
+            analysis.variableReferences,
+            analysis.groupInputs,
+            request,
+        );
         if (variableMatch) return variableMatch;
 
         const arrowUsages = defaultGroupUsages.filter(usage => {
@@ -295,6 +300,7 @@ export class FmlLanguageService {
     private getVariableHoverMatch(
         usages: FmlPropertyUsage[],
         references: FmlVariableReference[],
+        groupInputs: FmlPropertyAnalysis["groupInputs"],
         request: HoverRequest,
     ): HoverInformation | undefined {
         const definitions = usages.filter(usage => usage.variableName && usage.variableSpan);
@@ -317,10 +323,14 @@ export class FmlLanguageService {
                 .sort((left, right) => this.compareSpans(right.variableSpan!, left.variableSpan!))[0];
             const rootUsage = usages.find(candidate => candidate.groupName === reference.groupName
                 && this.normalizeIdentifier(candidate.rootVariableName) === this.normalizeIdentifier(reference.name));
+            const groupInput = groupInputs.find(candidate => candidate.groupName === reference.groupName
+                && this.normalizeIdentifier(candidate.inputName) === this.normalizeIdentifier(reference.name));
             if (definition) {
                 candidates.push({range, markdown: this.formatVariableHover(reference.name, definition)});
             } else if (rootUsage) {
                 candidates.push({range, markdown: this.formatVariableHover(reference.name, rootUsage, true)});
+            } else if (groupInput) {
+                candidates.push({range, markdown: this.formatInputContextHover(reference.name, groupInput)});
             } else {
                 candidates.push({range, markdown: this.formatUndefinedVariableHover(reference.name)});
             }
@@ -392,6 +402,18 @@ export class FmlLanguageService {
         ].join("\n");
     }
 
+    private formatInputContextHover(
+        name: string,
+        input: FmlPropertyAnalysis["groupInputs"][number],
+    ): string {
+        return [
+            `**${input.mode === "target" ? "Target" : "Source"} context** \`${name}\``,
+            "",
+            `- Type: ${input.typeName ? `\`${input.typeName}\`` : "unknown"}`
+                + (input.fhirVersion ? ` (${input.fhirVersion})` : ""),
+        ].join("\n");
+    }
+
     private formatVariableHover(
         name: string,
         usage: FmlPropertyUsage,
@@ -405,7 +427,9 @@ export class FmlLanguageService {
                 ? step.typeNames
                 : usage.compatibleTypeNames?.length
                     ? usage.compatibleTypeNames
-                    : usage.elementTypeName ? usage.elementTypeName.split(" | ") : [];
+                    : usage.elementTypeName
+                        ? usage.elementTypeName.split(" | ")
+                        : usage.transformResultTypeNames ?? [];
         const cardinalityMin = isRoot ? undefined : step?.cardinalityMin ?? usage.cardinalityMin;
         const cardinalityMax = isRoot ? undefined : step?.cardinalityMax ?? usage.cardinalityMax;
         const cardinality = cardinalityMin !== undefined && cardinalityMax
@@ -415,7 +439,7 @@ export class FmlLanguageService {
             `**Variable** \`${name}\`${cardinality}${usage.fhirVersion ? ` (${usage.fhirVersion})` : ""}`,
             "",
         ];
-        if (!isRoot) {
+        if (!isRoot && usage.rootTypeName) {
             const rootTypeName = this.customTypeModels[usage.rootTypeName]?.TypeName ?? usage.rootTypeName;
             const propertyPath = step?.path ?? usage.path;
             const propertyCardinality = cardinalityMin !== undefined && cardinalityMax

@@ -4,6 +4,9 @@ import fg from "fast-glob";
 import {promises as fs} from "node:fs";
 import path from "node:path";
 import * as vscode from "vscode";
+import {collectFmlModelResources} from "./FmlWorkspaceModels";
+
+export {collectFmlModelResources} from "./FmlWorkspaceModels";
 
 export type FmlRequiredResourceType = "ConceptMap" | "StructureDefinition";
 
@@ -36,6 +39,11 @@ interface SupportedResourceCandidate {
     resource: SupportedResource;
 }
 
+export interface FmlModelFileSnapshot {
+    filePath: string;
+    resources: readonly JsonValue[];
+}
+
 export async function resolveFmlDebugDependencies(
     program: string,
     mapText: string,
@@ -44,6 +52,8 @@ export async function resolveFmlDebugDependencies(
     defaultFhirVersion?: string,
     modelResourcePaths: string[] = [],
     onResourceResolved: (resource: FmlRequiredResource, filePath: string) => void = () => undefined,
+    mapSources?: FmlDebugMapSource[],
+    modelFileCache?: readonly FmlModelFileSnapshot[],
 ): Promise<FmlResolvedDebugDependencies> {
     const defaultRelease = toFhirRelease(defaultFhirVersion);
     const mainMap = parseMap(program, mapText, defaultRelease);
@@ -55,19 +65,27 @@ export async function resolveFmlDebugDependencies(
         };
     }
 
-    const workspaceMaps = await loadWorkspaceMaps(program, defaultRelease);
+    const workspaceMaps = mapSources
+        ? mapSources.flatMap(source => {
+            if (!source.filePath || filePathIdentity(source.filePath) === filePathIdentity(program)) {
+                return [];
+            }
+            const parsed = parseMap(source.filePath, source.text, defaultRelease);
+            return parsed ? [parsed] : [];
+        })
+        : await loadWorkspaceMaps(program, defaultRelease);
     const maps = walkImportedMaps(mainMap, workspaceMaps);
     const requirements = collectRequiredResources(maps);
     requirements.forEach(onResourceRequired);
 
-    const availableResources = await loadDependencyResources(dependencyPatterns, modelResourcePaths);
+    const availableResources = await loadDependencyResources(dependencyPatterns, modelResourcePaths, modelFileCache);
     const modelResources: JsonValue[] = [];
     const unresolvedResources: FmlRequiredResource[] = [];
     for (const requirement of requirements) {
         const matchingResources = availableResources.filter(candidate => {
             return candidate.resource.resourceType === requirement.resourceType
                 && resourceCanonicals(candidate.resource).some(canonical => {
-                    return canonicalMatches(requirement.canonical, canonical);
+                    return canonicalMatches(requirement.canonical, canonical, requirement.resourceType === "ConceptMap");
                 });
         });
         const candidate = matchingResources.find(candidate => {
@@ -129,7 +147,7 @@ export function deduplicateFmlFilePaths(filePaths: string[], excludedFilePath?: 
     return [...files.values()];
 }
 
-function filePathIdentity(filePath: string): string {
+export function filePathIdentity(filePath: string): string {
     const resolvedPath = path.resolve(filePath);
     return process.platform === "win32" ? resolvedPath.toLowerCase() : resolvedPath;
 }
@@ -155,21 +173,19 @@ function parseMap(
 function walkImportedMaps(mainMap: ParsedMapSource, candidates: ParsedMapSource[]): ParsedMapSource[] {
     const result: ParsedMapSource[] = [];
     const pending = [mainMap];
-    const visited = new Set<string>();
+    const visited = new Set([filePathIdentity(mainMap.filePath)]);
     while (pending.length) {
         const current = pending.shift();
         if (!current) {
             continue;
         }
-        const identity = filePathIdentity(current.filePath);
-        if (visited.has(identity)) {
-            continue;
-        }
-        visited.add(identity);
         result.push(current);
         for (const imported of current.model.imports) {
             for (const candidate of candidates) {
-                if (candidate.canonicalUrls.some(canonical => matchesCanonicalImport(imported.url, canonical))) {
+                const identity = filePathIdentity(candidate.filePath);
+                if (!visited.has(identity)
+                    && candidate.canonicalUrls.some(canonical => matchesCanonicalImport(imported.url, canonical))) {
+                    visited.add(identity);
                     pending.push(candidate);
                 }
             }
@@ -264,6 +280,7 @@ export function toFhirRelease(version: string | undefined): FhirVersion | undefi
 async function loadDependencyResources(
     patterns: string[],
     modelResourcePaths: string[],
+    modelFileCache?: readonly FmlModelFileSnapshot[],
 ): Promise<SupportedResourceCandidate[]> {
     const matchedFiles = patterns.length
         ? await fg(patterns.map(pattern => pattern.replaceAll("\\", "/")), {
@@ -274,11 +291,20 @@ async function loadDependencyResources(
         : [];
     const files = [...new Set([...matchedFiles, ...modelResourcePaths])];
     const resources: SupportedResourceCandidate[] = [];
+    const cached = new Map(modelFileCache?.map(file => [filePathIdentity(file.filePath), file]));
     for (const file of files.filter(file => path.extname(file).toLowerCase() === ".json")) {
         try {
-            const resource = JSON.parse(await fs.readFile(file, "utf8")) as JsonValue;
-            if (isSupportedResource(resource)) {
-                resources.push({filePath: file, resource});
+            const open = vscode.workspace.textDocuments.find(document => !document.isClosed
+                && document.uri.scheme === "file" && filePathIdentity(document.uri.fsPath) === filePathIdentity(file));
+            const snapshot = cached.get(filePathIdentity(file));
+            const models = open
+                ? collectFmlModelResources(JSON.parse(open.getText()))
+                : snapshot ? snapshot.resources
+                    : collectFmlModelResources(JSON.parse(await fs.readFile(file, "utf8")));
+            for (const resource of models) {
+                if (isSupportedResource(resource)) {
+                    resources.push({filePath: file, resource});
+                }
             }
         } catch {
             // Invalid JSON dependency files are not eligible FHIR resources.
@@ -287,10 +313,11 @@ async function loadDependencyResources(
     return resources;
 }
 
-function isSupportedResource(value: JsonValue): value is SupportedResource {
+function isSupportedResource(value: unknown): value is SupportedResource {
     return typeof value === "object"
         && value !== null
         && !Array.isArray(value)
+        && "resourceType" in value
         && (value.resourceType === "StructureDefinition" || value.resourceType === "ConceptMap");
 }
 
@@ -301,8 +328,9 @@ function resourceCanonicals(resource: SupportedResource): string[] {
         .filter((value): value is string => typeof value === "string");
 }
 
-function canonicalMatches(required: string, available: string): boolean {
-    return required === available || required.split("|")[0] === available.split("|")[0];
+function canonicalMatches(required: string, available: string, exactVersion = false): boolean {
+    return required === available
+        || ((!exactVersion || !required.includes("|")) && required.split("|")[0] === available.split("|")[0]);
 }
 
 function matchesCanonicalImport(pattern: string, canonicalUrl: string): boolean {

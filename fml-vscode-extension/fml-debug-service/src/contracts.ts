@@ -29,7 +29,19 @@ export interface FmlDebugLaunchRequest {
     modelText?: string;
     modelResources?: JsonValue[];
     serverUrl?: string;
+    legacyPost?: boolean;
+    terminologyServerUrl?: string;
+    terminologyFhirVersion?: "R4" | "R5";
     signal?: AbortSignal;
+    defaultFhirVersion?: import("@fhirpath-lab/validator").FhirVersion;
+    profileBaseTypes?: Record<string, string>;
+    customTypeModels?: Record<string, import("@fhirpath-lab/validator").TypeModel>;
+    entryGroup?: string;
+    localTrace?: false | {
+        maxEvents?: number;
+        maxBytes?: number;
+        detail?: "full" | "rules" | "coverage";
+    };
 }
 
 export interface FmlDebugMapSource {
@@ -44,6 +56,7 @@ export interface FmlDebugIssue {
     fileName?: string;
     line?: number;
     column?: number;
+    expression?: string;
 }
 
 export interface FmlTraceVariable {
@@ -53,11 +66,22 @@ export interface FmlTraceVariable {
     data?: FmlTypedValue;
     datatype?: string;
     errorMessage?: string;
+    retrievalFromInput?: boolean;
 }
 
 export interface FmlTraceSourceRange {
     startOffset: number;
     length: number;
+}
+
+/** `instant` is retained for legacy extension-based recordings. */
+export type FmlTracePhase = "enter" | "exit" | "step" | "instant";
+
+export interface FmlTraceTextRange {
+    startRow: number;
+    startColumn: number;
+    endRow?: number;
+    endColumn?: number;
 }
 
 export interface FmlTraceEvent {
@@ -66,10 +90,17 @@ export interface FmlTraceEvent {
     category: string;
     message: string;
     depth: number;
+    phase: FmlTracePhase;
     range?: FmlTraceSourceRange;
+    textRange?: FmlTraceTextRange;
+    messages?: {name?: string; text: string[]}[];
+    /** Simplified FHIRPath identifying the StructureMap element that produced the event. */
+    traceLocation?: string;
     variables: FmlTraceVariable[];
     state?: FmlTypedValue;
     exception?: string;
+    /** Diagnostic filename of the map owning `range`; absent means the primary map. */
+    mapFileName?: string;
     source?: FmlDebugMapSource;
 }
 
@@ -80,4 +111,8 @@ export interface FmlDebugTrace {
     rawResult?: string;
     trace: FmlTraceEvent[];
     outcome?: JsonValue;
+    traceStatus?: "complete" | "truncated" | "stopped";
+    parameters?: JsonValue;
+    output?: JsonValue[];
+    rawResponse?: JsonValue;
 }

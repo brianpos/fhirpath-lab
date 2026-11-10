@@ -1,0 +1,19 @@
+/// url = "http://hl7.org/fhir/uv/xver/StructureMap/Identifier4to5"
+/// name = "Identifier4to5"
+/// title = "Identifier Transforms: R4 to R5"
+/// status = "active"
+
+uses "http://hl7.org/fhir/4.0/StructureDefinition/Identifier" alias IdentifierR4 as source
+uses "http://hl7.org/fhir/5.0/StructureDefinition/Identifier" alias IdentifierR5 as target
+
+imports "http://hl7.org/fhir/uv/xver/StructureMap/*4to5"
+
+group Identifier(source src : IdentifierR4, target tgt : IdentifierR5) extends Element <<type+>> {
+  src.use as v -> tgt.use = translate(v, 'http://hl7.org/fhir/uv/xver/ConceptMap/idr.use-4to5', 'code');
+  src.type -> tgt.type;
+  src.system -> tgt.system;
+  src.value -> tgt.value;
+  src.period -> tgt.period;
+  src.assigner -> tgt.assigner;
+}
+

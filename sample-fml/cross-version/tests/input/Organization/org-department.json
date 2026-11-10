@@ -1,0 +1,8 @@
+{
+  "resourceType": "Organization",
+  "id": "org-department",
+  "active": false,
+  "name": "Radiology Department",
+  "partOf": {"reference": "Organization/org-hospital"},
+  "endpoint": [{"reference": "Endpoint/radiology-fhir"}]
+}

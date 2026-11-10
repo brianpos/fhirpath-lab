@@ -98,6 +98,10 @@ export interface ParsedFml {
     model: FmlStructureMap;
 }
 
+export interface AnalyzedFml extends ParsedFml {
+    propertyAnalysis: FmlPropertyAnalysis;
+}
+
 export interface FmlSourcePosition {
     line: number;
     column: number;

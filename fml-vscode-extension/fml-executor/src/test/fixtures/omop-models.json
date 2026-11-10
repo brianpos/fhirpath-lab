@@ -1,0 +1,84 @@
+{
+  "resourceType": "Bundle",
+  "type": "collection",
+  "entry": [
+    {
+      "resource": {
+        "resourceType": "StructureDefinition",
+        "url": "http://hl7.org/fhir/uv/omop/StructureDefinition/Observation",
+        "name": "Observation",
+        "type": "http://hl7.org/fhir/uv/omop/StructureDefinition/Observation",
+        "kind": "logical",
+        "derivation": "specialization",
+        "baseDefinition": "http://hl7.org/fhir/StructureDefinition/Base",
+        "differential": {
+          "element": [
+            {"id": "Observation", "path": "Observation"},
+            {"id": "Observation.observation_id", "path": "Observation.observation_id", "max": "1", "type": [{"code": "integer"}]},
+            {"id": "Observation.observation_source_value", "path": "Observation.observation_source_value", "max": "1", "type": [{"code": "string"}]},
+            {"id": "Observation.observation_date", "path": "Observation.observation_date", "max": "1", "type": [{"code": "date"}]},
+            {"id": "Observation.observation_datetime", "path": "Observation.observation_datetime", "max": "1", "type": [{"code": "dateTime"}]},
+            {"id": "Observation.value_as_number", "path": "Observation.value_as_number", "max": "1", "type": [{"code": "decimal"}]}
+          ]
+        }
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "StructureDefinition",
+        "url": "http://hl7.org/fhir/uv/omop/StructureDefinition/RecordSet",
+        "name": "RecordSet",
+        "type": "http://hl7.org/fhir/uv/omop/StructureDefinition/RecordSet",
+        "kind": "logical",
+        "derivation": "specialization",
+        "baseDefinition": "http://hl7.org/fhir/StructureDefinition/Base",
+        "differential": {
+          "element": [
+            {"id": "RecordSet", "path": "RecordSet"},
+            {"id": "RecordSet.observation", "path": "RecordSet.observation", "max": "*", "type": [{"code": "http://hl7.org/fhir/uv/omop/StructureDefinition/Observation"}]},
+            {"id": "RecordSet.measurement", "path": "RecordSet.measurement", "max": "*", "type": [{"code": "http://hl7.org/fhir/uv/omop/StructureDefinition/Measurement"}]}
+          ]
+        }
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "StructureDefinition",
+        "url": "http://hl7.org/fhir/uv/omop/StructureDefinition/Measurement",
+        "name": "Measurement",
+        "type": "http://hl7.org/fhir/uv/omop/StructureDefinition/Measurement",
+        "kind": "logical",
+        "derivation": "specialization",
+        "baseDefinition": "http://hl7.org/fhir/StructureDefinition/Base",
+        "differential": {
+          "element": [
+            {"id": "Measurement", "path": "Measurement"},
+            {"id": "Measurement.measurement_id", "path": "Measurement.measurement_id", "max": "1", "type": [{"code": "code"}]},
+            {"id": "Measurement.measurement_type_concept_id", "path": "Measurement.measurement_type_concept_id", "max": "1", "type": [{"code": "code"}]},
+            {"id": "Measurement.measurement_concept_id", "path": "Measurement.measurement_concept_id", "max": "1", "type": [{"code": "code"}]},
+            {"id": "Measurement.measurement_date", "path": "Measurement.measurement_date", "max": "1", "type": [{"code": "date"}]},
+            {"id": "Measurement.measurement_datetime", "path": "Measurement.measurement_datetime", "max": "1", "type": [{"code": "dateTime"}]},
+            {"id": "Measurement.value_as_number", "path": "Measurement.value_as_number", "max": "1", "type": [{"code": "decimal"}]},
+            {"id": "Measurement.value_source_value", "path": "Measurement.value_source_value", "max": "1", "type": [{"code": "string"}]},
+            {"id": "Measurement.unit_concept_id", "path": "Measurement.unit_concept_id", "max": "1", "type": [{"code": "code"}]},
+            {"id": "Measurement.unit_source_value", "path": "Measurement.unit_source_value", "max": "1", "type": [{"code": "string"}]}
+          ]
+        }
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "ConceptMap",
+        "url": "http://hl7.org/fhir/uv/omop/ConceptMap/BloodPressureCodes",
+        "group": [{
+          "source": "http://loinc.org",
+          "target": "http://example.test/omop",
+          "element": [{
+            "code": "85354-9",
+            "target": [{"code": "36203185", "relationship": "equivalent"}]
+          }]
+        }]
+      }
+    }
+  ]
+}

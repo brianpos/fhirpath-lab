@@ -1,0 +1,40 @@
+/// url = "http://hl7.org/fhir/uv/xver/StructureMap/Reference4to5"
+/// name = "Reference4to5"
+/// title = "Reference Transforms: R4 to R5"
+/// status = "active"
+
+uses "http://hl7.org/fhir/4.0/StructureDefinition/Reference" alias ReferenceR4 as source
+uses "http://hl7.org/fhir/5.0/StructureDefinition/CodeableReference" alias CodeableReferenceR5 as target
+uses "http://hl7.org/fhir/5.0/StructureDefinition/Reference" alias ReferenceR5 as target
+uses "http://hl7.org/fhir/5.0/StructureDefinition/canonical" alias canonicalR5 as target
+uses "http://hl7.org/fhir/4.0/StructureDefinition/url" alias urlR4 as source
+uses "http://hl7.org/fhir/5.0/StructureDefinition/url" alias urlR5 as target
+
+imports "http://hl7.org/fhir/uv/xver/StructureMap/*4to5"
+
+group Reference(source src : ReferenceR4, target tgt : ReferenceR5) extends Element <<type+>> {
+  src.reference -> tgt.reference;
+  src.type -> tgt.type;
+  src.identifier -> tgt.identifier;
+  src.display -> tgt.display;
+}
+
+group Reference2canonical(source src : ReferenceR4, target tgt : canonicalR5) extends Element <<types>> {
+  src.reference as v -> tgt.value = v "canonicalValue";
+}
+
+group Reference2Url(source src : ReferenceR4, target tgt : urlR5) extends Element <<types>> {
+  src.reference as v -> tgt.value = v "canonicalValue";
+}
+
+group url2Reference(source src : urlR4, target tgt : ReferenceR5) extends Element <<types>> {
+  src.value as v -> tgt.reference = v "canonicalValue";
+}
+
+group Reference2CodeableReference(source src : ReferenceR4, target tgt : CodeableReferenceR5) extends Element <<types>> {
+  src.reference as v ->  tgt.reference as t,  t.reference = v;
+  src.type as v ->  tgt.reference as t,  t.type = v;
+  src.identifier as v ->  tgt.reference as t,  t.identifier = v;
+  src.display as v ->  tgt.reference as t,  t.display = v;
+}
+

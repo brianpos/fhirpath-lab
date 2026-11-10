@@ -9,19 +9,52 @@ export function setAcePaths(config: ace.Ace.Config): void {
   config.set('workerPath', CDN);
 }
 
+function cloneHighlightRules(rules: Record<string, any[]>): Record<string, any[]> {
+  const cloned: Record<string, any[]> = {};
+  for (const state of Object.keys(rules)) {
+    cloned[state] = rules[state].map((rule) => {
+      const copy: Record<string, any> = { ...rule };
+      if (Array.isArray(rule.token)) {
+        copy.token = [...rule.token];
+      } else if (Array.isArray(rule.tokenArray)) {
+        copy.token = [...rule.tokenArray];
+        delete copy.tokenArray;
+        delete copy.onMatch;
+        delete copy.splitRegex;
+      }
+      if (rule.regex instanceof RegExp) {
+        copy.regex = new RegExp(rule.regex.source, rule.regex.flags);
+      }
+      return copy;
+    });
+  }
+  return cloned;
+}
+
+let customModeCounter = 0;
+
 export function setCustomHighlightRules(
   editor: ace.Ace.Editor,
   rules: Record<string, any[]>,
   preserveTabKey = false,
 ): void {
-  var modeFhir: ace.Ace.SyntaxMode = editor.session.getMode();
-  (modeFhir as any).$highlightRules.addRules(rules);
-  editor.session.getUseWorker();
-  (editor.session as any).$mode.$tokenizer = null;
-  let tokenizer = modeFhir.getTokenizer();
-  (editor.session as any).bgTokenizer.setTokenizer(tokenizer);
-  // force re-highlight whole document
-  (editor.session as any).bgTokenizer.start(0);
+  const TextMode = ace.require("ace/mode/text")?.Mode;
+  const clonedRules = cloneHighlightRules(rules);
+  if (TextMode) {
+    const customMode = new TextMode();
+    customMode.$id = `ace/mode/custom-${++customModeCounter}`;
+    customMode.$highlightRules = new customMode.HighlightRules();
+    customMode.$highlightRules.addRules(clonedRules);
+    editor.session.setMode(customMode);
+  } else {
+    const modeFhir: ace.Ace.SyntaxMode = editor.session.getMode();
+    (modeFhir as any).$highlightRules.addRules(clonedRules);
+    editor.session.getUseWorker();
+    (editor.session as any).$mode.$tokenizer = null;
+    const tokenizer = modeFhir.getTokenizer();
+    (editor.session as any).bgTokenizer.setTokenizer(tokenizer);
+    (editor.session as any).bgTokenizer.start(0);
+  }
 
   // cast as any to ignore the undefined typing error message
   if (!preserveTabKey) {
@@ -109,8 +142,8 @@ export const Rules: Record<string, TextHighlightToken[]> = {
       token: ["fhir_function.math", "text", "fhir_paren.lparen"], // section 5.7
       regex: /\b(abs|ceiling|exp|floor|ln|log|power|round|sqrt|truncate)\b(\s*)(\()/
     }, {
-      token: ["fhir_function.treenav", "text", "fhir_paren.lparen"], // section 5.8
-      regex: /\b(children|descendants)\b(\s*)(\()/
+      token: ["fhir_function.treenav", "text", "fhir_paren.lparen"], // section 5.8 + HL7 v2 navigation
+      regex: /\b(children|descendants|elements|components|subcomponents|simple|group|groups)\b(\s*)(\()/
     }, {
       token: ["fhir_function.utility", "text", "fhir_paren.lparen"], // section 5.9 (not is in section 6.5)
       regex: /\b(trace|now|timeOfDay|today|not)\b(\s*)(\()/

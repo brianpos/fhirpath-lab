@@ -1,0 +1,18 @@
+{
+  "resourceType": "HealthcareService",
+  "id": "hs-physio",
+  "identifier": [{"system": "http://example.org/services", "value": "PHYSIO"}],
+  "active": true,
+  "providedBy": {"reference": "Organization/org-hospital"},
+  "category": [{"coding": [{"system": "http://terminology.hl7.org/CodeSystem/service-category", "code": "8"}]}],
+  "name": "Physiotherapy",
+  "comment": "Outpatient physiotherapy",
+  "location": [{"reference": "Location/loc-ward"}],
+  "eligibility": [{"code": {"text": "Referral required"}, "comment": "GP referral"}],
+  "appointmentRequired": true,
+  "availability": [
+    {"availableTime": [{"daysOfWeek": ["wed", "thu"], "allDay": false, "availableStartTime": "09:00:00", "availableEndTime": "16:00:00"}]},
+    {"notAvailableTime": [{"description": "Closed for public holiday", "during": {"start": "2026-12-25", "end": "2026-12-26"}}]}
+  ],
+  "endpoint": [{"reference": "Endpoint/physio"}]
+}

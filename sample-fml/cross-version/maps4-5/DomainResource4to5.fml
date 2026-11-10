@@ -1,0 +1,17 @@
+/// url = "http://hl7.org/fhir/uv/xver/StructureMap/DomainResource4to5"
+/// name = "DomainResource4to5"
+/// title = "DomainResource Transforms: R4 to R5"
+/// status = "active"
+
+uses "http://hl7.org/fhir/4.0/StructureDefinition/DomainResource" alias DomainResourceR4 as source
+uses "http://hl7.org/fhir/5.0/StructureDefinition/DomainResource" alias DomainResourceR5 as target
+
+imports "http://hl7.org/fhir/uv/xver/StructureMap/*4to5"
+
+group DomainResource(source src : DomainResourceR4, target tgt : DomainResourceR5) extends Resource <<type+>> {
+  src.text -> tgt.text;
+  src.contained -> tgt.contained "containedResource";
+  src.extension -> tgt.extension;
+  src.modifierExtension -> tgt.modifierExtension;
+}
+

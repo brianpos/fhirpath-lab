@@ -1,0 +1,26 @@
+/// url = "http://hl7.org/fhir/uv/xver/StructureMap/Organization4to5"
+/// name = "Organization4to5"
+/// title = "Organization Transforms: R4 to R5"
+/// status = "active"
+
+uses "http://hl7.org/fhir/4.0/StructureDefinition/Organization" alias OrganizationR4 as source
+uses "http://hl7.org/fhir/5.0/StructureDefinition/Organization" alias OrganizationR5 as target
+
+imports "http://hl7.org/fhir/uv/xver/StructureMap/*4to5"
+
+group Organization(source src : OrganizationR4, target tgt : OrganizationR5) extends DomainResource <<type+>> {
+  src.identifier -> tgt.identifier;
+  src.active -> tgt.active;
+  src.type -> tgt.type;
+  src.name -> tgt.name;
+  src.alias -> tgt.alias;
+  src.contact as s -> tgt.contact as t then {
+    s.purpose -> t.purpose;
+    s.name -> t.name;
+    s.telecom -> t.telecom;
+    s.address -> t.address;
+  };
+  src.partOf -> tgt.partOf;
+  src.endpoint -> tgt.endpoint;
+}
+

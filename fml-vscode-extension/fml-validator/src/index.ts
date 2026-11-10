@@ -1,4 +1,6 @@
 export * from "./contracts";
+export * from "./CoreFmlParser";
+export {getModelProvider, getModelTypes} from "../../../helpers/fhirpath_validator";
 export * from "./FmlValidatorApi";
 export * from "./FmlValidatorEngine";
 export * from "./FmlGroupSymbolCollector";
@@ -10,3 +12,4 @@ export * from "./FmlCustomModels";
 export * from "./Stage1FmlValidatorEngine";
 export * from "./transformSignatures";
 export * from "./parseFmlModel";
+export {isHl7v2Content, prepareHl7v2FmlInput} from "../../../helpers/hl7v2_fml_input";

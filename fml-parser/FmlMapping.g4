@@ -65,6 +65,7 @@ identifier
   | 'asc'
   | 'desc'
   | 'sort'
+  | 'single'
   ;
 
 structureDeclaration
@@ -157,8 +158,8 @@ upperBound
   ;
 
 qualifiedIdentifier
-  : (DELIMITEDIDENTIFIER | ID | IDENTIFIER | 'imports' | 'source' | 'target' | 'group' | 'prefix' | 'map' | 'uses' | 'let' | 'types' | 'extends' | 'where' | 'check' | 'alias' | 'div' | 'contains' | 'as' | 'is' | 'asc' | 'desc' | 'first' | 'last' | 'sort' ) 
-    ('.' (DELIMITEDIDENTIFIER | ID | IDENTIFIER | 'imports' | 'source' | 'target' | 'group' | 'prefix' | 'map' | 'uses' | 'let' | 'types' | 'extends' | 'where' | 'check' | 'alias' | 'div' | 'contains' | 'as' | 'is' | 'asc' | 'desc' | 'first' | 'last' | 'sort'))*
+  : (DELIMITEDIDENTIFIER | ID | IDENTIFIER | 'imports' | 'source' | 'target' | 'group' | 'prefix' | 'map' | 'uses' | 'let' | 'types' | 'extends' | 'where' | 'check' | 'alias' | 'div' | 'contains' | 'as' | 'is' | 'asc' | 'desc' | 'first' | 'last' | 'sort' | 'single' )
+    ('.' (DELIMITEDIDENTIFIER | ID | IDENTIFIER | 'imports' | 'source' | 'target' | 'group' | 'prefix' | 'map' | 'uses' | 'let' | 'types' | 'extends' | 'where' | 'check' | 'alias' | 'div' | 'contains' | 'as' | 'is' | 'asc' | 'desc' | 'first' | 'last' | 'sort' | 'single'))*
   // : identifier ('.' identifier '[x]'?)*
   ;
 

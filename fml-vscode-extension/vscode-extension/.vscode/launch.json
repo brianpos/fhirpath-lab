@@ -13,6 +13,17 @@
         "${workspaceFolder}/dist/**/*.js"
       ],
       "preLaunchTask": "Build FHIR Mapping Language Tools Extension"
+    },
+    {
+      "name": "Attach to FML Language Server",
+      "type": "node",
+      "request": "attach",
+      "port": 6009,
+      "restart": true,
+      "sourceMaps": true,
+      "outFiles": [
+        "${workspaceFolder}/fml-vscode-extension/fml-language-server/dist/**/*.js"
+      ]
     }
   ]
 }

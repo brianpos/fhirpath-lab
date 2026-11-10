@@ -1,0 +1,15 @@
+/// url = "http://hl7.org/fhir/uv/xver/StructureMap/Narrative4to5"
+/// name = "Narrative4to5"
+/// title = "Narrative Transforms: R4 to R5"
+/// status = "active"
+
+uses "http://hl7.org/fhir/4.0/StructureDefinition/Narrative" alias NarrativeR4 as source
+uses "http://hl7.org/fhir/5.0/StructureDefinition/Narrative" alias NarrativeR5 as target
+
+imports "http://hl7.org/fhir/uv/xver/StructureMap/*4to5"
+
+group Narrative(source src : NarrativeR4, target tgt : NarrativeR5) extends Element <<type+>> {
+  src.status as v -> tgt.status = translate(v, 'http://hl7.org/fhir/uv/xver/ConceptMap/txt.status-4to5', 'code');
+  src.div -> tgt.div;
+}
+

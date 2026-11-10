@@ -73,6 +73,9 @@ export function findGroupReferences(
         const candidateUris = index.getDependentDocumentUris(target.uri);
         candidateUris.add(target.uri);
         for (const uri of candidateUris) {
+            if (!index.getNavigationDocuments(uri).has(target.uri)) {
+                continue;
+            }
             for (const candidate of index.get(uri)?.references ?? []) {
                 if (candidate.name === target.name) {
                     addLocation(uri, candidate.range);

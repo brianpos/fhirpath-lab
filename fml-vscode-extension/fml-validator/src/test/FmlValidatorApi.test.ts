@@ -175,7 +175,7 @@ test("accepts specific Reference profiles when the target supports Resource", as
     assert.equal(result.status, "success", result.diagnostics.map(diagnostic => diagnostic.message).join("; "));
 });
 
-test("rejects a batch Reference identity and reports source target profiles missing from the target", async () => {
+test("warns about batch Reference target profile narrowing without rejecting execution", async () => {
     const result = await validateReferenceIdentity(
         [
             "http://hl7.org/fhir/StructureDefinition/Patient",
@@ -185,9 +185,9 @@ test("rejects a batch Reference identity and reports source target profiles miss
         "src -> tgt: subject;",
     );
 
-    assert.equal(result.status, "failure");
+    assert.equal(result.status, "success");
     const diagnostic = result.diagnostics.find(candidate => candidate.message.includes("target profile"));
-    assert.equal(diagnostic?.severity, "error");
+    assert.equal(diagnostic?.severity, "warning");
     assert.equal(diagnostic?.offendingText, "subject");
     assert.match(diagnostic?.message ?? "", /does not support source Reference target profile\(s\): 'Group'/);
     assert.match(diagnostic?.message ?? "", /Supported target profiles: 'Patient'/);
@@ -202,8 +202,9 @@ test("retains non-core target profile canonicals in compatibility diagnostics", 
         "src.subject -> tgt.subject;",
     );
 
-    assert.equal(result.status, "failure");
+    assert.equal(result.status, "success");
     const diagnostic = result.diagnostics.find(candidate => candidate.message.includes("target profile"));
+    assert.equal(diagnostic?.severity, "warning");
     assert.match(diagnostic?.message ?? "", /'CustomSubject' \(http:\/\/example\.org\/fhir\/StructureDefinition\/CustomSubject\)/);
     assert.doesNotMatch(diagnostic?.message ?? "", /Patient.*http:\/\/hl7\.org/);
 });
@@ -221,9 +222,10 @@ group Main(source src : SourceType, target tgt : TargetType) {
     const narrowing = await validate("Appointment", "subject", "AllergyIntolerance", "patient");
     const widening = await validate("AllergyIntolerance", "patient", "Appointment", "subject");
 
-    assert.equal(narrowing.status, "failure");
+    assert.equal(narrowing.status, "success");
     assert.ok(narrowing.diagnostics.some(diagnostic => {
         return diagnostic.message.includes("does not support source Reference target profile(s): 'Group'")
+            && diagnostic.severity === "warning"
             && !diagnostic.message.includes("http://hl7.org/fhir/StructureDefinition/");
     }));
     assert.equal(widening.status, "success", widening.diagnostics.map(diagnostic => diagnostic.message).join("; "));
@@ -358,6 +360,23 @@ group StringToCodeableConcept(source src : string, target tgt : CodeableConcept)
     );
 });
 
+test("compiles share labels and signature-ordered named transform arguments", async () => {
+    const result = await new FmlValidatorApi().compile({sourceText: `
+uses 'http://hl7.org/fhir/StructureDefinition/Patient' alias P as source
+uses 'http://hl7.org/fhir/StructureDefinition/Patient' alias T as target
+group Main(source src : P, target tgt : T) {
+ src.name as n -> tgt.name as t share label then {
+  n -> t.text = truncate(length: 2, source: 'abcd');
+ };
+}`});
+    assert.equal(result.status, "success", JSON.stringify(result.diagnostics));
+    if (result.status !== "success") return;
+    const rule = result.value.resource.group?.[0].rule[0];
+    assert.deepEqual(rule?.target?.[0].listMode, ["share"]);
+    assert.equal(rule?.target?.[0].listRuleId, "label");
+    assert.deepEqual(rule?.rule?.[0].target?.[0].parameter, [{valueString: "abcd"}, {valueInteger: 2}]);
+});
+
 test("compiles simple batch identity fields into nested copy rules", async () => {
     const result = await new FmlValidatorApi().compile({sourceText: `
 uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias Patient as source
@@ -456,16 +475,11 @@ test("reports unknown transforms as warnings without failing validation", async 
     assert.match(warnings[0].message, /Unknown transform 'customTransform'/);
 });
 
-test("rejects FHIRPath expression parameters outside evaluate", async () => {
+test("accepts FHIRPath expression parameters outside evaluate", async () => {
     const result = await validateTransform("copy(src.item.first())");
 
-    assert.equal(result.status, "failure");
-    const expressionDiagnostics = result.diagnostics.filter(diagnostic => {
-        return diagnostic.severity === "error"
-            && diagnostic.message.includes("only permitted for the 'evaluate' transform");
-    });
-    assert.equal(expressionDiagnostics.length, 1);
-    assert.equal(result.diagnostics.filter(diagnostic => diagnostic.severity === "error").length, 1);
+    assert.equal(result.status, "success", JSON.stringify(result.diagnostics));
+    assert.equal(result.diagnostics.filter(diagnostic => diagnostic.severity === "error").length, 0);
 });
 
 test("treats underscore-containing aliases as variable references", async () => {
@@ -490,12 +504,77 @@ group example(source src, target tgt) {
     assert.deepEqual(result.diagnostics.filter(diagnostic => diagnostic.severity !== "information"), []);
 });
 
-test("requires the evaluate expression parameter to be a FHIRPath expression", async () => {
-    const result = await validateTransform("evaluate(src, 'item.count()')");
+test("accepts a FHIRPath string literal as the evaluate expression", async () => {
+    const sourceText = `
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias Patient as source
+group Main(source src : Patient, target tgt : Patient) {
+    src.name as v -> tgt.name as tn then {
+        v -> tn.text = evaluate(v, 'given.join(\\' \\')');
+    };
+}
+`;
+    const api = new FmlValidatorApi();
+    const result = await api.validate({sourceText});
+    const target = result.status === "success"
+        ? result.value.model.groups[0].rules[0].dependent?.rules[0].targets[0]
+        : undefined;
 
-    assert.equal(result.status, "failure");
-    assert.ok(result.diagnostics.some(diagnostic => {
-        return diagnostic.message.includes("parameter 'expression' must be expression");
+    assert.equal(result.status, "success", result.diagnostics.map(diagnostic => diagnostic.message).join("; "));
+    assert.equal(target?.transform?.parameters[1].type, "literal");
+    assert.equal(target?.transform?.parameters[1].value, "given.join(' ')");
+    assert.deepEqual(api.getPropertyUsages({sourceText})
+        .find(usage => usage.transformName === "evaluate")?.transformResultTypeNames, ["string"]);
+});
+
+test("accepts every FHIRPath literal family as an evaluate expression", async () => {
+    const sourceText = `
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias Patient as source
+group Main(source src : Patient, target tgt : Patient) {
+    src -> evaluate(src, {}) as nullValue,
+        evaluate(src, true) as booleanValue,
+        evaluate(src, 12) as integerValue,
+        evaluate(src, 12L) as longValue,
+        evaluate(src, 1.5) as decimalValue,
+        evaluate(src, @2024-12) as dateValue,
+        evaluate(src, @2024-12-01T12:00:00Z) as dateTimeValue,
+        evaluate(src, @T12:00:00) as timeValue,
+        evaluate(src, 5 'mg') as quantityValue,
+        evaluate(src, 'text') as stringValue;
+}
+`;
+    const api = new FmlValidatorApi();
+    const result = await api.validate({sourceText});
+    const usages = api.getPropertyUsages({sourceText});
+    const resultTypes = Object.fromEntries(usages
+        .filter(usage => usage.transformName === "evaluate" && usage.variableName)
+        .map(usage => [usage.variableName!, usage.transformResultTypeNames]));
+
+    assert.equal(result.status, "success", result.diagnostics.map(diagnostic => diagnostic.message).join("; "));
+    assert.deepEqual(resultTypes, {
+        booleanValue: ["boolean"],
+        integerValue: ["integer"],
+        longValue: ["integer"],
+        decimalValue: ["decimal"],
+        dateValue: ["date"],
+        dateTimeValue: ["dateTime"],
+        timeValue: ["time"],
+        quantityValue: ["quantity"],
+        stringValue: ["string"],
+    });
+});
+
+test("accepts an evaluate date literal for a date target", async () => {
+    const result = await new FmlValidatorApi().validate({sourceText: `
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias Patient as source
+group Main(source src : Patient, target tgt : Patient) {
+    src -> tgt.birthDate = evaluate(src, @2024-12);
+}
+`});
+
+    assert.equal(result.status, "success", result.diagnostics.map(diagnostic => diagnostic.message).join("; "));
+    assert.ok(result.diagnostics.every(diagnostic => {
+        return !diagnostic.message.includes("parameter 'expression'")
+            && !diagnostic.message.includes("not compatible");
     }));
 });
 
@@ -521,6 +600,42 @@ group Main(source src : Patient, target tgt : Patient) {
 
     assert.equal(result.status, "success", result.diagnostics.map(diagnostic => diagnostic.message).join("; "));
     assert.ok(result.diagnostics.every(diagnostic => !diagnostic.message.includes("Property 'x'")));
+});
+
+test("passes target aliases to following targets and dependent rule FHIRPath expressions", async () => {
+    const result = await new FmlValidatorApi().validate({sourceText: `
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias Patient as source
+group FhirPathSourceAsVar(source src : Patient, target tgt : Patient) {
+    src -> ('http://example.org/') as extBase, tgt.name as n2, n2.text = (%extBase) then {
+        src.name as sn -> tgt.name as tn, tn.text = (%extBase) then {
+            sn.family as f -> tn.family = f, tn.extension as e, e.url = (%e.url & 'family'), e.value = f "r1";
+            sn.suffix as f -> tn.suffix = f, tn.extension as e, e.url = (extBase & 'suffix'), e.value = f "r1";
+        } "r2";
+    } "r3";
+}
+`});
+
+    assert.equal(result.status, "success", result.diagnostics.map(diagnostic => diagnostic.message).join("; "));
+    assert.ok(
+        result.diagnostics.every(diagnostic => !diagnostic.message.startsWith("FHIRPath:")),
+        result.diagnostics.map(diagnostic => diagnostic.message).join("; "),
+    );
+});
+
+test("rejects FHIRPath expression results incompatible with the target element type", async () => {
+    const result = await new FmlValidatorApi().validate({sourceText: `
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias Patient as source
+group Main(source src : Patient, target tgt : Patient) {
+    src -> ('http://example.org/') as extBase, tgt.active = (extBase & 'suffix');
+}
+`});
+
+    assert.equal(result.status, "failure");
+    const diagnostic = result.diagnostics.find(candidate => {
+        return candidate.message.includes("Transform 'evaluate' result type 'string'");
+    });
+    assert.match(diagnostic?.message ?? "", /Patient\.active/);
+    assert.match(diagnostic?.message ?? "", /allowed: boolean/);
 });
 
 test("scopes reused FML aliases to the rule that declares them", async () => {
@@ -617,6 +732,30 @@ group Main(source src : ClinicalImpressionR3, target tgt : ClinicalImpression) {
     assert.equal(result.status, "success", result.diagnostics.map(diagnostic => diagnostic.message).join("; "));
     assert.deepEqual(targets.map(usage => usage.compatibleTypeNames), [["dateTime"], ["Period"]]);
     assert.deepEqual(targets.map(usage => usage.elementTypeName), ["dateTime", "Period"]);
+});
+
+test("keeps a later target choice occurrence independent from an earlier created type", async () => {
+    const sourceText = `
+uses 'http://hl7.org/fhir/4.0/StructureDefinition/ActivityDefinition' alias ActivityDefinitionR4 as source
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/ActivityDefinition' alias ActivityDefinitionR5 as target
+uses 'http://hl7.org/fhir/4.0/StructureDefinition/Reference' alias ReferenceR4 as source
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Reference' alias ReferenceR5 as target
+group Main(source src : ActivityDefinitionR4, target tgt : ActivityDefinitionR5) {
+    src.subject as s -> tgt.subject = create('CodeableConcept') as tc, tc.coding as tcc, tcc.system = 'http://example.org/system';
+    src.subject : Reference -> tgt.subject "subjectReference";
+}
+group Reference4to5(source src : ReferenceR4, target tgt : ReferenceR5) <<type+>> {
+}
+`;
+    const api = new FmlValidatorApi();
+    const result = await api.validate({sourceText});
+    const referenceTarget = api.getPropertyUsages({sourceText}).find(usage => {
+        return usage.role === "target" && usage.path === "subject" && usage.span.start.line === 8;
+    });
+
+    assert.equal(result.status, "success", result.diagnostics.map(diagnostic => diagnostic.message).join("; "));
+    assert.deepEqual(referenceTarget?.possibleTypeNames, ["CodeableConcept", "Reference", "canonical"]);
+    assert.deepEqual(referenceTarget?.compatibleTypeNames, ["CodeableConcept", "Reference", "canonical"]);
 });
 
 test("validates a type filtered copy as a simple identity assignment", async () => {
@@ -822,9 +961,9 @@ test("applies Reference target profile rules to variable assignments", async () 
     );
 
     assert.equal(widening.status, "success", widening.diagnostics.map(diagnostic => diagnostic.message).join("; "));
-    assert.equal(narrowing.status, "failure");
+    assert.equal(narrowing.status, "success");
     const diagnostic = narrowing.diagnostics.find(candidate => candidate.message.includes("target profile"));
-    assert.equal(diagnostic?.severity, "error");
+    assert.equal(diagnostic?.severity, "warning");
     assert.match(diagnostic?.message ?? "", /Assignment from variable 's'/);
     assert.match(diagnostic?.message ?? "", /does not support source Reference target profile\(s\): 'Group'/);
 });
@@ -1405,7 +1544,8 @@ test("converts logical StructureDefinitions and nested elements into TypeModels"
     }], "R4");
 
     assert.equal(models[canonical].Elements[0].ElementName, "detail");
-    assert.equal(models[canonical].Elements[0].Type[0].TypeName, "claimrow_detail");
+    assert.equal(models[canonical].Elements[0].Type[0].TypeName, `${canonical}#ClaimRow.detail`);
+    assert.equal(models[`${canonical}#ClaimRow.detail`], models.claimrow_detail);
     assert.equal(models.claimrow_detail.Elements[0].ElementName, "code");
 });
 
@@ -1673,6 +1813,189 @@ group Main(source src : Observation, target tgt : Observation) {
     }));
 });
 
+for (const type of ["Dosage", "Timing", "ElementDefinition"]) {
+    test(`rejects incompatible STU3 ${type} target inheritance at the extends reference`, async () => {
+        const api = new FmlValidatorApi();
+        const sourceText = [
+            `uses 'http://hl7.org/fhir/4.0/StructureDefinition/${type}' alias S as source`,
+            `uses 'http://hl7.org/fhir/3.0/StructureDefinition/${type}' alias T as target`,
+            "uses 'http://hl7.org/fhir/4.0/StructureDefinition/BackboneElement' alias B as source",
+            "uses 'http://hl7.org/fhir/3.0/StructureDefinition/BackboneElement' alias BT as target",
+            `group ${type}(source src : S, target tgt : T)`,
+            "  extends Base { }",
+            "group Base(source src : B, target tgt : BT) { }",
+        ].join("\r\n");
+        const result = await api.validate({sourceText, sourceName: "inheritance.fml"});
+        assert.equal(result.status, "failure");
+        const errors = result.diagnostics.filter(diagnostic => diagnostic.severity === "error");
+        assert.equal(errors.length, 1, JSON.stringify(errors));
+        assert.match(errors[0].message, new RegExp(`target parameter 'tgt'.*'${type}' \\(STU3\\).*'BackboneElement' \\(STU3\\)`));
+        assert.equal(errors[0].line, 6);
+        assert.equal(errors[0].column, "  extends ".length);
+        assert.equal(errors[0].offendingText, "Base");
+        assert.equal(errors[0].sourceName, "inheritance.fml");
+
+        const corrected = await api.validate({
+            sourceText: sourceText.replace("3.0/StructureDefinition/BackboneElement", "3.0/StructureDefinition/Element"),
+        });
+        assert.equal(corrected.status, "success", JSON.stringify(corrected.diagnostics));
+    });
+}
+
+test("extends accepts subtype parameters, reordered inherited parameters and additional inputs", async () => {
+    const result = await new FmlValidatorApi().validate({sourceText: `
+uses 'http://hl7.org/fhir/4.0/StructureDefinition/Patient' alias P as source
+uses 'http://hl7.org/fhir/3.0/StructureDefinition/Patient' alias T as target
+uses 'http://hl7.org/fhir/4.0/StructureDefinition/Resource' alias R as source
+uses 'http://hl7.org/fhir/3.0/StructureDefinition/Resource' alias RT as target
+group Main(target tgt : T, source extra : P, source src : P) extends Base { }
+group Base(source src : R, target tgt : RT) { }
+`});
+    assert.equal(result.status, "success", JSON.stringify(result.diagnostics));
+});
+
+for (const [parameters, message] of [
+    ["source other : Patient, target tgt : Patient", /missing inherited source parameter 'src'/],
+    ["target src : Patient, target tgt : Patient", /parameter 'src' has mode 'target'.*requires 'source'/],
+] as const) {
+    test(`extends rejects incompatible parameter names or modes: ${parameters}`, async () => {
+        const result = await new FmlValidatorApi().validate({sourceText: `
+group Main(${parameters}) extends Base { }
+group Base(source src : Patient, target tgt : Patient) { }
+`});
+        assert.equal(result.status, "failure");
+        assert.ok(result.diagnostics.some(diagnostic => message.test(diagnostic.message)), JSON.stringify(result.diagnostics));
+    });
+}
+
+for (const mode of ["source", "target"]) {
+    test(`extends rejects ${mode} parameters from a different FHIR release`, async () => {
+        const result = await new FmlValidatorApi().validate({sourceText: `
+uses 'http://hl7.org/fhir/4.0/StructureDefinition/Patient' alias P4 as source
+uses 'http://hl7.org/fhir/5.0/StructureDefinition/Patient' alias P5 as source
+group Main(source src : ${mode === "source" ? "P5" : "P4"}, target tgt : ${mode === "target" ? "P5" : "P4"}) extends Base { }
+group Base(source src : P4, target tgt : P4) { }
+`});
+        assert.equal(result.status, "failure");
+        assert.ok(result.diagnostics.some(diagnostic => diagnostic.message.includes(`${mode} parameter`)
+            && diagnostic.message.includes("(R5)") && diagnostic.message.includes("(R4)")), JSON.stringify(result.diagnostics));
+    });
+}
+
+test("extends does not coerce sibling primitive types with the same wire value type", async () => {
+    const result = await new FmlValidatorApi().validate({sourceText: `
+uses 'http://hl7.org/fhir/4.0/StructureDefinition/Extension' alias E as source
+group Main(source src : code, target tgt : E) extends Base { }
+group Base(source src : id, target tgt : E) { }
+`});
+    assert.equal(result.status, "failure");
+    assert.ok(result.diagnostics.some(diagnostic => /source parameter 'src'.*'code'.*'id'/.test(diagnostic.message)));
+});
+
+test("extends leaves unresolved types open and accepts an untyped base signature", async () => {
+    for (const [child, base] of [
+        ["source src : Patient, target tgt : Patient", "source src, target tgt"],
+        ["source src, target tgt", "source src : Resource, target tgt : Resource"],
+    ]) {
+        const result = await new FmlValidatorApi().validate({sourceText: `
+group Main(${child}) extends Base { }
+group Base(${base}) { }
+`});
+        assert.equal(result.status, "success", JSON.stringify(result.diagnostics));
+    }
+});
+
+test("extends uses logical model aliases and their declared inheritance", async () => {
+    const source = {
+        sourceText: `
+uses 'http://example.org/Base' alias B as source
+uses 'http://example.org/Derived' alias D as source
+group Main(source src : D, target tgt : D) extends Base { }
+group Base(source src : B, target tgt : B) { }
+`,
+        profileBaseTypes: {"http://example.org/Base": "BaseRow", "http://example.org/Derived": "DerivedRow"},
+        customTypeModels: {
+            BaseRow: {TypeName: "BaseRow", Elements: []},
+            DerivedRow: {TypeName: "DerivedRow", BaseTypeName: "BaseRow", Elements: []},
+        },
+    };
+    const api = new FmlValidatorApi();
+    assert.equal((await api.validate(source)).status, "success");
+    const unrelated = await api.validate({...source, customTypeModels: {
+        ...source.customTypeModels, DerivedRow: {TypeName: "DerivedRow", Elements: []},
+    }});
+    assert.equal(unrelated.status, "failure");
+    assert.ok(unrelated.diagnostics.some(diagnostic => /cannot extend.*DerivedRow.*BaseRow/.test(diagnostic.message)));
+});
+
+test("extends validates a transitive base and does not choose an arbitrary overloaded base", async () => {
+    const api = new FmlValidatorApi();
+    const transitive = await api.validate({sourceText: `
+uses 'http://hl7.org/fhir/4.0/StructureDefinition/Patient' alias P as source
+group Main(source src : P, target tgt : P) extends Middle { }
+group Middle(source src : P, target tgt : P) extends Base { }
+group Base(source src : Observation, target tgt : Resource) { }
+`});
+    assert.equal(transitive.status, "failure");
+    const errors = transitive.diagnostics.filter(diagnostic => diagnostic.severity === "error");
+    assert.equal(errors.length, 1, JSON.stringify(errors));
+    assert.match(errors[0].message, /Group 'Middle' cannot extend 'Base'/);
+
+    const ambiguous = await api.validate({sourceText: `
+group Main(source src : Patient, target tgt : Patient) extends Base { }
+group Base(source src : Resource, target tgt : Resource) { }
+group Base(source src : Patient, target tgt : Patient) { }
+`});
+    assert.equal(ambiguous.status, "failure");
+    assert.ok(ambiguous.diagnostics.some(diagnostic => /cannot extend 'Base'.*ambiguous/.test(diagnostic.message)));
+});
+
+test("extends checks imported signatures without resolving their type names as caller aliases", async () => {
+    const api = new FmlValidatorApi();
+    const importedGroupSignatures = api.getGroupSignatures({sourceText: `
+uses 'http://hl7.org/fhir/4.0/StructureDefinition/BackboneElement' alias S as source
+uses 'http://hl7.org/fhir/3.0/StructureDefinition/BackboneElement' alias T as target
+group ImportedBase(source src : S, target tgt : T) { }
+`});
+    const sourceText = `
+uses 'http://hl7.org/fhir/4.0/StructureDefinition/Dosage' alias S as source
+uses 'http://hl7.org/fhir/3.0/StructureDefinition/Dosage' alias BackboneElement as target
+imports 'http://example.org/Base'
+group Main(source src : S, target tgt : BackboneElement) extends ImportedBase { }
+`;
+    const result = await api.validate({sourceText, importedGroupSignatures});
+    assert.equal(result.status, "failure");
+    assert.ok(result.diagnostics.some(diagnostic => /cannot extend 'ImportedBase'.*Dosage.*BackboneElement/.test(diagnostic.message)));
+    const corrected = await api.validate({sourceText, importedGroupSignatures: [{
+        ...importedGroupSignatures[0],
+        parameters: importedGroupSignatures[0].parameters.map(parameter =>
+            parameter.mode === "target" ? {...parameter, typeName: "Element"} : parameter),
+    }]});
+    assert.equal(corrected.status, "success", JSON.stringify(corrected.diagnostics));
+});
+
+test("extends checks contextual parameters when a backbone helper receives a whole resource target", async () => {
+    const api = new FmlValidatorApi();
+    const importedGroupSignatures = api.getGroupSignatures({sourceText: `
+uses 'http://hl7.org/fhir/4.0/StructureDefinition/BackboneElement' alias S as source
+uses 'http://hl7.org/fhir/3.0/StructureDefinition/BackboneElement' alias T as target
+group ImportedBase(source src : S, target tgt : T) { }
+`});
+    const result = await api.validate({sourceText: `
+uses 'http://hl7.org/fhir/4.0/StructureDefinition/Coverage' alias S as source
+uses 'http://hl7.org/fhir/3.0/StructureDefinition/Coverage' alias T as target
+imports 'http://example.org/Base'
+group Main(source src : S, target tgt : T) {
+ src.class as c -> tgt then Flatten(c, tgt);
+}
+group Flatten(source src, target tgt) extends ImportedBase { }
+`, importedGroupSignatures});
+    assert.equal(result.status, "failure");
+    const errors = result.diagnostics.filter(diagnostic => diagnostic.severity === "error");
+    assert.equal(errors.length, 1, JSON.stringify(errors));
+    assert.match(errors[0].message, /Group 'Flatten' cannot extend 'ImportedBase'.*target parameter 'tgt'.*Coverage.*BackboneElement/);
+});
+
 test("resolves cross-version dependent source and target inputs from context", async () => {
     const result = await new FmlValidatorApi().validate({sourceText: `
 uses 'http://hl7.org/fhir/4.3/StructureDefinition/Condition' alias ConditionR4B as source
@@ -1741,6 +2064,8 @@ test("retains narrowed alias types for FHIRPath in dependent groups", async () =
         "}",
         "group Child(source src : Observation, target tgt) {",
         "    src.effective : dateTime as edt -> tgt.effective = (edt.toString().substring(0, 10));",
+        "}",
+        "group StringToDateTime(source src : string, target tgt : dateTime) <<type+>> {",
         "}",
     ].join("\n");
     const api = new FmlValidatorApi();

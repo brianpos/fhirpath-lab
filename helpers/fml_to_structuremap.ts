@@ -1,11 +1,10 @@
 import type {StructureMap, StructureMapGroupRule} from "fhir/r4b";
-import type {FmlStructureMap, Rule as FmlRule} from "./fml_models";
+import type {FmlStructureMap, Rule as FmlRule, TransformParameter} from "./fml_models";
 import {parseCanonicalVersion} from "./fml_cross_version";
+import {orderTransformParameters} from "./fml_transform_signatures";
 
 function convertTransformParameters(
-  parameters: FmlRule["targets"][number]["transform"] extends infer T
-    ? T extends {parameters: infer P} ? P : never
-    : never,
+  parameters: readonly TransformParameter[],
 ): any[] {
   return parameters.map(parameter => {
     if (parameter.type === "identifier") return {valueId: String(parameter.value)};
@@ -44,9 +43,10 @@ function convertRules(rules: FmlRule[]): StructureMapGroupRule[] {
           variable: target.variable,
           transform: target.transform?.type,
           parameter: target.transform?.parameters
-            ? convertTransformParameters(target.transform.parameters)
+            ? convertTransformParameters(orderTransformParameters(target.transform))
             : undefined,
           listMode: target.listMode ? [target.listMode] : undefined,
+          listRuleId: target.listRuleId,
         };
         return convertedTarget;
       }),

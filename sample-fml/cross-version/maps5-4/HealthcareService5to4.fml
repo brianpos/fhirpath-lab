@@ -1,0 +1,56 @@
+/// url = "http://hl7.org/fhir/uv/xver/StructureMap/HealthcareService5to4"
+/// name = "HealthcareService5to4"
+/// title = "HealthcareService Transforms: R5 to R4"
+/// status = "active"
+
+uses "http://hl7.org/fhir/5.0/StructureDefinition/HealthcareService" alias HealthcareServiceR5 as source
+uses "http://hl7.org/fhir/4.0/StructureDefinition/HealthcareService" alias HealthcareServiceR4 as target
+
+imports "http://hl7.org/fhir/uv/xver/StructureMap/*5to4"
+
+group HealthcareService(source src : HealthcareServiceR5, target tgt : HealthcareServiceR4) extends DomainResource <<type+>> {
+  src.identifier -> tgt.identifier;
+  src.active -> tgt.active;
+  src.providedBy -> tgt.providedBy;
+  src.category -> tgt.category;
+  src.type -> tgt.type;
+  src.specialty -> tgt.specialty;
+  src.location -> tgt.location;
+  src.name -> tgt.name;
+  src.comment -> tgt.comment;
+  src.extraDetails -> tgt.extraDetails;
+  src.photo -> tgt.photo;
+  src.coverageArea -> tgt.coverageArea;
+  src.serviceProvisionCode -> tgt.serviceProvisionCode;
+  src.eligibility as s -> tgt.eligibility as t then HealthcareServiceEligibility(s, t);
+  src.program -> tgt.program;
+  src.characteristic -> tgt.characteristic;
+  src.communication -> tgt.communication;
+  src.referralMethod -> tgt.referralMethod;
+  src.appointmentRequired -> tgt.appointmentRequired;
+  src.availability as s -> tgt.availableTime as t then HealthcareServiceAvailabilityAvailableTime(s, t) "availableTime";
+  src.availability as s -> tgt.notAvailable as t then HealthcareServiceAvailabilityNotAvailableTime(s, t) "notAvailableTime";
+  src.endpoint -> tgt.endpoint;
+}
+
+group HealthcareServiceEligibility(source src, target tgt) extends BackboneElement {
+  src.code -> tgt.code;
+  src.comment -> tgt.comment;
+}
+
+group HealthcareServiceAvailabilityAvailableTime(source src, target tgt) extends BackboneElement {
+  src.availableTime as s then {
+    s.daysOfWeek -> tgt.daysOfWeek;
+    s.allDay -> tgt.allDay;
+    s.availableStartTime -> tgt.availableStartTime;
+    s.availableEndTime -> tgt.availableEndTime;
+  } "availableTime";
+}
+
+group HealthcareServiceAvailabilityNotAvailableTime(source src, target tgt) extends BackboneElement {
+  src.notAvailableTime as s then {
+    s.description -> tgt.description;
+    s.during -> tgt.during;
+  } "notAvailableTime";
+}
+

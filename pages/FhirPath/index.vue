@@ -565,7 +565,7 @@ import { GetExternalVariablesUsed, GetExpressionDefinedVariables, InvertTree } f
 import { mapFunctionReferences } from "~/helpers/fhirpath_references";
 
 // import { getPreferredTerminologyServerFromSDC } from "fhir-sdc-helpers";
-import fhirpath, { AsyncOptions, Model } from "fhirpath";
+import fhirpath, { AsyncOptions, Model, UserInvocationTable } from "fhirpath";
 import fhirpath_r4_model from "fhirpath/fhir-context/r4";
 import fhirpath_r5_model from "fhirpath/fhir-context/r5";
 import fhirpath_r6_model from "~/models/r6";
@@ -599,6 +599,9 @@ import { validateFhirpathExpression, type FhirVersionKey } from "~/helpers/fhirp
 
 import { FhirPathTools, createFhirPathEvaluateTools } from "~/helpers/openai_tools";
 import { Console } from "console";
+
+import { convertParametersToNative } from "~/helpers/fhir_parameters";
+export { convertParametersToNative };
 
 const shareTooltipText = 'Copy a sharable link to this test expression';
 const shareZulipTooltipText = 'Copy a sharable link for Zulip to this test expression';
@@ -2830,6 +2833,14 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
           }
         }
       }
+
+      // register a custom function "native()" to flatten parameters into a simple structure
+      const userInvocationTable: UserInvocationTable = {
+        native: {
+          fn: (inputs: fhir4b.Parameters[]) => inputs.map(convertParametersToNative),
+          arity: {0: [], 1: ["String"]}},
+      };
+
       for (let contextNode of contextNodes) {
         let resData: ResultData;
         const index = contextNodes.indexOf(contextNode);
@@ -2897,6 +2908,7 @@ export default Vue.extend<FhirPathData, IFhirPathMethods, IFhirPathComputed, IFh
             traceFn: tracefunction,
             async: true,
             terminologyUrl: this.terminologyServer,
+            userInvocationTable,
             debugger: (ctx: any, focus: any, result: any, node: any) => {
               if (completedTracing) 
                 return;
