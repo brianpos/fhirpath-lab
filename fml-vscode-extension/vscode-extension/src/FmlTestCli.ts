@@ -2,6 +2,7 @@ import {promises as fs} from "node:fs";
 import path from "node:path";
 import {FML_TEST_CONFIG_FILE, FmlTestRunner, discoverTestSets, loadTestConfig} from "./FmlTestRunner";
 import {buildJUnit, buildLcov, buildPropertyReport, type ReportedCase} from "./FmlTestReport";
+import {createCliContextProvider} from "./FmlTestCliContext";
 
 interface CliArgs {
     config: string;
@@ -43,10 +44,11 @@ async function main(): Promise<number> {
         config.serverUrl = args.serverUrl;
         config.forceLocal = false;
     }
-    const runner = new FmlTestRunner(config, {coverage: Boolean(args.report || args.lcov)});
+    const context = createCliContextProvider();
+    const runner = new FmlTestRunner(config, {context, coverage: Boolean(args.report || args.lcov)});
     console.log(`Engine: ${runner.engine.kind === "local" ? "local" : runner.engine.serverUrl}`);
     const reported: ReportedCase[] = [];
-    for (const set of await discoverTestSets(config, args.filter)) {
+    for (const set of await discoverTestSets(config, args.filter, context)) {
         for (const input of set.inputs) {
             const result = await runner.runCase(set.map, input);
             const mapFile = path.relative(config.maps, set.map.filePath);

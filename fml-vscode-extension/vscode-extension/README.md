@@ -393,11 +393,17 @@ Add a `.fml-tests.json` file to run a folder of JSON inputs against every map in
 - `writeOutputFiles` – optional; when `true` (requires `expected`), outputs with no expected file are written there so the first engine's output becomes the baseline for comparing other engines. Existing files are compared; delete one to regenerate it.
 - `serverUrl` / `legacyPost` – optional remote FML engine, exactly as in the debugger launch configuration. With no URL (in the config or the `fmlTools.debug.serverUrl` setting) the bundled local engine is used; `"serverUrl": ""` forces local. `"engine": "local"` also forces the local engine.
 
+Discovery resolves source profiles (including versioned canonicals) to their underlying resource types using the same model configuration as validation. A profile-backed map also requires that profile's canonical URL in the input resource's `meta.profile` array. For example, `plannet-Network` accepts an `Organization` only when it declares the `plannet-Network` profile, not another profile on `Organization`. Profile URLs are compared ignoring `|version`; an instance declaring multiple profiles can match each corresponding map. Core-resource maps remain type-based and do not require `meta.profile`.
+
+Both Test Explorer and the CLI use SUSHI dependency package indexes and IG `output` models; the CLI finds the enclosing project from each map's location. An unresolved source profile is reported as a discovery error, not an empty or unfiltered test set. No map or test configuration changes are needed, but profile-specific inputs must explicitly declare their profiles.
+
 Each output (and reverse output) is also checked against the FHIR model for unknown property names, array/single cardinality and missing required elements (bindings are not checked).
 
 **Coverage:** the *Run with Coverage* profile highlights which map rules executed in the editor. The **FML: Show Map Test Coverage Report** command shows a markdown report of rules never executed and model properties never present in inputs or never produced in outputs.
 
 Rules that were reached but never matched are reported separately from rules that were never reached: the report distinguishes a source `where`/type filter that excluded every value from a source element that was absent in every input.
+
+Coverage counts successful rules even when their trace is compacted into a single step. Property coverage and output structure checks use each map's explicit source/target FHIR versions, falling back to the project's configured FHIR version, including for reverse maps. Property coverage remains based on core resource models; profile-specific slices and extension definitions are not enumerated.
 
 **CI:** `npm run test:maps -- --config .fml-tests.json --junit results.xml --report report.md --lcov lcov.info [--filter Patient] [--server-url https://...]` (after building; `--filter` is repeatable and matches the map path, input path or `map :: input`, with `*` wildcards or as a substring) runs the same tests without VS Code and exits non-zero on any failure.
 

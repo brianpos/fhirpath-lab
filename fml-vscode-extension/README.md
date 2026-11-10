@@ -46,6 +46,14 @@ This repository contains six TypeScript projects:
 - `fml-executor` implements private browser-safe FML execution, shared analysis and adjudicated external-corpus tests; see its [README](fml-executor/README.md) for supported semantics, explicit exclusions and fixture skips.
 - `vscode-extension` provides syntax highlighting, FHIR-aware completion, templates, filesystem hooks, and the LSP client.
 
+These projects are excluded from the root Nuxt TypeScript project's file scan
+and use their own TypeScript configurations and test-runner types. Shared modules
+directly imported by the web app are still checked as dependencies; `exclude`
+does not block imports. The web TypeScript target must remain ES2020 or newer
+because the shared executor uses BigInt literals for lossless integer range checks.
+Check the extension and its Mocha tests with
+`npm --prefix fml-vscode-extension/vscode-extension run check-types` from the repository root.
+
 The language server validates open FML documents as they change, without requiring a save. Manual validation waits for workspace indexing to complete so imported maps are available. **Validate FML** is also available from the Explorer context menu for an `.fml` file or folder; folder validation recursively loads and validates every FML file below it without opening editor tabs, retains their diagnostics in the Problems panel after documents close, shows that it is paused while indexing is in progress, updates the notification with a per-file `N/total` counter after indexing, and reports aggregate results. The filesystem watcher remains separate for future behavior driven by files and package builds.
 
 Workspace FML files are indexed by canonical URL from metadata and concept map declarations. Cross-file group navigation and unresolved-group checks follow each map's wildcard-capable `imports` declarations.
@@ -58,7 +66,9 @@ Node.js 20 or later is required.
 
 ```sh
 git clone https://github.com/brianpos/fhirpath-lab.git
-cd fhirpath-lab/fml-vscode-extension
+cd fhirpath-lab
+npm ci
+cd fml-vscode-extension
 
 cd fml-validator
 npm install
@@ -86,6 +96,29 @@ npm test
 ```
 
 The canonical parser is generated from `fml-parser/FmlMapping.g4`; validator builds compile and bundle that parser and the shared intermediate model.
+
+## Continuous integration
+
+[The Vue2 workflow](../.github/workflows/pr-vue2.yml) installs and builds
+`fml-validator`, `fml-executor`, and `fml-debug-service` before generating the
+site. The browser imports these shared packages, so their dependencies and
+generated declarations are required even though the standalone extension
+projects are excluded from the web TypeScript file scan. Nuxt's generation
+cache also ignores nested `node_modules` and generated outputs so file-linked
+packages cannot recursively snapshot the repository through their dependencies.
+
+[The extension workflow](../.github/workflows/pr-fml-extension.yml) independently
+installs all six projects, runs the shared-package tests, then compiles, lints,
+and tests the extension in a headless VS Code host. It packages a VSIX and uploads
+it as a workflow artifact; it does not publish to the Marketplace or deploy the
+web app. Both workflows use Node.js 22.
+
+The VSIX script uses the installed `vsce` binary, which runs the existing
+`vscode:prepublish` package checks once before packaging.
+
+Changes to shared FML code trigger both workflows. Editor-only changes below
+`vscode-extension` skip the Vue2 workflow. Changes to shared parsers, helpers,
+models, model-generation scripts, and sample maps also trigger extension CI.
 
 ## Run in an Extension Development Host
 

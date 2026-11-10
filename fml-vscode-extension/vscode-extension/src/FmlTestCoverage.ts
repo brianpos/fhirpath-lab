@@ -82,19 +82,18 @@ export class RuleCoverageCollector {
             if (!file) {
                 continue;
             }
-            if (event.phase === "enter") {
+            const reason = event.messages?.find(message => message.name === "coverage")?.text[0];
+            // Successful leaf-rule scopes are compacted to a single step event.
+            if (event.phase === "enter" || event.phase === "step" && !reason) {
                 file.hits.set(event.traceLocation, (file.hits.get(event.traceLocation) ?? 0) + 1);
-            } else if (event.phase === "step") {
-                const reason = event.messages?.find(message => message.name === "coverage")?.text[0];
-                if (reason) {
-                    const skip = file.skips.get(event.traceLocation) ?? {noSourceValues: 0, filtered: 0};
-                    if (reason === "filtered") {
-                        skip.filtered++;
-                    } else {
-                        skip.noSourceValues++;
-                    }
-                    file.skips.set(event.traceLocation, skip);
+            } else if (event.phase === "step" && reason) {
+                const skip = file.skips.get(event.traceLocation) ?? {noSourceValues: 0, filtered: 0};
+                if (reason === "filtered") {
+                    skip.filtered++;
+                } else {
+                    skip.noSourceValues++;
                 }
+                file.skips.set(event.traceLocation, skip);
             }
         }
     }

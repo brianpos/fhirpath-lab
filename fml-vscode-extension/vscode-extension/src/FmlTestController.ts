@@ -41,8 +41,10 @@ export class FmlTestController implements vscode.Disposable {
 
     public constructor(
         private readonly modelConfigurationProvider: (program: string) => SushiWorkspaceConfiguration | undefined,
+        controller = vscode.tests.createTestController("fmlTools.tests", "FML Map Tests"),
+        watcher = vscode.workspace.createFileSystemWatcher("**/*"),
     ) {
-        this.controller = vscode.tests.createTestController("fmlTools.tests", "FML Map Tests");
+        this.controller = controller;
         this.controller.refreshHandler = () => this.refresh();
         this.controller.resolveHandler = async item => {
             if (!item) {await this.refresh();}
@@ -54,7 +56,6 @@ export class FmlTestController implements vscode.Disposable {
         coverage.loadDetailedCoverage = async (_run, fileCoverage) => this.details.get(fileCoverage) ?? [];
         this.controller.createRunProfile("Debug", vscode.TestRunProfileKind.Debug,
             (request, token) => this.debug(request, token), false);
-        const watcher = vscode.workspace.createFileSystemWatcher("**/*");
         const onChange = (uri: vscode.Uri): void => {
             if (/\.(json|fml)$/i.test(uri.fsPath)) {void this.refresh();}
         };
@@ -78,7 +79,7 @@ export class FmlTestController implements vscode.Disposable {
             try {
                 const config = await loadTestConfig(file.fsPath);
                 this.data.set(root, {kind: "config", config});
-                for (const set of await discoverTestSets(config)) {
+                for (const set of await discoverTestSets(config, [], this.contextProvider())) {
                     const mapItem = this.controller.createTestItem(`${root.id}|${set.map.filePath}`,
                         path.relative(config.maps, set.map.filePath), vscode.Uri.file(set.map.filePath));
                     this.data.set(mapItem, {kind: "map", config, map: set.map});
@@ -128,6 +129,7 @@ export class FmlTestController implements vscode.Disposable {
             return {
                 maps: resolved.maps, modelResources: resolved.modelResources,
                 defaultFhirVersion: toFhirVersion(this.modelConfigurationProvider(map.filePath)?.fhirVersion),
+                profileBaseTypes: this.modelConfigurationProvider(map.filePath)?.profileBaseTypes,
             };
         };
     }

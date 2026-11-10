@@ -4,7 +4,7 @@ import {
     FmlDebugEngineError, FmlDebugService, FmlLocalDebugService, type FmlDebugMapSource, type JsonValue,
 } from "@fhirpath-lab/debug-service";
 import {resolveFmlExecutionEngine, type FmlExecutionEngine} from "./FmlExecutionEngine";
-import {parseFmlModel, type FhirVersion} from "@fhirpath-lab/validator";
+import {parseFmlModel, resolveFmlStructureType, type FhirVersion} from "@fhirpath-lab/validator";
 import {analyzeInstance} from "./FmlStructureCheck";
 import {RuleCoverageCollector} from "./FmlTestCoverage";
 import {
@@ -119,7 +119,18 @@ function structureUrl(map: ReturnType<typeof parseFmlModel>, mode: "source" | "t
     return map?.structures.find(item => item.alias === parameter.type)?.url ?? parameter.type;
 }
 
-export function describeMap(filePath: string, text: string): MapInfo {
+function resolveMapType(url: string | undefined, profileBaseTypes?: Record<string, string>): string | undefined {
+    return url ? resolveFmlStructureType(url, profileBaseTypes) ?? (/^\w+$/.test(url) ? url : undefined) : undefined;
+}
+
+function applyModelContext(map: MapInfo, context: ExecutionContext): void {
+    map.sourceType = resolveMapType(map.sourceUrl, context.profileBaseTypes);
+    map.targetType = resolveMapType(map.targetUrl, context.profileBaseTypes);
+    map.sourceVersion ??= context.defaultFhirVersion;
+    map.targetVersion ??= context.defaultFhirVersion;
+}
+
+export function describeMap(filePath: string, text: string, profileBaseTypes?: Record<string, string>): MapInfo {
     const model = parseFmlModel(text);
     const sourceUrl = structureUrl(model, "source");
     const targetUrl = structureUrl(model, "target");
@@ -127,7 +138,7 @@ export function describeMap(filePath: string, text: string): MapInfo {
         .filter((url): url is string => typeof url === "string");
     return {
         filePath, text, sourceUrl, targetUrl, urls,
-        sourceType: sourceUrl?.split("/").pop(), targetType: targetUrl?.split("/").pop(),
+        sourceType: resolveMapType(sourceUrl, profileBaseTypes), targetType: resolveMapType(targetUrl, profileBaseTypes),
         sourceVersion: model?.sourceModelVersion, targetVersion: model?.targetModelVersion,
         imports: model?.imports.map(item => item.url) ?? [],
     };
@@ -207,33 +218,66 @@ export interface MapTestSet {
     inputs: FmlTestCaseFile[];
 }
 
-/** Pairs each map with the inputs whose resourceType matches the map's source type. */
-export async function discoverTestSets(config: ResolvedTestConfig, filter: readonly string[] = []): Promise<MapTestSet[]> {
+/** Pairs maps with matching resource types and, for profiled sources, explicit meta.profile declarations. */
+export async function discoverTestSets(
+    config: ResolvedTestConfig,
+    filter: readonly string[] = [],
+    contextProvider: ContextProvider = defaultContextProvider,
+): Promise<MapTestSet[]> {
     const maps = await loadMaps(config.maps);
     const inputs = await discoverTestInputs(config.inputs, config.include);
-    const resourceTypes = new Map<string, string | undefined>();
+    const metadata = new Map<string, {resourceType?: string; profiles: string[]}>();
     for (const input of inputs) {
+        let parsed: unknown;
         try {
-            const parsed = JSON.parse(await fs.readFile(input.filePath, "utf8")) as {resourceType?: string};
-            resourceTypes.set(input.filePath, parsed.resourceType);
+            parsed = JSON.parse(await fs.readFile(input.filePath, "utf8"));
         } catch {
-            resourceTypes.set(input.filePath, undefined);
+            // Invalid inputs remain eligible for core maps so execution can report the error.
+        }
+        if (typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)) {
+            const resourceType = "resourceType" in parsed && typeof parsed.resourceType === "string"
+                ? parsed.resourceType : undefined;
+            const meta = "meta" in parsed ? parsed.meta : undefined;
+            const profiles = typeof meta === "object" && meta !== null && "profile" in meta && Array.isArray(meta.profile)
+                ? meta.profile.filter((profile): profile is string => typeof profile === "string")
+                    .map(profile => profile.split("|")[0])
+                : [];
+            metadata.set(input.filePath, {resourceType, profiles});
         }
     }
-    return maps.map(map => ({
-        map,
-        inputs: inputs.filter(input => {
-            const resourceType = resourceTypes.get(input.filePath);
-            return (!map.sourceType || !resourceType || map.sourceType === resourceType)
-                && matchesFilter(filter, path.relative(config.maps, map.filePath), input.relativePath);
-        }),
-    })).filter(set => set.inputs.length > 0);
+    const sets: MapTestSet[] = [];
+    for (const map of maps) {
+        const candidates = inputs.filter(input =>
+            matchesFilter(filter, path.relative(config.maps, map.filePath), input.relativePath));
+        if (!candidates.length) {continue;}
+        const context = await contextProvider(map, maps);
+        applyModelContext(map, context);
+        if (map.sourceUrl && !map.sourceType) {
+            throw new Error(`Unable to resolve source profile '${map.sourceUrl}' for ${map.filePath}. `
+                + "Load its StructureDefinition through the project's SUSHI dependencies or IG output.");
+        }
+        const sourceCanonical = map.sourceUrl?.split("|")[0];
+        const sourceProfile = map.sourceType !== sourceCanonical && resolveMapType(map.sourceUrl) !== map.sourceType
+            ? sourceCanonical : undefined;
+        const matchingInputs = candidates.filter(input => {
+            const {resourceType, profiles} = metadata.get(input.filePath) ?? {profiles: []};
+            if (sourceProfile) {
+                return map.sourceType === resourceType && profiles.includes(sourceProfile);
+            }
+            return !map.sourceType || !resourceType || map.sourceType === resourceType;
+        });
+        if (matchingInputs.length) {
+            sets.push({map, inputs: matchingInputs});
+        }
+    }
+    return sets;
 }
 
 export interface ExecutionContext {
     maps: FmlDebugMapSource[];
     modelResources: JsonValue[];
     defaultFhirVersion?: FhirVersion;
+    profileBaseTypes?: Record<string, string>;
 }
 
 export type ContextProvider = (map: MapInfo, folderMaps: readonly MapInfo[]) => Promise<ExecutionContext>;
@@ -324,6 +368,7 @@ export class FmlTestRunner {
         const contextStarted = Date.now();
         const context = await (this.options.context ?? defaultContextProvider)(map, folderMaps);
         this.contextMs += Date.now() - contextStarted;
+        applyModelContext(map, context);
         for (const source of context.maps) {
             this.coverage.registerFile(source.fileName ?? path.basename(source.filePath ?? ""), source.filePath, source.text);
         }
@@ -339,6 +384,7 @@ export class FmlTestRunner {
             terminologyFhirVersion: this.options.terminology?.fhirVersion,
             signal: this.options.signal,
             defaultFhirVersion: context.defaultFhirVersion,
+            profileBaseTypes: context.profileBaseTypes,
             localTrace: this.options.coverage ? {detail: "coverage" as const, maxEvents: 200_000} : false as const,
         };
         if (remote || this.options.coverage) {

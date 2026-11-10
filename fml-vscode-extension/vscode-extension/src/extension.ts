@@ -71,11 +71,13 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     } = {};
     const serverStatusRef: {current?: FmlLanguageServerStatus} = {};
     let waitForWorkspaceIndexForPreview = async (): Promise<void> => undefined;
+    const testControllerRef: {current?: FmlTestController} = {};
     const sushiConfigWatcher = new SushiConfigWatcher(
         UiConstants.detailsChannel,
         undefined,
         async () => {
             await reindexWorkspaceRef.current?.();
+            await testControllerRef.current?.refresh();
         },
     );
     context.subscriptions.push(sushiConfigWatcher);
@@ -110,6 +112,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     );
 
     const testController = new FmlTestController(program => sushiConfigWatcher.getConfigurationForPath(program));
+    testControllerRef.current = testController;
     context.subscriptions.push(testController);
     void testController.refresh();
 

@@ -4,6 +4,9 @@ import fg from "fast-glob";
 import {promises as fs} from "node:fs";
 import path from "node:path";
 import * as vscode from "vscode";
+import {collectFmlModelResources} from "./FmlWorkspaceModels";
+
+export {collectFmlModelResources} from "./FmlWorkspaceModels";
 
 export type FmlRequiredResourceType = "ConceptMap" | "StructureDefinition";
 
@@ -308,17 +311,6 @@ async function loadDependencyResources(
         }
     }
     return resources;
-}
-
-export function collectFmlModelResources(value: unknown): JsonValue[] {
-    if (isSupportedResource(value)) {
-        return [value];
-    } else if (value && typeof value === "object" && !Array.isArray(value)
-        && "resourceType" in value && value.resourceType === "Bundle" && "entry" in value && Array.isArray(value.entry)) {
-        return value.entry.flatMap(entry =>
-            entry && typeof entry === "object" && "resource" in entry ? collectFmlModelResources(entry.resource) : []);
-    }
-    return [];
 }
 
 function isSupportedResource(value: unknown): value is SupportedResource {
